@@ -205,7 +205,7 @@ footer { margin-top: 48px; padding-top: 18px; border-top: 1px solid var(--line);
   <a href="#top" class="brand"><span class="brand-mark" aria-hidden="true">∿</span><span>Sports Market Maker</span></a>
   <nav class="toplinks" aria-label="Dashboard sections">
     <a href="#overview">Overview</a><a href="#forward">Live results</a><a href="#paper">Paper trading</a>
-    <a href="#strategies">Strategies</a><a href="#risk">Trading system</a><a href="#research-section">Research</a>
+    <a href="#strategies">Strategies</a><a href="#risk">Trading system</a><a href="#research-section">Research</a><a href="#exchange-watch">Exchange watch</a>
   </nav>
 </div>
 <header class="report-head" id="top">
@@ -421,6 +421,20 @@ footer { margin-top: 48px; padding-top: 18px; border-top: 1px solid var(--line);
       <div id="research"></div>
     </div>
   </div>
+</section>
+
+<section id="exchange-watch">
+  <div class="section-heading">
+    <div><div class="eyebrow">07 · Exchange watch</div><h2>Kalshi vs. Polymarket US</h2>
+      <p class="desc">I'm watching NBA and NFL player props on both exchanges to see which lines overlap and where prices differ. Research only. A price gap isn't an arbitrage or a reason to place an order.</p></div>
+    <span class="stage hist">Read-only</span>
+  </div>
+  <article class="panel">
+    <div id="exchange-watch-data" aria-live="polite">
+      Waiting for the first public-market scan. No Polymarket account or funding needed.
+    </div>
+    <p class="note">Both sets of prices come from public production feeds, not my Kalshi Demo account. Matching wording is not enough to prove identical settlement rules. <a href="../docs/CROSS_EXCHANGE_PROP_WATCH.md">How I'm checking this ↗</a></p>
+  </article>
 </section>
 
 <footer><strong>About the numbers.</strong> This page reads reports saved to GitHub, not the exchange account itself. <a href="../outputs/dashboard/summary.json">Summary JSON</a> · <a href="../docs/FORWARD_VALIDATION.md">Evaluation protocol</a> · <a href="https://github.com/akilatrades/sports-market-maker">Source code</a>.<br>Simulated fills, backtest results and exchange-confirmed results are distinct, and none of them guarantee future returns.</footer>
@@ -783,6 +797,37 @@ fetch("../outputs/dashboard/summary.json", {cache: "no-store"}).then(r => { if (
   document.getElementById("forward-view").textContent = "Live results could not be loaded.";
   document.getElementById("system-view").textContent = "Source unavailable; do not infer live account status.";
 });
+// Optional read-only cross-exchange snapshot. Never infer live trading status.
+fetch("../outputs/cross_exchange/latest.json", {cache:"no-store"})
+  .then(r => { if (!r.ok) throw new Error("not published"); return r.json(); })
+  .then(data => {
+    const node = document.getElementById("exchange-watch-data");
+    if (data.status !== "research_only_no_order_access" || data.venue !== "polymarket_us") {
+      node.textContent = "Cross-exchange scan has no verified data.";
+      return;
+    }
+    const summary = ["nfl", "nba"].map(league => {
+      const c = data.coverage?.[league];
+      if (!c) return `<div class="fwd-row"><span>${league.toUpperCase()}</span><strong>No report</strong></div>`;
+      const incomplete = !c.pagination_complete || c.bbo_scan_capped;
+      if (c.polymarket_us_catalog_empty) {
+        return `<div class="fwd-row"><span>${league.toUpperCase()} · ${esc(c.kalshi_markets_scanned)} Kalshi markets</span><strong>Polymarket US prop catalog returned no listings; coverage unverified</strong></div>`;
+      }
+      return `<div class="fwd-row"><span>${league.toUpperCase()} · ${esc(c.polymarket_us_strict_prop_markets)} strictly parsed props vs. ${esc(c.kalshi_markets_scanned)} Kalshi markets</span><strong>${esc(c.priced_pairs_needing_rules_review)} possible overlaps${incomplete ? " (partial scan)" : ""}</strong></div>`;
+    }).join("");
+    const rows = (data.candidates || []).slice(0, 5).map(r => {
+      const gap = Number(r.mid_gap_cents);
+      return `<tr><td class="lbl">${esc(r.player)} · ${esc(r.stat)} · ${esc(r.line)}</td><td>${esc(r.league.toUpperCase())}</td><td class="num">${Number.isFinite(gap) ? esc(gap.toFixed(2)) + "¢" : "—"}</td></tr>`;
+    }).join("");
+    node.innerHTML = `<p class="desc">Last scan: ${esc(data.updated_utc)}. These are candidate text/line matches, not verified equivalent contracts. A missing or partial scan does not mean zero opportunities.</p>${summary}`+
+      (rows ? `<div class="scroll" role="region" tabindex="0" aria-label="Candidate price differences, swipe sideways"><table><thead><tr><th>Player &amp; line</th><th>League</th><th class="num">YES midpoint difference*</th></tr></thead><tbody>${rows}</tbody></table></div>` : `<p class="note">No strictly matched and priced contracts in this saved snapshot.</p>`)+
+      `<p class="note">*Midprice difference only; excludes fees, executable depth, rule differences and fills. Not a tradable edge.</p>`;
+  })
+  .catch(() => {
+    document.getElementById("exchange-watch-data").textContent =
+      "No completed Polymarket US scan published yet. Waiting on the scheduled research job.";
+  });
+
 document.getElementById("scenario-contracts").addEventListener("input", renderScenarios);
 renderScenarios();
 let pageWidth = document.documentElement.clientWidth;

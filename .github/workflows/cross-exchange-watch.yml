@@ -1,0 +1,87 @@
+name: Cross-exchange prop watch
+on:
+  pull_request:
+    paths:
+      - "live/compare_polymarket_us.py"
+      - "tests/test_compare_polymarket_us.py"
+      - ".github/workflows/cross-exchange-watch.yml"
+  schedule:
+    - cron: "25 */4 * * *"
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: repo-writes
+  cancel-in-progress: false
+jobs:
+  compare:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      KALSHI_ENV: prod
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r requirements.txt
+      - name: Format preview (research branch only)
+        if: github.event_name == 'pull_request'
+        run: |
+          pip install ruff==0.11.13
+          ruff format --diff live/compare_polymarket_us.py tests/test_compare_polymarket_us.py || true
+      - name: Probe public US prop catalog for field compatibility
+        if: github.event_name == 'pull_request'
+        run: |
+          python - <<'PY'
+          import json
+          import urllib.parse
+          import urllib.request
+          p = urllib.parse.urlencode({
+              "limit": 4, "offset": 0, "active": "true", "closed": "false",
+              "sportsMarketTypes": "SPORTS_MARKET_TYPE_PROP",
+          })
+          u = "https://gateway.polymarket.us/v1/markets?" + p
+          with urllib.request.urlopen(u, timeout=20) as resp:
+              payload = json.load(resp)
+          print("catalog top-level keys:", list(payload))
+          markets = payload.get("markets", [])
+          print("page market count:", len(markets))
+          for m in markets[:3]:
+              print(json.dumps({
+                  "type": m.get("sportsMarketTypeV2"),
+                  "question": m.get("question"),
+                  "line": m.get("line"),
+                  "date": m.get("gameStartTime"),
+                  "subject": m.get("subject"),
+                  "tags": m.get("tags"),
+              })[:1500])
+          for league in ("nfl", "nba"):
+              with urllib.request.urlopen("https://gateway.polymarket.us/v2/leagues/"+league, timeout=20) as resp:
+                  info = json.load(resp).get("league", {})
+              tag = info.get("tagId")
+              print("league", league, "tag", tag)
+              for filtered in (False, True):
+                  args = {"limit": 10, "tagIds": tag, "active": "true", "closed": "false"}
+                  if filtered:
+                      args["sportsMarketTypes"] = "SPORTS_MARKET_TYPE_PROP"
+                  url = "https://gateway.polymarket.us/v1/markets?" + urllib.parse.urlencode(args)
+                  with urllib.request.urlopen(url, timeout=20) as resp:
+                      found = json.load(resp).get("markets", [])
+                  print("tag-filter", league, "prop-filter", filtered,
+                        "rows", len(found),
+                        "types", [x.get("sportsMarketTypeV2") for x in found[:5]],
+                        "tag slugs", [[t.get("slug") for t in x.get("tags",[])[:3]] for x in found[:2]])
+          PY
+      - name: Compare public US exchange props (GET only)
+        run: python -m live.compare_polymarket_us
+      - name: Commit read-only evidence
+        if: github.event_name != 'pull_request'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A outputs/cross_exchange/
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m "Cross-exchange public prop snapshot: $(date -u +%Y-%m-%dT%H:%MZ)"
+          git pull --rebase -X theirs
+          git push
