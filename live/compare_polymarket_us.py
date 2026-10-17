@@ -48,7 +48,9 @@ def get_json(path, params=None, timeout=18):
     if not path.startswith(("/v2/leagues/", "/v1/markets/")):
         raise ValueError("unsupported read-only path")
     url = API + path + ("?" + urllib.parse.urlencode(params) if params else "")
-    req = urllib.request.Request(url, headers={"User-Agent": "sports-props-research/1.0"})
+    req = urllib.request.Request(
+        url, headers={"User-Agent": "sports-props-research/1.0"}
+    )
     with urllib.request.urlopen(req, timeout=timeout) as response:
         return json.load(response)
 
@@ -91,7 +93,10 @@ def threshold_from_question(question, stat):
     if not stat:
         return None
     # "30+ points" or "at least 30 points", both mean OVER 29.5.
-    m = re.search(r"(\d+(?:\.\d+)?)\s*\+\s*(?:points?|rebounds?|assists?|threes?|3.pointers?|receiving yards?|passing yards?)", s)
+    m = re.search(
+        r"(\d+(?:\.\d+)?)\s*\+\s*(?:points?|rebounds?|assists?|threes?|3.pointers?|receiving yards?|passing yards?)",
+        s,
+    )
     if m:
         return float(m.group(1)) - 0.5
     m = re.search(r"at least\s+(\d+(?:\.\d+)?)", s)
@@ -292,7 +297,9 @@ def run(poly_get=get_json, kalshi_fetch=fetch_markets):
         "manual_contract_equivalence_verified": False,
         "fees_verified": False,
         "coverage": coverage,
-        "candidates": sorted(pairs, key=lambda x: abs(x["mid_gap_cents"]), reverse=True)[:30],
+        "candidates": sorted(
+            pairs, key=lambda x: abs(x["mid_gap_cents"]), reverse=True
+        )[:30],
     }
 
 
@@ -301,16 +308,26 @@ def main():
     OUT.mkdir(parents=True, exist_ok=True)
     (OUT / "latest.json").write_text(json.dumps(result, indent=2) + "\n")
     with (OUT / "history.jsonl").open("a") as stream:
-        stream.write(json.dumps({
-            "updated_utc": result["updated_utc"],
-            "coverage": result["coverage"],
-            "candidate_count": len(result["candidates"]),
-        }) + "\n")
+        stream.write(
+            json.dumps(
+                {
+                    "updated_utc": result["updated_utc"],
+                    "coverage": result["coverage"],
+                    "candidate_count": len(result["candidates"]),
+                }
+            )
+            + "\n"
+        )
     # Keep a rolling 7-day / 42-run observation window without growing GitHub
     # forever. Each entry is an observation, not an execution.
     path = OUT / "history.jsonl"
     path.write_text("\n".join(path.read_text().splitlines()[-42:]) + "\n")
-    print(json.dumps({"updated_utc": result["updated_utc"], "coverage": result["coverage"]}, indent=2))
+    print(
+        json.dumps(
+            {"updated_utc": result["updated_utc"], "coverage": result["coverage"]},
+            indent=2,
+        )
+    )
 
 
 if __name__ == "__main__":
