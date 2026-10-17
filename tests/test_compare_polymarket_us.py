@@ -146,7 +146,11 @@ def test_full_scan_mocked_public_requests_and_no_external_actions(monkeypatch):
     def poly(path, params=None):
         counter["poly"] += 1
         if "/events" in path:
-            return {"events": [make_event([poly_market()])]} if "/nfl/" in path else {"events": []}
+            return (
+                {"events": [make_event([poly_market()])]}
+                if "/nfl/" in path
+                else {"events": []}
+            )
         return {
             "marketData": {"bestBid": {"value": 0.56}, "bestAsk": {"value": 0.60}}
         }
