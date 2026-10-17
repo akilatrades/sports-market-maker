@@ -1,5 +1,10 @@
 name: Cross-exchange prop watch
 on:
+  pull_request:
+    paths:
+      - "live/compare_polymarket_us.py"
+      - "tests/test_compare_polymarket_us.py"
+      - ".github/workflows/cross-exchange-watch.yml"
   schedule:
     - cron: "25 */4 * * *"
   workflow_dispatch:
@@ -23,6 +28,7 @@ jobs:
       - name: Compare public US exchange props (GET only)
         run: python -m live.compare_polymarket_us
       - name: Commit read-only evidence
+        if: github.event_name != 'pull_request'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
