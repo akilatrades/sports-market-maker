@@ -42,38 +42,14 @@ def test_strict_same_player_stat_line_and_eastern_game_date():
     k = p.kalshi_key(kalshi_market(), "nfl", "receiving_yards")
     m = poly_market()
     key = p.poly_key(m, "nfl", make_event([m]))
-    assert k == key == ("nfl", "2026-10-18", "mike evans", "receiving_yards", 79.5)
-    assert (
-        p.poly_key(
-            poly_market(question="Mike Evans: UNDER 80 receiving yards"),
-            "nfl",
-            make_event(),
-        )
-        is None
-    )
-    assert ()
-    assert (
-        p.poly_key(
-            poly_market(question="Mike Evans: UNDER 80 receiving yards"),
-            "nfl",
-            make_event(),
-        )
-    )
-    assert p.poly_key(
-        poly_market(question="Mike Evans: UNDER 80 receiving yards"),
-        "nfl",
-        make_event(),
-    ) is None
-    assert p.poly_key(
-        poly_market(sportsMarketTypeV2="SPORTS_MARKET_TYPE_MONEYLINE"),
-        "nfl",
-        make_event(),
-    ) is None
-    assert p.poly_key(
-        poly_market(question="Somebody: 90+ receiving yards"),
-        "nfl",
-        make_event(),
-    ) != k
+    assert k == key
+    assert k == ("nfl", "2026-10-18", "mike evans", "receiving_yards", 79.5)
+    under = poly_market(question="Mike Evans: UNDER 80 receiving yards")
+    ml = poly_market(sportsMarketTypeV2="SPORTS_MARKET_TYPE_MONEYLINE")
+    different = poly_market(question="Somebody: 90+ receiving yards")
+    assert p.poly_key(under, "nfl", make_event()) is None
+    assert p.poly_key(ml, "nfl", make_event()) is None
+    assert p.poly_key(different, "nfl", make_event()) != k
     assert p.east_date("2026-10-19T01:30:00Z") == "2026-10-18"
 
 
@@ -108,15 +84,18 @@ def test_comparison_uses_bbo_not_headline_last_trade():
 def test_no_matching_when_ambiguous_or_quote_invalid():
     k = p.kalshi_key(kalshi_market(), "nfl", "receiving_yards")
     pm = poly_market()
+
     def should_not_call(*args, **kwargs):
         raise AssertionError("No BBO call for ambiguous mapping")
     rows, count, hits = p.compare(
-        {k: [kalshi_market(), kalshi_market()]}, {k: [pm]},
+        {k: [kalshi_market(), kalshi_market()]},
+        {k: [pm]},
         get=should_not_call,
     )
     assert (rows, count, hits) == ([], 1, 0)
     rows, count, hits = p.compare(
-        {k: [kalshi_market()]}, {k: [pm]},
+        {k: [kalshi_market()]},
+        {k: [pm]},
         get=lambda *_: {"marketData": {"bestBid": None, "bestAsk": None}},
     )
     assert (rows, count, hits) == ([], 1, 1)
@@ -131,6 +110,7 @@ def test_scan_fails_closed_on_demo_env(monkeypatch):
 def test_pagination_uses_exact_public_get_and_reports_truncation(monkeypatch):
     monkeypatch.setattr(p, "MAX_EVENT_PAGES", 2)
     paths = []
+
     def fake(path, params):
         paths.append((path, params["offset"]))
         return {"events": [make_event()] * p.PAGE_LIMIT}
@@ -157,6 +137,7 @@ def test_no_api_keys_or_trading_calls_in_scanner():
 def test_full_scan_mocked_public_requests_and_no_external_actions(monkeypatch):
     monkeypatch.delenv("KALSHI_ENV", raising=False)
     counter = {"poly": 0, "kalshi": 0}
+
     def poly(path, params=None):
         counter["poly"] += 1
         if "/events" in path:
@@ -165,9 +146,7 @@ def test_full_scan_mocked_public_requests_and_no_external_actions(monkeypatch):
                 if "/nfl/" in path
                 else {"events": []}
             )
-        return {
-            "marketData": {"bestBid": {"value": 0.56}, "bestAsk": {"value": 0.60}}
-        }
+        return {"marketData": {"bestBid": {"value": 0.56}, "bestAsk": {"value": 0.60}}}
 
     def kalshi(series, status="open", historical=False):
         counter["kalshi"] += 1
