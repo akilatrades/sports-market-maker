@@ -4,7 +4,7 @@ This **research-only** job compares public NBA and NFL player-prop listings. It 
 
 ## Data sources
 
-- **Polymarket US** public [league events](https://docs.polymarket.us/api-reference/sports/get-events-by-league-slug) and [best bid/offer](https://docs.polymarket.us/api-reference/markets/get-market-bbo) under `https://gateway.polymarket.us`. **Not** the international Gamma/CLOB API on `polymarket.com`.
+- **Polymarket US** public [league metadata](https://docs.polymarket.us/api-reference/sports/get-league-by-slug), [active prop-market catalog](https://docs.polymarket.us/api-reference/markets/get-markets), and [best bid/offer](https://docs.polymarket.us/api-reference/markets/get-market-bbo) under `https://gateway.polymarket.us`. **Not** the international Gamma/CLOB API on `polymarket.com`.
 - **Kalshi production public market data** (`kalshi.api.fetch_markets`) for NBA points, rebounds, assists, threes, NFL receiving yards and anytime touchdown. This is read-only research *against production quotes*, not Kalshi Demo account executions.
 
 ## What gets counted
@@ -17,11 +17,11 @@ If the candidate is unique on both sides, the tool queries public Polymarket US 
 
 ## Schedule and outputs
 
-GitHub Actions `cross-exchange-watch.yml` runs **every four hours**, and can be run manually. It writes:
+GitHub Actions `cross-exchange-watch.yml` runs **every four hours**, and can be run manually. The catalog is queried for each league's tag ID and `SPORTS_MARKET_TYPE_PROP`; if the API returns an empty result, the dashboard explicitly labels that coverage **unverified**, not 'there are no props on the exchange'. It writes:
 - `outputs/cross_exchange/latest.json`: most recent coverage and up to 30 candidate matches for investigation.
 - `outputs/cross_exchange/history.jsonl`: the most recent 42 scan summaries (about one week), retaining incomplete-coverage flags.
 
-A first successful scan is needed before any live count or market overlap claim. Pagination is deliberately capped (6 × 100 events per league), and BBO reads are capped at 80 per league. The results explicitly flag incomplete pages or capped snapshots.
+A first successful scan is needed before any live count or market overlap claim. Pagination is deliberately capped (6 × 100 filtered markets per league), and BBO reads are capped at 80 per league. The results explicitly flag incomplete pages or capped snapshots.
 
 **First-week research questions:** How many unique player props actually overlap? Are both sides quoted? What percentage have matching, *verified* contract language? How quickly do quotes disappear? Are apparent price gaps still present when executable depth and fees are considered? If no meaningful overlap, don't build a trader.
 
