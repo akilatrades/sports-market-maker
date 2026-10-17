@@ -312,8 +312,7 @@ def run(poly_get=get_json, kalshi_fetch=fetch_markets):
         # The catalog is a list of markets; make synthetic parent objects
         # exclusively for the existing extraction/normalization code.
         events = [
-            {"startTime": m.get("gameStartTime"), "markets": [m]}
-            for m in catalog
+            {"startTime": m.get("gameStartTime"), "markets": [m]} for m in catalog
         ]
         poly, observed = extract_poly(events, league)
         kalshi, ktotal = extract_kalshi(league, fetch=kalshi_fetch)
