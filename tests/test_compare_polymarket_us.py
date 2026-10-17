@@ -138,3 +138,41 @@ def test_no_api_keys_or_trading_calls_in_scanner():
     assert "POST" not in content
     assert "https://gamma-api.polymarket.com" not in content
     assert "https://clob.polymarket.com" not in content
+
+
+def test_full_scan_mocked_public_requests_and_no_external_actions(monkeypatch):
+    monkeypatch.delenv("KALSHI_ENV", raising=False)
+    counter = {"poly": 0, "kalshi": 0}
+    def poly(path, params=None):
+        counter["poly"] += 1
+        if "/events" in path:
+            return {"events": [make_event([poly_market()])]} if "/nfl/" in path else {"events": []}
+        return {
+            "marketData": {"bestBid": {"value": 0.56}, "bestAsk": {"value": 0.60}}
+        }
+
+    def kalshi(series, status="open", historical=False):
+        counter["kalshi"] += 1
+        return [kalshi_market()] if series == "KXNFLRECYDS" else []
+
+    snapshot = p.run(poly_get=poly, kalshi_fetch=kalshi)
+    assert snapshot["status"] == "research_only_no_order_access"
+    assert snapshot["venue"] == "polymarket_us"
+    assert snapshot["manual_contract_equivalence_verified"] is False
+    assert snapshot["coverage"]["nfl"]["strict_candidate_keys"] == 1
+    assert snapshot["coverage"]["nfl"]["priced_pairs_needing_rules_review"] == 1
+    assert snapshot["coverage"]["nba"]["strict_candidate_keys"] == 0
+    assert snapshot["candidates"][0]["mid_gap_cents"] == 17.0
+    assert counter["poly"] == 3  # two league pages plus one bid/ask GET
+    assert counter["kalshi"] == 6  # NBA 4 series and NFL 2
+
+
+def test_dashboard_exchange_watch_is_read_only():
+    from pathlib import Path
+
+    html = (Path(__file__).parents[1] / "dashboard" / "index.html").read_text()
+    assert 'id="exchange-watch"' in html
+    assert 'id="exchange-watch-data"' in html
+    assert 'fetch("../outputs/cross_exchange/latest.json"' in html
+    assert "Not a tradable edge." in html
+    assert "No completed Polymarket US scan published yet" in html
