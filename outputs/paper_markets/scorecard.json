@@ -2,18 +2,18 @@
   "KXITFMATCH": {
     "orders": 130,
     "vetoed": 0,
-    "open": 11,
-    "fill_rate": 0.8151260504201681,
-    "fills_settled": 97,
-    "bankroll": 390.28,
-    "cents_per_contract": -2.52,
-    "t": -1.64,
-    "profit_dollars": -109.72
+    "open": 5,
+    "fill_rate": 0.824,
+    "fills_settled": 103,
+    "bankroll": 390.23,
+    "cents_per_contract": -2.36,
+    "t": -1.62,
+    "profit_dollars": -109.77
   },
   "KXNASCARRACE": {
-    "orders": 29,
+    "orders": 42,
     "vetoed": 0,
-    "open": 0,
+    "open": 13,
     "fill_rate": 0.6206896551724138,
     "fills_settled": 18,
     "bankroll": 500.94,
@@ -22,9 +22,9 @@
     "profit_dollars": 0.94
   },
   "KXLIGAMXSPREAD": {
-    "orders": 32,
+    "orders": 42,
     "vetoed": 0,
-    "open": 8,
+    "open": 18,
     "fill_rate": 0.5416666666666666,
     "fills_settled": 13,
     "bankroll": 497.99,
@@ -35,13 +35,13 @@
   "KXLALIGASPREAD": {
     "orders": 32,
     "vetoed": 0,
-    "open": 9,
-    "fill_rate": 0.30434782608695654,
-    "fills_settled": 7,
-    "bankroll": 514.16,
-    "cents_per_contract": 26.64,
-    "t": 5.58,
-    "profit_dollars": 14.16
+    "open": 0,
+    "fill_rate": 0.5,
+    "fills_settled": 16,
+    "bankroll": 519.23,
+    "cents_per_contract": 17.08,
+    "t": 3.19,
+    "profit_dollars": 19.23
   },
   "KXNFLANYTD": {
     "orders": 0,
@@ -76,9 +76,9 @@
     "bankroll": 500.0
   },
   "KXUFCMOF": {
-    "orders": 52,
+    "orders": 56,
     "vetoed": 0,
-    "open": 40,
+    "open": 44,
     "fill_rate": 0.0,
     "fills_settled": 0,
     "bankroll": 500.0
@@ -116,9 +116,9 @@
     "bankroll": 500.0
   },
   "KXNASCARTOP10": {
-    "orders": 0,
+    "orders": 28,
     "vetoed": 0,
-    "open": 0,
+    "open": 28,
     "fill_rate": null,
     "fills_settled": 0,
     "bankroll": 500.0
@@ -142,13 +142,13 @@
   "KXITFMATCH+no30": {
     "orders": 15,
     "vetoed": 0,
-    "open": 10,
-    "fill_rate": 0.8,
-    "fills_settled": 4,
-    "bankroll": 503.79,
-    "cents_per_contract": 15.95,
-    "t": 3.89,
-    "profit_dollars": 3.79
+    "open": 5,
+    "fill_rate": 0.9,
+    "fills_settled": 9,
+    "bankroll": 508.5,
+    "cents_per_contract": 9.18,
+    "t": 1.87,
+    "profit_dollars": 8.5
   },
-  "updated_utc": "2026-10-17T18:25+00:00"
+  "updated_utc": "2026-10-17T21:22+00:00"
 }
