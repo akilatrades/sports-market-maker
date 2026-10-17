@@ -42,8 +42,16 @@ def test_strict_same_player_stat_line_and_eastern_game_date():
     k = p.kalshi_key(kalshi_market(), "nfl", "receiving_yards")
     m = poly_market()
     key = p.poly_key(m, "nfl", make_event([m]))
-    assert k == key == (
-        "nfl", "2026-10-18", "mike evans", "receiving_yards", 79.5
+    assert k == key == ("nfl", "2026-10-18", "mike evans", "receiving_yards", 79.5)
+    assert (
+        p.poly_key(
+            poly_market(question="Mike Evans: UNDER 80 receiving yards"),
+            "nfl",
+            make_event(),
+        )
+        is None
+    )
+    assert (
     )
     assert p.poly_key(
         poly_market(question="Mike Evans: UNDER 80 receiving yards"),
