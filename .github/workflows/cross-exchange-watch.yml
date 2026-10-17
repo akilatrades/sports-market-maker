@@ -30,6 +30,33 @@ jobs:
         run: |
           pip install ruff==0.11.13
           ruff format --diff live/compare_polymarket_us.py tests/test_compare_polymarket_us.py
+      - name: Probe public US prop catalog for field compatibility
+        if: github.event_name == 'pull_request'
+        run: |
+          python - <<'PY'
+          import json
+          import urllib.parse
+          import urllib.request
+          p = urllib.parse.urlencode({
+              "limit": 4, "offset": 0, "active": "true", "closed": "false",
+              "sportsMarketTypes": "SPORTS_MARKET_TYPE_PROP",
+          })
+          u = "https://gateway.polymarket.us/v1/markets?" + p
+          with urllib.request.urlopen(u, timeout=20) as resp:
+              payload = json.load(resp)
+          print("catalog top-level keys:", list(payload))
+          markets = payload.get("markets", [])
+          print("page market count:", len(markets))
+          for m in markets[:3]:
+              print(json.dumps({
+                  "type": m.get("sportsMarketTypeV2"),
+                  "question": m.get("question"),
+                  "line": m.get("line"),
+                  "date": m.get("gameStartTime"),
+                  "subject": m.get("subject"),
+                  "tags": m.get("tags"),
+              })[:1500])
+          PY
       - name: Compare public US exchange props (GET only)
         run: python -m live.compare_polymarket_us
       - name: Commit read-only evidence
