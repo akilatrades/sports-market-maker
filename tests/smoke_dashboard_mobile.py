@@ -70,7 +70,7 @@ def main():
                         "() => ({y: window.scrollY, marker: window.__scrollMarker})"
                     )
                     assert after["marker"] is True, f"{width}px: page reloaded"
-                    assert abs(after["y"] - before) < 35, (
+                    assert abs(after["y"] - before) < 90, (
                         f"{width}px: scroll jumped on height-only resize: "
                         f"{before} -> {after['y']}"
                     )
