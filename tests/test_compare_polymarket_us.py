@@ -21,6 +21,7 @@ def poly_market(**kw):
         "closed": False,
         "sportsMarketTypeV2": "SPORTS_MARKET_TYPE_PROP",
         "question": "Mike Evans: 80+ receiving yards",
+        "gameStartTime": "2026-10-18T20:25:00Z",
         "subject": {"name": "Mike Evans"},
         **kw,
     }
