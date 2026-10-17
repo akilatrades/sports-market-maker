@@ -45,7 +45,7 @@ STAT_TERMS = (
 
 def get_json(path, params=None, timeout=18):
     """Only public GETs against the documented Polymarket US gateway."""
-    if not path.startswith(("/v2/leagues/", "/v1/markets/")):
+    if not (path.startswith(("/v2/leagues/", "/v1/markets/")) or path == "/v1/markets"):
         raise ValueError("unsupported read-only path")
     url = API + path + ("?" + urllib.parse.urlencode(params) if params else "")
     req = urllib.request.Request(
@@ -180,6 +180,43 @@ def fetch_polymarket_events(league, get=get_json):
     return events, complete
 
 
+def fetch_polymarket_props(league, get=get_json):
+    """Browse the US site's league-tagged active PROP market catalog.
+
+    A zero result is an API observation only; it is not proof of the full
+    exchange's inventory or whether products are available in another feed.
+    """
+    details = get(f"/v2/leagues/{league}")
+    info = details.get("league") if isinstance(details, dict) else None
+    if not isinstance(info, dict) or not isinstance(info.get("tagId"), int):
+        raise ValueError(f"Polymarket US {league} league tag unavailable")
+    tag = info["tagId"]
+    markets = []
+    complete = False
+    for page in range(MAX_EVENT_PAGES):
+        response = get(
+            "/v1/markets",
+            {
+                "tagIds": tag,
+                "sportsMarketTypes": "SPORTS_MARKET_TYPE_PROP",
+                "active": "true",
+                "closed": "false",
+                "limit": PAGE_LIMIT,
+                "offset": page * PAGE_LIMIT,
+            },
+        )
+        if not isinstance(response, dict) or not isinstance(
+            response.get("markets"), list
+        ):
+            raise ValueError(f"Polymarket US {league} prop catalog unavailable")
+        batch = response["markets"]
+        markets.extend(batch)
+        if len(batch) < PAGE_LIMIT:
+            complete = True
+            break
+    return markets, complete
+
+
 def extract_poly(events, league):
     output = {}
     considered = 0
@@ -271,13 +308,21 @@ def run(poly_get=get_json, kalshi_fetch=fetch_markets):
     stamp = datetime.now(UTC).isoformat(timespec="seconds")
     pairs, coverage = [], {}
     for league in LEAGUES:
-        events, complete = fetch_polymarket_events(league, get=poly_get)
+        catalog, complete = fetch_polymarket_props(league, get=poly_get)
+        # The catalog is a list of markets; make synthetic parent objects
+        # exclusively for the existing extraction/normalization code.
+        events = [
+            {"startTime": m.get("gameStartTime"), "markets": [m]}
+            for m in catalog
+        ]
         poly, observed = extract_poly(events, league)
         kalshi, ktotal = extract_kalshi(league, fetch=kalshi_fetch)
         matches, intersect, fetched = compare(kalshi, poly, get=poly_get)
         pairs.extend(matches)
         coverage[league] = {
-            "polymarket_us_events_scanned": len(events),
+            "polymarket_us_events_scanned": None,
+            "polymarket_us_catalog_source": "league-tagged active PROP markets",
+            "polymarket_us_catalog_empty": len(catalog) == 0,
             "polymarket_us_market_rows_scanned": observed,
             "polymarket_us_strict_prop_markets": sum(map(len, poly.values())),
             "kalshi_markets_scanned": ktotal,
