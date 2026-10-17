@@ -51,7 +51,13 @@ def test_strict_same_player_stat_line_and_eastern_game_date():
         )
         is None
     )
+    assert ()
     assert (
+        p.poly_key(
+            poly_market(question="Mike Evans: UNDER 80 receiving yards"),
+            "nfl",
+            make_event(),
+        )
     )
     assert p.poly_key(
         poly_market(question="Mike Evans: UNDER 80 receiving yards"),
