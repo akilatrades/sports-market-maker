@@ -47,7 +47,8 @@ def test_scenario_math_uses_filled_contracts_not_deposit(
 const vm = require("vm");
 const fs = require("fs");
 const source = fs.readFileSync(process.argv[2], "utf8");
-const code = source.split('fetch("../outputs/dashboard/summary.json"')[0];
+const inline = source.match(/<script>([\\s\\S]*?)<\\/script>/)[1];
+const code = inline.split('fetch("../outputs/dashboard/summary.json"')[0];
 const input = {value: process.argv[3]};
 const nodes = {
   "scenario-contracts": input,
