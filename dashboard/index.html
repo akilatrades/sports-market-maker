@@ -649,7 +649,9 @@ function liveBlock(live, label, limits) {
   let html = `<div><h2 style="font-size:16px">${esc(label)} ${live.run_utc ? `<span class="pill ${live.mode === "live" ? "live" : ""}">${esc(live.mode)}</span> <span class="pill">${esc(live.env || "")}</span>` : `<span class="pill">no saved run</span>`}</h2>`;
   if (!live.run_utc) { html += `<p class="note">No trading run in the saved snapshot. The trading server reports separately from the GitHub dry-run mirror.</p></div>`; return html; }
   html += `<dl class="kv"><dt>Last pass</dt><dd>${esc(live.run_utc.slice(0, 16).replace("T", " "))} UTC</dd><dt>Rule</dt><dd>${esc(name("NBA " + live.rule).replace("NBA props, ", ""))}</dd><dt>Bankroll</dt><dd>${money(live.bankroll)}</dd><dt>Candidates → placed</dt><dd>${live.candidates ?? "—"} → ${live.placed ?? "—"}${live.rejected ? ` <span class="muted">(${live.rejected} rejected)</span>` : ""}</dd>${live.injury_cancels ? `<dt>Injury cancels</dt><dd>${live.injury_cancels}</dd>` : ""}${live.exits?.orders ? `<dt>Early exits</dt><dd>${live.exits.orders} orders, expected ${money(live.exits.expected_gain)}${live.exits.scored ? `; holding would have made ${money(live.exits.hold_would_have_made)}` : ""}</dd>` : ""}</dl>`;
-  html += `<div class="util">${util("Open exposure", live.open_exposure || 0, limits.max_open, true)}${util("Today's loss vs stop", Math.max(0, -(today || 0)), limits.daily_loss_stop, true)}</div>`;
+  const activeLimit = live.demo_pilot ? (live.pilot_total_cap || DEMO_REFERENCE.pilotTotalLimit) : limits.max_open;
+  const activeStop = live.demo_pilot ? 5 : limits.daily_loss_stop;
+  html += `<div class="util">${util("Open exposure", live.open_exposure || 0, activeLimit, true)}${util("Today's loss vs stop", Math.max(0, -(today || 0)), activeStop, true)}</div>`;
   if (live.rejections && Object.keys(live.rejections).length) html += `<p class="note">Rejections: ${Object.entries(live.rejections).map(([k, v]) => `${esc(k)} (${v})`).join("; ")}</p>`;
   if (live.realized_by_day) html += `<div class="scroll" style="margin-top:8px"><table><thead><tr><th>Day</th><th class="num">Realized</th></tr></thead><tbody>${Object.entries(live.realized_by_day).slice(-7).map(([d, v]) => `<tr><td>${esc(d)}</td><td class="num ${cls(v)}">${money(v)}</td></tr>`).join("")}</tbody></table></div>`;
   return html + "</div>";
@@ -699,12 +701,15 @@ function overview(snapshot){
  `<div style="margin-top:19px">${row("Real profit / settled contract",f.cents_per_settled_contract==null?"—":cents(f.cents_per_settled_contract))}${row("What the backtest expects","+2.9¢ / contract")}${row("Volume data recorded",f.mature_volume_coverage==null?"—":pct(f.mature_volume_coverage))}${row("Independent games",f.independent_games==null?"—":String(f.independent_games))}${row("Position sizing","Frozen until the checkpoint review")}</div>`+
  `<p class="note">The checkpoint covers NBA “NO” buys only. The edge is judged on exchange-confirmed fills after fees and settlement, not on the backtest.</p>`;
  const statusLine=(name,item)=>`<div class="fwd-row"><span>${esc(name)} trader · ${esc(item.run_utc?String(item.mode||"unknown").toUpperCase():"NO LOG")}</span><strong>${esc(item.run_utc?String(item.run_utc).slice(0,16).replace("T"," ")+" UTC":"Not published")}</strong></div>`;
- const exposure=Number(live.open_exposure||0)+Number(nfl.open_exposure||0),limit=Number(snapshot.limits?.max_open||0);
- const usage=limit?Math.min(100,100*exposure/limit):0;
+ const hasRun=Boolean(live.run_utc || nfl.run_utc);
+ const exposure=Number(live.open_exposure||0)+Number(nfl.open_exposure||0);
+ const pilotReported=Boolean(live.demo_pilot || nfl.demo_pilot);
+ const limit=pilotReported?DEMO_REFERENCE.pilotTotalLimit:null;
+ const usage=hasRun && limit?Math.min(100,100*exposure/limit):0;
  const errors=[live.forward_validation_error,nfl.forward_validation_error].filter(Boolean).join(" · ");
  document.getElementById("system-view").innerHTML=
  `<div class="proof-status"><strong>Not a live account feed.</strong> GitHub's scheduled dry runs may not reflect the VPS's Demo account. Check Kalshi Demo for the latest balance, fills and open orders.</div>`+
- statusLine("NBA",live)+statusLine("NFL",nfl)+row("Open exposure (last saved run)",limit?money(exposure)+" / "+money(limit):money(exposure))+
+ statusLine("NBA",live)+statusLine("NFL",nfl)+row("Open exposure (last saved run)",hasRun?money(exposure)+(limit?" / "+money(limit):""):"— no run published")+
  `<div class="progress-track" aria-label="Reported exposure against configured maximum"><span style="width:${usage}%"></span></div>`+
  row("Demo pilot order cap (configured)",money(DEMO_REFERENCE.pilotOrderLimit))+
  row("Demo pilot commitment cap",money(DEMO_REFERENCE.pilotTotalLimit))+
@@ -764,9 +769,6 @@ function renderScenarios() {
   document.getElementById("scenario-even").textContent = money(0);
   document.getElementById("scenario-backtest").textContent = signedMoney(hypotheticalProfit(n, 2.93));
 }
-document.getElementById("scenario-contracts").addEventListener("input", renderScenarios);
-renderScenarios();
-
 let latestDashboard = null;
 fetch("../outputs/dashboard/summary.json", {cache: "no-store"}).then(r => { if (!r.ok) throw new Error(r.status); return r.json(); }).then(s => {
   const pf = portfolio(s);
@@ -781,6 +783,8 @@ fetch("../outputs/dashboard/summary.json", {cache: "no-store"}).then(r => { if (
   document.getElementById("forward-view").textContent = "Live results could not be loaded.";
   document.getElementById("system-view").textContent = "Source unavailable; do not infer live account status.";
 });
+document.getElementById("scenario-contracts").addEventListener("input", renderScenarios);
+renderScenarios();
 let pageWidth = document.documentElement.clientWidth;
 let resizeTimer = null;
 window.addEventListener("resize", () => {
