@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Sports props | Testing the edge</title>
+<title>Sports props | Does it pay?</title>
 <meta name="description" content="My sports props trading research: what the backtests showed, what paper trading shows, and what actually fills on Kalshi.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;600;700&display=swap" rel="stylesheet">
@@ -175,76 +175,76 @@ footer{margin-top:44px;border-top:1px solid var(--rule);line-height:1.8}
 </div>
 <header class="report-head" id="top">
   <div>
-    <div class="kicker">MY SPORTS PROPS RESEARCH</div>
-    <h1>Does the edge<br>actually hold up?</h1>
-    <p>I'm testing whether what looks good in the data can actually get filled on Kalshi and make money after fees.
-    Backtests, paper trades and exchange fills are separate here. They aren't the same thing.</p>
+    <div class="kicker">AKILA JUAN · SPORTS PROPS ON KALSHI</div>
+    <h1>I found an edge in the data.<br>Now I'm finding out if it pays.</h1>
+    <p>Last season's data says selling "NO" on NBA player props makes about 3 cents a contract. That's the backtest.
+    This page tracks what happens when real orders go to Kalshi. Backtest, paper fills and real fills are kept in separate boxes on purpose.</p>
   </div>
-  <div class="meta" id="stamp" aria-live="polite">Loading published data…</div>
+  <div class="meta" id="stamp" aria-live="polite">Loading the latest saved numbers…</div>
 </header>
 <section id="overview">
   <div class="section-heading">
-    <div><div class="eyebrow">01 / Quick look</div><h2>Where things stand</h2>
-      <p class="desc">If I can't verify a number, I leave it blank instead of calling it zero.</p></div>
-    <span class="stage">No guessing</span>
+    <div><div class="eyebrow">01 / Quick look</div><h2>Where I'm at</h2>
+      <p class="desc">A blank means I don't have the number yet. I'd rather show a dash than a zero that looks like a result.</p></div>
+    <span class="stage">No made-up numbers</span>
   </div>
   <div class="metric-grid" id="hero-metrics" aria-live="polite">
-    <article class="metric-card"><span class="metric-label">Live realized P&amp;L</span><div class="metric-value">—</div><span class="metric-caption">Awaiting verified settlement data</span></article>
-    <article class="metric-card"><span class="metric-label">Settled NO contracts</span><div class="metric-value">—</div><span class="metric-caption">Awaiting actual filled contracts</span></article>
-    <article class="metric-card"><span class="metric-label">Volume capture</span><div class="metric-value">—</div><span class="metric-caption">Historical assumed share: 50%</span></article>
-    <article class="metric-card"><span class="metric-label">Settled fill events</span><div class="metric-value">— / 500</div><span class="metric-caption">Research evaluation checkpoint</span></article>
+    <article class="metric-card"><span class="metric-label">Live realized P&amp;L</span><div class="metric-value">—</div><span class="metric-caption">Nothing settled on the exchange yet</span></article>
+    <article class="metric-card"><span class="metric-label">Settled NO contracts</span><div class="metric-value">—</div><span class="metric-caption">No real fills yet</span></article>
+    <article class="metric-card"><span class="metric-label">Volume capture</span><div class="metric-value">—</div><span class="metric-caption">The backtest assumes 50%</span></article>
+    <article class="metric-card"><span class="metric-label">Settled fill events</span><div class="metric-value">— / 500</div><span class="metric-caption">The bar before I scale anything</span></article>
   </div>
   <div class="primer">
     <div class="primer-mark" aria-hidden="true">i</div>
-    <div><strong>What I'm trying to do</strong>
-      <p>Buy “NO” on player props when the “YES” side looks overpriced. Posting an order isn't the same as getting filled, and a fill isn't profit until I know how it settled.</p>
+    <div><strong>The idea in one line</strong>
+      <p>Fans overpay for “YES” on their guy going over. I rest “NO” orders on the other side and let them come to me. Three things have to happen before that's money: the order gets filled, the game settles, and the fees come out. Each one is tracked separately below.</p>
     </div>
   </div>
 </section>
 <section id="forward">
   <div class="section-heading">
-    <div><div class="eyebrow">02 / Real orders</div><h2>What has actually filled?</h2>
-      <p class="desc">My checkpoint is 30 days and 500 settled exchange fills, with enough data to trust the result.</p></div>
-    <a href="../docs/FORWARD_VALIDATION.md" style="font-size:12px">Read the evaluation protocol ↗</a>
+    <div><div class="eyebrow">02 / Real orders</div><h2>What has filled for real</h2>
+      <p class="desc">I don't touch the sizing until 30 days have passed and 500 real fills have settled. A good first week doesn't count.</p></div>
+    <a href="../docs/FORWARD_VALIDATION.md" style="font-size:12px">The rules I wrote down before starting ↗</a>
   </div>
   <div class="panel-grid">
-    <article class="panel"><h3>Real fills vs. the backtest</h3><p class="desc">Exchange results, not modeled fills.</p>
-      <div id="forward-view" aria-live="polite">Loading forward validation…</div></article>
-    <article class="panel"><h3>Bot status and risk</h3><p class="desc">Last data saved to GitHub. Not a live feed from the account.</p>
-      <div id="system-view" aria-live="polite">Loading system status…</div></article>
+    <article class="panel"><h3>Real fills vs. the backtest</h3><p class="desc">Confirmed by the exchange. Nothing modeled here.</p>
+      <div id="forward-view" aria-live="polite">Loading the live results…</div></article>
+    <article class="panel"><h3>Bot status and risk</h3><p class="desc">The last run the bot saved. Not a live feed of the account.</p>
+      <div id="system-view" aria-live="polite">Loading the bot status…</div></article>
   </div>
   <details class="quick-guide">
-    <summary>What these numbers mean</summary>
+    <summary>Plain-English glossary</summary>
     <dl>
-      <dt>Order</dt><dd>An instruction to buy or sell. An order might never execute.</dd>
-      <dt>Fill</dt><dd>Some or all of an order has actually executed on the exchange.</dd>
-      <dt>Volume capture</dt><dd>The share of qualifying public market volume our orders received. Different from the fraction of our own order filled.</dd>
-      <dt>Drawdown</dt><dd>A decline from a previous cumulative profit peak. It helps describe the losing stretches.</dd>
+      <dt>Order</dt><dd>Me saying I'll buy at a price. It can sit there and never trade.</dd>
+      <dt>Fill</dt><dd>Someone took the other side. Part or all of the order traded.</dd>
+      <dt>Volume capture</dt><dd>Of everything that traded through my price, how much came to me. Not the same as how much of my own order filled.</dd>
+      <dt>Drawdown</dt><dd>How far the P&amp;L dropped from its best point. The losing stretches, in dollars.</dd>
     </dl>
   </details>
 </section>
 <section class="chart-panel" id="paper">
   <div class="section-heading">
     <div><div class="eyebrow">03 / Paper trading</div><h2>Paper P&amp;L over time</h2>
-      <p class="desc">These results come from simulated fills. This is <strong>not</strong> the Kalshi account balance.</p></div>
+      <p class="desc">Simulated fills only. This is <strong>not</strong> my Kalshi balance.</p></div>
     <span class="stage">Paper only</span>
   </div>
-  <div class="evidence-note"><strong>Important:</strong> Paper fills are estimates based on public trades. Only fills confirmed by the exchange count toward the forward test.</div>
+  <div class="evidence-note"><strong>Keep this straight:</strong> paper fills are estimated from public trades. Only fills the exchange confirms count toward the real test above.</div>
   <div id="cumulative"></div>
   <div class="legend"><span style="--c:var(--algo)"><i></i>Simulated portfolio</span>
-    <span style="--c:var(--bench)"><i></i>Historical benchmark applied to paper fills</span></div>
+    <span style="--c:var(--bench)"><i></i>What last season's backtest would have made on the same fills</span></div>
   <details class="stats-details"><summary>More paper-trading stats</summary><div class="stats" id="stats"></div></details>
 </section>
 <section>
   <div class="two">
     <div>
       <h2>Daily profit</h2>
-      <p class="desc">Green days made money on paper. Red days lost money.</p>
+      <p class="desc">Green days made money on paper, red days lost it.</p>
       <div id="daily"></div>
     </div>
     <div>
       <h2>Profit per fill</h2>
-      <p class="desc">Distribution of profit per contract across settled fills, in cents.</p>
+      <p class="desc">How the profit per contract is spread across settled fills, in cents.</p>
       <div id="hist"></div>
     </div>
   </div>
@@ -252,13 +252,13 @@ footer{margin-top:44px;border-top:1px solid var(--rule);line-height:1.8}
 
 <section>
   <h2>Monthly profit by ledger</h2>
-  <p class="desc">Dollars per month; green positive, red negative, darker is larger. Dashed cells are months with no settlement.</p>
+  <p class="desc">Dollars per month. Green is positive, red is negative, darker is bigger. Dashed cells had nothing settle.</p>
   <div class="scroll heat-scroll" id="heat" role="region" tabindex="0" aria-label="Monthly paper profit by ledger; swipe sideways to see more months"></div>
 </section>
 
 <section>
   <h2>Drawdown</h2>
-  <p class="desc">Portfolio decline from its running peak, in dollars. The three largest drawdown periods are shaded.</p>
+  <p class="desc">How far the paper portfolio fell from its high, in dollars. The three worst stretches are shaded.</p>
   <div id="underwater"></div>
   <div class="scroll" id="ddtable"></div>
 </section>
@@ -267,13 +267,13 @@ footer{margin-top:44px;border-top:1px solid var(--rule);line-height:1.8}
   <div class="two">
     <div>
       <h2>Rolling edge</h2>
-      <p class="desc">Profit per contract over the trailing 7 and 30 settlement days, in cents, with the backtest edge for reference.</p>
+      <p class="desc">Profit per contract over the last 7 and 30 settlement days, in cents. The flat line is what the backtest expects.</p>
       <div id="rolling"></div>
       <div class="legend"><span style="--c:var(--algo)"><i></i>Trailing 30 days</span><span style="--c:var(--algo-soft)"><i></i>Trailing 7 days</span><span style="--c:var(--bench)"><i></i>Backtest edge</span></div>
     </div>
     <div>
       <h2>Edge by ledger</h2>
-      <p class="desc">Profit per contract with ±2 standard errors, ledgers with at least five fills; last season's backtests as hollow markers.</p>
+      <p class="desc">Profit per contract with ±2 standard errors, for ledgers with at least five fills. Hollow markers are last season's backtest.</p>
       <div id="forest"></div>
     </div>
   </div>
@@ -281,12 +281,12 @@ footer{margin-top:44px;border-top:1px solid var(--rule);line-height:1.8}
 
 <section id="strategies">
   <div class="eyebrow">04 / The strategies</div>
-  <h2>What's working on paper?</h2>
-  <p class="desc">Each strategy starts with a separate $500 paper bankroll. Simulated fills use public Kalshi trades, not my actual account.</p>
-  <p class="desc">The main numbers come first. Open the details if you want the full breakdown.</p>
+  <h2>What's working on paper</h2>
+  <p class="desc">Every strategy gets its own $500 paper bankroll. Fills are simulated from public Kalshi trades, not from my account.</p>
+  <p class="desc">Headline numbers first. Open the details if you want everything.</p>
   <div class="scroll"><table id="strategy-summary"></table></div>
   <details class="stats-details">
-    <summary>Full stats: sample size, drawdowns and more</summary>
+    <summary>Full stats: sample sizes, drawdowns, the rest</summary>
     <div class="scroll" style="margin-bottom:16px"><table id="ledgers"></table></div>
   </details>
   <div id="idle"></div>
@@ -294,14 +294,14 @@ footer{margin-top:44px;border-top:1px solid var(--rule);line-height:1.8}
 
 <section>
   <h2>Where the contracts went</h2>
-  <p class="desc">Which paper strategies account for the fills.</p>
+  <p class="desc">Which paper strategies the fills came from.</p>
   <div class="expo" id="expo"></div>
 </section>
 
 <section id="risk">
   <div class="eyebrow">05 / The bot</div>
-  <h2>Last reported trading run</h2>
-  <p class="desc">These are the latest saved logs and risk numbers, not a real-time view of Kalshi.</p>
+  <h2>Last run the bot reported</h2>
+  <p class="desc">The latest saved logs and risk limits. Not a real-time view of Kalshi.</p>
   <div class="two" id="live"></div>
 </section>
 
@@ -310,18 +310,18 @@ footer{margin-top:44px;border-top:1px solid var(--rule);line-height:1.8}
   <div class="two">
     <div>
       <h2>Market scan</h2>
-      <p class="desc">Last season's numbers by market. A strong backtest isn't a guarantee.</p>
+      <p class="desc">Last season, market by market. A strong backtest is a reason to test, not a result.</p>
       <div id="scan"></div>
     </div>
     <div>
       <h2>Sportsbook-line veto</h2>
-      <p class="desc">What happened when I compared Kalshi prices against sportsbook lines last season.</p>
+      <p class="desc">What I got when I checked Kalshi prices against sportsbook lines last season.</p>
       <div id="research"></div>
     </div>
   </div>
 </section>
 
-<footer><strong>About the numbers:</strong> This page reads saved GitHub reports, not the Kalshi account itself. <a href="../outputs/dashboard/summary.json">Summary JSON</a> · <a href="../docs/FORWARD_VALIDATION.md">Forward validation rules</a> · <a href="https://github.com/akilatrades/sports-market-maker">Source code</a>. Simulated fills, backtests and exchange-confirmed results are distinct; none guarantee future returns.</footer>
+<footer><strong>About the numbers:</strong> This page reads reports saved to GitHub, not the Kalshi account itself. <a href="../outputs/dashboard/summary.json">Summary JSON</a> · <a href="../docs/FORWARD_VALIDATION.md">Forward validation rules</a> · <a href="https://github.com/akilatrades/sports-market-maker">Source code</a>. Simulated fills, backtests and exchange-confirmed results are three different things, and none of them promise anything about next month.</footer>
 <div class="tt" id="tt"></div>
 
 <script>
@@ -567,44 +567,44 @@ function overview(snapshot){
  const events=observed?Number(f.settled_buy_fill_events||0):null;
  const card=(label,value,caption,tone="")=>`<article class="metric-card"><span class="metric-label">${esc(label)}</span><div class="metric-value ${tone}">${esc(value)}</div><span class="metric-caption">${esc(caption)}</span></article>`;
  document.getElementById("hero-metrics").innerHTML=[
-  card("Confirmed settled P&L",realized==null?"—":money(realized),realized==null?"No verified settlement results in the published logs":"NBA + NFL settlement results in saved logs",realized>0?"positive":realized<0?"negative":""),
-  card("Settled NO contracts",contracts==null?"—":contracts.toLocaleString(),contracts==null?"Awaiting exchange-settled real buy fills":"NBA exchange-confirmed NO contracts"),
-  card("Share of volume filled",capture==null?"—":pct(capture),capture==null?"No complete eligible execution window":"Compared with a 50% historical assumption"),
-  card("Verified fill events",events==null?"— / 500":events.toLocaleString()+" / 500",events==null?"No qualifying exchange fills published yet":"Requires 30 days and 500 settled fills")
+  card("Confirmed settled P&L",realized==null?"—":money(realized),realized==null?"Nothing has settled in the saved logs yet":"NBA + NFL settlements from the saved logs",realized>0?"positive":realized<0?"negative":""),
+  card("Settled NO contracts",contracts==null?"—":contracts.toLocaleString(),contracts==null?"No real fills have settled yet":"NBA contracts, confirmed by the exchange"),
+  card("Share of volume filled",capture==null?"—":pct(capture),capture==null?"No finished order window to measure yet":"The backtest assumed 50%"),
+  card("Verified fill events",events==null?"— / 500":events.toLocaleString()+" / 500",events==null?"No real fills on record yet":"Needs 30 days and 500 settled fills")
  ].join("");
  const row=(label,value)=>`<div class="fwd-row"><span>${esc(label)}</span><strong>${esc(value)}</strong></div>`;
  const count=Number(f.settled_buy_fill_events||0),days=Number(f.elapsed_days||0);
  const pc=Math.min(100,100*count/500),pd=Math.min(100,100*days/30);
  const states={
-  awaiting_live_orders:"Still waiting on the first recorded exchange order",
-  collecting:"Collecting exchange fills and settlements",
-  data_incomplete:"Not enough reliable data yet",
-  checkpoint_ready_for_human_review:"Enough data collected — needs review",
-  missing_acceptance_timestamps:"Missing order timestamps — can't score this yet"
+  awaiting_live_orders:"Waiting on the first real order",
+  collecting:"Collecting real fills and settlements",
+  data_incomplete:"Time and fills are there, but the data has gaps",
+  checkpoint_ready_for_human_review:"Checkpoint reached. Time to sit down and review it",
+  missing_acceptance_timestamps:"Order timestamps are missing, so I can't score this yet"
  };
- const state=states[f.status]||(observed?"No forward status published":"Waiting for the first recorded exchange order");
+ const state=states[f.status]||(observed?"No status in the saved report":"Waiting on the first real order");
  const tone=f.status==="checkpoint_ready_for_human_review"?"ok":f.status==="data_incomplete"?"warn":"";
  const ready=observed;
  const proof=document.getElementById("forward-view");
- proof.innerHTML=`<div class="proof-status ${tone}">${esc(ready?state:"No NBA exchange fills in the published report yet. That doesn't tell me whether the strategy works.")}</div>`+
+ proof.innerHTML=`<div class="proof-status ${tone}">${esc(ready?state:"No real NBA fills yet. That's not a verdict either way; it means the test hasn't started.")}</div>`+
  `<div class="progress-labels"><span>Real, settled fill events</span><strong>${esc(ready?count.toLocaleString()+" / 500":"Not started")}</strong></div>`+
  `<div class="progress-track" role="progressbar" aria-label="Settlement-fill checkpoint" aria-valuemin="0" aria-valuemax="500" aria-valuenow="${Math.min(500,count)}"><span style="width:${pc}%"></span></div>`+
  `<div class="progress-labels" style="margin-top:17px"><span>Observation period</span><strong>${esc(ready?days.toFixed(1)+" / 30 days":"Not started")}</strong></div>`+
  `<div class="progress-track" role="progressbar" aria-label="Observation-day checkpoint" aria-valuemin="0" aria-valuemax="30" aria-valuenow="${Math.min(30,days)}"><span style="width:${pd}%"></span></div>`+
- `<div style="margin-top:19px">${row("Real profit / settled contract",f.cents_per_settled_contract==null?"—":cents(f.cents_per_settled_contract))}${row("Backtest estimate (not a fill)","+2.9¢ / contract")}${row("Volume data recorded",f.mature_volume_coverage==null?"—":pct(f.mature_volume_coverage))}${row("Independent games",f.independent_games==null?"—":String(f.independent_games))}${row("Sizing","No automatic increases")}</div>`+
- `<p class="note">This checkpoint tracks NBA NO buys only. I'll judge the edge from actual fills after fees and settlement, not the backtest.</p>`;
+ `<div style="margin-top:19px">${row("Real profit / settled contract",f.cents_per_settled_contract==null?"—":cents(f.cents_per_settled_contract))}${row("What the backtest expects","+2.9¢ / contract")}${row("Volume data recorded",f.mature_volume_coverage==null?"—":pct(f.mature_volume_coverage))}${row("Independent games",f.independent_games==null?"—":String(f.independent_games))}${row("Sizing","Fixed. Nothing steps up on its own")}</div>`+
+ `<p class="note">This checkpoint covers NBA “NO” buys only. The edge gets judged on real fills after fees and settlement, not on the backtest.</p>`;
  const statusLine=(name,item)=>`<div class="fwd-row"><span>${esc(name)} trader · ${esc(item.run_utc?String(item.mode||"unknown").toUpperCase():"NO LOG")}</span><strong>${esc(item.run_utc?String(item.run_utc).slice(0,16).replace("T"," ")+" UTC":"Not published")}</strong></div>`;
  const exposure=Number(live.open_exposure||0)+Number(nfl.open_exposure||0),limit=Number(snapshot.limits?.max_open||0);
  const usage=limit?Math.min(100,100*exposure/limit):0;
  const errors=[live.forward_validation_error,nfl.forward_validation_error].filter(Boolean).join(" · ");
  document.getElementById("system-view").innerHTML=
- `<div class="proof-status"><strong>Not a live account feed.</strong> GitHub can lag the bot on DigitalOcean. For current orders, check Kalshi Demo directly.</div>`+
- statusLine("NBA",live)+statusLine("NFL",nfl)+row("Reported open exposure",limit?money(exposure)+" / "+money(limit):money(exposure))+
+ `<div class="proof-status"><strong>Not a live account feed.</strong> GitHub can run a few minutes behind the bot on DigitalOcean. For what's resting right now, check Kalshi directly.</div>`+
+ statusLine("NBA",live)+statusLine("NFL",nfl)+row("Open exposure (last saved)",limit?money(exposure)+" / "+money(limit):money(exposure))+
  `<div class="progress-track" aria-label="Reported exposure against configured maximum"><span style="width:${usage}%"></span></div>`+
- row("Maximum order size",snapshot.limits?.max_order==null?"—":money(snapshot.limits.max_order))+
- row("Maximum game exposure",snapshot.limits?.max_per_game==null?"—":money(snapshot.limits.max_per_game))+
+ row("Max per order",snapshot.limits?.max_order==null?"—":money(snapshot.limits.max_order))+
+ row("Max per game",snapshot.limits?.max_per_game==null?"—":money(snapshot.limits.max_per_game))+
  (errors?`<p class="note">${esc(errors)}</p>`:"")+
- `<p class="note">These numbers are saved reports, not the emergency stop. The actual bot runs on DigitalOcean; GitHub Actions only simulates a trading pass.</p>`;
+ `<p class="note">Saved reports, not the kill switch. The real bot runs on DigitalOcean; the GitHub workflow only runs a dry pass.</p>`;
 }
 
 // Rebuild SVGs only if the screen WIDTH changes. Mobile address bars
@@ -647,7 +647,7 @@ fetch("../outputs/dashboard/summary.json", {cache: "no-store"}).then(r => { if (
   document.getElementById("live").innerHTML = liveBlock(s.live || {}, "NBA props", s.limits || {}) + liveBlock(s.live_nfl || {}, "NFL props", s.limits || {});
 }).catch(e => {
   document.getElementById("stamp").textContent = "Could not load the published data (" + e.message + ")";
-  document.getElementById("forward-view").textContent = "No verified forward data could be loaded.";
+  document.getElementById("forward-view").textContent = "Couldn't load the live results.";
   document.getElementById("system-view").textContent = "Source unavailable; do not infer live account status.";
 });
 let pageWidth = document.documentElement.clientWidth;
