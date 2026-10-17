@@ -78,6 +78,22 @@ section.chart-panel + section.chart-panel, section + section.chart-panel { margi
 .metric-value.positive { color: var(--pos); } .metric-value.negative { color: var(--neg); }
 .metric-caption { display: block; color: var(--ink-3); font-size: 12.5px; line-height: 1.5; margin-top: 10px; }
 
+/* Keep the account reference separate from modeled / paper ledgers. */
+.account-strip{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--gap);margin-bottom:var(--gap)}
+.account-box{border:1px solid var(--line);border-radius:var(--r);padding:16px 18px;min-width:0;background:var(--card)}
+.account-box .account-label{display:block;font-size:12px;color:var(--ink-2);font-weight:600}
+.account-box strong{display:block;margin:4px 0 2px;font-size:clamp(21px,2.6vw,31px);letter-spacing:-.02em}
+.account-box .account-small{font-size:12px;color:var(--ink-3)}
+.scenario-panel{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:22px}
+.scenario-layout{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.4fr);gap:24px;align-items:start}
+.scenario-label{display:flex;align-items:center;justify-content:space-between;gap:12px;font-size:14px;font-weight:600}
+.scenario-panel input[type="range"]{width:100%;margin:18px 0 12px;accent-color:var(--accent);min-height:28px;cursor:pointer}
+.scenario-results{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.scenario-result{background:var(--card-2);border:1px solid var(--line);border-radius:8px;padding:15px 12px;min-width:0}
+.scenario-result span{display:block;color:var(--ink-2);font-size:12px}
+.scenario-result strong{display:block;font-size:clamp(19px,2.5vw,27px);margin-top:6px;white-space:nowrap}
+.scenario-small{font-size:12px;color:var(--ink-3);margin-top:9px}
+
 /* Reading guide */
 .tiers { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--gap); margin-top: var(--gap); }
 .tier { background: var(--card); border: 1px solid var(--line); border-radius: var(--r); padding: 18px 18px 16px; border-top: 3px solid var(--bench); }
@@ -159,7 +175,9 @@ footer { margin-top: 48px; padding-top: 18px; border-top: 1px solid var(--line);
 
 /* Responsive */
 @media (max-width: 1050px) { .metric-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .panel-grid { grid-template-columns: 1fr; } }
-@media (max-width: 860px) { .two { grid-template-columns: 1fr; } .tiers { grid-template-columns: 1fr; } .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 860px) { .two { grid-template-columns: 1fr; } .tiers { grid-template-columns: 1fr; } .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); } .scenario-layout{grid-template-columns:1fr} }
+@media (max-width: 700px) { .account-strip{grid-template-columns:1fr 1fr;gap:10px} .account-box:first-child{grid-column:1/-1} .scenario-results{gap:6px} .scenario-result{padding:10px 8px} .scenario-result strong{font-size:19px} .scenario-panel{padding:16px} }
+
 @media (max-width: 700px) {
   body { padding: 0 15px 56px; }
   .sitebar { flex-direction: column; align-items: flex-start; gap: 12px; }
@@ -205,6 +223,19 @@ footer { margin-top: 48px; padding-top: 18px; border-top: 1px solid var(--line);
       <p class="desc">A dash means the figure is not yet available. Missing values are shown as missing rather than as zero.</p></div>
     <span class="stage">Exchange-confirmed</span>
   </div>
+  
+  <div class="account-strip" aria-label="Demo account and pilot risk limits">
+    <div class="account-box"><span class="account-label">Kalshi Demo · last verified balance</span>
+      <strong id="demo-verified-balance">$2,500.00</strong>
+      <span class="account-small">Verified Oct 17, 2026. Not a live balance feed.</span>
+    </div>
+    <div class="account-box"><span class="account-label">Current Demo balance</span>
+      <strong>Not available</strong><span class="account-small">Check Kalshi Demo for the latest amount.</span>
+    </div>
+    <div class="account-box"><span class="account-label">Pilot risk limits</span>
+      <strong>$2 / order</strong><span class="account-small">$10 maximum committed exposure · not $2,500 deployed.</span>
+    </div>
+  </div>
   <div class="metric-grid" id="hero-metrics" aria-live="polite">
     <article class="metric-card"><span class="metric-label">Realized P&amp;L</span><div class="metric-value">—</div><span class="metric-caption">No settled exchange results yet</span></article>
     <article class="metric-card"><span class="metric-label">Settled NO contracts</span><div class="metric-value">—</div><span class="metric-caption">No exchange-confirmed fills yet</span></article>
@@ -230,9 +261,34 @@ footer { margin-top: 48px; padding-top: 18px; border-top: 1px solid var(--line);
   </div>
 </section>
 
+<section id="profit-scenarios" aria-labelledby="scenarios-heading">
+  <div class="section-heading">
+    <div><div class="eyebrow">02 · What-if math</div><h2 id="scenarios-heading">What could the profits look like?</h2>
+      <p class="desc">Pick a number of <strong>settled NBA contracts over 30 days</strong>.
+      Then see how much the result changes with the actual profit or loss per contract.
+      This is math, not a prediction of how many orders will fill.</p></div>
+    <span class="stage hist">Hypothetical only</span>
+  </div>
+  <div class="scenario-panel">
+    <div class="scenario-layout">
+      <div>
+        <label class="scenario-label" for="scenario-contracts"><span>Settled NBA contracts in 30 days</span><strong id="scenario-count">300</strong></label>
+        <input id="scenario-contracts" type="range" min="0" max="1000" step="25" value="300" aria-describedby="scenario-helper">
+        <p id="scenario-helper" class="desc">Count actual settled contracts, not the number of orders or assumed fills.</p>
+      </div>
+      <div class="scenario-results" role="group" aria-label="Hypothetical 30-day P and L">
+        <div class="scenario-result"><span>Loss case · −5¢ / contract</span><strong class="neg" id="scenario-loss">−$15.00</strong></div>
+        <div class="scenario-result"><span>Break even · 0¢</span><strong id="scenario-even">$0.00</strong></div>
+        <div class="scenario-result"><span>NBA backtest · +2.93¢</span><strong class="pos" id="scenario-backtest">+$8.79</strong></div>
+      </div>
+    </div>
+    <p class="scenario-small">Backtest number assumes its modeled fees and fill conditions; actual fees, fill selection and settlement outcomes can be worse. The −5¢ case is just an example, <strong>not a worst-case loss bound</strong>. This does not apply to NFL (no proven trading edge), and the current 48-hour pilot has much tighter limits than a full 30-day test.</p>
+  </div>
+</section>
+
 <section id="forward">
   <div class="section-heading">
-    <div><div class="eyebrow">02 · Live results</div><h2>Exchange-confirmed fills</h2>
+    <div><div class="eyebrow">03 · Live results</div><h2>Exchange-confirmed fills</h2>
       <p class="desc">Position sizes are frozen until 30 days have elapsed and 500 real fills have settled. The checkpoint triggers a review, not an automatic change.</p></div>
     <a href="../docs/FORWARD_VALIDATION.md" style="font-size:13px">Evaluation protocol ↗</a>
   </div>
@@ -522,10 +578,13 @@ function stats(s, pf) {
     ["Winning days", pf.days.length ? `${wins} of ${pf.days.length}` : "—"],
     ["Max drawdown", maxdd ? "−" + money(maxdd) : "$0.00", maxdd ? "neg" : ""],
     ["Contracts per day", pf.days.length ? Math.round(contracts / pf.days.length).toLocaleString() : "—"],
-    ["Real account", money((live.realized_total || 0) + (nfl.realized_total || 0)), "muted"],
-    ["Open exposure", `${money((live.open_exposure || 0) + (nfl.open_exposure || 0))} of ${money0(s.limits?.max_open)}`],
-    ["Live rule", (live.rule ? name("NBA " + live.rule) : "NBA props, \"no\" seller, sportsbook veto (v2)").replace("NBA props, \"no\" seller, ", "").replace(" (v2)", "")],
-    ["Mode", live.run_utc ? `${live.mode} (${live.env})` : "dry run, waiting for markets"],
+    ["Demo starting balance (Oct 17)", money(DEMO_REFERENCE.lastVerifiedBalance), "muted"],
+    ["Current Demo balance", "— check the exchange", "muted"],
+    ["Exchange P&L (saved logs)", [live.realized_total, nfl.realized_total].some(v => typeof v === "number") ? money((live.realized_total || 0) + (nfl.realized_total || 0)) : "— not published", "muted"],
+    ["Exposure (saved logs)", [live.run_utc, nfl.run_utc].some(Boolean) ? money((live.open_exposure || 0) + (nfl.open_exposure || 0)) : "— not published", "muted"],
+    ["Pilot max (configured)", money(DEMO_REFERENCE.pilotTotalLimit) + " committed", "muted"],
+    ["Strategy rule", live.run_utc ? name("NBA " + live.rule) : "— no server log published"],
+    ["Reported mode", live.run_utc ? `${live.mode} (${live.env})` : "— no server log published"],
   ];
   document.getElementById("stats").innerHTML = rows.map(([k, v, c]) => `<div><span>${esc(k)}</span><span class="${c || ""}">${esc(v)}</span></div>`).join("");
 }
@@ -644,10 +703,12 @@ function overview(snapshot){
  const usage=limit?Math.min(100,100*exposure/limit):0;
  const errors=[live.forward_validation_error,nfl.forward_validation_error].filter(Boolean).join(" · ");
  document.getElementById("system-view").innerHTML=
- `<div class="proof-status"><strong>Not a live account feed.</strong> The saved reports can lag the trading server by several minutes. Resting orders are visible only on the exchange itself.</div>`+
+ `<div class="proof-status"><strong>Not a live account feed.</strong> GitHub's scheduled dry runs may not reflect the VPS's Demo account. Check Kalshi Demo for the latest balance, fills and open orders.</div>`+
  statusLine("NBA",live)+statusLine("NFL",nfl)+row("Open exposure (last saved run)",limit?money(exposure)+" / "+money(limit):money(exposure))+
  `<div class="progress-track" aria-label="Reported exposure against configured maximum"><span style="width:${usage}%"></span></div>`+
- row("Maximum per order",snapshot.limits?.max_order==null?"—":money(snapshot.limits.max_order))+
+ row("Demo pilot order cap (configured)",money(DEMO_REFERENCE.pilotOrderLimit))+
+ row("Demo pilot commitment cap",money(DEMO_REFERENCE.pilotTotalLimit))+
+ row("Default risk limit (research)",snapshot.limits?.max_order==null?"—":money(snapshot.limits.max_order))+
  row("Maximum per game",snapshot.limits?.max_per_game==null?"—":money(snapshot.limits.max_per_game))+
  (errors?`<p class="note">${esc(errors)}</p>`:"")+
  `<p class="note">Saved reports only. The trading process runs on a dedicated server; the GitHub workflow runs a dry pass for comparison.</p>`;
@@ -682,6 +743,30 @@ function renderCharts(s, pf) {
   forest(document.getElementById("scan"), (s.scan_top || []).map(r => ({label: name(r.series), est: r.cents, se: r.se, color: r.passes ? "var(--algo)" : "var(--bench)", hollow: !r.passes, sub: `${r.fills.toLocaleString()} fills, t ${r.t}${r.passes ? ", passed" : ""}`})), {labelW: 220});
   research(s);
 }
+// Historical account reference from Oct 17 server verification.
+ // A GitHub dry-run reports its own $250 fallback; NEVER treat it as
+ // authenticated Demo buying power. This is not a current balance feed.
+const DEMO_REFERENCE = Object.freeze({
+  lastVerifiedBalance: 2500,
+  verifiedDate: "2026-10-17",
+  pilotOrderLimit: 2,
+  pilotTotalLimit: 10,
+});
+function hypotheticalProfit(contracts, centsPerContract) {
+  return contracts * centsPerContract / 100;
+}
+function renderScenarios() {
+  const input = document.getElementById("scenario-contracts");
+  const n = Number(input.value);
+  document.getElementById("scenario-count").textContent = n.toLocaleString();
+  const signedMoney = value => value > 0 ? "+" + money(value) : money(value);
+  document.getElementById("scenario-loss").textContent = signedMoney(hypotheticalProfit(n, -5));
+  document.getElementById("scenario-even").textContent = money(0);
+  document.getElementById("scenario-backtest").textContent = signedMoney(hypotheticalProfit(n, 2.93));
+}
+document.getElementById("scenario-contracts").addEventListener("input", renderScenarios);
+renderScenarios();
+
 let latestDashboard = null;
 fetch("../outputs/dashboard/summary.json", {cache: "no-store"}).then(r => { if (!r.ok) throw new Error(r.status); return r.json(); }).then(s => {
   const pf = portfolio(s);
