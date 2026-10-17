@@ -25,6 +25,11 @@ jobs:
         with:
           python-version: "3.12"
       - run: pip install -r requirements.txt
+      - name: Format preview (research branch only)
+        if: github.event_name == 'pull_request'
+        run: |
+          pip install ruff==0.11.13
+          ruff format --diff live/compare_polymarket_us.py tests/test_compare_polymarket_us.py
       - name: Compare public US exchange props (GET only)
         run: python -m live.compare_polymarket_us
       - name: Commit read-only evidence
