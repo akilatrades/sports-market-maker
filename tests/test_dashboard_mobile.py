@@ -29,7 +29,7 @@ def test_dashboard_mobile_scroll_does_not_reload():
     assert "const nextWidth = document.documentElement.clientWidth" in html
     assert "if (Math.abs(nextWidth - pageWidth) < 2) return" in html
     assert "renderCharts(latestDashboard.s, latestDashboard.pf)" in html
-    assert "overflow-x:auto" in html
+    assert re.search(r"overflow-x:\\s*auto", html)
     assert "touch-action:pan-x pan-y" in html
     assert 'class="scroll heat-scroll" id="heat"' in html
 
@@ -41,8 +41,8 @@ def test_dashboard_nav_and_data_mounts_exist():
     assert all(anchor in tags.ids for anchor in tags.nav_targets)
     mounted = set(re.findall(r'document.getElementById\("([^"]+)"\)', html))
     assert mounted <= tags.ids
-    assert "No verified settlement results in the published logs" in html
-    assert "not a real-time view of Kalshi" in html
+    assert "No settled exchange results in the saved logs" in html
+    assert "Not a real-time feed of the account." in html
 
 
 def test_dashboard_inline_javascript_parses(tmp_path):
