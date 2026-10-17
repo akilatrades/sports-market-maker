@@ -87,6 +87,7 @@ def test_no_matching_when_ambiguous_or_quote_invalid():
 
     def should_not_call(*args, **kwargs):
         raise AssertionError("No BBO call for ambiguous mapping")
+
     rows, count, hits = p.compare(
         {k: [kalshi_market(), kalshi_market()]},
         {k: [pm]},
@@ -114,6 +115,7 @@ def test_pagination_uses_exact_public_get_and_reports_truncation(monkeypatch):
     def fake(path, params):
         paths.append((path, params["offset"]))
         return {"events": [make_event()] * p.PAGE_LIMIT}
+
     events, complete = p.fetch_polymarket_events("nfl", get=fake)
     assert len(events) == 200
     assert complete is False
@@ -162,9 +164,11 @@ def test_full_scan_mocked_public_requests_and_no_external_actions(monkeypatch):
         if path.startswith("/v2/leagues/"):
             return {"league": {"tagId": 1 if "/nfl" in path else 5}}
         if path == "/v1/markets":
-            return {"markets": [poly_market()]} if params["tagIds"] == 1 else {
-                "markets": []
-            }
+            return (
+                {"markets": [poly_market()]}
+                if params["tagIds"] == 1
+                else {"markets": []}
+            )
         return {"marketData": {"bestBid": {"value": 0.56}, "bestAsk": {"value": 0.60}}}
 
     def kalshi(series, status="open", historical=False):
