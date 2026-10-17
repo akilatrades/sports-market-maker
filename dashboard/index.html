@@ -810,7 +810,10 @@ fetch("../outputs/cross_exchange/latest.json", {cache:"no-store"})
       const c = data.coverage?.[league];
       if (!c) return `<div class="fwd-row"><span>${league.toUpperCase()}</span><strong>No report</strong></div>`;
       const incomplete = !c.pagination_complete || c.bbo_scan_capped;
-      return `<div class="fwd-row"><span>${league.toUpperCase()} · ${esc(c.polymarket_us_strict_prop_markets)} strict listings vs. ${esc(c.kalshi_markets_scanned)} Kalshi markets</span><strong>${esc(c.priced_pairs_needing_rules_review)} possible overlaps${incomplete ? " (partial scan)" : ""}</strong></div>`;
+      if (c.polymarket_us_catalog_empty) {
+        return `<div class="fwd-row"><span>${league.toUpperCase()} · ${esc(c.kalshi_markets_scanned)} Kalshi markets</span><strong>Polymarket US prop catalog returned no listings; coverage unverified</strong></div>`;
+      }
+      return `<div class="fwd-row"><span>${league.toUpperCase()} · ${esc(c.polymarket_us_strict_prop_markets)} strictly parsed props vs. ${esc(c.kalshi_markets_scanned)} Kalshi markets</span><strong>${esc(c.priced_pairs_needing_rules_review)} possible overlaps${incomplete ? " (partial scan)" : ""}</strong></div>`;
     }).join("");
     const rows = (data.candidates || []).slice(0, 5).map(r => {
       const gap = Number(r.mid_gap_cents);
