@@ -56,13 +56,11 @@ def get_json(path, params=None, timeout=18):
 
 
 def normalize_name(name):
-    ascii_name = unicodedata.normalize("NFKD", str(name)).encode(
-        "ascii", "ignore"
-    ).decode()
-    words = re.sub(r"[^a-z ]", " ", ascii_name.lower()).split()
-    return " ".join(
-        w for w in words if w not in {"jr", "sr", "ii", "iii", "iv", "v"}
+    ascii_name = (
+        unicodedata.normalize("NFKD", str(name)).encode("ascii", "ignore").decode()
     )
+    words = re.sub(r"[^a-z ]", " ", ascii_name.lower()).split()
+    return " ".join(w for w in words if w not in {"jr", "sr", "ii", "iii", "iv", "v"})
 
 
 def east_date(timestamp):
@@ -130,9 +128,7 @@ def poly_key(market, league, event):
     player = poly_player(market)
     line = threshold_from_question(question, stat)
     date = east_date(
-        market.get("gameStartTime")
-        or event.get("startTime")
-        or event.get("eventDate")
+        market.get("gameStartTime") or event.get("startTime") or event.get("eventDate")
     )
     if not (stat and player and date and line is not None):
         return None
@@ -239,30 +235,33 @@ def compare(kalshi, poly, get=get_json, max_bbos=MAX_BBOS):
         bbo = get(f"/v1/markets/{urllib.parse.quote(slug, safe='')}/bbo")
         queried += 1
         md = bbo.get("marketData", {}) if isinstance(bbo, dict) else {}
-        kb, ka = maybe_price(km.get("yes_bid_dollars")), maybe_price(
-            km.get("yes_ask_dollars")
+        kb, ka = (
+            maybe_price(km.get("yes_bid_dollars")),
+            maybe_price(km.get("yes_ask_dollars")),
         )
         pb, pa = maybe_price(md.get("bestBid")), maybe_price(md.get("bestAsk"))
         if None in (kb, ka, pb, pa) or not (0 < kb <= ka < 1 and 0 < pb <= pa < 1):
             continue
-        results.append({
-            "league": key[0],
-            "game_date_eastern": key[1],
-            "player": key[2],
-            "stat": key[3],
-            "line": key[4],
-            "kalshi_ticker": km["ticker"],
-            "polymarket_us_slug": slug,
-            "kalshi_yes_bid": kb,
-            "kalshi_yes_ask": ka,
-            "polymarket_yes_bid": pb,
-            "polymarket_yes_ask": pa,
-            # Midprice divergence is NOT an executable cross-exchange arbitrage.
-            "mid_gap_cents": round(100 * ((pb + pa) / 2 - (kb + ka) / 2), 2),
-            "manual_rules_review_required": True,
-            "fee_adjusted_edge": None,
-            "executable_arbitrage": False,
-        })
+        results.append(
+            {
+                "league": key[0],
+                "game_date_eastern": key[1],
+                "player": key[2],
+                "stat": key[3],
+                "line": key[4],
+                "kalshi_ticker": km["ticker"],
+                "polymarket_us_slug": slug,
+                "kalshi_yes_bid": kb,
+                "kalshi_yes_ask": ka,
+                "polymarket_yes_bid": pb,
+                "polymarket_yes_ask": pa,
+                # Midprice divergence is NOT an executable cross-exchange arbitrage.
+                "mid_gap_cents": round(100 * ((pb + pa) / 2 - (kb + ka) / 2), 2),
+                "manual_rules_review_required": True,
+                "fee_adjusted_edge": None,
+                "executable_arbitrage": False,
+            }
+        )
     return results, len(keys), queried
 
 
