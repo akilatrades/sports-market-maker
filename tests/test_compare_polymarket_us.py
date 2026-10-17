@@ -134,18 +134,37 @@ def test_no_api_keys_or_trading_calls_in_scanner():
     assert "https://clob.polymarket.com" not in content
 
 
+def test_prop_catalog_uses_explicit_league_tag_and_type():
+    calls = []
+
+    def api(path, params=None):
+        calls.append((path, params))
+        if path == "/v2/leagues/nfl":
+            return {"league": {"tagId": 1}}
+        if path == "/v1/markets":
+            return {"markets": [poly_market()]}
+        raise AssertionError(path)
+
+    markets, complete = p.fetch_polymarket_props("nfl", get=api)
+    assert len(markets) == 1
+    assert complete
+    assert calls[1][0] == "/v1/markets"
+    assert calls[1][1]["tagIds"] == 1
+    assert calls[1][1]["sportsMarketTypes"] == "SPORTS_MARKET_TYPE_PROP"
+
+
 def test_full_scan_mocked_public_requests_and_no_external_actions(monkeypatch):
     monkeypatch.delenv("KALSHI_ENV", raising=False)
     counter = {"poly": 0, "kalshi": 0}
 
     def poly(path, params=None):
         counter["poly"] += 1
-        if "/events" in path:
-            return (
-                {"events": [make_event([poly_market()])]}
-                if "/nfl/" in path
-                else {"events": []}
-            )
+        if path.startswith("/v2/leagues/"):
+            return {"league": {"tagId": 1 if "/nfl" in path else 5}}
+        if path == "/v1/markets":
+            return {"markets": [poly_market()]} if params["tagIds"] == 1 else {
+                "markets": []
+            }
         return {"marketData": {"bestBid": {"value": 0.56}, "bestAsk": {"value": 0.60}}}
 
     def kalshi(series, status="open", historical=False):
@@ -160,7 +179,7 @@ def test_full_scan_mocked_public_requests_and_no_external_actions(monkeypatch):
     assert snapshot["coverage"]["nfl"]["priced_pairs_needing_rules_review"] == 1
     assert snapshot["coverage"]["nba"]["strict_candidate_keys"] == 0
     assert snapshot["candidates"][0]["mid_gap_cents"] == 17.0
-    assert counter["poly"] == 3  # two league pages plus one bid/ask GET
+    assert counter["poly"] == 5  # league tags, prop catalogs and one BBO
     assert counter["kalshi"] == 6  # NBA 4 series and NFL 2
 
 
