@@ -30,7 +30,7 @@ def test_dashboard_mobile_scroll_does_not_reload():
     assert "if (Math.abs(nextWidth - pageWidth) < 2) return" in html
     assert "renderCharts(latestDashboard.s, latestDashboard.pf)" in html
     assert re.search(r"overflow-x:\s*auto", html)
-    assert "touch-action:pan-x pan-y" in html
+    assert re.search(r"touch-action:\s*pan-x pan-y", html)
     assert 'class="scroll heat-scroll" id="heat"' in html
 
 
