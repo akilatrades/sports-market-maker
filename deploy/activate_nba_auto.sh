@@ -45,3 +45,12 @@ if ! systemctl enable --now market-maker-prod-nba-auto.timer; then
   exit 1
 fi
 echo 'NBA timer active; NFL timer stopped. Inspect NBA DECISION and last_scan.json.'
+install -d -m 755 /etc/systemd/system/market-maker-dashboard.service.d
+cat > /etc/systemd/system/market-maker-dashboard.service.d/market.conf <<'EOF'
+[Service]
+Environment=ACCOUNT_DASHBOARD_MARKET=nba
+EOF
+systemctl daemon-reload
+if ! systemctl restart market-maker-dashboard.service; then
+  echo 'NBA is active, but the private dashboard needs inspection.' >&2
+fi

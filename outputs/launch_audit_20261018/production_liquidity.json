@@ -1,0 +1,935 @@
+{
+  "as_of_utc": "2026-10-18T21:34:20.515084+00:00",
+  "source": "Kalshi public production API",
+  "scope": "At most 600 open markets per named series, page order may bias coverage; no trading and no fair-value inference.",
+  "series": [
+    {
+      "series": "KXNBAPTS",
+      "category": "Sports",
+      "title": "NBA Player Points",
+      "fee_type": "quadratic",
+      "fee_multiplier": 1,
+      "sampled_open_markets": 86,
+      "pagination_complete": true,
+      "status": "ok",
+      "edge_established": false,
+      "two_sided": 86,
+      "median_spread_cents": 10.500000000000004,
+      "volume_24h_contracts": 3207.4599999999996,
+      "open_interest_contracts": 42829.31999999999,
+      "sample_markets": [
+        {
+          "ticker": "KXNBAPTS-26OCT20PHINYK-PHILJAMES23-15",
+          "title": "LeBron James: 15+ points",
+          "yes_bid_dollars": "0.6100",
+          "yes_ask_dollars": "0.6200",
+          "yes_bid_size_fp": "21.15",
+          "yes_ask_size_fp": "6734.29",
+          "volume_24h_fp": "926.32",
+          "close_time": "2026-10-22T23:00:00Z",
+          "expected_expiration_time": "2026-10-21T02:00:00Z"
+        },
+        {
+          "ticker": "KXNBAPTS-26OCT20OKCSAS-OKCSGILGEOUSALEXANDER2-25",
+          "title": "Shai Gilgeous-Alexander: 25+ points",
+          "yes_bid_dollars": "0.6700",
+          "yes_ask_dollars": "0.7400",
+          "yes_bid_size_fp": "1.00",
+          "yes_ask_size_fp": "2.00",
+          "volume_24h_fp": "496.91",
+          "close_time": "2026-10-23T01:30:00Z",
+          "expected_expiration_time": "2026-10-21T04:30:00Z"
+        },
+        {
+          "ticker": "KXNBAPTS-26OCT20PHINYK-PHIJBROWN7-20",
+          "title": "Jaylen Brown: 20+ points",
+          "yes_bid_dollars": "0.5800",
+          "yes_ask_dollars": "0.6700",
+          "yes_bid_size_fp": "3.22",
+          "yes_ask_size_fp": "2.00",
+          "volume_24h_fp": "340.12",
+          "close_time": "2026-10-22T23:00:00Z",
+          "expected_expiration_time": "2026-10-21T02:00:00Z"
+        }
+      ]
+    },
+    {
+      "series": "KXNBAREB",
+      "category": "Sports",
+      "title": "NBA Player Rebounds",
+      "fee_type": "quadratic",
+      "fee_multiplier": 1,
+      "sampled_open_markets": 75,
+      "pagination_complete": true,
+      "status": "ok",
+      "edge_established": false,
+      "two_sided": 75,
+      "median_spread_cents": 20.000000000000007,
+      "volume_24h_contracts": 360.9,
+      "open_interest_contracts": 776.24,
+      "sample_markets": [
+        {
+          "ticker": "KXNBAREB-26OCT20PHINYK-PHIJEMBIID21-8",
+          "title": "Joel Embiid: 8+ rebounds",
+          "yes_bid_dollars": "0.5000",
+          "yes_ask_dollars": "0.5300",
+          "yes_bid_size_fp": "17.45",
+          "yes_ask_size_fp": "1463.55",
+          "volume_24h_fp": "90.69",
+          "close_time": "2026-10-22T23:00:00Z",
+          "expected_expiration_time": "2026-10-21T02:00:00Z"
+        },
+        {
+          "ticker": "KXNBAREB-26OCT20PHINYK-PHILJAMES23-6",
+          "title": "LeBron James: 6+ rebounds",
+          "yes_bid_dollars": "0.5100",
+          "yes_ask_dollars": "0.6700",
+          "yes_bid_size_fp": "1.00",
+          "yes_ask_size_fp": "3.00",
+          "volume_24h_fp": "62.19",
+          "close_time": "2026-10-22T23:00:00Z",
+          "expected_expiration_time": "2026-10-21T02:00:00Z"
+        },
+        {
+          "ticker": "KXNBAREB-26OCT20PHINYK-PHIJEMBIID21-6",
+          "title": "Joel Embiid: 6+ rebounds",
+          "yes_bid_dollars": "0.5700",
+          "yes_ask_dollars": "0.7700",
+          "yes_bid_size_fp": "4.00",
+          "yes_ask_size_fp": "4.00",
+          "volume_24h_fp": "43.79",
+          "close_time": "2026-10-22T23:00:00Z",
+          "expected_expiration_time": "2026-10-21T02:00:00Z"
+        }
+      ]
+    },
+    {
+      "series": "KXNBAAST",
+      "category": "Sports",
+      "title": "NBA Player Assists",
+      "fee_type": "quadratic",
+      "fee_multiplier": 1,
+      "sampled_open_markets": 68,
+      "pagination_complete": true,
+      "status": "ok",
+      "edge_established": false,
+      "two_sided": 68,
+      "median_spread_cents": 18.999999999999993,
+      "volume_24h_contracts": 675.8399999999999,
+      "open_interest_contracts": 917.0600000000001,
+      "sample_markets": [
+        {
+          "ticker": "KXNBAAST-26OCT20PHINYK-PHILJAMES23-10",
+          "title": "LeBron James: 10+ assists",
+          "yes_bid_dollars": "0.2300",
+          "yes_ask_dollars": "0.2700",
+          "yes_bid_size_fp": "2.00",
+          "yes_ask_size_fp": "11.00",
+          "volume_24h_fp": "188.56",
+          "close_time": "2026-10-22T23:00:00Z",
+          "expected_expiration_time": "2026-10-21T02:00:00Z"
+        },
+        {
+          "ticker": "KXNBAAST-26OCT20PHINYK-PHILJAMES23-6",
+          "title": "LeBron James: 6+ assists",
+          "yes_bid_dollars": "0.7700",
+          "yes_ask_dollars": "0.8900",
+          "yes_bid_size_fp": "0.50",
+          "yes_ask_size_fp": "10.00",
+          "volume_24h_fp": "148.06",
+          "close_time": "2026-10-22T23:00:00Z",
+          "expected_expiration_time": "2026-10-21T02:00:00Z"
+        },
+        {
+          "ticker": "KXNBAAST-26OCT20PHINYK-PHILJAMES23-8",
+          "title": "LeBron James: 8+ assists",
+          "yes_bid_dollars": "0.4700",
+          "yes_ask_dollars": "0.7700",
+          "yes_bid_size_fp": "19.62",
+          "yes_ask_size_fp": "1.00",
+          "volume_24h_fp": "83.75",
+          "close_time": "2026-10-22T23:00:00Z",
+          "expected_expiration_time": "2026-10-21T02:00:00Z"
+        }
+      ]
+    },
+    {
+      "series": "KXNBA3PT",
+      "category": "Sports",
+      "title": "NBA Player Threes",
+      "fee_type": "quadratic",
+      "fee_multiplier": 1,
+      "sampled_open_markets": 83,
+      "pagination_complete": true,
+      "status": "ok",
+      "edge_established": false,
+      "two_sided": 83,
+      "median_spread_cents": 10.999999999999998,
+      "volume_24h_contracts": 2130.08,
+      "open_interest_contracts": 2637.61,
+      "sample_markets": [
+        {
+          "ticker": "KXNBA3PT-26OCT20PHINYK-PHILJAMES23-2",
+          "title": "LeBron James: 2+ threes",
+          "yes_bid_dollars": "0.3500",
+          "yes_ask_dollars": "0.5200",
+          "yes_bid_size_fp": "4.00",
+          "yes_ask_size_fp": "10.00",
+          "volume_24h_fp": "301.75",
+          "close_time": "2026-10-22T23:00:00Z",
+          "expected_expiration_time": "2026-10-21T02:00:00Z"
+        },
+        {
+          "ticker": "KXNBA3PT-26OCT20PHINYK-NYKKTOWNS32-2",
+          "title": "Karl-Anthony Towns: 2+ threes",
+          "yes_bid_dollars": "0.3900",
+          "yes_ask_dollars": "0.4400",
+          "yes_bid_size_fp": "1021.95",
+          "yes_ask_size_fp": "1356.52",
+          "volume_24h_fp": "277.26",
+          "close_time": "2026-10-22T23:00:00Z",
+          "expected_expiration_time": "2026-10-21T02:00:00Z"
+        },
+        {
+          "ticker": "KXNBA3PT-26OCT20PHINYK-NYKJBRUNSON11-2",
+          "title": "Jalen Brunson: 2+ threes",
+          "yes_bid_dollars": "0.6700",
+          "yes_ask_dollars": "0.7300",
+          "yes_bid_size_fp": "1.00",
+          "yes_ask_size_fp": "57.00",
+          "volume_24h_fp": "249.19",
+          "close_time": "2026-10-22T23:00:00Z",
+          "expected_expiration_time": "2026-10-21T02:00:00Z"
+        }
+      ]
+    },
+    {
+      "series": "KXNBAGAME",
+      "category": "Sports",
+      "title": "NBA Game",
+      "fee_type": "quadratic_with_maker_fees",
+      "fee_multiplier": 1,
+      "sampled_open_markets": 74,
+      "pagination_complete": true,
+      "status": "ok",
+      "edge_established": false,
+      "two_sided": 74,
+      "median_spread_cents": 6.000000000000003,
+      "volume_24h_contracts": 76898.31,
+      "open_interest_contracts": 258891.37000000002,
+      "sample_markets": [
+        {
+          "ticker": "KXNBAGAME-26OCT20PHINYK-PHI",
+          "title": "Philadelphia wins",
+          "yes_bid_dollars": "0.3800",
+          "yes_ask_dollars": "0.3900",
+          "yes_bid_size_fp": "1865.20",
+          "yes_ask_size_fp": "94829.96",
+          "volume_24h_fp": "31808.33",
+          "close_time": "2026-10-22T23:00:00Z",
+          "expected_expiration_time": "2026-10-21T05:00:00Z"
+        },
+        {
+          "ticker": "KXNBAGAME-26OCT21GSWLAL-GSW",
+          "title": "Golden State wins",
+          "yes_bid_dollars": "0.3500",
+          "yes_ask_dollars": "0.3600",
+          "yes_bid_size_fp": "2.00",
+          "yes_ask_size_fp": "3365.82",
+          "volume_24h_fp": "6539.47",
+          "close_time": "2026-10-24T02:00:00Z",
+          "expected_expiration_time": "2026-10-22T05:00:00Z"
+        },
+        {
+          "ticker": "KXNBAGAME-26OCT20PHINYK-NYK",
+          "title": "New York wins",
+          "yes_bid_dollars": "0.6100",
+          "yes_ask_dollars": "0.6200",
+          "yes_bid_size_fp": "5855.16",
+          "yes_ask_size_fp": "3577.69",
+          "volume_24h_fp": "6024.18",
+          "close_time": "2026-10-22T23:00:00Z",
+          "expected_expiration_time": "2026-10-21T05:00:00Z"
+        }
+      ]
+    },
+    {
+      "series": "KXNHLGAME",
+      "category": "Sports",
+      "title": "NHL Game",
+      "fee_type": "quadratic_with_maker_fees",
+      "fee_multiplier": 1,
+      "sampled_open_markets": 92,
+      "pagination_complete": true,
+      "status": "ok",
+      "edge_established": false,
+      "two_sided": 92,
+      "median_spread_cents": 4.0000000000000036,
+      "volume_24h_contracts": 147049.28,
+      "open_interest_contracts": 149947.12,
+      "sample_markets": [
+        {
+          "ticker": "KXNHLGAME-26OCT18CBJMIN-MIN",
+          "title": "Minnesota wins",
+          "yes_bid_dollars": "0.6300",
+          "yes_ask_dollars": "0.6400",
+          "yes_bid_size_fp": "45566.21",
+          "yes_ask_size_fp": "67219.78",
+          "volume_24h_fp": "68372.28",
+          "close_time": "2026-10-20T22:00:00Z",
+          "expected_expiration_time": "2026-10-19T01:00:00Z"
+        },
+        {
+          "ticker": "KXNHLGAME-26OCT18CARCGY-CAR",
+          "title": "Carolina wins",
+          "yes_bid_dollars": "0.6600",
+          "yes_ask_dollars": "0.6700",
+          "yes_bid_size_fp": "20248.96",
+          "yes_ask_size_fp": "174725.18",
+          "volume_24h_fp": "43519.67",
+          "close_time": "2026-10-21T00:00:00Z",
+          "expected_expiration_time": "2026-10-19T03:00:00Z"
+        },
+        {
+          "ticker": "KXNHLGAME-26OCT18CBJMIN-CBJ",
+          "title": "Columbus wins",
+          "yes_bid_dollars": "0.3700",
+          "yes_ask_dollars": "0.3800",
+          "yes_bid_size_fp": "9632.29",
+          "yes_ask_size_fp": "455454.42",
+          "volume_24h_fp": "9130.79",
+          "close_time": "2026-10-20T22:00:00Z",
+          "expected_expiration_time": "2026-10-19T01:00:00Z"
+        }
+      ]
+    },
+    {
+      "series": "KXMLBGAME",
+      "category": "Sports",
+      "title": "Professional Baseball Game",
+      "fee_type": "quadratic_with_maker_fees",
+      "fee_multiplier": 0.5,
+      "sampled_open_markets": 2,
+      "pagination_complete": true,
+      "status": "ok",
+      "edge_established": false,
+      "two_sided": 2,
+      "median_spread_cents": 1.5000000000000013,
+      "volume_24h_contracts": 4842022.01,
+      "open_interest_contracts": 3806126.37,
+      "sample_markets": [
+        {
+          "ticker": "KXMLBGAME-26OCT172000TBCLE-TB",
+          "title": "Tampa Bay wins",
+          "yes_bid_dollars": "0.6900",
+          "yes_ask_dollars": "0.7000",
+          "yes_bid_size_fp": "0.02",
+          "yes_ask_size_fp": "6001.02",
+          "volume_24h_fp": "3050433.34",
+          "close_time": "2026-10-21T00:00:00Z",
+          "expected_expiration_time": "2026-10-18T03:00:00Z"
+        },
+        {
+          "ticker": "KXMLBGAME-26OCT172000TBCLE-CLE",
+          "title": "Cleveland wins",
+          "yes_bid_dollars": "0.3100",
+          "yes_ask_dollars": "0.3300",
+          "yes_bid_size_fp": "516.00",
+          "yes_ask_size_fp": "2437.37",
+          "volume_24h_fp": "1791588.67",
+          "close_time": "2026-10-21T00:00:00Z",
+          "expected_expiration_time": "2026-10-18T03:00:00Z"
+        }
+      ]
+    },
+    {
+      "series": "KXITFMATCH",
+      "category": "Sports",
+      "title": "ITF Men's Match",
+      "fee_type": "quadratic",
+      "fee_multiplier": 1,
+      "sampled_open_markets": 112,
+      "pagination_complete": true,
+      "status": "ok",
+      "edge_established": false,
+      "two_sided": 112,
+      "median_spread_cents": 30.5,
+      "volume_24h_contracts": 48200.11,
+      "open_interest_contracts": 34855.78,
+      "sample_markets": [
+        {
+          "ticker": "KXITFMATCH-26OCT18BRUSAN-BRU",
+          "title": "Bruno Vieira Alves Malacarne Bruno wins",
+          "yes_bid_dollars": "0.0100",
+          "yes_ask_dollars": "0.0200",
+          "yes_bid_size_fp": "2559.00",
+          "yes_ask_size_fp": "132.00",
+          "volume_24h_fp": "28502.28",
+          "close_time": "2026-11-01T18:30:00Z",
+          "expected_expiration_time": "2026-10-19T00:30:00Z"
+        },
+        {
+          "ticker": "KXITFMATCH-26OCT18BRUSAN-SAN",
+          "title": "Kaua Lorenzo Santos Gava wins",
+          "yes_bid_dollars": "0.9700",
+          "yes_ask_dollars": "0.9900",
+          "yes_bid_size_fp": "1327.00",
+          "yes_ask_size_fp": "774.39",
+          "volume_24h_fp": "10631.50",
+          "close_time": "2026-11-01T18:30:00Z",
+          "expected_expiration_time": "2026-10-19T00:30:00Z"
+        },
+        {
+          "ticker": "KXITFMATCH-26OCT18DELBOJ-BOJ",
+          "title": "Luka Bojicic Ono wins",
+          "yes_bid_dollars": "0.2200",
+          "yes_ask_dollars": "0.2500",
+          "yes_bid_size_fp": "45.50",
+          "yes_ask_size_fp": "66.00",
+          "volume_24h_fp": "3734.27",
+          "close_time": "2026-11-01T18:30:00Z",
+          "expected_expiration_time": "2026-10-19T00:30:00Z"
+        }
+      ]
+    },
+    {
+      "series": "KXNCAAMB1HSPREAD",
+      "category": "Sports",
+      "title": "Men's College Basketball 1st Half Spread",
+      "fee_type": "quadratic",
+      "fee_multiplier": 1,
+      "sampled_open_markets": 0,
+      "pagination_complete": true,
+      "status": "ok",
+      "edge_established": false
+    },
+    {
+      "series": "KXNWSLSPREAD",
+      "category": "Sports",
+      "title": "NWSL Spread",
+      "fee_type": "quadratic",
+      "fee_multiplier": 1,
+      "sampled_open_markets": 8,
+      "pagination_complete": true,
+      "status": "ok",
+      "edge_established": false,
+      "two_sided": 7,
+      "median_spread_cents": 25.0,
+      "volume_24h_contracts": 2333.0,
+      "open_interest_contracts": 2332.0,
+      "sample_markets": [
+        {
+          "ticker": "KXNWSLSPREAD-26OCT18BAYPTH-BAY2",
+          "title": "Bay FC wins by more than 1.5 goals?",
+          "yes_bid_dollars": "0.0200",
+          "yes_ask_dollars": "0.3000",
+          "yes_bid_size_fp": "102.00",
+          "yes_ask_size_fp": "100.00",
+          "volume_24h_fp": "953.30",
+          "close_time": "2026-10-20T21:00:00Z",
+          "expected_expiration_time": "2026-10-19T01:00:00Z"
+        },
+        {
+          "ticker": "KXNWSLSPREAD-26OCT18CHIREI-REI2",
+          "title": "Seattle Reign wins by more than 1.5 goals?",
+          "yes_bid_dollars": "0.4500",
+          "yes_ask_dollars": "0.4700",
+          "yes_bid_size_fp": "3425.10",
+          "yes_ask_size_fp": "679.16",
+          "volume_24h_fp": "753.19",
+          "close_time": "2026-10-20T23:00:00Z",
+          "expected_expiration_time": "2026-10-19T03:00:00Z"
+        },
+        {
+          "ticker": "KXNWSLSPREAD-26OCT18CHIREI-CHI3",
+          "title": "Chicago wins by more than 2.5 goals?",
+          "yes_bid_dollars": "0.0000",
+          "yes_ask_dollars": "0.2000",
+          "yes_bid_size_fp": "0.00",
+          "yes_ask_size_fp": "50.00",
+          "volume_24h_fp": "366.56",
+          "close_time": "2026-10-20T23:00:00Z",
+          "expected_expiration_time": "2026-10-19T03:00:00Z"
+        }
+      ]
+    },
+    {
+      "series": "KXLALIGASPREAD",
+      "category": "Sports",
+      "title": "La Liga Spread",
+      "fee_type": "quadratic",
+      "fee_multiplier": 1,
+      "sampled_open_markets": 40,
+      "pagination_complete": true,
+      "status": "ok",
+      "edge_established": false,
+      "two_sided": 39,
+      "median_spread_cents": 3.0,
+      "volume_24h_contracts": 2487.09,
+      "open_interest_contracts": 2850.09,
+      "sample_markets": [
+        {
+          "ticker": "KXLALIGASPREAD-26OCT25BARRMA-RMA2",
+          "title": "Real Madrid wins by more than 1.5 goals?",
+          "yes_bid_dollars": "0.0800",
+          "yes_ask_dollars": "0.1000",
+          "yes_bid_size_fp": "1412.93",
+          "yes_ask_size_fp": "629.00",
+          "volume_24h_fp": "1153.83",
+          "close_time": "2026-10-27T20:00:00Z",
+          "expected_expiration_time": "2026-10-26T00:00:00Z"
+        },
+        {
+          "ticker": "KXLALIGASPREAD-26OCT25BARRMA-BAR3",
+          "title": "Barcelona wins by more than 2.5 goals?",
+          "yes_bid_dollars": "0.2400",
+          "yes_ask_dollars": "0.2800",
+          "yes_bid_size_fp": "1880.93",
+          "yes_ask_size_fp": "1215.91",
+          "volume_24h_fp": "391.00",
+          "close_time": "2026-10-27T20:00:00Z",
+          "expected_expiration_time": "2026-10-26T00:00:00Z"
+        },
+        {
+          "ticker": "KXLALIGASPREAD-26OCT25BARRMA-BAR2",
+          "title": "Barcelona wins by more than 1.5 goals?",
+          "yes_bid_dollars": "0.4200",
+          "yes_ask_dollars": "0.4400",
+          "yes_bid_size_fp": "3495.64",
+          "yes_ask_size_fp": "400.00",
+          "volume_24h_fp": "336.23",
+          "close_time": "2026-10-27T20:00:00Z",
+          "expected_expiration_time": "2026-10-26T00:00:00Z"
+        }
+      ]
+    },
+    {
+      "series": "KXNASCARRACE",
+      "category": "Sports",
+      "title": "NASCAR Race",
+      "fee_type": "quadratic_with_maker_fees",
+      "fee_multiplier": 1,
+      "sampled_open_markets": 37,
+      "pagination_complete": true,
+      "status": "ok",
+      "edge_established": false,
+      "two_sided": 6,
+      "median_spread_cents": 0.9999999999999998,
+      "volume_24h_contracts": 2105573.36,
+      "open_interest_contracts": 2483183.97,
+      "sample_markets": [
+        {
+          "ticker": "KXNASCARRACE-FREI26-DEHA",
+          "title": "Cup Series: Denny Hamlin wins",
+          "yes_bid_dollars": "0.0000",
+          "yes_ask_dollars": "0.0200",
+          "yes_bid_size_fp": "0.00",
+          "yes_ask_size_fp": "3160.07",
+          "volume_24h_fp": "170687.27",
+          "close_time": "2026-10-26T01:00:00Z",
+          "expected_expiration_time": "2026-10-19T01:00:00Z"
+        },
+        {
+          "ticker": "KXNASCARRACE-FREI26-BUWA",
+          "title": "Cup Series: Bubba Wallace wins",
+          "yes_bid_dollars": "0.2400",
+          "yes_ask_dollars": "0.3600",
+          "yes_bid_size_fp": "43.00",
+          "yes_ask_size_fp": "69.81",
+          "volume_24h_fp": "167105.27",
+          "close_time": "2026-10-26T01:00:00Z",
+          "expected_expiration_time": "2026-10-19T01:00:00Z"
+        },
+        {
+          "ticker": "KXNASCARRACE-FREI26-JOLO",
+          "title": "Cup Series: Joey Logano wins",
+          "yes_bid_dollars": "0.0100",
+          "yes_ask_dollars": "0.0200",
+          "yes_bid_size_fp": "3814.84",
+          "yes_ask_size_fp": "450.75",
+          "volume_24h_fp": "165511.50",
+          "close_time": "2026-10-26T01:00:00Z",
+          "expected_expiration_time": "2026-10-19T01:00:00Z"
+        }
+      ]
+    },
+    {
+      "series": "KXUFCMOF",
+      "category": "Sports",
+      "title": "UFC Method of Finish",
+      "fee_type": "quadratic",
+      "fee_multiplier": 1,
+      "sampled_open_markets": 0,
+      "pagination_complete": true,
+      "status": "ok",
+      "edge_established": false
+    },
+    {
+      "series": "KXHIGHCHI",
+      "category": "Climate and Weather",
+      "title": "Highest temperature in Chicago",
+      "fee_type": "quadratic",
+      "fee_multiplier": 1,
+      "sampled_open_markets": 12,
+      "pagination_complete": true,
+      "status": "ok",
+      "edge_established": false,
+      "two_sided": 8,
+      "median_spread_cents": 1.0000000000000004,
+      "volume_24h_contracts": 45690.97,
+      "open_interest_contracts": 34810.05,
+      "sample_markets": [
+        {
+          "ticker": "KXHIGHCHI-26OCT18-B61.5",
+          "title": "Will the maximum temperature be 61-62\u00b0 on Oct 18, 2026?",
+          "yes_bid_dollars": "0.0000",
+          "yes_ask_dollars": "0.0100",
+          "yes_bid_size_fp": "0.00",
+          "yes_ask_size_fp": "61961.13",
+          "volume_24h_fp": "16431.05",
+          "close_time": "2026-10-19T06:00:00Z",
+          "expected_expiration_time": "2026-10-19T19:00:00Z"
+        },
+        {
+          "ticker": "KXHIGHCHI-26OCT18-B65.5",
+          "title": "Will the maximum temperature be 65-66\u00b0 on Oct 18, 2026?",
+          "yes_bid_dollars": "0.0700",
+          "yes_ask_dollars": "0.0900",
+          "yes_bid_size_fp": "463.13",
+          "yes_ask_size_fp": "6.00",
+          "volume_24h_fp": "13397.94",
+          "close_time": "2026-10-19T06:00:00Z",
+          "expected_expiration_time": "2026-10-19T19:00:00Z"
+        },
+        {
+          "ticker": "KXHIGHCHI-26OCT18-B63.5",
+          "title": "Will the maximum temperature be 63-64\u00b0 on Oct 18, 2026?",
+          "yes_bid_dollars": "0.8800",
+          "yes_ask_dollars": "0.9100",
+          "yes_bid_size_fp": "5.00",
+          "yes_ask_size_fp": "98.91",
+          "volume_24h_fp": "7330.06",
+          "close_time": "2026-10-19T06:00:00Z",
+          "expected_expiration_time": "2026-10-19T19:00:00Z"
+        }
+      ]
+    },
+    {
+      "series": "KXHIGHLAX",
+      "category": "Climate and Weather",
+      "title": "Highest temperature in Los Angeles",
+      "fee_type": "quadratic",
+      "fee_multiplier": 1,
+      "sampled_open_markets": 12,
+      "pagination_complete": true,
+      "status": "ok",
+      "edge_established": false,
+      "two_sided": 4,
+      "median_spread_cents": 1.0,
+      "volume_24h_contracts": 127225.17999999998,
+      "open_interest_contracts": 84764.74,
+      "sample_markets": [
+        {
+          "ticker": "KXHIGHLAX-26OCT18-T85",
+          "title": "Will the maximum temperature be >85\u00b0 on Oct 18, 2026?",
+          "yes_bid_dollars": "0.9900",
+          "yes_ask_dollars": "1.0000",
+          "yes_bid_size_fp": "193714.92",
+          "yes_ask_size_fp": "0.00",
+          "volume_24h_fp": "55610.39",
+          "close_time": "2026-10-19T08:00:00Z",
+          "expected_expiration_time": "2026-10-19T19:00:00Z"
+        },
+        {
+          "ticker": "KXHIGHLAX-26OCT18-B84.5",
+          "title": "Will the maximum temperature be 84-85\u00b0 on Oct 18, 2026?",
+          "yes_bid_dollars": "0.0000",
+          "yes_ask_dollars": "0.0100",
+          "yes_bid_size_fp": "0.00",
+          "yes_ask_size_fp": "250204.50",
+          "volume_24h_fp": "29832.35",
+          "close_time": "2026-10-19T08:00:00Z",
+          "expected_expiration_time": "2026-10-19T19:00:00Z"
+        },
+        {
+          "ticker": "KXHIGHLAX-26OCT18-B82.5",
+          "title": "Will the maximum temperature be 82-83\u00b0 on Oct 18, 2026?",
+          "yes_bid_dollars": "0.0000",
+          "yes_ask_dollars": "0.0100",
+          "yes_bid_size_fp": "0.00",
+          "yes_ask_size_fp": "170301.77",
+          "volume_24h_fp": "20839.34",
+          "close_time": "2026-10-19T08:00:00Z",
+          "expected_expiration_time": "2026-10-19T19:00:00Z"
+        }
+      ]
+    },
+    {
+      "series": "KXRAINNYC",
+      "category": "Climate and Weather",
+      "title": "NYC rain",
+      "fee_type": "quadratic",
+      "fee_multiplier": 1,
+      "sampled_open_markets": 0,
+      "pagination_complete": true,
+      "status": "ok",
+      "edge_established": false
+    },
+    {
+      "series": "KXBTC",
+      "category": "Crypto",
+      "title": "Bitcoin range",
+      "fee_type": "quadratic",
+      "fee_multiplier": 1,
+      "sampled_open_markets": 318,
+      "pagination_complete": true,
+      "status": "ok",
+      "edge_established": false,
+      "two_sided": 46,
+      "median_spread_cents": 3.0,
+      "volume_24h_contracts": 22489.149999999998,
+      "open_interest_contracts": 37661.76999999999,
+      "sample_markets": [
+        {
+          "ticker": "KXBTC-26OCT2317-B77750",
+          "title": "Bitcoin price range on Oct 23, 2026?",
+          "yes_bid_dollars": "0.0200",
+          "yes_ask_dollars": "0.0700",
+          "yes_bid_size_fp": "168.00",
+          "yes_ask_size_fp": "4972.34",
+          "volume_24h_fp": "10197.46",
+          "close_time": "2026-10-23T21:00:00Z",
+          "expected_expiration_time": "2026-10-23T21:05:00Z"
+        },
+        {
+          "ticker": "KXBTC-26OCT1818-B80950",
+          "title": "Bitcoin price range on Oct 18, 2026?",
+          "yes_bid_dollars": "0.2900",
+          "yes_ask_dollars": "0.3000",
+          "yes_bid_size_fp": "70.00",
+          "yes_ask_size_fp": "3.00",
+          "volume_24h_fp": "1788.86",
+          "close_time": "2026-10-18T22:00:00Z",
+          "expected_expiration_time": "2026-10-18T22:05:00Z"
+        },
+        {
+          "ticker": "KXBTC-26OCT1818-B80850",
+          "title": "Bitcoin price range on Oct 18, 2026?",
+          "yes_bid_dollars": "0.2300",
+          "yes_ask_dollars": "0.2400",
+          "yes_bid_size_fp": "88.00",
+          "yes_ask_size_fp": "98.50",
+          "volume_24h_fp": "1661.23",
+          "close_time": "2026-10-18T22:00:00Z",
+          "expected_expiration_time": "2026-10-18T22:05:00Z"
+        }
+      ]
+    },
+    {
+      "series": "KXBTC15M",
+      "category": "Crypto",
+      "title": "Bitcoin price up down",
+      "fee_type": "quadratic",
+      "fee_multiplier": 1,
+      "sampled_open_markets": 1,
+      "pagination_complete": true,
+      "status": "ok",
+      "edge_established": false,
+      "two_sided": 1,
+      "median_spread_cents": 1.0000000000000009,
+      "volume_24h_contracts": 162167.78,
+      "open_interest_contracts": 294255.83,
+      "sample_markets": [
+        {
+          "ticker": "KXBTC15M-26OCT181745-45",
+          "title": "BTC price up in next 15 mins?",
+          "yes_bid_dollars": "0.7600",
+          "yes_ask_dollars": "0.7700",
+          "yes_bid_size_fp": "6825.53",
+          "yes_ask_size_fp": "1466.34",
+          "volume_24h_fp": "162167.78",
+          "close_time": "2026-10-18T21:45:00Z",
+          "expected_expiration_time": "2026-10-18T21:50:00Z"
+        }
+      ]
+    },
+    {
+      "series": "KXETH15M",
+      "category": "Crypto",
+      "title": "ETH 15M price up down",
+      "fee_type": "quadratic",
+      "fee_multiplier": 1,
+      "sampled_open_markets": 1,
+      "pagination_complete": true,
+      "status": "ok",
+      "edge_established": false,
+      "two_sided": 1,
+      "median_spread_cents": 0.9999999999999898,
+      "volume_24h_contracts": 11293.54,
+      "open_interest_contracts": 33198.69,
+      "sample_markets": [
+        {
+          "ticker": "KXETH15M-26OCT181745-45",
+          "title": "ETH price up in next 15 mins?",
+          "yes_bid_dollars": "0.8100",
+          "yes_ask_dollars": "0.8200",
+          "yes_bid_size_fp": "617.70",
+          "yes_ask_size_fp": "438.29",
+          "volume_24h_fp": "11293.54",
+          "close_time": "2026-10-18T21:45:00Z",
+          "expected_expiration_time": "2026-10-18T21:50:00Z"
+        }
+      ]
+    },
+    {
+      "series": "KXCPI",
+      "category": "Economics",
+      "title": "CPI",
+      "fee_type": "quadratic_with_maker_fees",
+      "fee_multiplier": 1,
+      "sampled_open_markets": 30,
+      "pagination_complete": true,
+      "status": "ok",
+      "edge_established": false,
+      "two_sided": 26,
+      "median_spread_cents": 1.0000000000000009,
+      "volume_24h_contracts": 14136.82,
+      "open_interest_contracts": 490547.82999999996,
+      "sample_markets": [
+        {
+          "ticker": "KXCPI-26OCT-T0.7",
+          "title": "Will CPI rise more than 0.7% in October 2026?",
+          "yes_bid_dollars": "0.0000",
+          "yes_ask_dollars": "0.0100",
+          "yes_bid_size_fp": "0.00",
+          "yes_ask_size_fp": "3878.00",
+          "volume_24h_fp": "4169.29",
+          "close_time": "2026-11-10T13:29:00Z",
+          "expected_expiration_time": "2026-11-10T14:56:00Z"
+        },
+        {
+          "ticker": "KXCPI-26OCT-T0.2",
+          "title": "Will CPI rise more than 0.2% in October 2026?",
+          "yes_bid_dollars": "0.7000",
+          "yes_ask_dollars": "0.7200",
+          "yes_bid_size_fp": "1439.00",
+          "yes_ask_size_fp": "1949.00",
+          "volume_24h_fp": "3526.70",
+          "close_time": "2026-11-10T13:29:00Z",
+          "expected_expiration_time": "2026-11-10T14:56:00Z"
+        },
+        {
+          "ticker": "KXCPI-26OCT-T0.6",
+          "title": "Will CPI rise more than 0.6% in October 2026?",
+          "yes_bid_dollars": "0.0000",
+          "yes_ask_dollars": "0.0100",
+          "yes_bid_size_fp": "0.00",
+          "yes_ask_size_fp": "2408.40",
+          "volume_24h_fp": "2399.60",
+          "close_time": "2026-11-10T13:29:00Z",
+          "expected_expiration_time": "2026-11-10T14:56:00Z"
+        }
+      ]
+    },
+    {
+      "series": "KXFED",
+      "category": "Economics",
+      "title": "Fed funds rate",
+      "fee_type": "quadratic_with_maker_fees",
+      "fee_multiplier": 1,
+      "sampled_open_markets": 247,
+      "pagination_complete": true,
+      "status": "ok",
+      "edge_established": false,
+      "two_sided": 142,
+      "median_spread_cents": 38.0,
+      "volume_24h_contracts": 9256.04,
+      "open_interest_contracts": 691700.6599999999,
+      "sample_markets": [
+        {
+          "ticker": "KXFED-26OCT-T4.25",
+          "title": "Will the upper bound of the federal funds rate be above 4.25% following the Fed's Oct 28, 2026 meeting?",
+          "yes_bid_dollars": "0.0000",
+          "yes_ask_dollars": "0.0100",
+          "yes_bid_size_fp": "0.00",
+          "yes_ask_size_fp": "6618.98",
+          "volume_24h_fp": "4681.67",
+          "close_time": "2026-10-28T17:55:00Z",
+          "expected_expiration_time": "2026-10-28T18:05:00Z"
+        },
+        {
+          "ticker": "KXFED-26OCT-T3.75",
+          "title": "Will the upper bound of the federal funds rate be above 3.75% following the Fed's Oct 28, 2026 meeting?",
+          "yes_bid_dollars": "0.9900",
+          "yes_ask_dollars": "1.0000",
+          "yes_bid_size_fp": "22434.52",
+          "yes_ask_size_fp": "0.00",
+          "volume_24h_fp": "1385.00",
+          "close_time": "2026-10-28T17:55:00Z",
+          "expected_expiration_time": "2026-10-28T18:05:00Z"
+        },
+        {
+          "ticker": "KXFED-26OCT-T4.00",
+          "title": "Will the upper bound of the federal funds rate be above 4.00% following the Fed's Oct 28, 2026 meeting?",
+          "yes_bid_dollars": "0.1200",
+          "yes_ask_dollars": "0.1400",
+          "yes_bid_size_fp": "1.00",
+          "yes_ask_size_fp": "13.99",
+          "volume_24h_fp": "1113.11",
+          "close_time": "2026-10-28T17:55:00Z",
+          "expected_expiration_time": "2026-10-28T18:05:00Z"
+        }
+      ]
+    },
+    {
+      "series": "KXPAYROLLS",
+      "category": "Economics",
+      "title": "Jobs numbers",
+      "fee_type": "quadratic_with_maker_fees",
+      "fee_multiplier": 1,
+      "sampled_open_markets": 26,
+      "pagination_complete": true,
+      "status": "ok",
+      "edge_established": false,
+      "two_sided": 26,
+      "median_spread_cents": 5.000000000000004,
+      "volume_24h_contracts": 1552.06,
+      "open_interest_contracts": 110877.18,
+      "sample_markets": [
+        {
+          "ticker": "KXPAYROLLS-26OCT-T50000",
+          "title": "Will above 50000 jobs be added in October 2026?",
+          "yes_bid_dollars": "0.5900",
+          "yes_ask_dollars": "0.6100",
+          "yes_bid_size_fp": "184.13",
+          "yes_ask_size_fp": "0.23",
+          "volume_24h_fp": "1444.06",
+          "close_time": "2026-11-06T13:29:00Z",
+          "expected_expiration_time": "2026-11-06T15:00:00Z"
+        },
+        {
+          "ticker": "KXPAYROLLS-26OCT-T125000",
+          "title": "Will above 125000 jobs be added in October 2026?",
+          "yes_bid_dollars": "0.1300",
+          "yes_ask_dollars": "0.1700",
+          "yes_bid_size_fp": "1313.00",
+          "yes_ask_size_fp": "2.00",
+          "volume_24h_fp": "81.00",
+          "close_time": "2026-11-06T13:29:00Z",
+          "expected_expiration_time": "2026-11-06T15:00:00Z"
+        },
+        {
+          "ticker": "KXPAYROLLS-26OCT-T-25000",
+          "title": "Will above -25000 jobs be added in October 2026?",
+          "yes_bid_dollars": "0.9300",
+          "yes_ask_dollars": "0.9400",
+          "yes_bid_size_fp": "2000.00",
+          "yes_ask_size_fp": "973.00",
+          "volume_24h_fp": "27.00",
+          "close_time": "2026-11-06T13:29:00Z",
+          "expected_expiration_time": "2026-11-06T15:00:00Z"
+        }
+      ]
+    }
+  ]
+}

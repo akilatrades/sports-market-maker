@@ -30,6 +30,24 @@ def main():
         ):
             raise ValueError("Injury rows lack identity or update time")
     markets = parse(snapshot(SERIES, now=now))
+    ladder_pairs = 0
+    dislocations = []
+    if not markets.empty:
+        for _, group in markets.groupby(["event_ticker", "player_key", "stat"]):
+            ordered = list(group.sort_values("line").itertuples())
+            for i, low in enumerate(ordered):
+                for high in ordered[i+1:]:
+                    if low.line >= high.line:
+                        continue
+                    a, b = float(low.yes_ask_dollars), 1-float(high.yes_bid_dollars)
+                    if not (0 < a < 1 and 0 < b < 1):
+                        continue
+                    ladder_pairs += 1
+                    # Screening only; verify fees, size and both settlement
+                    # rules before treating any crossed ladder as executable.
+                    fee = sum(__import__("math").ceil(.07*p*(1-p)*100-1e-12)/100 for p in (a,b))
+                    if 1-a-b-fee > .01:
+                        dislocations.append({"low":low.ticker, "high":high.ticker, "screen_edge":round(1-a-b-fee,6)})
     fees = {}
     for series in SERIES:
         payload = get_json(f"/series/{series}", {}, retries=1)["series"]
@@ -48,6 +66,8 @@ def main():
                 "roster_counts": {k: len(v) for k, v in roster.items()},
                 "injury_rows": len(report),
                 "open_prop_markets": len(markets),
+                "ladder_pairs_screened": ladder_pairs,
+                "ladder_dislocations_needing_rules_depth_review": dislocations,
                 "series_fees": fees,
             },
             indent=2,

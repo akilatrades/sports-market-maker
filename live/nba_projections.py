@@ -178,6 +178,7 @@ def main():
     schedule = pd.concat(
         [scoreboard(f"{d:%Y%m%d}", season) for d in days], ignore_index=True
     )
+    schedule["tip_utc"] = pd.to_datetime(schedule.tip_utc, utc=True)
     schedule = schedule[~schedule.completed & (schedule.tip_utc > now)]
     markets = parse(snapshot(SERIES, now=now))
     if schedule.empty or markets.empty:

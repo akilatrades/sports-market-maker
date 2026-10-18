@@ -928,13 +928,24 @@ def nba_candidates(now, latest=Path("outputs/projections/latest.csv")):
                 else attach_latest(frame)
             )
         if "book_updated_utc" in frame and not report.empty:
-            team_news = report.assign(stamp=pd.to_datetime(report.updated, utc=True)).groupby("team").stamp.max()
+            team_news = (
+                report.assign(stamp=pd.to_datetime(report.updated, utc=True))
+                .groupby("team")
+                .stamp.max()
+            )
             update = pd.to_datetime(frame.book_updated_utc, utc=True, errors="coerce")
             stale_news = update < frame.team_espn.map(team_news)
             frame.loc[stale_news, "p_book"] = float("nan")
             frame.loc[stale_news, "book_n"] = 0
         if "book_commence_utc" in frame:
-            game_gap = (pd.to_datetime(frame.book_commence_utc, utc=True, errors="coerce") - frame.tip_utc).dt.total_seconds().abs()
+            game_gap = (
+                (
+                    pd.to_datetime(frame.book_commence_utc, utc=True, errors="coerce")
+                    - frame.tip_utc
+                )
+                .dt.total_seconds()
+                .abs()
+            )
             frame.loc[game_gap > 900, "p_book"] = float("nan")
             frame.loc[game_gap > 900, "book_n"] = 0
         # Opening-night, long-absence and transferred-player roles are not

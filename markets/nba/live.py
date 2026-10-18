@@ -84,7 +84,12 @@ def parse_scoreboard(payload, season):
                 "total": float(odds["overUnder"]) if odds.get("overUnder") else np.nan,
             }
         )
-    return pd.DataFrame(rows, columns=SCHEDULE_COLUMNS)
+    frame = pd.DataFrame(rows, columns=SCHEDULE_COLUMNS)
+    # Empty off-days must retain the same dtypes as a day with games. Pandas
+    # 3 otherwise converts concatenated tip times to object at season opening.
+    frame["tip_utc"] = pd.to_datetime(frame.tip_utc, utc=True)
+    frame["completed"] = frame.completed.astype(bool)
+    return frame
 
 
 def scoreboard(date, season):

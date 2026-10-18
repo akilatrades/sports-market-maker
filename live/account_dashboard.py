@@ -286,6 +286,20 @@ def collect(client, state=STATE):
     result = summarize(
         balance, positions, resting, fills, settlements, events, scan, datetime.now(UTC)
     )
+    if state.name == "prod-nba-auto":
+        result["strategy"].update(
+            name="NBA passive NO entries",
+            version="nba-no-v2-opening-audit",
+            min_reserved_edge=None,
+        )
+        if scan:
+            scan["run_utc"] = scan.get("utc")
+            scan["filters"] = {
+                "open_markets": scan.get("inputs", {}).get("rows"),
+                "in_entry_window": scan.get("inputs", {}).get("in_entry_window"),
+                "passed_book_or_model_and_spread": scan.get("candidate_count"),
+            }
+            scan["skip_reasons"] = scan.get("skipped", {})
     result["kill_switch"] = (state / "KILL").exists()
     titles = market_titles()
     for row in result["positions"] + result["orders"]:
@@ -376,15 +390,19 @@ def main():
         help="Print a private account snapshot, then exit",
     )
     args = parser.parse_args()
+    market = os.environ.get("ACCOUNT_DASHBOARD_MARKET", "nfl")
+    if market not in {"nfl", "nba"}:
+        raise TradingError("Unknown account dashboard cohort")
+    state = Path("/home/trader/prod-nba-auto") if market == "nba" else STATE
     client = ReadOnlyClient()
     if args.once:
-        print(json.dumps(collect(client), indent=2, allow_nan=False))
+        print(json.dumps(collect(client, state), indent=2, allow_nan=False))
         return
     snapshot = Snapshot()
 
     def worker():
         while True:
-            snapshot.refresh(client, STATE)
+            snapshot.refresh(client, state)
             time.sleep(REFRESH_SECONDS)
 
     threading.Thread(target=worker, daemon=True).start()

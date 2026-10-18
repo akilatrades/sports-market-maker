@@ -72,6 +72,14 @@ def test_malformed_feeds_are_not_healthy_empty_reports():
     assert report.out.iloc[0]
 
 
+def test_empty_schedule_days_preserve_utc_dtype_for_opening_week():
+    empty = parse_scoreboard({"events": []}, 2027)
+    game = pd.DataFrame({"tip_utc": [pd.Timestamp("2026-10-20T19:00:00Z")], "completed":[False]})
+    joined = pd.concat([empty, game, empty], ignore_index=True)
+    assert joined.tip_utc.dt.tz_convert("America/New_York").dt.hour.tolist() == [15]
+    assert not joined.completed.iloc[0]
+
+
 def test_fee_bounds_event_override_and_unsupported_models():
     series = {"fee_type": "quadratic", "fee_multiplier": 1}
     assert maker_fee_bound(0.6, 4, series, {}) == 0

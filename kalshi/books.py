@@ -306,7 +306,9 @@ def attach(priced, book):
     carry = [name for name in evidence if name in b]
     b = b.rename(columns={k: evidence[k] for k in carry})
     p = p.drop(columns=["p_book", "book_n", *evidence.values()], errors="ignore").merge(
-        b[keys + ["p_book", "book_n"] + [evidence[k] for k in carry]], on=keys, how="left"
+        b[keys + ["p_book", "book_n"] + [evidence[k] for k in carry]],
+        on=keys,
+        how="left",
     )
     p = p.drop(columns=["game_day"], errors="ignore")
     p["book_n"] = p.book_n.fillna(0).astype(int)
