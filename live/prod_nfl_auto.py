@@ -561,8 +561,15 @@ def pass_once(client, env, frame, now, journal, *, dry=False):
         )
         try:
             queue = client.queue_position(str(result["order_id"]))
-        except Exception:
+            queue_issue = None if queue is not None else "missing_queue_field"
+        except Exception as error:
+            # Do not log exception bodies: authenticated API responses can
+            # contain sensitive information. Only the category and HTTP code.
+            import re
+
+            match = re.search(r"-> HTTP ([0-9]{3})", str(error))
             queue = None
+            queue_issue = f"HTTP_{match.group(1)}" if match else type(error).__name__
         write_event(
             journal,
             {
@@ -570,6 +577,7 @@ def pass_once(client, env, frame, now, journal, *, dry=False):
                 "utc": datetime.now(UTC).isoformat(),
                 "order_id": result["order_id"],
                 "ahead": queue,
+                "issue": queue_issue,
             },
         )
         return True
