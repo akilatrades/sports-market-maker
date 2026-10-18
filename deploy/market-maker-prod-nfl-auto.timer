@@ -1,6 +1,5 @@
 [Unit]
 Description=Schedule isolated $25-lifetime Kalshi production NFL trial
-Requires=market-maker-prod-nfl-auto.service
 
 [Timer]
 # Only NFL pregame hours. The runner itself restricts orders to 0.5–2 h to tip.
