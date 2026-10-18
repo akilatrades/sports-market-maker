@@ -4,6 +4,14 @@
 
 This audit combines source inspection, reanalysis of historical production-market observations, current public API checks and primary exchange/data-provider documentation. No demo-market liquidity was used as evidence. No account orders were placed by this audit.
 
+## Verified readiness and outstanding launch conditions
+
+At 21:46 UTC on October 18, the repaired full producer priced **312 of 312** open NBA props across Tuesday's three games. All 312 model probabilities were finite and between zero and one. The history download contained 299,169 player-game rows; its latest completed game was June 14. The source check verified six current rosters, the injury feed and all four prop-series fee paths. It screened **523 nested prop pairs**, finding no crossings after its fee/cushion screen. Targeted regression tests and the dashboard browser checks passed; the final complete CI result is recorded in [PR #31](https://github.com/akilatrades/sports-market-maker/pull/31).
+
+**Today is not a trade-ready snapshot:** all 312 props require fresh book corroboration after the offseason, and book coverage is zero. The existing book collector requests only the next **36 hours**; Tuesday is outside that horizon on Sunday afternoon. The latest scheduled collection succeeded, with NFL data present, so this is not evidence of broken credentials. Monday/Tuesday collections must actually supply two fresh, exact-line books; availability is not guaranteed. Do not relax this requirement just to create fills.
+
+The account and Droplet are separate outstanding checks. This audit has not verified their current balances, positions or deployed version, and has not armed NBA. Owner preflight must reconcile the actual account after NFL exposure settles. The first NBA entry window begins **Tuesday, October 20, at 8 a.m. Central**. Scheduled jobs can be delayed; leave time to inspect their outputs before that window.
+
 ## What this strategy does
 
 It is a **one-sided passive NO strategy holding inventory to settlement**, not a continuously hedged two-sided market maker. A good entry can have positive expected value and still lose its entire cost on one outcome. More fills can increase losses if informed traders accept stale quotes.
@@ -55,6 +63,7 @@ Four contracts at 60¢ reserve $2.64 including the existing 10% buffer. At that 
 | Separate workers could race on one account | Shared process lock plus existing isolation/ownership checks |
 | Missing portfolio lists became empty; cursor loops could hang | Reject malformed pages and repeated cursors |
 | Fixed-point balances were ignored | Prefer dollar balance, reject missing values |
+| Legacy integer positions could hide fractional exposure | Prefer fixed-point positions; reject foreign, opposite-side or excessive NBA inventory and foreign fills in owned tickers |
 | Non-trading cycles lacked explanation | Persist exclusions, candidate counts, skip reasons and decision |
 | Insufficient actual-fill diagnostics | Repeated queue readings and observed markouts with explicit missing windows |
 

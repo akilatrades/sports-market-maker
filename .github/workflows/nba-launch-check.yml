@@ -58,10 +58,26 @@ jobs:
         env:
           KALSHI_ENV: prod
         run: python -m live.nba_projections
+      - name: Pass production projections through current worker inputs
+        env:
+          KALSHI_ENV: prod
+        run: |
+          python - <<'PY'
+          import json
+          from datetime import UTC, datetime
+          from pathlib import Path
+          from live.prod_nba_auto import nba_candidates
+          frame = nba_candidates(datetime.now(UTC))
+          report = frame.attrs.get("diagnostics", {})
+          print(json.dumps(report, indent=2))
+          assert report and report.get("blocked") in (None, "no_priced_markets"), report
+          Path("outputs/projections/worker_readiness.json").write_text(json.dumps(report, indent=2) + "\n")
+          PY
       - uses: actions/upload-artifact@v4
         with:
           name: nba-production-projections
           path: |
             outputs/projections/latest.csv
             outputs/projections/latest_meta.json
+            outputs/projections/worker_readiness.json
           if-no-files-found: error

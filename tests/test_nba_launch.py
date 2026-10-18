@@ -76,7 +76,9 @@ def test_empty_schedule_days_preserve_utc_dtype_for_opening_week():
     empty = parse_scoreboard({"events": []}, 2027)
     assert pd.api.types.is_float_dtype(empty.home_spread)
     assert pd.api.types.is_float_dtype(empty.total)
-    game = pd.DataFrame({"tip_utc": [pd.Timestamp("2026-10-20T19:00:00Z")], "completed":[False]})
+    game = pd.DataFrame(
+        {"tip_utc": [pd.Timestamp("2026-10-20T19:00:00Z")], "completed": [False]}
+    )
     joined = pd.concat([empty, game, empty], ignore_index=True)
     assert joined.tip_utc.dt.tz_convert("America/New_York").dt.hour.tolist() == [15]
     assert not joined.completed.iloc[0]
@@ -184,29 +186,56 @@ def test_actual_fill_markouts_separate_mid_from_executable_bid_and_missing_windo
     assert nba.load_journal(journal)[-1]["mid_move_dollars"] is None
 
 
-def test_full_pass_records_fee_evidence_and_never_retries_an_uncertain_post(tmp_path, monkeypatch):
+def test_full_pass_records_fee_evidence_and_never_retries_an_uncertain_post(
+    tmp_path, monkeypatch
+):
     import kalshi.fees as fees
     from tests.test_prod_nba_auto import ARMED, NOW, priced
 
     class Client:
         env, dry_run, can_sign = "prod", False, True
+
         def __init__(self):
             self.posts = 0
             self.fail = False
-        def orders(self, *args): return []
-        def positions(self): return []
-        def settlements(self): return []
-        def fills(self, **kwargs): return []
-        def balance(self): return {"balance":100.0}
-        def queue_position(self, oid): return 12.0
+
+        def orders(self, *args):
+            return []
+
+        def positions(self):
+            return []
+
+        def settlements(self):
+            return []
+
+        def fills(self, **kwargs):
+            return []
+
+        def balance(self):
+            return {"balance": 100.0}
+
+        def queue_position(self, oid):
+            return 12.0
+
         def place(self, order):
             self.posts += 1
-            assert order.post_only and nba.reserve(order.count * order.price_cents / 100) <= 3
+            assert (
+                order.post_only
+                and nba.reserve(order.count * order.price_cents / 100) <= 3
+            )
             if self.fail:
                 raise OSError("timeout")
-            return {"order_id":"accepted"}
+            return {"order_id": "accepted"}
+
     monkeypatch.setattr(nba, "verify_quote", lambda *args: None)
-    monkeypatch.setattr(fees, "live_maker_fee_bound", lambda *args: (.05, {"fee_type":"quadratic_with_maker_fees", "fee_multiplier":1}))
+    monkeypatch.setattr(
+        fees,
+        "live_maker_fee_bound",
+        lambda *args: (
+            0.05,
+            {"fee_type": "quadratic_with_maker_fees", "fee_multiplier": 1},
+        ),
+    )
     client = Client()
     journal = tmp_path / "journal.jsonl"
     assert nba.pass_once(client, ARMED, priced(), NOW, journal)
@@ -214,7 +243,9 @@ def test_full_pass_records_fee_evidence_and_never_retries_an_uncertain_post(tmp_
     assert events[0]["probability_source"] == "sportsbook"
     assert events[0]["net_edge_after_fee_bound"] > 0
     assert client.posts == 1
-    assert json.loads((tmp_path / "last_scan.json").read_text())["decision"] == "accepted"
+    assert (
+        json.loads((tmp_path / "last_scan.json").read_text())["decision"] == "accepted"
+    )
     uncertain = tmp_path / "uncertain.jsonl"
     client.fail = True
     with pytest.raises(TradingError, match="Ambiguous"):
@@ -227,12 +258,21 @@ def test_full_pass_records_fee_evidence_and_never_retries_an_uncertain_post(tmp_
 
 def test_expired_unfilled_uses_recorded_expiry_and_keeps_partial_fills_reserved():
     now = datetime.now(UTC)
-    intent = {"client_order_id":"c", "ticker":"NBA", "expiration_ts":int((now-timedelta(minutes=11)).timestamp()), "tip_utc":(now+timedelta(hours=3)).isoformat()}
-    accepted = {"c":{"order_id":"o"}}
-    state = {"resting":[], "held":[], "settled":set()}
-    active, released = nba.reconcile_expired_unfilled([intent], accepted, state, [], now)
+    intent = {
+        "client_order_id": "c",
+        "ticker": "NBA",
+        "expiration_ts": int((now - timedelta(minutes=11)).timestamp()),
+        "tip_utc": (now + timedelta(hours=3)).isoformat(),
+    }
+    accepted = {"c": {"order_id": "o"}}
+    state = {"resting": [], "held": [], "settled": set()}
+    active, released = nba.reconcile_expired_unfilled(
+        [intent], accepted, state, [], now
+    )
     assert not active and released == 1
-    active, released = nba.reconcile_expired_unfilled([intent], accepted, state, [{"order_id":"o"}], now)
+    active, released = nba.reconcile_expired_unfilled(
+        [intent], accepted, state, [{"order_id": "o"}], now
+    )
     assert active == [intent] and released == 0
 
 
@@ -243,10 +283,35 @@ def test_private_dashboard_keeps_nba_cohort_separate(tmp_path):
     state.mkdir()
     (state / "journal.jsonl").write_text("")
     stamp = datetime.now(UTC).isoformat()
-    (state / "last_scan.json").write_text(json.dumps({"utc":stamp, "decision":"no_eligible_candidates", "inputs":{"rows":312, "in_entry_window":0}, "candidate_count":0}))
-    client = SimpleNamespace(_request=lambda *args: {"balance_dollars":"123.45", "portfolio_value":0}, pages=lambda *args, **kwargs: [])
+    (state / "last_scan.json").write_text(
+        json.dumps(
+            {
+                "utc": stamp,
+                "decision": "no_eligible_candidates",
+                "inputs": {"rows": 312, "in_entry_window": 0},
+                "candidate_count": 0,
+            }
+        )
+    )
+    client = SimpleNamespace(
+        _request=lambda *args: {"balance_dollars": "123.45", "portfolio_value": 0},
+        pages=lambda *args, **kwargs: [],
+    )
     result = collect(client, state)
     assert result["strategy"]["name"] == "NBA passive NO entries"
     assert result["strategy"]["accepted_orders"] == 0
     assert result["account"]["cash_dollars"] == 123.45
     assert result["scan"]["run_utc"] == stamp
+
+
+def test_fixed_point_foreign_or_opposite_positions_cannot_hide_behind_legacy_zero():
+    client = SimpleNamespace(
+        orders=lambda *args: [],
+        positions=lambda: [{"ticker": "NBA", "position": 0, "position_fp": "-0.5"}],
+        settlements=lambda: [],
+    )
+    with pytest.raises(TradingError, match="Foreign open"):
+        nba.current_production_state(client, [], {})
+    client.positions = lambda: [{"ticker": "NBA", "position_fp": "1.0"}]
+    with pytest.raises(TradingError, match="contradicts"):
+        nba.current_production_state(client, [{"ticker": "NBA", "count": 2}], {})

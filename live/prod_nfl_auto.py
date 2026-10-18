@@ -99,7 +99,9 @@ def current_production_state(client, attempts, accepted):
         raise TradingError("Foreign resting production orders: HALT")
     held = []
     for p in positions:
-        pos = p.get("position", p.get("position_fp"))
+        pos = p.get("position_fp")
+        if pos is None:
+            pos = p.get("position")
         if pos is None:
             raise TradingError("Cannot parse production position")
         try:

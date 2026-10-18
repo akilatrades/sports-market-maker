@@ -65,6 +65,8 @@ The Droplet downloads only model inputs and the derived book file, pinned to one
 
 Projection schedules: 12:30, 15:30, 18:30 and 21:30 UTC, or 7:30 a.m., 10:30 a.m., 1:30 p.m. and 4:30 p.m. Central on October 20. GitHub jobs can be delayed. The first two runs cover the early game; book collection keeps its existing schedule. Public-source checks never place orders.
 
+Book collection looks only 36 hours ahead. Sunday's successful run had no NBA games in that horizon; the repaired model can already price Tuesday but must not use last season's roles alone. Monday/Tuesday collections must provide at least two fresh books for an opening-week candidate. If they do not, preflight reports `no_verified_projection_rows` and activation stops. That is a specific missing input, not proof that the strategy needs more aggressive prices.
+
 ## Monitoring and accounting
 
 ```bash

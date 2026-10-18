@@ -68,7 +68,9 @@ def main():
         if not markets.empty:
             sample = markets[markets.series == series]
             if not sample.empty:
-                amount, event_meta = live_maker_fee_bound(str(sample.ticker.iloc[0]), .6, 4)
+                amount, event_meta = live_maker_fee_bound(
+                    str(sample.ticker.iloc[0]), 0.6, 4
+                )
                 fees[series]["sample_event_fee_bound_at_60c"] = amount
                 fees[series]["sample_event_fee_metadata"] = event_meta
     print(

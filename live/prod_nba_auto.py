@@ -105,7 +105,9 @@ def current_production_state(client, attempts, accepted):
         raise TradingError("Foreign resting production orders: HALT")
     held = []
     for p in positions:
-        pos = p.get("position", p.get("position_fp"))
+        pos = p.get("position_fp")
+        if pos is None:
+            pos = p.get("position")
         if pos is None:
             raise TradingError("Cannot parse production position")
         try:
@@ -118,6 +120,11 @@ def current_production_state(client, attempts, accepted):
             ticker = p.get("market_ticker", p.get("ticker"))
             if not ticker or ticker not in tickers:
                 raise TradingError("Foreign open production position: HALT")
+            maximum = sum(float(a["count"]) for a in attempts if a["ticker"] == ticker)
+            if qty > 0 or abs(qty) > maximum + 1e-8:
+                raise TradingError(
+                    "Production position contradicts owned NO intents: HALT"
+                )
             held.append(ticker)
     settlements = client.settlements() if attempts else []
     if not isinstance(settlements, list):
@@ -167,8 +174,11 @@ def reconcile_expired_unfilled(attempts, accepted, state, fills, now):
         if not match:
             raise TradingError("Unaccepted attempt: HALT")
         oid = str(match["order_id"])
-        tip = (pd.Timestamp(attempt["expiration_ts"], unit="s", tz="UTC")
-               if attempt.get("expiration_ts") is not None else pd.Timestamp(attempt["tip_utc"]))
+        tip = (
+            pd.Timestamp(attempt["expiration_ts"], unit="s", tz="UTC")
+            if attempt.get("expiration_ts") is not None
+            else pd.Timestamp(attempt["tip_utc"])
+        )
         # Require 10 extra minutes after nominal expiration to tolerate late
         # exchange events. No history, no balance release.
         can_release = (
@@ -612,6 +622,14 @@ def pass_once(client, env, frame, now, journal, *, dry=False):
         fills = client.fills(min_ts=min_ts)
         if not isinstance(fills, list):
             raise TradingError("Cannot read production fills")
+        owned_ids = {str(a["order_id"]) for a in accepted.values()}
+        owned_tickers = {a["ticker"] for a in attempts}
+        if any(
+            (f.get("ticker") or f.get("market_ticker")) in owned_tickers
+            and str(f.get("order_id")) not in owned_ids
+            for f in fills
+        ):
+            raise TradingError("Foreign fill in an owned NBA market: HALT")
         active, released = reconcile_expired_unfilled(
             attempts, accepted, state, fills, now
         )

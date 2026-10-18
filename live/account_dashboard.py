@@ -305,8 +305,12 @@ def collect(client, state=STATE):
     if state.name == "prod-nba-auto":
         try:
             with (state / "inputs" / "latest.csv").open() as source:
-                titles.update({row["ticker"]: f"{row['player']} · {row['stat']} {row['line']}"
-                               for row in csv.DictReader(source)})
+                titles.update(
+                    {
+                        row["ticker"]: f"{row['player']} · {row['stat']} {row['line']}"
+                        for row in csv.DictReader(source)
+                    }
+                )
         except (OSError, KeyError, csv.Error):
             pass  # labels only; the exchange still supplies every account amount
     for row in result["positions"] + result["orders"]:
