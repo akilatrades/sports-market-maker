@@ -1,0 +1,29 @@
+name: Format late NFL cutoff tests
+on:
+  push:
+    branches: [fix/nfl-entry-10min-20261018]
+    paths: [.github/workflows/format-nfl-cutoff.yml]
+permissions:
+  contents: write
+jobs:
+  format:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/nfl-entry-10min-20261018
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install ruff==0.11.13
+      - run: |
+          ruff check --fix tests/test_prod_nfl_auto.py
+          ruff format tests/test_prod_nfl_auto.py
+      - run: |
+          if ! git diff --quiet; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add tests/test_prod_nfl_auto.py
+            git commit -m "Format near-kickoff trading tests"
+            git push origin HEAD:fix/nfl-entry-10min-20261018
+          fi
