@@ -382,7 +382,27 @@ def test_nfl_market_dry_run(tmp_path, monkeypatch):
         "fetch_markets",
         lambda series, status, historical: markets if "RECYDS" in series else [],
     )
-    monkeypatch.setattr(nfl, "load_nfl", lambda: (pd.DataFrame(), pd.DataFrame()))
+    schedule = pd.DataFrame([{
+        "gameday": "2026-10-18",
+        "away_team": "CHI",
+        "home_team": "ATL",
+        "season": 2026,
+        "week": 6,
+    }])
+    monkeypatch.setattr(nfl, "load_nfl", lambda: (schedule, pd.DataFrame()))
+    monkeypatch.setattr(
+        nfl, "current_rosters",
+        lambda teams, now=None: {
+            "CHI": {},
+            "ATL": {"player 0": True, "player 1": True, "player 2": True},
+        },
+    )
+    monkeypatch.setattr(
+        nfl, "load_injuries",
+        lambda: pd.DataFrame(columns=[
+            "season", "week", "team", "full_name", "report_status"
+        ]),
+    )
     monkeypatch.setattr(nfl, "model_probabilities", lambda m, g, now: p_model)
     monkeypatch.setattr(
         nfl,
