@@ -304,8 +304,48 @@ def record_execution(journal, events, attempts, accepted, fills, settlements):
         seen_results.add(ticker)
 
 
-def verify_quote(candidate):
-    """Re-read production quote immediately before placing the selected order."""
+# Guardrail for the small pilot. No change to maker/taker status or risk caps.
+# Only improve a quote by a second tick in a spread wide enough to stay passive.
+EXTRA_MAKER_TICK = 0.01
+MIN_EDGE_AFTER_IMPROVEMENT = 0.03
+
+
+def execution_quote(candidate):
+    """Choose a better maker quote only if the existing book/model edge covers it.
+
+    candidate.edge already includes estimated maker fees, and where available
+    uses sportsbook probability rather than model-only probability. Preserve
+    at least three percentage points of that estimated edge after improving.
+    """
+    base = float(candidate.price)
+    original_edge = float(candidate.edge)
+    bid, ask = float(candidate.yes_bid), float(candidate.yes_ask)
+    if not all(math.isfinite(v) for v in (base, original_edge, bid, ask)):
+        raise TradingError("Nonfinite execution quote")
+    if not 0 < bid < ask < 1:
+        raise TradingError("Invalid execution market spread")
+    spread_cents = round((ask - bid) * 100)
+    if abs(spread_cents - (ask - bid) * 100) > 0.0001:
+        raise TradingError("Non-cent price spread in maker experiment")
+    # Baseline is already inside 2c+ spreads by one tick.
+    # A second tick must never reach/cross the opposing YES bid.
+    proposed = round(base + EXTRA_MAKER_TICK, 2)
+    remaining_edge = round(original_edge - EXTRA_MAKER_TICK, 5)
+    take_second_tick = (
+        spread_cents >= 3
+        and remaining_edge >= MIN_EDGE_AFTER_IMPROVEMENT
+        and proposed <= 0.90
+        and round(1 - proposed, 2) > round(bid, 2)
+    )
+    return (
+        proposed if take_second_tick else base,
+        remaining_edge if take_second_tick else original_edge,
+        int(take_second_tick),
+    )
+
+
+def verify_quote(candidate, proposed_no_price=None):
+    """Re-read production quote and ensure selected maker price is still passive."""
     market = fetch_market(str(candidate.ticker))
     if not market or market.get("status") not in {"active", "open"}:
         raise TradingError("Selected market no longer active")
@@ -322,6 +362,13 @@ def verify_quote(candidate):
     expected = round(no_bid + (0.01 if ask - bid >= 0.019999 else 0), 2)
     if abs(expected - float(candidate.price)) > 0.001:
         raise TradingError("Price moved since model snapshot; wait for next pass")
+    price = float(candidate.price) if proposed_no_price is None else float(proposed_no_price)
+    if price < expected - 0.001 or price > expected + EXTRA_MAKER_TICK + 0.001:
+        raise TradingError("Proposed NO price does not match verified snapshot")
+    # A buy NO is a sell YES ask at 1 - price. Resting order must be priced
+    # strictly above the YES bid to stay maker-only.
+    if round(1 - price, 2) <= round(bid, 2):
+        raise TradingError("Proposed maker quote would cross the YES bid")
 
 
 def select_candidates(frame, events, state, now):
@@ -351,8 +398,8 @@ def select_candidates(frame, events, state, now):
     return list(found.sort_values("edge", ascending=False).itertuples())
 
 
-def order_from_row(row, now):
-    price = float(row.price)
+def order_from_row(row, now, no_price=None):
+    price = float(row.price) if no_price is None else float(no_price)
     cents = round(price * 100)
     if not math.isfinite(price) or abs(cents - price * 100) > 1e-6:
         raise TradingError("Order price not a whole cent")
@@ -475,13 +522,14 @@ def pass_once(client, env, frame, now, journal, *, dry=False):
         return False
     for row in candidates:
         try:
-            order, cost = order_from_row(row, now)
+            quoted, execution_edge, extra_ticks = execution_quote(row)
+            order, cost = order_from_row(row, now, no_price=quoted)
         except TradingError:
             continue
         if not room_for(attempts, state["active"], row, cost, now):
             continue
         try:
-            verify_quote(row)
+            verify_quote(row, quoted)
         except TradingError:
             continue
         if dry:
@@ -494,6 +542,8 @@ def pass_once(client, env, frame, now, journal, *, dry=False):
                         "count": order.count,
                         "cost": cost,
                         "price_cents": order.price_cents,
+                        "extra_maker_ticks": extra_ticks,
+                        "edge_after_quote": round(execution_edge, 4),
                     },
                     sort_keys=True,
                 ),
@@ -524,7 +574,9 @@ def pass_once(client, env, frame, now, journal, *, dry=False):
                 "game_id": str(row.game_id),
                 "team": str(row.team),
                 "tip_utc": pd.Timestamp(row.tip_utc).isoformat(),
-                "edge": round(float(row.edge), 4),
+                "edge": round(execution_edge, 4),
+                "baseline_edge": round(float(row.edge), 4),
+                "extra_maker_ticks": extra_ticks,
             },
         )
         try:
