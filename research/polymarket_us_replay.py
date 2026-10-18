@@ -6,6 +6,7 @@ counterfactual IF a maker order had filled, never realized or estimated P&L.
 
 Run: python -m research.polymarket_us_replay
 """
+
 import json
 import math
 import urllib.parse
@@ -52,15 +53,20 @@ def props_from_closed(league, get=get_json):
     # The filtered API can be empty even when unfiltered markets are present.
     # Neither an empty page nor a bounded response proves complete coverage.
     queries = {
-        "typed_closed": {"closed": "true", "tagIds": tag,
-                         "sportsMarketTypes": "SPORTS_MARKET_TYPE_PROP"},
+        "typed_closed": {
+            "closed": "true",
+            "tagIds": tag,
+            "sportsMarketTypes": "SPORTS_MARKET_TYPE_PROP",
+        },
         "all_closed": {"closed": "true", "tagIds": tag},
     }
     for source, filters in queries.items():
         n = 0
         for page in range(MAX_PAGES):
-            data = get("/v1/markets", {**filters, "limit": PAGE_LIMIT,
-                                       "offset": page * PAGE_LIMIT})
+            data = get(
+                "/v1/markets",
+                {**filters, "limit": PAGE_LIMIT, "offset": page * PAGE_LIMIT},
+            )
             batch = data.get("markets") if isinstance(data, dict) else None
             if not isinstance(batch, list):
                 raise ValueError("US market catalog returned unexpected format")
@@ -107,9 +113,13 @@ def quote_candidate(points, start_ts, end_ts, tick=TICK):
             continue
         if price > no_ask - tick + 1e-8:
             continue
-        return {"timestamp": ts, "no_bid": round(no_bid, 4),
-                "no_ask": round(no_ask, 4), "rest_no_price": price,
-                "spread_cents": round(100 * (no_ask - no_bid), 2)}
+        return {
+            "timestamp": ts,
+            "no_bid": round(no_bid, 4),
+            "no_ask": round(no_ask, 4),
+            "rest_no_price": price,
+            "spread_cents": round(100 * (no_ask - no_bid), 2),
+        }
     return None
 
 
@@ -167,10 +177,15 @@ def replay(get=get_json):
             lo = int((tip - timedelta(hours=6)).timestamp())
             hi = int((tip - timedelta(hours=2)).timestamp())
             try:
-                history = get("/v1/price-history", {
-                    "symbol": slug, "timestamp.startTimestamp": lo,
-                    "timestamp.endTimestamp": hi, "fidelity": 1,
-                }).get("history")
+                history = get(
+                    "/v1/price-history",
+                    {
+                        "symbol": slug,
+                        "timestamp.startTimestamp": lo,
+                        "timestamp.endTimestamp": hi,
+                        "fidelity": 1,
+                    },
+                ).get("history")
                 if not isinstance(history, list):
                     continue
                 quote = quote_candidate(history, lo, hi)
@@ -182,10 +197,17 @@ def replay(get=get_json):
             except (OSError, ValueError, KeyError):
                 continue
             row = {
-                "league": league, "date_eastern": key[1], "player": key[2],
-                "stat": key[3], "line": key[4], "slug": slug,
-                "quote": quote, "settlement_yes": settlement,
-                "order_submitted": False, "filled": None, "model_probability": None,
+                "league": league,
+                "date_eastern": key[1],
+                "player": key[2],
+                "stat": key[3],
+                "line": key[4],
+                "slug": slug,
+                "quote": quote,
+                "settlement_yes": settlement,
+                "order_submitted": False,
+                "filled": None,
+                "model_probability": None,
                 "expected_edge": None,
             }
             if settlement is not None:
@@ -201,16 +223,16 @@ def replay(get=get_json):
         "not_trading_profit": True,
         "profit_per_contract_if_every_order_filled": (
             round(sum(x["no_payoff_if_filled"] for x in scored) / len(scored), 4)
-            if scored else None
+            if scored
+            else None
         ),
-        "severe_selection_bias_warning":
-            "Resting maker fills depend on queue priority and adverse selection; "
+        "severe_selection_bias_warning": "Resting maker fills depend on queue priority and adverse selection; "
             "a profitable all-filled counterfactual is not an executable edge.",
     }
     result["interpretation"] = (
         "Insufficient to conclude strategy profitability or compare with Kalshi"
-        if len(scored) < 30 else
-        "Quote-only exploratory statistics; queue/trade data and model forecasts "
+        if len(scored) < 30
+        else "Quote-only exploratory statistics; queue/trade data and model forecasts "
         "still required before comparing executable edge with Kalshi"
     )
     return result
@@ -220,12 +242,17 @@ def main():
     result = replay()
     OUT.parent.mkdir(parents=True, exist_ok=True)
     OUT.write_text(json.dumps(result, indent=2) + "\n")
-    print(json.dumps({
-        "coverage": result["coverage"],
-        "quotes_scored": result["scored_quote_opportunities"],
-        "conditional_all_filled": result["all_fill_counterfactual"],
-        "interpretation": result["interpretation"],
-    }, indent=2))
+    print(
+        json.dumps(
+            {
+                "coverage": result["coverage"],
+                "quotes_scored": result["scored_quote_opportunities"],
+                "conditional_all_filled": result["all_fill_counterfactual"],
+                "interpretation": result["interpretation"],
+            },
+            indent=2,
+        )
+    )
 
 
 if __name__ == "__main__":
