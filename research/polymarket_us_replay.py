@@ -227,7 +227,7 @@ def replay(get=get_json):
             else None
         ),
         "severe_selection_bias_warning": "Resting maker fills depend on queue priority and adverse selection; "
-            "a profitable all-filled counterfactual is not an executable edge.",
+        "a profitable all-filled counterfactual is not an executable edge.",
     }
     result["interpretation"] = (
         "Insufficient to conclude strategy profitability or compare with Kalshi"
