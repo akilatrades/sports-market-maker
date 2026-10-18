@@ -252,7 +252,11 @@ def sample_unfiltered_catalog(league, get=get_json):
             continue
         kind = str(row.get("sportsMarketTypeV2") or "").lower()
         meta = row.get("metadata") or {}
-        full_type = str(meta.get("market_sport_type") or "").lower() if isinstance(meta, dict) else ""
+        full_type = (
+            str(meta.get("market_sport_type") or "").lower()
+            if isinstance(meta, dict)
+            else ""
+        )
         typed += int("prop" in kind or "_player_" in full_type)
     return {
         "sampled_rows": len(rows),
@@ -368,7 +372,10 @@ def run(poly_get=get_json, kalshi_fetch=fetch_markets):
             try:
                 diagnostic = sample_unfiltered_catalog(league, get=poly_get)
             except (ValueError, OSError) as error:
-                diagnostic = {"status": "unverified", "error_type": type(error).__name__}
+                diagnostic = {
+                    "status": "unverified",
+                    "error_type": type(error).__name__,
+                }
         coverage[league] = {
             "unfiltered_sample_diagnostic": diagnostic,
             "polymarket_us_events_scanned": None,
