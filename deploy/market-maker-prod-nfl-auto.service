@@ -1,0 +1,15 @@
+[Unit]
+Description=Bounded unattended Kalshi production NFL research trader
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=oneshot
+User=trader
+Group=trader
+WorkingDirectory=/home/trader/sports-market-maker-prod-auto
+EnvironmentFile=/etc/market-maker-prod-auto.env
+ExecStart=/home/trader/sports-market-maker-prod-auto/.venv/bin/python -m live.prod_nfl_auto --live
+Restart=no
+UMask=0077
+TimeoutStartSec=240
