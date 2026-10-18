@@ -240,7 +240,9 @@ def test_nfl_priced_frame_from_open_markets():
     ]
     out = priced_frame(markets, {markets[0]["ticker"]: 0.38}, now)
     assert list(out.columns) == COLUMNS
-    assert out.hours_to_tip.tolist() == [6.0, 6.0]
+    # Never trust the exchange occurrence field as a kickoff time.
+    assert out.hours_to_tip.isna().all()
+    assert out.tip_utc.isna().all()
     # Team must not be inferred from a ticker's player identifier.
     assert out.team.tolist() == ["", ""]
     assert out.injury_status.tolist() == ["UNVERIFIED", "UNVERIFIED"]
