@@ -22,6 +22,7 @@ jobs:
       - run: pip install -r requirements.txt ruff==0.11.13
       - name: Test quote-vs-fill separation
         run: |
+          ruff format --diff research/polymarket_us_replay.py tests/test_polymarket_us_replay.py || true
           ruff check research/polymarket_us_replay.py tests/test_polymarket_us_replay.py
           ruff format --check research/polymarket_us_replay.py tests/test_polymarket_us_replay.py
           pytest -q tests/test_polymarket_us_replay.py
