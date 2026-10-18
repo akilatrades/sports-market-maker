@@ -204,7 +204,9 @@ def main():
         if os.getenv("KALSHI_ENV") != "prod":
             raise TradingError("Pilot diagnostics must use production market data")
 
-    state_dir = STATE_DIR if (args.live or args.inspect) else Path("/tmp/smm-prod-nfl-dry")
+    state_dir = (
+        STATE_DIR if (args.live or args.inspect) else Path("/tmp/smm-prod-nfl-dry")
+    )
     state_dir.mkdir(parents=True, exist_ok=True, mode=0o700)
     state_dir.chmod(0o700)
     lock_path = state_dir / "pilot.lock"
