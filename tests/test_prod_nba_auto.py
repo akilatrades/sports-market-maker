@@ -153,7 +153,7 @@ def test_new_injury_since_projection_vetoes_candidate(tmp_path, monkeypatch):
     )
     out = nba.nba_candidates(NOW, latest=latest)
     assert len(out) == 1
-    assert out.injury_status.iloc[0] == "NEW_INJURY_NEWS"
+    assert out.injury_status.iloc[0] == "TEAM_INJURY_CHANGE"
     assert nba.select_candidates(out, [], {"active": []}, NOW) == []
 
 
