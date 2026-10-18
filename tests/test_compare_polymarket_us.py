@@ -198,10 +198,20 @@ def test_dashboard_exchange_watch_is_read_only():
     assert "Not a tradable edge." in html
     assert "No completed Polymarket US scan published yet" in html
 
+
 def test_only_unambiguous_integer_over_thresholds_are_normalized():
-    assert p.threshold_from_question("Mike Evans: over 79.5 receiving yards", "receiving_yards") == 79.5
-    assert p.threshold_from_question("Mike Evans: over 80 receiving yards", "receiving_yards") == 80.5
-    assert p.threshold_from_question("Mike Evans: 80+ receiving yards", "receiving_yards") == 79.5
+    assert (
+        p.threshold_from_question("Mike Evans: over 79.5 receiving yards", "receiving_yards")
+        == 79.5
+    )
+    assert (
+        p.threshold_from_question("Mike Evans: over 80 receiving yards", "receiving_yards")
+        == 80.5
+    )
+    assert (
+        p.threshold_from_question("Mike Evans: 80+ receiving yards", "receiving_yards")
+        == 79.5
+    )
 
 
 def test_player_prop_metadata_classification():
