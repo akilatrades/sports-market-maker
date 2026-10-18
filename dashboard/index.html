@@ -817,7 +817,11 @@ fetch("../outputs/cross_exchange/latest.json", {cache:"no-store"})
       if (!c) return `<div class="fwd-row"><span>${league.toUpperCase()}</span><strong>No report</strong></div>`;
       const incomplete = !c.pagination_complete || c.bbo_scan_capped;
       if (c.polymarket_us_catalog_empty) {
-        return `<div class="fwd-row"><span>${league.toUpperCase()} · ${esc(c.kalshi_markets_scanned)} Kalshi markets</span><strong>Polymarket US prop catalog returned no listings; coverage unverified</strong></div>`;
+         const d = c.unfiltered_sample_diagnostic;
+         const sampled = d && typeof d.sampled_rows === "number"
+           ? ` Unfiltered sample: ${d.sampled_rows} league-tagged markets, ${d.typed_prop_rows_seen} marked as props.`
+           : " No unfiltered diagnostic yet.";
+         return `<div class="fwd-row"><span>${league.toUpperCase()} · ${esc(c.kalshi_markets_scanned)} Kalshi markets</span><strong>Filtered prop catalog returned no listings; coverage unverified</strong></div><p class="note">${esc(sampled)} This is not a complete player-prop inventory or a trading signal.</p>`;
       }
       return `<div class="fwd-row"><span>${league.toUpperCase()} · ${esc(c.polymarket_us_strict_prop_markets)} strictly parsed props vs. ${esc(c.kalshi_markets_scanned)} Kalshi markets</span><strong>${esc(c.priced_pairs_needing_rules_review)} possible overlaps${incomplete ? " (partial scan)" : ""}</strong></div>`;
     }).join("");
