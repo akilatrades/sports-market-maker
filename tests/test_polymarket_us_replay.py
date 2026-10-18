@@ -1,4 +1,5 @@
 """Historical US replay must not fabricate maker fills or look ahead."""
+
 from datetime import UTC, datetime, timedelta
 
 from research import polymarket_us_replay as r
@@ -21,8 +22,12 @@ def test_price_history_is_quote_not_trade_and_respects_pregame_window():
 def test_rejects_crossing_quotes_bad_prices_and_nonbinary_settlements():
     a = [{"timestamp": 100, "longPrice": 0.51, "shortPrice": 0.49}]
     assert r.quote_candidate(a, 90, 110) is None
-    assert r.quote_candidate([{"timestamp": 100, "longPrice": 1.3,
-                               "shortPrice": 0.1}], 90, 110) is None
+    assert (
+        r.quote_candidate(
+            [{"timestamp": 100, "longPrice": 1.3, "shortPrice": 0.1}], 90, 110
+        )
+        is None
+    )
     assert r.settle_yes({"settlement": "0"}) == 0
     assert r.settle_yes({"settlement": {"value": 1}}) == 1
     assert r.settle_yes({"settlement": 0.4}) is None
@@ -53,8 +58,11 @@ def test_replay_reports_conditional_payoff_not_actual_profit(monkeypatch):
         if path == "/v1/price-history":
             assert params["timestamp.startTimestamp"] < quote_ts
             assert params["timestamp.endTimestamp"] > quote_ts
-            return {"history": [{"timestamp": quote_ts, "longPrice": 0.51,
-                                 "shortPrice": 0.54}]}
+            return {
+                "history": [
+                    {"timestamp": quote_ts, "longPrice": 0.51, "shortPrice": 0.54}
+                ]
+            }
         if path.endswith("/settlement"):
             return {"settlement": 0}
         raise AssertionError(path)
@@ -81,14 +89,21 @@ def test_no_archived_props_is_inconclusive_not_zero_edge():
 
     result = r.replay(get=fake)
     assert result["coverage"]["nba"]["strict_archived_prop_contracts_found"] == 0
-    assert result["all_fill_counterfactual"]["profit_per_contract_if_every_order_filled"] is None
+    assert (
+        result["all_fill_counterfactual"]["profit_per_contract_if_every_order_filled"]
+        is None
+    )
     assert result["realized_profit"] is None
     assert result["model_tested"] is False
 
 
 def test_only_read_only_market_endpoints_allowed():
-    for path in ("/portfolio/orders", "/v1/orders", "/v1/markets/foo/bbo",
-                 "https://clob.polymarket.com/book"):
+    for path in (
+        "/portfolio/orders",
+        "/v1/orders",
+        "/v1/markets/foo/bbo",
+        "https://clob.polymarket.com/book",
+    ):
         try:
             r.get_json(path)
         except ValueError:
