@@ -411,3 +411,32 @@ def test_real_money_order_not_submitted_when_wall_clock_cutoff_failed(
     assert not auto.pass_once(client, ARMED, frame(), NOW, journal)
     assert client.placed == []
     assert not journal.exists()
+
+def test_queue_diagnostic_preserves_http_status_without_response_body(
+    quotes, tmp_path, monkeypatch
+):
+    client = Client()
+    journal = tmp_path / "ledger.jsonl"
+
+    def rejected_queue(order_id):
+        raise TradingError(
+            "GET /portfolio/orders/xxx/queue_position -> HTTP 404: PRIVATE DETAILS"
+        )
+
+    monkeypatch.setattr(client, "queue_position", rejected_queue)
+    assert auto.pass_once(client, ARMED, frame(), NOW, journal)
+    events = auto.load_journal(journal)
+    q = next(e for e in events if e["event"] == "queue")
+    assert q["ahead"] is None
+    assert q["issue"] == "HTTP_404"
+    assert "PRIVATE" not in str(events)
+
+
+def test_queue_success_has_no_issue(quotes, tmp_path):
+    client = Client()
+    journal = tmp_path / "ledger.jsonl"
+    assert auto.pass_once(client, ARMED, frame(), NOW, journal)
+    events = auto.load_journal(journal)
+    q = next(e for e in events if e["event"] == "queue")
+    assert q["ahead"] == 4.0
+    assert q["issue"] is None
