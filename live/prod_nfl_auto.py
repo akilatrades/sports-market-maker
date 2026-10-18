@@ -29,7 +29,7 @@ MAX_DAILY_COST = 10.0
 MAX_GAME_ORDERS = 2
 MAX_CONTRACTS = 5
 FEE_RESERVE = 1.10
-WINDOW = (0.5, 2.0)
+WINDOW = (1 / 6, 2.0)  # latest entry: 10 minutes before kickoff
 STATE = Path("/home/trader/prod-nfl-auto")
 REQUIRED = {
     "KALSHI_ENV": "prod",
@@ -317,7 +317,7 @@ def order_from_row(row, now):
     if count <= 0:
         raise TradingError("Zero affordable contracts")
     tip = pd.Timestamp(row.tip_utc)
-    if pd.isna(tip) or int(tip.timestamp()) < int(now.timestamp()) + 31 * 60:
+    if pd.isna(tip) or int(tip.timestamp()) < int(now.timestamp()) + 10 * 60:
         raise TradingError("Too close to kickoff")
     cost = round(count * cents / 100, 2)
     order = Order(
