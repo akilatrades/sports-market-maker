@@ -1,5 +1,5 @@
 {
- "updated_utc": "2026-10-18T16:18+00:00",
+ "updated_utc": "2026-10-18T16:39+00:00",
  "paper": {
   "ledgers": [
    {
@@ -587,7 +587,7 @@
  },
  "live": {},
  "live_nfl": {
-  "run_utc": "2026-10-18T16:04+00:00",
+  "run_utc": "2026-10-18T16:39+00:00",
   "mode": "dry",
   "env": "prod",
   "rule": "no_seller_bookline",
@@ -598,18 +598,18 @@
   "pilot_total_cap": null,
   "bankroll": 250.0,
   "injury_cancels": 0,
-  "candidates": 81,
+  "candidates": 62,
   "placed": 18,
-  "rejected": 63,
+  "rejected": 44,
   "rejections": {
-   "6 orders already in game 26OCT18LACKC": 34,
-   "6 orders already in game 26OCT18BUFLV": 21,
-   "6 orders already in game 26OCT18ARILAR": 8
+   "6 orders already in game 26OCT18LACKC": 28,
+   "6 orders already in game 26OCT18BUFLV": 14,
+   "6 orders already in game 26OCT18ARILAR": 2
   },
-  "open_exposure": 36.94,
+  "open_exposure": 36.54,
   "orders_by_status": {
-   "rejected": 370,
-   "dry": 136
+   "rejected": 414,
+   "dry": 154
   },
   "dollars_resting": 0.0
  },
