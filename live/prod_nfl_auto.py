@@ -376,6 +376,23 @@ def order_from_row(row, now):
     return order, cost
 
 
+def pre_submit_kickoff_ok(tip_utc, now):
+    """Fail closed on the wall clock, not the earlier two-minute scan start.
+
+    A 30-second submission buffer prevents slow API calls from pushing
+    accepted orders past the intended ten-minute pre-kickoff cutoff.
+    """
+    from datetime import timedelta
+
+    tip = pd.Timestamp(tip_utc)
+    if pd.isna(tip):
+        return False
+    try:
+        return tip.to_pydatetime() > now + timedelta(minutes=10, seconds=30)
+    except (TypeError, ValueError):
+        return False
+
+
 def room_for(attempts, active, row, cost, now):
     today = now.astimezone(__import__("zoneinfo").ZoneInfo("America/New_York")).date()
     total = sum(reserve(a["cost"]) for a in attempts)
@@ -482,6 +499,13 @@ def pass_once(client, env, frame, now, journal, *, dry=False):
                 ),
             )
             return False
+
+        # The candidate scan can take minutes. Check the actual wall clock
+        # immediately before the irreversible order intent and network POST,
+        # rather than the start of the scan, or late entries can slip through.
+        if not pre_submit_kickoff_ok(row.tip_utc, datetime.now(UTC)):
+            print(f"Skipped {order.ticker}: too close to verified kickoff at submission")
+            continue
 
         # Durable intent first; any failure after this (including a timeout)
         # disables all future automatic orders until manually investigated.
