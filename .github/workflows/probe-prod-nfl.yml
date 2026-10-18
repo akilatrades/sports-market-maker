@@ -2,7 +2,7 @@ name: NFL production read-only opportunity probe
 on:
   push:
     branches: [pilot/prod-nfl-supervised-20261018]
-    paths: [.github/workflows/probe-prod-nfl.yml]
+    paths: [.github/workflows/probe-prod-nfl.yml, live/prod_nfl_pilot.py]
 permissions:
   contents: read
 jobs:
