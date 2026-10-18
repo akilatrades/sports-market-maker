@@ -615,7 +615,7 @@ def verify_execution_venue(client):
             "https://external-api.demo.kalshi.co/trade-api/v2",
         },
     }
-    trusted = aliases.get(client.env, set())
+    trusted = aliases.get(getattr(client, "env", os.environ.get("KALSHI_ENV", "demo")), set())
     if data_url not in trusted or execution_url not in trusted:
         raise TradingError(
             "Trading stopped: market-data API and order-execution API "
