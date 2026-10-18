@@ -6,6 +6,7 @@ ALLOW_PRODUCTION_TRADING=YES are *all* supplied from a separate production
 environment. The journal is outside Git; one attempt permanently blocks
 further placement until a human audits it.
 """
+
 import argparse
 import fcntl
 import json
@@ -127,9 +128,12 @@ def execute_once(*, live, env, client, frame, now, journal):
         return False
     order, cost = make_order(candidate, now)
     details = {
-        "ticker": order.ticker, "side": order.side,
-        "count": order.count, "price_cents": order.price_cents,
-        "cost": cost, "tip_utc": candidate.tip_utc.isoformat(),
+        "ticker": order.ticker,
+        "side": order.side,
+        "count": order.count,
+        "price_cents": order.price_cents,
+        "cost": cost,
+        "tip_utc": candidate.tip_utc.isoformat(),
         "edge": round(float(candidate.edge), 4),
     }
     if not live:
@@ -138,30 +142,51 @@ def execute_once(*, live, env, client, frame, now, journal):
 
     # Write-ahead intent means even a timeout/crash CANNOT cause the same
     # runner to retry a possibly accepted live order. Persist before network.
-    append_event(journal, {
-        "event": "intent", "utc": now.isoformat(),
-        "client_order_id": order.client_order_id, **details,
-    })
+    append_event(
+        journal,
+        {
+            "event": "intent",
+            "utc": now.isoformat(),
+            "client_order_id": order.client_order_id,
+            **details,
+        },
+    )
     try:
         result = client.place(order)
     except Exception as err:
-        append_event(journal, {
-            "event": "uncertain_result", "utc": datetime.now(UTC).isoformat(),
-            "error_type": type(err).__name__,
-        })
+        append_event(
+            journal,
+            {
+                "event": "uncertain_result",
+                "utc": datetime.now(UTC).isoformat(),
+                "error_type": type(err).__name__,
+            },
+        )
         raise TradingError(
             "Order submission uncertain. Inspect production orders manually; "
             "never retry automatically."
         ) from err
-    append_event(journal, {
-        "event": "accepted", "utc": datetime.now(UTC).isoformat(),
-        "order_id": result["order_id"], "client_order_id": order.client_order_id,
-    })
+    append_event(
+        journal,
+        {
+            "event": "accepted",
+            "utc": datetime.now(UTC).isoformat(),
+            "order_id": result["order_id"],
+            "client_order_id": order.client_order_id,
+        },
+    )
     print("PRODUCTION ORDER ACCEPTED; verify fills in Kalshi and do not rerun live.")
-    print(json.dumps({
-        "ticker": order.ticker, "cost": cost, "order_id": result["order_id"],
-        "immediate_fill_count": result.get("fill_count", "unknown"),
-    }, sort_keys=True))
+    print(
+        json.dumps(
+            {
+                "ticker": order.ticker,
+                "cost": cost,
+                "order_id": result["order_id"],
+                "immediate_fill_count": result.get("fill_count", "unknown"),
+            },
+            sort_keys=True,
+        )
+    )
     return True
 
 
@@ -189,7 +214,9 @@ def main():
             entries = read_events(journal)
             print("Pilot journal events:", len(entries))
             for e in entries:
-                print(json.dumps({k: v for k, v in e.items() if k != "client_order_id"}))
+                print(
+                    json.dumps({k: v for k, v in e.items() if k != "client_order_id"})
+                )
             return
         client = TradingClient(dry_run=not args.live, env="prod")
         now = datetime.now(UTC)
@@ -200,10 +227,15 @@ def main():
             if any(x.get("event") == "intent" for x in read_events(journal)):
                 raise TradingError("Prior attempt; one-shot pilot locked")
         from live.nfl_trade import candidates as nfl_candidates
+
         frame = nfl_candidates(now)
         execute_once(
-            live=args.live, env=os.environ, client=client,
-            frame=frame, now=now, journal=journal,
+            live=args.live,
+            env=os.environ,
+            client=client,
+            frame=frame,
+            now=now,
+            journal=journal,
         )
 
 
