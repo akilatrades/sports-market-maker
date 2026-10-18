@@ -7,7 +7,7 @@ import pytest
 from kalshi.trading import TradingError
 from live import prod_nfl_auto as auto
 
-NOW = datetime(2026, 10, 18, 15, 22, tzinfo=timezone.utc)
+NOW = datetime.now(timezone.utc)
 ARMED = {
     "KALSHI_ENV": "prod",
     "TRADE_MODE": "live",
