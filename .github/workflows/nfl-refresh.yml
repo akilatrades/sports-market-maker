@@ -3,6 +3,12 @@ name: nfl refresh
 on:
   schedule:
     - cron: "0 13 * * *"
+  push:
+    paths:
+      - "markets/nfl/roster_guard.py"
+      - "markets/nfl/data.py"
+      - "markets/nfl/project.py"
+      - "live/nfl_projections.py"
   workflow_dispatch:
 permissions:
   contents: write

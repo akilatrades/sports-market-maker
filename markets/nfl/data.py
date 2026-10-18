@@ -6,6 +6,7 @@ import numpy as np
 import pandas as pd
 
 from markets.nfl.odds import no_vig
+from markets.nfl.kalshi import normalize_name
 
 DATA = Path("data/nfl")
 # The schedule keeps a franchise's code at the time; box scores use today's.
@@ -90,28 +91,57 @@ def player_games(games, players):
     return frame
 
 
-def upcoming_rows(games, players, season, week, lookback_games=2):
+def upcoming_rows(games, players, season, week, lookback_games=2, rosters=None):
     """Placeholder rows for players expected to play in an upcoming week.
 
-    A player is included if he appeared for the team in one of its last
-    ``lookback_games`` games this season. The listed starting QB comes from
-    the schedule. Injuries are not checked: see the README.
+    With a current roster, players with prior NFL history are included even
+    after extended absence or a team change. Unknown/ambiguous identities
+    are excluded. Without roster data, retain old historical-test behavior.
     """
     teams = team_games(games)
     upcoming = teams[(teams.season == season) & (teams.week == week)]
     played = players[players.season == season]
+    if rosters is not None:
+        history = players[players.season <= season].copy()
+        history["roster_name"] = history.player_display_name.map(normalize_name)
+        ambiguous = (
+            history.groupby("roster_name")
+            .player_id.nunique()
+            .loc[lambda x: x > 1]
+            .index
+        )
+        history = history[~history.roster_name.isin(ambiguous)]
+        history = history.sort_values(["season", "week"]).drop_duplicates(
+            "player_id", keep="last"
+        )
     rows = []
     for team_row in upcoming.itertuples():
-        team_weeks = sorted(played.loc[played.team == team_row.team, "week"].unique())
-        recent = team_weeks[-lookback_games:]
-        roster = played[(played.team == team_row.team) & played.week.isin(recent)]
-        roster = roster.sort_values("week").drop_duplicates("player_id", keep="last")
-        # Drop players who have since appeared for another team.
-        latest = played.sort_values("week").drop_duplicates("player_id", keep="last")
-        moved = latest[latest.team != team_row.team].player_id
-        roster = roster[~roster.player_id.isin(moved)]
+        if rosters is not None:
+            current = rosters.get(team_row.team, {})
+            roster = history[
+                history.roster_name.map(lambda name: current.get(name, False))
+            ].copy()
+        else:
+            team_weeks = sorted(
+                played.loc[played.team == team_row.team, "week"].unique()
+            )
+            recent = team_weeks[-lookback_games:]
+            roster = played[(played.team == team_row.team) & played.week.isin(recent)]
+            roster = roster.sort_values("week").drop_duplicates(
+                "player_id", keep="last"
+            )
+            # Drop players who have since appeared for another team.
+            latest = played.sort_values("week").drop_duplicates(
+                "player_id", keep="last"
+            )
+            moved = latest[latest.team != team_row.team].player_id
+            roster = roster[~roster.player_id.isin(moved)]
         listed_qb = team_row.qb_id
-        if isinstance(listed_qb, str) and listed_qb not in set(roster.player_id):
+        if (
+            rosters is None
+            and isinstance(listed_qb, str)
+            and listed_qb not in set(roster.player_id)
+        ):
             history = players[players.player_id == listed_qb]
             if len(history):
                 roster = pd.concat([roster, history.tail(1)])

@@ -362,12 +362,13 @@ def test_nfl_market_dry_run(tmp_path, monkeypatch):
     import live.nfl_trade as nfl
 
     now = pd.Timestamp("2026-10-18T14:00:00Z")
+    names = ["Player Alpha", "Player Beta", "Player Gamma"]
     markets = [
         {
             "ticker": f"KXNFLRECYDS-26OCT18CHIATL-ATLP{i}-75",
             "event_ticker": "KXNFLRECYDS-26OCT18CHIATL",
-            "title": f"Player {i}: 75+ receiving yards",
-            "yes_sub_title": f"Player {i}: 75+",
+            "title": f"{names[i]}: 75+ receiving yards",
+            "yes_sub_title": f"{names[i]}: 75+",
             "floor_strike": 74.5,
             "yes_bid_dollars": "0.40",
             "yes_ask_dollars": "0.45",
@@ -382,7 +383,33 @@ def test_nfl_market_dry_run(tmp_path, monkeypatch):
         "fetch_markets",
         lambda series, status, historical: markets if "RECYDS" in series else [],
     )
-    monkeypatch.setattr(nfl, "load_nfl", lambda: (pd.DataFrame(), pd.DataFrame()))
+    schedule = pd.DataFrame(
+        [
+            {
+                "gameday": "2026-10-18",
+                "away_team": "CHI",
+                "home_team": "ATL",
+                "season": 2026,
+                "week": 6,
+            }
+        ]
+    )
+    monkeypatch.setattr(nfl, "load_nfl", lambda: (schedule, pd.DataFrame()))
+    monkeypatch.setattr(
+        nfl,
+        "current_rosters",
+        lambda teams, now=None: {
+            "CHI": {},
+            "ATL": {"player alpha": True, "player beta": True, "player gamma": True},
+        },
+    )
+    monkeypatch.setattr(
+        nfl,
+        "load_injuries",
+        lambda: pd.DataFrame(
+            columns=["season", "week", "team", "full_name", "report_status"]
+        ),
+    )
     monkeypatch.setattr(nfl, "model_probabilities", lambda m, g, now: p_model)
     monkeypatch.setattr(
         nfl,
