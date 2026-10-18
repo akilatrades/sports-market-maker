@@ -241,9 +241,10 @@ def test_nfl_priced_frame_from_open_markets():
     out = priced_frame(markets, {markets[0]["ticker"]: 0.38}, now)
     assert list(out.columns) == COLUMNS
     assert out.hours_to_tip.tolist() == [6.0, 6.0]
-    assert (
-        out.team.tolist() == ["ATL", "ATL"] and out.game_id.iloc[0] == "26OCT18CHIATL"
-    )
+    # Team must not be inferred from a ticker's player identifier.
+    assert out.team.tolist() == ["", ""]
+    assert out.injury_status.tolist() == ["UNVERIFIED", "UNVERIFIED"]
+    assert out.game_id.iloc[0] == "26OCT18CHIATL"
     assert out.stat.tolist() == ["receiving_yards", "skill_tds"]
     assert out.line.tolist() == [74.5, 0.5]
     assert out.p_model.round(2).tolist()[0] == 0.38 and pd.isna(out.p_model.iloc[1])
