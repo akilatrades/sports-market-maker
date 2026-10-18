@@ -15,7 +15,7 @@ from pathlib import Path
 from markets.nfl.kalshi import normalize_name
 
 ESPN = "https://site.api.espn.com/apis/site/v2/sports/football/nfl/teams"
-CACHE = Path("outputs/live/nfl/roster_cache.json")
+CACHE = Path("/tmp/smm-nfl-rosters-cache.json")
 CACHE_MINUTES = 20
 BAD_STATUS = ("inactive", "injured", "reserve", "suspend", "out", "doubtful", "questionable", "pup", "non-football")
 ALIASES = {"JAC": "JAX", "WSH": "WAS", "LAR": "LA", "STL": "LA", "OAK": "LV", "SD": "LAC"}
