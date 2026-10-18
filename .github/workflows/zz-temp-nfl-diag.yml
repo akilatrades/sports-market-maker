@@ -1,0 +1,36 @@
+name: Temporary NFL returning-player diagnostic
+on:
+  push:
+    branches: [fix/nfl-initials-roster-20261018]
+permissions:
+  contents: read
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r requirements.txt
+      - name: Identify missing model players (read-only)
+        run: |
+          python - <<'PY'
+          import pandas as pd
+          from markets.nfl.data import load
+          from markets.nfl.roster_guard import current_rosters
+          from markets.nfl.kalshi import normalize_name
+          rosters = current_rosters(["NE", "BUF"])
+          print("ESPN AJ status:", rosters["NE"].get("a j brown"))
+          print("ESPN DJ status:", rosters["BUF"].get("dj moore"))
+          games, players = load()
+          for name in ("brown", "moore"):
+              recent = players[players.player_display_name.str.contains(name, case=False, na=False)]
+              print("Historical", name, recent[["player_display_name", "player_id", "season", "week", "team"]].tail(8).to_string(index=False))
+              print("Normalized values:", {normalize_name(str(n)) for n in recent.player_display_name.unique()})
+          import json
+          from pathlib import Path
+          out = pd.read_csv("outputs/nfl/projections/2026_week06.csv")
+          print("Projection has Brown:", out.player.str.contains("Brown", case=False).sum())
+          print("Projection has Moore:", out.player.str.contains("Moore", case=False).sum())
+          PY
