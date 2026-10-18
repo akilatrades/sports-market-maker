@@ -158,6 +158,9 @@ def event_teams(event_ticker, game_date, games):
         pair = match.group(1)
     except (IndexError, AttributeError):
         return None
+    needed = {"gameday", "away_team", "home_team", "season", "week"}
+    if not needed.issubset(games.columns):
+        return None
     day_games = games[games.gameday.astype(str).eq(str(game_date))]
     possibilities = []
     for game in day_games.itertuples():
