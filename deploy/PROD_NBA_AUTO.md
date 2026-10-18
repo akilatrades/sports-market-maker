@@ -32,7 +32,7 @@ authorize NBA production trading.
   and out statuses veto affected players or teams. Failure blocks orders.
 - NBA sportsbook bookline veto is attached only for fresh quote rows with
   `updated_utc`; otherwise the rule uses the documented model fallback.
-- A 15m30s real-clock cutoff is checked immediately before an order POST.
+- A 2h30s real-clock cutoff is checked immediately before an order POST (the baseline requires at least 2h before tip).
 - Distinct KILL file blocks entries and cancels owned resting NBA orders;
   already filled positions remain exposed until settlement.
 
