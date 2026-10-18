@@ -55,3 +55,13 @@ def test_dashboard_inline_javascript_parses(tmp_path):
     js = tmp_path / "dashboard.js"
     js.write_text(scripts[0])
     subprocess.run([node, "--check", str(js)], check=True)
+
+
+def test_paper_ledgers_and_demo_account_are_not_conflated():
+    html = DASHBOARD.read_text()
+    assert "The sum of separate $500 research ledgers" in html
+    assert "not a single tradable portfolio" in html
+    assert 'id="scenario-impact"' in html
+    assert "DEMO_REFERENCE.lastVerifiedBalance" in html
+    assert "Not a forecast." in html
+    assert "touch-action: auto" in html

@@ -184,7 +184,7 @@ def test_full_scan_mocked_public_requests_and_no_external_actions(monkeypatch):
     assert snapshot["coverage"]["nfl"]["priced_pairs_needing_rules_review"] == 1
     assert snapshot["coverage"]["nba"]["strict_candidate_keys"] == 0
     assert snapshot["candidates"][0]["mid_gap_cents"] == 17.0
-    assert counter["poly"] == 5  # league tags, prop catalogs and one BBO
+    assert counter["poly"] == 7  # filtered reads, NBA diagnostic, and BBO
     assert counter["kalshi"] == 6  # NBA 4 series and NFL 2
 
 
@@ -222,3 +222,28 @@ def test_player_prop_metadata_classification():
     m = poly_market(sportsMarketTypeV2="SPORTS_MARKET_TYPE_UNSPECIFIED")
     m["metadata"] = {"market_sport_type": "football_player_receiving_yards"}
     assert p.poly_key(m, "nfl", make_event()) is not None
+
+
+def test_unfiltered_empty_filter_diagnostic_does_not_become_trading_signal():
+    calls = []
+
+    def api(path, params=None):
+        calls.append((path, params))
+        if path == "/v2/leagues/nba":
+            return {"league": {"tagId": 5}}
+        if path == "/v1/markets":
+            assert "sportsMarketTypes" not in params
+            return {
+                "markets": [
+                    poly_market(sportsMarketTypeV2="SPORTS_MARKET_TYPE_PROP"),
+                    {"sportsMarketTypeV2": "SPORTS_MARKET_TYPE_FUTURE"},
+                ]
+            }
+        raise AssertionError(path)
+
+    d = p.sample_unfiltered_catalog("nba", get=api)
+    assert d["sampled_rows"] == 2
+    assert d["typed_prop_rows_seen"] == 1
+    assert d["sample_complete"] is True
+    assert d["scope"].endswith("diagnostic only")
+    assert len(calls) == 2

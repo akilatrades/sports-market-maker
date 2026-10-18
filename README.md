@@ -1,5 +1,7 @@
 # Sports market maker
 
+**October 17 execution audit:** [Demo verification, GitHub dry-run status and remaining gates](docs/EXECUTION_READINESS_2026-10-17.md). The $2,500 Demo reference and independent $500 paper ledgers are not interchangeable. No production-money trading has been authorized.
+
 **Forward-validation protocol:** [30-day execution evidence and the 500-fill checkpoint](docs/FORWARD_VALIDATION.md). The live selection, sizing and risk rules are unchanged; reports never enable live trading or authorize a capital increase.
 
 [![tests](https://github.com/akilatrades/sports-market-maker/actions/workflows/tests.yml/badge.svg)](https://github.com/akilatrades/sports-market-maker/actions/workflows/tests.yml)

@@ -193,6 +193,8 @@ footer { margin-top: 48px; padding-top: 18px; border-top: 1px solid var(--line);
   .expo .row { grid-template-columns: 1fr 60px; } .expo .row span:first-child { grid-column: 1 / -1; }
   .fwd-row strong { max-width: 55%; }
   .heat-scroll { padding: 8px; }
+  /* Let vertical finger swipes pass through sideways-scrolling tables. */
+  .scroll, .toplinks { touch-action: auto; }
   .tt { display: none !important; }
 }
 @media (max-width: 340px) { .metric-grid, .stats { grid-template-columns: 1fr; } }
@@ -282,6 +284,7 @@ footer { margin-top: 48px; padding-top: 18px; border-top: 1px solid var(--line);
         <div class="scenario-result"><span>NBA backtest · +2.93¢</span><strong class="pos" id="scenario-backtest">+$8.79</strong></div>
       </div>
     </div>
+    <p class="scenario-small" id="scenario-impact" aria-live="polite">Relative to the last verified $2,500 Demo reference balance. This is not an expected return.</p>
     <p class="scenario-small">Backtest number assumes its modeled fees and fill conditions; actual fees, fill selection and settlement outcomes can be worse. The −5¢ case is just an example, <strong>not a worst-case loss bound</strong>. This does not apply to NFL (no proven trading edge), and the current 48-hour pilot has much tighter limits than a full 30-day test.</p>
   </div>
 </section>
@@ -314,13 +317,13 @@ footer { margin-top: 48px; padding-top: 18px; border-top: 1px solid var(--line);
 
 <section class="chart-panel" id="paper">
   <div class="section-heading">
-    <div><div class="eyebrow">03 · Paper trading</div><h2>Simulated portfolio over time</h2>
-      <p class="desc">Combined paper ledgers. Fills are simulated from public trades; this is <strong>not</strong> an account balance.</p></div>
+    <div><div class="eyebrow">03 · Paper trading</div><h2>Combined paper results over time</h2>
+      <p class="desc">The sum of separate $500 research ledgers, not a single tradable portfolio or account balance. Fills are estimated from public prints.</p></div>
     <span class="stage sim">Simulated</span>
   </div>
   <div class="evidence-note"><strong>Note:</strong> paper fills are estimates based on public trade prints. Only exchange-confirmed fills count toward the live evaluation above.</div>
   <div id="cumulative"></div>
-  <div class="legend"><span style="--c:var(--algo)"><i></i>Simulated portfolio</span>
+  <div class="legend"><span style="--c:var(--algo)"><i></i>Independent paper-ledger totals</span>
     <span style="--c:var(--bench)"><i></i>Backtest benchmark applied to the same fills</span></div>
   <details class="stats-details"><summary>Detailed paper-trading statistics</summary><div class="stats" id="stats"></div></details>
 </section>
@@ -351,7 +354,7 @@ footer { margin-top: 48px; padding-top: 18px; border-top: 1px solid var(--line);
 <section class="chart-panel">
   <div class="section-heading">
     <div><h2>Drawdown</h2>
-      <p class="desc">Decline of the paper portfolio from its running peak, in dollars. The three largest drawdown periods are shaded.</p></div>
+      <p class="desc">Drawdown in the sum of separate paper experiments, not a drawdown on one funded account. The three largest periods are shaded.</p></div>
   </div>
   <div id="underwater"></div>
   <div class="scroll" id="ddtable"></div>
@@ -586,7 +589,7 @@ function stats(s, pf) {
     ["Fill rate", done ? pct(fills / done) : "—"],
     ["Fills settled", fills.toLocaleString()],
     ["Contracts", contracts.toLocaleString()],
-    ["Net profit", money(p.total_profit), cls(p.total_profit)],
+    ["Summed paper P&L (not an account)", money(p.total_profit), cls(p.total_profit)],
     ["Profit per contract, weighted", edge == null ? "—" : cents(edge), cls(edge)],
     ["Benchmark profit", money(pf.bench.length ? pf.bench[pf.bench.length - 1] : 0), "muted"],
     ["Winning days", pf.days.length ? `${wins} of ${pf.days.length}` : "—"],
@@ -782,6 +785,9 @@ function renderScenarios() {
   document.getElementById("scenario-loss").textContent = signedMoney(hypotheticalProfit(n, -5));
   document.getElementById("scenario-even").textContent = money(0);
   document.getElementById("scenario-backtest").textContent = signedMoney(hypotheticalProfit(n, 2.93));
+  const gain = hypotheticalProfit(n, 2.93);
+  const fraction = 100 * gain / DEMO_REFERENCE.lastVerifiedBalance;
+  document.getElementById("scenario-impact").textContent = `For ${n.toLocaleString()} settled contracts, the historical +2.93¢ case means ${money(gain)} — ${fraction.toFixed(2)}% of the last verified ${money(DEMO_REFERENCE.lastVerifiedBalance)} Demo balance. Not a forecast. The Demo pilot permits at most ${money(DEMO_REFERENCE.pilotOrderLimit)} per order and ${money(DEMO_REFERENCE.pilotTotalLimit)} of committed exposure.`;
 }
 let latestDashboard = null;
 fetch("../outputs/dashboard/summary.json", {cache: "no-store"}).then(r => { if (!r.ok) throw new Error(r.status); return r.json(); }).then(s => {
@@ -811,7 +817,11 @@ fetch("../outputs/cross_exchange/latest.json", {cache:"no-store"})
       if (!c) return `<div class="fwd-row"><span>${league.toUpperCase()}</span><strong>No report</strong></div>`;
       const incomplete = !c.pagination_complete || c.bbo_scan_capped;
       if (c.polymarket_us_catalog_empty) {
-        return `<div class="fwd-row"><span>${league.toUpperCase()} · ${esc(c.kalshi_markets_scanned)} Kalshi markets</span><strong>Polymarket US prop catalog returned no listings; coverage unverified</strong></div>`;
+         const d = c.unfiltered_sample_diagnostic;
+         const sampled = d && typeof d.sampled_rows === "number"
+           ? ` Unfiltered sample: ${d.sampled_rows} league-tagged markets, ${d.typed_prop_rows_seen} marked as props.`
+           : " No unfiltered diagnostic yet.";
+         return `<div class="fwd-row"><span>${league.toUpperCase()} · ${esc(c.kalshi_markets_scanned)} Kalshi markets</span><strong>Filtered prop catalog returned no listings; coverage unverified</strong></div><p class="note">${esc(sampled)} This is not a complete player-prop inventory or a trading signal.</p>`;
       }
       return `<div class="fwd-row"><span>${league.toUpperCase()} · ${esc(c.polymarket_us_strict_prop_markets)} strictly parsed props vs. ${esc(c.kalshi_markets_scanned)} Kalshi markets</span><strong>${esc(c.priced_pairs_needing_rules_review)} possible overlaps${incomplete ? " (partial scan)" : ""}</strong></div>`;
     }).join("");
