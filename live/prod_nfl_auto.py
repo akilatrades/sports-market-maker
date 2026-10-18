@@ -1,7 +1,7 @@
 """Bounded unattended NFL production experiment. NOT the general-purpose trader.
 
 This worker is isolated from the Demo service and has a lifetime *gross-cost*
-budget below $25 including a fee buffer. One new post-only order max per pass,
+budget below $50 including a fee buffer. One new post-only order max per pass,
 no automatic re-arming, and durable journal before each network write. Fail
 closed on inconsistent balances, orders, positions, fills or model data.
 """
@@ -20,12 +20,12 @@ from kalshi.api import fetch_market
 from kalshi.paper_props import candidate_orders
 from kalshi.trading import Order, TradingClient, TradingError
 
-MAX_GROSS_COST = 25.0
-MAX_ORDER_COST = 2.0
-MAX_ACTIVE_COST = 5.0
+MAX_GROSS_COST = 50.0
+MAX_ORDER_COST = 3.0
+MAX_ACTIVE_COST = 15.0
 MAX_GAME_COST = 3.0
 MAX_TEAM_COST = 3.0
-MAX_DAILY_COST = 10.0
+MAX_DAILY_COST = 30.0
 MAX_GAME_ORDERS = 2
 MAX_CONTRACTS = 5
 FEE_RESERVE = 1.10
@@ -134,6 +134,51 @@ def current_production_state(client, attempts, accepted):
         "settlements": settlements,
         "active": still_at_risk,
     }
+
+
+def reconcile_expired_unfilled(attempts, accepted, state, fills, now):
+    """Release *active* capacity only on robust evidence of zero execution.
+
+    Full historical attempt cost still counts toward the lifetime and daily
+    gross-spend caps. Never release recent, partially filled, resting, or
+    unaccounted orders. Check the exchange again on every subsequent pass.
+    """
+    still_active = []
+    resting_ids = {str(o.get("order_id")) for o in state["resting"]}
+    held_tickers = set(state["held"])
+    filled_ids = {str(f.get("order_id")) for f in fills if f.get("order_id")}
+    filled_tickers = {
+        str(f.get("ticker") or f.get("market_ticker"))
+        for f in fills
+        if f.get("ticker") or f.get("market_ticker")
+    }
+    from datetime import timedelta
+
+    released = 0
+    for attempt in attempts:
+        ticker = attempt["ticker"]
+        if ticker in state["settled"]:
+            continue
+        match = accepted.get(attempt["client_order_id"])
+        if not match:
+            raise TradingError("Unaccepted attempt: HALT")
+        oid = str(match["order_id"])
+        tip = pd.Timestamp(attempt["tip_utc"])
+        # Require 10 extra minutes after nominal expiration to tolerate late
+        # exchange events. No history, no balance release.
+        can_release = (
+            pd.notna(tip)
+            and now >= tip.to_pydatetime() + timedelta(minutes=10)
+            and oid not in resting_ids
+            and oid not in filled_ids
+            and ticker not in filled_tickers
+            and ticker not in held_tickers
+        )
+        if can_release:
+            released += 1
+        else:
+            still_active.append(attempt)
+    return still_active, released
 
 
 def cancel_invalid_resting(client, journal, state, frame, now):
@@ -382,6 +427,14 @@ def pass_once(client, env, frame, now, journal, *, dry=False):
         fills = client.fills(min_ts=min_ts)
         if not isinstance(fills, list):
             raise TradingError("Cannot read production fills")
+        active, released = reconcile_expired_unfilled(
+            attempts, accepted, state, fills, now
+        )
+        state["active"] = active
+        if released:
+            print(
+                f"PROD AUTO: {released} verified unfilled expired orders freed from active capacity"
+            )
         record_execution(
             journal,
             load_journal(journal),
@@ -398,7 +451,7 @@ def pass_once(client, env, frame, now, journal, *, dry=False):
         print(
             f"PROD AUTO: attempts={len(attempts)}, resting={len(state['resting'])}, "
             f"held={len(state['held'])}, settled_tickers={len(state['settled'])}, "
-            f"fills={len(fills)}, gross_reserved=${sum(reserve(a['cost']) for a in attempts):.2f}/$25"
+            f"fills={len(fills)}, gross_reserved=${sum(reserve(a['cost']) for a in attempts):.2f}/${MAX_GROSS_COST:.0f}"
         )
     if not candidates:
         print("No eligible late-window NFL opportunities")
