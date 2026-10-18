@@ -223,6 +223,45 @@ def fetch_polymarket_props(league, get=get_json):
     return markets, complete
 
 
+def sample_unfiltered_catalog(league, get=get_json):
+    """Diagnostic only: sample public league-tagged listings without PROP filter.
+
+    An empty PROP-filtered page might reflect a filter mismatch. This sample
+    must never be fed to matching or described as full market coverage.
+    """
+    details = get(f"/v2/leagues/{league}")
+    info = details.get("league") if isinstance(details, dict) else None
+    if not isinstance(info, dict) or not isinstance(info.get("tagId"), int):
+        raise ValueError(f"Polymarket US {league} league tag unavailable")
+    result = get(
+        "/v1/markets",
+        {
+            "tagIds": info["tagId"],
+            "active": "true",
+            "closed": "false",
+            "limit": PAGE_LIMIT,
+            "offset": 0,
+        },
+    )
+    rows = result.get("markets") if isinstance(result, dict) else None
+    if not isinstance(rows, list):
+        raise ValueError("Unexpected Polymarket US unfiltered catalog response")
+    typed = 0
+    for row in rows:
+        if not isinstance(row, dict):
+            continue
+        kind = str(row.get("sportsMarketTypeV2") or "").lower()
+        meta = row.get("metadata") or {}
+        full_type = str(meta.get("market_sport_type") or "").lower() if isinstance(meta, dict) else ""
+        typed += int("prop" in kind or "_player_" in full_type)
+    return {
+        "sampled_rows": len(rows),
+        "typed_prop_rows_seen": typed,
+        "sample_complete": len(rows) < PAGE_LIMIT,
+        "scope": "first page of active league-tagged markets; diagnostic only",
+    }
+
+
 def extract_poly(events, league):
     output = {}
     considered = 0
@@ -324,7 +363,14 @@ def run(poly_get=get_json, kalshi_fetch=fetch_markets):
         kalshi, ktotal = extract_kalshi(league, fetch=kalshi_fetch)
         matches, intersect, fetched = compare(kalshi, poly, get=poly_get)
         pairs.extend(matches)
+        diagnostic = None
+        if not catalog:
+            try:
+                diagnostic = sample_unfiltered_catalog(league, get=poly_get)
+            except (ValueError, OSError) as error:
+                diagnostic = {"status": "unverified", "error_type": type(error).__name__}
         coverage[league] = {
+            "unfiltered_sample_diagnostic": diagnostic,
             "polymarket_us_events_scanned": None,
             "polymarket_us_catalog_source": "league-tagged active PROP markets",
             "polymarket_us_catalog_empty": len(catalog) == 0,
