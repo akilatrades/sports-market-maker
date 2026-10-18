@@ -294,6 +294,7 @@ def test_fill_and_settlement_are_recorded_once(tmp_path):
     assert len(auto.load_journal(journal)) == 2
     assert events[1]["fee_cents"] == 1
 
+
 def test_entries_12_minutes_before_kickoff_are_eligible(quotes):
     f = frame()
     f["hours_to_tip"] = 12 / 60
