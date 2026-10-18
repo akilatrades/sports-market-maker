@@ -262,15 +262,31 @@ def test_unknown_submission_emergency_cancel_by_client_id(quotes, tmp_path):
     assert auto.cancel_owned_on_kill(client, journal) == 1
     assert not client.resting
 
+
 def test_fill_and_settlement_are_recorded_once(tmp_path):
     journal = tmp_path / "ledger.jsonl"
     attempts = [{"ticker": "NFL-A"}]
     accepted = {"cid": {"order_id": "oid"}}
-    fills = [{"order_id": "oid", "fill_id": "f1", "ticker": "NFL-A",
-              "count_fp": "1.00", "no_price_dollars": ".5100", "fee_cost": "1"}]
-    settled = [{"market_ticker": "NFL-A", "settled_time": NOW.isoformat(),
-                "revenue": 100, "no_total_cost": 51, "yes_total_cost": 0,
-                "fee_cost": 1}]
+    fills = [
+        {
+            "order_id": "oid",
+            "fill_id": "f1",
+            "ticker": "NFL-A",
+            "count_fp": "1.00",
+            "no_price_dollars": ".5100",
+            "fee_cost": "1",
+        }
+    ]
+    settled = [
+        {
+            "market_ticker": "NFL-A",
+            "settled_time": NOW.isoformat(),
+            "revenue": 100,
+            "no_total_cost": 51,
+            "yes_total_cost": 0,
+            "fee_cost": 1,
+        }
+    ]
     auto.record_execution(journal, [], attempts, accepted, fills, settled)
     events = auto.load_journal(journal)
     assert [e["event"] for e in events] == ["fill", "settlement"]
