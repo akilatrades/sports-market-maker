@@ -11,6 +11,7 @@ import fcntl
 import json
 import math
 import os
+from collections import Counter
 from datetime import UTC, datetime
 from pathlib import Path
 
@@ -264,7 +265,9 @@ def record_execution(journal, events, attempts, accepted, fills, settlements):
     known_orders = {e["order_id"] for e in accepted.values()}
     tickers = {a["ticker"] for a in attempts}
     seen_fills = {e.get("fill_id") for e in events if e.get("event") == "fill"}
-    seen_results = {e.get("ticker") for e in events if e.get("event") == "settlement"}
+    seen_results = {
+        e.get("ticker"): e for e in events if e.get("event") == "settlement"
+    }
     for fill in fills:
         oid = fill.get("order_id")
         fid = fill.get("fill_id") or fill.get("trade_id")
@@ -287,21 +290,78 @@ def record_execution(journal, events, attempts, accepted, fills, settlements):
         seen_fills.add(fid)
     for result in settlements:
         ticker = result.get("market_ticker") or result.get("ticker")
-        if ticker not in tickers or ticker in seen_results:
+        if ticker not in tickers:
             continue
-        write_event(
-            journal,
-            {
-                "event": "settlement",
-                "ticker": ticker,
-                "utc": str(result.get("settled_time", "")),
-                "revenue_cents": result.get("revenue"),
-                "yes_cost_cents": result.get("yes_total_cost"),
-                "no_cost_cents": result.get("no_total_cost"),
-                "fee_cents": result.get("fee_cost"),
-            },
-        )
-        seen_results.add(ticker)
+        record = {
+            "event": "settlement",
+            "ticker": ticker,
+            "utc": str(result.get("settled_time", "")),
+            **settlement_accounting(result),
+        }
+        # Append a correction for older/incomplete records; never rewrite history.
+        if record != seen_results.get(ticker):
+            write_event(journal, record)
+            seen_results[ticker] = record
+
+
+def settlement_accounting(result):
+    """Normalize the exchange's dollar costs/fees and cent revenue explicitly."""
+
+    def amount(dollars_key, cents_key=None):
+        value = result.get(dollars_key)
+        divisor = 1
+        if value is None and cents_key:
+            value = result.get(cents_key)
+            divisor = 100
+        if value is None:
+            return None
+        try:
+            parsed = float(value) / divisor
+        except (TypeError, ValueError):
+            return None
+        return round(parsed, 6) if math.isfinite(parsed) and parsed >= 0 else None
+
+    revenue = amount("revenue_dollars", "revenue")
+    yes_cost = amount("yes_total_cost_dollars", "yes_total_cost")
+    no_cost = amount("no_total_cost_dollars", "no_total_cost")
+    fee = amount("fee_cost")  # API fee_cost is in dollars, including legacy costs.
+    complete = all(v is not None for v in (revenue, yes_cost, no_cost, fee))
+    return {
+        "accounting_version": 2,
+        "revenue_dollars": revenue,
+        "yes_cost_dollars": yes_cost,
+        "no_cost_dollars": no_cost,
+        "fee_dollars": fee,
+        "accounting_complete": complete,
+        "net_profit_dollars": (
+            round(revenue - yes_cost - no_cost - fee, 6) if complete else None
+        ),
+    }
+
+
+def record_queue_observation(client, journal, order_id, now):
+    """Read an owned order's queue without allowing a telemetry error to trade."""
+    try:
+        queue = client.queue_position(str(order_id))
+        if queue is not None and (not math.isfinite(queue) or queue < 0):
+            queue = None
+        issue = None if queue is not None else "missing_or_invalid_queue_field"
+    except Exception as error:
+        import re
+
+        match = re.search(r"-> HTTP ([0-9]{3})", str(error))
+        queue = None
+        issue = f"HTTP_{match.group(1)}" if match else type(error).__name__
+    write_event(
+        journal,
+        {
+            "event": "queue",
+            "utc": now.isoformat(),
+            "order_id": str(order_id),
+            "ahead": queue,
+            "issue": issue,
+        },
+    )
 
 
 # Guardrail for the small pilot. No change to maker/taker status or risk caps.
@@ -375,19 +435,24 @@ def verify_quote(candidate, proposed_no_price=None):
         raise TradingError("Proposed maker quote would cross the YES bid")
 
 
-def select_candidates(frame, events, state, now):
+def select_candidates(frame, events, state, now, diagnostics=None):
     attempts, _ = records(events)
+    counts = diagnostics if diagnostics is not None else {}
+    counts["open_markets"] = len(frame)
     if frame.empty:
         return []
-    eligible = frame[
-        frame.injury_status.fillna("").eq("")
-        & frame.hours_to_tip.between(*WINDOW)
-        & frame.tip_utc.notna()
-        & frame.ticker.astype(str).str.startswith(("KXNFLRECYDS-", "KXNFLANYTD-"))
+    verified = frame[frame.injury_status.fillna("").eq("") & frame.tip_utc.notna()]
+    counts["verified_availability_and_time"] = len(verified)
+    in_window = verified[verified.hours_to_tip.between(*WINDOW)]
+    counts["in_entry_window"] = len(in_window)
+    eligible = in_window[
+        in_window.ticker.astype(str).str.startswith(("KXNFLRECYDS-", "KXNFLANYTD-"))
     ]
+    counts["eligible_series"] = len(eligible)
     if eligible.empty:
         return []
     found = candidate_orders(eligible, "no_seller_bookline", window=WINDOW)
+    counts["passed_book_or_model_and_spread"] = len(found)
     if found.empty:
         return []
     found = found[found.side.eq("no")].copy()
@@ -395,8 +460,10 @@ def select_candidates(frame, events, state, now):
     # Extremely large modeled edges are suspicious: wrong player, mismatched
     # line, or stale sportsbook feed. Such markets need human review.
     found = found[found.edge.between(0, 0.15)]
+    counts["passed_outlier_check"] = len(found)
     already = {a["ticker"] for a in attempts}
     found = found[~found.ticker.isin(already)]
+    counts["not_previously_attempted"] = len(found)
     if found.empty:
         return []
     return list(found.sort_values("edge", ascending=False).itertuples())
@@ -444,7 +511,7 @@ def pre_submit_kickoff_ok(tip_utc, now):
         return False
 
 
-def room_for(attempts, active, row, cost, now):
+def budget_blockers(attempts, active, row, cost, now):
     today = now.astimezone(__import__("zoneinfo").ZoneInfo("America/New_York")).date()
     total = sum(reserve(a["cost"]) for a in attempts)
     open_now = sum(reserve(a["cost"]) for a in active)
@@ -462,14 +529,29 @@ def room_for(attempts, active, row, cost, now):
         == today
     )
     r = reserve(cost)
-    return (
-        total + r <= MAX_GROSS_COST + 1e-9
-        and open_now + r <= MAX_ACTIVE_COST + 1e-9
-        and game_cost + r <= MAX_GAME_COST + 1e-9
-        and team_cost + r <= MAX_TEAM_COST + 1e-9
-        and day_cost + r <= MAX_DAILY_COST + 1e-9
-        and game_orders < MAX_GAME_ORDERS
-    )
+    checks = {
+        "lifetime_submission_budget": total + r <= MAX_GROSS_COST + 1e-9,
+        "active_exposure": open_now + r <= MAX_ACTIVE_COST + 1e-9,
+        "game_budget": game_cost + r <= MAX_GAME_COST + 1e-9,
+        "team_budget": team_cost + r <= MAX_TEAM_COST + 1e-9,
+        "daily_submission_budget": day_cost + r <= MAX_DAILY_COST + 1e-9,
+        "game_order_count": game_orders < MAX_GAME_ORDERS,
+    }
+    return [name for name, fits in checks.items() if not fits]
+
+
+def room_for(attempts, active, row, cost, now):
+    return not budget_blockers(attempts, active, row, cost, now)
+
+
+def fit_order_to_budget(order, attempts, active, row, now):
+    """Reduce quantity until cost plus reserve fits every existing cap."""
+    for count in range(order.count, 0, -1):
+        cost = round(count * order.price_cents / 100, 2)
+        if room_for(attempts, active, row, cost, now):
+            order.count = count
+            return cost
+    return None
 
 
 def pass_once(client, env, frame, now, journal, *, dry=False):
@@ -484,7 +566,29 @@ def pass_once(client, env, frame, now, journal, *, dry=False):
             raise TradingError("Production cash balance insufficient")
     else:
         state = {"active": []}
-    candidates = select_candidates(frame, events, state, now)
+    diagnostics = {}
+    candidates = select_candidates(frame, events, state, now, diagnostics)
+    skipped = Counter()
+
+    def finish(decision, *, placed=False, **details):
+        report = {
+            "run_utc": datetime.now(UTC).isoformat(),
+            "env": "prod",
+            "mode": "dry" if dry else "live",
+            "decision": decision,
+            "filters": diagnostics,
+            "skip_reasons": dict(skipped),
+            **details,
+        }
+        print("NFL SCAN", json.dumps(report, sort_keys=True))
+        if not dry:
+            target = journal.with_name("last_scan.json")
+            temporary = target.with_suffix(".json.tmp")
+            temporary.write_text(json.dumps(report, indent=2) + "\n")
+            temporary.chmod(0o600)
+            temporary.replace(target)
+        return placed
+
     if not dry:
         min_ts = (
             int(datetime.fromisoformat(attempts[0]["utc"]).timestamp()) - 60
@@ -515,7 +619,9 @@ def pass_once(client, env, frame, now, journal, *, dry=False):
         if canceled:
             print(f"PROD AUTO: canceled {canceled} unsafe resting orders")
             # Require another reconciliation pass after cancellation.
-            return False
+            return finish("availability_cancellation", canceled=canceled)
+        for resting in state["resting"]:
+            record_queue_observation(client, journal, resting["order_id"], now)
         print(
             f"PROD AUTO: attempts={len(attempts)}, resting={len(state['resting'])}, "
             f"held={len(state['held'])}, settled_tickers={len(state['settled'])}, "
@@ -523,18 +629,26 @@ def pass_once(client, env, frame, now, journal, *, dry=False):
         )
     if not candidates:
         print("No eligible late-window NFL opportunities")
-        return False
+        return finish("no_eligible_candidates")
     for row in candidates:
         try:
             quoted, execution_edge, extra_ticks = execution_quote(row)
             order, cost = order_from_row(row, now, no_price=quoted)
         except TradingError:
+            skipped["invalid_order_or_price"] += 1
             continue
-        if not room_for(attempts, state["active"], row, cost, now):
+        cost = fit_order_to_budget(order, attempts, state["active"], row, now)
+        if cost is None:
+            skipped.update(
+                budget_blockers(
+                    attempts, state["active"], row, order.price_cents / 100, now
+                )
+            )
             continue
         try:
             verify_quote(row, quoted)
         except TradingError:
+            skipped["fresh_quote_check"] += 1
             continue
         if dry:
             print(
@@ -552,12 +666,13 @@ def pass_once(client, env, frame, now, journal, *, dry=False):
                     sort_keys=True,
                 ),
             )
-            return False
+            return finish("public_candidate_only")
 
         # The candidate scan can take minutes. Check the actual wall clock
         # immediately before the irreversible order intent and network POST,
         # rather than the start of the scan, or late entries can slip through.
         if not pre_submit_kickoff_ok(row.tip_utc, datetime.now(UTC)):
+            skipped["kickoff_cutoff"] += 1
             print(
                 f"Skipped {order.ticker}: too close to verified kickoff at submission"
             )
@@ -615,30 +730,17 @@ def pass_once(client, env, frame, now, journal, *, dry=False):
             "order_id",
             result["order_id"],
         )
-        try:
-            queue = client.queue_position(str(result["order_id"]))
-            queue_issue = None if queue is not None else "missing_queue_field"
-        except Exception as error:
-            # Do not log exception bodies: authenticated API responses can
-            # contain sensitive information. Only the category and HTTP code.
-            import re
-
-            match = re.search(r"-> HTTP ([0-9]{3})", str(error))
-            queue = None
-            queue_issue = f"HTTP_{match.group(1)}" if match else type(error).__name__
-        write_event(
-            journal,
-            {
-                "event": "queue",
-                "utc": datetime.now(UTC).isoformat(),
-                "order_id": result["order_id"],
-                "ahead": queue,
-                "issue": queue_issue,
-            },
+        record_queue_observation(client, journal, result["order_id"], datetime.now(UTC))
+        return finish(
+            "exchange_accepted",
+            placed=True,
+            ticker=order.ticker,
+            contracts=order.count,
+            cost_dollars=cost,
+            reserved_dollars=reserve(cost),
         )
-        return True
     print("No opportunities fit remaining production risk budget or fresh quotes")
-    return False
+    return finish("all_candidates_blocked")
 
 
 def main():
@@ -665,6 +767,10 @@ def main():
                 "Uncertain:",
                 len([e for e in events if e["event"] == "unknown_outcome"]),
             )
+            last_scan = directory / "last_scan.json"
+            if last_scan.exists():
+                print("Last completed scan (check run_utc for freshness):")
+                print(last_scan.read_text())
             return
         if os.environ.get("KALSHI_ENV") != "prod":
             raise TradingError(
