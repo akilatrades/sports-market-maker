@@ -504,7 +504,9 @@ def pass_once(client, env, frame, now, journal, *, dry=False):
         # immediately before the irreversible order intent and network POST,
         # rather than the start of the scan, or late entries can slip through.
         if not pre_submit_kickoff_ok(row.tip_utc, datetime.now(UTC)):
-            print(f"Skipped {order.ticker}: too close to verified kickoff at submission")
+            print(
+                f"Skipped {order.ticker}: too close to verified kickoff at submission"
+            )
             continue
 
         # Durable intent first; any failure after this (including a timeout)

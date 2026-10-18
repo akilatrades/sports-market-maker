@@ -390,6 +390,7 @@ def test_expanded_authorized_budget():
     assert auto.MAX_DAILY_COST == 30.0
     assert auto.MAX_GROSS_COST == 50.0
 
+
 def test_pre_submit_guard_checks_live_clock_not_scan_start():
     from datetime import timedelta
 
