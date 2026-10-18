@@ -170,6 +170,7 @@ def test_expired_and_outlier_model_timestamp_blocks(tmp_path, monkeypatch):
     )
     assert nba.nba_candidates(NOW, latest=latest).empty
 
+
 def test_shared_account_rejects_active_nfl_timer_or_service(monkeypatch):
     import subprocess
 

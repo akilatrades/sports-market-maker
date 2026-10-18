@@ -740,14 +740,17 @@ def assert_nfl_production_stopped():
                 capture_output=True,
             )
         except (OSError, subprocess.TimeoutExpired) as error:
-            raise TradingError("Cannot verify isolated NBA production account") from error
+            raise TradingError(
+                "Cannot verify isolated NBA production account"
+            ) from error
         if result.returncode == 0:
             raise TradingError("NFL production still active: NBA trading HALTED")
         # systemd returns 3 for inactive/failed and 4 for no matching unit.
         # Any other result is ambiguous: block production trading.
         if result.returncode not in {3, 4}:
-            raise TradingError("Uncertain NFL production unit state: NBA trading HALTED")
-
+            raise TradingError(
+                "Uncertain NFL production unit state: NBA trading HALTED"
+            )
 
 
 def main():
