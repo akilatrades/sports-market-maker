@@ -1689,3 +1689,41 @@ and complete observations; calculate *volume-weighted* capture (not the
 simple average of per-order ratios). Exclude early-exit markets from the
 buy-and-hold payout proxy pending reconciled realized P&L. Flag missing data
 and game-level dependence explicitly.
+
+## 2026-10-18: Polymarket, feasibility before any scan
+
+Question: can the Kalshi research (resting "no" on player props) be repeated
+on Polymarket? Checked before building anything (`research/polymarket/probe.py`,
+run on Actions; `outputs/polymarket/probe.md`, `markets.csv.gz`).
+
+**Access and fees.** Polymarket's CFTC-regulated US app is live in Texas as
+of 2026-10-16 with NBA/NFL/NHL/soccer markets (CBS Sports, 2026-10-16).
+Makers pay no fee and receive 10–25% of taker fees as rebates; takers pay
+about 5% × p × (1 − p) on sports (≈1.75% at 50¢). Structurally better for a
+maker than Kalshi's fee. Unknown: whether the US app shares an order book
+with polymarket.com, whose public API carries the history.
+
+**Data.** `data-api /trades` returns public prints with taker side, price,
+size and time (the same input the Kalshi simulator uses);
+`clob /prices-history` returns an hourly price series for open markets and
+nothing for closed ones; `/book` gives the current book only. So a fill
+simulation is possible, with the posting price inferred from the last
+trade rather than a historical bid/ask (a known weakening).
+
+**Inventory, the deciding fact.** 335,615 unique sports markets listed;
+34,998 are per-game player props by question text, with **$9.7M total
+volume and a median of $0**: most are empty listings. Closed props with at
+least $1,000 of volume: **743** (NFL anytime touchdown 232, soccer
+goals-threshold 191, NFL yards/receptions 177, NBA points 70, NFL 2+ TD
+56). The 70 NBA points markets are all 2024-25 playoff one-offs ("NBA
+Finals G1: Will SGA score 34+ points"); there is no regular-season NBA
+prop history. For comparison the Kalshi NBA prop replay had 21,373 fills
+in one season.
+
+**Reading.** The market where the edge lives (regular-season NBA props
+with a retail crowd) does not yet exist on Polymarket in testable size;
+what can be scanned is NFL scorer props (flat on Kalshi) and soccer
+goal-threshold markets (a game market). Polymarket US lists "Player Prop"
+as a contract type, so volume may arrive this season. Decision pending:
+either run the small scan on the 743 markets now, or snapshot the
+inventory weekly and scan when NBA prop volume exists.
