@@ -6,10 +6,10 @@ turns on live trading or modifies the existing Demo service.
 ## Defined experiment, not a profitable product
 
 - Funded account: **$250 planned**, independently confirmed by account owner.
-- **Hard cumulative gross-cost budget: $25**, including 10% worst-case fee reserve
+- **Hard cumulative gross-cost budget: $50**, including 10% worst-case fee reserve
   on valid 10c–90c prices. This is an *ever-decreasing* lifetime budget; proceeds
   are not recycled until a separate researched rollout is approved.
-- Max **$2 order**, **5 contracts** per order, **$5 active exposure**, **$10 daily
+- Max **$3 order**, **5 contracts** per order, **$15 active exposure**, **$30 daily
   spend**, **$3/game**, **$3/team**, **2 orders/game** and one new order per scan.
 - Post-only NO strategy, standard `no_seller_bookline` book/model veto.
 - Orders 10–120 minutes pregame, one-cent inside spreads when permitted,
@@ -20,6 +20,7 @@ turns on live trading or modifies the existing Demo service.
 - Private **write-ahead order journal** (outside repo) ensures network timeouts
   never silently become duplicate placements. Unknown orders/positions prevent
   new orders.
+- The bot releases active capacity for expired unfilled orders only after a 10-minute grace period, confirming no resting order, fill, or held position. All attempted gross costs still consume the $50 lifetime ceiling.
 - Server polls Kalshi for fill IDs, prices, order queue, fees, and settlements;
   durable private events are saved for later forward evaluation.
 - Current roster/injury verification failures cancel affected owned resting
@@ -101,7 +102,7 @@ sudo -u trader .venv/bin/python -m live.prod_nfl_auto --status
 ## Operational limitations
 
 - This is not a $250 trading authorization. Full $250 balance stays available
-  but only $25 in **cumulative order cost plus fee reserve** is permitted.
+  but only $50 in **cumulative order cost plus fee reserve** is permitted.
 - The software gross spend ceiling is not a brokerage account guarantee and
   cannot prevent losses from orders made outside the pilot.
 - The first production fills do not prove edge; the 2025-26 backtests are
