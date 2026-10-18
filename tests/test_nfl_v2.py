@@ -40,7 +40,12 @@ class EntryChecks(unittest.TestCase):
             entry_evidence(self.row, self.order, 2.64)
 
     def test_missing_stale_future_and_invalid_timestamp_block(self):
-        for stamp in (None, "bad", self.now - timedelta(hours=37), self.now + timedelta(hours=1)):
+        for stamp in (
+            None,
+            "bad",
+            self.now - timedelta(hours=37),
+            self.now + timedelta(hours=1),
+        ):
             with self.subTest(stamp=stamp):
                 self.row.model_made_utc = stamp
                 with self.assertRaisesRegex(TradingError, "model_timestamp"):
@@ -57,8 +62,21 @@ class EntryChecks(unittest.TestCase):
             folder = Path(directory)
             rows = []
             for player, hours in (("stale", 37), ("fresh", 6), ("future", -1)):
-                rows.append({"game_id":"G", "player_id":player, "player":player, "stat":"receiving_yards", "line":49.5, "p_over":0.4, "made_utc":(self.now - timedelta(hours=hours)).isoformat()})
-            pd.DataFrame(rows).to_csv(folder / (self.now.strftime("test_%Y-%m-%dT%H%MZ") + ".csv.gz"), index=False)
+                rows.append(
+                    {
+                        "game_id": "G",
+                        "player_id": player,
+                        "player": player,
+                        "stat": "receiving_yards",
+                        "line": 49.5,
+                        "p_over": 0.4,
+                        "made_utc": (self.now - timedelta(hours=hours)).isoformat(),
+                    }
+                )
+            pd.DataFrame(rows).to_csv(
+                folder / (self.now.strftime("test_%Y-%m-%dT%H%MZ") + ".csv.gz"),
+                index=False,
+            )
             ladder = latest_ladder(self.now, folder, max_age_hours=36)
             self.assertEqual(ladder.player.tolist(), ["fresh"])
 

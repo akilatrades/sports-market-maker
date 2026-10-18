@@ -134,7 +134,10 @@ def summarize(balance, positions, resting, fills, settlements, events, scan, now
     for fill in executed:
         # This strategy only buys NO; an unexpected buy/sell must not be
         # silently interpreted as the entry cost of a NO contract.
-        if fill.get("action", "buy") != "buy" or fill.get("outcome_side", fill.get("side", "no")) != "no":
+        if (
+            fill.get("action", "buy") != "buy"
+            or fill.get("outcome_side", fill.get("side", "no")) != "no"
+        ):
             raise TradingError("Unexpected strategy fill side or action")
         n = number(fill.get("count_fp", fill.get("count")))
         p = dollars(fill, "no_price_dollars", "no_price")
@@ -150,7 +153,11 @@ def summarize(balance, positions, resting, fills, settlements, events, scan, now
         ticker = result.get("ticker") or result.get("market_ticker")
         if ticker in attempts_by_ticker:
             results[ticker] = settlement_accounting(result)
-    profit = total(r.get("net_profit_dollars") for r in results.values()) if results else None
+    profit = (
+        total(r.get("net_profit_dollars") for r in results.values())
+        if results
+        else None
+    )
     held = []
     for position in positions:
         n = number(position.get("position_fp", position.get("position")))
@@ -160,34 +167,42 @@ def summarize(balance, positions, resting, fills, settlements, events, scan, now
             continue
         ticker = position.get("ticker") or position.get("market_ticker")
         attempt = attempts_by_ticker.get(ticker, {})
-        held.append({
-            "ticker": ticker,
-            "player": attempt.get("player") or ticker,
-            "side": "YES" if n > 0 else "NO",
-            "contracts": abs(n),
-            "cost_dollars": dollars(position, "market_exposure_dollars", "market_exposure"),
-            "fees_dollars": dollars(position, "fees_paid_dollars", "fees_paid"),
-            "strategy_version": attempt.get("strategy_version", "Earlier version"),
-            "probability_source": attempt.get("probability_source", "Not recorded"),
-            "kickoff_utc": attempt.get("tip_utc"),
-            "owned": bool(attempt),
-        })
+        held.append(
+            {
+                "ticker": ticker,
+                "player": attempt.get("player") or ticker,
+                "side": "YES" if n > 0 else "NO",
+                "contracts": abs(n),
+                "cost_dollars": dollars(
+                    position, "market_exposure_dollars", "market_exposure"
+                ),
+                "fees_dollars": dollars(position, "fees_paid_dollars", "fees_paid"),
+                "strategy_version": attempt.get("strategy_version", "Earlier version"),
+                "probability_source": attempt.get("probability_source", "Not recorded"),
+                "kickoff_utc": attempt.get("tip_utc"),
+                "owned": bool(attempt),
+            }
+        )
     resting_rows = []
     for order in resting:
         oid = order.get("order_id")
         attempt = accepted.get(oid, {})
-        remaining = number(order.get("remaining_count_fp", order.get("remaining_count")))
+        remaining = number(
+            order.get("remaining_count_fp", order.get("remaining_count"))
+        )
         price = dollars(order, "no_price_dollars", "no_price")
         if price is None and attempt:
             price = number(attempt.get("price_cents"))
             price = price / 100 if price is not None else None
-        resting_rows.append({
-            "ticker": order.get("ticker"),
-            "player": attempt.get("player") or order.get("ticker"),
-            "contracts": remaining,
-            "price_dollars": price if attempt else None,
-            "owned": bool(attempt),
-        })
+        resting_rows.append(
+            {
+                "ticker": order.get("ticker"),
+                "player": attempt.get("player") or order.get("ticker"),
+                "contracts": remaining,
+                "price_dollars": price if attempt else None,
+                "owned": bool(attempt),
+            }
+        )
     submitted = round(sum(reserve(e["cost"]) for e in intents.values()), 2)
     return {
         "schema_version": 1,
@@ -216,8 +231,14 @@ def summarize(balance, positions, resting, fills, settlements, events, scan, now
             "settled_profit_dollars": profit,
             "submitted_reserved_dollars": submitted,
             "submission_limit_dollars": MAX_GROSS_COST,
-            "remaining_submission_budget_dollars": round(max(0, MAX_GROSS_COST - submitted), 2),
-            "limits": {"per_order": MAX_ORDER_COST, "per_game": MAX_GAME_COST, "active": MAX_ACTIVE_COST},
+            "remaining_submission_budget_dollars": round(
+                max(0, MAX_GROSS_COST - submitted), 2
+            ),
+            "limits": {
+                "per_order": MAX_ORDER_COST,
+                "per_game": MAX_GAME_COST,
+                "active": MAX_ACTIVE_COST,
+            },
             "min_reserved_edge": MIN_RESERVED_EDGE,
             "unconfirmed_intents": len(intents) - len(accepted),
         },
@@ -233,12 +254,22 @@ def collect(client, state=STATE):
     positions = client.pages("/portfolio/positions", "market_positions")
     resting = client.pages("/portfolio/orders", "orders", status="resting")
     starts = [e["utc"] for e in events if e.get("event") == "intent"]
-    params = {"min_ts": int(datetime.fromisoformat(min(starts)).timestamp()) - 60} if starts else {}
+    params = (
+        {"min_ts": int(datetime.fromisoformat(min(starts)).timestamp()) - 60}
+        if starts
+        else {}
+    )
     fills = client.pages("/portfolio/fills", "fills", **params) if starts else []
-    settlements = client.pages("/portfolio/settlements", "settlements", **params) if starts else []
+    settlements = (
+        client.pages("/portfolio/settlements", "settlements", **params)
+        if starts
+        else []
+    )
     scan_path = state / "last_scan.json"
     scan = json.loads(scan_path.read_text()) if scan_path.exists() else None
-    result = summarize(balance, positions, resting, fills, settlements, events, scan, datetime.now(UTC))
+    result = summarize(
+        balance, positions, resting, fills, settlements, events, scan, datetime.now(UTC)
+    )
     result["kill_switch"] = (state / "KILL").exists()
     return result
 
@@ -257,7 +288,11 @@ class Snapshot:
             value = collect(client, state)
         except Exception as error:
             with self.lock:
-                value = {**self.value, "status": "error", "error_type": type(error).__name__}
+                value = {
+                    **self.value,
+                    "status": "error",
+                    "error_type": type(error).__name__,
+                }
             # Error text can contain exchange/account details; keep it off logs.
             print("Account snapshot unavailable:", type(error).__name__, flush=True)
         with self.lock:
@@ -276,11 +311,18 @@ def handler_for(snapshot, port):
             if host not in allowed_hosts or (origin and origin != "http://" + host):
                 self.send_error(403)
                 return
-            if self.headers.get("Sec-Fetch-Site", "none") not in {"none", "same-origin"}:
+            if self.headers.get("Sec-Fetch-Site", "none") not in {
+                "none",
+                "same-origin",
+            }:
                 self.send_error(403)
                 return
             path = self.path.split("?", 1)[0]
-            assets = {"/": ("index.html", "text/html"), "/account.js": ("account.js", "text/javascript"), "/account.css": ("account.css", "text/css")}
+            assets = {
+                "/": ("index.html", "text/html"),
+                "/account.js": ("account.js", "text/javascript"),
+                "/account.css": ("account.css", "text/css"),
+            }
             if path == "/api/account":
                 data = json.dumps(snapshot.read(), allow_nan=False).encode()
                 content_type = "application/json"
@@ -296,7 +338,10 @@ def handler_for(snapshot, port):
             self.send_header("Cache-Control", "no-store")
             self.send_header("X-Content-Type-Options", "nosniff")
             self.send_header("Referrer-Policy", "no-referrer")
-            self.send_header("Content-Security-Policy", "default-src 'self'; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'")
+            self.send_header(
+                "Content-Security-Policy",
+                "default-src 'self'; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'",
+            )
             self.end_headers()
             self.wfile.write(data)
 
@@ -306,7 +351,11 @@ def handler_for(snapshot, port):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--port", type=int, default=8765)
-    parser.add_argument("--once", action="store_true", help="Print a private account snapshot, then exit")
+    parser.add_argument(
+        "--once",
+        action="store_true",
+        help="Print a private account snapshot, then exit",
+    )
     args = parser.parse_args()
     client = ReadOnlyClient()
     if args.once:
@@ -320,8 +369,13 @@ def main():
             time.sleep(REFRESH_SECONDS)
 
     threading.Thread(target=worker, daemon=True).start()
-    server = ThreadingHTTPServer(("127.0.0.1", args.port), handler_for(snapshot, args.port))
-    print(f"Private account dashboard: 127.0.0.1:{args.port}; GET-only production reads", flush=True)
+    server = ThreadingHTTPServer(
+        ("127.0.0.1", args.port), handler_for(snapshot, args.port)
+    )
+    print(
+        f"Private account dashboard: 127.0.0.1:{args.port}; GET-only production reads",
+        flush=True,
+    )
     server.serve_forever()
 
 
