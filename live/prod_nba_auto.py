@@ -413,7 +413,7 @@ def order_from_row(row, now, no_price=None):
     if count <= 0:
         raise TradingError("Zero affordable contracts")
     tip = pd.Timestamp(row.tip_utc)
-    if pd.isna(tip) or int(tip.timestamp()) < int(now.timestamp()) + 15 * 60:
+    if pd.isna(tip) or int(tip.timestamp()) < int(now.timestamp()) + 2 * 3600:
         raise TradingError("Too close to kickoff")
     cost = round(count * cents / 100, 2)
     order = Order(
@@ -430,8 +430,8 @@ def order_from_row(row, now, no_price=None):
 def pre_submit_kickoff_ok(tip_utc, now):
     """Fail closed on the wall clock, not the earlier two-minute scan start.
 
-    A 30-second submission buffer enforces the 15-minute NBA minimum
-    even if a scan has been running for several minutes.
+    The 30-second buffer enforces the NBA baseline 2-hour minimum at POST,
+    even if the model/market scan has been running for several minutes.
     """
     from datetime import timedelta
 
@@ -439,7 +439,7 @@ def pre_submit_kickoff_ok(tip_utc, now):
     if pd.isna(tip):
         return False
     try:
-        return tip.to_pydatetime() > now + timedelta(minutes=15, seconds=30)
+        return tip.to_pydatetime() > now + timedelta(hours=2, seconds=30)
     except (TypeError, ValueError):
         return False
 
