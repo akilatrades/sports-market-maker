@@ -53,6 +53,12 @@ def main():
                     )
                     if width <= 700:
                         assert metrics["navOverflow"] == "auto"
+                        action = page.locator("#heat").evaluate(
+                            "(el) => getComputedStyle(el).touchAction"
+                        )
+                        assert action == "auto", (
+                            f"{width}px: side-scrolling table traps touch gestures: {action}"
+                        )
                     assert metrics["height"] > 1200, (
                         f"{width}px: unexpectedly short page; data failed to render"
                     )
