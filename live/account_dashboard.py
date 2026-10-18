@@ -5,6 +5,8 @@ balances or journals are published to GitHub Pages. No trading endpoints exist.
 """
 
 import argparse
+import csv
+import gzip
 import json
 import math
 import os
@@ -29,6 +31,20 @@ from live.prod_nfl_auto import (
 
 ASSETS = Path(__file__).resolve().parents[1] / "dashboard"
 REFRESH_SECONDS = 60
+
+
+def market_titles(path=None):
+    """Use saved public contract titles only as labels, never as account data."""
+    path = path or ASSETS.parent / "outputs/nfl/market/comparison.csv.gz"
+    try:
+        with gzip.open(path, "rt") as source:
+            return {
+                row["ticker"]: row["title"]
+                for row in csv.DictReader(source)
+                if row.get("ticker") and row.get("title")
+            }
+    except (OSError, EOFError, csv.Error):
+        return {}
 
 
 class ReadOnlyClient(TradingClient):
@@ -271,6 +287,9 @@ def collect(client, state=STATE):
         balance, positions, resting, fills, settlements, events, scan, datetime.now(UTC)
     )
     result["kill_switch"] = (state / "KILL").exists()
+    titles = market_titles()
+    for row in result["positions"] + result["orders"]:
+        row["player"] = titles.get(row["ticker"], row["player"])
     return result
 
 
