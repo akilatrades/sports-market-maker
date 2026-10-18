@@ -169,3 +169,30 @@ def test_expired_and_outlier_model_timestamp_blocks(tmp_path, monkeypatch):
         json.dumps({"generated_utc": (NOW + timedelta(hours=1)).isoformat()})
     )
     assert nba.nba_candidates(NOW, latest=latest).empty
+
+def test_shared_account_rejects_active_nfl_timer_or_service(monkeypatch):
+    import subprocess
+
+    def active(args, **kwargs):
+        return SimpleNamespace(returncode=0)
+
+    monkeypatch.setattr(subprocess, "run", active)
+    with pytest.raises(TradingError, match="NFL production still active"):
+        nba.assert_nfl_production_stopped()
+
+
+def test_shared_account_allows_only_known_inactive_states(monkeypatch):
+    import subprocess
+
+    def inactive(args, **kwargs):
+        return SimpleNamespace(returncode=3)
+
+    monkeypatch.setattr(subprocess, "run", inactive)
+    nba.assert_nfl_production_stopped()
+
+    def unverified(args, **kwargs):
+        return SimpleNamespace(returncode=1)
+
+    monkeypatch.setattr(subprocess, "run", unverified)
+    with pytest.raises(TradingError, match="Uncertain"):
+        nba.assert_nfl_production_stopped()
