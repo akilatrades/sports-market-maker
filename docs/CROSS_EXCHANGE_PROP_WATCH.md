@@ -21,7 +21,7 @@ GitHub Actions `cross-exchange-watch.yml` runs **every four hours**, and can be 
 - `outputs/cross_exchange/latest.json`: most recent coverage and up to 30 candidate matches for investigation.
 - `outputs/cross_exchange/history.jsonl`: the most recent 42 scan summaries (about one week), retaining incomplete-coverage flags.
 
-A first successful scan is needed before any live count or market overlap claim. Pagination is deliberately capped (6 × 100 filtered markets per league), and BBO reads are capped at 80 per league. The results explicitly flag incomplete pages or capped snapshots.
+A first successful public-API probe ran at 2026-10-17 23:40 UTC. The league-tagged `SPORTS_MARKET_TYPE_PROP` filter returned **0 market rows** for NFL and **0 market rows** for NBA, even though the unfiltered league-tag query returned entries such as futures. The same probe scanned **1,097 Kalshi NFL** and **312 Kalshi NBA** open prop markets. This is **not evidence that Polymarket US offers zero player props overall**: it is an empty result for this exact public filter at that timestamp. The tool must keep this uncertainty visible rather than invent overlaps or price gaps. Pagination is deliberately capped (6 × 100 filtered markets per league), and BBO reads are capped at 80 per league. The results explicitly flag incomplete pages or capped snapshots.
 
 **First-week research questions:** How many unique player props actually overlap? Are both sides quoted? What percentage have matching, *verified* contract language? How quickly do quotes disappear? Are apparent price gaps still present when executable depth and fees are considered? If no meaningful overlap, don't build a trader.
 
