@@ -332,7 +332,8 @@ def execution_quote(candidate):
     proposed = round(base + EXTRA_MAKER_TICK, 2)
     remaining_edge = round(original_edge - EXTRA_MAKER_TICK, 5)
     take_second_tick = (
-        EXTRA_MAKER_TICK > 0 and spread_cents >= 3
+        EXTRA_MAKER_TICK > 0
+        and spread_cents >= 3
         and remaining_edge >= MIN_EDGE_AFTER_IMPROVEMENT
         and proposed <= 0.90
         and round(1 - proposed, 2) > round(bid, 2)
@@ -383,7 +384,9 @@ def select_candidates(frame, events, state, now):
         frame.injury_status.fillna("").eq("")
         & frame.hours_to_tip.between(*WINDOW)
         & frame.tip_utc.notna()
-        & frame.ticker.astype(str).str.startswith(("KXNBAPTS-", "KXNBAREB-", "KXNBAAST-", "KXNBA3PT-"))
+        & frame.ticker.astype(str).str.startswith(
+            ("KXNBAPTS-", "KXNBAREB-", "KXNBAAST-", "KXNBA3PT-")
+        )
     ]
     if eligible.empty:
         return []
@@ -641,7 +644,6 @@ def pass_once(client, env, frame, now, journal, *, dry=False):
     return False
 
 
-
 def nba_candidates(now, latest=Path("outputs/projections/latest.csv")):
     """Fail closed unless the dated NBA model, live quotes, and injury feed work.
 
@@ -665,8 +667,16 @@ def nba_candidates(now, latest=Path("outputs/projections/latest.csv")):
         if not 0 <= age <= 9:
             raise ValueError("model timestamp outside 0-9h freshness bound")
         frame = pd.read_csv(latest, low_memory=False)
-        needed = {"ticker", "tip_utc", "game_id", "player_id", "team",
-                  "p_model", "injury_status", "hours_to_tip"}
+        needed = {
+            "ticker",
+            "tip_utc",
+            "game_id",
+            "player_id",
+            "team",
+            "p_model",
+            "injury_status",
+            "hours_to_tip",
+        }
         if not needed.issubset(frame.columns):
             raise ValueError("missing NBA projection columns")
         frame["tip_utc"] = pd.to_datetime(frame.tip_utc, utc=True, errors="coerce")
@@ -682,7 +692,10 @@ def nba_candidates(now, latest=Path("outputs/projections/latest.csv")):
         # Check the current injury feed, not only the cached injury column.
         report = injuries()
         if not isinstance(report, pd.DataFrame) or not {
-            "player_id", "team", "updated", "out"
+            "player_id",
+            "team",
+            "updated",
+            "out",
         }.issubset(report.columns):
             raise ValueError("current ESPN NBA injuries unavailable")
         if not report.empty:
@@ -709,7 +722,6 @@ def nba_candidates(now, latest=Path("outputs/projections/latest.csv")):
         # Don't leak HTTP response bodies, headers, or credentials.
         print(f"NBA PREFLIGHT BLOCKED: {type(err).__name__} -- no new orders")
         return pd.DataFrame()
-
 
 
 def main():

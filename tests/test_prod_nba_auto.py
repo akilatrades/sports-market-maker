@@ -21,23 +21,27 @@ ARMED = {
 
 
 def priced():
-    return pd.DataFrame([{
-        "ticker": "KXNBAPTS-26OCT20LALGSW-LALSPLAYER-30",
-        "game_id": 20261020,
-        "player": "Test Player",
-        "player_id": 1234,
-        "team": "LAL",
-        "stat": "points",
-        "line": 29.5,
-        "tip_utc": pd.Timestamp(NOW + timedelta(hours=4)),
-        "hours_to_tip": 4.0,
-        "p_model": 0.35,
-        "p_book": 0.40,
-        "book_n": 2,
-        "injury_status": "",
-        "yes_bid_dollars": 0.40,
-        "yes_ask_dollars": 0.50,
-    }])
+    return pd.DataFrame(
+        [
+            {
+                "ticker": "KXNBAPTS-26OCT20LALGSW-LALSPLAYER-30",
+                "game_id": 20261020,
+                "player": "Test Player",
+                "player_id": 1234,
+                "team": "LAL",
+                "stat": "points",
+                "line": 29.5,
+                "tip_utc": pd.Timestamp(NOW + timedelta(hours=4)),
+                "hours_to_tip": 4.0,
+                "p_model": 0.35,
+                "p_book": 0.40,
+                "book_n": 2,
+                "injury_status": "",
+                "yes_bid_dollars": 0.40,
+                "yes_ask_dollars": 0.50,
+            }
+        ]
+    )
 
 
 def test_live_arm_is_distinct_from_nfl_and_requires_correct_venue():
@@ -136,10 +140,16 @@ def test_new_injury_since_projection_vetoes_candidate(tmp_path, monkeypatch):
     monkeypatch.setattr(
         live,
         "injuries",
-        lambda: pd.DataFrame([{
-            "player_id": 1234, "team": "LAL",
-            "updated": NOW.isoformat(), "out": True,
-        }]),
+        lambda: pd.DataFrame(
+            [
+                {
+                    "player_id": 1234,
+                    "team": "LAL",
+                    "updated": NOW.isoformat(),
+                    "out": True,
+                }
+            ]
+        ),
     )
     out = nba.nba_candidates(NOW, latest=latest)
     assert len(out) == 1
