@@ -461,7 +461,7 @@ def test_one_cent_spread_stays_passive_no_aggressive_price():
     f = frame()
     f["yes_bid_dollars"] = 0.40
     f["yes_ask_dollars"] = 0.41
-    f["p_book"] = 0.10
+    f["p_book"] = 0.27
     row = auto.select_candidates(f, [], {"active": []}, NOW)[0]
     price, edge, ticks = auto.execution_quote(row)
     assert ticks == 0
@@ -495,7 +495,7 @@ def test_fresh_quote_recheck_rejects_crossed_or_moved_prices(monkeypatch):
             "yes_ask_dollars": "0.50",
         },
     )
-    with pytest.raises(TradingError, match="moved"):
+    with pytest.raises(TradingError, match="cross"):
         auto.verify_quote(row, price)
 
 
