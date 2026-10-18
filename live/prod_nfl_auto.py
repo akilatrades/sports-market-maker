@@ -783,7 +783,10 @@ def main():
     )
     directory.mkdir(mode=0o700, parents=True, exist_ok=True)
     directory.chmod(0o700)
-    with (account_lock() if args.live else nullcontext()), (directory / "lock").open("a+") as lock:
+    with (
+        account_lock() if args.live else nullcontext(),
+        (directory / "lock").open("a+") as lock,
+    ):
         fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
         journal = directory / "journal.jsonl"
         if args.status:

@@ -34,3 +34,34 @@ jobs:
         env:
           KALSHI_ENV: prod
         run: python -m research.nba_source_smoke
+      - name: Inspect alternative production liquidity
+        if: github.event_name == 'pull_request'
+        run: python -m research.market_opportunity_audit
+      - uses: actions/upload-artifact@v4
+        if: github.event_name == 'pull_request'
+        with:
+          name: production-market-liquidity
+          path: outputs/launch_audit_20261018/production_liquidity.json
+          if-no-files-found: error
+  projection-contract:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install -r requirements.txt
+      - run: python -m live.fetch_nba_data
+      - name: Price real production markets with the launch model
+        env:
+          KALSHI_ENV: prod
+        run: python -m live.nba_projections
+      - uses: actions/upload-artifact@v4
+        with:
+          name: nba-production-projections
+          path: |
+            outputs/projections/latest.csv
+            outputs/projections/latest_meta.json
+          if-no-files-found: error

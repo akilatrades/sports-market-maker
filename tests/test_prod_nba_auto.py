@@ -38,9 +38,12 @@ def priced():
                 "p_book": 0.40,
                 "book_n": 2,
                 "injury_status": "",
-                "team_espn": "LAL", "home_espn": "GS", "away_espn": "LAL",
-                "requires_book": False, "last_player_team": "LAL",
-                "last_player_game_utc": (NOW-timedelta(days=4)).isoformat(),
+                "team_espn": "LAL",
+                "home_espn": "GS",
+                "away_espn": "LAL",
+                "requires_book": False,
+                "last_player_team": "LAL",
+                "last_player_game_utc": (NOW - timedelta(days=4)).isoformat(),
                 "yes_bid_dollars": 0.40,
                 "yes_ask_dollars": 0.50,
             }
@@ -51,11 +54,23 @@ def priced():
 @pytest.fixture(autouse=True)
 def current_context(monkeypatch):
     import markets.nba.live as source
+
     monkeypatch.setattr(source, "rosters", lambda teams: {"LAL": {1234}})
-    monkeypatch.setattr(source, "scoreboard", lambda day, season: pd.DataFrame([{
-        "game_id": 20261020, "home": "GS", "away": "LAL", "completed": False,
-        "tip_utc": pd.Timestamp(NOW + timedelta(hours=4))
-    }]))
+    monkeypatch.setattr(
+        source,
+        "scoreboard",
+        lambda day, season: pd.DataFrame(
+            [
+                {
+                    "game_id": 20261020,
+                    "home": "GS",
+                    "away": "LAL",
+                    "completed": False,
+                    "tip_utc": pd.Timestamp(NOW + timedelta(hours=4)),
+                }
+            ]
+        ),
+    )
 
 
 def test_live_arm_is_distinct_from_nfl_and_requires_correct_venue():
@@ -207,4 +222,3 @@ def test_shared_account_allows_only_known_inactive_states(monkeypatch):
     monkeypatch.setattr(subprocess, "run", unverified)
     with pytest.raises(TradingError, match="Uncertain"):
         nba.assert_nfl_production_stopped()
-

@@ -340,8 +340,16 @@ def record_queue_observation(client, journal, order_id, now):
 def record_markouts(journal, frame, now):
     """Observed NO-price movement after actual fills; never invent missed quotes."""
     events = load_journal(journal)
-    seen = {(e.get("fill_id"), e.get("horizon_minutes")) for e in events if e.get("event") == "markout"}
-    quotes = frame.drop_duplicates("ticker").set_index("ticker") if not frame.empty else pd.DataFrame()
+    seen = {
+        (e.get("fill_id"), e.get("horizon_minutes"))
+        for e in events
+        if e.get("event") == "markout"
+    }
+    quotes = (
+        frame.drop_duplicates("ticker").set_index("ticker")
+        if not frame.empty
+        else pd.DataFrame()
+    )
     for fill in (e for e in events if e.get("event") == "fill"):
         try:
             age = (pd.Timestamp(now) - pd.Timestamp(fill["utc"])).total_seconds()
@@ -353,9 +361,17 @@ def record_markouts(journal, frame, now):
         for horizon in (5, 15, 60):
             if (fill["fill_id"], horizon) in seen or age < horizon * 60:
                 continue
-            observation = {"event":"markout", "fill_id":fill["fill_id"], "ticker":fill["ticker"],
-                           "utc":now.isoformat(), "horizon_minutes":horizon, "observed_after_seconds":age,
-                           "mid_move_dollars":None, "bid_move_dollars":None, "fees_included":False}
+            observation = {
+                "event": "markout",
+                "fill_id": fill["fill_id"],
+                "ticker": fill["ticker"],
+                "utc": now.isoformat(),
+                "horizon_minutes": horizon,
+                "observed_after_seconds": age,
+                "mid_move_dollars": None,
+                "bid_move_dollars": None,
+                "fees_included": False,
+            }
             if age > horizon * 60 + 600:
                 observation["issue"] = "missed_observation_window"
             elif fill["ticker"] not in quotes.index:
@@ -366,8 +382,11 @@ def record_markouts(journal, frame, now):
                 if not 0 < bid < ask < 1:
                     observation["issue"] = "invalid_quote"
                 else:
-                    observation.update(mid_move_dollars=round(1-(bid+ask)/2-entry,6),
-                                       bid_move_dollars=round(1-ask-entry,6), issue=None)
+                    observation.update(
+                        mid_move_dollars=round(1 - (bid + ask) / 2 - entry, 6),
+                        bid_move_dollars=round(1 - ask - entry, 6),
+                        issue=None,
+                    )
             write_event(journal, observation)
 
 
@@ -550,14 +569,23 @@ def pass_once(client, env, frame, now, journal, *, dry=False):
     from kalshi.fees import live_maker_fee_bound
 
     skipped = Counter()
+
     def finish(decision, placed=False):
         report = {
-            "utc": datetime.now(UTC).isoformat(), "strategy_version": STRATEGY_VERSION,
-            "decision": decision, "placed": placed, "candidate_count": len(candidates),
-            "skipped": dict(skipped), "inputs": frame.attrs.get("diagnostics", {}),
-            "attempts": len(attempts), "gross_reserved": sum(reserve(a["cost"]) for a in attempts),
+            "utc": datetime.now(UTC).isoformat(),
+            "strategy_version": STRATEGY_VERSION,
+            "decision": decision,
+            "placed": placed,
+            "candidate_count": len(candidates),
+            "skipped": dict(skipped),
+            "inputs": frame.attrs.get("diagnostics", {}),
+            "attempts": len(attempts),
+            "gross_reserved": sum(reserve(a["cost"]) for a in attempts),
         }
-        atomic_write(journal.parent / "last_scan.json", (json.dumps(report, indent=2) + "\n").encode())
+        atomic_write(
+            journal.parent / "last_scan.json",
+            (json.dumps(report, indent=2) + "\n").encode(),
+        )
         print("NBA DECISION:", decision, dict(skipped), flush=True)
         return placed
 
@@ -620,7 +648,9 @@ def pass_once(client, env, frame, now, journal, *, dry=False):
         except TradingError:
             skipped["invalid_order_or_price"] += 1
             continue
-        while order.count > 0 and not room_for(attempts, state["active"], row, cost, now):
+        while order.count > 0 and not room_for(
+            attempts, state["active"], row, cost, now
+        ):
             order.count -= 1
             cost = round(order.count * order.price_cents / 100, 2)
         if order.count <= 0:
@@ -630,7 +660,9 @@ def pass_once(client, env, frame, now, journal, *, dry=False):
             skipped["cash_balance"] += 1
             continue
         try:
-            fee_bound, fee_metadata = live_maker_fee_bound(order.ticker, quoted, order.count)
+            fee_bound, fee_metadata = live_maker_fee_bound(
+                order.ticker, quoted, order.count
+            )
             p_book = float(getattr(row, "p_book", float("nan")))
             p_yes = p_book if math.isfinite(p_book) else float(row.p_model)
             net_edge = 1 - p_yes - quoted - fee_bound / order.count
@@ -639,7 +671,9 @@ def pass_once(client, env, frame, now, journal, *, dry=False):
             if cost + fee_bound > reserve(cost) + 1e-9:
                 raise TradingError("fee_exceeds_reservation")
         except Exception as error:
-            skipped[str(error) if isinstance(error, TradingError) else "fee_read_failure"] += 1
+            skipped[
+                str(error) if isinstance(error, TradingError) else "fee_read_failure"
+            ] += 1
             continue
         try:
             verify_quote(row, quoted)
@@ -694,7 +728,9 @@ def pass_once(client, env, frame, now, journal, *, dry=False):
                 "extra_maker_ticks": extra_ticks,
                 "strategy_version": STRATEGY_VERSION,
                 "model_version": MODEL_VERSION,
-                "probability_source": "sportsbook" if math.isfinite(p_book) else "model",
+                "probability_source": "sportsbook"
+                if math.isfinite(p_book)
+                else "model",
                 "p_yes": p_yes,
                 "book_n": int(getattr(row, "book_n", 0)),
                 "fee_bound_dollars": fee_bound,
@@ -775,12 +811,15 @@ def nba_candidates(now, latest=Path("outputs/projections/latest.csv")):
 
     import io
     from live.nba_inputs import read
+
     diagnostics = {"model_version": MODEL_VERSION}
     try:
         data, metadata = read(latest.parent, now)
         ts = pd.Timestamp(metadata["generated_utc"])
         age = (pd.Timestamp(now) - ts).total_seconds() / 3600
-        diagnostics.update(model_generated_utc=metadata["generated_utc"], model_age_hours=age)
+        diagnostics.update(
+            model_generated_utc=metadata["generated_utc"], model_age_hours=age
+        )
         frame = pd.read_csv(io.BytesIO(data), low_memory=False)
         if len(frame) != metadata["rows"]:
             raise ValueError("projection_row_count")
@@ -795,8 +834,13 @@ def nba_candidates(now, latest=Path("outputs/projections/latest.csv")):
             "team",
             "p_model",
             "injury_status",
-            "hours_to_tip", "team_espn", "home_espn", "away_espn",
-            "requires_book", "last_player_game_utc", "last_player_team",
+            "hours_to_tip",
+            "team_espn",
+            "home_espn",
+            "away_espn",
+            "requires_book",
+            "last_player_game_utc",
+            "last_player_team",
         }
         if not needed.issubset(frame.columns):
             raise ValueError("missing NBA projection columns")
@@ -810,11 +854,20 @@ def nba_candidates(now, latest=Path("outputs/projections/latest.csv")):
         frame["injury_status"] = frame.injury_status.fillna("")
         frame["model_generated_utc"] = metadata["generated_utc"]
         from markets.nba.live import rosters, scoreboard
+
         season = now.year + 1 if now.month >= 8 else now.year
-        days = sorted(set(frame.tip_utc.dropna().dt.tz_convert("America/New_York").dt.strftime("%Y%m%d")))
+        days = sorted(
+            set(
+                frame.tip_utc.dropna()
+                .dt.tz_convert("America/New_York")
+                .dt.strftime("%Y%m%d")
+            )
+        )
         if len(days) > 3:
             raise ValueError("unexpected_projection_schedule_span")
-        schedule = pd.concat([scoreboard(day, season) for day in days], ignore_index=True)
+        schedule = pd.concat(
+            [scoreboard(day, season) for day in days], ignore_index=True
+        )
         if schedule.game_id.duplicated().any():
             raise ValueError("duplicate_live_game")
         by_game = schedule.set_index("game_id")
@@ -822,10 +875,13 @@ def nba_candidates(now, latest=Path("outputs/projections/latest.csv")):
         for idx, row in frame.iterrows():
             try:
                 game = by_game.loc[int(row.game_id)]
-                good = (not game.completed and game.home == row.home_espn
-                        and game.away == row.away_espn
-                        and abs((game.tip_utc - row.tip_utc).total_seconds()) <= 60
-                        and int(row.player_id) in current_rosters[row.team_espn])
+                good = (
+                    not game.completed
+                    and game.home == row.home_espn
+                    and game.away == row.away_espn
+                    and abs((game.tip_utc - row.tip_utc).total_seconds()) <= 60
+                    and int(row.player_id) in current_rosters[row.team_espn]
+                )
             except (KeyError, TypeError, ValueError):
                 good = False
             if not good:
@@ -863,19 +919,52 @@ def nba_candidates(now, latest=Path("outputs/projections/latest.csv")):
         book_path = latest.parent / "nba_books.csv"
         if book_path.exists() and book_path.stat().st_size == 0:
             from kalshi.books import attach
+
             frame = attach(frame, None)
         else:
-            frame = attach_latest(frame, path=book_path) if book_path.exists() else attach_latest(frame)
+            frame = (
+                attach_latest(frame, path=book_path)
+                if book_path.exists()
+                else attach_latest(frame)
+            )
+        if "book_updated_utc" in frame and not report.empty:
+            team_news = report.assign(stamp=pd.to_datetime(report.updated, utc=True)).groupby("team").stamp.max()
+            update = pd.to_datetime(frame.book_updated_utc, utc=True, errors="coerce")
+            stale_news = update < frame.team_espn.map(team_news)
+            frame.loc[stale_news, "p_book"] = float("nan")
+            frame.loc[stale_news, "book_n"] = 0
+        if "book_commence_utc" in frame:
+            game_gap = (pd.to_datetime(frame.book_commence_utc, utc=True, errors="coerce") - frame.tip_utc).dt.total_seconds().abs()
+            frame.loc[game_gap > 900, "p_book"] = float("nan")
+            frame.loc[game_gap > 900, "book_n"] = 0
         # Opening-night, long-absence and transferred-player roles are not
         # established by last season's box scores. Require two fresh books.
         required = frame.requires_book.astype(str).str.lower().isin({"true", "1"})
-        invalid_flag = ~frame.requires_book.astype(str).str.lower().isin({"true", "false", "1", "0"})
-        history_gap = (frame.tip_utc - pd.to_datetime(frame.last_player_game_utc, utc=True, errors="coerce")).dt.days
-        required |= history_gap.isna() | (history_gap > 45) | frame.team_espn.ne(frame.last_player_team)
-        frame.loc[invalid_flag | (required & (frame.p_book.isna() | (frame.book_n < 2))), "injury_status"] = "SEASON_OR_ROLE_CHANGE_NEEDS_TWO_BOOKS"
-        diagnostics.update(rows=len(frame), in_entry_window=int(frame.hours_to_tip.between(*WINDOW).sum()),
-                           verified=int(frame.injury_status.eq("").sum()), book_covered=int(frame.p_book.notna().sum()),
-                           exclusions=frame.loc[frame.injury_status.ne(""), "injury_status"].value_counts().to_dict())
+        invalid_flag = ~frame.requires_book.astype(str).str.lower().isin(
+            {"true", "false", "1", "0"}
+        )
+        history_gap = (
+            frame.tip_utc
+            - pd.to_datetime(frame.last_player_game_utc, utc=True, errors="coerce")
+        ).dt.days
+        required |= (
+            history_gap.isna()
+            | (history_gap > 45)
+            | frame.team_espn.ne(frame.last_player_team)
+        )
+        frame.loc[
+            invalid_flag | (required & (frame.p_book.isna() | (frame.book_n < 2))),
+            "injury_status",
+        ] = "SEASON_OR_ROLE_CHANGE_NEEDS_TWO_BOOKS"
+        diagnostics.update(
+            rows=len(frame),
+            in_entry_window=int(frame.hours_to_tip.between(*WINDOW).sum()),
+            verified=int(frame.injury_status.eq("").sum()),
+            book_covered=int(frame.p_book.notna().sum()),
+            exclusions=frame.loc[frame.injury_status.ne(""), "injury_status"]
+            .value_counts()
+            .to_dict(),
+        )
         frame.attrs["diagnostics"] = diagnostics
         print(
             f"NBA PREFLIGHT: model_age={age:.2f}h, open_quoted={len(frame)}, "
@@ -887,7 +976,10 @@ def nba_candidates(now, latest=Path("outputs/projections/latest.csv")):
         # Don't leak HTTP response bodies, headers, or credentials.
         print(f"NBA PREFLIGHT BLOCKED: {type(err).__name__} -- no new orders")
         blocked = pd.DataFrame()
-        blocked.attrs["diagnostics"] = {**diagnostics, "blocked": str(err) if isinstance(err, ValueError) else type(err).__name__}
+        blocked.attrs["diagnostics"] = {
+            **diagnostics,
+            "blocked": str(err) if isinstance(err, ValueError) else type(err).__name__,
+        }
         return blocked
 
 
@@ -929,17 +1021,26 @@ def main():
     parser.add_argument("--dry-run", action="store_true")
     parser.add_argument("--live", action="store_true")
     parser.add_argument("--status", action="store_true")
-    parser.add_argument("--preflight", action="store_true", help="Production GET checks only; never submits or cancels")
+    parser.add_argument(
+        "--preflight",
+        action="store_true",
+        help="Production GET checks only; never submits or cancels",
+    )
     parser.add_argument("--sync-inputs", action="store_true")
     args = parser.parse_args()
     if sum((args.dry_run, args.live, args.status, args.preflight)) != 1:
         parser.error("Choose exactly one mode")
     directory = (
-        STATE if args.live or args.status or args.preflight else Path("/tmp/smm-nba-auto-readonly")
+        STATE
+        if args.live or args.status or args.preflight
+        else Path("/tmp/smm-nba-auto-readonly")
     )
     directory.mkdir(mode=0o700, parents=True, exist_ok=True)
     directory.chmod(0o700)
-    with (account_lock() if args.live else nullcontext()), (directory / "lock").open("a+") as lock:
+    with (
+        account_lock() if args.live else nullcontext(),
+        (directory / "lock").open("a+") as lock,
+    ):
         fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
         journal = directory / "journal.jsonl"
         if args.status:
@@ -955,7 +1056,9 @@ def main():
             raise TradingError(
                 "Production auto requires production venue even for dry run"
             )
-        client = (ReadOnlyClient if args.preflight else TradingClient)(dry_run=args.dry_run or args.preflight, env="prod")
+        client = (ReadOnlyClient if args.preflight else TradingClient)(
+            dry_run=args.dry_run or args.preflight, env="prod"
+        )
         if args.live:
             guard(os.environ, client)
             if (directory / "KILL").exists():
@@ -969,11 +1072,17 @@ def main():
             try:
                 sync(latest.parent, now)
             except Exception as error:
-                print(f"NBA INPUT SYNC: {type(error).__name__}; checking cached input age/hash", flush=True)
+                print(
+                    f"NBA INPUT SYNC: {type(error).__name__}; checking cached input age/hash",
+                    flush=True,
+                )
         frame = nba_candidates(now, latest=latest)
         if args.preflight:
             report = preflight(client, frame, now, journal)
-            atomic_write(directory / "preflight.json", (json.dumps(report, indent=2) + "\n").encode())
+            atomic_write(
+                directory / "preflight.json",
+                (json.dumps(report, indent=2) + "\n").encode(),
+            )
             print(json.dumps(report, indent=2))
             raise SystemExit(0 if report["ready"] else 2)
         pass_once(client, os.environ, frame, now, journal, dry=args.dry_run)
@@ -1009,16 +1118,27 @@ def preflight(client, frame, now, journal):
         budget = sum(reserve(a["cost"]) for a in attempts)
         if budget >= MAX_GROSS_COST:
             failures.append("lifetime_budget_exhausted")
-        account = {"cash_dollars": cash, "gross_reserved": budget, "resting": len(state["resting"]), "held_markets": len(state["held"])}
+        account = {
+            "cash_dollars": cash,
+            "gross_reserved": budget,
+            "resting": len(state["resting"]),
+            "held_markets": len(state["held"]),
+        }
     except Exception as error:
-        failures.append(str(error) if isinstance(error, TradingError) else type(error).__name__)
+        failures.append(
+            str(error) if isinstance(error, TradingError) else type(error).__name__
+        )
         account = {"verified": False}
-    return {"utc": now.isoformat(), "ready": not failures,
-            "strategy_version": STRATEGY_VERSION, "failures": failures,
-            "account": account, "inputs": frame.attrs.get("diagnostics", {}),
-            "note": "Read-only readiness check; owner activation is separate. No fill or profit claim."}
+    return {
+        "utc": now.isoformat(),
+        "ready": not failures,
+        "strategy_version": STRATEGY_VERSION,
+        "failures": failures,
+        "account": account,
+        "inputs": frame.attrs.get("diagnostics", {}),
+        "note": "Read-only readiness check; owner activation is separate. No fill or profit claim.",
+    }
 
 
 if __name__ == "__main__":
     main()
-

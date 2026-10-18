@@ -46,12 +46,17 @@ def publish(frame, directory, now, **evidence):
     }
     directory = Path(directory)
     atomic_write(directory / "latest.csv", data)
-    atomic_write(directory / "latest_meta.json", (json.dumps(meta, indent=2) + "\n").encode())
+    atomic_write(
+        directory / "latest_meta.json", (json.dumps(meta, indent=2) + "\n").encode()
+    )
     return meta
 
 
 def validate(data, meta, now):
-    if meta.get("schema_version") != SCHEMA or meta.get("model_version") != MODEL_VERSION:
+    if (
+        meta.get("schema_version") != SCHEMA
+        or meta.get("model_version") != MODEL_VERSION
+    ):
         raise ValueError("projection_schema_or_model_version")
     if hashlib.sha256(data).hexdigest() != meta.get("sha256"):
         raise ValueError("projection_checksum")
@@ -73,7 +78,9 @@ def read(directory, now):
 
 
 def download(url):
-    req = urllib.request.Request(url, headers={"User-Agent": "sports-market-maker-nba-inputs"})
+    req = urllib.request.Request(
+        url, headers={"User-Agent": "sports-market-maker-nba-inputs"}
+    )
     with urllib.request.urlopen(req, timeout=20) as response:
         data = response.read(MAX_BYTES + 1)
     if len(data) > MAX_BYTES:
@@ -84,7 +91,9 @@ def download(url):
 def sync(directory, now=None):
     """Pin all reads to one public commit. Never git-pull executable code."""
     now = now or datetime.now(UTC)
-    commit = json.loads(download(f"https://api.github.com/repos/{REPOSITORY}/commits/main"))
+    commit = json.loads(
+        download(f"https://api.github.com/repos/{REPOSITORY}/commits/main")
+    )
     sha = commit["sha"]
     if len(sha) != 40 or any(c not in "0123456789abcdef" for c in sha):
         raise ValueError("Invalid source commit")
@@ -101,7 +110,9 @@ def sync(directory, now=None):
     atomic_write(directory / "nba_books.csv", book)
     meta["source_commit"] = sha
     atomic_write(directory / "latest.csv", data)
-    atomic_write(directory / "latest_meta.json", (json.dumps(meta, indent=2) + "\n").encode())
+    atomic_write(
+        directory / "latest_meta.json", (json.dumps(meta, indent=2) + "\n").encode()
+    )
     return meta
 
 
@@ -110,7 +121,12 @@ def main():
     parser.add_argument("--sync", type=Path, required=True)
     args = parser.parse_args()
     meta = sync(args.sync)
-    print(json.dumps({k: meta[k] for k in ("generated_utc", "rows", "source_commit")}, sort_keys=True))
+    print(
+        json.dumps(
+            {k: meta[k] for k in ("generated_utc", "rows", "source_commit")},
+            sort_keys=True,
+        )
+    )
 
 
 if __name__ == "__main__":

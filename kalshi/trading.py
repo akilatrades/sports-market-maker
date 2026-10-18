@@ -365,4 +365,3 @@ class TradingClient:
                     continue
             cancelled.append(self.cancel(o["order_id"]))
         return cancelled
-

@@ -1,0 +1,820 @@
+{
+  "as_of_utc": "2026-10-18",
+  "nba": {
+    "all_sampled_no_print_fills": {
+      "rows": 4862,
+      "events": 151,
+      "cents": 2.038129843685725,
+      "t": 1.8031814056279298,
+      "ci95_cents": [
+        -0.19522926850838418,
+        4.271488955879835
+      ],
+      "bootstrap_ci95_cents": [
+        -0.23091726253639988,
+        4.099641893382067
+      ],
+      "two_sided_p": 0.07336689893573338
+    },
+    "book_veto_original": {
+      "rows": 1647,
+      "events": 146,
+      "cents": 3.8143918488160296,
+      "t": 2.3919641321359566,
+      "ci95_cents": [
+        0.662592394996716,
+        6.966191302635344
+      ],
+      "bootstrap_ci95_cents": [
+        0.7465475600585261,
+        6.960079663445941
+      ],
+      "two_sided_p": 0.018040195877893062
+    },
+    "model_veto_original": {
+      "rows": 3005,
+      "events": 144,
+      "cents": 2.793604825291181,
+      "t": 2.0172101843957893,
+      "ci95_cents": [
+        0.056112765728663985,
+        5.531096884853698
+      ],
+      "bootstrap_ci95_cents": [
+        0.15798800465649052,
+        5.515799737310114
+      ],
+      "two_sided_p": 0.04554493878879195
+    },
+    "baseline_book_or_model": {
+      "rows": 2578,
+      "events": 149,
+      "cents": 3.5318811869666407,
+      "t": 2.7524774757958563,
+      "ci95_cents": [
+        0.9961910969622002,
+        6.067571276971082
+      ],
+      "bootstrap_ci95_cents": [
+        0.9668123167169187,
+        6.081334136259566
+      ],
+      "two_sided_p": 0.006655077581608379
+    },
+    "current_price_and_edge_caps": {
+      "rows": 2254,
+      "events": 148,
+      "cents": 3.596376475155279,
+      "t": 2.605736706368721,
+      "ci95_cents": [
+        0.8688257735980497,
+        6.323927176712507
+      ],
+      "bootstrap_ci95_cents": [
+        0.9467127639950115,
+        6.396481093397667
+      ],
+      "two_sided_p": 0.010110818233745142
+    },
+    "opening_two_books_price_edge_caps": {
+      "rows": 1033,
+      "events": 142,
+      "cents": 3.975384438528558,
+      "t": 1.9699868261354825,
+      "ci95_cents": [
+        -0.014014156268548489,
+        7.964783033325665
+      ],
+      "bootstrap_ci95_cents": [
+        0.08247613146396156,
+        7.767508659582073
+      ],
+      "two_sided_p": 0.05079925795281581
+    },
+    "original_by_month": {
+      "2025-11": {
+        "rows": 11,
+        "events": 6,
+        "cents": 11.993431818181817,
+        "t": 0.5864479289074329,
+        "ci95_cents": [
+          -40.57747253507941,
+          64.56433617144305
+        ],
+        "bootstrap_ci95_cents": [
+          -20.614505,
+          60.35753888888888
+        ],
+        "two_sided_p": 0.5830500607485843
+      },
+      "2025-12": {
+        "rows": 181,
+        "events": 23,
+        "cents": 6.763132182320442,
+        "t": 0.9070840644095353,
+        "ci95_cents": [
+          -8.699467413362525,
+          22.225731778003407
+        ],
+        "bootstrap_ci95_cents": [
+          -7.474459319444442,
+          20.05841527107279
+        ],
+        "two_sided_p": 0.3741912240976341
+      },
+      "2026-01": {
+        "rows": 283,
+        "events": 32,
+        "cents": 4.2657982332155475,
+        "t": 1.042689236532788,
+        "ci95_cents": [
+          -4.078157522180388,
+          12.609753988611484
+        ],
+        "bootstrap_ci95_cents": [
+          -3.278293567788516,
+          12.053532443906645
+        ],
+        "two_sided_p": 0.3051558437923627
+      },
+      "2026-02": {
+        "rows": 320,
+        "events": 23,
+        "cents": 2.330636796875,
+        "t": 0.9234125277196829,
+        "ci95_cents": [
+          -2.9036921070668784,
+          7.564965700816878
+        ],
+        "bootstrap_ci95_cents": [
+          -2.302866852328282,
+          7.394230590387456
+        ],
+        "two_sided_p": 0.36580986118326136
+      },
+      "2026-03": {
+        "rows": 360,
+        "events": 35,
+        "cents": 2.774610902777778,
+        "t": 1.230429285033401,
+        "ci95_cents": [
+          -1.8080886812215986,
+          7.357310486777155
+        ],
+        "bootstrap_ci95_cents": [
+          -1.5718665556049387,
+          7.3035147973546515
+        ],
+        "two_sided_p": 0.22698157667301613
+      },
+      "2026-04": {
+        "rows": 293,
+        "events": 20,
+        "cents": 3.8679041808873724,
+        "t": 1.1556666279884726,
+        "ci95_cents": [
+          -3.137244444745942,
+          10.873052806520686
+        ],
+        "bootstrap_ci95_cents": [
+          -2.8130712429519784,
+          10.256457593002652
+        ],
+        "two_sided_p": 0.2621440108342138
+      },
+      "2026-05": {
+        "rows": 167,
+        "events": 6,
+        "cents": 5.558420808383236,
+        "t": 0.6774420649983012,
+        "ci95_cents": [
+          -15.533236032986217,
+          26.65007764975269
+        ],
+        "bootstrap_ci95_cents": [
+          -7.211522129186602,
+          20.441009600221925
+        ],
+        "two_sided_p": 0.5281978994248636
+      },
+      "2026-06": {
+        "rows": 32,
+        "events": 1,
+        "cents": -2.7246281250000006,
+        "t": null,
+        "ci95_cents": null,
+        "bootstrap_ci95_cents": null,
+        "two_sided_p": null
+      }
+    },
+    "original_by_season_type": {
+      "play-in": {
+        "rows": 27,
+        "events": 1,
+        "cents": -5.484068518518519,
+        "t": null,
+        "ci95_cents": null,
+        "bootstrap_ci95_cents": null,
+        "two_sided_p": null
+      },
+      "playoffs": {
+        "rows": 328,
+        "events": 12,
+        "cents": 4.71431112804878,
+        "t": 1.0794073086401526,
+        "ci95_cents": [
+          -4.898490962352277,
+          14.327113218449838
+        ],
+        "bootstrap_ci95_cents": [
+          -3.322655008268799,
+          12.819263854768373
+        ],
+        "two_sided_p": 0.3035055812343885
+      },
+      "regular": {
+        "rows": 1292,
+        "events": 133,
+        "cents": 3.7802470394736845,
+        "t": 2.190953297870066,
+        "ci95_cents": [
+          0.3672567679606116,
+          7.193237310986758
+        ],
+        "bootstrap_ci95_cents": [
+          0.5518537048784236,
+          7.191158852647028
+        ],
+        "two_sided_p": 0.030210380957521894
+      }
+    },
+    "opening_by_stat": {
+      "assists": {
+        "rows": 211,
+        "events": 100,
+        "cents": 5.275050236966826,
+        "t": 1.3432855368211016,
+        "ci95_cents": [
+          -2.516922365842114,
+          13.067022839775767
+        ],
+        "bootstrap_ci95_cents": [
+          -2.2818694759825315,
+          12.844597468714744
+        ],
+        "two_sided_p": 0.18225072803410308
+      },
+      "points": {
+        "rows": 346,
+        "events": 116,
+        "cents": 3.204904624277457,
+        "t": 1.0323612822455817,
+        "ci95_cents": [
+          -2.9443953906154134,
+          9.354204639170327
+        ],
+        "bootstrap_ci95_cents": [
+          -2.876895506574364,
+          9.103091781452335
+        ],
+        "two_sided_p": 0.3040691157074294
+      },
+      "rebounds": {
+        "rows": 287,
+        "events": 110,
+        "cents": 2.9334488675958186,
+        "t": 0.968467871076601,
+        "ci95_cents": [
+          -3.0698481565130513,
+          8.936745891704689
+        ],
+        "bootstrap_ci95_cents": [
+          -2.8667601612972504,
+          8.75273070915435
+        ],
+        "two_sided_p": 0.3349547877289383
+      },
+      "threes": {
+        "rows": 189,
+        "events": 95,
+        "cents": 5.517141269841272,
+        "t": 1.463627979299851,
+        "ci95_cents": [
+          -1.9672833778753833,
+          13.001565917557926
+        ],
+        "bootstrap_ci95_cents": [
+          -2.068486185341721,
+          12.764524524296505
+        ],
+        "two_sided_p": 0.146631685627491
+      }
+    },
+    "opening_with_one_contract_fee_bound": {
+      "rows": 1033,
+      "events": 142,
+      "cents": 3.3959341723136487,
+      "t": 1.6828729093484758,
+      "ci95_cents": [
+        -0.5933921524978271,
+        7.385260497125124
+      ],
+      "bootstrap_ci95_cents": [
+        -0.4982341470460789,
+        7.1884363578579356
+      ],
+      "two_sided_p": 0.09461272471910527
+    },
+    "opening_fee_bound_positive_edge": {
+      "rows": 747,
+      "events": 138,
+      "cents": 3.712182061579651,
+      "t": 1.6774630472651302,
+      "ci95_cents": [
+        -0.6638217414882672,
+        8.088185864647569
+      ],
+      "bootstrap_ci95_cents": [
+        -0.6290485449478256,
+        8.045633077935141
+      ],
+      "two_sided_p": 0.09573202834983568
+    },
+    "stress_cents_per_captured_contract": {
+      "extra_0c": 3.3959341723136487,
+      "extra_1c": 2.3959341723136487,
+      "extra_2c": 1.3959341723136487,
+      "extra_4c": -0.6040658276863513
+    },
+    "warning": "All NBA rows here were preselected as possible historical fills. No unfilled-order denominator, actual queue, current roster gate, current fee schedule or full pilot-budget replay is available in this file. Do not call this live P&L or launch-version backtest."
+  },
+  "broad_scan": {
+    "listed_series": 3047,
+    "series_with_no_fill_statistics": 2349,
+    "nominal_passes": 80,
+    "minimum_side_tests": 4698,
+    "warning": "Additional windows, prices and filters make the true search family larger. Correlated outcomes and expiry after resolution can invalidate a scan even with a small adjusted p value."
+  },
+  "selected_series": {
+    "KXBTC": {
+      "rows": 12,
+      "events": 6,
+      "cents": -8.982706250000005,
+      "t": -0.4142559086707728,
+      "ci95_cents": [
+        -64.72308565749823,
+        46.757673157498225
+      ],
+      "bootstrap_ci95_cents": [
+        -50.268719230769236,
+        17.746999999999996
+      ],
+      "two_sided_p": 0.6958586947596492,
+      "placed_rows": 31,
+      "print_fill_rate": 0.3870967741935484,
+      "cents_per_placed_order": -3.4771766129032287,
+      "bonferroni_p_lower_bound_family": 1.0,
+      "first_possible_fill_per_ticker": {
+        "rows": 7,
+        "events": 6,
+        "cents": 1.4848857142857073,
+        "t": 0.10390870978580846,
+        "ci95_cents": [
+          -35.24947710291107,
+          38.21924853148248
+        ],
+        "bootstrap_ci95_cents": [
+          -31.760254166666673,
+          19.229654166666656
+        ],
+        "two_sided_p": 0.9212810299362993
+      },
+      "dates": [
+        "2025-10-01",
+        "2026-07-31"
+      ]
+    },
+    "KXCPI": {
+      "rows": 45,
+      "events": 8,
+      "cents": -0.8274911111111111,
+      "t": -0.1699908540582877,
+      "ci95_cents": [
+        -12.338143023242,
+        10.683160801019778
+      ],
+      "bootstrap_ci95_cents": [
+        -7.177313775510203,
+        12.444491195522032
+      ],
+      "two_sided_p": 0.8698259550305353,
+      "placed_rows": 130,
+      "print_fill_rate": 0.34615384615384615,
+      "cents_per_placed_order": -0.28643923076923067,
+      "bonferroni_p_lower_bound_family": 1.0,
+      "first_possible_fill_per_ticker": {
+        "rows": 23,
+        "events": 8,
+        "cents": 3.360233695652174,
+        "t": 0.4750833516453212,
+        "ci95_cents": [
+          -13.364600084021758,
+          20.085067475326106
+        ],
+        "bootstrap_ci95_cents": [
+          -6.462749650000001,
+          21.09033138701921
+        ],
+        "two_sided_p": 0.6491933576428732
+      },
+      "dates": [
+        "2025-10-15",
+        "2026-08-12"
+      ]
+    },
+    "KXITFMATCH": {
+      "rows": 1168,
+      "events": 554,
+      "cents": 4.617889982876712,
+      "t": 2.5133689687149117,
+      "ci95_cents": [
+        1.0088891643103226,
+        8.226890801443101
+      ],
+      "bootstrap_ci95_cents": [
+        1.0135036751760558,
+        8.055523436888237
+      ],
+      "two_sided_p": 0.012241550263456557,
+      "placed_rows": 2409,
+      "print_fill_rate": 0.48484848484848486,
+      "cents_per_placed_order": 2.2389769613947696,
+      "bonferroni_p_lower_bound_family": 1.0,
+      "first_possible_fill_per_ticker": {
+        "rows": 560,
+        "events": 554,
+        "cents": 4.3843529017857135,
+        "t": 2.458448338265005,
+        "ci95_cents": [
+          0.881321224423133,
+          7.887384579148293
+        ],
+        "bootstrap_ci95_cents": [
+          0.951834770420712,
+          7.7254290188432435
+        ],
+        "two_sided_p": 0.014259325686920975
+      },
+      "dates": [
+        "2026-04-11",
+        "2026-08-15"
+      ]
+    },
+    "KXLALIGASPREAD": {
+      "rows": 835,
+      "events": 223,
+      "cents": 4.311144940119758,
+      "t": 2.293016440036967,
+      "ci95_cents": [
+        0.6059795224417553,
+        8.01631035779776
+      ],
+      "bootstrap_ci95_cents": [
+        0.46807213259846253,
+        7.84522596733242
+      ],
+      "two_sided_p": 0.022783235036428044,
+      "placed_rows": 2787,
+      "print_fill_rate": 0.299605310369573,
+      "cents_per_placed_order": 1.2916419178327945,
+      "bonferroni_p_lower_bound_family": 1.0,
+      "first_possible_fill_per_ticker": {
+        "rows": 462,
+        "events": 223,
+        "cents": 2.086726731601729,
+        "t": 1.2539183075817841,
+        "ci95_cents": [
+          -1.192855181442523,
+          5.366308644645981
+        ],
+        "bootstrap_ci95_cents": [
+          -1.4200980006204635,
+          5.284579084226909
+        ],
+        "two_sided_p": 0.2111904824697946
+      },
+      "dates": [
+        "2025-11-21",
+        "2026-08-16"
+      ]
+    },
+    "KXNASCARRACE": {
+      "rows": 940,
+      "events": 73,
+      "cents": 4.0024535372340395,
+      "t": 3.62177859658501,
+      "ci95_cents": [
+        1.7994626334675345,
+        6.2054444410005445
+      ],
+      "bootstrap_ci95_cents": [
+        1.8553280220123325,
+        6.088532114463422
+      ],
+      "two_sided_p": 0.0005412252920010187,
+      "placed_rows": 1333,
+      "print_fill_rate": 0.7051762940735183,
+      "cents_per_placed_order": 2.822435352588145,
+      "bonferroni_p_lower_bound_family": 1.0,
+      "first_possible_fill_per_ticker": {
+        "rows": 365,
+        "events": 73,
+        "cents": 3.1837607534246555,
+        "t": 3.460685384415084,
+        "ci95_cents": [
+          1.3498144792265152,
+          5.017707027622795
+        ],
+        "bootstrap_ci95_cents": [
+          1.3863969127129816,
+          4.919939994059178
+        ],
+        "two_sided_p": 0.0009096995782026423
+      },
+      "dates": [
+        "2025-09-13",
+        "2026-08-16"
+      ]
+    },
+    "KXNCAAMB1HSPREAD": {
+      "rows": 223,
+      "events": 116,
+      "cents": 16.35482365470852,
+      "t": 3.9669198806321337,
+      "ci95_cents": [
+        8.188347143085874,
+        24.521300166331173
+      ],
+      "bootstrap_ci95_cents": [
+        7.8141286197280415,
+        23.886636752481035
+      ],
+      "two_sided_p": 0.00012701257834479563,
+      "placed_rows": 729,
+      "print_fill_rate": 0.3058984910836763,
+      "cents_per_placed_order": 5.002915877914952,
+      "bonferroni_p_lower_bound_family": 0.5967050930638499,
+      "first_possible_fill_per_ticker": {
+        "rows": 135,
+        "events": 116,
+        "cents": 11.042333888888889,
+        "t": 2.7659576642082717,
+        "ci95_cents": [
+          3.134498378051731,
+          18.950169399726047
+        ],
+        "bootstrap_ci95_cents": [
+          3.013659409507278,
+          18.599263247643265
+        ],
+        "two_sided_p": 0.00661429398995613
+      },
+      "dates": [
+        "2026-02-18",
+        "2026-04-07"
+      ]
+    },
+    "KXNWSLSPREAD": {
+      "rows": 145,
+      "events": 39,
+      "cents": 14.036125517241379,
+      "t": 4.040001346208218,
+      "ci95_cents": [
+        7.002798509143187,
+        21.06945252533957
+      ],
+      "bootstrap_ci95_cents": [
+        6.598472553306037,
+        20.3146777675621
+      ],
+      "two_sided_p": 0.0002507404919622162,
+      "placed_rows": 502,
+      "print_fill_rate": 0.28884462151394424,
+      "cents_per_placed_order": 4.054259362549799,
+      "bonferroni_p_lower_bound_family": 1.0,
+      "first_possible_fill_per_ticker": {
+        "rows": 95,
+        "events": 39,
+        "cents": 12.003704210526314,
+        "t": 3.797649517175472,
+        "ci95_cents": [
+          5.604949233477124,
+          18.402459187575502
+        ],
+        "bootstrap_ci95_cents": [
+          5.443104993896354,
+          17.732164016158926
+        ],
+        "two_sided_p": 0.0005121945543119245
+      },
+      "dates": [
+        "2026-07-18",
+        "2026-08-16"
+      ]
+    }
+  },
+  "later_paper": {
+    "KXITFMATCH": {
+      "rows": 158,
+      "events": 89,
+      "cents": -0.08935364981165135,
+      "t": -0.07169383400017298,
+      "ci95_cents": [
+        -2.5661580379817663,
+        2.3874507383584636
+      ],
+      "bootstrap_ci95_cents": [
+        -2.499842439614612,
+        2.48523324003936
+      ],
+      "two_sided_p": 0.9430082535073299,
+      "profit_dollars": -78.63,
+      "contracts": 2179.0,
+      "weighted_cents": -3.608536025699862,
+      "dates": [
+        "2026-10-16",
+        "2026-10-18"
+      ]
+    },
+    "KXITFMATCH+no30": {
+      "rows": 66,
+      "events": 45,
+      "cents": 2.616990038580949,
+      "t": 0.831015011478184,
+      "ci95_cents": [
+        -3.729702612634579,
+        8.963682689796478
+      ],
+      "bootstrap_ci95_cents": [
+        -3.968673516160455,
+        8.432017457159215
+      ],
+      "two_sided_p": 0.41045210090781764,
+      "profit_dollars": 15.200000000000003,
+      "contracts": 504.0,
+      "weighted_cents": 3.0158730158730167,
+      "dates": [
+        "2026-10-17",
+        "2026-10-18"
+      ]
+    },
+    "KXLALIGASPREAD": {
+      "rows": 20,
+      "events": 8,
+      "cents": 11.661031746031744,
+      "t": 1.8067940897822181,
+      "ci95_cents": [
+        -3.6002305202089193,
+        26.922294012272406
+      ],
+      "bootstrap_ci95_cents": [
+        -4.7193069727891155,
+        22.726648715041552
+      ],
+      "two_sided_p": 0.11374753104083782,
+      "profit_dollars": 16.619999999999994,
+      "contracts": 117.0,
+      "weighted_cents": 14.2051282051282,
+      "dates": [
+        "2026-10-16",
+        "2026-10-18"
+      ]
+    },
+    "KXLIGAMXSPREAD": {
+      "rows": 35,
+      "events": 8,
+      "cents": -10.798633068250773,
+      "t": -0.9495994636481152,
+      "ci95_cents": [
+        -37.68861206964977,
+        16.091345933148226
+      ],
+      "bootstrap_ci95_cents": [
+        -29.276968036287904,
+        12.097208538587848
+      ],
+      "two_sided_p": 0.37394037453006485,
+      "profit_dollars": -31.32,
+      "contracts": 284.0,
+      "weighted_cents": -11.028169014084508,
+      "dates": [
+        "2026-10-17",
+        "2026-10-18"
+      ]
+    },
+    "KXNASCARRACE": {
+      "rows": 39,
+      "events": 2,
+      "cents": 1.33943833943834,
+      "t": 2.5427929534270053,
+      "ci95_cents": [
+        -5.353665693844473,
+        8.032542372721153
+      ],
+      "bootstrap_ci95_cents": [
+        0.7687830687830691,
+        1.8285714285714283
+      ],
+      "two_sided_p": 0.23853493384503902,
+      "profit_dollars": 1.8199999999999996,
+      "contracts": 211.0,
+      "weighted_cents": 0.8625592417061609,
+      "dates": [
+        "2026-10-17",
+        "2026-10-18"
+      ]
+    },
+    "KXNASCARTOP10": {
+      "rows": 28,
+      "events": 1,
+      "cents": 4.135062315639888,
+      "t": null,
+      "ci95_cents": null,
+      "bootstrap_ci95_cents": null,
+      "two_sided_p": null,
+      "profit_dollars": -15.070000000000002,
+      "contracts": 428.0,
+      "weighted_cents": -3.521028037383178,
+      "dates": [
+        "2026-10-18",
+        "2026-10-18"
+      ]
+    },
+    "KXNFLRECYDS": {
+      "rows": 20,
+      "events": 1,
+      "cents": -28.22915584415585,
+      "t": null,
+      "ci95_cents": null,
+      "bootstrap_ci95_cents": null,
+      "two_sided_p": null,
+      "profit_dollars": -30.28,
+      "contracts": 112.0,
+      "weighted_cents": -27.035714285714285,
+      "dates": [
+        "2026-10-18",
+        "2026-10-18"
+      ]
+    },
+    "KXNFLRECYDS+model": {
+      "rows": 2,
+      "events": 1,
+      "cents": -24.416666666666668,
+      "t": null,
+      "ci95_cents": null,
+      "bootstrap_ci95_cents": null,
+      "two_sided_p": null,
+      "profit_dollars": -4.720000000000001,
+      "contracts": 13.0,
+      "weighted_cents": -36.307692307692314,
+      "dates": [
+        "2026-10-18",
+        "2026-10-18"
+      ]
+    },
+    "KXUFCMOF": {
+      "rows": 34,
+      "events": 13,
+      "cents": -9.045640225787285,
+      "t": -2.7054088376162375,
+      "ci95_cents": [
+        -16.33058610992392,
+        -1.760694341650644
+      ],
+      "bootstrap_ci95_cents": [
+        -15.941002337526633,
+        -3.299150539371894
+      ],
+      "two_sided_p": 0.019117108755191164,
+      "profit_dollars": -33.62,
+      "contracts": 231.0,
+      "weighted_cents": -14.554112554112553,
+      "dates": [
+        "2026-10-17",
+        "2026-10-18"
+      ]
+    }
+  },
+  "source_sha256": {
+    "outputs/bookline/fills_with_book.csv.gz": "eacb18b831cbbedb21e23c6e638cbb6452ad7289cf7da0775522297c11b5685f",
+    "outputs/scan/table.csv": "97bc1ff6a87f093bdc50aacd320ad6b6201d78fcff92f60a0a67358c3ced9859",
+    "outputs/paper_markets/orders.csv": "ff3e93ed92a98fdf0ee6e4fa19b61007c7007e270df1dea8cb7664ca796d1feb",
+    "outputs/scan/orders_KXBTC.csv.gz": "4a967c1486e3f0ef38f879f0447838d91783d60ded67e70104b40dc73b4b95fd",
+    "outputs/scan/orders_KXCPI.csv.gz": "8030d15e0c251b9142b834383e6e1e8943ed1c5e7c382679b1390a231e644a5d",
+    "outputs/scan/orders_KXITFMATCH.csv.gz": "aac166a9d8c1bc2dddf18a8bc5b6061bd39bad7f5c338a4afd1a11cc739f2049",
+    "outputs/scan/orders_KXLALIGASPREAD.csv.gz": "e829a5d423de7906be07139485b894f8ed486fd4ab646e42a0c14da9cb808381",
+    "outputs/scan/orders_KXNASCARRACE.csv.gz": "ed9da9a6c49001fb6a3ba648f11410125e9ca9a1fb2cc74fec7e236811c712d5",
+    "outputs/scan/orders_KXNCAAMB1HSPREAD.csv.gz": "f739e96b98ad3d32b3e3160734bccae5dd549ead9413119dfa25c134b3a424f6",
+    "outputs/scan/orders_KXNWSLSPREAD.csv.gz": "08e529bb0e72fb376015bbef1dec957a0ea2e3310618aa9c9de0d6f69a68d725"
+  }
+}

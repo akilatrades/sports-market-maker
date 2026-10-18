@@ -300,9 +300,13 @@ def attach(priced, book):
         p["game_day"] = game_day(p.tip_utc)
         b = b[b.game_day.notna()]
         keys = ["game_day"] + keys
-    b = b.drop_duplicates(keys)
-    p = p.drop(columns=["p_book", "book_n"], errors="ignore").merge(
-        b[keys + ["p_book", "book_n"]], on=keys, how="left"
+    # Ambiguous same-player/game/line rows cannot be resolved by file order.
+    b = b.drop_duplicates(keys, keep=False)
+    evidence = {"updated_utc": "book_updated_utc", "commence_utc": "book_commence_utc"}
+    carry = [name for name in evidence if name in b]
+    b = b.rename(columns={k: evidence[k] for k in carry})
+    p = p.drop(columns=["p_book", "book_n", *evidence.values()], errors="ignore").merge(
+        b[keys + ["p_book", "book_n"] + [evidence[k] for k in carry]], on=keys, how="left"
     )
     p = p.drop(columns=["game_day"], errors="ignore")
     p["book_n"] = p.book_n.fillna(0).astype(int)
@@ -323,11 +327,12 @@ def attach_latest(priced, path=LATEST, max_age_hours=4):
         return attach(priced, None)
     book = pd.read_csv(path)
     now = pd.Timestamp.now(tz="UTC")
-    if len(book) and "snapshot_utc" in book:
-        age = now - pd.to_datetime(book.snapshot_utc.iloc[0], utc=True)
-        if age > pd.Timedelta(hours=max_age_hours):
-            print(f"Book lines are {age} old; ignored")
+    if len(book):
+        if "snapshot_utc" not in book:
             return attach(priced, None)
+        stamps = pd.to_datetime(book.snapshot_utc, utc=True, errors="coerce")
+        age = now - stamps
+        book = book[age.between(pd.Timedelta(0), pd.Timedelta(hours=max_age_hours))]
     if len(book) and "updated_utc" not in book:
         # An older log without the books' own update times cannot be checked
         # for freshness: treat it as no book data (the model veto takes over).
@@ -338,7 +343,9 @@ def attach_latest(priced, path=LATEST, max_age_hours=4):
         # whose stalest contributing book last moved more than max_age ago.
         upd = pd.to_datetime(book.updated_utc, utc=True, errors="coerce")
         age = now - upd
-        fresh = upd.notna() & age.between(pd.Timedelta(0), pd.Timedelta(hours=max_age_hours))
+        fresh = upd.notna() & age.between(
+            pd.Timedelta(0), pd.Timedelta(hours=max_age_hours)
+        )
         if (~fresh).any():
             print(
                 f"Book lines: {int((~fresh).sum())} of {len(book)} dropped as stale at the books"
@@ -386,4 +393,3 @@ def save_json(obj, path):
 def load_json(path):
     with gzip.open(path, "rt") as f:
         return json.load(f)
-

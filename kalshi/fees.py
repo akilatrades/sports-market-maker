@@ -42,5 +42,6 @@ def live_maker_fee_bound(ticker, price, count):
     return maker_fee_bound(price, count, s, e), {
         "fee_type": e.get("fee_type_override") or s.get("fee_type"),
         "fee_multiplier": e.get("fee_multiplier_override")
-        if e.get("fee_multiplier_override") is not None else s.get("fee_multiplier"),
+        if e.get("fee_multiplier_override") is not None
+        else s.get("fee_multiplier"),
     }

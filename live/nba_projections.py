@@ -167,10 +167,14 @@ def main():
     games = pd.read_parquet("data/games.parquet")
     players = players[players.tip_utc < now].copy()
     if players.empty or players.season.max() < now.year:
-        raise ValueError("NBA player history is missing the most recent completed season")
+        raise ValueError(
+            "NBA player history is missing the most recent completed season"
+        )
     season = now.year + 1 if now.month >= 8 else now.year
     eastern = pd.Timestamp(now).tz_convert("America/New_York")
-    days = [eastern.date(), (eastern + timedelta(days=1)).date()]
+    # Include opening Tuesday in Sunday's source validation. The worker still
+    # enforces the same 2–6 hour entry window and 9-hour projection age.
+    days = [(eastern + timedelta(days=i)).date() for i in range(3)]
     schedule = pd.concat(
         [scoreboard(f"{d:%Y%m%d}", season) for d in days], ignore_index=True
     )
@@ -178,9 +182,14 @@ def main():
     markets = parse(snapshot(SERIES, now=now))
     if schedule.empty or markets.empty:
         print(f"Nothing to price: {len(schedule)} games, {len(markets)} markets")
-        publish(pd.DataFrame(columns=COLUMNS), OUT, now,
-                schedule_games=len(schedule), open_markets=len(markets),
-                data_max_tip_utc=players.tip_utc.max().isoformat())
+        publish(
+            pd.DataFrame(columns=COLUMNS),
+            OUT,
+            now,
+            schedule_games=len(schedule),
+            open_markets=len(markets),
+            data_max_tip_utc=players.tip_utc.max().isoformat(),
+        )
         return
     priced, matched = price_markets(
         players, games, schedule, markets, injuries(), now=now
@@ -190,8 +199,14 @@ def main():
     folder.mkdir(parents=True, exist_ok=True)
     path = folder / f"{now:%Y-%m-%dT%H%MZ}.csv"
     priced.round(4).to_csv(path, index=False)
-    publish(priced, OUT, now, schedule_games=len(schedule), open_markets=len(markets),
-            data_max_tip_utc=players.tip_utc.max().isoformat())
+    publish(
+        priced,
+        OUT,
+        now,
+        schedule_games=len(schedule),
+        open_markets=len(markets),
+        data_max_tip_utc=players.tip_utc.max().isoformat(),
+    )
     unpriced = matched.player_id.isna().sum()
     print(
         f"Priced {len(priced)} of {len(markets)} open markets for "
