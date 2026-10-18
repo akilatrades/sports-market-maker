@@ -182,8 +182,12 @@ def test_simultaneous_cap_and_game_cap():
     row = SimpleNamespace(game_id="g3", team="NYG")
     assert auto.room_for([a, b], [a, b], row, 2.0, NOW)
     more = [
-        {"cost": 2.0, "game_id": f"other{i}", "team": f"other{i}",
-         "utc": NOW.isoformat()}
+        {
+            "cost": 2.0,
+            "game_id": f"other{i}",
+            "team": f"other{i}",
+            "utc": NOW.isoformat(),
+        }
         for i in range(5)
     ]
     assert not auto.room_for([a, b] + more, [a, b] + more, row, 2.0, NOW)
@@ -323,18 +327,21 @@ def test_entries_9_minutes_before_kickoff_are_rejected(quotes):
     with pytest.raises(TradingError, match="Too close"):
         auto.order_from_row(row, NOW)
 
+
 def test_expired_unfilled_releases_active_only_after_ten_minutes():
     old = (NOW - timedelta(minutes=20)).isoformat()
     attempt = {
-        "client_order_id": "cid", "ticker": "NFL-OLD",
-        "tip_utc": old, "cost": 2.0,
-        "game_id": "past", "team": "OLD", "utc": (NOW - timedelta(hours=1)).isoformat(),
+        "client_order_id": "cid",
+        "ticker": "NFL-OLD",
+        "tip_utc": old,
+        "cost": 2.0,
+        "game_id": "past",
+        "team": "OLD",
+        "utc": (NOW - timedelta(hours=1)).isoformat(),
     }
     accepted = {"cid": {"order_id": "oid"}}
     state = {"resting": [], "held": [], "settled": set()}
-    active, freed = auto.reconcile_expired_unfilled(
-        [attempt], accepted, state, [], NOW
-    )
+    active, freed = auto.reconcile_expired_unfilled([attempt], accepted, state, [], NOW)
     assert freed == 1 and active == []
     # The expired attempt still consumes cumulative and daily gross costs.
     row = SimpleNamespace(game_id="fresh", team="OTHER")
@@ -343,8 +350,11 @@ def test_expired_unfilled_releases_active_only_after_ten_minutes():
 
 
 def test_expired_with_fill_or_resting_or_position_never_releases():
-    attempt = {"client_order_id": "cid", "ticker": "NFL-OLD",
-               "tip_utc": (NOW - timedelta(minutes=20)).isoformat()}
+    attempt = {
+        "client_order_id": "cid",
+        "ticker": "NFL-OLD",
+        "tip_utc": (NOW - timedelta(minutes=20)).isoformat(),
+    }
     accepted = {"cid": {"order_id": "oid"}}
     base = {"resting": [], "held": [], "settled": set()}
     for state, fills in [
@@ -359,11 +369,17 @@ def test_expired_with_fill_or_resting_or_position_never_releases():
 
 
 def test_recent_expired_unfilled_still_reserved():
-    attempt = {"client_order_id": "cid", "ticker": "NFL-OLD",
-               "tip_utc": (NOW - timedelta(minutes=5)).isoformat()}
+    attempt = {
+        "client_order_id": "cid",
+        "ticker": "NFL-OLD",
+        "tip_utc": (NOW - timedelta(minutes=5)).isoformat(),
+    }
     active, freed = auto.reconcile_expired_unfilled(
-        [attempt], {"cid": {"order_id": "oid"}},
-        {"resting": [], "held": [], "settled": set()}, [], NOW
+        [attempt],
+        {"cid": {"order_id": "oid"}},
+        {"resting": [], "held": [], "settled": set()},
+        [],
+        NOW,
     )
     assert freed == 0 and active == [attempt]
 

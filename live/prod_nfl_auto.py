@@ -432,7 +432,9 @@ def pass_once(client, env, frame, now, journal, *, dry=False):
         )
         state["active"] = active
         if released:
-            print(f"PROD AUTO: {released} verified unfilled expired orders freed from active capacity")
+            print(
+                f"PROD AUTO: {released} verified unfilled expired orders freed from active capacity"
+            )
         record_execution(
             journal,
             load_journal(journal),
