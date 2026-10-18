@@ -113,7 +113,7 @@ def test_all_arm_flags_required():
 def test_order_has_strict_post_only_price_and_size(quotes):
     row = auto.select_candidates(frame(), [], {"active": []}, NOW)[0]
     order, cost = auto.order_from_row(row, NOW)
-    assert cost <= 2.0
+    assert cost <= auto.MAX_ORDER_COST
     assert order.post_only is True
     assert order.side == "no"
     assert order.count <= auto.MAX_CONTRACTS
@@ -169,7 +169,7 @@ def test_budget_reserves_fees_and_never_renews():
             "team": f"t{i}",
             "utc": (NOW - timedelta(days=i + 1)).isoformat(),
         }
-        for i in range(11)
+        for i in range(23)
     ]
     candidate = SimpleNamespace(game_id="fresh", team="fresh")
     assert not auto.room_for(attempts, [], candidate, 2.0, NOW)
@@ -180,7 +180,13 @@ def test_simultaneous_cap_and_game_cap():
     a = {"cost": 2.0, "game_id": "g1", "team": "PHI", "utc": NOW.isoformat()}
     b = {"cost": 2.0, "game_id": "g2", "team": "CAR", "utc": NOW.isoformat()}
     row = SimpleNamespace(game_id="g3", team="NYG")
-    assert not auto.room_for([a, b], [a, b], row, 2.0, NOW)
+    assert auto.room_for([a, b], [a, b], row, 2.0, NOW)
+    more = [
+        {"cost": 2.0, "game_id": f"other{i}", "team": f"other{i}",
+         "utc": NOW.isoformat()}
+        for i in range(5)
+    ]
+    assert not auto.room_for([a, b] + more, [a, b] + more, row, 2.0, NOW)
     row_same = SimpleNamespace(game_id="g1", team="PHI")
     assert not auto.room_for([a], [a], row_same, 2.0, NOW)
 
@@ -316,3 +322,54 @@ def test_entries_9_minutes_before_kickoff_are_rejected(quotes):
     row = candidate._replace(tip_utc=pd.Timestamp(NOW + timedelta(minutes=9)))
     with pytest.raises(TradingError, match="Too close"):
         auto.order_from_row(row, NOW)
+
+def test_expired_unfilled_releases_active_only_after_ten_minutes():
+    old = (NOW - timedelta(minutes=20)).isoformat()
+    attempt = {
+        "client_order_id": "cid", "ticker": "NFL-OLD",
+        "tip_utc": old, "cost": 2.0,
+        "game_id": "past", "team": "OLD", "utc": (NOW - timedelta(hours=1)).isoformat(),
+    }
+    accepted = {"cid": {"order_id": "oid"}}
+    state = {"resting": [], "held": [], "settled": set()}
+    active, freed = auto.reconcile_expired_unfilled(
+        [attempt], accepted, state, [], NOW
+    )
+    assert freed == 1 and active == []
+    # The expired attempt still consumes cumulative and daily gross costs.
+    row = SimpleNamespace(game_id="fresh", team="OTHER")
+    assert auto.room_for([attempt], [], row, 2.0, NOW)
+    assert auto.reserve(attempt["cost"]) == 2.2
+
+
+def test_expired_with_fill_or_resting_or_position_never_releases():
+    attempt = {"client_order_id": "cid", "ticker": "NFL-OLD",
+               "tip_utc": (NOW - timedelta(minutes=20)).isoformat()}
+    accepted = {"cid": {"order_id": "oid"}}
+    base = {"resting": [], "held": [], "settled": set()}
+    for state, fills in [
+        ({**base, "resting": [{"order_id": "oid"}]}, []),
+        (base, [{"order_id": "oid", "ticker": "NFL-OLD"}]),
+        ({**base, "held": ["NFL-OLD"]}, []),
+    ]:
+        active, freed = auto.reconcile_expired_unfilled(
+            [attempt], accepted, state, fills, NOW
+        )
+        assert freed == 0 and active == [attempt]
+
+
+def test_recent_expired_unfilled_still_reserved():
+    attempt = {"client_order_id": "cid", "ticker": "NFL-OLD",
+               "tip_utc": (NOW - timedelta(minutes=5)).isoformat()}
+    active, freed = auto.reconcile_expired_unfilled(
+        [attempt], {"cid": {"order_id": "oid"}},
+        {"resting": [], "held": [], "settled": set()}, [], NOW
+    )
+    assert freed == 0 and active == [attempt]
+
+
+def test_expanded_authorized_budget():
+    assert auto.MAX_ORDER_COST == 3.0
+    assert auto.MAX_ACTIVE_COST == 15.0
+    assert auto.MAX_DAILY_COST == 30.0
+    assert auto.MAX_GROSS_COST == 50.0
