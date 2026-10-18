@@ -57,8 +57,6 @@ def choose_market(frame, now, window=WINDOW):
     """Retain the sportsbook-veto rule; override *only* the entry window."""
     if frame.empty:
         return None
-    from kalshi.paper_props import candidate_orders
-
     eligible = frame[
         frame.injury_status.fillna("").eq("")
         & frame.hours_to_tip.between(*window)
