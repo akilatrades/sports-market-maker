@@ -58,11 +58,13 @@ def injuries(status=None):
 
 def test_espn_group_roster_and_injured_reserve_or_questionable():
     roster = parse_roster(
-        espn_roster([
-            ("A.J. Brown", "ACTIVE"),
-            ("Player Q", "QUESTIONABLE"),
-            ("Player IR", "INJURED_RESERVE"),
-        ])
+        espn_roster(
+            [
+                ("A.J. Brown", "ACTIVE"),
+                ("Player Q", "QUESTIONABLE"),
+                ("Player IR", "INJURED_RESERVE"),
+            ]
+        )
     )
     assert roster["a j brown"] is True
     assert roster["player q"] is False
@@ -82,7 +84,12 @@ def test_verified_matchup_and_current_roster_membership():
     assert availability("A.J. Brown", game, rosters, injuries("Questionable"))[1]
     assert availability("A.J. Brown", game, rosters, injuries("Out"))[1]
     assert availability("A.J. Brown", game, {"NYJ": {}, "NE": {}}, injuries())[1]
-    assert availability("A.J. Brown", game, {"NYJ": {"a j brown": True}, "NE": {"a j brown": True}}, injuries())[1]
+    assert availability(
+        "A.J. Brown",
+        game,
+        {"NYJ": {"a j brown": True}, "NE": {"a j brown": True}},
+        injuries(),
+    )[1]
 
 
 def test_cache_is_fresh_only_and_error_does_not_authorize_roster(tmp_path):
@@ -143,7 +150,10 @@ def test_current_roster_includes_returning_or_traded_player():
         }
     )
     rows = upcoming_rows(
-        games, history, 2026, 6,
+        games,
+        history,
+        2026,
+        6,
         rosters={"NE": {"a j brown": True}, "NYJ": {"other receiver": True}},
     )
     brown = rows.loc[rows.player_id.eq("aj")].iloc[0]

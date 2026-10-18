@@ -39,10 +39,7 @@ def main():
             return
         season, week = upcoming
     scheduled = games[(games.season == season) & (games.week == week)]
-    teams = {
-        canonical(team)
-        for team in [*scheduled.home_team, *scheduled.away_team]
-    }
+    teams = {canonical(team) for team in [*scheduled.home_team, *scheduled.away_team]}
     rosters = current_rosters(teams)
     print(f"Current ESPN NFL rosters verified: {len(rosters)} teams")
     projections, models, ladder = project_week(

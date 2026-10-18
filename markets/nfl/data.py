@@ -105,7 +105,10 @@ def upcoming_rows(games, players, season, week, lookback_games=2, rosters=None):
         history = players[players.season <= season].copy()
         history["roster_name"] = history.player_display_name.map(normalize_name)
         ambiguous = (
-            history.groupby("roster_name").player_id.nunique().loc[lambda x: x > 1].index
+            history.groupby("roster_name")
+            .player_id.nunique()
+            .loc[lambda x: x > 1]
+            .index
         )
         history = history[~history.roster_name.isin(ambiguous)]
         history = history.sort_values(["season", "week"]).drop_duplicates(
@@ -119,12 +122,18 @@ def upcoming_rows(games, players, season, week, lookback_games=2, rosters=None):
                 history.roster_name.map(lambda name: current.get(name, False))
             ].copy()
         else:
-            team_weeks = sorted(played.loc[played.team == team_row.team, "week"].unique())
+            team_weeks = sorted(
+                played.loc[played.team == team_row.team, "week"].unique()
+            )
             recent = team_weeks[-lookback_games:]
             roster = played[(played.team == team_row.team) & played.week.isin(recent)]
-            roster = roster.sort_values("week").drop_duplicates("player_id", keep="last")
+            roster = roster.sort_values("week").drop_duplicates(
+                "player_id", keep="last"
+            )
             # Drop players who have since appeared for another team.
-            latest = played.sort_values("week").drop_duplicates("player_id", keep="last")
+            latest = played.sort_values("week").drop_duplicates(
+                "player_id", keep="last"
+            )
             moved = latest[latest.team != team_row.team].player_id
             roster = roster[~roster.player_id.isin(moved)]
         listed_qb = team_row.qb_id

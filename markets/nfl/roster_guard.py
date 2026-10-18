@@ -17,8 +17,25 @@ from markets.nfl.kalshi import normalize_name
 ESPN = "https://site.api.espn.com/apis/site/v2/sports/football/nfl/teams"
 CACHE = Path("/tmp/smm-nfl-rosters-cache.json")
 CACHE_MINUTES = 20
-BAD_STATUS = ("inactive", "injured", "reserve", "suspend", "out", "doubtful", "questionable", "pup", "non-football")
-ALIASES = {"JAC": "JAX", "WSH": "WAS", "LAR": "LA", "STL": "LA", "OAK": "LV", "SD": "LAC"}
+BAD_STATUS = (
+    "inactive",
+    "injured",
+    "reserve",
+    "suspend",
+    "out",
+    "doubtful",
+    "questionable",
+    "pup",
+    "non-football",
+)
+ALIASES = {
+    "JAC": "JAX",
+    "WSH": "WAS",
+    "LAR": "LA",
+    "STL": "LA",
+    "OAK": "LV",
+    "SD": "LAC",
+}
 ESPN_CODES = {"LA": "lar", "WAS": "wsh"}
 
 
@@ -78,10 +95,14 @@ def _one(team, fetch=None):
     code = ESPN_CODES.get(team, team.lower())
     url = f"{ESPN}/{code}/roster"
     if fetch is None:
+
         def fetch(url):
-            request = urllib.request.Request(url, headers={"User-Agent": "smm-roster-research/1.0"})
+            request = urllib.request.Request(
+                url, headers={"User-Agent": "smm-roster-research/1.0"}
+            )
             with urllib.request.urlopen(request, timeout=7) as response:
                 return json.load(response)
+
     return parse_roster(fetch(url))
 
 
@@ -114,7 +135,9 @@ def current_rosters(teams, now=None, cache=CACHE, fetch=None):
             try:
                 found[team] = future.result()
             except (OSError, ValueError, TypeError, KeyError) as error:
-                raise ValueError(f"ESPN roster unavailable for {team}: {type(error).__name__}") from error
+                raise ValueError(
+                    f"ESPN roster unavailable for {team}: {type(error).__name__}"
+                ) from error
 
     cache.parent.mkdir(parents=True, exist_ok=True)
     # Atomically replace. Never silently use a stale roster following API errors.
@@ -139,8 +162,18 @@ def event_teams(event_ticker, game_date, games):
     possibilities = []
     for game in day_games.itertuples():
         away, home = canonical(game.away_team), canonical(game.home_team)
-        a = {away, "LAR" if away == "LA" else away, "WSH" if away == "WAS" else away, "JAC" if away == "JAX" else away}
-        h = {home, "LAR" if home == "LA" else home, "WSH" if home == "WAS" else home, "JAC" if home == "JAX" else home}
+        a = {
+            away,
+            "LAR" if away == "LA" else away,
+            "WSH" if away == "WAS" else away,
+            "JAC" if away == "JAX" else away,
+        }
+        h = {
+            home,
+            "LAR" if home == "LA" else home,
+            "WSH" if home == "WAS" else home,
+            "JAC" if home == "JAX" else home,
+        }
         if any(pair == x + y for x in a for y in h):
             possibilities.append((away, home, int(game.season), int(game.week)))
     return possibilities[0] if len(possibilities) == 1 else None

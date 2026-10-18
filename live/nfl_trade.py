@@ -60,7 +60,9 @@ def priced_frame(markets, p_model, now):
     m["game_id"] = m.event_ticker.str.split("-").str[1]  # e.g. 26OCT18CHIATL
     m["player_id"] = -1  # no roster ids here; the injury filter is NBA-only
     m["p_model"] = m.ticker.map(p_model).astype(float)
-    m["injury_status"] = "UNVERIFIED"  # Never treat missing NFL availability as healthy.
+    m["injury_status"] = (
+        "UNVERIFIED"  # Never treat missing NFL availability as healthy.
+    )
     m["snapshot_utc"] = pd.Timestamp(now).isoformat(timespec="minutes")
     m = m[COLUMNS]
     m["line"] = pd.to_numeric(m.line, errors="coerce")
@@ -94,7 +96,9 @@ def candidates(now):
 
         retrieved = json.loads(Path("data/nfl/retrieval.json").read_text())
         stamp = datetime.fromisoformat(retrieved["retrieved"]).replace(tzinfo=UTC)
-        if not (0 <= (pd.Timestamp(now) - pd.Timestamp(stamp)).total_seconds() <= 48 * 3600):
+        if not (
+            0 <= (pd.Timestamp(now) - pd.Timestamp(stamp)).total_seconds() <= 48 * 3600
+        ):
             raise ValueError("NFL injury report snapshot is stale")
 
         injuries = load_injuries()
@@ -103,16 +107,14 @@ def candidates(now):
             ticker: event_teams(ticker, date, games)
             for ticker, date in zip(
                 priced.event_ticker,
-                pd.to_datetime(priced.tip_utc, utc=True).dt.tz_convert(
-                    "America/New_York"
-                ).dt.strftime("%Y-%m-%d"),
+                pd.to_datetime(priced.tip_utc, utc=True)
+                .dt.tz_convert("America/New_York")
+                .dt.strftime("%Y-%m-%d"),
                 strict=True,
             )
         }
         needed = {
-            team
-            for game in matchups.values() if game is not None
-            for team in game[:2]
+            team for game in matchups.values() if game is not None for team in game[:2]
         }
         rosters = current_rosters(needed, now=pd.Timestamp(now).to_pydatetime())
         checks = []
