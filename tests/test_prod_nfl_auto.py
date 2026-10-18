@@ -509,4 +509,3 @@ def test_improved_pilot_journals_effective_edge(quotes, tmp_path):
     assert intent["price_cents"] == 52
     assert intent["edge"] < intent["baseline_edge"]
     assert client.placed[0].post_only is True
-

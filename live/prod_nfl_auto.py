@@ -588,6 +588,7 @@ def pass_once(client, env, frame, now, journal, *, dry=False):
             temporary.chmod(0o600)
             temporary.replace(target)
         return placed
+
     if not dry:
         min_ts = (
             int(datetime.fromisoformat(attempts[0]["utc"]).timestamp()) - 60
@@ -729,9 +730,7 @@ def pass_once(client, env, frame, now, journal, *, dry=False):
             "order_id",
             result["order_id"],
         )
-        record_queue_observation(
-            client, journal, result["order_id"], datetime.now(UTC)
-        )
+        record_queue_observation(client, journal, result["order_id"], datetime.now(UTC))
         return finish(
             "exchange_accepted",
             placed=True,
@@ -792,4 +791,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
