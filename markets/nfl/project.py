@@ -32,7 +32,7 @@ def injury_status(injuries, season, week):
     )
 
 
-def project_week(games, players, season, week, injuries=None):
+def project_week(games, players, season, week, injuries=None, rosters=None):
     """Fit on every game before ``week`` and project each eligible player.
 
     Returns one row per player and stat with the expected value, the
@@ -45,7 +45,7 @@ def project_week(games, players, season, week, injuries=None):
     """
     played = player_games(games, players)
     played = played[(played.season < season) | (played.week < week)]
-    upcoming = upcoming_rows(games, players, season, week)
+    upcoming = upcoming_rows(games, players, season, week, rosters=rosters)
     status = (
         injury_status(injuries, season, week)
         if injuries is not None
