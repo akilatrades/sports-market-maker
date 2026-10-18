@@ -17,16 +17,20 @@ measured live fill rate.
 
 ## When the clock starts
 
-Start at the first exchange-accepted *real* strategy order. Count 30 calendar
-days from that timestamp. Do not treat scheduled jobs, dry runs, or days with
+Maintain a **separate forward cohort for each market (NBA and NFL)** and for
+each material execution-rule version. Each cohort starts at its own first
+exchange-accepted *real* strategy order in that market, with 30 calendar days
+counted from that timestamp. An NFL production pilot order **does not start the
+NBA evaluation window**. Do not treat scheduled jobs, dry runs, or days with
 no positions as empirical evidence. Keep the rule set frozen through the
 observation window; record any unavoidable fixes as deviations with a new
 version and separately labeled subsequent cohort.
 
 ## Pre-registered checkpoint
 
-Review when **both** (a) at least 30 days have elapsed since the first accepted
-real order and (b) at least 500 **unique, settled exchange buy fill records**
+For each market/version cohort separately, review when **both** (a) at least
+30 days have elapsed since its first exchange-accepted real order and (b)
+at least 500 **unique, settled exchange buy fill records**
 have been observed. This definition uses fill events, **not** contracts,
 orders, or hypothetical trade-throughs. The checkpoint authorizes a human
 review, not automatic scaling. Fewer observations = inconclusive, not failed.
@@ -91,6 +95,6 @@ outcomes are populated. The scorecard is a diagnostic snapshot; source CSVs
 are the audit trail. Don't commit personal API secrets or privately sensitive
 account detail.
 
-The forward review should cover the whole cohort. Avoid inspecting early
+Each forward review should cover the whole applicable market/version cohort. Avoid inspecting early
 winners and quietly altering thresholds. Changes to production money settings
 require an explicit separate decision.
