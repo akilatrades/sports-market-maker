@@ -1,0 +1,35 @@
+name: Format pilot source safely
+on:
+  push:
+    branches: [pilot/prod-nfl-supervised-20261018]
+    paths: [.github/workflows/fix-pilot-style-2.yml]
+permissions:
+  contents: write
+jobs:
+  format:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: pilot/prod-nfl-supervised-20261018
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install ruff==0.11.13
+      - run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path("tests/test_prod_nfl_pilot.py")
+          s = p.read_text().replace('; client=FakeClient()', chr(10) + '    client=FakeClient()')
+          p.write_text(s)
+          PY
+          ruff check --fix live/prod_nfl_pilot.py tests/test_prod_nfl_pilot.py kalshi/paper_props.py
+          ruff format live/prod_nfl_pilot.py tests/test_prod_nfl_pilot.py kalshi/paper_props.py
+      - run: |
+          if ! git diff --quiet; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add live/prod_nfl_pilot.py tests/test_prod_nfl_pilot.py kalshi/paper_props.py
+            git commit -m "Format production pilot tests"
+            git push origin HEAD:pilot/prod-nfl-supervised-20261018
+          fi
