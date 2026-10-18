@@ -18,6 +18,7 @@ Nothing in this module decides what to trade; see ``live/nba_trade.py``.
 import base64
 import json
 import os
+import math
 import re
 import time
 import urllib.error
@@ -195,30 +196,48 @@ class TradingClient:
     # --- reads ---------------------------------------------------------------
 
     def balance(self):
-        """Available balance and portfolio value, in dollars."""
+        """Available balance and portfolio value, in dollars; missing is unknown."""
         b = self._request("GET", "/portfolio/balance")
-        return {
-            "balance": float(b.get("balance", 0)) / 100,
-            "portfolio_value": float(b.get("portfolio_value", 0)) / 100,
-        }
+        result = {}
+        for name in ("balance", "portfolio_value"):
+            raw = b.get(name + "_dollars")
+            divisor = 1 if raw is not None else 100
+            if raw is None:
+                raw = b.get(name)
+            try:
+                value = float(raw) / divisor
+            except (TypeError, ValueError) as error:
+                raise TradingError("Missing or invalid balance field") from error
+            if not math.isfinite(value) or value < 0:
+                raise TradingError("Invalid balance value")
+            result[name] = value
+        return result
+
+    def _pages(self, path, key, params):
+        out, cursor, seen = [], "", set()
+        while True:
+            query = {**params, **({"cursor": cursor} if cursor else {})}
+            page = self._request("GET", path, query)
+            rows = page.get(key)
+            if not isinstance(rows, list) or any(not isinstance(r, dict) for r in rows):
+                raise TradingError(f"Missing or invalid {key} list")
+            out.extend(rows)
+            cursor = page.get("cursor") or ""
+            if not cursor:
+                return out
+            if not isinstance(cursor, str) or cursor in seen:
+                raise TradingError(f"Repeated or invalid {key} cursor")
+            seen.add(cursor)
 
     def orders(self, status="resting", ticker=None):
         params = {"status": status, "limit": 200}
         if ticker:
             params["ticker"] = ticker
-        out, cursor = [], ""
-        while True:
-            if cursor:
-                params["cursor"] = cursor
-            page = self._request("GET", "/portfolio/orders", params)
-            new_orders = page.get("orders", [])
-            for order in new_orders:
-                if order.get("order_id") and order.get("ticker"):
-                    self._order_ticker_by_id[order["order_id"]] = order["ticker"]
-            out.extend(new_orders)
-            cursor = page.get("cursor") or ""
-            if not cursor:
-                return out
+        orders = self._pages("/portfolio/orders", "orders", params)
+        for order in orders:
+            if order.get("order_id") and order.get("ticker"):
+                self._order_ticker_by_id[order["order_id"]] = order["ticker"]
+        return orders
 
     def fills(self, min_ts=None, ticker=None):
         params = {"limit": 200}
@@ -226,30 +245,13 @@ class TradingClient:
             params["min_ts"] = int(min_ts)
         if ticker:
             params["ticker"] = ticker
-        out, cursor = [], ""
-        while True:
-            if cursor:
-                params["cursor"] = cursor
-            page = self._request("GET", "/portfolio/fills", params)
-            out.extend(page.get("fills", []))
-            cursor = page.get("cursor") or ""
-            if not cursor:
-                return out
+        return self._pages("/portfolio/fills", "fills", params)
 
     def settlements(self, min_ts=None):
-        """Settled positions: revenue, cost and fees per market, newest first."""
         params = {"limit": 200}
         if min_ts:
             params["min_ts"] = int(min_ts)
-        out, cursor = [], ""
-        while True:
-            if cursor:
-                params["cursor"] = cursor
-            page = self._request("GET", "/portfolio/settlements", params)
-            out.extend(page.get("settlements", []))
-            cursor = page.get("cursor") or ""
-            if not cursor:
-                return out
+        return self._pages("/portfolio/settlements", "settlements", params)
 
     def queue_position(self, order_id):
         """Contracts resting ahead of this order at its price (Kalshi's
@@ -363,3 +365,4 @@ class TradingClient:
                     continue
             cancelled.append(self.cancel(o["order_id"]))
         return cancelled
+

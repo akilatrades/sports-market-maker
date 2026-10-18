@@ -768,6 +768,9 @@ def pass_once(client, env, frame, now, journal, *, dry=False):
 
 
 def main():
+    from contextlib import nullcontext
+    from live.production_lock import account_lock
+
     parser = argparse.ArgumentParser()
     parser.add_argument("--dry-run", action="store_true")
     parser.add_argument("--live", action="store_true")
@@ -780,7 +783,7 @@ def main():
     )
     directory.mkdir(mode=0o700, parents=True, exist_ok=True)
     directory.chmod(0o700)
-    with (directory / "lock").open("a+") as lock:
+    with (account_lock() if args.live else nullcontext()), (directory / "lock").open("a+") as lock:
         fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
         journal = directory / "journal.jsonl"
         if args.status:

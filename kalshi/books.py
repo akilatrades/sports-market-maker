@@ -337,7 +337,8 @@ def attach_latest(priced, path=LATEST, max_age_hours=4):
         # The log's download time is not the books' quote time: drop lines
         # whose stalest contributing book last moved more than max_age ago.
         upd = pd.to_datetime(book.updated_utc, utc=True, errors="coerce")
-        fresh = upd.notna() & (now - upd <= pd.Timedelta(hours=max_age_hours))
+        age = now - upd
+        fresh = upd.notna() & age.between(pd.Timedelta(0), pd.Timedelta(hours=max_age_hours))
         if (~fresh).any():
             print(
                 f"Book lines: {int((~fresh).sum())} of {len(book)} dropped as stale at the books"
@@ -385,3 +386,4 @@ def save_json(obj, path):
 def load_json(path):
     with gzip.open(path, "rt") as f:
         return json.load(f)
+

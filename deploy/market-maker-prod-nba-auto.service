@@ -9,7 +9,9 @@ User=trader
 Group=trader
 WorkingDirectory=/home/trader/sports-market-maker-prod-auto
 EnvironmentFile=/etc/market-maker-prod-nba-auto.env
-ExecStart=/home/trader/sports-market-maker-prod-auto/.venv/bin/python -m live.prod_nba_auto --live
+Environment=PYTHONUNBUFFERED=1
+ExecStart=/home/trader/sports-market-maker-prod-auto/.venv/bin/python -m live.prod_nba_auto --live --sync-inputs
+MemoryAccounting=true
 Restart=no
 UMask=0077
 TimeoutStartSec=240

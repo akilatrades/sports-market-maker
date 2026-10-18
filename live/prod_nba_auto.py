@@ -19,6 +19,10 @@ import pandas as pd
 from kalshi.api import fetch_market
 from kalshi.paper_props import candidate_orders
 from kalshi.trading import Order, TradingClient, TradingError
+from live.nfl_policy import settlement_accounting
+from live.nba_inputs import MODEL_VERSION
+
+STRATEGY_VERSION = "nba-no-v2-opening-audit"
 
 MAX_GROSS_COST = 50.0
 MAX_ORDER_COST = 3.0
@@ -193,6 +197,10 @@ def cancel_invalid_resting(client, journal, state, frame, now):
             ticker = resting.get("ticker")
             if ticker not in valid:
                 invalid.add(resting["order_id"])
+                continue
+            row = frame.set_index("ticker").loc[ticker]
+            if not WINDOW[0] < float(row.hours_to_tip) <= WINDOW[1]:
+                invalid.add(resting["order_id"])
     canceled = 0
     for resting in state["resting"]:
         order_id = resting.get("order_id")
@@ -264,7 +272,9 @@ def record_execution(journal, events, attempts, accepted, fills, settlements):
     known_orders = {e["order_id"] for e in accepted.values()}
     tickers = {a["ticker"] for a in attempts}
     seen_fills = {e.get("fill_id") for e in events if e.get("event") == "fill"}
-    seen_results = {e.get("ticker") for e in events if e.get("event") == "settlement"}
+    seen_results = {
+        e.get("ticker"): e for e in events if e.get("event") == "settlement"
+    }
     for fill in fills:
         oid = fill.get("order_id")
         fid = fill.get("fill_id") or fill.get("trade_id")
@@ -282,26 +292,83 @@ def record_execution(journal, events, attempts, accepted, fills, settlements):
                 "yes_price": str(fill.get("yes_price_dollars", "")),
                 "no_price": str(fill.get("no_price_dollars", "")),
                 "fee": str(fill.get("fee_cost", "")),
+                "is_taker": fill.get("is_taker"),
             },
         )
         seen_fills.add(fid)
     for result in settlements:
         ticker = result.get("market_ticker") or result.get("ticker")
-        if ticker not in tickers or ticker in seen_results:
+        if ticker not in tickers:
             continue
-        write_event(
-            journal,
-            {
-                "event": "settlement",
-                "ticker": ticker,
-                "utc": str(result.get("settled_time", "")),
-                "revenue_cents": result.get("revenue"),
-                "yes_cost_cents": result.get("yes_total_cost"),
-                "no_cost_cents": result.get("no_total_cost"),
-                "fee_cents": result.get("fee_cost"),
-            },
-        )
-        seen_results.add(ticker)
+        record = {
+            "event": "settlement",
+            "ticker": ticker,
+            "utc": str(result.get("settled_time", "")),
+            **settlement_accounting(result),
+        }
+        # Append a correction for older/incomplete records; never rewrite history.
+        if record != seen_results.get(ticker):
+            write_event(journal, record)
+            seen_results[ticker] = record
+
+
+def record_queue_observation(client, journal, order_id, now):
+    """Read an owned order's queue without allowing a telemetry error to trade."""
+    try:
+        queue = client.queue_position(str(order_id))
+        if queue is not None and (not math.isfinite(queue) or queue < 0):
+            queue = None
+        issue = None if queue is not None else "missing_or_invalid_queue_field"
+    except Exception as error:
+        import re
+
+        match = re.search(r"-> HTTP ([0-9]{3})", str(error))
+        queue = None
+        issue = f"HTTP_{match.group(1)}" if match else type(error).__name__
+    write_event(
+        journal,
+        {
+            "event": "queue",
+            "utc": now.isoformat(),
+            "order_id": str(order_id),
+            "ahead": queue,
+            "issue": issue,
+        },
+    )
+
+
+def record_markouts(journal, frame, now):
+    """Observed NO-price movement after actual fills; never invent missed quotes."""
+    events = load_journal(journal)
+    seen = {(e.get("fill_id"), e.get("horizon_minutes")) for e in events if e.get("event") == "markout"}
+    quotes = frame.drop_duplicates("ticker").set_index("ticker") if not frame.empty else pd.DataFrame()
+    for fill in (e for e in events if e.get("event") == "fill"):
+        try:
+            age = (pd.Timestamp(now) - pd.Timestamp(fill["utc"])).total_seconds()
+            entry = float(fill["no_price"])
+            if not math.isfinite(entry) or not 0 < entry < 1:
+                continue
+        except (KeyError, TypeError, ValueError):
+            continue
+        for horizon in (5, 15, 60):
+            if (fill["fill_id"], horizon) in seen or age < horizon * 60:
+                continue
+            observation = {"event":"markout", "fill_id":fill["fill_id"], "ticker":fill["ticker"],
+                           "utc":now.isoformat(), "horizon_minutes":horizon, "observed_after_seconds":age,
+                           "mid_move_dollars":None, "bid_move_dollars":None, "fees_included":False}
+            if age > horizon * 60 + 600:
+                observation["issue"] = "missed_observation_window"
+            elif fill["ticker"] not in quotes.index:
+                observation["issue"] = "quote_unavailable"
+            else:
+                quote = quotes.loc[fill["ticker"]]
+                bid, ask = float(quote.yes_bid_dollars), float(quote.yes_ask_dollars)
+                if not 0 < bid < ask < 1:
+                    observation["issue"] = "invalid_quote"
+                else:
+                    observation.update(mid_move_dollars=round(1-(bid+ask)/2-entry,6),
+                                       bid_move_dollars=round(1-ask-entry,6), issue=None)
+            write_event(journal, observation)
 
 
 # Guardrail for the small pilot. No change to maker/taker status or risk caps.
@@ -412,7 +479,9 @@ def order_from_row(row, now, no_price=None):
         raise TradingError("Order price not a whole cent")
     if not 10 <= cents <= 90:
         raise TradingError("Order price outside safe 10c–90c range")
-    count = min(int((MAX_ORDER_COST + 1e-8) // price), MAX_CONTRACTS)
+    count = MAX_CONTRACTS
+    while count > 0 and reserve(round(count * price, 2)) > MAX_ORDER_COST:
+        count -= 1
     if count <= 0:
         raise TradingError("Zero affordable contracts")
     tip = pd.Timestamp(row.tip_utc)
@@ -424,7 +493,7 @@ def order_from_row(row, now, no_price=None):
         side="no",
         count=count,
         price_cents=cents,
-        expiration_ts=int(tip.timestamp()),
+        expiration_ts=min(int(now.timestamp()) + 3600, int(tip.timestamp()) - 7200),
         post_only=True,
     )
     return order, cost
@@ -476,6 +545,22 @@ def room_for(attempts, active, row, cost, now):
 
 
 def pass_once(client, env, frame, now, journal, *, dry=False):
+    from collections import Counter
+    from live.nba_inputs import atomic_write
+    from kalshi.fees import live_maker_fee_bound
+
+    skipped = Counter()
+    def finish(decision, placed=False):
+        report = {
+            "utc": datetime.now(UTC).isoformat(), "strategy_version": STRATEGY_VERSION,
+            "decision": decision, "placed": placed, "candidate_count": len(candidates),
+            "skipped": dict(skipped), "inputs": frame.attrs.get("diagnostics", {}),
+            "attempts": len(attempts), "gross_reserved": sum(reserve(a["cost"]) for a in attempts),
+        }
+        atomic_write(journal.parent / "last_scan.json", (json.dumps(report, indent=2) + "\n").encode())
+        print("NBA DECISION:", decision, dict(skipped), flush=True)
+        return placed
+
     if not dry:
         guard(env, client)
     events = load_journal(journal)
@@ -483,8 +568,6 @@ def pass_once(client, env, frame, now, journal, *, dry=False):
     if not dry:
         state = current_production_state(client, attempts, accepted)
         free = money(client.balance()["balance"])
-        if free < MAX_ORDER_COST * FEE_RESERVE:
-            raise TradingError("Production cash balance insufficient")
     else:
         state = {"active": []}
     candidates = select_candidates(frame, events, state, now)
@@ -514,11 +597,14 @@ def pass_once(client, env, frame, now, journal, *, dry=False):
             fills,
             state["settlements"],
         )
+        for resting in state["resting"]:
+            record_queue_observation(client, journal, resting["order_id"], now)
+        record_markouts(journal, frame, now)
         canceled = cancel_invalid_resting(client, journal, state, frame, now)
         if canceled:
             print(f"PROD AUTO: canceled {canceled} unsafe resting orders")
             # Require another reconciliation pass after cancellation.
-            return False
+            return finish("unsafe_resting_canceled")
         print(
             f"PROD AUTO: attempts={len(attempts)}, resting={len(state['resting'])}, "
             f"held={len(state['held'])}, settled_tickers={len(state['settled'])}, "
@@ -526,18 +612,39 @@ def pass_once(client, env, frame, now, journal, *, dry=False):
         )
     if not candidates:
         print("No eligible 2-6h NBA opportunities")
-        return False
+        return finish("no_eligible_candidates")
     for row in candidates:
         try:
             quoted, execution_edge, extra_ticks = execution_quote(row)
             order, cost = order_from_row(row, now, no_price=quoted)
         except TradingError:
+            skipped["invalid_order_or_price"] += 1
             continue
-        if not room_for(attempts, state["active"], row, cost, now):
+        while order.count > 0 and not room_for(attempts, state["active"], row, cost, now):
+            order.count -= 1
+            cost = round(order.count * order.price_cents / 100, 2)
+        if order.count <= 0:
+            skipped["risk_budget"] += 1
+            continue
+        if not dry and free < reserve(cost):
+            skipped["cash_balance"] += 1
+            continue
+        try:
+            fee_bound, fee_metadata = live_maker_fee_bound(order.ticker, quoted, order.count)
+            p_book = float(getattr(row, "p_book", float("nan")))
+            p_yes = p_book if math.isfinite(p_book) else float(row.p_model)
+            net_edge = 1 - p_yes - quoted - fee_bound / order.count
+            if not 0 < net_edge <= 0.15:
+                raise TradingError("nonpositive_or_outlier_net_edge")
+            if cost + fee_bound > reserve(cost) + 1e-9:
+                raise TradingError("fee_exceeds_reservation")
+        except Exception as error:
+            skipped[str(error) if isinstance(error, TradingError) else "fee_read_failure"] += 1
             continue
         try:
             verify_quote(row, quoted)
         except TradingError:
+            skipped["fresh_quote_check"] += 1
             continue
         if dry:
             print(
@@ -555,7 +662,7 @@ def pass_once(client, env, frame, now, journal, *, dry=False):
                     sort_keys=True,
                 ),
             )
-            return False
+            return finish("read_only_candidate")
 
         # The candidate scan can take minutes. Check the actual wall clock
         # immediately before the irreversible order intent and network POST,
@@ -564,6 +671,7 @@ def pass_once(client, env, frame, now, journal, *, dry=False):
             print(
                 f"Skipped {order.ticker}: too close to verified kickoff at submission"
             )
+            skipped["entry_window_elapsed"] += 1
             continue
 
         # Durable intent first; any failure after this (including a timeout)
@@ -584,6 +692,16 @@ def pass_once(client, env, frame, now, journal, *, dry=False):
                 "edge": round(execution_edge, 4),
                 "baseline_edge": round(float(row.edge), 4),
                 "extra_maker_ticks": extra_ticks,
+                "strategy_version": STRATEGY_VERSION,
+                "model_version": MODEL_VERSION,
+                "probability_source": "sportsbook" if math.isfinite(p_book) else "model",
+                "p_yes": p_yes,
+                "book_n": int(getattr(row, "book_n", 0)),
+                "fee_bound_dollars": fee_bound,
+                "net_edge_after_fee_bound": round(net_edge, 6),
+                "model_generated_utc": str(getattr(row, "model_generated_utc", "")),
+                "expiration_ts": order.expiration_ts,
+                **fee_metadata,
             },
         )
         try:
@@ -639,9 +757,9 @@ def pass_once(client, env, frame, now, journal, *, dry=False):
                 "issue": queue_issue,
             },
         )
-        return True
+        return finish("accepted", placed=True)
     print("No opportunities fit remaining production risk budget or fresh quotes")
-    return False
+    return finish("all_candidates_blocked")
 
 
 def nba_candidates(now, latest=Path("outputs/projections/latest.csv")):
@@ -655,18 +773,20 @@ def nba_candidates(now, latest=Path("outputs/projections/latest.csv")):
     from kalshi.books import attach_latest
     from markets.nba.live import injuries
 
-    meta = latest.parent / "latest_meta.json"
-    if not latest.exists() or not meta.exists():
-        print("NBA PREFLIGHT: no latest projection and/or explicit model metadata")
-        return pd.DataFrame()
+    import io
+    from live.nba_inputs import read
+    diagnostics = {"model_version": MODEL_VERSION}
     try:
-        ts = pd.Timestamp(json.loads(meta.read_text())["generated_utc"])
-        if ts.tzinfo is None:
-            raise ValueError("unverified projection timezone")
+        data, metadata = read(latest.parent, now)
+        ts = pd.Timestamp(metadata["generated_utc"])
         age = (pd.Timestamp(now) - ts).total_seconds() / 3600
-        if not 0 <= age <= 9:
-            raise ValueError("model timestamp outside 0-9h freshness bound")
-        frame = pd.read_csv(latest, low_memory=False)
+        diagnostics.update(model_generated_utc=metadata["generated_utc"], model_age_hours=age)
+        frame = pd.read_csv(io.BytesIO(data), low_memory=False)
+        if len(frame) != metadata["rows"]:
+            raise ValueError("projection_row_count")
+        if frame.empty:
+            frame.attrs["diagnostics"] = {**diagnostics, "blocked": "no_priced_markets"}
+            return frame
         needed = {
             "ticker",
             "tip_utc",
@@ -675,7 +795,8 @@ def nba_candidates(now, latest=Path("outputs/projections/latest.csv")):
             "team",
             "p_model",
             "injury_status",
-            "hours_to_tip",
+            "hours_to_tip", "team_espn", "home_espn", "away_espn",
+            "requires_book", "last_player_game_utc", "last_player_team",
         }
         if not needed.issubset(frame.columns):
             raise ValueError("missing NBA projection columns")
@@ -684,7 +805,31 @@ def nba_candidates(now, latest=Path("outputs/projections/latest.csv")):
         frame["hours_to_tip"] = (
             frame.tip_utc - pd.Timestamp(now)
         ).dt.total_seconds() / 3600
+        if frame.ticker.duplicated().any():
+            raise ValueError("duplicate_projection_ticker")
         frame["injury_status"] = frame.injury_status.fillna("")
+        frame["model_generated_utc"] = metadata["generated_utc"]
+        from markets.nba.live import rosters, scoreboard
+        season = now.year + 1 if now.month >= 8 else now.year
+        days = sorted(set(frame.tip_utc.dropna().dt.tz_convert("America/New_York").dt.strftime("%Y%m%d")))
+        if len(days) > 3:
+            raise ValueError("unexpected_projection_schedule_span")
+        schedule = pd.concat([scoreboard(day, season) for day in days], ignore_index=True)
+        if schedule.game_id.duplicated().any():
+            raise ValueError("duplicate_live_game")
+        by_game = schedule.set_index("game_id")
+        current_rosters = rosters(set(frame.team_espn.dropna()))
+        for idx, row in frame.iterrows():
+            try:
+                game = by_game.loc[int(row.game_id)]
+                good = (not game.completed and game.home == row.home_espn
+                        and game.away == row.away_espn
+                        and abs((game.tip_utc - row.tip_utc).total_seconds()) <= 60
+                        and int(row.player_id) in current_rosters[row.team_espn])
+            except (KeyError, TypeError, ValueError):
+                good = False
+            if not good:
+                frame.loc[idx, "injury_status"] = "UNVERIFIED_CURRENT_ROSTER_OR_GAME"
         frame.loc[
             ~frame.p_model.between(0, 1) | frame.tip_utc.isna(),
             "injury_status",
@@ -702,16 +847,36 @@ def nba_candidates(now, latest=Path("outputs/projections/latest.csv")):
             players = pd.to_numeric(report.player_id, errors="coerce")
             out = report.out.fillna(False).astype(bool)
             updated = pd.to_datetime(report.updated, utc=True, errors="coerce")
-            fresh = updated.notna() & (updated >= ts)
+            if players.isna().any() or updated.isna().any():
+                raise ValueError("unidentifiable_or_undated_injury")
+            if (updated > pd.Timestamp(now) + pd.Timedelta(minutes=5)).any():
+                raise ValueError("future_injury_timestamp")
+            fresh = updated >= ts
             flagged = set(players[fresh | out].dropna().astype(int))
             frame_ids = pd.to_numeric(frame.player_id, errors="coerce")
             frame.loc[frame_ids.isin(flagged), "injury_status"] = "NEW_INJURY_NEWS"
-            newly_out_teams = set(report.loc[fresh & out, "team"].dropna())
-            frame.loc[frame.team.isin(newly_out_teams), "injury_status"] = (
+            newly_out_teams = set(report.loc[fresh, "team"].dropna())
+            frame.loc[frame.team_espn.isin(newly_out_teams), "injury_status"] = (
                 "TEAM_INJURY_CHANGE"
             )
         frame = refresh_quotes(frame, now)
-        frame = attach_latest(frame)
+        book_path = latest.parent / "nba_books.csv"
+        if book_path.exists() and book_path.stat().st_size == 0:
+            from kalshi.books import attach
+            frame = attach(frame, None)
+        else:
+            frame = attach_latest(frame, path=book_path) if book_path.exists() else attach_latest(frame)
+        # Opening-night, long-absence and transferred-player roles are not
+        # established by last season's box scores. Require two fresh books.
+        required = frame.requires_book.astype(str).str.lower().isin({"true", "1"})
+        invalid_flag = ~frame.requires_book.astype(str).str.lower().isin({"true", "false", "1", "0"})
+        history_gap = (frame.tip_utc - pd.to_datetime(frame.last_player_game_utc, utc=True, errors="coerce")).dt.days
+        required |= history_gap.isna() | (history_gap > 45) | frame.team_espn.ne(frame.last_player_team)
+        frame.loc[invalid_flag | (required & (frame.p_book.isna() | (frame.book_n < 2))), "injury_status"] = "SEASON_OR_ROLE_CHANGE_NEEDS_TWO_BOOKS"
+        diagnostics.update(rows=len(frame), in_entry_window=int(frame.hours_to_tip.between(*WINDOW).sum()),
+                           verified=int(frame.injury_status.eq("").sum()), book_covered=int(frame.p_book.notna().sum()),
+                           exclusions=frame.loc[frame.injury_status.ne(""), "injury_status"].value_counts().to_dict())
+        frame.attrs["diagnostics"] = diagnostics
         print(
             f"NBA PREFLIGHT: model_age={age:.2f}h, open_quoted={len(frame)}, "
             f"verified={int(frame.injury_status.fillna('').eq('').sum())}, "
@@ -721,7 +886,9 @@ def nba_candidates(now, latest=Path("outputs/projections/latest.csv")):
     except Exception as err:
         # Don't leak HTTP response bodies, headers, or credentials.
         print(f"NBA PREFLIGHT BLOCKED: {type(err).__name__} -- no new orders")
-        return pd.DataFrame()
+        blocked = pd.DataFrame()
+        blocked.attrs["diagnostics"] = {**diagnostics, "blocked": str(err) if isinstance(err, ValueError) else type(err).__name__}
+        return blocked
 
 
 def assert_nfl_production_stopped():
@@ -754,19 +921,25 @@ def assert_nfl_production_stopped():
 
 
 def main():
+    from contextlib import nullcontext
+    from live.production_lock import account_lock
+    from live.nba_inputs import sync, atomic_write
+
     parser = argparse.ArgumentParser()
     parser.add_argument("--dry-run", action="store_true")
     parser.add_argument("--live", action="store_true")
     parser.add_argument("--status", action="store_true")
+    parser.add_argument("--preflight", action="store_true", help="Production GET checks only; never submits or cancels")
+    parser.add_argument("--sync-inputs", action="store_true")
     args = parser.parse_args()
-    if sum((args.dry_run, args.live, args.status)) != 1:
+    if sum((args.dry_run, args.live, args.status, args.preflight)) != 1:
         parser.error("Choose exactly one mode")
     directory = (
-        STATE if args.live or args.status else Path("/tmp/smm-nba-auto-readonly")
+        STATE if args.live or args.status or args.preflight else Path("/tmp/smm-nba-auto-readonly")
     )
     directory.mkdir(mode=0o700, parents=True, exist_ok=True)
     directory.chmod(0o700)
-    with (directory / "lock").open("a+") as lock:
+    with (account_lock() if args.live else nullcontext()), (directory / "lock").open("a+") as lock:
         fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
         journal = directory / "journal.jsonl"
         if args.status:
@@ -782,17 +955,70 @@ def main():
             raise TradingError(
                 "Production auto requires production venue even for dry run"
             )
-        client = TradingClient(dry_run=args.dry_run, env="prod")
+        client = (ReadOnlyClient if args.preflight else TradingClient)(dry_run=args.dry_run or args.preflight, env="prod")
         if args.live:
             guard(os.environ, client)
-            assert_nfl_production_stopped()
             if (directory / "KILL").exists():
                 cancel_owned_on_kill(client, journal)
                 return
+            assert_nfl_production_stopped()
         now = datetime.now(UTC)
-        frame = nba_candidates(now)
+        latest = Path("outputs/projections/latest.csv")
+        if args.sync_inputs:
+            latest = directory / "inputs" / "latest.csv"
+            try:
+                sync(latest.parent, now)
+            except Exception as error:
+                print(f"NBA INPUT SYNC: {type(error).__name__}; checking cached input age/hash", flush=True)
+        frame = nba_candidates(now, latest=latest)
+        if args.preflight:
+            report = preflight(client, frame, now, journal)
+            atomic_write(directory / "preflight.json", (json.dumps(report, indent=2) + "\n").encode())
+            print(json.dumps(report, indent=2))
+            raise SystemExit(0 if report["ready"] else 2)
         pass_once(client, os.environ, frame, now, journal, dry=args.dry_run)
+        print("NBA WORKER: completed", flush=True)
+
+
+class ReadOnlyClient(TradingClient):
+    def _request(self, method, path, params=None, body=None):
+        if method != "GET":
+            raise TradingError("Read-only preflight rejects exchange writes")
+        return super()._request(method, path, params=params, body=body)
+
+
+def preflight(client, frame, now, journal):
+    """Inspect the real account without altering exchange orders or journals."""
+    failures = []
+    if client.env != "prod" or not client.can_sign:
+        failures.append("signed_production_reads_required")
+    try:
+        assert_nfl_production_stopped()
+    except TradingError as error:
+        failures.append(str(error))
+    if (journal.parent / "KILL").exists():
+        failures.append("NBA_KILL_exists")
+    if frame.empty or not frame.injury_status.eq("").any():
+        failures.append("no_verified_projection_rows")
+    try:
+        attempts, accepted = records(load_journal(journal))
+        state = current_production_state(client, attempts, accepted)
+        cash = money(client.balance()["balance"])
+        if cash < MAX_ORDER_COST:
+            failures.append("cash_below_order_cap")
+        budget = sum(reserve(a["cost"]) for a in attempts)
+        if budget >= MAX_GROSS_COST:
+            failures.append("lifetime_budget_exhausted")
+        account = {"cash_dollars": cash, "gross_reserved": budget, "resting": len(state["resting"]), "held_markets": len(state["held"])}
+    except Exception as error:
+        failures.append(str(error) if isinstance(error, TradingError) else type(error).__name__)
+        account = {"verified": False}
+    return {"utc": now.isoformat(), "ready": not failures,
+            "strategy_version": STRATEGY_VERSION, "failures": failures,
+            "account": account, "inputs": frame.attrs.get("diagnostics", {}),
+            "note": "Read-only readiness check; owner activation is separate. No fill or profit claim."}
 
 
 if __name__ == "__main__":
     main()
+

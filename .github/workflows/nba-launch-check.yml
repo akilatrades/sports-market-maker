@@ -1,0 +1,36 @@
+name: NBA production sources (read only)
+on:
+  pull_request:
+    paths: ['live/nba*', 'live/prod_nba_auto.py', 'markets/nba/**', 'kalshi/fees.py', 'research/nba_source_smoke.py', '.github/workflows/nba-launch-check.yml']
+  push:
+    branches: [main]
+    paths: ['live/nba*', 'live/prod_nba_auto.py', 'markets/nba/**', 'kalshi/fees.py', 'research/nba_source_smoke.py', '.github/workflows/nba-launch-check.yml']
+  schedule:
+    - cron: '0 11,14,17,20 * * *'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  sources:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install -r requirements.txt ruff==0.11.13
+      - name: Formatter patch for review
+        run: |
+          ruff format .
+          ruff check . --fix
+          git diff --output=/tmp/nba-format.patch
+      - uses: actions/upload-artifact@v4
+        with:
+          name: nba-format-patch
+          path: /tmp/nba-format.patch
+      - run: pytest tests/test_nba_launch.py tests/test_prod_nba_auto.py tests/test_live.py tests/test_books.py tests/test_trading.py
+      - name: Check real production data sources
+        env:
+          KALSHI_ENV: prod
+        run: python -m research.nba_source_smoke

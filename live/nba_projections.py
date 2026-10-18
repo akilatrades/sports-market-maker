@@ -16,7 +16,6 @@ Run from the repository root: python run_projections.py
 """
 
 from datetime import UTC, datetime, timedelta
-import json
 from pathlib import Path
 
 import pandas as pd
@@ -41,6 +40,7 @@ from markets.nba.paper import (
     empty_ledger,
     new_positions,
 )
+from live.nba_inputs import publish
 
 OUT = Path("outputs/projections")
 LEDGER = Path("outputs/paper/ledger.csv")
@@ -49,10 +49,10 @@ BETS = Path("outputs/bets")
 
 
 def player_ids(players):
-    """Normalized name -> most recent player_id with that name."""
+    """Names must identify exactly one historical player, never guess a namesake."""
     latest = players.sort_values("tip_utc").drop_duplicates("player_id", keep="last")
     latest = latest.assign(player_key=latest.player.map(normalize_name))
-    return latest.drop_duplicates("player_key", keep="last").set_index("player_key")
+    return latest.drop_duplicates("player_key", keep=False).set_index("player_key")
 
 
 def match_open_markets(markets, schedule, players):
@@ -68,12 +68,19 @@ def match_open_markets(markets, schedule, players):
     m = m.merge(games, on=["game_date", "home_espn", "away_espn"], how="inner")
     ids = player_ids(players)
     m["player_id"] = m.player_key.map(ids.player_id)
+    m["last_player_team"] = m.player_key.map(ids.team)
+    m["last_player_game_utc"] = m.player_key.map(ids.tip_utc)
+    m["last_player_season"] = m.player_key.map(ids.season)
+    gap = (m.tip_utc - pd.to_datetime(m.last_player_game_utc, utc=True)).dt.days
+    m["requires_book"] = (gap > 45) | m.team_espn.ne(m.last_player_team)
     return m
 
 
 def price_markets(players, games, schedule, markets, report, now=None):
     """Model price for each open market on a scheduled game, with edges vs Kalshi."""
     matched = match_open_markets(markets, schedule, players)
+    if matched.empty:
+        return pd.DataFrame(columns=COLUMNS), matched
     listed = (
         matched[["game_id", "team_espn", "player_id"]]
         .rename(columns={"team_espn": "team"})
@@ -144,6 +151,13 @@ COLUMNS = [
     "game_id",
     "player_id",
     "season_type",
+    "home_espn",
+    "away_espn",
+    "team_espn",
+    "last_player_team",
+    "last_player_game_utc",
+    "last_player_season",
+    "requires_book",
 ]
 
 
@@ -151,6 +165,9 @@ def main():
     now = datetime.now(UTC)
     players = pd.read_parquet("data/player_games.parquet")
     games = pd.read_parquet("data/games.parquet")
+    players = players[players.tip_utc < now].copy()
+    if players.empty or players.season.max() < now.year:
+        raise ValueError("NBA player history is missing the most recent completed season")
     season = now.year + 1 if now.month >= 8 else now.year
     eastern = pd.Timestamp(now).tz_convert("America/New_York")
     days = [eastern.date(), (eastern + timedelta(days=1)).date()]
@@ -161,6 +178,9 @@ def main():
     markets = parse(snapshot(SERIES, now=now))
     if schedule.empty or markets.empty:
         print(f"Nothing to price: {len(schedule)} games, {len(markets)} markets")
+        publish(pd.DataFrame(columns=COLUMNS), OUT, now,
+                schedule_games=len(schedule), open_markets=len(markets),
+                data_max_tip_utc=players.tip_utc.max().isoformat())
         return
     priced, matched = price_markets(
         players, games, schedule, markets, injuries(), now=now
@@ -170,10 +190,8 @@ def main():
     folder.mkdir(parents=True, exist_ok=True)
     path = folder / f"{now:%Y-%m-%dT%H%MZ}.csv"
     priced.round(4).to_csv(path, index=False)
-    priced.round(4).to_csv(OUT / "latest.csv", index=False)
-    (OUT / "latest_meta.json").write_text(
-        json.dumps({"generated_utc": now.isoformat(timespec="minutes")}) + "\n"
-    )
+    publish(priced, OUT, now, schedule_games=len(schedule), open_markets=len(markets),
+            data_max_tip_utc=players.tip_utc.max().isoformat())
     unpriced = matched.player_id.isna().sum()
     print(
         f"Priced {len(priced)} of {len(markets)} open markets for "
