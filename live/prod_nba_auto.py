@@ -167,7 +167,8 @@ def reconcile_expired_unfilled(attempts, accepted, state, fills, now):
         if not match:
             raise TradingError("Unaccepted attempt: HALT")
         oid = str(match["order_id"])
-        tip = pd.Timestamp(attempt["tip_utc"])
+        tip = (pd.Timestamp(attempt["expiration_ts"], unit="s", tz="UTC")
+               if attempt.get("expiration_ts") is not None else pd.Timestamp(attempt["tip_utc"]))
         # Require 10 extra minutes after nominal expiration to tolerate late
         # exchange events. No history, no balance release.
         can_release = (
@@ -493,6 +494,8 @@ def select_candidates(frame, events, state, now):
 
 def order_from_row(row, now, no_price=None):
     price = float(row.price) if no_price is None else float(no_price)
+    if not math.isfinite(price):
+        raise TradingError("Nonfinite order price")
     cents = round(price * 100)
     if not math.isfinite(price) or abs(cents - price * 100) > 1e-6:
         raise TradingError("Order price not a whole cent")

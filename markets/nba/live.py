@@ -89,6 +89,10 @@ def parse_scoreboard(payload, season):
     # 3 otherwise converts concatenated tip times to object at season opening.
     frame["tip_utc"] = pd.to_datetime(frame.tip_utc, utc=True)
     frame["completed"] = frame.completed.astype(bool)
+    for column in ("home_spread", "total", "home_score", "away_score"):
+        frame[column] = pd.to_numeric(frame[column], errors="raise").astype(float)
+    for column in ("game_id", "season"):
+        frame[column] = pd.to_numeric(frame[column], errors="raise").astype("int64")
     return frame
 
 

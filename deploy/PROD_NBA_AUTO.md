@@ -1,65 +1,82 @@
-# NBA production readiness — separate from NFL
+# NBA opening-week production handoff
 
-**Code-only. The NBA production timer is never enabled by this change.**
-The current shared Kalshi balance and previous NFL pilot approval **do not**
-authorize NBA production trading.
+Target: **Tuesday, October 20, 2026**. This prepares a bounded production experiment, not a profitability guarantee. Read the [research audit](../docs/NBA_AND_MARKET_AUDIT_2026-10-18.md). Code merged on GitHub is not automatically deployed to the Droplet.
 
-- A separate `live.prod_nba_auto` worker retains the bounded journal, one
-  post-only NO order per scan, exchange reconciliation and emergency KILL guard.
-- Dedicated private journal/state: `/home/trader/prod-nba-auto/`.
-- Dedicated systemd unit and timer, disabled by default:
-  `market-maker-prod-nba-auto.{service,timer}`.
-- Dedicated root-only config: `/etc/market-maker-prod-nba-auto.env`.
-  **Do not put production keys in GitHub, chat, or screenshots.**
-- Explicit independent live flags: `KALSHI_ENV=prod`, `TRADE_MODE=live`,
-  `PROD_NBA_AUTO_ARM=YES`, `ALLOW_PRODUCTION_TRADING=YES`,
-  `DEMO_PILOT=0`, `TRADE_MARKET=nba`.
-- Caps: **$3/order; $15 active; $30 per day; $50 lifetime nominal gross order
-  costs with reserve**; $3/game, $3/team, 2 orders/game, 5 contracts/order;
-  one new order per scan. These are *independent* of NFL's accounting.
-  **Do not enable both production timers on the same funded account** without
-  a tested shared-account risk manager and a separately authorized combined
-  cap. The worker fails closed if the NFL production timer or service is active
-  or their status cannot be verified. Leave NFL stopped before NBA rollout.
-- Frozen `no_seller_bookline` rule, 2–6h before NBA tipoff, post-only NO,
-  original 1-cent quote improvement; the NFL extra-tick execution experiment
-  **is explicitly disabled in this NBA baseline**. This cohort is separate.
-- Must have `outputs/projections/latest.csv` AND a genuine
-  `outputs/projections/latest_meta.json` with a timezone-aware
-  `generated_utc` no more than 9h old. Never mistake git mtime for recency.
-- Fresh NBA production quotes are read before the order and again right
-  before submission; market must remain two-sided and unchanged.
-- Current ESPN injury report must be readable; newer injury information
-  and out statuses veto affected players or teams. Failure blocks orders.
-- NBA sportsbook bookline veto is attached only for fresh quote rows with
-  `updated_utc`; otherwise the rule uses the documented model fallback.
-- A 2h30s real-clock cutoff is checked immediately before an order POST (the baseline requires at least 2h before tip).
-- Distinct KILL file blocks entries and cancels owned resting NBA orders;
-  already filled positions remain exposed until settlement.
+## Tuesday's clock
 
-## Operator verification — read only, do not arm
+Confirmed against the [official NBA schedule](https://pr.nba.com/2026-27-nba-regular-season-schedule) and ESPN's production schedule. The worker rechecks the current schedule rather than hardcoding these times.
 
-After checking out the code and installing requirements, the operator can
-review public inputs without credentials:
+| Game | Tip, Eastern | Tip, Central | New-entry window, Central |
+|---|---:|---:|---:|
+| Boston at Detroit | 3:00 p.m. | 2:00 p.m. | 8:00 a.m.–noon |
+| Philadelphia at New York | 7:00 p.m. | 6:00 p.m. | noon–4:00 p.m. |
+| Oklahoma City at San Antonio | 9:30 p.m. | 8:30 p.m. | 2:30–6:30 p.m. |
+
+Submissions stop 30 seconds before the two-hour boundary. Resting orders expire after at most one hour and before the final two hours. Filled contracts are held to settlement. The timer scans every five minutes; repetitive scans are normal, but completed cycles must print their decisions.
+
+## Owner steps
+
+Run this in the existing **root DigitalOcean console** to update code and stage NBA. The update preserves the previous NFL timer state. Staging does not activate NBA, reset journals or remove KILL files.
 
 ```bash
 cd /home/trader/sports-market-maker-prod-auto
-sudo -u trader env KALSHI_ENV=prod TRADE_MODE=dry \
-  .venv/bin/python -m live.prod_nba_auto --dry-run
+bash deploy/update_nfl_dashboard.sh
+bash deploy/stage_nba_auto.sh
 ```
 
-Status (private journal counts only; no trading):
+After NFL positions have settled and there are no foreign/manual resting orders or open positions, run the handoff **Tuesday morning before 8 a.m. Central**:
 
 ```bash
 cd /home/trader/sports-market-maker-prod-auto
-sudo -u trader .venv/bin/python -m live.prod_nba_auto --status
+bash deploy/activate_nba_auto.sh
 ```
 
-Never enable the NBA timer or store production credentials without a **new,
-explicit approval** after checking (1) true opening-night slate/projections,
-(2) sportsbook freshness and credits, (3) actual NBA injuries/lineup safety,
-(4) an empty Kalshi account with the NFL service disabled, (5) all risk tests,
-and (6) a dry/no-order supervised end-to-end run.
+This is an owner-operated activation command. It stops the NFL timer, waits for its current service, then runs signed **production GET-only** checks. It will not sell or cancel an NFL position to make room. If preflight fails, it restores a previously running NFL timer and prints the blockers. If it passes, it arms and starts NBA and selects its journal in the private account dashboard. If activation itself fails after preflight, NFL remains stopped to prevent concurrent trading; inspect the printed error.
 
-NBA forward validation starts with its **first exchange-accepted NBA real
-order**, not an NFL order. See `docs/FORWARD_VALIDATION.md`.
+If scheduled projections or books have not arrived, wait for the next data update. Do not force arm flags, reset the allowance, remove KILL or disable freshness/roster checks to obtain a trade.
+
+For readiness without activation:
+
+```bash
+systemd-run --wait --pipe --collect --uid=trader \
+  --property=WorkingDirectory=/home/trader/sports-market-maker-prod-auto \
+  --property=EnvironmentFile=/etc/market-maker-prod-nba-auto.env \
+  /home/trader/sports-market-maker-prod-auto/.venv/bin/python \
+  -m live.prod_nba_auto --preflight --sync-inputs
+```
+
+Preflight while NFL is running should report its isolation blocker. A successful preflight establishes readiness at that moment, not a fill, profit or future feed availability. Fee metadata and the final quote are also checked before each order.
+
+## Execution policy
+
+- Points, rebounds, assists and threes; passive NO entries only. At most one new order per scan and one lifetime submission per ticker. No market orders or automatic exits.
+- Existing limits: $3 reserved per order, $15 active, $30 daily, $50 lifetime submitted allowance; $3 per game and team, at most five contracts. Game/team allowances accumulate over the pilot. Canceled submissions still consume daily/lifetime allowance.
+- Contract count shrinks until price plus the 10% reserve fits. Reserve is a risk allowance, not an actual expense. Actual reported fees determine P&L.
+- Current series/event fees must be understood, estimated net edge must remain positive after the fee bound, and the verified price must stay passive. Unknown fee types block entry.
+- Current roster, exact fixture, projection timestamp/checksum and injury news must agree. New team injury news requires refreshed projections; book probabilities predating team news are discarded.
+- Long absences over 45 days and transfers require two fresh books on the exact line. Ambiguous player names, unsupported rookies/history, missing context and changed fixtures are skipped.
+- Durable intent precedes POST. Uncertain submission stops new orders pending manual reconciliation. Shared process locking and ownership checks prevent the two pilots from independently allocating the same account.
+
+## Data and memory
+
+GitHub Actions downloads history and fits the existing four models. Projections cover today plus two days, so Sunday's source check can see Tuesday. A schema/version, timestamp, row count and SHA-256 bind every CSV to its metadata. Empty off-days publish explicit empty snapshots.
+
+The Droplet downloads only model inputs and the derived book file, pinned to one commit. It does not automatically update executable code, train locally or call the paid book API. Inputs older than nine hours, future-dated inputs or mismatched hashes are rejected. Missing book data clears the cached book file instead of retaining old odds.
+
+Projection schedules: 12:30, 15:30, 18:30 and 21:30 UTC, or 7:30 a.m., 10:30 a.m., 1:30 p.m. and 4:30 p.m. Central on October 20. GitHub jobs can be delayed. The first two runs cover the early game; book collection keeps its existing schedule. Public-source checks never place orders.
+
+## Monitoring and accounting
+
+```bash
+systemctl list-timers market-maker-prod-nba-auto.timer
+journalctl -u market-maker-prod-nba-auto.service -n 70 --no-pager
+cat /home/trader/prod-nba-auto/last_scan.json
+```
+
+`NBA WORKER: completed` confirms completion. `NBA DECISION` and the JSON report distinguish no eligible rows, risk limits, changed quotes, cancellations and accepted orders. Account freshness and worker freshness are separate.
+
+The private dashboard keeps its layout and exchange balances. Handoff selects NBA; NFL journals remain intact. Before switching back, stop/reconcile NBA, change `ACCOUNT_DASHBOARD_MARKET=nfl` in `/etc/systemd/system/market-maker-dashboard.service.d/market.conf`, reload systemd and restart the dashboard. A label change alone does not authorize a trading handoff.
+
+Actual fills are identified by exchange ID and record cost, fees and maker/taker status. Resting orders have repeated queue observations. Actual fills have observed 5/15/60-minute midpoint and executable-bid movements; missing windows are marked missing. Markouts are not realized profit. Settlements normalize dollar costs/fees and cent revenue, using append-only corrections.
+
+The NBA review checkpoint remains 30 days **and** 500 distinct settled buy-fill records with the existing coverage gates. This small initial lifetime allowance is unlikely to reach that research checkpoint. No automatic reset or capital increase is implemented. Count independent games as well as fill records.

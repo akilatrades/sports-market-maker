@@ -116,8 +116,15 @@ def main():
         "warning": "Additional windows, prices and filters make the true search family larger. Correlated outcomes and expiry after resolution can invalidate a scan even with a small adjusted p value.",
     }
     selected = {}
-    selected_names = ["KXBTC", "KXCPI", "KXITFMATCH", "KXLALIGASPREAD",
-                      "KXNASCARRACE", "KXNCAAMB1HSPREAD", "KXNWSLSPREAD"]
+    selected_names = [
+        "KXBTC",
+        "KXCPI",
+        "KXITFMATCH",
+        "KXLALIGASPREAD",
+        "KXNASCARRACE",
+        "KXNCAAMB1HSPREAD",
+        "KXNWSLSPREAD",
+    ]
     for series in selected_names:
         path = Path("outputs/scan") / f"orders_{series}.csv.gz"
         inputs.append(path)

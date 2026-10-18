@@ -11,6 +11,9 @@ if systemctl is-active --quiet market-maker-prod-nba-auto.timer || systemctl is-
   exit 1
 fi
 install -d -m 700 -o trader -g trader /home/trader/prod-nba-auto
+if [[ ! -e /home/trader/prod-nba-auto/journal.jsonl ]]; then
+  install -m 600 -o trader -g trader /dev/null /home/trader/prod-nba-auto/journal.jsonl
+fi
 if [[ ! -e /etc/market-maker-prod-nba-auto.env ]]; then
   install -m 600 -o trader -g trader /etc/market-maker-prod-auto.env /etc/market-maker-prod-nba-auto.env
   python3 - <<'PY'
