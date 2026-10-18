@@ -724,6 +724,32 @@ def nba_candidates(now, latest=Path("outputs/projections/latest.csv")):
         return pd.DataFrame()
 
 
+def assert_nfl_production_stopped():
+    """Do not run two independently capped production pilots on one account."""
+    import subprocess
+
+    for unit in (
+        "market-maker-prod-nfl-auto.timer",
+        "market-maker-prod-nfl-auto.service",
+    ):
+        try:
+            result = subprocess.run(
+                ["systemctl", "is-active", "--quiet", unit],
+                timeout=5,
+                check=False,
+                capture_output=True,
+            )
+        except (OSError, subprocess.TimeoutExpired) as error:
+            raise TradingError("Cannot verify isolated NBA production account") from error
+        if result.returncode == 0:
+            raise TradingError("NFL production still active: NBA trading HALTED")
+        # systemd returns 3 for inactive/failed and 4 for no matching unit.
+        # Any other result is ambiguous: block production trading.
+        if result.returncode not in {3, 4}:
+            raise TradingError("Uncertain NFL production unit state: NBA trading HALTED")
+
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--dry-run", action="store_true")
@@ -756,6 +782,7 @@ def main():
         client = TradingClient(dry_run=args.dry_run, env="prod")
         if args.live:
             guard(os.environ, client)
+            assert_nfl_production_stopped()
             if (directory / "KILL").exists():
                 cancel_owned_on_kill(client, journal)
                 return
