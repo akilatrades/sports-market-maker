@@ -16,28 +16,18 @@ GAMMA = "https://gamma-api.polymarket.com"
 CLOB = "https://clob.polymarket.com"
 DATA = "https://data-api.polymarket.com"
 OUT = Path("outputs/polymarket")
-PROP_WORDS = (
-    "points",
-    "rebounds",
-    "assists",
-    "threes",
-    "3-pointers",
-    "3pt",
-    "receiving yards",
-    "rushing yards",
-    "passing yards",
-    "touchdown",
-    "anytime",
-    "goalscorer",
-    "shots on goal",
-    "saves",
-    "strikeouts",
-    "hits",
-    "home run",
-    "double-double",
-    "triple-double",
-    "o/u",
-    "over",
+import re
+
+# A per-game player prop: a named player's stat against a threshold, or an
+# event explicitly labelled as player props. Game totals ("Seahawks vs.
+# Patriots: O/U 45.5") and season leaders ("lead the NBA in assists") are not.
+PROP_RE = re.compile(
+    r"(\d+(\.\d)?\+ ?(points|pts|rebounds|reb|assists|ast|3-pointers|threes|three-pointers|"
+    r"receiving yards|rushing yards|passing yards|receptions|rec yards|rush yards|pass yards|"
+    r"touchdowns?|saves|shots on goal|shots|strikeouts|hits|home runs?|total bases|goals|"
+    r"steals|blocks|pra|points \+ rebounds \+ assists))|anytime (td|touchdown|goalscorer|scorer)|"
+    r"to score a touchdown|to record a (double-double|triple-double)|first (td|touchdown) scorer",
+    re.I,
 )
 SPORT_TAGS = [
     "nba",
@@ -92,6 +82,12 @@ def main():
         for e in events:
             for m in e.get("markets", []) or []:
                 q = (m.get("question") or "").lower()
+                slug_title = f"{e.get('slug') or ''} {e.get('title') or ''}".lower()
+                is_prop = (
+                    bool(PROP_RE.search(q))
+                    or "player prop" in slug_title
+                    or "player-prop" in slug_title
+                )
                 markets.append(
                     {
                         "tag": tag,
@@ -99,8 +95,7 @@ def main():
                         "event_slug": e.get("slug"),
                         "closed": e["_closed"] == "true",
                         "question": m.get("question"),
-                        "is_prop": any(w in q for w in PROP_WORDS)
-                        and ("vs" not in q or "o/u" in q),
+                        "is_prop": is_prop,
                         "volume": float(m.get("volumeNum") or m.get("volume") or 0),
                         "liquidity": float(
                             m.get("liquidityNum") or m.get("liquidity") or 0
@@ -130,6 +125,53 @@ def main():
             report["tags"][tag]["prop_markets"],
             flush=True,
         )
+    import csv
+    import gzip
+
+    with gzip.open(OUT / "markets.csv.gz", "wt", newline="") as f:
+        w = csv.DictWriter(
+            f, fieldnames=list(all_markets[0].keys()) if all_markets else ["tag"]
+        )
+        w.writeheader()
+        for m in all_markets:
+            w.writerow(m)
+    open_props = [
+        m
+        for m in all_markets
+        if m["is_prop"] and not m["closed"] and m["clob_token_ids"]
+    ]
+    open_props.sort(key=lambda m: -m["volume"])
+    for m in open_props[:2]:
+        try:
+            tokens = (
+                json.loads(m["clob_token_ids"])
+                if isinstance(m["clob_token_ids"], str)
+                else m["clob_token_ids"]
+            )
+        except Exception:  # noqa: BLE001
+            tokens = []
+        tok = tokens[0] if tokens else None
+        sample = {
+            "market": m["question"],
+            "open": True,
+            "volume": m["volume"],
+            "token": tok,
+        }
+        if tok:
+            ph = get(
+                f"{CLOB}/prices-history",
+                {"market": tok, "interval": "max", "fidelity": 60},
+            )
+            sample["prices_history_points"] = (
+                len(ph.get("history", [])) if isinstance(ph, dict) else ph
+            )
+            book = get(f"{CLOB}/book", {"token_id": tok})
+            sample["book"] = (
+                {k: (v[:3] if isinstance(v, list) else v) for k, v in book.items()}
+                if isinstance(book, dict)
+                else book
+            )
+        report["samples"]["open:" + str(m["condition_id"])] = sample
     # endpoint shapes on the highest-volume closed prop (settled history)
     closed_props = [
         m for m in all_markets if m["is_prop"] and m["closed"] and m["clob_token_ids"]
