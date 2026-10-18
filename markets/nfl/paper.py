@@ -18,36 +18,56 @@ MAX_MODEL_AGE_HOURS = 36
 
 
 def latest_ladder(now, folder=LADDERS, max_age_hours=None):
-    """Rows of the most recent ladder made before ``now``, with kickoff times."""
+    """Latest eligible rows, reducing each chunk before reading more history."""
     files = sorted(folder.glob("*.csv.gz"))
-    frames = []
+    ladder = pd.DataFrame(
+        columns=[
+            "game_id",
+            "player",
+            "player_id",
+            "stat",
+            "line",
+            "p_over",
+            "made_utc",
+        ]
+    )
+    keys = ["game_id", "player_id", "stat", "line"]
     for f in files:
         made = pd.to_datetime(
             f.stem.split("_")[-1].replace(".csv", ""), format="%Y-%m-%dT%H%MZ", utc=True
         )
-        if made <= pd.Timestamp(now):
-            frames.append(pd.read_csv(f))
-    if not frames:
-        return pd.DataFrame(
-            columns=[
-                "game_id",
-                "player",
-                "player_id",
-                "stat",
-                "line",
-                "p_over",
-                "made_utc",
-            ]
-        )
-    ladder = pd.concat(frames, ignore_index=True)
-    ladder["made_utc"] = pd.to_datetime(ladder.made_utc, utc=True)
-    age = (pd.Timestamp(now) - ladder.made_utc).dt.total_seconds() / 3600
-    ladder = ladder[age.ge(0)]
-    if max_age_hours is not None:
-        ladder = ladder[age.loc[ladder.index].le(max_age_hours)]
-    return ladder.sort_values("made_utc").drop_duplicates(
-        ["game_id", "player_id", "stat", "line"], keep="last"
-    )
+        if made > pd.Timestamp(now):
+            continue
+        # Never concatenate the entire archive before applying freshness. Row
+        # timestamps still govern eligibility, even if a filename is misleading.
+        with pd.read_csv(f, chunksize=10_000) as reader:
+            for chunk in reader:
+                chunk["made_utc"] = pd.to_datetime(chunk.made_utc, utc=True)
+                age = (pd.Timestamp(now) - chunk.made_utc).dt.total_seconds() / 3600
+                eligible = age.ge(0)
+                if max_age_hours is not None:
+                    eligible &= age.le(max_age_hours)
+                chunk = chunk.loc[eligible]
+                if chunk.empty:
+                    continue
+                ladder = (
+                    pd.concat([ladder, chunk], ignore_index=True)
+                    if not ladder.empty
+                    else chunk
+                )
+                latest_made = ladder.groupby(
+                    keys, sort=False, dropna=False
+                ).made_utc.transform("max")
+                ladder = ladder.loc[ladder.made_utc.eq(latest_made)].drop_duplicates(
+                    keys + ["p_over"], keep="last"
+                )
+    # Conflicting probabilities with the same latest timestamp have no valid
+    # tie-breaker. Do not choose by sort order or fall back to an older estimate.
+    ambiguous = ladder.duplicated(keys, keep=False)
+    if ambiguous.any():
+        count = len(ladder.loc[ambiguous, keys].drop_duplicates())
+        print(f"NFL MODEL: blocked {count} conflicting projection keys", flush=True)
+    return ladder.loc[~ambiguous].sort_values("made_utc").reset_index(drop=True)
 
 
 def model_estimates(markets, games, now, folder=LADDERS, max_age_hours=None):

@@ -11,6 +11,7 @@ import fcntl
 import json
 import math
 import os
+import resource
 from collections import Counter
 from datetime import UTC, datetime
 from pathlib import Path
@@ -20,20 +21,25 @@ import pandas as pd
 from kalshi.api import fetch_market
 from kalshi.paper_props import candidate_orders
 from kalshi.trading import Order, TradingClient, TradingError
+from live.nfl_policy import (
+    FEE_RESERVE,
+    MAX_ACTIVE_COST,
+    MAX_CONTRACTS,
+    MAX_DAILY_COST,
+    MAX_GAME_COST,
+    MAX_GAME_ORDERS,
+    MAX_GROSS_COST,
+    MAX_ORDER_COST,
+    MAX_TEAM_COST,
+    MIN_RESERVED_EDGE,
+    STATE,
+    STRATEGY_VERSION,
+    money,
+    reserve,
+    settlement_accounting,
+)
 
-MAX_GROSS_COST = 50.0
-MAX_ORDER_COST = 3.0
-MAX_ACTIVE_COST = 15.0
-MAX_GAME_COST = 3.0
-MAX_TEAM_COST = 3.0
-MAX_DAILY_COST = 30.0
-MAX_GAME_ORDERS = 2
-MAX_CONTRACTS = 5
-FEE_RESERVE = 1.10
-STRATEGY_VERSION = "nfl-no-v2-reserved-edge"
-MIN_RESERVED_EDGE = 0.03
 WINDOW = (1 / 6, 2.0)  # latest entry: 10 minutes before kickoff
-STATE = Path("/home/trader/prod-nfl-auto")
 REQUIRED = {
     "KALSHI_ENV": "prod",
     "TRADE_MODE": "live",
@@ -63,17 +69,6 @@ def load_journal(path):
     if not path.exists():
         return []
     return [json.loads(line) for line in path.read_text().splitlines() if line]
-
-
-def money(n):
-    value = float(n)
-    if not math.isfinite(value) or value < 0:
-        raise TradingError(f"Invalid risk value {n!r}")
-    return round(value, 4)
-
-
-def reserve(cost):
-    return math.ceil(money(cost) * FEE_RESERVE * 100 - 1e-8) / 100
 
 
 def records(events):
@@ -305,41 +300,6 @@ def record_execution(journal, events, attempts, accepted, fills, settlements):
         if record != seen_results.get(ticker):
             write_event(journal, record)
             seen_results[ticker] = record
-
-
-def settlement_accounting(result):
-    """Normalize the exchange's dollar costs/fees and cent revenue explicitly."""
-
-    def amount(dollars_key, cents_key=None):
-        value = result.get(dollars_key)
-        divisor = 1
-        if value is None and cents_key:
-            value = result.get(cents_key)
-            divisor = 100
-        if value is None:
-            return None
-        try:
-            parsed = float(value) / divisor
-        except (TypeError, ValueError):
-            return None
-        return round(parsed, 6) if math.isfinite(parsed) and parsed >= 0 else None
-
-    revenue = amount("revenue_dollars", "revenue")
-    yes_cost = amount("yes_total_cost_dollars", "yes_total_cost")
-    no_cost = amount("no_total_cost_dollars", "no_total_cost")
-    fee = amount("fee_cost")  # API fee_cost is in dollars, including legacy costs.
-    complete = all(v is not None for v in (revenue, yes_cost, no_cost, fee))
-    return {
-        "accounting_version": 2,
-        "revenue_dollars": revenue,
-        "yes_cost_dollars": yes_cost,
-        "no_cost_dollars": no_cost,
-        "fee_dollars": fee,
-        "accounting_complete": complete,
-        "net_profit_dollars": (
-            round(revenue - yes_cost - no_cost - fee, 6) if complete else None
-        ),
-    }
 
 
 def record_queue_observation(client, journal, order_id, now):
@@ -846,11 +806,15 @@ def main():
             if (directory / "KILL").exists():
                 cancel_owned_on_kill(client, journal)
                 return
+        now = datetime.now(UTC)
+        print(f"NFL WORKER: started {now.isoformat()}", flush=True)
         from live.nfl_trade import candidates
 
-        now = datetime.now(UTC)
         frame = candidates(now)
+        peak_mib = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / 1024
+        print(f"NFL WORKER: inputs ready; peak RSS {peak_mib:.1f} MiB", flush=True)
         pass_once(client, os.environ, frame, now, journal, dry=args.dry_run)
+        print("NFL WORKER: completed", flush=True)
 
 
 if __name__ == "__main__":
