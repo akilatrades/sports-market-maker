@@ -30,6 +30,8 @@ MAX_DAILY_COST = 30.0
 MAX_GAME_ORDERS = 2
 MAX_CONTRACTS = 5
 FEE_RESERVE = 1.10
+STRATEGY_VERSION = "nfl-no-v2-reserved-edge"
+MIN_RESERVED_EDGE = 0.03
 WINDOW = (1 / 6, 2.0)  # latest entry: 10 minutes before kickoff
 STATE = Path("/home/trader/prod-nfl-auto")
 REQUIRED = {
@@ -285,6 +287,7 @@ def record_execution(journal, events, attempts, accepted, fills, settlements):
                 "yes_price": str(fill.get("yes_price_dollars", "")),
                 "no_price": str(fill.get("no_price_dollars", "")),
                 "fee": str(fill.get("fee_cost", "")),
+                "is_taker": fill.get("is_taker"),
             },
         )
         seen_fills.add(fid)
@@ -554,6 +557,42 @@ def fit_order_to_budget(order, attempts, active, row, now):
     return None
 
 
+def entry_evidence(row, order, cost):
+    """Require 3c of modeled advantage AFTER the existing full fee buffer.
+
+    This is a conservative admission rule, not a claim about true probabilities
+    or the actual exchange fee. Do not optimize it against a single NFL game.
+    """
+    from markets.nfl.paper import MAX_MODEL_AGE_HOURS
+
+    stamp = pd.to_datetime(
+        getattr(row, "model_made_utc", None), utc=True, errors="coerce"
+    )
+    if stamp is None or pd.isna(stamp):
+        raise TradingError("model_timestamp_missing_or_stale")
+    age = (pd.Timestamp(datetime.now(UTC)) - stamp).total_seconds() / 3600
+    if not 0 <= age <= MAX_MODEL_AGE_HOURS:
+        raise TradingError("model_timestamp_missing_or_stale")
+    model = float(row.p_model)
+    book = getattr(row, "p_book", None)
+    covered = book is not None and pd.notna(book)
+    probability = float(book) if covered else model
+    if not all(math.isfinite(p) and 0 <= p <= 1 for p in (model, probability)):
+        raise TradingError("invalid_probability")
+    net = 1 - probability - reserve(cost) / order.count
+    if net < MIN_RESERVED_EDGE - 1e-9:
+        raise TradingError("insufficient_edge_after_fee_buffer")
+    return {
+        "strategy_version": STRATEGY_VERSION,
+        "probability_source": "sportsbook" if covered else "model",
+        "p_yes_used": probability,
+        "p_model_yes": model,
+        "model_made_utc": stamp.isoformat(),
+        "edge_after_fee_buffer": round(net, 6),
+        "fee_buffer_dollars": round(reserve(cost) - cost, 2),
+    }
+
+
 def pass_once(client, env, frame, now, journal, *, dry=False):
     if not dry:
         guard(env, client)
@@ -575,6 +614,8 @@ def pass_once(client, env, frame, now, journal, *, dry=False):
             "run_utc": datetime.now(UTC).isoformat(),
             "env": "prod",
             "mode": "dry" if dry else "live",
+            "strategy_version": STRATEGY_VERSION,
+            "min_edge_after_fee_buffer": MIN_RESERVED_EDGE,
             "decision": decision,
             "filters": diagnostics,
             "skip_reasons": dict(skipped),
@@ -646,6 +687,27 @@ def pass_once(client, env, frame, now, journal, *, dry=False):
             )
             continue
         try:
+            evidence = entry_evidence(row, order, cost)
+        except TradingError as error:
+            # If the optional second tick consumes the remaining edge, retain
+            # the baseline passive quote instead of chasing a fill.
+            if extra_ticks and str(error) == "insufficient_edge_after_fee_buffer":
+                quoted, extra_ticks = float(row.price), 0
+                execution_edge = float(row.edge)
+                order, cost = order_from_row(row, now, no_price=quoted)
+                cost = fit_order_to_budget(order, attempts, state["active"], row, now)
+                if cost is None:
+                    skipped["baseline_budget"] += 1
+                    continue
+                try:
+                    evidence = entry_evidence(row, order, cost)
+                except TradingError as baseline_error:
+                    skipped[str(baseline_error)] += 1
+                    continue
+            else:
+                skipped[str(error)] += 1
+                continue
+        try:
             verify_quote(row, quoted)
         except TradingError:
             skipped["fresh_quote_check"] += 1
@@ -696,6 +758,8 @@ def pass_once(client, env, frame, now, journal, *, dry=False):
                 "edge": round(execution_edge, 4),
                 "baseline_edge": round(float(row.edge), 4),
                 "extra_maker_ticks": extra_ticks,
+                "player": str(getattr(row, "player", "")),
+                **evidence,
             },
         )
         try:

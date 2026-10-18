@@ -259,9 +259,22 @@ class TradingClient:
         return float(value) if value is not None else None
 
     def positions(self):
-        return self._request("GET", "/portfolio/positions", {"limit": 200}).get(
-            "market_positions", []
-        )
+        out, cursor, seen = [], "", set()
+        while True:
+            params = {"limit": 200}
+            if cursor:
+                params["cursor"] = cursor
+            page = self._request("GET", "/portfolio/positions", params)
+            rows = page.get("market_positions")
+            if not isinstance(rows, list):
+                raise TradingError("Missing production positions list")
+            out.extend(rows)
+            cursor = page.get("cursor") or ""
+            if not cursor:
+                return out
+            if cursor in seen:
+                raise TradingError("Repeated positions cursor")
+            seen.add(cursor)
 
     # --- writes ----------------------------------------------------------------
 

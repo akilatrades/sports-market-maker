@@ -5,6 +5,7 @@ on:
     paths:
       - "dashboard/**"
       - "tests/smoke_dashboard_mobile.py"
+      - "tests/smoke_account_dashboard.py"
       - ".github/workflows/dashboard-mobile.yml"
   workflow_dispatch:
 
@@ -23,3 +24,10 @@ jobs:
           python -m playwright install --with-deps chromium
       - name: Test mobile scrolling and responsive layout
         run: python tests/smoke_dashboard_mobile.py
+      - name: Test private account views and freshness states
+        run: python tests/smoke_account_dashboard.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: dashboard-layouts
+          path: test-artifacts/*.png

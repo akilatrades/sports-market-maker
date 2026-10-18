@@ -414,7 +414,14 @@ def test_nfl_market_dry_run(tmp_path, monkeypatch):
             columns=["season", "week", "team", "full_name", "report_status"]
         ),
     )
-    monkeypatch.setattr(nfl, "model_probabilities", lambda m, g, now: p_model)
+    monkeypatch.setattr(
+        nfl,
+        "model_estimates",
+        lambda m, g, now, max_age_hours=None: {
+            ticker: {"probability": p, "made_utc": now.isoformat()}
+            for ticker, p in p_model.items()
+        },
+    )
     monkeypatch.setattr(
         nfl,
         "attach_latest",

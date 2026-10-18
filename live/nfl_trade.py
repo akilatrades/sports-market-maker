@@ -27,7 +27,7 @@ from markets.nfl.roster_guard import (
     verified_kickoff,
 )
 from markets.nfl.kalshi import parse
-from markets.nfl.paper import MODEL_SERIES, model_probabilities
+from markets.nfl.paper import MAX_MODEL_AGE_HOURS, MODEL_SERIES, model_estimates
 
 SERIES = sorted(MODEL_SERIES)  # KXNFLANYTD, KXNFLRECYDS
 BOOKS = Path("outputs/books/nfl_latest.csv")
@@ -84,13 +84,20 @@ def candidates(now):
         return pd.DataFrame(columns=COLUMNS)
     try:
         games, _ = load_nfl()
-        p_model = model_probabilities(markets, games, now)
+        estimates = model_estimates(
+            markets, games, now, max_age_hours=MAX_MODEL_AGE_HOURS
+        )
+        p_model = {ticker: e["probability"] for ticker, e in estimates.items()}
     except (OSError, ValueError, KeyError) as error:
         print(f"NFL model unavailable ({error}); all NFL entries blocked")
         games = None
         p_model = {}
+        estimates = {}
 
     priced = priced_frame(markets, p_model, now)
+    priced["model_made_utc"] = priced.ticker.map(
+        {ticker: e["made_utc"] for ticker, e in estimates.items()}
+    )
     priced["p_model"] = pd.to_numeric(priced.p_model, errors="coerce")
 
     # Unverified kickoffs never inherit Kalshi occurrence_datetime. Fail closed.
