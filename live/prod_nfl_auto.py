@@ -80,7 +80,9 @@ def records(events):
         raise TradingError("Duplicate client order ID in production journal")
     for attempt in attempts:
         if attempt["client_order_id"] not in accepted:
-            raise TradingError("Uncertain production order attempt: HALT, reconcile manually")
+            raise TradingError(
+                "Uncertain production order attempt: HALT, reconcile manually"
+            )
     return attempts, accepted
 
 
@@ -153,21 +155,30 @@ def cancel_invalid_resting(client, journal, state, frame, now):
         ticker = resting.get("ticker")
         if not ticker:
             raise TradingError("Cannot cancel order without its ticker: HALT")
-        write_event(journal, {
-            "event": "cancel_intent", "utc": now.isoformat(),
-            "order_id": order_id, "ticker": ticker,
-            "reason": "availability no longer verified",
-        })
+        write_event(
+            journal,
+            {
+                "event": "cancel_intent",
+                "utc": now.isoformat(),
+                "order_id": order_id,
+                "ticker": ticker,
+                "reason": "availability no longer verified",
+            },
+        )
         try:
             client.cancel(order_id, ticker=ticker)
         except Exception as error:
             raise TradingError(
                 "Cannot confirm cancellation; HALT and inspect Kalshi orders"
             ) from error
-        write_event(journal, {
-            "event": "cancel_accepted", "utc": datetime.now(UTC).isoformat(),
-            "order_id": order_id,
-        })
+        write_event(
+            journal,
+            {
+                "event": "cancel_accepted",
+                "utc": datetime.now(UTC).isoformat(),
+                "order_id": order_id,
+            },
+        )
         canceled += 1
     return canceled
 
@@ -234,8 +245,11 @@ def order_from_row(row, now):
         raise TradingError("Too close to kickoff")
     cost = round(count * cents / 100, 2)
     order = Order(
-        ticker=str(row.ticker), side="no", count=count,
-        price_cents=cents, expiration_ts=int(tip.timestamp()),
+        ticker=str(row.ticker),
+        side="no",
+        count=count,
+        price_cents=cents,
+        expiration_ts=int(tip.timestamp()),
         post_only=True,
     )
     return order, cost
@@ -245,14 +259,18 @@ def room_for(attempts, active, row, cost, now):
     today = now.astimezone(__import__("zoneinfo").ZoneInfo("America/New_York")).date()
     total = sum(reserve(a["cost"]) for a in attempts)
     open_now = sum(reserve(a["cost"]) for a in active)
-    game_cost = sum(reserve(a["cost"]) for a in attempts if a["game_id"] == str(row.game_id))
+    game_cost = sum(
+        reserve(a["cost"]) for a in attempts if a["game_id"] == str(row.game_id)
+    )
     team_cost = sum(reserve(a["cost"]) for a in attempts if a["team"] == str(row.team))
     game_orders = sum(a["game_id"] == str(row.game_id) for a in attempts)
     day_cost = sum(
-        reserve(a["cost"]) for a in attempts
-        if datetime.fromisoformat(a["utc"]).astimezone(
-            __import__("zoneinfo").ZoneInfo("America/New_York")
-        ).date() == today
+        reserve(a["cost"])
+        for a in attempts
+        if datetime.fromisoformat(a["utc"])
+        .astimezone(__import__("zoneinfo").ZoneInfo("America/New_York"))
+        .date()
+        == today
     )
     r = reserve(cost)
     return (
@@ -281,7 +299,8 @@ def pass_once(client, env, frame, now, journal, *, dry=False):
     if not dry:
         min_ts = (
             int(datetime.fromisoformat(attempts[0]["utc"]).timestamp()) - 60
-            if attempts else int(now.timestamp()) - 60
+            if attempts
+            else int(now.timestamp()) - 60
         )
         # Capture fill data or halt on read failure (do not silently use zero).
         fills = client.fills(min_ts=min_ts)
@@ -314,47 +333,82 @@ def pass_once(client, env, frame, now, journal, *, dry=False):
         if dry:
             print(
                 "DRY CANDIDATE",
-                json.dumps({
-                    "ticker": order.ticker, "side": order.side,
-                    "count": order.count, "cost": cost, "price_cents": order.price_cents
-                }, sort_keys=True),
+                json.dumps(
+                    {
+                        "ticker": order.ticker,
+                        "side": order.side,
+                        "count": order.count,
+                        "cost": cost,
+                        "price_cents": order.price_cents,
+                    },
+                    sort_keys=True,
+                ),
             )
             return False
 
         # Durable intent first; any failure after this (including a timeout)
         # disables all future automatic orders until manually investigated.
-        write_event(journal, {
-            "event": "intent", "utc": now.isoformat(),
-            "client_order_id": order.client_order_id,
-            "ticker": order.ticker, "cost": cost,
-            "count": order.count, "price_cents": order.price_cents,
-            "game_id": str(row.game_id), "team": str(row.team),
-            "tip_utc": pd.Timestamp(row.tip_utc).isoformat(),
-            "edge": round(float(row.edge), 4),
-        })
+        write_event(
+            journal,
+            {
+                "event": "intent",
+                "utc": now.isoformat(),
+                "client_order_id": order.client_order_id,
+                "ticker": order.ticker,
+                "cost": cost,
+                "count": order.count,
+                "price_cents": order.price_cents,
+                "game_id": str(row.game_id),
+                "team": str(row.team),
+                "tip_utc": pd.Timestamp(row.tip_utc).isoformat(),
+                "edge": round(float(row.edge), 4),
+            },
+        )
         try:
             result = client.place(order)
         except Exception as error:
-            write_event(journal, {
-                "event": "unknown_outcome", "utc": datetime.now(UTC).isoformat(),
-                "client_order_id": order.client_order_id, "type": type(error).__name__,
-            })
+            write_event(
+                journal,
+                {
+                    "event": "unknown_outcome",
+                    "utc": datetime.now(UTC).isoformat(),
+                    "client_order_id": order.client_order_id,
+                    "type": type(error).__name__,
+                },
+            )
             raise TradingError(
                 "Ambiguous production submission. Auto halted until manual audit."
             ) from error
-        write_event(journal, {
-            "event": "accepted", "utc": datetime.now(UTC).isoformat(),
-            "client_order_id": order.client_order_id, "order_id": result["order_id"],
-        })
-        print("PROD AUTO ACCEPTED", order.ticker, "cost", cost, "order_id", result["order_id"])
+        write_event(
+            journal,
+            {
+                "event": "accepted",
+                "utc": datetime.now(UTC).isoformat(),
+                "client_order_id": order.client_order_id,
+                "order_id": result["order_id"],
+            },
+        )
+        print(
+            "PROD AUTO ACCEPTED",
+            order.ticker,
+            "cost",
+            cost,
+            "order_id",
+            result["order_id"],
+        )
         try:
             queue = client.queue_position(str(result["order_id"]))
         except Exception:
             queue = None
-        write_event(journal, {
-            "event": "queue", "utc": datetime.now(UTC).isoformat(),
-            "order_id": result["order_id"], "ahead": queue,
-        })
+        write_event(
+            journal,
+            {
+                "event": "queue",
+                "utc": datetime.now(UTC).isoformat(),
+                "order_id": result["order_id"],
+                "ahead": queue,
+            },
+        )
         return True
     print("No opportunities fit remaining production risk budget or fresh quotes")
     return False
@@ -368,7 +422,9 @@ def main():
     args = parser.parse_args()
     if sum((args.dry_run, args.live, args.status)) != 1:
         parser.error("Choose exactly one mode")
-    directory = STATE if args.live or args.status else Path("/tmp/smm-nfl-auto-readonly")
+    directory = (
+        STATE if args.live or args.status else Path("/tmp/smm-nfl-auto-readonly")
+    )
     directory.mkdir(mode=0o700, parents=True, exist_ok=True)
     directory.chmod(0o700)
     with (directory / "lock").open("a+") as lock:
@@ -378,14 +434,20 @@ def main():
             events = load_journal(journal)
             print("Pilot attempts:", len([e for e in events if e["event"] == "intent"]))
             print("Accepted:", len([e for e in events if e["event"] == "accepted"]))
-            print("Uncertain:", len([e for e in events if e["event"] == "unknown_outcome"]))
+            print(
+                "Uncertain:",
+                len([e for e in events if e["event"] == "unknown_outcome"]),
+            )
             return
         if os.environ.get("KALSHI_ENV") != "prod":
-            raise TradingError("Production auto requires production venue even for dry run")
+            raise TradingError(
+                "Production auto requires production venue even for dry run"
+            )
         client = TradingClient(dry_run=args.dry_run, env="prod")
         if args.live:
             guard(os.environ, client)
         from live.nfl_trade import candidates
+
         now = datetime.now(UTC)
         frame = candidates(now)
         pass_once(client, os.environ, frame, now, journal, dry=args.dry_run)
