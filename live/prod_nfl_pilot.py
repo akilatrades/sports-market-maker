@@ -204,10 +204,11 @@ def main():
         if os.getenv("KALSHI_ENV") != "prod":
             raise TradingError("Pilot diagnostics must use production market data")
 
-    STATE_DIR.mkdir(parents=True, exist_ok=True, mode=0o700)
-    STATE_DIR.chmod(0o700)
-    lock_path = STATE_DIR / "pilot.lock"
-    journal = STATE_DIR / "orders.jsonl"
+    state_dir = STATE_DIR if (args.live or args.inspect) else Path("/tmp/smm-prod-nfl-dry")
+    state_dir.mkdir(parents=True, exist_ok=True, mode=0o700)
+    state_dir.chmod(0o700)
+    lock_path = state_dir / "pilot.lock"
+    journal = state_dir / "orders.jsonl"
     with lock_path.open("a+") as lock:
         fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
         if args.inspect:
