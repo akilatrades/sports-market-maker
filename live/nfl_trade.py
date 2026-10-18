@@ -142,7 +142,9 @@ def candidates(now):
         priced["team"] = [t or "" for t, _ in checks]
         priced["injury_status"] = [reason for _, reason in checks]
     except (OSError, ValueError, TypeError, KeyError, AttributeError) as error:
-        print(f"::warning::NFL kickoff/roster check unavailable ({error}); no new orders")
+        print(
+            f"::warning::NFL kickoff/roster check unavailable ({error}); no new orders"
+        )
         priced["tip_utc"] = pd.NaT
         priced["hours_to_tip"] = np.nan
         priced["injury_status"] = "UNVERIFIED"

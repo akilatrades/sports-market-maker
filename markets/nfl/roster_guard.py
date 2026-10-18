@@ -182,7 +182,6 @@ def event_teams(event_ticker, game_date, games):
     return possibilities[0] if len(possibilities) == 1 else None
 
 
-
 def verified_kickoff(game, game_date, games):
     """Exact NFL fixture kickoff in UTC; never use Kalshi market occurrence time.
 
@@ -220,6 +219,7 @@ def verified_kickoff(game, game_date, games):
     except (TypeError, ValueError):
         return None
     return None if pd.isna(utc) else utc
+
 
 def availability(player, game, rosters, injuries):
     """Return (team, reason): reason '' only for unambiguous, eligible player."""
