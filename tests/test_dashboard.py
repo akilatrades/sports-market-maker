@@ -39,6 +39,8 @@ def test_dashboard_has_unique_essential_sections_and_education():
         "strategies",
         "risk",
         "research-section",
+        "methodology",
+        "study-chart",
         "hero-metrics",
         "forward-view",
         "system-view",
@@ -90,6 +92,11 @@ overview({live: {}, live_nfl: {}, limits: {max_open: 150}});
 if (!nodes["hero-metrics"].innerHTML.includes("—") ||
     !nodes["forward-view"].innerHTML.includes("Not started")) {
   throw new Error("Missing data was not represented honestly");
+}
+overview({live: {mode: "dry", realized_total: 9}, live_nfl: {realized_total: 7}});
+if (nodes["hero-metrics"].innerHTML.includes("$9.00") ||
+    nodes["hero-metrics"].innerHTML.includes("$16.00")) {
+  throw new Error("Research or separate-market totals became NBA live performance");
 }
 overview({
   live: {forward_validation: {

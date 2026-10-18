@@ -1,4 +1,4 @@
-"""Check Demo account separation and transparent profit scenario calculations."""
+"""Keep the public research evidence separate from account and scenario data."""
 
 import re
 import shutil
@@ -10,15 +10,14 @@ import pytest
 DASHBOARD = Path(__file__).resolve().parents[1] / "dashboard" / "index.html"
 
 
-def test_demo_reference_is_not_a_fake_current_balance():
+def test_public_research_has_no_private_account_or_demo_balance_panel():
     source = DASHBOARD.read_text()
-    assert "lastVerifiedBalance: 2500" in source
-    assert "Verified Oct 17, 2026. Not a live balance feed." in source
-    assert "Current Demo balance" in source
-    assert "Not available" in source
-    assert "pilotOrderLimit: 2" in source
-    assert "pilotTotalLimit: 10" in source
-    assert '["Current Demo balance", "— check the exchange"' in source
+    assert "DEMO_REFERENCE" not in source
+    assert "Current Demo balance" not in source
+    assert "ssh -N" not in source
+    assert 'src="account.js"' not in source
+    assert "HISTORICAL REPLAY" in source
+    assert "not live performance" in source
     assert "Each strategy runs on a separate $500 paper bankroll" in source
 
 
@@ -81,5 +80,5 @@ vm.runInNewContext(code + exercise, {document, console, Object});
 def test_no_unverified_live_profit_is_invented():
     source = DASHBOARD.read_text()
     assert 'card("Realized P&L",realized==null?"—"' in source
-    assert '"— not published"' in source
-    assert 'row("Open exposure (last saved run)",hasRun?' in source
+    assert 'const realized=observed&&typeof live.realized_total==="number"' in source
+    assert 'row("Missing observations","Unknown; never replaced with zero")' in source
