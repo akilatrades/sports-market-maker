@@ -30,3 +30,4 @@ jobs:
             git commit -m "Format unattended production pilot and tests"
             git push origin HEAD:pilot/fully-auto-prod-nfl-20261018
           fi
+# Run formatting once more after emergency-stop and settlement additions.
