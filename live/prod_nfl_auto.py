@@ -569,9 +569,7 @@ def pass_once(client, env, frame, now, journal, *, dry=False):
 
             match = re.search(r"-> HTTP ([0-9]{3})", str(error))
             queue = None
-            queue_issue = (
-                f"HTTP_{match.group(1)}" if match else type(error).__name__
-            )
+            queue_issue = f"HTTP_{match.group(1)}" if match else type(error).__name__
         write_event(
             journal,
             {

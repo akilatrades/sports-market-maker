@@ -412,6 +412,7 @@ def test_real_money_order_not_submitted_when_wall_clock_cutoff_failed(
     assert client.placed == []
     assert not journal.exists()
 
+
 def test_queue_diagnostic_preserves_http_status_without_response_body(
     quotes, tmp_path, monkeypatch
 ):
