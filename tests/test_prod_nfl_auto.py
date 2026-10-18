@@ -32,6 +32,7 @@ def frame(ticker="KXNFLRECYDS-26OCT18CARPHI-PHIXPLAYER-30", injury=""):
                 "yes_bid_dollars": 0.40,
                 "yes_ask_dollars": 0.50,
                 "p_model": 0.35,
+                "model_made_utc": (NOW - timedelta(hours=1)).isoformat(),
                 "p_book": 0.40,
                 "book_n": 2,
                 "hours_to_tip": 1.0,

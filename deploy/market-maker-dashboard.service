@@ -1,0 +1,23 @@
+[Unit]
+Description=Private read-only Kalshi production account dashboard
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=trader
+Group=trader
+WorkingDirectory=/home/trader/sports-market-maker-prod-auto
+EnvironmentFile=/etc/market-maker-prod-auto.env
+ExecStart=/home/trader/sports-market-maker-prod-auto/.venv/bin/python -m live.account_dashboard
+Restart=on-failure
+RestartSec=10
+UMask=0077
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=read-only
+PrivateTmp=true
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+
+[Install]
+WantedBy=multi-user.target

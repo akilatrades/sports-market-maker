@@ -13,7 +13,7 @@ from live.summarize import live_status
 
 
 ROOT = Path(__file__).resolve().parents[1]
-DASHBOARD = ROOT / "dashboard" / "index.html"
+DASHBOARD = ROOT / "dashboard" / "research.html"
 
 
 class Ids(HTMLParser):

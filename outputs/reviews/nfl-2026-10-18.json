@@ -1,0 +1,53 @@
+{
+  "snapshot_latest_utc": "2026-10-18 16:53:32.215523+00:00",
+  "settled_games": 1,
+  "settled_market_lines": 231,
+  "historical_paper_contracts": 77,
+  "historical_paper_profit_dollars": -2.425884,
+  "historical_receiving_players": 15,
+  "historical_breakdown": [
+    {
+      "stat": "receiving_yards",
+      "side": "no",
+      "contracts": 20,
+      "paper_profit_dollars": -2.243646
+    },
+    {
+      "stat": "receiving_yards",
+      "side": "yes",
+      "contracts": 5,
+      "paper_profit_dollars": -0.936501
+    },
+    {
+      "stat": "receptions",
+      "side": "no",
+      "contracts": 28,
+      "paper_profit_dollars": -1.062066
+    },
+    {
+      "stat": "receptions",
+      "side": "yes",
+      "contracts": 6,
+      "paper_profit_dollars": 0.619408
+    },
+    {
+      "stat": "rushing_yards",
+      "side": "no",
+      "contracts": 12,
+      "paper_profit_dollars": 0.332823
+    },
+    {
+      "stat": "rushing_yards",
+      "side": "yes",
+      "contracts": 6,
+      "paper_profit_dollars": 0.864098
+    }
+  ],
+  "one_contract_quote_screen_by_buffered_edge_floor": {
+    "0": 178,
+    "0.03": 111,
+    "0.05": 80
+  },
+  "quote_screen_caveat": "Model-only, saved quotes; excludes live roster, entry-time, book coverage, queue, fill and risk-cap checks. Counts are not tradable orders or performance estimates.",
+  "conclusion": "One settled game cannot establish live profitability. Separate NFL v2 fills from prior cohorts; reconcile actual fees and settlements before sizing up."
+}

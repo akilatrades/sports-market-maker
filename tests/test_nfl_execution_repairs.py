@@ -24,6 +24,7 @@ class ExecutionRepairs(unittest.TestCase):
             team="team",
             tip_utc=pd.Timestamp(self.now + timedelta(hours=1)),
             price=0.60,
+            model_made_utc=(self.now - timedelta(hours=1)).isoformat(),
         )
 
     def test_sizes_fit_every_cap_at_all_supported_prices(self):
