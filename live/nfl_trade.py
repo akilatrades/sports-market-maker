@@ -18,8 +18,7 @@ import pandas as pd
 
 from kalshi.api import fetch_markets
 from kalshi.books import attach_latest
-from markets.nfl.data import load as load_nfl
-from markets.nfl.data import load_injuries
+from markets.nfl.data import load_injuries, load_schedule
 from markets.nfl.roster_guard import (
     availability,
     current_rosters,
@@ -76,6 +75,7 @@ def priced_frame(markets, p_model, now):
 
 def candidates(now):
     """Priced NFL prop markets with model and book probabilities attached."""
+    print("NFL INPUT: fetching open markets", flush=True)
     markets = []
     for series in SERIES:
         markets += fetch_markets(series, status="open", historical=False)
@@ -83,7 +83,8 @@ def candidates(now):
         print("No open NFL prop markets")
         return pd.DataFrame(columns=COLUMNS)
     try:
-        games, _ = load_nfl()
+        print("NFL INPUT: loading schedule and saved probabilities", flush=True)
+        games = load_schedule()
         estimates = model_estimates(
             markets, games, now, max_age_hours=MAX_MODEL_AGE_HOURS
         )
@@ -111,7 +112,6 @@ def candidates(now):
         ):
             raise ValueError("NFL schedule/injury snapshot is stale")
 
-        injuries = load_injuries()
         event_dates = pd.to_datetime(
             priced.event_ticker.str.split("-").str[1].str[:7],
             format="%y%b%d",
@@ -125,6 +125,16 @@ def candidates(now):
             game = event_teams(ticker, date, games)
             matchups[ticker] = game
             times[ticker] = verified_kickoff(game, date, games)
+        # Availability only examines these exact fixture weeks. Avoid repeatedly
+        # normalizing years of irrelevant injury records for every open market.
+        weeks = {game[2:] for game in matchups.values() if game is not None}
+        injuries = load_injuries()
+        week_index = pd.MultiIndex.from_frame(injuries[["season", "week"]])
+        injuries = injuries.loc[week_index.isin(weeks)]
+        print(
+            f"NFL INPUT: verifying rosters with {len(injuries)} relevant injury rows",
+            flush=True,
+        )
         priced["tip_utc"] = pd.to_datetime(
             priced.event_ticker.map(times), utc=True, errors="coerce"
         )

@@ -18,8 +18,13 @@ SKILL = ["WR", "TE", "RB", "FB"]
 RULED_OUT = ["Out", "Doubtful"]
 
 
+def load_schedule(data=DATA):
+    """Read only the schedule; live pricing does not need historical box scores."""
+    return pd.read_csv(data / "games.csv")
+
+
 def load(data=DATA):
-    games = pd.read_csv(data / "games.csv")
+    games = load_schedule(data)
     players = pd.read_csv(data / "player_week.csv.gz")
     return games, players
 

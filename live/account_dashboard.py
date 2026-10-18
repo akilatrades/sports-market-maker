@@ -17,7 +17,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
 from kalshi.trading import TradingClient, TradingError
-from live.prod_nfl_auto import (
+from live.nfl_policy import (
     MAX_ACTIVE_COST,
     MAX_GAME_COST,
     MAX_GROSS_COST,

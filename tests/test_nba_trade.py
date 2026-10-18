@@ -398,7 +398,7 @@ def test_nfl_market_dry_run(tmp_path, monkeypatch):
             }
         ]
     )
-    monkeypatch.setattr(nfl, "load_nfl", lambda: (schedule, pd.DataFrame()))
+    monkeypatch.setattr(nfl, "load_schedule", lambda: schedule)
     monkeypatch.setattr(
         nfl,
         "current_rosters",

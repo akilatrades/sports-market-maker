@@ -9,6 +9,8 @@ User=trader
 Group=trader
 WorkingDirectory=/home/trader/sports-market-maker-prod-auto
 EnvironmentFile=/etc/market-maker-prod-auto.env
+Environment=PYTHONUNBUFFERED=1
+MemoryAccounting=true
 ExecStart=/home/trader/sports-market-maker-prod-auto/.venv/bin/python -m live.prod_nfl_auto --live
 Restart=no
 UMask=0077
