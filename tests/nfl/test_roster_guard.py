@@ -169,13 +169,21 @@ def test_verified_kickoff_london_and_main_slate_ignore_exchange_occurrence():
         [
             {
                 "game_id": "2026_06_HOU_JAX",
-                "season": 2026, "week": 6, "gameday": "2026-10-18",
-                "gametime": "09:30", "away_team": "HOU", "home_team": "JAX",
+                "season": 2026,
+                "week": 6,
+                "gameday": "2026-10-18",
+                "gametime": "09:30",
+                "away_team": "HOU",
+                "home_team": "JAX",
             },
             {
                 "game_id": "2026_06_CHI_ATL",
-                "season": 2026, "week": 6, "gameday": "2026-10-18",
-                "gametime": "13:00", "away_team": "CHI", "home_team": "ATL",
+                "season": 2026,
+                "week": 6,
+                "gameday": "2026-10-18",
+                "gametime": "13:00",
+                "away_team": "CHI",
+                "home_team": "ATL",
             },
         ]
     )
@@ -189,7 +197,10 @@ def test_verified_kickoff_london_and_main_slate_ignore_exchange_occurrence():
     )
     assert verified_kickoff(None, "2026-10-18", fixtures) is None
     assert verified_kickoff(london, "2026-10-19", fixtures) is None
-    assert verified_kickoff(london, "2026-10-18", fixtures.drop(columns="gametime")) is None
+    assert (
+        verified_kickoff(london, "2026-10-18", fixtures.drop(columns="gametime"))
+        is None
+    )
     broken = fixtures.copy()
     broken.loc[0, "gametime"] = None
     assert verified_kickoff(london, "2026-10-18", broken) is None
