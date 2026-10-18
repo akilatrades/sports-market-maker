@@ -36,15 +36,18 @@ class FakeClient:
         return {"balance":25.}
     def place(self, order):
         self.placed.append(order)
-        if self.fail: raise RuntimeError("timeout after submission")
+        if self.fail:
+            raise RuntimeError("timeout after submission")
         return {"order_id":"first", "fill_count":"0.00"}
 
 def test_arm_guards():
     for field in ("KALSHI_ENV","TRADE_MODE","ALLOW_PRODUCTION_TRADING","PROD_PILOT_ARM"):
         state = dict(ARMED)
         state.pop(field)
-        with pytest.raises(TradingError): assert_live_safety(state)
-    with pytest.raises(TradingError): assert_live_safety({**ARMED,"DEMO_PILOT":"1"})
+        with pytest.raises(TradingError):
+            assert_live_safety(state)
+    with pytest.raises(TradingError):
+        assert_live_safety({**ARMED,"DEMO_PILOT":"1"})
 
 def test_late_window_and_book_veto():
     found = choose_market(frame(), NOW)
@@ -60,7 +63,8 @@ def test_post_only_capped():
     assert order.body()["post_only"] is True
 
 def test_dry_does_not_write(tmp_path):
-    journal=tmp_path/"order.jsonl"; client=FakeClient()
+    journal=tmp_path/"order.jsonl"
+    client=FakeClient()
     assert not execute_once(live=False,env={},client=client,frame=frame(),now=NOW,journal=journal)
     assert not journal.exists() and not client.placed
 
@@ -73,7 +77,8 @@ def test_one_attempt_only(tmp_path):
     assert len(client.placed)==1
 
 def test_timeout_cannot_retry(tmp_path):
-    journal=tmp_path/"order.jsonl"; client=FakeClient(fail=True)
+    journal=tmp_path/"order.jsonl"
+    client=FakeClient(fail=True)
     with pytest.raises(TradingError,match="uncertain"):
         execute_once(live=True,env=ARMED,client=client,frame=frame(),now=NOW,journal=journal)
     assert [e["event"] for e in read_events(journal)] == ["intent","uncertain_result"]
