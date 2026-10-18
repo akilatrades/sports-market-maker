@@ -102,7 +102,8 @@ def threshold_from_question(question, stat):
         return float(m.group(1)) - 0.5
     m = re.search(r"(?:over|more than)\s+(\d+(?:\.\d+)?)", s)
     if m:
-        return float(m.group(1))
+        value = float(m.group(1))
+        return value + 0.5 if value.is_integer() else value
     return None
 
 
@@ -121,7 +122,12 @@ def poly_player(market):
 def poly_key(market, league, event):
     if market.get("active") is False or market.get("closed") is True:
         return None
-    if market.get("sportsMarketTypeV2") != "SPORTS_MARKET_TYPE_PROP":
+    # Polymarket exposes both retail enum tags and richer institutional
+    # market_sport_type metadata. Require an explicit player-prop classification.
+    kind = str(market.get("sportsMarketTypeV2") or "").lower()
+    meta = market.get("metadata") or {}
+    full_type = str(meta.get("market_sport_type") or "").lower()
+    if not ("prop" in kind or "_player_" in full_type):
         return None
     question = market.get("question") or market.get("title") or ""
     stat = market_stat(question)
