@@ -19,7 +19,8 @@ authorize NBA production trading.
   one new order per scan. These are *independent* of NFL's accounting.
   **Do not enable both production timers on the same funded account** without
   a tested shared-account risk manager and a separately authorized combined
-  cap. Leave NFL stopped before any NBA money rollout.
+  cap. The worker fails closed if the NFL production timer or service is active
+  or their status cannot be verified. Leave NFL stopped before NBA rollout.
 - Frozen `no_seller_bookline` rule, 2–6h before NBA tipoff, post-only NO,
   original 1-cent quote improvement; the NFL extra-tick execution experiment
   **is explicitly disabled in this NBA baseline**. This cohort is separate.
