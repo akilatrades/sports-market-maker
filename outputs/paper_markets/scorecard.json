@@ -1,8 +1,8 @@
 {
   "KXITFMATCH": {
-    "orders": 134,
+    "orders": 156,
     "vetoed": 0,
-    "open": 4,
+    "open": 26,
     "fill_rate": 0.8307692307692308,
     "fills_settled": 108,
     "bankroll": 395.76,
@@ -13,8 +13,8 @@
   "KXNASCARRACE": {
     "orders": 53,
     "vetoed": 0,
-    "open": 23,
-    "fill_rate": 0.6,
+    "open": 21,
+    "fill_rate": 0.5625,
     "fills_settled": 18,
     "bankroll": 500.94,
     "cents_per_contract": 0.77,
@@ -22,15 +22,15 @@
     "profit_dollars": 0.94
   },
   "KXLIGAMXSPREAD": {
-    "orders": 54,
+    "orders": 56,
     "vetoed": 0,
-    "open": 22,
-    "fill_rate": 0.40625,
-    "fills_settled": 13,
-    "bankroll": 497.99,
-    "cents_per_contract": -1.89,
-    "t": -0.14,
-    "profit_dollars": -2.01
+    "open": 6,
+    "fill_rate": 0.58,
+    "fills_settled": 29,
+    "bankroll": 492.42,
+    "cents_per_contract": -3.36,
+    "t": -0.3,
+    "profit_dollars": -7.58
   },
   "KXLALIGASPREAD": {
     "orders": 32,
@@ -78,13 +78,13 @@
   "KXUFCMOF": {
     "orders": 60,
     "vetoed": 0,
-    "open": 17,
-    "fill_rate": 0.4186046511627907,
-    "fills_settled": 18,
-    "bankroll": 476.44,
-    "cents_per_contract": -13.66,
-    "t": -2.87,
-    "profit_dollars": -23.56
+    "open": 0,
+    "fill_rate": 0.5666666666666667,
+    "fills_settled": 34,
+    "bankroll": 466.38,
+    "cents_per_contract": -9.05,
+    "t": -2.71,
+    "profit_dollars": -33.62
   },
   "KXNBAFTM": {
     "orders": 0,
@@ -121,7 +121,7 @@
   "KXNASCARTOP10": {
     "orders": 42,
     "vetoed": 0,
-    "open": 32,
+    "open": 28,
     "fill_rate": 0.0,
     "fills_settled": 0,
     "bankroll": 500.0
@@ -143,9 +143,9 @@
     "bankroll": 500.0
   },
   "KXITFMATCH+no30": {
-    "orders": 19,
+    "orders": 33,
     "vetoed": 0,
-    "open": 4,
+    "open": 18,
     "fill_rate": 0.9333333333333333,
     "fills_settled": 14,
     "bankroll": 515.99,
@@ -153,5 +153,5 @@
     "t": 2.43,
     "profit_dollars": 15.99
   },
-  "updated_utc": "2026-10-18T00:34+00:00"
+  "updated_utc": "2026-10-18T03:25+00:00"
 }
