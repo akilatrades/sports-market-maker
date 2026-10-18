@@ -184,6 +184,22 @@ def audit():
                 orderbook_check(env, row)
             except (OSError, RuntimeError) as e:
                 print(f"  BOOK CHECK FAILED {env} {row['ticker']}: {e}")
+        if env == "demo":
+            selected = []
+            used_events = set()
+            for row in upcoming:
+                if row.get("event_ticker") not in used_events and classify(row) != "two_sided":
+                    selected.append(row)
+                    used_events.add(row.get("event_ticker"))
+                    if len(selected) == 3:
+                        break
+            for row in selected:
+                fields = ("ticker", "yes_bid_dollars", "yes_ask_dollars", "no_bid_dollars", "no_ask_dollars", "volume_fp")
+                print(f"  UPCOMING DEMO RAW: {json.dumps({k: row.get(k) for k in fields})}")
+                try:
+                    orderbook_check(env, row)
+                except (OSError, RuntimeError) as e:
+                    print(f"  UPCOMING BOOK CHECK FAILED {row['ticker']}: {e}")
     return 0
 
 
