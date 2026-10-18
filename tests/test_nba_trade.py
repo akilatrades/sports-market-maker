@@ -362,6 +362,9 @@ def test_nfl_market_dry_run(tmp_path, monkeypatch):
     import live.nfl_trade as nfl
 
     now = pd.Timestamp("2026-10-18T14:00:00Z")
+    # Fix the clock for the expiration validator too: this fixture contains
+    # a historical game and must not fail when executed after kickoff.
+    monkeypatch.setattr("kalshi.trading.time.time", lambda: now.timestamp())
     names = ["Player Alpha", "Player Beta", "Player Gamma"]
     markets = [
         {
