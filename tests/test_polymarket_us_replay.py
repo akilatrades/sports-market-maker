@@ -50,7 +50,7 @@ def test_replay_reports_conditional_payoff_not_actual_profit(monkeypatch):
     def fake(path, params=None):
         calls.append(path)
         if path.startswith("/v2/leagues/"):
-            return {"league": {"tagId": 5}}
+            return {"league": {"tagId": 5 if path.endswith("/nba") else 7}}
         if path == "/v1/markets":
             if params.get("sportsMarketTypes"):
                 return {"markets": [m]} if params["tagIds"] == 5 else {"markets": []}
