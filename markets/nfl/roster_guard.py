@@ -182,6 +182,45 @@ def event_teams(event_ticker, game_date, games):
     return possibilities[0] if len(possibilities) == 1 else None
 
 
+
+def verified_kickoff(game, game_date, games):
+    """Exact NFL fixture kickoff in UTC; never use Kalshi market occurrence time.
+
+    The exchange occurrence timestamp can reflect market expiration/settlement
+    rather than actual kickoff. Return None on missing/ambiguous schedule data
+    so a trader cannot enter late or leave a new order past the game start.
+    """
+    needed = {"gameday", "gametime", "away_team", "home_team", "season", "week"}
+    if game is None or not needed.issubset(games.columns):
+        return None
+    away, home, season, week = game
+    fixtures = games.loc[
+        games.gameday.astype(str).eq(str(game_date))
+        & games.away_team.map(canonical).eq(away)
+        & games.home_team.map(canonical).eq(home)
+        & games.season.eq(season)
+        & games.week.eq(week)
+    ]
+    if len(fixtures) != 1:
+        return None
+    clock = fixtures.iloc[0].gametime
+    if not isinstance(clock, str) or not re.fullmatch(r"\d{1,2}:\d{2}", clock):
+        return None
+    import pandas as pd
+
+    local = pd.to_datetime(
+        f"{game_date} {clock}", format="%Y-%m-%d %H:%M", errors="coerce"
+    )
+    if pd.isna(local):
+        return None
+    try:
+        utc = local.tz_localize(
+            "America/New_York", ambiguous="NaT", nonexistent="NaT"
+        ).tz_convert("UTC")
+    except (TypeError, ValueError):
+        return None
+    return None if pd.isna(utc) else utc
+
 def availability(player, game, rosters, injuries):
     """Return (team, reason): reason '' only for unambiguous, eligible player."""
     away, home, season, week = game
