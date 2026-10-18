@@ -2,8 +2,8 @@
 
 Builds the priced frame the trader's rules take (the same columns the NBA
 projection run writes) from Kalshi's open anytime-touchdown and
-receiving-yards markets: fresh quotes, kickoff from the market's
-occurrence time, the NFL model's over-probability where the latest ladder
+receiving-yards markets: fresh quotes, kickoff from a verified nflverse
+scheduled game (never Kalshi's market occurrence timestamp), the NFL model's
 has one, and the sportsbooks' consensus where they quote the line.
 
 Run through the trader: TRADE_MARKET=nfl python -m live.nba_trade
@@ -11,6 +11,7 @@ Run through the trader: TRADE_MARKET=nfl python -m live.nba_trade
 
 from datetime import UTC, datetime
 from pathlib import Path
+import json
 
 import numpy as np
 import pandas as pd
@@ -19,7 +20,12 @@ from kalshi.api import fetch_markets
 from kalshi.books import attach_latest
 from markets.nfl.data import load as load_nfl
 from markets.nfl.data import load_injuries
-from markets.nfl.roster_guard import availability, current_rosters, event_teams
+from markets.nfl.roster_guard import (
+    availability,
+    current_rosters,
+    event_teams,
+    verified_kickoff,
+)
 from markets.nfl.kalshi import parse
 from markets.nfl.paper import MODEL_SERIES, model_probabilities
 
@@ -51,11 +57,10 @@ def priced_frame(markets, p_model, now):
         return pd.DataFrame(columns=COLUMNS)
     m["series"] = m.ticker.str.split("-").str[0]
     m = parse(m)
-    m["tip_utc"] = pd.to_datetime(
-        m.occurrence_datetime, utc=True, format="ISO8601", errors="coerce"
-    )
-    m = m[m.tip_utc.notna()].copy()
-    m["hours_to_tip"] = (m.tip_utc - pd.Timestamp(now)).dt.total_seconds() / 3600
+    # Kalshi occurrence_datetime is NOT a reliable kickoff timestamp.
+    # Candidate selection can only set time after verifying the NFL schedule.
+    m["tip_utc"] = pd.NaT
+    m["hours_to_tip"] = np.nan
     m["team"] = ""  # Set only after a verified roster/team/schedule match.
     m["game_id"] = m.event_ticker.str.split("-").str[1]  # e.g. 26OCT18CHIATL
     m["player_id"] = -1  # no roster ids here; the injury filter is NBA-only
@@ -82,62 +87,77 @@ def candidates(now):
         p_model = model_probabilities(markets, games, now)
     except (OSError, ValueError, KeyError) as error:
         print(f"NFL model unavailable ({error}); all NFL entries blocked")
+        games = None
         p_model = {}
+
     priced = priced_frame(markets, p_model, now)
-    priced = attach_latest(priced, path=BOOKS)
     priced["p_model"] = pd.to_numeric(priced.p_model, errors="coerce")
 
-    # Fail closed for missing, stale or inconsistent game/roster/injury data.
-    # ESPN's current roster cannot confirm official 90-minute inactives, so
-    # questionable/out/doubtful and all unverified cases are excluded.
+    # Unverified kickoffs never inherit Kalshi occurrence_datetime. Fail closed.
     try:
-        import json
-        from pathlib import Path
-
+        if games is None:
+            raise ValueError("NFL schedule unavailable")
         retrieved = json.loads(Path("data/nfl/retrieval.json").read_text())
         stamp = datetime.fromisoformat(retrieved["retrieved"]).replace(tzinfo=UTC)
         if not (
             0 <= (pd.Timestamp(now) - pd.Timestamp(stamp)).total_seconds() <= 48 * 3600
         ):
-            raise ValueError("NFL injury report snapshot is stale")
+            raise ValueError("NFL schedule/injury snapshot is stale")
 
         injuries = load_injuries()
-        games, _ = load_nfl()
-        matchups = {
-            ticker: event_teams(ticker, date, games)
-            for ticker, date in zip(
-                priced.event_ticker,
-                pd.to_datetime(priced.tip_utc, utc=True)
-                .dt.tz_convert("America/New_York")
-                .dt.strftime("%Y-%m-%d"),
-                strict=True,
-            )
-        }
+        event_dates = pd.to_datetime(
+            priced.event_ticker.str.split("-").str[1].str[:7],
+            format="%y%b%d",
+            errors="coerce",
+        ).dt.strftime("%Y-%m-%d")
+        matchups = {}
+        times = {}
+        for ticker, date in zip(priced.event_ticker, event_dates, strict=True):
+            if ticker in matchups:
+                continue
+            game = event_teams(ticker, date, games)
+            matchups[ticker] = game
+            times[ticker] = verified_kickoff(game, date, games)
+        priced["tip_utc"] = pd.to_datetime(
+            priced.event_ticker.map(times), utc=True, errors="coerce"
+        )
+        priced["hours_to_tip"] = (
+            priced.tip_utc - pd.Timestamp(now)
+        ).dt.total_seconds() / 3600
+
         needed = {
-            team for game in matchups.values() if game is not None for team in game[:2]
+            team
+            for ticker, game in matchups.items()
+            if game is not None and times.get(ticker) is not None
+            for team in game[:2]
         }
         rosters = current_rosters(needed, now=pd.Timestamp(now).to_pydatetime())
         checks = []
         for row in priced.itertuples():
             game = matchups.get(row.event_ticker)
-            if game is None:
-                checks.append(("", "unverified-game"))
+            if game is None or times.get(row.event_ticker) is None:
+                checks.append(("", "unverified-kickoff-or-game"))
             else:
                 checks.append(availability(row.player, game, rosters, injuries))
         priced["team"] = [t or "" for t, _ in checks]
         priced["injury_status"] = [reason for _, reason in checks]
-    except (OSError, ValueError, TypeError, KeyError) as error:
-        print(f"::warning::NFL roster check unavailable ({error}); no new orders")
+    except (OSError, ValueError, TypeError, KeyError, AttributeError) as error:
+        print(f"::warning::NFL kickoff/roster check unavailable ({error}); no new orders")
+        priced["tip_utc"] = pd.NaT
+        priced["hours_to_tip"] = np.nan
         priced["injury_status"] = "UNVERIFIED"
 
-    # A sportsbook quote is not a replacement for a missing projection.
-    # Keep all unmatched and non-finite NFL model probabilities out of trading.
+    # Books must join against the verified scheduled kickoff, not the market
+    # occurrence timestamp. A sportsbook quote is never a roster substitute.
+    priced = attach_latest(priced, path=BOOKS)
+
+    # Keep missing/non-finite model probabilities and suspect kickoffs out.
     missing_model = ~np.isfinite(priced.p_model)
     priced.loc[missing_model, "injury_status"] = "UNVERIFIED_MODEL"
     good = int(priced.injury_status.eq("").sum())
     print(
         f"NFL: {len(priced)} open markets, {int(priced.p_model.notna().sum())} model-priced, "
         f"{int(priced.p_book.notna().sum())} with a book line, "
-        f"{good} roster/injury/model-verified"
+        f"{good} verified for kickoff/roster/injury/model"
     )
     return priced
