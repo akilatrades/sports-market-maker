@@ -6,7 +6,7 @@ import subprocess
 from html.parser import HTMLParser
 from pathlib import Path
 
-DASHBOARD = Path(__file__).resolve().parents[1] / "dashboard" / "research.html"
+DASHBOARD = Path(__file__).resolve().parents[1] / "dashboard" / "index.html"
 
 
 class Tags(HTMLParser):

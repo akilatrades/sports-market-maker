@@ -31,9 +31,7 @@ def main():
                     page = context.new_page()
                     errors = []
                     page.on("pageerror", lambda error: errors.append(str(error)))
-                    url = (
-                        f"http://127.0.0.1:{server.server_port}/dashboard/research.html"
-                    )
+                    url = f"http://127.0.0.1:{server.server_port}/dashboard/"
                     page.goto(url, wait_until="domcontentloaded")
                     page.wait_for_function(
                         "() => !document.querySelector('#stamp').textContent.includes('Loading')",
