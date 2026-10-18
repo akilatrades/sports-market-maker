@@ -389,3 +389,24 @@ def test_expanded_authorized_budget():
     assert auto.MAX_ACTIVE_COST == 15.0
     assert auto.MAX_DAILY_COST == 30.0
     assert auto.MAX_GROSS_COST == 50.0
+
+def test_pre_submit_guard_checks_live_clock_not_scan_start():
+    from datetime import timedelta
+
+    scan_started = NOW - timedelta(minutes=6)
+    kickoff = NOW + timedelta(minutes=9)
+    assert auto.pre_submit_kickoff_ok(kickoff, scan_started)
+    assert not auto.pre_submit_kickoff_ok(kickoff, NOW)
+    assert not auto.pre_submit_kickoff_ok(NOW + timedelta(minutes=10, seconds=20), NOW)
+    assert auto.pre_submit_kickoff_ok(NOW + timedelta(minutes=11), NOW)
+
+
+def test_real_money_order_not_submitted_when_wall_clock_cutoff_failed(
+    quotes, tmp_path, monkeypatch
+):
+    client = Client()
+    journal = tmp_path / "ledger.jsonl"
+    monkeypatch.setattr(auto, "pre_submit_kickoff_ok", lambda tip, now: False)
+    assert not auto.pass_once(client, ARMED, frame(), NOW, journal)
+    assert client.placed == []
+    assert not journal.exists()
