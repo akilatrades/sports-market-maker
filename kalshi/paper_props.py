@@ -119,7 +119,7 @@ def bankroll(ledger, rule, start=START_BANKROLL):
     return start + float(pd.to_numeric(done.profit).fillna(0).sum())
 
 
-def candidate_orders(priced, rule):
+def candidate_orders(priced, rule, window=None):
     """Orders a rule would post from one run's prices (before sizing)."""
     spec = V2_RULES.get(
         rule, {"window": WINDOW_HOURS, "min_edge": 0.0, "sizing": "flat"}
@@ -127,7 +127,7 @@ def candidate_orders(priced, rule):
     q = priced.rename(
         columns={"yes_bid_dollars": "yes_bid", "yes_ask_dollars": "yes_ask"}
     ).copy()
-    lo, hi = spec["window"]
+    lo, hi = spec["window"] if window is None else window
     q = q[q.hours_to_tip.between(lo, hi) & q.injury_status.fillna("").eq("")]
     if q.empty:
         return q

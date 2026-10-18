@@ -1,0 +1,16 @@
+[Unit]
+Description=Read-only Kalshi production NFL pilot candidate check
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=oneshot
+User=trader
+Group=trader
+WorkingDirectory=/home/trader/sports-market-maker-prod
+Environment=KALSHI_ENV=prod
+Environment=TRADE_MODE=dry
+ExecStart=/home/trader/sports-market-maker-prod/.venv/bin/python -m live.prod_nfl_pilot --dry-run
+Restart=no
+UMask=0077
+TimeoutStartSec=240

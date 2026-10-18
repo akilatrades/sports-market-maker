@@ -1,0 +1,15 @@
+[Unit]
+Description=One-shot supervised Kalshi production NFL pilot (maximum $2, one order)
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=oneshot
+User=trader
+Group=trader
+WorkingDirectory=/home/trader/sports-market-maker-prod
+EnvironmentFile=/etc/market-maker-prod.env
+ExecStart=/home/trader/sports-market-maker-prod/.venv/bin/python -m live.prod_nfl_pilot --live
+Restart=no
+UMask=0077
+TimeoutStartSec=240
