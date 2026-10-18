@@ -391,6 +391,7 @@ def test_nfl_market_dry_run(tmp_path, monkeypatch):
                 "home_team": "ATL",
                 "season": 2026,
                 "week": 6,
+                "gametime": "13:00",
             }
         ]
     )
@@ -436,6 +437,7 @@ def test_nfl_market_dry_run(tmp_path, monkeypatch):
     # unpriced one is skipped under the v1 rule (no model, no book: no order).
     assert ledger.ticker.tolist() == [markets[0]["ticker"]]
     assert ledger.status.iloc[0] == "dry" and ledger.game_id.iloc[0] == "26OCT18CHIATL"
+    assert pd.Timestamp(ledger.expiration_utc.iloc[0]) == pd.Timestamp("2026-10-18T17:00Z")
     summary = json.loads((tmp_path / "nfl" / "last_run.json").read_text())
     assert summary["market"] == "nfl" and summary["placed"] == 1
 
