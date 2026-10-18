@@ -183,6 +183,29 @@ def cancel_invalid_resting(client, journal, state, frame, now):
     return canceled
 
 
+def cancel_owned_on_kill(client, journal):
+    """Emergency stop: only cancel orders provably from this pilot journal."""
+    events = load_journal(journal)
+    ids = {e["order_id"] for e in events if e.get("event") == "accepted"}
+    client_ids = {e["client_order_id"] for e in events if e.get("event") == "intent"}
+    canceled = 0
+    for item in client.orders("resting"):
+        if (item.get("order_id") not in ids
+                and item.get("client_order_id") not in client_ids):
+            continue
+        oid, ticker = item.get("order_id"), item.get("ticker")
+        if not oid or not ticker:
+            raise TradingError("Emergency cancellation cannot route: inspect Kalshi")
+        client.cancel(oid, ticker=ticker)
+        write_event(journal, {
+            "event": "emergency_cancel", "utc": datetime.now(UTC).isoformat(),
+            "order_id": oid, "ticker": ticker,
+        })
+        canceled += 1
+    print(f"PROD AUTO HALTED: canceled {canceled} owned resting orders")
+    return canceled
+
+
 def verify_quote(candidate):
     """Re-read production quote immediately before placing the selected order."""
     market = fetch_market(str(candidate.ticker))
@@ -446,6 +469,9 @@ def main():
         client = TradingClient(dry_run=args.dry_run, env="prod")
         if args.live:
             guard(os.environ, client)
+            if (directory / "KILL").exists():
+                cancel_owned_on_kill(client, journal)
+                return
         from live.nfl_trade import candidates
 
         now = datetime.now(UTC)
