@@ -55,9 +55,11 @@ def home_spread_from(details, home, away):
 
 
 def parse_scoreboard(payload, season):
+    if not isinstance(payload, dict) or not isinstance(payload.get("events"), list):
+        raise ValueError("NBA scoreboard has no events list")
     rows = []
     for event in payload.get("events", []):
-        kind = SEASON_TYPES.get((event.get("season") or {}).get("type", 2))
+        kind = SEASON_TYPES.get((event.get("season") or {}).get("type"))
         if kind is None:
             continue  # preseason and exhibitions
         competition = event["competitions"][0]
@@ -82,7 +84,16 @@ def parse_scoreboard(payload, season):
                 "total": float(odds["overUnder"]) if odds.get("overUnder") else np.nan,
             }
         )
-    return pd.DataFrame(rows, columns=SCHEDULE_COLUMNS)
+    frame = pd.DataFrame(rows, columns=SCHEDULE_COLUMNS)
+    # Empty off-days must retain the same dtypes as a day with games. Pandas
+    # 3 otherwise converts concatenated tip times to object at season opening.
+    frame["tip_utc"] = pd.to_datetime(frame.tip_utc, utc=True)
+    frame["completed"] = frame.completed.astype(bool)
+    for column in ("home_spread", "total", "home_score", "away_score"):
+        frame[column] = pd.to_numeric(frame[column], errors="raise").astype(float)
+    for column in ("game_id", "season"):
+        frame[column] = pd.to_numeric(frame[column], errors="raise").astype("int64")
+    return frame
 
 
 def scoreboard(date, season):
@@ -91,6 +102,13 @@ def scoreboard(date, season):
 
 
 def _athlete_id(athlete):
+    direct = athlete.get("id")
+    if direct is not None:
+        try:
+            value = int(direct)
+            return value if value > 0 else None
+        except (TypeError, ValueError):
+            return None
     for href in [athlete.get("headshot", {}).get("href", "")] + [
         link.get("href", "") for link in athlete.get("links", [])
     ]:
@@ -101,13 +119,18 @@ def _athlete_id(athlete):
 
 
 def parse_injuries(payload):
+    if not isinstance(payload, dict) or not isinstance(payload.get("injuries"), list):
+        raise ValueError("NBA injuries has no injuries list")
     rows = []
     for team in payload.get("injuries", []):
-        for item in team.get("injuries", []):
+        if not isinstance(team.get("injuries"), list):
+            raise ValueError("Malformed NBA team injury report")
+        for item in team["injuries"]:
             athlete = item.get("athlete", {})
             rows.append(
                 {
-                    "team": athlete.get("team", {}).get("abbreviation"),
+                    "team": athlete.get("team", {}).get("abbreviation")
+                    or (team.get("team") or {}).get("abbreviation"),
                     "player_id": _athlete_id(athlete),
                     "player": athlete.get("displayName"),
                     "status": item.get("status"),
@@ -124,6 +147,27 @@ def parse_injuries(payload):
 
 def injuries():
     return parse_injuries(get_json(f"{ESPN}/injuries"))
+
+
+def rosters(teams):
+    """Current ESPN player IDs by team. Unknown/empty feeds are failures."""
+    wanted = set(teams)
+    payload = get_json(f"{ESPN}/teams?limit=100")
+    entries = payload["sports"][0]["leagues"][0]["teams"]
+    ids = {item["team"]["abbreviation"]: item["team"]["id"] for item in entries}
+    if not wanted.issubset(ids):
+        raise ValueError("NBA team directory is incomplete")
+    result = {}
+    for team in sorted(wanted):
+        roster = get_json(f"{ESPN}/teams/{ids[team]}/roster")
+        athletes = roster.get("athletes")
+        if not isinstance(athletes, list) or not athletes:
+            raise ValueError("NBA roster is empty or malformed")
+        players = {_athlete_id(a) for a in athletes}
+        if None in players or len(players) != len(athletes):
+            raise ValueError("NBA roster IDs are missing or duplicated")
+        result[team] = players
+    return result
 
 
 def upcoming_rows(players, schedule, report, listed, lookback=3):

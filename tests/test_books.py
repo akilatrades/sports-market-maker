@@ -323,3 +323,30 @@ def test_attach_latest_ignores_logs_without_book_update_times(tmp_path):
     )
     out = attach_latest(priced, path=path)
     assert out.p_book.isna().all() and (out.book_n == 0).all()
+
+
+def test_future_download_or_quote_timestamp_cannot_be_fresh(tmp_path):
+    from kalshi.books import attach_latest
+
+    now = pd.Timestamp.now(tz="UTC")
+    rows = pd.DataFrame(
+        {
+            "player_key": ["x y", "a b"],
+            "stat": ["points"] * 2,
+            "line": [20.5] * 2,
+            "p_book": [0.5] * 2,
+            "book_n": [2] * 2,
+            "snapshot_utc": [
+                (now + pd.Timedelta(hours=1)).isoformat(),
+                now.isoformat(),
+            ],
+            "updated_utc": [now.isoformat(), (now + pd.Timedelta(hours=1)).isoformat()],
+            "commence_utc": [(now + pd.Timedelta(hours=3)).isoformat()] * 2,
+        }
+    )
+    path = tmp_path / "book.csv"
+    rows.to_csv(path, index=False)
+    priced = rows[["player_key", "stat", "line"]].assign(
+        tip_utc=now + pd.Timedelta(hours=3)
+    )
+    assert attach_latest(priced, path=path).p_book.isna().all()

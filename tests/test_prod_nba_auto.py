@@ -9,6 +9,7 @@ import pytest
 
 from kalshi.trading import TradingError
 from live import prod_nba_auto as nba
+from live.nba_inputs import publish
 
 NOW = datetime.now(timezone.utc)
 ARMED = {
@@ -37,10 +38,38 @@ def priced():
                 "p_book": 0.40,
                 "book_n": 2,
                 "injury_status": "",
+                "team_espn": "LAL",
+                "home_espn": "GS",
+                "away_espn": "LAL",
+                "requires_book": False,
+                "last_player_team": "LAL",
+                "last_player_game_utc": (NOW - timedelta(days=4)).isoformat(),
                 "yes_bid_dollars": 0.40,
                 "yes_ask_dollars": 0.50,
             }
         ]
+    )
+
+
+@pytest.fixture(autouse=True)
+def current_context(monkeypatch):
+    import markets.nba.live as source
+
+    monkeypatch.setattr(source, "rosters", lambda teams: {"LAL": {1234}})
+    monkeypatch.setattr(
+        source,
+        "scoreboard",
+        lambda day, season: pd.DataFrame(
+            [
+                {
+                    "game_id": 20261020,
+                    "home": "GS",
+                    "away": "LAL",
+                    "completed": False,
+                    "tip_utc": pd.Timestamp(NOW + timedelta(hours=4)),
+                }
+            ]
+        ),
     )
 
 
@@ -100,9 +129,7 @@ def test_missing_projection_or_meta_blocks_new_orders(tmp_path):
 def test_explicit_fresh_meta_and_current_injury_report_required(tmp_path, monkeypatch):
     latest = tmp_path / "latest.csv"
     priced().to_csv(latest, index=False)
-    (tmp_path / "latest_meta.json").write_text(
-        json.dumps({"generated_utc": NOW.isoformat()})
-    )
+    publish(priced(), tmp_path, NOW)
     import live.nba_trade as trader
     import markets.nba.live as live
     import kalshi.books as books
@@ -128,9 +155,7 @@ def test_explicit_fresh_meta_and_current_injury_report_required(tmp_path, monkey
 def test_new_injury_since_projection_vetoes_candidate(tmp_path, monkeypatch):
     latest = tmp_path / "latest.csv"
     priced().to_csv(latest, index=False)
-    (tmp_path / "latest_meta.json").write_text(
-        json.dumps({"generated_utc": (NOW - timedelta(hours=1)).isoformat()})
-    )
+    publish(priced(), tmp_path, NOW - timedelta(hours=1))
     import live.nba_trade as trader
     import markets.nba.live as live
     import kalshi.books as books

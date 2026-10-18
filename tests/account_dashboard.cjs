@@ -13,7 +13,7 @@ const data = {status:'ok',updated_utc:new Date(now).toISOString(),account:{cash_
 view.render(data,document,now);
 assert.equal(nodes.cash.textContent,'$100.00');
 assert.equal(nodes.profit.textContent,'—');
-assert.equal(nodes['settled-note'].textContent,'No settled NFL markets yet');
+assert.equal(nodes['settled-note'].textContent,'No settled strategy markets yet');
 assert.equal(nodes.filled.textContent,'1');
 assert.equal(nodes.contracts.textContent,'4');
 assert(!nodes['positions-body'].innerHTML.includes('<img'));
@@ -23,4 +23,7 @@ view.render({...data,status:'error'},document,now);
 assert.equal(nodes.cash.textContent,'$100.00');
 assert(nodes.notice.textContent.includes('last successful snapshot'));
 assert.equal(view.freshness({...data,updated_utc:new Date(now+3600000).toISOString()},now),'stale');
+view.render({...data,strategy:{...data.strategy,name:'NBA passive NO entries'},orders:[{owned:true,player:'NBA player',contracts:2,price_dollars:0.6}]},document,now);
+assert(nodes['orders-list'].innerHTML.includes('NBA passive NO entries'));
+assert(!nodes['orders-list'].innerHTML.includes('NFL'));
 console.log('Account view: missing values, partial fills, XSS and stale snapshots passed');
