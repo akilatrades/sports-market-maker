@@ -442,6 +442,7 @@ def test_queue_success_has_no_issue(quotes, tmp_path):
     assert q["ahead"] == 4.0
     assert q["issue"] is None
 
+
 def test_two_tick_maker_quote_is_more_competitive_without_crossing(quotes):
     row = auto.select_candidates(frame(), [], {"active": []}, NOW)[0]
     price, net_edge, ticks = auto.execution_quote(row)
@@ -486,9 +487,13 @@ def test_fresh_quote_recheck_rejects_crossed_or_moved_prices(monkeypatch):
     price, _, ticks = auto.execution_quote(row)
     assert ticks == 1
     monkeypatch.setattr(
-        auto, "fetch_market",
-        lambda ticker: {"status": "active",
-                        "yes_bid_dollars": "0.48", "yes_ask_dollars": "0.50"},
+        auto,
+        "fetch_market",
+        lambda ticker: {
+            "status": "active",
+            "yes_bid_dollars": "0.48",
+            "yes_ask_dollars": "0.50",
+        },
     )
     with pytest.raises(TradingError, match="moved"):
         auto.verify_quote(row, price)

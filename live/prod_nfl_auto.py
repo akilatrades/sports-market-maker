@@ -362,7 +362,11 @@ def verify_quote(candidate, proposed_no_price=None):
     expected = round(no_bid + (0.01 if ask - bid >= 0.019999 else 0), 2)
     if abs(expected - float(candidate.price)) > 0.001:
         raise TradingError("Price moved since model snapshot; wait for next pass")
-    price = float(candidate.price) if proposed_no_price is None else float(proposed_no_price)
+    price = (
+        float(candidate.price)
+        if proposed_no_price is None
+        else float(proposed_no_price)
+    )
     if price < expected - 0.001 or price > expected + EXTRA_MAKER_TICK + 0.001:
         raise TradingError("Proposed NO price does not match verified snapshot")
     # A buy NO is a sell YES ask at 1 - price. Resting order must be priced
