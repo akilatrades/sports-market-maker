@@ -233,3 +233,27 @@ def test_outlier_edge_is_not_automatically_traded():
     f = frame()
     f["p_book"] = 0.01
     assert auto.select_candidates(f, [], {"active": []}, NOW) == []
+
+def test_emergency_stop_cancels_only_pilot_resting(quotes, tmp_path):
+    client = Client()
+    journal = tmp_path / "ledger.jsonl"
+    assert auto.pass_once(client, ARMED, frame(), NOW, journal)
+    client.resting.append({"ticker": "MANUAL", "order_id": "other"})
+    assert auto.cancel_owned_on_kill(client, journal) == 1
+    assert client.cancelled == [("o1", frame().iloc[0].ticker)]
+    assert client.resting == [{"ticker": "MANUAL", "order_id": "other"}]
+
+
+def test_unknown_submission_emergency_cancel_by_client_id(quotes, tmp_path):
+    client = Client()
+    client.broken = True
+    journal = tmp_path / "ledger.jsonl"
+    with pytest.raises(TradingError, match="Ambiguous"):
+        auto.pass_once(client, ARMED, frame(), NOW, journal)
+    intent = next(e for e in auto.load_journal(journal) if e["event"] == "intent")
+    client.resting = [{
+        "order_id": "unknown-but-accepted", "ticker": intent["ticker"],
+        "client_order_id": intent["client_order_id"],
+    }]
+    assert auto.cancel_owned_on_kill(client, journal) == 1
+    assert not client.resting
