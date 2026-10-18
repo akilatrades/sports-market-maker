@@ -11,6 +11,7 @@ import pandas as pd
 
 from markets.nfl.data import load, load_injuries
 from markets.nfl.marginals import FEATURE_NAMES, STATS
+from markets.nfl.roster_guard import canonical, current_rosters
 from markets.nfl.project import project_week
 
 OUT = Path("outputs/nfl/projections")
@@ -37,8 +38,15 @@ def main():
             print("No upcoming games with lines; nothing to project.")
             return
         season, week = upcoming
+    scheduled = games[(games.season == season) & (games.week == week)]
+    teams = {
+        canonical(team)
+        for team in [*scheduled.home_team, *scheduled.away_team]
+    }
+    rosters = current_rosters(teams)
+    print(f"Current ESPN NFL rosters verified: {len(rosters)} teams")
     projections, models, ladder = project_week(
-        games, players, season, week, load_injuries()
+        games, players, season, week, load_injuries(), rosters=rosters
     )
     OUT.mkdir(parents=True, exist_ok=True)
     path = OUT / f"{season}_week{week:02d}.csv"
