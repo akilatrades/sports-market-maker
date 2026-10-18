@@ -20,6 +20,7 @@ jobs:
     env:
       TRADE_MODE: dry
       TRADE_MARKET: nfl
+      KALSHI_ENV: prod  # public production research quotes only; no credentials or orders
       DRY_BANKROLL: "250"
     steps:
       - uses: actions/checkout@v4
