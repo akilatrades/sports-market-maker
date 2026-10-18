@@ -596,6 +596,33 @@ def reconcile(ledger, client, market="nba"):
     return report, exchange
 
 
+def verify_execution_venue(client):
+    """Reject cross-environment quotes/orders, allowing documented host aliases.
+
+    Kalshi production has two public REST hostnames. Exact-string comparison
+    wrongly rejected the production research dry run, even though both URLs
+    point to the same production environment. Demo is NEVER interchangeable.
+    """
+    data_url = market_data_base_url()
+    execution_url = f"{client.base.rstrip('/')}/trade-api/v2"
+    aliases = {
+        "prod": {
+            "https://external-api.kalshi.com/trade-api/v2",
+            "https://api.elections.kalshi.com/trade-api/v2",
+        },
+        "demo": {
+            "https://demo-api.kalshi.co/trade-api/v2",
+            "https://external-api.demo.kalshi.co/trade-api/v2",
+        },
+    }
+    trusted = aliases.get(client.env, set())
+    if data_url not in trusted or execution_url not in trusted:
+        raise TradingError(
+            "Trading stopped: market-data API and order-execution API "
+            f"are different venues ({data_url} != {execution_url})"
+        )
+
+
 def main():
     now = datetime.now(UTC)
     mode = os.environ.get("TRADE_MODE", "dry")
@@ -608,13 +635,7 @@ def main():
     summary_extra = {}
     client = TradingClient(dry_run=(mode != "live"))
     if getattr(client, "base", None):
-        data_url = market_data_base_url()
-        execution_url = f"{client.base}/trade-api/v2"
-        if data_url != execution_url:
-            raise TradingError(
-                "Trading stopped: market-data API and order-execution API "
-                f"are different venues ({data_url} != {execution_url})"
-            )
+        verify_execution_venue(client)
     OUT.mkdir(parents=True, exist_ok=True)
     limits = RiskLimits()
     pilot = os.environ.get("DEMO_PILOT") == "1"
