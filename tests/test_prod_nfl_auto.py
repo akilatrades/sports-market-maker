@@ -504,9 +504,23 @@ def test_fresh_quote_recheck_rejects_crossed_or_moved_prices(monkeypatch):
 def test_improved_pilot_journals_effective_edge(quotes, tmp_path):
     client = Client()
     journal = tmp_path / "ledger.jsonl"
-    assert auto.pass_once(client, ARMED, frame(), NOW, journal)
+    priced = frame()
+    priced["p_book"] = 0.38
+    assert auto.pass_once(client, ARMED, priced, NOW, journal)
     intent = next(e for e in auto.load_journal(journal) if e["event"] == "intent")
     assert intent["extra_maker_ticks"] == 1
     assert intent["price_cents"] == 52
     assert intent["edge"] < intent["baseline_edge"]
+    assert client.placed[0].post_only is True
+
+
+def test_second_tick_falls_back_when_full_reserve_consumes_edge(quotes, tmp_path):
+    client = Client()
+    journal = tmp_path / "ledger.jsonl"
+    assert auto.pass_once(client, ARMED, frame(), NOW, journal)
+    intent = next(e for e in auto.load_journal(journal) if e["event"] == "intent")
+    assert intent["extra_maker_ticks"] == 0
+    assert intent["price_cents"] == 51
+    assert intent["edge_after_fee_buffer"] >= 0.03
+    assert intent["probability_source"] == "sportsbook"
     assert client.placed[0].post_only is True

@@ -191,7 +191,7 @@ def test_full_scan_mocked_public_requests_and_no_external_actions(monkeypatch):
 def test_dashboard_exchange_watch_is_read_only():
     from pathlib import Path
 
-    html = (Path(__file__).parents[1] / "dashboard" / "index.html").read_text()
+    html = (Path(__file__).parents[1] / "dashboard" / "research.html").read_text()
     assert 'id="exchange-watch"' in html
     assert 'id="exchange-watch-data"' in html
     assert 'fetch("../outputs/cross_exchange/latest.json"' in html
