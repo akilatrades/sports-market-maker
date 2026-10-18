@@ -441,3 +441,70 @@ def test_queue_success_has_no_issue(quotes, tmp_path):
     q = next(e for e in events if e["event"] == "queue")
     assert q["ahead"] == 4.0
     assert q["issue"] is None
+
+
+def test_two_tick_maker_quote_is_more_competitive_without_crossing(quotes):
+    row = auto.select_candidates(frame(), [], {"active": []}, NOW)[0]
+    price, net_edge, ticks = auto.execution_quote(row)
+    assert price == 0.52 and ticks == 1
+    assert net_edge >= 0.03
+    order, cost = auto.order_from_row(row, NOW, no_price=price)
+    assert order.price_cents == 52
+    assert order.body()["side"] == "ask"
+    assert float(order.body()["price"]) == 0.48
+    assert float(order.body()["price"]) > row.yes_bid
+    assert cost == round(order.count * price, 2)
+    auto.verify_quote(row, price)
+
+
+def test_one_cent_spread_stays_passive_no_aggressive_price():
+    f = frame()
+    f["yes_bid_dollars"] = 0.40
+    f["yes_ask_dollars"] = 0.41
+    f["p_book"] = 0.27
+    row = auto.select_candidates(f, [], {"active": []}, NOW)[0]
+    price, edge, ticks = auto.execution_quote(row)
+    assert ticks == 0
+    assert price == row.price
+    assert edge == row.edge
+
+
+def test_three_cent_spread_improves_only_if_net_edge_retained():
+    f = frame()
+    f["yes_bid_dollars"] = 0.40
+    f["yes_ask_dollars"] = 0.43
+    f["p_book"] = 0.39
+    row = auto.select_candidates(f, [], {"active": []}, NOW)[0]
+    assert 0 < row.edge < 0.04
+    price, edge, ticks = auto.execution_quote(row)
+    assert ticks == 0
+    assert edge == row.edge
+    assert price == row.price
+
+
+def test_fresh_quote_recheck_rejects_crossed_or_moved_prices(monkeypatch):
+    row = auto.select_candidates(frame(), [], {"active": []}, NOW)[0]
+    price, _, ticks = auto.execution_quote(row)
+    assert ticks == 1
+    monkeypatch.setattr(
+        auto,
+        "fetch_market",
+        lambda ticker: {
+            "status": "active",
+            "yes_bid_dollars": "0.48",
+            "yes_ask_dollars": "0.50",
+        },
+    )
+    with pytest.raises(TradingError, match="cross"):
+        auto.verify_quote(row, price)
+
+
+def test_improved_pilot_journals_effective_edge(quotes, tmp_path):
+    client = Client()
+    journal = tmp_path / "ledger.jsonl"
+    assert auto.pass_once(client, ARMED, frame(), NOW, journal)
+    intent = next(e for e in auto.load_journal(journal) if e["event"] == "intent")
+    assert intent["extra_maker_ticks"] == 1
+    assert intent["price_cents"] == 52
+    assert intent["edge"] < intent["baseline_edge"]
+    assert client.placed[0].post_only is True

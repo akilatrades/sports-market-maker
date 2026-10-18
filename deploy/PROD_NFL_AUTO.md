@@ -12,9 +12,10 @@ turns on live trading or modifies the existing Demo service.
 - Max **$3 order**, **5 contracts** per order, **$15 active exposure**, **$30 daily
   spend**, **$3/game**, **$3/team**, **2 orders/game** and one new order per scan.
 - Post-only NO strategy, standard `no_seller_bookline` book/model veto.
-- Orders 10–120 minutes pregame, one-cent inside spreads when permitted,
+- Orders 10–120 minutes pregame, 1¢ inside eligible spreads; in spreads of 3¢ or more, price 2¢ inside only if at least 3¢ of estimated edge remains,
   expiration at real scheduled kickoff.
-- Fresh real production quote checked just before POST, fail if changed.
+- Fresh real production quote checked just before POST, fail if changed or if more competitive quote would cross the other side. All orders remain post-only. This is a forward experiment, not a validated fill-rate improvement.
+- One-cent spreads cannot be improved while remaining a passive maker, so they retain the original quote and queue position.
 - Model edge above 15 cents is treated as potentially mismatched/stale
   and *not auto-executed*. No profitability guarantee.
 - Private **write-ahead order journal** (outside repo) ensures network timeouts
