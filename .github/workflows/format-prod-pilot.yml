@@ -1,0 +1,35 @@
+name: Format production pilot branch
+on:
+  push:
+    branches: [pilot/prod-nfl-supervised-20261018]
+    paths:
+      - "live/prod_nfl_pilot.py"
+      - "tests/test_prod_nfl_pilot.py"
+      - "kalshi/paper_props.py"
+      - ".github/workflows/format-prod-pilot.yml"
+permissions:
+  contents: write
+jobs:
+  format:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: pilot/prod-nfl-supervised-20261018
+          persist-credentials: true
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install ruff==0.11.13
+      - run: |
+          ruff check --fix live/prod_nfl_pilot.py tests/test_prod_nfl_pilot.py kalshi/paper_props.py
+          ruff format live/prod_nfl_pilot.py tests/test_prod_nfl_pilot.py kalshi/paper_props.py
+      - name: Commit formatting fixes to feature branch
+        run: |
+          if ! git diff --quiet; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add live/prod_nfl_pilot.py tests/test_prod_nfl_pilot.py kalshi/paper_props.py
+            git commit -m "Format isolated production pilot code and tests"
+            git push origin HEAD:pilot/prod-nfl-supervised-20261018
+          fi
