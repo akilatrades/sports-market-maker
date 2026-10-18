@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 
-DASHBOARD = Path(__file__).resolve().parents[1] / "dashboard" / "research.html"
+DASHBOARD = Path(__file__).resolve().parents[1] / "dashboard" / "index.html"
 
 
 def test_demo_reference_is_not_a_fake_current_balance():

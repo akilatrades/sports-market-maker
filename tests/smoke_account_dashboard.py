@@ -86,7 +86,7 @@ def main():
                     ),
                 )
                 page.goto(
-                    f"http://127.0.0.1:{server.server_port}/dashboard/",
+                    f"http://127.0.0.1:{server.server_port}/dashboard/account.html",
                     wait_until="networkidle",
                 )
                 assert page.locator("#cash").inner_text() == "$100.00"

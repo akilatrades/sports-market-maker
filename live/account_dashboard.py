@@ -338,7 +338,7 @@ def handler_for(snapshot, port):
                 return
             path = self.path.split("?", 1)[0]
             assets = {
-                "/": ("index.html", "text/html"),
+                "/": ("account.html", "text/html"),
                 "/account.js": ("account.js", "text/javascript"),
                 "/account.css": ("account.css", "text/css"),
             }

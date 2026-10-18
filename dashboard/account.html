@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>AJ · Trading desk</title>
+  <link rel="stylesheet" href="account.css">
+  <script src="account.js" defer></script>
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="#overview"><span class="monogram">AJ</span><span>Trading desk<small>SPORTS MARKETS</small></span></a>
+    <nav aria-label="Main navigation"><a class="selected" href="#overview">Account</a><a href="#positions">Positions</a><a href="https://akilatrades.github.io/sports-market-maker/dashboard/">Research ↗</a></nav>
+    <span class="connection" id="connection">Not connected</span>
+  </header>
+  <main>
+    <section class="heading" id="overview">
+      <div><p class="eyebrow">KALSHI / PRODUCTION</p><h1>Your account, clearly.</h1><p class="subtitle">Live account snapshots. Actual fills. Settled results.</p></div>
+      <div class="refresh"><button type="button" id="refresh">Refresh account <span aria-hidden="true">↻</span></button><p id="updated">No production snapshot loaded</p></div>
+    </section>
+    <aside class="notice" id="notice" role="status" aria-live="polite">Connect to your private server view to load account balances.</aside>
+    <section class="metrics" aria-label="Account balances">
+      <article class="metric"><p>Cash balance <span>ACCOUNT</span></p><strong id="cash">—</strong><small>Cash reported by Kalshi</small></article>
+      <article class="metric"><p>Open position value <span>ACCOUNT</span></p><strong id="value">—</strong><small>Exchange estimate; not guaranteed exit proceeds</small></article>
+      <article class="metric"><p>Total account value <span>ACCOUNT</span></p><strong id="equity">—</strong><small>Cash + open position value; not trading profit</small></article>
+      <article class="metric accent"><p>Settled profit / loss <span>NFL STRATEGY</span></p><strong id="profit">—</strong><small id="settled-note">Waiting for verified settlement accounting</small></article>
+    </section>
+    <section class="panel connection-help" id="connect-help">
+      <div class="section-title"><div><p class="eyebrow">PRIVATE ACCOUNT ACCESS</p><h2>Connect once. Keep balances private.</h2></div><span class="tag">Read only</span></div>
+      <p>The public page does not store account data. After installing the dashboard service on your trading server, open an SSH tunnel from your own computer:</p>
+      <code>ssh -N -L 8765:127.0.0.1:8765 YOUR_SSH_LOGIN</code>
+      <p>Use the same login you use for your Droplet. Leave that terminal open, then <a href="http://127.0.0.1:8765">open your private account view ↗</a>.</p>
+      <a class="text-link" href="https://github.com/akilatrades/sports-market-maker/blob/main/deploy/ACCOUNT_DASHBOARD.md">Setup instructions ↗</a>
+    </section>
+    <div class="two-column">
+      <section class="panel"><div class="section-title"><div><p class="eyebrow">EXECUTION</p><h2>What actually traded</h2></div><span class="tag">NFL only</span></div>
+        <div class="execution-grid"><div><strong id="accepted">—</strong><span>Orders accepted</span></div><div><strong id="filled">—</strong><span>Orders with a fill</span></div><div><strong id="contracts">—</strong><span>Contracts bought</span></div></div>
+        <dl class="details"><div><dt>Cost of filled contracts</dt><dd id="fill-cost">—</dd></div><div><dt>Reported fill fees</dt><dd id="fees">—</dd></div><div><dt>Orders still resting · whole account</dt><dd id="resting">—</dd></div></dl>
+        <p class="footnote">A filled order spends cash to buy a position. That cost is not automatically a loss. Multiple fill records can belong to one order.</p>
+      </section>
+      <section class="panel"><div class="section-title"><div><p class="eyebrow">RISK &amp; STRATEGY</p><h2>Small, bounded exposure</h2></div><span class="tag" id="version">v2 code</span></div>
+        <div class="budget"><strong id="budget">—</strong><span>remaining submission allowance</span></div>
+        <progress id="budget-bar" value="0" max="50" aria-label="Lifetime submission allowance used"></progress>
+        <p class="footnote" id="budget-note">The $50 lifetime cap counts submitted cost plus the fee buffer, including canceled orders. It is not a cash balance.</p>
+        <dl class="details"><div><dt>Per order / per game caps</dt><dd>$3 / $3</dd></div><div><dt>Maximum active reservation</dt><dd>$15</dd></div><div><dt>New entry requirement</dt><dd>3¢ after fee buffer</dd></div></dl>
+      </section>
+    </div>
+    <section class="panel" id="positions"><div class="section-title"><div><p class="eyebrow">OPEN POSITIONS</p><h2>What you own</h2></div><span class="tag" id="position-count">Awaiting connection</span></div>
+      <p class="section-caption">Whole account. Position cost is capital at risk before fees. These are not settled results.</p>
+      <div class="table-wrap"><table><thead><tr><th>Market / player</th><th>Side</th><th>Contracts</th><th>Position cost</th><th>Entry source</th></tr></thead><tbody id="positions-body"><tr><td colspan="5" class="empty">Connect to load open positions.</td></tr></tbody></table></div>
+    </section>
+    <div class="two-column lower">
+      <section class="panel"><div class="section-title"><div><p class="eyebrow">RESTING ORDERS</p><h2>Waiting to trade</h2></div></div><div id="orders-list" class="list-empty">Connect to load resting orders.</div><p class="footnote">An accepted order is not a fill. Its price and the volume trading against it determine whether it executes.</p></section>
+      <section class="panel"><div class="section-title"><div><p class="eyebrow">LAST STRATEGY SCAN</p><h2 id="scan-title">No scan loaded</h2></div></div><p id="scan-stamp" class="section-caption">A recent account snapshot does not prove the trader is running.</p><div id="scan-details" class="scan-details"></div></section>
+    </div>
+    <section class="explanation"><p class="eyebrow">UNDERSTANDING THE STRATEGY</p><h2>Buying NO is a position, not a locked-in profit.</h2><p>The bot posts passive NO orders and holds filled contracts to settlement. A winning contract normally returns $1; a losing one returns $0. Profit depends on outcomes, entry prices, and actual fees. The 3¢ filter is an estimated advantage, not a promise.</p><a href="https://akilatrades.github.io/sports-market-maker/dashboard/">View historical research separately ↗</a></section>
+    <footer><span>AJ Trading desk · NFL production</span><span>Private view refreshes every 60 seconds · No trading controls</span></footer>
+  </main>
+</body>
+</html>

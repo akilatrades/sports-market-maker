@@ -1,7 +1,9 @@
 # Production account dashboard
 
-The public dashboard is an account-first layout with a separate Research page.
-Private balances require the read-only service on the existing trading Droplet.
+The public dashboard at `/dashboard/` presents research, models and results for
+portfolio visitors. The separate account view is served by the read-only service
+on the existing trading Droplet at `http://127.0.0.1:8765`. Publishing the public
+research page requires no terminal or SSH setup.
 No balances, keys, raw journals or order IDs are uploaded to GitHub. The account
 service binds to **127.0.0.1 only**, rejects foreign browser origins/hosts, and
 allows only production GET requests. It cannot submit or cancel orders.
