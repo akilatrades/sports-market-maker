@@ -31,7 +31,7 @@ def summarize_trades(no_price_cents, prints):
         p for p in prints
         if p.get("taker_outcome_side") == "yes"
         and not p.get("is_block_trade")
-        and math.isfinite(valid_num(p.get("yes_price")))
+        and 0 < valid_num(p.get("yes_price")) < 1
     ]
     at = sum(
         valid_num(p.get("count"))
@@ -85,6 +85,7 @@ def run(journal, client, now):
         placed = datetime.fromisoformat(known.get("utc", a["utc"]))
         tip = datetime.fromisoformat(a["tip_utc"])
         end = min(now, tip)
+        t = None
         try:
             prints = fetch_trades(a["ticker"], int(placed.timestamp()),
                                   max(int(placed.timestamp()) + 1, int(end.timestamp())))
@@ -106,7 +107,7 @@ def run(journal, client, now):
         print(f"  ACTUAL EXCHANGE FILLS: {filled:g}/{a['count']} contracts; "
               f"fees from fill records=${fee:.4f}")
         print(f"  PUBLIC MARKET PRINTS DURING ORDER WINDOW: {public_info}")
-        if filled == 0 and t.get("through_price", 0) if "t" in locals() else False:
+        if filled == 0 and t is not None and t["through_price"] > 0:
             print("  NOTE: trades crossed quote; inspect time/queue/cancel reasons.")
     print("Follow-up: compare at-price volumes and queue position before changing quotes.")
 
