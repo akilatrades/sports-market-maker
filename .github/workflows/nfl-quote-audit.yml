@@ -1,0 +1,24 @@
+name: NFL public quote liquidity audit
+on:
+  push:
+    branches:
+      - audit/nfl-demo-liquidity-20261018
+    paths:
+      - "research/nfl_quote_audit.py"
+      - ".github/workflows/nfl-quote-audit.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  public-quote-compare:
+    runs-on: ubuntu-latest
+    timeout-minutes: 7
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Compare Kalshi Demo and production NFL public markets and depth
+        run: python -m research.nfl_quote_audit
