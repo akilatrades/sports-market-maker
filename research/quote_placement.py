@@ -60,7 +60,7 @@ def policy_orders(o, policy):
         two = spread >= 3 * TICK - 1e-9
         one = spread >= 2 * TICK - 1e-9
         price = np.where(two, no_bid + 2 * TICK, np.where(one, no_bid + TICK, no_bid))
-        improved = pd.Series(True, index=o.index)
+        improved = one
     elif policy == "edge2":
         improved = spread >= 2 * TICK - 1e-9
         price = np.where(improved, no_bid + TICK, no_bid)
@@ -127,3 +127,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+

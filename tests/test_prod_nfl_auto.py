@@ -284,7 +284,7 @@ def test_fill_and_settlement_are_recorded_once(tmp_path):
             "ticker": "NFL-A",
             "count_fp": "1.00",
             "no_price_dollars": ".5100",
-            "fee_cost": "1",
+            "fee_cost": "0.0100",
         }
     ]
     settled = [
@@ -294,7 +294,7 @@ def test_fill_and_settlement_are_recorded_once(tmp_path):
             "revenue": 100,
             "no_total_cost": 51,
             "yes_total_cost": 0,
-            "fee_cost": 1,
+            "fee_cost": "0.0100",
         }
     ]
     auto.record_execution(journal, [], attempts, accepted, fills, settled)
@@ -302,7 +302,8 @@ def test_fill_and_settlement_are_recorded_once(tmp_path):
     assert [e["event"] for e in events] == ["fill", "settlement"]
     auto.record_execution(journal, events, attempts, accepted, fills, settled)
     assert len(auto.load_journal(journal)) == 2
-    assert events[1]["fee_cents"] == 1
+    assert events[1]["fee_dollars"] == 0.01
+    assert events[1]["net_profit_dollars"] == 0.48
 
 
 def test_entries_12_minutes_before_kickoff_are_eligible(quotes):
@@ -508,3 +509,4 @@ def test_improved_pilot_journals_effective_edge(quotes, tmp_path):
     assert intent["price_cents"] == 52
     assert intent["edge"] < intent["baseline_edge"]
     assert client.placed[0].post_only is True
+

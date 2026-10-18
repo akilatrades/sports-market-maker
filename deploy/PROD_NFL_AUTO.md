@@ -11,6 +11,9 @@ turns on live trading or modifies the existing Demo service.
   are not recycled until a separate researched rollout is approved.
 - Max **$3 order**, **5 contracts** per order, **$15 active exposure**, **$30 daily
   spend**, **$3/game**, **$3/team**, **2 orders/game** and one new order per scan.
+- Sizing reduces contract quantity until the cost **including the reserve**
+  fits all remaining caps. Example: a 60-cent quote uses four contracts ($2.40
+  cost, $2.64 reserved), because five would exceed the $3 game/team allowance.
 - Post-only NO strategy, standard `no_seller_bookline` book/model veto.
 - Orders 10–120 minutes pregame, 1¢ inside eligible spreads; in spreads of 3¢ or more, price 2¢ inside only if at least 3¢ of estimated edge remains,
   expiration at real scheduled kickoff.
@@ -24,6 +27,13 @@ turns on live trading or modifies the existing Demo service.
 - The bot releases active capacity for expired unfilled orders only after a 10-minute grace period, confirming no resting order, fill, or held position. All attempted gross costs still consume the $50 lifetime ceiling.
 - Server polls Kalshi for fill IDs, prices, order queue, fees, and settlements;
   durable private events are saved for later forward evaluation.
+- Queue position is observed on each completed pass for owned resting orders.
+  `last_scan.json` in the private state directory records the last scan time,
+  entry-filter counts, acceptance, and named blocking reasons. `--status`
+  displays that saved observation; it is not a fresh exchange-account query.
+- Settlement records normalize current dollar cost fields and legacy cent cost
+  fields, with fees in dollars. Missing costs or fees produce unknown P&L.
+  Older journal records receive append-only corrections after reconciliation.
 - Current roster/injury verification failures cancel affected owned resting
   orders; quote or data errors refuse new orders.
 - Only the account owner can arm a production timer, and they can always stop it.
@@ -112,3 +122,4 @@ sudo -u trader .venv/bin/python -m live.prod_nfl_auto --status
   review freshness before any first live start.
 - We do not promise any particular kickoff entry, order acceptance, fill,
   positive P&L, or automatic continued trading after the budget is exhausted.
+
