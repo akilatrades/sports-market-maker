@@ -131,6 +131,7 @@ def current_production_state(client, attempts, accepted):
         "resting": resting,
         "held": held,
         "settled": settled,
+        "settlements": settlements,
         "active": still_at_risk,
     }
 
@@ -211,6 +212,42 @@ def cancel_owned_on_kill(client, journal):
         canceled += 1
     print(f"PROD AUTO HALTED: canceled {canceled} owned resting orders")
     return canceled
+
+
+def record_execution(journal, events, attempts, accepted, fills, settlements):
+    """Store distinct actual fills and exchange settlement amounts for audit."""
+    known_orders = {e["order_id"] for e in accepted.values()}
+    tickers = {a["ticker"] for a in attempts}
+    seen_fills = {e.get("fill_id") for e in events if e.get("event") == "fill"}
+    seen_results = {e.get("ticker") for e in events if e.get("event") == "settlement"}
+    for fill in fills:
+        oid = fill.get("order_id")
+        fid = fill.get("fill_id") or fill.get("trade_id")
+        if not fid or fid in seen_fills or oid not in known_orders:
+            continue
+        write_event(journal, {
+            "event": "fill", "fill_id": str(fid),
+            "utc": str(fill.get("created_time", "")),
+            "ticker": str(fill.get("ticker") or fill.get("market_ticker") or ""),
+            "order_id": str(oid), "count": str(fill.get("count_fp", "")),
+            "yes_price": str(fill.get("yes_price_dollars", "")),
+            "no_price": str(fill.get("no_price_dollars", "")),
+            "fee": str(fill.get("fee_cost", "")),
+        })
+        seen_fills.add(fid)
+    for result in settlements:
+        ticker = result.get("market_ticker") or result.get("ticker")
+        if ticker not in tickers or ticker in seen_results:
+            continue
+        write_event(journal, {
+            "event": "settlement", "ticker": ticker,
+            "utc": str(result.get("settled_time", "")),
+            "revenue_cents": result.get("revenue"),
+            "yes_cost_cents": result.get("yes_total_cost"),
+            "no_cost_cents": result.get("no_total_cost"),
+            "fee_cents": result.get("fee_cost"),
+        })
+        seen_results.add(ticker)
 
 
 def verify_quote(candidate):
@@ -336,6 +373,10 @@ def pass_once(client, env, frame, now, journal, *, dry=False):
         fills = client.fills(min_ts=min_ts)
         if not isinstance(fills, list):
             raise TradingError("Cannot read production fills")
+        record_execution(
+            journal, load_journal(journal), attempts, accepted,
+            fills, state["settlements"],
+        )
         canceled = cancel_invalid_resting(client, journal, state, frame, now)
         if canceled:
             print(f"PROD AUTO: canceled {canceled} unsafe resting orders")
