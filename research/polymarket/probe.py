@@ -7,6 +7,7 @@ Polymarket). Writes outputs/polymarket/probe.json and probe.md.
 """
 
 import json
+import re
 import time
 from pathlib import Path
 from urllib.parse import urlencode
@@ -16,7 +17,6 @@ GAMMA = "https://gamma-api.polymarket.com"
 CLOB = "https://clob.polymarket.com"
 DATA = "https://data-api.polymarket.com"
 OUT = Path("outputs/polymarket")
-import re
 
 # A per-game player prop: a named player's stat against a threshold, or an
 # event explicitly labelled as player props. Game totals ("Seahawks vs.
