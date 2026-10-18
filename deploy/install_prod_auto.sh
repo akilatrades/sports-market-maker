@@ -15,6 +15,7 @@ id trader >/dev/null
 sudo -u trader git clone --depth 1 https://github.com/akilatrades/sports-market-maker.git "$ROOT"
 sudo -u trader python3 -m venv "$ROOT/.venv"
 sudo -u trader "$ROOT/.venv/bin/python" -m pip install -q -r "$ROOT/requirements.txt"
+install -d -m 700 -o trader -g trader /home/trader/prod-nfl-auto
 install -m 644 "$ROOT/deploy/market-maker-prod-nfl-auto.service" /etc/systemd/system/
 install -m 644 "$ROOT/deploy/market-maker-prod-nfl-auto.timer" /etc/systemd/system/
 systemctl daemon-reload
