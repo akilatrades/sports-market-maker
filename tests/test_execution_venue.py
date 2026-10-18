@@ -11,12 +11,21 @@ from live import nba_trade
 @pytest.mark.parametrize(
     "env,data,host",
     [
-        ("prod", "https://external-api.kalshi.com/trade-api/v2",
-         "https://api.elections.kalshi.com"),
-        ("prod", "https://api.elections.kalshi.com/trade-api/v2",
-         "https://external-api.kalshi.com"),
-        ("demo", "https://demo-api.kalshi.co/trade-api/v2",
-         "https://demo-api.kalshi.co"),
+        (
+            "prod",
+            "https://external-api.kalshi.com/trade-api/v2",
+            "https://api.elections.kalshi.com",
+        ),
+        (
+            "prod",
+            "https://api.elections.kalshi.com/trade-api/v2",
+            "https://external-api.kalshi.com",
+        ),
+        (
+            "demo",
+            "https://demo-api.kalshi.co/trade-api/v2",
+            "https://demo-api.kalshi.co",
+        ),
     ],
 )
 def test_accepts_host_aliases_within_same_venue(monkeypatch, env, data, host):
@@ -27,12 +36,21 @@ def test_accepts_host_aliases_within_same_venue(monkeypatch, env, data, host):
 @pytest.mark.parametrize(
     "env,data,host",
     [
-        ("demo", "https://external-api.kalshi.com/trade-api/v2",
-         "https://demo-api.kalshi.co"),
-        ("prod", "https://demo-api.kalshi.co/trade-api/v2",
-         "https://api.elections.kalshi.com"),
-        ("prod", "https://evil.invalid/trade-api/v2",
-         "https://api.elections.kalshi.com"),
+        (
+            "demo",
+            "https://external-api.kalshi.com/trade-api/v2",
+            "https://demo-api.kalshi.co",
+        ),
+        (
+            "prod",
+            "https://demo-api.kalshi.co/trade-api/v2",
+            "https://api.elections.kalshi.com",
+        ),
+        (
+            "prod",
+            "https://evil.invalid/trade-api/v2",
+            "https://api.elections.kalshi.com",
+        ),
     ],
 )
 def test_refuses_cross_venue_or_unknown_hosts(monkeypatch, env, data, host):
