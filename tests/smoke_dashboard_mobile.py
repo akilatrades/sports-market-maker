@@ -3,6 +3,7 @@
 Run explicitly after installing Playwright/Chromium; not part of regular pytest.
 """
 
+import json
 import threading
 from functools import partial
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
@@ -13,6 +14,9 @@ from playwright.sync_api import sync_playwright
 
 def main():
     repo = Path(__file__).resolve().parents[1]
+    screenshots = repo / "test-artifacts"
+    screenshots.mkdir(exist_ok=True)
+    expected = json.loads((repo / "outputs/dashboard/summary.json").read_text())
     handler = partial(SimpleHTTPRequestHandler, directory=str(repo))
     server = ThreadingHTTPServer(("127.0.0.1", 0), handler)
     thread = threading.Thread(target=server.serve_forever, daemon=True)
@@ -21,12 +25,12 @@ def main():
         with sync_playwright() as playwright:
             browser = playwright.chromium.launch(headless=True)
             try:
-                for width in (320, 375, 390, 768):
+                for width in (320, 375, 390, 768, 1440):
                     context = browser.new_context(
-                        viewport={"width": width, "height": 780},
-                        device_scale_factor=2,
-                        is_mobile=True,
-                        has_touch=True,
+                        viewport={"width": width, "height": 1000},
+                        device_scale_factor=1,
+                        is_mobile=width <= 768,
+                        has_touch=width <= 768,
                     )
                     page = context.new_page()
                     errors = []
@@ -38,6 +42,19 @@ def main():
                         timeout=15000,
                     )
                     assert not errors, f"{width}px: JS errors: {errors}"
+                    expected_edge = expected["research"]["bookline"]["veto"]["cents"]
+                    assert page.locator("#lead-edge").inner_text() == (
+                        f"+{expected_edge:.2f}¢"
+                    )
+                    assert page.locator("#study-chart svg").count() == 1
+                    page.screenshot(path=str(screenshots / f"research-{width}.png"))
+                    if width == 1440:
+                        page.locator("#methodology").screenshot(
+                            path=str(screenshots / "research-methodology.png")
+                        )
+                        page.locator("#research-section").screenshot(
+                            path=str(screenshots / "research-evidence.png")
+                        )
                     metrics = page.evaluate(
                         """() => ({
                           page: document.documentElement.clientWidth,
@@ -89,6 +106,11 @@ def main():
                     )
                     page.locator('a[href="#research-section"]').click()
                     assert page.evaluate("location.hash") == "#research-section"
+                    page.locator("details.diagnostics").first.locator("summary").click()
+                    assert page.locator("details.diagnostics").first.evaluate(
+                        "(el) => el.open"
+                    )
+                    assert not errors, f"{width}px: errors after expanding diagnostics"
                     print(f"PASS {width}px: scroll, no reload, nav, JS and overflow")
                     context.close()
             finally:

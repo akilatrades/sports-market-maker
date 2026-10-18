@@ -3,11 +3,17 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Sports Market Maker | Research Dashboard</title>
-<meta name="description" content="Research dashboard for a passive liquidity strategy in Kalshi player-prop markets: backtest results, paper-trading ledgers and exchange-confirmed live fills, kept separate.">
+<meta name="theme-color" content="#0b1015">
+<title>Sports Market Maker — AJ Quantitative Research</title>
+<meta name="description" content="An open quantitative research and execution system for prediction markets. Explore probability models, passive execution, historical evidence and forward validation.">
+<meta property="og:title" content="Sports Market Maker — AJ Quantitative Research">
+<meta property="og:description" content="From probability to execution. Pricing models, market microstructure and transparent performance evidence.">
+<meta property="og:type" content="website">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
+
 :root {
   color-scheme: dark;
   --bg:#0b1320; --bg-2:#101b2c; --card:#131f33; --card-2:#172538; --line:#263449; --line-2:#3a4b64;
@@ -77,22 +83,6 @@ section.chart-panel + section.chart-panel, section + section.chart-panel { margi
 .metric-value { color: var(--ink); font-size: clamp(26px, 3vw, 36px); font-weight: 700; letter-spacing: -.03em; line-height: 1.05; }
 .metric-value.positive { color: var(--pos); } .metric-value.negative { color: var(--neg); }
 .metric-caption { display: block; color: var(--ink-3); font-size: 12.5px; line-height: 1.5; margin-top: 10px; }
-
-/* Keep the account reference separate from modeled / paper ledgers. */
-.account-strip{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--gap);margin-bottom:var(--gap)}
-.account-box{border:1px solid var(--line);border-radius:var(--r);padding:16px 18px;min-width:0;background:var(--card)}
-.account-box .account-label{display:block;font-size:12px;color:var(--ink-2);font-weight:600}
-.account-box strong{display:block;margin:4px 0 2px;font-size:clamp(21px,2.6vw,31px);letter-spacing:-.02em}
-.account-box .account-small{font-size:12px;color:var(--ink-3)}
-.scenario-panel{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:22px}
-.scenario-layout{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.4fr);gap:24px;align-items:start}
-.scenario-label{display:flex;align-items:center;justify-content:space-between;gap:12px;font-size:14px;font-weight:600}
-.scenario-panel input[type="range"]{width:100%;margin:18px 0 12px;accent-color:var(--accent);min-height:28px;cursor:pointer}
-.scenario-results{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
-.scenario-result{background:var(--card-2);border:1px solid var(--line);border-radius:8px;padding:15px 12px;min-width:0}
-.scenario-result span{display:block;color:var(--ink-2);font-size:12px}
-.scenario-result strong{display:block;font-size:clamp(19px,2.5vw,27px);margin-top:6px;white-space:nowrap}
-.scenario-small{font-size:12px;color:var(--ink-3);margin-top:9px}
 
 /* Reading guide */
 .tiers { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--gap); margin-top: var(--gap); }
@@ -199,251 +189,278 @@ footer { margin-top: 48px; padding-top: 18px; border-top: 1px solid var(--line);
 }
 @media (max-width: 340px) { .metric-grid, .stats { grid-template-columns: 1fr; } }
 @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+
+/* Public research presentation: quiet surfaces, precise data, clear evidence. */
+:root {
+  --bg:#0b1015; --bg-2:#0e151d; --card:#111a23; --card-2:#16212b;
+  --line:#25323e; --line-2:#3b4a57; --ink:#edf2f6; --ink-2:#abb8c5; --ink-3:#8c9caa;
+  --accent:#c3ed8b; --accent-2:#a9d96e; --teal:#83cfc8; --pos:#c3ed8b; --neg:#f09892;
+  --algo:#c3ed8b; --algo-soft:#83cfc8; --bench:#7b8d9e; --up:#90cda9; --down:#e28e88;
+  --heat-pos:#427c68; --heat-neg:#9c5653; --heat-mid:#18232b;
+  --s1:#c3ed8b; --s2:#83cfc8; --s3:#b5b0e3; --s4:#dfb27f; --s5:#df9da6; --s6:#84aec8; --s7:#c7cfb8; --s8:#d8ca93;
+  --r:8px; --mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Consolas,monospace;
+}
+body { max-width:1280px; padding:0 32px 42px; font-family:Inter,"Segoe UI",system-ui,sans-serif; font-size:14px; line-height:1.65; }
+h1,h2,h3 { font-weight:600; letter-spacing:-.035em; }
+h2 { font-size:25px; line-height:1.25; } h3 { font-size:16px; }
+a:hover { color:#e3f8c9; }
+.sitebar { padding:23px 0; gap:24px; }
+.brand { font-size:12px; letter-spacing:.04em; gap:12px; white-space:nowrap; }
+.brand-mark { width:34px; height:34px; border:1px solid var(--line-2); border-radius:4px; background:none; color:var(--accent); font:500 17px var(--mono); }
+.brand small { display:block; color:var(--ink-3); font:10px var(--mono); letter-spacing:.12em; margin-top:3px; }
+.toplinks { gap:22px; } .toplinks a { font-size:12px; font-weight:500; }
+.toplinks .source-link { color:var(--accent); }
+.report-head { display:grid; grid-template-columns:minmax(0,1.12fr) minmax(0,1fr); gap:64px; align-items:center; text-align:left; padding:66px 0 42px; }
+.kicker,.eyebrow { font:500 10px/1.6 var(--mono); letter-spacing:.12em; color:var(--accent); }
+.report-head h1 { font-size:clamp(42px,4.7vw,64px); letter-spacing:-.055em; line-height:1.08; max-width:none; margin:21px 0; font-weight:500; }
+.report-head h1 span { color:var(--accent); }
+.report-head p { font-size:15px; max-width:49ch; line-height:1.85; margin:0; }
+.hero-actions { display:flex; flex-wrap:wrap; gap:12px; margin-top:28px; }
+.button { display:inline-flex; align-items:center; gap:20px; padding:11px 17px; border:1px solid var(--line-2); border-radius:4px; color:var(--ink); font-size:12px; font-weight:600; text-decoration:none; }
+.button.primary { background:var(--accent); border-color:var(--accent); color:#142015; }
+.button:hover { border-color:var(--accent); color:var(--accent); } .button.primary:hover { background:#d7f6b0; color:#142015; }
+.skill-tags { display:flex; flex-wrap:wrap; gap:8px 14px; margin-top:24px; font:10px var(--mono); color:var(--ink-3); }
+.skill-tags span::before { content:"+"; margin-right:6px; color:var(--line-2); }
+.study-card { min-width:0; border:1px solid var(--line-2); border-radius:var(--r); background:linear-gradient(145deg,#15212b,#101820); position:relative; padding:25px 24px 19px; }
+.study-card::before { content:""; position:absolute; top:-1px; left:24px; width:48px; height:2px; background:var(--accent); }
+.study-top { display:flex; justify-content:space-between; flex-wrap:wrap; gap:8px; font:10px var(--mono); color:var(--ink-3); letter-spacing:.06em; }
+.study-top strong { color:var(--ink-2); font-weight:400; }
+.study-metrics { display:flex; align-items:flex-end; justify-content:space-between; gap:20px; padding:22px 0 17px; }
+.study-metrics strong { display:block; font:400 clamp(35px,4vw,48px)/1.2 var(--mono); letter-spacing:-.06em; color:var(--accent); }
+.study-metrics .sample strong { font-size:23px; color:var(--ink); letter-spacing:-.04em; }
+.study-metrics span { display:block; margin-top:7px; color:var(--ink-2); font-size:11px; }
+.study-axis { padding-top:16px; border-top:1px solid var(--line); color:var(--ink-3); font:9px var(--mono); text-transform:uppercase; letter-spacing:.06em; }
+#study-chart { margin-top:7px; min-height:116px; }
+.study-card .study-caption { font-size:10px; color:var(--ink-3); line-height:1.65; margin-top:10px; max-width:none; }
+.publication { display:flex; justify-content:space-between; gap:16px; align-items:center; padding:14px 0; border-top:1px solid var(--line); border-bottom:1px solid var(--line); font:10px/1.7 var(--mono); color:var(--ink-3); }
+.publication .state { display:flex; align-items:center; gap:8px; white-space:nowrap; color:var(--ink-2); }
+.publication .state::before { content:""; width:5px; height:5px; background:var(--accent); }
+.publication strong { font-weight:400; color:var(--ink-2); }
+section { padding-top:48px; scroll-margin-top:20px; }
+.section-heading { margin-bottom:22px; align-items:center; }
+.section-heading h2 { margin-top:8px; }
+.section-heading .desc { max-width:74ch; font-size:13px; }
+.section-heading a { font-size:12px; text-decoration:none; }
+.section-number { color:var(--ink-3); margin-right:8px; }
+.stage { border-radius:4px; font:9px/1.6 var(--mono); font-weight:400; letter-spacing:.05em; padding:5px 8px; }
+.stage::before { width:4px; height:4px; border-radius:0; }
+.research-metrics { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); border:1px solid var(--line); border-radius:var(--r); overflow:hidden; }
+.research-metric { padding:23px 22px; background:var(--card); border-right:1px solid var(--line); }
+.research-metric:last-child { border-right:0; }
+.research-metric .metric-label { font:9px var(--mono); letter-spacing:.06em; }
+.research-metric strong { display:block; font:400 30px/1.25 var(--mono); letter-spacing:-.055em; margin:13px 0 7px; }
+.research-metric small { color:var(--ink-3); font-size:11px; line-height:1.6; display:block; }
+.research-metric .subtle { font-size:23px; color:var(--ink-2); }
+.tiers { gap:0; border-bottom:1px solid var(--line); margin-top:20px; }
+.tier { border:0; border-top:1px solid var(--line); border-radius:0; padding:22px 24px 24px 0; background:none; }
+.tier + .tier { padding-left:24px; border-left:1px solid var(--line); }
+.tier h3 { font-size:15px; margin:10px 0 7px; }
+.tier p { font-size:12px; color:var(--ink-3); }
+.panel,.two > div { padding:24px; }
+.two > div h2 { font-size:17px; }
+.desc { font-size:13px; line-height:1.7; } .note { font-size:11px; line-height:1.7; }
+.axis { font-family:var(--mono); font-size:10px; }
+.legend { font-size:11px; justify-content:flex-start; padding-left:4px; gap:8px 20px; }
+.legend i { border-radius:0; height:2px; }
+.chart-panel { box-shadow:none; } section.chart-panel { padding:25px; }
+.method-grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:0; border:1px solid var(--line); border-radius:var(--r); overflow:hidden; }
+.method-step { padding:24px 22px; border-right:1px solid var(--line); background:var(--card); }
+.method-step:last-child { border-right:0; }
+.method-step .step { color:var(--accent); font:11px var(--mono); }
+.method-step h3 { margin:18px 0 10px; font-size:16px; }
+.method-step p { color:var(--ink-2); font-size:12px; line-height:1.8; }
+.method-step a { display:inline-block; margin-top:18px; font:10px var(--mono); text-decoration:none; }
+.equation { display:flex; justify-content:space-between; align-items:center; gap:24px; background:#101922; border:1px solid var(--line); border-radius:var(--r); margin-top:14px; padding:19px 23px; }
+.equation .formula { font:14px var(--mono); color:var(--accent); white-space:nowrap; }
+.equation p { color:var(--ink-3); font-size:11px; max-width:60ch; }
+.limitations { display:grid; grid-template-columns:1fr 1fr; gap:10px 36px; margin-top:18px; padding:18px 0; border-top:1px solid var(--line); }
+.limitations p { font-size:11px; color:var(--ink-3); }
+.limitations strong { color:var(--ink-2); font-weight:500; }
+.metric-grid { gap:12px; margin-bottom:16px; }
+.metric-card { text-align:left; align-items:flex-start; padding:19px; min-height:132px; }
+.metric-label { font:9px var(--mono); letter-spacing:.06em; }
+.metric-value { font:400 28px/1.1 var(--mono); letter-spacing:-.04em; }
+.metric-caption { font-size:10px; color:var(--ink-3); }
+.proof-status { font-size:12px; border-color:var(--line); padding:12px; border-radius:4px; }
+.progress-labels,.fwd-row { font-size:11px; } .fwd-row strong { font:400 11px/1.6 var(--mono); }
+.progress-track { height:4px; border-radius:0; } .progress-track span { border-radius:0; background:var(--accent); }
+.evidence-note { font-size:11px; padding:11px 14px; border-radius:4px; border-left-width:2px; }
+.quick-guide summary,.stats-details summary,details summary { font-size:12px; font-weight:500; }
+.quick-guide dl { font-size:12px; } .stats div { font-size:11px; }
+.diagnostics { margin-top:18px; border:1px solid var(--line); border-radius:var(--r); padding:0 22px 8px; }
+.diagnostics > summary { padding:18px 0 10px; color:var(--ink-2); }
+.diagnostics > summary span { float:right; color:var(--ink-3); font:9px/2 var(--mono); }
+.diagnostics section { padding-top:20px; }
+.diagnostics section.chart-panel { margin-top:16px; }
+.risk-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:14px; }
+.risk-card { padding:22px; border:1px solid var(--line); border-radius:var(--r); }
+.risk-card b { display:block; color:var(--ink-3); font:10px var(--mono); margin-bottom:13px; }
+.risk-card h3 { font-size:15px; margin-bottom:9px; }
+.risk-card p { font-size:12px; color:var(--ink-2); }
+.ops-details { margin-top:16px; padding:0 20px 16px; border:1px solid var(--line); border-radius:var(--r); }
+.scenario-panel { padding:20px 0 10px; }
+.scenario-layout { display:grid; grid-template-columns:1fr 1.4fr; gap:24px; }
+.scenario-label { display:flex; justify-content:space-between; gap:12px; font-size:12px; }
+.scenario-label strong { font-family:var(--mono); color:var(--accent); }
+.scenario-panel input { width:100%; min-height:28px; accent-color:var(--accent); margin:12px 0; }
+.scenario-results { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; }
+.scenario-result { padding:15px 12px; border:1px solid var(--line); border-radius:5px; background:var(--card); }
+.scenario-result span { display:block; font-size:10px; color:var(--ink-3); }
+.scenario-result strong { display:block; margin-top:8px; font:20px var(--mono); white-space:nowrap; }
+.scenario-small { font-size:11px; color:var(--ink-3); margin-top:12px; }
+table { font-size:12px; } th { font:10px/1.6 var(--mono); } td { padding:12px; } td.num { font:11px var(--mono); }
+.footer-top { display:flex; justify-content:space-between; flex-wrap:wrap; gap:16px; margin-bottom:15px; color:var(--ink-2); }
+.footer-top strong { font:12px var(--mono); } .footer-top a { text-decoration:none; }
+footer { text-align:left; font-size:11px; margin-top:54px; padding-top:23px; }
+footer p { max-width:100ch; font-size:10px; color:var(--ink-3); }
+@media (max-width:1100px) {
+  .report-head { gap:32px; } .report-head h1 { font-size:49px; } .toplinks { gap:14px; }
+  .method-grid { grid-template-columns:1fr 1fr; } .method-step:nth-child(2) { border-right:0; } .method-step:nth-child(-n+2) { border-bottom:1px solid var(--line); }
+}
+@media (max-width:860px) {
+  .sitebar { flex-direction:column; align-items:flex-start; gap:15px; }
+  .report-head { grid-template-columns:1fr; gap:30px; padding:39px 0 27px; }
+  .report-head h1 { font-size:55px; } .report-head p { max-width:65ch; }
+  .study-card { padding:22px; } .study-metrics strong { font-size:42px; }
+  .study-metrics .sample strong { font-size:26px; }
+  .research-metrics { grid-template-columns:1fr 1fr; } .research-metric:nth-child(2) { border-right:0; } .research-metric:nth-child(-n+2) { border-bottom:1px solid var(--line); }
+  .tiers { grid-template-columns:1fr; } .tier + .tier { border-left:0; padding-left:0; }
+  .risk-grid { grid-template-columns:1fr; } .equation { align-items:flex-start; flex-direction:column; gap:10px; }
+}
+@media (max-width:700px) {
+  body { padding:0 18px 30px; } .sitebar { padding:19px 0 10px; gap:13px; }
+  .toplinks { gap:20px; } .toplinks a { font-size:11px; }
+  .report-head h1 { font-size:clamp(36px,9.7vw,53px); margin:18px 0; } .report-head p { font-size:13px; line-height:1.85; }
+  .kicker { font-size:9px; } .hero-actions { margin-top:22px; } .button { font-size:11px; padding:10px 13px; gap:14px; }
+  .skill-tags { margin-top:19px; font-size:9px; }
+  .study-card { padding:20px 15px 16px; } .study-metrics strong { font-size:37px; } .study-metrics .sample strong { font-size:23px; }
+  .study-metrics span { font-size:10px; } .study-top { font-size:9px; }
+  .publication { display:block; font-size:9px; } .publication .state { margin-bottom:5px; }
+  section { padding-top:36px; } h2 { font-size:22px; }
+  .section-heading { margin-bottom:17px; } .section-heading .desc { font-size:12px; } .section-heading > a { display:inline-block; margin-top:10px; }
+  .research-metric { padding:18px 14px; } .research-metric strong { font-size:25px; } .research-metric .subtle { font-size:20px; } .research-metric small { font-size:10px; }
+  .metric-grid { grid-template-columns:1fr 1fr; gap:10px; } .metric-card { padding:15px 12px; min-height:135px; } .metric-value { font-size:25px; }
+  .panel,.two > div,section.chart-panel { padding:17px 15px; }
+  .method-grid { grid-template-columns:1fr; } .method-step { padding:20px; border-right:0; border-bottom:1px solid var(--line); } .method-step:last-child { border-bottom:0; }
+  .method-step h3 { margin-top:10px; } .method-step a { margin-top:12px; }
+  .equation { padding:17px 14px; } .equation .formula { font-size:11px; }
+  .limitations { grid-template-columns:1fr; gap:10px; } .diagnostics { padding:0 12px 10px; } .diagnostics > summary span { display:none; }
+  .ops-details { padding:0 13px 13px; } .scenario-layout { grid-template-columns:1fr; gap:8px; } .scenario-results { gap:6px; } .scenario-result { padding:13px 8px; } .scenario-result strong { font-size:17px; }
+  .footer-top { display:block; } .footer-top div { margin-top:12px; }
+}
+
+.skip-link { position:absolute; left:20px; top:-70px; padding:12px; background:var(--accent); color:var(--bg); z-index:20; } .skip-link:focus { top:10px; }
+
 </style>
 </head>
 <body>
 
+<a class="skip-link" href="#overview">Skip to research</a>
 <div class="sitebar">
-  <a href="#top" class="brand"><span class="brand-mark" aria-hidden="true">∿</span><span>Sports Market Maker</span></a>
+  <a href="#top" class="brand"><span class="brand-mark" aria-hidden="true">AJ</span><span>Sports Market Maker<small>QUANTITATIVE RESEARCH</small></span></a>
   <nav class="toplinks" aria-label="Dashboard sections">
-    <a href="#overview">Overview</a><a href="#forward">Live results</a><a href="#paper">Paper trading</a>
-    <a href="#strategies">Strategies</a><a href="#risk">Trading system</a><a href="#research-section">Research</a><a href="#exchange-watch">Exchange watch</a>
+    <a href="#overview">Overview</a><a href="#research-section">Research</a><a href="#methodology">Model &amp; execution</a><a href="#forward">Validation</a><a href="#paper">Paper results</a><a class="source-link" href="https://github.com/akilatrades/sports-market-maker">Source ↗</a>
   </nav>
 </div>
+<main>
 <header class="report-head" id="top">
-  <div class="kicker">Kalshi player-prop markets</div>
-  <h1>A market-making strategy, measured against real fills</h1>
-  <p>Last season's data suggests that resting "NO" orders on NBA player props earns about 3 cents per contract after fees.
-  This page tracks whether that holds once real orders are placed on the exchange. Backtest results, paper trading and
-  exchange-confirmed fills are reported separately and never combined.</p>
-  <div class="meta" id="stamp" aria-live="polite">Loading the latest published data…</div>
+  <div>
+    <div class="kicker">RESEARCH PROJECT 001 / PREDICTION MARKETS</div>
+    <h1>From probability<br><span>to execution.</span></h1>
+    <p>An open research system for NBA and NFL player-prop markets. Price the contract, test passive execution, and measure how much simulated edge survives real fills, fees, and settlement.</p>
+    <div class="hero-actions"><a class="button primary" href="#methodology">Explore the framework <span aria-hidden="true">↗</span></a><a class="button" href="https://github.com/akilatrades/sports-market-maker/blob/main/RESEARCH_LOG.md">Read the research log <span aria-hidden="true">↗</span></a></div>
+    <div class="skill-tags"><span>Probability models</span><span>Market microstructure</span><span>Python</span><span>Risk systems</span></div>
+  </div>
+  <aside class="study-card" aria-label="Historical NBA sportsbook-filter study">
+    <div class="study-top"><strong>NBA / SPORTSBOOK FILTER</strong><span>HISTORICAL REPLAY</span></div>
+    <div class="study-metrics"><div><strong id="lead-edge">—</strong><span>Net cents / simulated contract</span></div><div class="sample"><strong id="lead-sample">—</strong><span>Retained simulated fills</span></div></div>
+    <div class="study-axis">Estimate ± 2 reported standard errors</div>
+    <div id="study-chart" role="img" aria-label="Historical net edge with and without the sportsbook filter"><p class="note">Loading the published study…</p></div>
+    <p class="study-caption" id="study-source">2025–26 NBA data · after modeled fees · not live performance</p>
+  </aside>
 </header>
+<div class="publication"><span class="state">PUBLIC RESEARCH SNAPSHOT</span><div id="stamp" aria-live="polite">Loading the latest published data…</div></div>
 
 <section id="overview">
-  <div class="section-heading">
-    <div><div class="eyebrow">01 · Overview</div><h2>Current status</h2>
-      <p class="desc">A dash means the figure is not yet available. Missing values are shown as missing rather than as zero.</p></div>
-    <span class="stage">Exchange-confirmed</span>
+  <div class="section-heading"><div><div class="eyebrow"><span class="section-number">01 /</span> THE RESEARCH QUESTION</div><h2>Does a statistical edge survive execution?</h2><p class="desc">The hypothesis: passive NO orders can capture asymmetric demand in player props. Models and sportsbook probabilities filter candidates; exchange evidence decides whether the edge is tradable.</p></div></div>
+  <div class="research-metrics" aria-label="Historical research scope and validation design">
+    <article class="research-metric"><span class="metric-label">NBA market sample</span><strong>57,111</strong><small>2025–26 markets in the<br>model-versus-price study</small></article>
+    <article class="research-metric"><span class="metric-label">Model-veto replay</span><strong class="pos">+2.93¢</strong><small>Per simulated contract<br>after modeled fees</small></article>
+    <article class="research-metric"><span class="metric-label">Replay observations</span><strong>21,373</strong><small>Simulated fills in the<br>NBA model-veto cohort</small></article>
+    <article class="research-metric"><span class="metric-label">Forward review gate</span><strong class="subtle">30d / 500</strong><small>Days and settled fill events<br>per market / rule version</small></article>
   </div>
-  
-  <div class="account-strip" aria-label="Demo account and pilot risk limits">
-    <div class="account-box"><span class="account-label">Kalshi Demo · last verified balance</span>
-      <strong id="demo-verified-balance">$2,500.00</strong>
-      <span class="account-small">Verified Oct 17, 2026. Not a live balance feed.</span>
-    </div>
-    <div class="account-box"><span class="account-label">Current Demo balance</span>
-      <strong>Not available</strong><span class="account-small">Check Kalshi Demo for the latest amount.</span>
-    </div>
-    <div class="account-box"><span class="account-label">Pilot risk limits</span>
-      <strong>$2 / order</strong><span class="account-small">$10 maximum committed exposure · not $2,500 deployed.</span>
-    </div>
+  <div class="tiers" aria-label="Evidence classification">
+    <div class="tier hist"><div class="eyebrow">01 · HISTORICAL</div><h3>Backtest the mechanism</h3><p>Historical quotes and trade prints replayed against fixed rules. A research estimate with modeled execution, not realized account performance.</p></div>
+    <div class="tier sim"><div class="eyebrow">02 · SIMULATED</div><h3>Observe the forward sample</h3><p>Paper fills estimated from public prints. Each strategy runs on a separate $500 paper bankroll; ledgers are never presented as one funded account.</p></div>
+    <div class="tier real"><div class="eyebrow">03 · EXCHANGE-CONFIRMED</div><h3>Validate actual execution</h3><p>Accepted orders, actual fills, fees and settlements. NBA and NFL, and each material rule version, require separate forward cohorts.</p></div>
   </div>
-  <div class="metric-grid" id="hero-metrics" aria-live="polite">
-    <article class="metric-card"><span class="metric-label">Realized P&amp;L</span><div class="metric-value">—</div><span class="metric-caption">No settled exchange results yet</span></article>
-    <article class="metric-card"><span class="metric-label">Settled NO contracts</span><div class="metric-value">—</div><span class="metric-caption">No exchange-confirmed fills yet</span></article>
-    <article class="metric-card"><span class="metric-label">Volume capture</span><div class="metric-value">—</div><span class="metric-caption">Backtest assumption: 50%</span></article>
-    <article class="metric-card"><span class="metric-label">Settled fill events</span><div class="metric-value">— / 500</div><span class="metric-caption">Evaluation checkpoint</span></article>
-  </div>
-
-  <div class="tiers" aria-label="How to read this page">
-    <div class="tier hist"><div class="eyebrow">Backtest</div><h3>Last season, simulated</h3>
-      <p>Historical Kalshi prices and trades replayed against the strategy's rules. It shows what the edge looked like in the past; it is not a result.</p></div>
-    <div class="tier sim"><div class="eyebrow">Paper trading</div><h3>This season, simulated fills</h3>
-      <p>Orders are generated live but fills are estimated from public trades. Each strategy runs on a separate $500 paper bankroll.</p></div>
-    <div class="tier real"><div class="eyebrow">Live results</div><h3>Real orders, real fills</h3>
-      <p>Orders placed on Kalshi and confirmed by the exchange. Only these count toward the evaluation checkpoint.</p></div>
-  </div>
-
-  <div class="primer">
-    <div class="primer-mark" aria-hidden="true">i</div>
-    <div><strong>The strategy in one paragraph</strong>
-      <p>Retail traders tend to overpay for "YES" on a player exceeding a stat line. The strategy rests "NO" orders on the other side and lets the market come to it.
-      Three steps separate an order from a profit: the order must fill, the game must settle, and exchange fees must be paid. Each step is tracked separately on this page.</p>
-    </div>
-  </div>
-</section>
-
-<section id="profit-scenarios" aria-labelledby="scenarios-heading">
-  <div class="section-heading">
-    <div><div class="eyebrow">02 · What-if math</div><h2 id="scenarios-heading">What could the profits look like?</h2>
-      <p class="desc">Pick a number of <strong>settled NBA contracts over 30 days</strong>.
-      Then see how much the result changes with the actual profit or loss per contract.
-      This is math, not a prediction of how many orders will fill.</p></div>
-    <span class="stage hist">Hypothetical only</span>
-  </div>
-  <div class="scenario-panel">
-    <div class="scenario-layout">
-      <div>
-        <label class="scenario-label" for="scenario-contracts"><span>Settled NBA contracts in 30 days</span><strong id="scenario-count">300</strong></label>
-        <input id="scenario-contracts" type="range" min="0" max="1000" step="25" value="300" aria-describedby="scenario-helper">
-        <p id="scenario-helper" class="desc">Count actual settled contracts, not the number of orders or assumed fills.</p>
-      </div>
-      <div class="scenario-results" role="group" aria-label="Hypothetical 30-day P and L">
-        <div class="scenario-result"><span>Loss case · −5¢ / contract</span><strong class="neg" id="scenario-loss">−$15.00</strong></div>
-        <div class="scenario-result"><span>Break even · 0¢</span><strong id="scenario-even">$0.00</strong></div>
-        <div class="scenario-result"><span>NBA backtest · +2.93¢</span><strong class="pos" id="scenario-backtest">+$8.79</strong></div>
-      </div>
-    </div>
-    <p class="scenario-small" id="scenario-impact" aria-live="polite">Relative to the last verified $2,500 Demo reference balance. This is not an expected return.</p>
-    <p class="scenario-small">Backtest number assumes its modeled fees and fill conditions; actual fees, fill selection and settlement outcomes can be worse. The −5¢ case is just an example, <strong>not a worst-case loss bound</strong>. This does not apply to NFL (no proven trading edge), and the current 48-hour pilot has much tighter limits than a full 30-day test.</p>
-  </div>
-</section>
-
-<section id="forward">
-  <div class="section-heading">
-    <div><div class="eyebrow">03 · Live results</div><h2>Exchange-confirmed fills</h2>
-      <p class="desc">Position sizes are frozen until 30 days have elapsed and 500 real fills have settled. The checkpoint triggers a review, not an automatic change.</p></div>
-    <a href="../docs/FORWARD_VALIDATION.md" style="font-size:13px">Evaluation protocol ↗</a>
-  </div>
-  <div class="panel-grid">
-    <article class="panel"><h3>Real fills vs. the backtest</h3><p class="desc">Confirmed by the exchange; nothing here is modeled.</p>
-      <div id="forward-view" aria-live="polite">Loading live results…</div></article>
-    <article class="panel"><h3>Trading system and risk limits</h3><p class="desc">The most recent saved run. Not a real-time feed of the account.</p>
-      <div id="system-view" aria-live="polite">Loading system status…</div></article>
-  </div>
-  <details class="quick-guide">
-    <summary>Glossary</summary>
-    <dl>
-      <dt>Order</dt><dd>An instruction to buy at a stated price. It can rest on the exchange without ever trading.</dd>
-      <dt>Fill</dt><dd>Part or all of an order has traded with another participant.</dd>
-      <dt>Settled</dt><dd>The game has finished and the contract has paid out, so the profit or loss is final.</dd>
-      <dt>Profit per contract</dt><dd>Average profit, in cents, on each contract after fees. The backtest estimate is 2.9¢.</dd>
-      <dt>Volume capture</dt><dd>Of all contracts that traded through the strategy's price, the share that filled its orders. Different from the fraction of a single order that filled.</dd>
-      <dt>Drawdown</dt><dd>The decline from a previous peak in cumulative profit, in dollars. It describes the losing stretches.</dd>
-      <dt>Standard error</dt><dd>A measure of how uncertain an average is. Error bars of ±2 standard errors that exclude zero indicate a result unlikely to be luck.</dd>
-    </dl>
-  </details>
-</section>
-
-<section class="chart-panel" id="paper">
-  <div class="section-heading">
-    <div><div class="eyebrow">03 · Paper trading</div><h2>Combined paper results over time</h2>
-      <p class="desc">The sum of separate $500 research ledgers, not a single tradable portfolio or account balance. Fills are estimated from public prints.</p></div>
-    <span class="stage sim">Simulated</span>
-  </div>
-  <div class="evidence-note"><strong>Note:</strong> paper fills are estimates based on public trade prints. Only exchange-confirmed fills count toward the live evaluation above.</div>
-  <div id="cumulative"></div>
-  <div class="legend"><span style="--c:var(--algo)"><i></i>Independent paper-ledger totals</span>
-    <span style="--c:var(--bench)"><i></i>Backtest benchmark applied to the same fills</span></div>
-  <details class="stats-details"><summary>Detailed paper-trading statistics</summary><div class="stats" id="stats"></div></details>
-</section>
-
-<section>
-  <div class="two">
-    <div>
-      <h2>Daily profit</h2>
-      <p class="desc">Paper profit by settlement day. Green days were positive, red days negative.</p>
-      <div id="daily"></div>
-    </div>
-    <div>
-      <h2>Profit per fill</h2>
-      <p class="desc">Distribution of profit per contract across settled paper fills, in cents.</p>
-      <div id="hist"></div>
-    </div>
-  </div>
-</section>
-
-<section class="chart-panel">
-  <div class="section-heading">
-    <div><h2>Monthly profit by ledger</h2>
-      <p class="desc">Dollars per month. Green is positive, red is negative, darker is larger. Dashed cells had no settlements.</p></div>
-  </div>
-  <div class="scroll heat-scroll" id="heat" role="region" tabindex="0" aria-label="Monthly paper profit by ledger; scroll sideways to see more months"></div>
-</section>
-
-<section class="chart-panel">
-  <div class="section-heading">
-    <div><h2>Drawdown</h2>
-      <p class="desc">Drawdown in the sum of separate paper experiments, not a drawdown on one funded account. The three largest periods are shaded.</p></div>
-  </div>
-  <div id="underwater"></div>
-  <div class="scroll" id="ddtable"></div>
-</section>
-
-<section>
-  <div class="two">
-    <div>
-      <h2>Rolling edge</h2>
-      <p class="desc">Profit per contract over the trailing 7 and 30 settlement days, in cents. The flat line is the backtest estimate.</p>
-      <div id="rolling"></div>
-      <div class="legend"><span style="--c:var(--algo)"><i></i>Trailing 30 days</span><span style="--c:var(--algo-soft)"><i></i>Trailing 7 days</span><span style="--c:var(--bench)"><i></i>Backtest edge</span></div>
-    </div>
-    <div>
-      <h2>Edge by ledger</h2>
-      <p class="desc">Profit per contract with ±2 standard errors, for ledgers with at least five fills. Hollow markers show last season's backtest.</p>
-      <div id="forest"></div>
-    </div>
-  </div>
-</section>
-
-<section class="chart-panel" id="strategies">
-  <div class="section-heading">
-    <div><div class="eyebrow">04 · Strategies</div><h2>Paper ledgers by strategy</h2>
-      <p class="desc">Each strategy runs on its own $500 paper bankroll. Fills are simulated from public Kalshi trades. Headline figures first; the full table is below.</p></div>
-    <span class="stage sim">Simulated</span>
-  </div>
-  <div class="scroll"><table id="strategy-summary"></table></div>
-  <details class="stats-details">
-    <summary>Full statistics: sample sizes, drawdowns and more</summary>
-    <div class="scroll" style="margin-bottom:16px"><table id="ledgers"></table></div>
-  </details>
-  <div id="idle"></div>
-</section>
-
-<section class="chart-panel">
-  <div class="section-heading">
-    <div><h2>Contract allocation</h2>
-      <p class="desc">Share of settled paper contracts by strategy.</p></div>
-  </div>
-  <div class="expo" id="expo"></div>
-</section>
-
-<section id="risk">
-  <div class="section-heading">
-    <div><div class="eyebrow">05 · Trading system</div><h2>Most recent trading run</h2>
-      <p class="desc">Latest saved logs and configured risk limits. Not a real-time view of the exchange account.</p></div>
-  </div>
-  <div class="two" id="live"></div>
 </section>
 
 <section id="research-section">
-  <div class="section-heading">
-    <div><div class="eyebrow">06 · Research</div><h2>Backtest results</h2>
-      <p class="desc">Last season's data. A strong backtest is a reason to test a market, not evidence that it pays.</p></div>
-    <span class="stage hist">Historical</span>
+  <div class="section-heading"><div><div class="eyebrow"><span class="section-number">02 /</span> HISTORICAL EVIDENCE</div><h2>Test the mechanism. Report the failures.</h2><p class="desc">Market selection and trade filtering are separate experiments. Estimates below describe their own historical samples.</p></div><a href="https://github.com/akilatrades/sports-market-maker/blob/main/RESEARCH_LOG.md">Full experiment log ↗</a></div>
+  <div class="two"><div><h2>Where did the NO edge appear?</h2><p class="desc">Net cents per simulated contract across scanned markets.</p><div id="scan"></div></div><div><h2>Does the sportsbook filter help?</h2><p class="desc">Historical fills, grouped by contemporaneous sportsbook-line filters.</p><div id="research"></div></div></div>
+  <div class="limitations"><p><strong>Execution assumption.</strong> Trade-through fills and modeled fees do not capture the full exchange queue. The scaling study's 50% flow share is assumed, not measured.</p><p><strong>Statistical limits.</strong> One NBA season, selected markets and correlated fills. ±2 reported standard errors are descriptive; live evaluation requires game-level uncertainty.</p><p><strong>Cohort boundaries.</strong> The 21,373-fill model-veto replay and the 151-game sportsbook study use different samples. Their headline estimates are not a matched comparison.</p><p><strong>Negative findings.</strong> The model-pick taker test lost 0.9¢ per contract after costs. Forecast information alone did not deliver an executable trading edge.</p></div>
+</section>
+
+<section id="methodology">
+  <div class="section-heading"><div><div class="eyebrow"><span class="section-number">03 /</span> MODEL &amp; EXECUTION</div><h2>A research question, built into a system.</h2><p class="desc">Four connected components make the work reproducible, measurable, and explicit about where uncertainty enters.</p></div><span class="stage hist">Open source</span></div>
+  <div class="method-grid">
+    <article class="method-step"><span class="step">01 / INGEST</span><h3>Build the market state</h3><p>Player box scores, schedules, usage and injury data, sportsbook consensus, and timestamped Kalshi quotes.</p><a href="https://github.com/akilatrades/sports-market-maker/tree/main/live">Data pipelines ↗</a></article>
+    <article class="method-step"><span class="step">02 / ESTIMATE</span><h3>Price the distribution</h3><p>NBA minutes and rate models; NFL usage and efficiency. Map stat distributions to contract probabilities and compare de-vigged lines.</p><a href="https://github.com/akilatrades/sports-market-maker/tree/main/markets">Pricing models ↗</a></article>
+    <article class="method-step"><span class="step">03 / EXECUTE</span><h3>Filter, quote, constrain</h3><p>Passive NO quotes, expected-edge filters, data freshness checks and bounded exposure. Record the strategy version behind each order.</p><a href="https://github.com/akilatrades/sports-market-maker/blob/main/live/prod_nfl_auto.py">Execution engine ↗</a></article>
+    <article class="method-step"><span class="step">04 / RECONCILE</span><h3>Measure realized evidence</h3><p>Separate orders from fills, account for actual fees and settlement, then examine capture, drawdown and independent games.</p><a href="https://github.com/akilatrades/sports-market-maker/blob/main/docs/FORWARD_VALIDATION.md">Validation protocol ↗</a></article>
   </div>
-  <div class="two">
-    <div>
-      <h2>Market scan</h2>
-      <p class="desc">Profit per contract by market, from last season's replay.</p>
-      <div id="scan"></div>
-    </div>
-    <div>
-      <h2>Sportsbook-line filter</h2>
-      <p class="desc">Last season's fills, with and without the sportsbook consensus as a filter.</p>
-      <div id="research"></div>
-    </div>
-  </div>
+  <div class="equation"><div class="formula">EV(NO) = p̂(NO) − q(NO) − ĉ(fees)</div><p>Estimated edge per contract with a $1 winning payout. Fill selection, price and actual fees determine whether this estimate survives execution.</p></div>
+</section>
+
+<section id="forward">
+  <div class="section-heading"><div><div class="eyebrow"><span class="section-number">04 /</span> FORWARD VALIDATION</div><h2>The execution test is the next proof point.</h2><p class="desc">Published NBA exchange evidence. A missing report is not zero profit or proof that trading has stopped. NFL activity is evaluated in its own cohort.</p></div><span class="stage">Exchange-confirmed only</span></div>
+  <div class="metric-grid" id="hero-metrics" aria-live="polite"></div>
+  <div class="panel-grid"><article class="panel"><h3>NBA validation checkpoint</h3><p class="desc">30 days and 500 settled fill events trigger a review, not automatic scaling.</p><div id="forward-view" aria-live="polite">Loading published evidence…</div></article><article class="panel"><h3>Evidence and provenance</h3><p class="desc">Not a real-time feed of the account.</p><div id="system-view" aria-live="polite">Loading report coverage…</div></article></div>
+  <details class="quick-guide"><summary>Metric definitions &amp; reading guide</summary><dl><dt>Order / fill / contract</dt><dd>An order can receive multiple fill events; each fill can contain multiple contracts. These counts answer different questions.</dd><dt>Settled P&amp;L</dt><dd>Final contract payout minus entry cost and actual fees. Open position cost is not a realized loss.</dd><dt>Volume capture</dt><dd>Actual filled contracts divided by qualifying printed volume in comparable, fully observed resting-order windows.</dd><dt>Drawdown</dt><dd>The decline from a previous peak in cumulative profit. Paper-ledger drawdowns remain separate from funded account risk.</dd><dt>Standard error</dt><dd>Uncertainty around an estimated mean. Correlated fills and selected experiments limit what a conventional error bar can establish.</dd></dl></details>
+</section>
+
+<section class="chart-panel" id="paper">
+  <div class="section-heading"><div><div class="eyebrow"><span class="section-number">05 /</span> PAPER OBSERVATION</div><h2>Forward paper results</h2><p class="desc">The sum of separate $500 research ledgers, not a single tradable portfolio or account balance. Fills are estimated from public prints.</p></div><span class="stage sim">Simulated</span></div>
+  <div class="evidence-note">These ledgers test forward behavior under the paper fill model. They do not establish actual exchange fill rates or realized account returns.</div>
+  <div id="cumulative"></div><div class="legend"><span style="--c:var(--algo)"><i></i>Independent paper-ledger totals</span><span style="--c:var(--bench)"><i></i>Backtest benchmark applied to the same fills</span></div>
+  <details class="stats-details"><summary>Sample sizes &amp; paper statistics</summary><div class="stats" id="stats"></div></details>
+</section>
+<details class="diagnostics"><summary>Explore the paper diagnostics <span>RETURNS / DRAWDOWN / DISTRIBUTIONS</span></summary>
+  <section><div class="two"><div><h2>Daily settlement P&amp;L</h2><p class="desc">Paper profit by settlement day, in dollars.</p><div id="daily"></div></div><div><h2>Return distribution</h2><p class="desc">Profit per contract across settled paper fills, in cents.</p><div id="hist"></div></div></div></section>
+  <section class="chart-panel"><h2>Monthly attribution</h2><p class="desc">Paper P&amp;L by ledger. Dashed cells have no settlements.</p><div class="scroll heat-scroll" id="heat" role="region" tabindex="0" aria-label="Monthly paper profit by ledger; scroll sideways to see more months"></div></section>
+  <section class="chart-panel"><h2>Drawdown</h2><p class="desc">Aggregate drawdown across separate paper experiments. The three largest periods are shaded.</p><div id="underwater"></div><div class="scroll" id="ddtable"></div></section>
+  <section><div class="two"><div><h2>Rolling edge</h2><p class="desc">Net cents per contract across the trailing 7 and 30 settlement days.</p><div id="rolling"></div><div class="legend"><span style="--c:var(--algo)"><i></i>30 days</span><span style="--c:var(--algo-soft)"><i></i>7 days</span><span style="--c:var(--bench)"><i></i>Historical reference</span></div></div><div><h2>Edge by ledger</h2><p class="desc">±2 reported standard errors; minimum five fills. Hollow markers are historical references.</p><div id="forest"></div></div></div></section>
+  <section class="chart-panel"><h2>Contract allocation</h2><p class="desc">Share of settled paper contracts by strategy.</p><div class="expo" id="expo"></div></section>
+</details>
+
+<section class="chart-panel" id="strategies">
+  <div class="section-heading"><div><div class="eyebrow">PAPER / STRATEGY ATTRIBUTION</div><h2>Independent research ledgers</h2><p class="desc">Separate $500 paper bankrolls. Compare sample size and exposure alongside each result.</p></div><span class="stage sim">Simulated</span></div>
+  <div class="scroll"><table id="strategy-summary"></table></div><details class="stats-details"><summary>Full ledger statistics</summary><div class="scroll" style="margin-bottom:16px"><table id="ledgers"></table></div></details><div id="idle"></div>
+</section>
+
+<section id="risk">
+  <div class="section-heading"><div><div class="eyebrow"><span class="section-number">06 /</span> RISK &amp; ENGINEERING</div><h2>Constraints are part of the strategy.</h2><p class="desc">Execution safeguards and an auditable record make the model testable under real operational limits.</p></div><a href="https://github.com/akilatrades/sports-market-maker/tree/main/tests">Inspect the tests ↗</a></div>
+  <div class="risk-grid"><article class="risk-card"><b>PRE-TRADE</b><h3>Fresh inputs. Bounded exposure.</h3><p>Projection age, availability checks and fee-aware edge filters precede order submission. Per-order, game, team and active-exposure limits constrain the NFL runner.</p></article><article class="risk-card"><b>EXECUTION</b><h3>Orders are not fills.</h3><p>Resting quotes, cancellations and partial fills have distinct states. The account service is read-only; reporting does not submit orders.</p></article><article class="risk-card"><b>MEASUREMENT</b><h3>Keep a traceable research record.</h3><p>Preserve rule versions, probability sources and timestamps. Missing outcomes and fees remain unknown; a checkpoint prompts review rather than automatic sizing.</p></article></div>
+  <details class="ops-details"><summary>Inspect published research-job snapshots</summary><p class="desc">Scheduled GitHub output is a separate research mirror. A dry-run snapshot does not establish the private trading server's status.</p><div class="two" id="live"></div></details>
 </section>
 
 <section id="exchange-watch">
-  <div class="section-heading">
-    <div><div class="eyebrow">07 · Exchange watch</div><h2>Kalshi vs. Polymarket US</h2>
-      <p class="desc">I'm watching NBA and NFL player props on both exchanges to see which lines overlap and where prices differ. Research only. A price gap isn't an arbitrage or a reason to place an order.</p></div>
-    <span class="stage hist">Read-only</span>
-  </div>
-  <article class="panel">
-    <div id="exchange-watch-data" aria-live="polite">
-      Waiting for the first public-market scan. No Polymarket account or funding needed.
-    </div>
-    <p class="note">Both sets of prices come from public production feeds, not my Kalshi Demo account. Matching wording is not enough to prove identical settlement rules. <a href="../docs/CROSS_EXCHANGE_PROP_WATCH.md">How I'm checking this ↗</a></p>
-  </article>
+  <div class="section-heading"><div><div class="eyebrow"><span class="section-number">07 /</span> RESEARCH EXTENSION</div><h2>Cross-venue market structure</h2><p class="desc">Compare Kalshi and Polymarket US player-prop coverage, contract definitions and observed prices. Text matches are candidates for review, not executable arbitrage.</p></div><span class="stage hist">Read-only research</span></div>
+  <article class="panel"><div id="exchange-watch-data" aria-live="polite">Loading the latest public-market scan…</div><p class="note">Public production feeds. Contract wording, settlement rules, depth and costs must align before a price difference has trading meaning. <a href="https://github.com/akilatrades/sports-market-maker/blob/main/docs/CROSS_EXCHANGE_PROP_WATCH.md">Research specification ↗</a></p></article>
 </section>
 
-<footer><strong>About the numbers.</strong> This page reads reports saved to GitHub, not the exchange account itself. <a href="../outputs/dashboard/summary.json">Summary JSON</a> · <a href="../docs/FORWARD_VALIDATION.md">Evaluation protocol</a> · <a href="https://github.com/akilatrades/sports-market-maker">Source code</a>.<br>Simulated fills, backtest results and exchange-confirmed results are distinct, and none of them guarantee future returns.</footer>
+<section id="profit-scenarios" aria-labelledby="scenarios-heading">
+  <details class="diagnostics"><summary id="scenarios-heading">Execution sensitivity: contracts × net edge <span>HYPOTHETICAL / NOT A FORECAST</span></summary>
+    <div class="scenario-panel"><p class="desc">Hold settled contract count fixed and vary realized net cents per contract. This isolates the arithmetic; it does not estimate fills, capacity or future returns.</p><div class="scenario-layout" style="margin-top:20px"><div><label class="scenario-label" for="scenario-contracts"><span>Settled contracts</span><strong id="scenario-count">300</strong></label><input id="scenario-contracts" type="range" min="0" max="1000" step="25" value="300" aria-describedby="scenario-helper"><p id="scenario-helper" class="note">Count contracts, not orders or fill records.</p></div><div class="scenario-results" role="group" aria-label="Hypothetical P and L"><div class="scenario-result"><span>−5¢ / contract</span><strong class="neg" id="scenario-loss">−$15.00</strong></div><div class="scenario-result"><span>0¢ / contract</span><strong id="scenario-even">$0.00</strong></div><div class="scenario-result"><span>+2.93¢ / contract</span><strong class="pos" id="scenario-backtest">+$8.79</strong></div></div></div><p class="scenario-small" id="scenario-impact" aria-live="polite"></p><p class="scenario-small">The positive case uses the historical NBA model-veto estimate after modeled fees. It is not an NFL estimate. The −5¢ case is an example, not a worst-case loss bound.</p></div>
+  </details>
+</section>
+</main>
+<footer><div class="footer-top"><strong>AJ / SPORTS MARKET MAKER</strong><div><a href="https://github.com/akilatrades/sports-market-maker">Repository ↗</a> &nbsp; / &nbsp; <a href="../outputs/dashboard/summary.json">Published data ↗</a> &nbsp; / &nbsp; <a href="https://github.com/akilatrades/sports-market-maker/blob/main/docs/FORWARD_VALIDATION.md">Validation protocol ↗</a></div></div><p>Independent quantitative research. Backtests, paper ledgers and exchange-confirmed results remain separate. This page reads published GitHub reports; private account data is not exposed here. Historical results do not establish future returns.</p></footer>
 <div class="tt" id="tt"></div>
 
 <script>
+
 const NAMES = {
   "KXITFMATCH": "ITF tennis, match winner", "KXNASCARRACE": "NASCAR, race winner", "KXLIGAMXSPREAD": "Liga MX, point spread", "KXLALIGASPREAD": "La Liga, point spread",
   "KXNFLANYTD": "NFL, anytime touchdown", "KXNFLRECYDS": "NFL, receiving yards", "KXNFLANYTD+model": "NFL, anytime TD, model filter", "KXNFLRECYDS+model": "NFL, receiving yds, model filter", "KXITFMATCH+no30": "ITF tennis, no at 30¢+ only", "KXNBA3D": "NBA, player triple-double", "KXNASCARTOP10": "NASCAR, driver top-10 finish",
@@ -575,7 +592,7 @@ function spark(values, color) {
 }
 
 function stats(s, pf) {
-  const p = s.paper, live = s.live || {}, nfl = s.live_nfl || {};
+  const p = s.paper;
   const fills = p.total_fills, contracts = p.daily.reduce((a, d) => a + (d.contracts || 0), 0);
   const active = p.ledgers.filter(l => l.fills > 0);
   const orders = p.ledgers.reduce((a, l) => a + l.orders, 0), done = p.ledgers.reduce((a, l) => a + l.orders - l.open, 0);
@@ -595,13 +612,7 @@ function stats(s, pf) {
     ["Winning days", pf.days.length ? `${wins} of ${pf.days.length}` : "—"],
     ["Max drawdown", maxdd ? "−" + money(maxdd) : "$0.00", maxdd ? "neg" : ""],
     ["Contracts per day", pf.days.length ? Math.round(contracts / pf.days.length).toLocaleString() : "—"],
-    ["Demo starting balance (Oct 17)", money(DEMO_REFERENCE.lastVerifiedBalance), "muted"],
-    ["Current Demo balance", "— check the exchange", "muted"],
-    ["Exchange P&L (saved logs)", [live.realized_total, nfl.realized_total].some(v => typeof v === "number") ? money((live.realized_total || 0) + (nfl.realized_total || 0)) : "— not published", "muted"],
-    ["Exposure (saved logs)", [live.run_utc, nfl.run_utc].some(Boolean) ? money((live.open_exposure || 0) + (nfl.open_exposure || 0)) : "— not published", "muted"],
-    ["Pilot max (configured)", money(DEMO_REFERENCE.pilotTotalLimit) + " committed", "muted"],
-    ["Strategy rule", live.run_utc ? name("NBA " + live.rule) : "— no server log published"],
-    ["Reported mode", live.run_utc ? `${live.mode} (${live.env})` : "— no server log published"],
+
   ];
   document.getElementById("stats").innerHTML = rows.map(([k, v, c]) => `<div><span>${esc(k)}</span><span class="${c || ""}">${esc(v)}</span></div>`).join("");
 }
@@ -661,40 +672,38 @@ function util(label, value, limit, hot) {
   const f = limit ? Math.min(1, Math.max(0, value / limit)) : 0;
   return `<div class="row"><span class="lab">${esc(label)}</span><div class="bar"><i class="${hot && f >= 1 ? "hot" : ""}" style="width:${(100 * f).toFixed(1)}%"></i></div><span class="val">${money(value)} of ${money0(limit)}</span></div>`;
 }
-function liveBlock(live, label, limits) {
-  const today = live.realized_by_day ? Object.values(live.realized_by_day).slice(-1)[0] : 0;
-  let html = `<div><h2 style="font-size:16px">${esc(label)} ${live.run_utc ? `<span class="pill ${live.mode === "live" ? "live" : ""}">${esc(live.mode)}</span> <span class="pill">${esc(live.env || "")}</span>` : `<span class="pill">no saved run</span>`}</h2>`;
-  if (!live.run_utc) { html += `<p class="note">No trading run in the saved snapshot. The trading server reports separately from the GitHub dry-run mirror.</p></div>`; return html; }
-  html += `<dl class="kv"><dt>Last pass</dt><dd>${esc(live.run_utc.slice(0, 16).replace("T", " "))} UTC</dd><dt>Rule</dt><dd>${esc(name("NBA " + live.rule).replace("NBA props, ", ""))}</dd><dt>Bankroll</dt><dd>${money(live.bankroll)}</dd><dt>Candidates → placed</dt><dd>${live.candidates ?? "—"} → ${live.placed ?? "—"}${live.rejected ? ` <span class="muted">(${live.rejected} rejected)</span>` : ""}</dd>${live.injury_cancels ? `<dt>Injury cancels</dt><dd>${live.injury_cancels}</dd>` : ""}${live.exits?.orders ? `<dt>Early exits</dt><dd>${live.exits.orders} orders, expected ${money(live.exits.expected_gain)}${live.exits.scored ? `; holding would have made ${money(live.exits.hold_would_have_made)}` : ""}</dd>` : ""}</dl>`;
-  const activeLimit = live.demo_pilot ? (live.pilot_total_cap || DEMO_REFERENCE.pilotTotalLimit) : limits.max_open;
-  const activeStop = live.demo_pilot ? 5 : limits.daily_loss_stop;
-  html += `<div class="util">${util("Open exposure", live.open_exposure || 0, activeLimit, true)}${util("Today's loss vs stop", Math.max(0, -(today || 0)), activeStop, true)}</div>`;
-  if (live.rejections && Object.keys(live.rejections).length) html += `<p class="note">Rejections: ${Object.entries(live.rejections).map(([k, v]) => `${esc(k)} (${v})`).join("; ")}</p>`;
-  if (live.realized_by_day) html += `<div class="scroll" style="margin-top:8px"><table><thead><tr><th>Day</th><th class="num">Realized</th></tr></thead><tbody>${Object.entries(live.realized_by_day).slice(-7).map(([d, v]) => `<tr><td>${esc(d)}</td><td class="num ${cls(v)}">${money(v)}</td></tr>`).join("")}</tbody></table></div>`;
-  return html + "</div>";
+function liveBlock(live, label) {
+  const hasRun = Boolean(live.run_utc);
+  const mode = hasRun ? String(live.mode || "unknown").toUpperCase() : "NO REPORT";
+  const row = (key, value) => `<div class="fwd-row"><span>${esc(key)}</span><strong>${esc(value)}</strong></div>`;
+  return `<div><h2>${esc(label)} <span class="pill">${esc(mode)}</span></h2>` +
+    (hasRun ? row("Published run", String(live.run_utc).slice(0,16).replace("T"," ")+" UTC") +
+      row("Environment label", live.env || "Not published") + row("Research rule", live.rule || "Not published") +
+      row("Candidates", live.candidates == null ? "—" : String(live.candidates)) +
+      row("Reported submissions", live.placed == null ? "—" : String(live.placed)) : `<p class="note">No trading run in the saved snapshot.</p>`) +
+    `<p class="note">A scheduled research snapshot is not evidence of production orders, live balances or profitability.</p></div>`;
 }
 function research(s) {
   const b = (s.research || {}).bookline, el = document.getElementById("research");
   if (!b || !b.veto) { el.innerHTML = `<p class="note">Not run yet.</p>`; return; }
   const items = [["All fills in sample", b.all], ["Kept by sportsbook veto", b.veto], ["Removed by sportsbook veto", b.removed], ["Kept by model veto", b.model]].filter(x => x[1]).map(([label, r]) => ({label, est: r.cents, se: r.se, color: label.startsWith("Kept by sportsbook") ? "var(--algo)" : "var(--bench)", sub: `${r.fills.toLocaleString()} fills, t ${r.t}`}));
   forest(el, items, {labelW: 200});
-  el.insertAdjacentHTML("beforeend", `<p class="note">${b.games} games sampled from 2025-26 with the books' lines as they stood when each order was posted; an exact-line quote for ${Math.round(100 * b.coverage)}% of fills. Kept minus removed ${cents(b.difference?.cents)}, t ${b.difference?.t}. ${b.pass ? "Passed the pre-registered test (at least 1¢ better, t ≥ 2, 2,000+ covered fills); the live trader runs this rule from opening night." : "Did not pass the pre-registered test."}</p>`);
+  el.insertAdjacentHTML("beforeend", `<p class="note">${b.games} games sampled from 2025-26 with the books' lines as they stood when each order was posted; an exact-line quote for ${Math.round(100 * b.coverage)}% of fills. Kept minus removed ${cents(b.difference?.cents)}, t ${b.difference?.t}. ${b.pass ? "Passed this historical study’s pre-registered threshold (at least 1¢ improvement, t ≥ 2, 2,000+ covered fills). Forward execution remains a separate test." : "Did not pass the pre-registered test."}</p>`);
 }
 
 function overview(snapshot){
  const live=snapshot.live||{}, nfl=snapshot.live_nfl||{}, f=live.forward_validation||{};
  const observed=Number(f.eligible_real_orders||0)>0;
- const realizedParts=[live.realized_total,nfl.realized_total].filter(v=>typeof v==="number");
- const realized=realizedParts.length?realizedParts.reduce((sum,n)=>sum+n,0):null;
+ const realized=observed&&typeof live.realized_total==="number"?live.realized_total:null;
  const contracts=observed&&Number(f.settled_contracts)>0?Number(f.settled_contracts):null;
  const capture=observed&&f.capture_volume_weighted!=null&&Number(f.qualifying_contracts)>0?f.capture_volume_weighted:null;
  const events=observed?Number(f.settled_buy_fill_events||0):null;
  const card=(label,value,caption,tone="")=>`<article class="metric-card"><span class="metric-label">${esc(label)}</span><div class="metric-value ${tone}">${esc(value)}</div><span class="metric-caption">${esc(caption)}</span></article>`;
  document.getElementById("hero-metrics").innerHTML=[
-  card("Realized P&L",realized==null?"—":money(realized),realized==null?"No settled exchange results in the saved logs":"NBA and NFL settlements from the saved logs",realized>0?"positive":realized<0?"negative":""),
-  card("Settled NO contracts",contracts==null?"—":contracts.toLocaleString(),contracts==null?"No exchange-confirmed fills have settled yet":"NBA contracts confirmed by the exchange"),
+  card("Realized P&L",realized==null?"—":money(realized),realized==null?"No settled exchange results in the saved logs":"NBA settlements from the published cohort",realized>0?"positive":realized<0?"negative":""),
+  card("Settled NO contracts",contracts==null?"—":contracts.toLocaleString(),contracts==null?"No settled NBA contracts in the published cohort":"NBA contracts confirmed by the exchange"),
   card("Volume capture",capture==null?"—":pct(capture),capture==null?"No completed order window to measure yet":"Backtest assumption: 50%"),
-  card("Settled fill events",events==null?"— / 500":events.toLocaleString()+" / 500",events==null?"No exchange fills recorded yet":"Checkpoint: 30 days and 500 settled fills")
+  card("Settled fill events",events==null?"— / 500":events.toLocaleString()+" / 500",events==null?"No NBA fill-event count published":"Checkpoint: 30 days and 500 settled fills")
  ].join("");
  const row=(label,value)=>`<div class="fwd-row"><span>${esc(label)}</span><strong>${esc(value)}</strong></div>`;
  const count=Number(f.settled_buy_fill_events||0),days=Number(f.elapsed_days||0);
@@ -710,35 +719,45 @@ function overview(snapshot){
  const tone=f.status==="checkpoint_ready_for_human_review"?"ok":f.status==="data_incomplete"?"warn":"";
  const ready=observed;
  const proof=document.getElementById("forward-view");
- proof.innerHTML=`<div class="proof-status ${tone}">${esc(ready?state:"No exchange-confirmed NBA fills yet. This is not a result in either direction; the live evaluation has not started.")}</div>`+
+ proof.innerHTML=`<div class="proof-status ${tone}">${esc(ready?state:"No exchange-confirmed NBA cohort published yet. Historical and paper results do not establish live performance.")}</div>`+
  `<div class="progress-labels"><span>Real, settled fill events</span><strong>${esc(ready?count.toLocaleString()+" / 500":"Not started")}</strong></div>`+
  `<div class="progress-track" role="progressbar" aria-label="Settlement-fill checkpoint" aria-valuemin="0" aria-valuemax="500" aria-valuenow="${Math.min(500,count)}"><span style="width:${pc}%"></span></div>`+
  `<div class="progress-labels" style="margin-top:17px"><span>Observation period</span><strong>${esc(ready?days.toFixed(1)+" / 30 days":"Not started")}</strong></div>`+
  `<div class="progress-track" role="progressbar" aria-label="Observation-day checkpoint" aria-valuemin="0" aria-valuemax="30" aria-valuenow="${Math.min(30,days)}"><span style="width:${pd}%"></span></div>`+
- `<div style="margin-top:19px">${row("Real profit / settled contract",f.cents_per_settled_contract==null?"—":cents(f.cents_per_settled_contract))}${row("What the backtest expects","+2.9¢ / contract")}${row("Volume data recorded",f.mature_volume_coverage==null?"—":pct(f.mature_volume_coverage))}${row("Independent games",f.independent_games==null?"—":String(f.independent_games))}${row("Position sizing","Frozen until the checkpoint review")}</div>`+
+ `<div style="margin-top:19px">${row("Real profit / settled contract",f.cents_per_settled_contract==null?"—":cents(f.cents_per_settled_contract))}${row("Historical reference","+2.9¢ / contract")}${row("Volume data recorded",f.mature_volume_coverage==null?"—":pct(f.mature_volume_coverage))}${row("Independent games",f.independent_games==null?"—":String(f.independent_games))}${row("Position sizing","Frozen until the checkpoint review")}</div>`+
  `<p class="note">The checkpoint covers NBA “NO” buys only. The edge is judged on exchange-confirmed fills after fees and settlement, not on the backtest.</p>`;
  const statusLine=(name,item)=>`<div class="fwd-row"><span>${esc(name)} trader · ${esc(item.run_utc?String(item.mode||"unknown").toUpperCase():"NO LOG")}</span><strong>${esc(item.run_utc?String(item.run_utc).slice(0,16).replace("T"," ")+" UTC":"Not published")}</strong></div>`;
- const hasRun=Boolean(live.run_utc || nfl.run_utc);
- const exposure=Number(live.open_exposure||0)+Number(nfl.open_exposure||0);
- const pilotReported=Boolean(live.demo_pilot || nfl.demo_pilot);
- const limit=pilotReported?DEMO_REFERENCE.pilotTotalLimit:null;
- const usage=hasRun && limit?Math.min(100,100*exposure/limit):0;
  const errors=[live.forward_validation_error,nfl.forward_validation_error].filter(Boolean).join(" · ");
  document.getElementById("system-view").innerHTML=
- `<div class="proof-status"><strong>Not a live account feed.</strong> GitHub's scheduled dry runs may not reflect the VPS's Demo account. Check Kalshi Demo for the latest balance, fills and open orders.</div>`+
- statusLine("NBA",live)+statusLine("NFL",nfl)+row("Open exposure (last saved run)",hasRun?money(exposure)+(limit?" / "+money(limit):""):"— no run published")+
- `<div class="progress-track" aria-label="Reported exposure against configured maximum"><span style="width:${usage}%"></span></div>`+
- row("Demo pilot order cap (configured)",money(DEMO_REFERENCE.pilotOrderLimit))+
- row("Demo pilot commitment cap",money(DEMO_REFERENCE.pilotTotalLimit))+
- row("Default risk limit (research)",snapshot.limits?.max_order==null?"—":money(snapshot.limits.max_order))+
- row("Maximum per game",snapshot.limits?.max_per_game==null?"—":money(snapshot.limits.max_per_game))+
+ `<div class="proof-status">Published reports only. Scheduled research runs and the private production service have separate data sources.</div>`+
+ statusLine("NBA",live)+statusLine("NFL",nfl)+
+ row("Evidence basis","Exchange fills + actual fees + settlement")+
+ row("Cohort boundaries","Market and strategy version")+
+ row("Missing observations","Unknown; never replaced with zero")+
+ row("Review gate","30 days AND 500 settled fill events")+
  (errors?`<p class="note">${esc(errors)}</p>`:"")+
- `<p class="note">Saved reports only. The trading process runs on a dedicated server; the GitHub workflow runs a dry pass for comparison.</p>`;
+ `<p class="note">The source and timestamp describe this published snapshot, not the current account or trading-server state.</p>`;
 }
 
 // Rebuild SVGs only if the screen WIDTH changes. Mobile address bars
 // change viewport height during normal scrolling; never reload the page.
+function renderStudy(s) {
+  const b = s.research?.bookline;
+  const el = document.getElementById("study-chart");
+  if (!b?.veto || !Number.isFinite(b.veto.cents) || !Number.isFinite(b.veto.fills)) {
+    document.getElementById("lead-edge").textContent = "—";
+    document.getElementById("lead-sample").textContent = "—";
+    el.innerHTML = '<p class="note">Historical study unavailable in this snapshot.</p>';
+    return;
+  }
+  document.getElementById("lead-edge").textContent = cents(b.veto.cents);
+  document.getElementById("lead-sample").textContent = b.veto.fills.toLocaleString();
+  const rows = [["All sampled fills",b.all],["Filter retained",b.veto],["Filter removed",b.removed]];
+  forest(el, rows.filter(([,r])=>r && Number.isFinite(r.cents)).map(([label,r])=>({label,est:r.cents,se:r.se,color:label==="Filter retained"?"var(--accent)":"var(--bench)",sub:`${r.fills.toLocaleString()} simulated fills`})), {labelW:138});
+  document.getElementById("study-source").textContent = `2025–26 replay · ${b.games} games sampled · after modeled fees. Not live performance. Fills are not independent games.`;
+}
 function renderCharts(s, pf) {
+  renderStudy(s);
   lines(document.getElementById("cumulative"), pf.days, [
     {label: "Benchmark (backtest edge)", v: pf.bench, color: "var(--bench)", width: 2},
     {label: "Paper ledgers", v: pf.eq, color: "var(--algo)", width: 2.5},
@@ -765,15 +784,6 @@ function renderCharts(s, pf) {
   forest(document.getElementById("scan"), (s.scan_top || []).map(r => ({label: name(r.series), est: r.cents, se: r.se, color: r.passes ? "var(--algo)" : "var(--bench)", hollow: !r.passes, sub: `${r.fills.toLocaleString()} fills, t ${r.t}${r.passes ? ", passed" : ""}`})), {labelW: 220});
   research(s);
 }
-// Historical account reference from Oct 17 server verification.
- // A GitHub dry-run reports its own $250 fallback; NEVER treat it as
- // authenticated Demo buying power. This is not a current balance feed.
-const DEMO_REFERENCE = Object.freeze({
-  lastVerifiedBalance: 2500,
-  verifiedDate: "2026-10-17",
-  pilotOrderLimit: 2,
-  pilotTotalLimit: 10,
-});
 function hypotheticalProfit(contracts, centsPerContract) {
   return contracts * centsPerContract / 100;
 }
@@ -786,21 +796,22 @@ function renderScenarios() {
   document.getElementById("scenario-even").textContent = money(0);
   document.getElementById("scenario-backtest").textContent = signedMoney(hypotheticalProfit(n, 2.93));
   const gain = hypotheticalProfit(n, 2.93);
-  const fraction = 100 * gain / DEMO_REFERENCE.lastVerifiedBalance;
-  document.getElementById("scenario-impact").textContent = `For ${n.toLocaleString()} settled contracts, the historical +2.93¢ case means ${money(gain)} — ${fraction.toFixed(2)}% of the last verified ${money(DEMO_REFERENCE.lastVerifiedBalance)} Demo balance. Not a forecast. The Demo pilot permits at most ${money(DEMO_REFERENCE.pilotOrderLimit)} per order and ${money(DEMO_REFERENCE.pilotTotalLimit)} of committed exposure.`;
+  document.getElementById("scenario-impact").textContent = `${n.toLocaleString()} settled contracts × 2.93¢ = ${money(gain)} in the historical-reference case. Not a forecast. No assumption is made about how many orders will fill.`;
 }
 let latestDashboard = null;
 fetch("../outputs/dashboard/summary.json", {cache: "no-store"}).then(r => { if (!r.ok) throw new Error(r.status); return r.json(); }).then(s => {
   const pf = portfolio(s);
   latestDashboard = {s, pf};
-  document.getElementById("stamp").innerHTML = `<strong>Data as of</strong> ${esc(s.updated_utc.slice(0, 16).replace("T", " "))} UTC · saved reports, not a live account feed`;
+  document.getElementById("stamp").innerHTML = `<strong>Data as of</strong> ${esc(s.updated_utc.slice(0, 16).replace("T", " "))} UTC`;
   stats(s, pf);
   overview(s);
   renderCharts(s, pf);
   document.getElementById("live").innerHTML = liveBlock(s.live || {}, "NBA props", s.limits || {}) + liveBlock(s.live_nfl || {}, "NFL props", s.limits || {});
 }).catch(e => {
   document.getElementById("stamp").textContent = "Could not load the published data (" + e.message + ")";
-  document.getElementById("forward-view").textContent = "Live results could not be loaded.";
+  document.getElementById("forward-view").textContent = "Published exchange evidence could not be loaded.";
+  renderStudy({});
+  overview({});
   document.getElementById("system-view").textContent = "Source unavailable; do not infer live account status.";
 });
 // Optional read-only cross-exchange snapshot. Never infer live trading status.
@@ -838,6 +849,9 @@ fetch("../outputs/cross_exchange/latest.json", {cache:"no-store"})
       "No completed Polymarket US scan published yet. Waiting on the scheduled research job.";
   });
 
+document.querySelectorAll("details.diagnostics").forEach(detail => detail.addEventListener("toggle", () => {
+  if (detail.open && latestDashboard) renderCharts(latestDashboard.s, latestDashboard.pf);
+}));
 document.getElementById("scenario-contracts").addEventListener("input", renderScenarios);
 renderScenarios();
 let pageWidth = document.documentElement.clientWidth;
@@ -851,6 +865,7 @@ window.addEventListener("resize", () => {
     if (latestDashboard) renderCharts(latestDashboard.s, latestDashboard.pf);
   }, 180);
 }, {passive: true});
+
 </script>
 </body>
 </html>
