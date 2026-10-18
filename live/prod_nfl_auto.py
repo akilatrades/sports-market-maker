@@ -190,17 +190,24 @@ def cancel_owned_on_kill(client, journal):
     client_ids = {e["client_order_id"] for e in events if e.get("event") == "intent"}
     canceled = 0
     for item in client.orders("resting"):
-        if (item.get("order_id") not in ids
-                and item.get("client_order_id") not in client_ids):
+        if (
+            item.get("order_id") not in ids
+            and item.get("client_order_id") not in client_ids
+        ):
             continue
         oid, ticker = item.get("order_id"), item.get("ticker")
         if not oid or not ticker:
             raise TradingError("Emergency cancellation cannot route: inspect Kalshi")
         client.cancel(oid, ticker=ticker)
-        write_event(journal, {
-            "event": "emergency_cancel", "utc": datetime.now(UTC).isoformat(),
-            "order_id": oid, "ticker": ticker,
-        })
+        write_event(
+            journal,
+            {
+                "event": "emergency_cancel",
+                "utc": datetime.now(UTC).isoformat(),
+                "order_id": oid,
+                "ticker": ticker,
+            },
+        )
         canceled += 1
     print(f"PROD AUTO HALTED: canceled {canceled} owned resting orders")
     return canceled
