@@ -10,7 +10,7 @@ from live.prod_nfl_pilot import (
     read_events,
 )
 
-NOW = datetime(2026, 10, 18, 14, 55, tzinfo=timezone.utc)
+NOW = datetime.now(timezone.utc)
 ARMED = {
     "KALSHI_ENV": "prod",
     "TRADE_MODE": "live",

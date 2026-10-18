@@ -293,3 +293,26 @@ def test_fill_and_settlement_are_recorded_once(tmp_path):
     auto.record_execution(journal, events, attempts, accepted, fills, settled)
     assert len(auto.load_journal(journal)) == 2
     assert events[1]["fee_cents"] == 1
+
+
+def test_entries_12_minutes_before_kickoff_are_eligible(quotes):
+    f = frame()
+    f["hours_to_tip"] = 12 / 60
+    f["tip_utc"] = pd.Timestamp(NOW + timedelta(minutes=12))
+    rows = auto.select_candidates(f, [], {"active": []}, NOW)
+    assert len(rows) == 1
+    order, cost = auto.order_from_row(rows[0], NOW)
+    assert order.post_only
+    assert cost <= auto.MAX_ORDER_COST
+
+
+def test_entries_9_minutes_before_kickoff_are_rejected(quotes):
+    f = frame()
+    f["hours_to_tip"] = 9 / 60
+    f["tip_utc"] = pd.Timestamp(NOW + timedelta(minutes=9))
+    assert auto.select_candidates(f, [], {"active": []}, NOW) == []
+    candidate = auto.select_candidates(frame(), [], {"active": []}, NOW)[0]
+    # Order guard operates independently of the candidate/window filter.
+    row = candidate._replace(tip_utc=pd.Timestamp(NOW + timedelta(minutes=9)))
+    with pytest.raises(TradingError, match="Too close"):
+        auto.order_from_row(row, NOW)
