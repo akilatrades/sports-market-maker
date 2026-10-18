@@ -9,8 +9,12 @@ def test_compare_yes_taker_trade_prices_against_no_bid():
         {"taker_outcome_side": "yes", "yes_price": 0.35, "count": 3},
         {"taker_outcome_side": "yes", "yes_price": 0.33, "count": 4},
         {"taker_outcome_side": "no", "yes_price": 0.40, "count": 10},
-        {"taker_outcome_side": "yes", "yes_price": 0.36,
-         "count": 50, "is_block_trade": True},
+        {
+            "taker_outcome_side": "yes",
+            "yes_price": 0.36,
+            "count": 50,
+            "is_block_trade": True,
+        },
     ]
     result = summarize_trades(66, trades)
     assert result["yes_ask_cents"] == 34
@@ -21,8 +25,10 @@ def test_compare_yes_taker_trade_prices_against_no_bid():
 
 
 def test_missing_quotes_and_wrong_taker_side_cannot_claim_fill():
-    trades = [{"taker_outcome_side": "no", "yes_price": 0.36, "count": 5},
-              {"taker_outcome_side": "yes", "yes_price": None, "count": 2}]
+    trades = [
+        {"taker_outcome_side": "no", "yes_price": 0.36, "count": 5},
+        {"taker_outcome_side": "yes", "yes_price": None, "count": 2},
+    ]
     result = summarize_trades(66, trades)
     assert result["at_price"] == 0
     assert result["through_price"] == 0
