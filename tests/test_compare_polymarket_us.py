@@ -233,10 +233,12 @@ def test_unfiltered_empty_filter_diagnostic_does_not_become_trading_signal():
             return {"league": {"tagId": 5}}
         if path == "/v1/markets":
             assert "sportsMarketTypes" not in params
-            return {"markets": [
-                poly_market(sportsMarketTypeV2="SPORTS_MARKET_TYPE_PROP"),
-                {"sportsMarketTypeV2": "SPORTS_MARKET_TYPE_FUTURE"},
-            ]}
+            return {
+                "markets": [
+                    poly_market(sportsMarketTypeV2="SPORTS_MARKET_TYPE_PROP"),
+                    {"sportsMarketTypeV2": "SPORTS_MARKET_TYPE_FUTURE"},
+                ]
+            }
         raise AssertionError(path)
 
     d = p.sample_unfiltered_catalog("nba", get=api)
