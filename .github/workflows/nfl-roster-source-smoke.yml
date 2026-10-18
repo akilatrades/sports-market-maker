@@ -1,0 +1,35 @@
+name: NFL roster source smoke (read only)
+on:
+  pull_request:
+    paths:
+      - "markets/nfl/roster_guard.py"
+      - "live/nfl_trade.py"
+      - "live/nfl_projections.py"
+      - ".github/workflows/nfl-roster-source-smoke.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify-public-rosters:
+    runs-on: ubuntu-latest
+    timeout-minutes: 7
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r requirements.txt
+      - name: Verify current ESPN NFL roster response structure (no trading)
+        run: |
+          python - <<'PY'
+          from markets.nfl.roster_guard import current_rosters
+          rosters = current_rosters(["NE", "BUF"])
+          for team, players in rosters.items():
+              print(f"{team}: {len(players)} readable players")
+              if len(players) < 25:
+                  raise SystemExit(f"Roster unexpectedly incomplete for {team}")
+          print("A.J. Brown in New England roster:", "a j brown" in rosters["NE"])
+          print("DJ Moore in Buffalo roster:", "dj moore" in rosters["BUF"])
+          PY
