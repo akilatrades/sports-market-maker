@@ -1,0 +1,37 @@
+name: Polymarket US historical quote replay (read only)
+on:
+  pull_request:
+    paths:
+      - "research/polymarket_us_replay.py"
+      - "tests/test_polymarket_us_replay.py"
+      - ".github/workflows/polymarket-us-replay.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r requirements.txt ruff==0.11.13
+      - name: Test quote-vs-fill separation
+        run: |
+          ruff format --diff research/polymarket_us_replay.py tests/test_polymarket_us_replay.py || true
+          ruff check research/polymarket_us_replay.py tests/test_polymarket_us_replay.py
+          ruff format --check research/polymarket_us_replay.py tests/test_polymarket_us_replay.py
+          pytest -q tests/test_polymarket_us_replay.py
+      - name: Probe actual public archived Polymarket US markets and quotes
+        run: python -m research.polymarket_us_replay
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: polymarket-us-quote-replay
+          path: outputs/polymarket_us_replay/latest.json
+          if-no-files-found: warn
+          retention-days: 14
