@@ -133,6 +133,45 @@ def current_production_state(client, attempts, accepted):
     }
 
 
+def cancel_invalid_resting(client, journal, state, frame, now):
+    """Withdraw owned orders after new roster/injury/market safety failures."""
+    if frame.empty:
+        invalid = set(o.get("order_id") for o in state["resting"])
+    else:
+        status = frame.set_index("ticker")["injury_status"].fillna("UNVERIFIED")
+        valid = set(status[status.eq("")].index)
+        invalid = set()
+        for resting in state["resting"]:
+            ticker = resting.get("ticker")
+            if ticker not in valid:
+                invalid.add(resting["order_id"])
+    canceled = 0
+    for resting in state["resting"]:
+        order_id = resting.get("order_id")
+        if order_id not in invalid:
+            continue
+        ticker = resting.get("ticker")
+        if not ticker:
+            raise TradingError("Cannot cancel order without its ticker: HALT")
+        write_event(journal, {
+            "event": "cancel_intent", "utc": now.isoformat(),
+            "order_id": order_id, "ticker": ticker,
+            "reason": "availability no longer verified",
+        })
+        try:
+            client.cancel(order_id, ticker=ticker)
+        except Exception as error:
+            raise TradingError(
+                "Cannot confirm cancellation; HALT and inspect Kalshi orders"
+            ) from error
+        write_event(journal, {
+            "event": "cancel_accepted", "utc": datetime.now(UTC).isoformat(),
+            "order_id": order_id,
+        })
+        canceled += 1
+    return canceled
+
+
 def verify_quote(candidate):
     """Re-read production quote immediately before placing the selected order."""
     market = fetch_market(str(candidate.ticker))
@@ -248,6 +287,11 @@ def pass_once(client, env, frame, now, journal, *, dry=False):
         fills = client.fills(min_ts=min_ts)
         if not isinstance(fills, list):
             raise TradingError("Cannot read production fills")
+        canceled = cancel_invalid_resting(client, journal, state, frame, now)
+        if canceled:
+            print(f"PROD AUTO: canceled {canceled} unsafe resting orders")
+            # Require another reconciliation pass after cancellation.
+            return False
         print(
             f"PROD AUTO: attempts={len(attempts)}, resting={len(state['resting'])}, "
             f"held={len(state['held'])}, settled_tickers={len(state['settled'])}, "
