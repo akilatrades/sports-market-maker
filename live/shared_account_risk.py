@@ -98,9 +98,7 @@ def classify(resting, positions, owner):
         if sport not in result or qty > 0:
             raise TradingError("Unowned or wrong-side account position: HALT")
         owned_count = sum(
-            float(a["count"])
-            for a in owner["attempts"]
-            if a["ticker"] == ticker
+            float(a["count"]) for a in owner["attempts"] if a["ticker"] == ticker
         )
         if abs(qty) > owned_count + 1e-8:
             raise TradingError("Held inventory exceeds accepted intent: HALT")
