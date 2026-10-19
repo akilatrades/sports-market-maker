@@ -185,7 +185,7 @@ $2,618 by the Finals.
 yesterday's positions from Kalshi's own results, prices every open prop,
 and adds the rule's positions to a paper ledger:
 [today's bet card](../outputs/bets/latest.md),
-[scorecard](../outputs/paper/scorecard.md),
+[ledger](../outputs/paper/ledger.csv),
 [ledger](../outputs/paper/ledger.csv). Regular-season positions are marked
 paper; play-in and playoff positions are marked as the 2027 playoff test. The
 pass criteria were committed before the season (RESEARCH_LOG.md).
@@ -236,7 +236,7 @@ mostly buy "yes", and selling them "no" pays. With the model vetoing orders
 it rates below zero, on every line: +2.9¢ (t 6.1). This was found after the
 fact, so from opening night two resting-order rules are paper traded from
 separate $500 paper bankrolls, filled from Kalshi's public trade prints
-([scorecard](../outputs/paper_maker/scorecard.md),
+([ledger](../outputs/paper_maker/orders.csv),
 [orders](../outputs/paper_maker/orders.csv)).
 
 **Trading during games (passed, but it is about speed).** An in-game model

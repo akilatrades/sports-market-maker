@@ -8,16 +8,16 @@
 
 # Sports market maker
 
-**October 17 execution audit:** [Demo verification, GitHub dry-run status and remaining gates](docs/EXECUTION_READINESS_2026-10-17.md). The $2,500 Demo reference and independent $500 paper ledgers are not interchangeable. No production-money trading has been authorized.
+**October 17 execution audit:** [Demo verification, GitHub dry-run status and remaining gates](EXECUTION_READINESS_2026-10-17.md). The $2,500 Demo reference and independent $500 paper ledgers are not interchangeable. No production-money trading has been authorized.
 
-**Forward-validation protocol:** [30-day execution evidence and the 500-fill checkpoint](docs/FORWARD_VALIDATION.md). The live selection, sizing and risk rules are unchanged; reports never enable live trading or authorize a capital increase.
+**Forward-validation protocol:** [30-day execution evidence and the 500-fill checkpoint](FORWARD_VALIDATION.md). The live selection, sizing and risk rules are unchanged; reports never enable live trading or authorize a capital increase.
 
 [![tests](https://github.com/akilatrades/sports-market-maker/actions/workflows/tests.yml/badge.svg)](https://github.com/akilatrades/sports-market-maker/actions/workflows/tests.yml)
 
 A market-making strategy for Kalshi's sports markets, built from two
 player-prop pricing models (NBA and NFL) and a year of pre-registered tests
 against real prices. Every test's rule is written in
-[RESEARCH_LOG.md](RESEARCH_LOG.md) before its data is downloaded, and every
+[RESEARCH_LOG.md](../RESEARCH_LOG.md) before its data is downloaded, and every
 result is reported, including the failures.
 
 ## The finding
@@ -35,18 +35,18 @@ people who sell "yes" into a bid are informed. A resting "no" order one cent
 inside the ask, on every line, made +1.65¢ a contract with no model at all
 (33,475 fills). Buying "yes" the same way lost 2.0¢.
 
-![Resting "no" orders made money at every price level; resting "yes" orders lost](docs/figures/no_vs_yes_by_price.svg)
+![Resting "no" orders made money at every price level; resting "yes" orders lost](figures/no_vs_yes_by_price.svg)
 
 The model's job is to keep the sharps out. Profit rises with the model's
 opinion of the order: skipping the ones it rates below zero raised the result
 to **+2.9¢ a contract (t 6.1), positive in both halves of the season, in all
 four stats and at every price level.**
 
-![Profit per contract by the model's edge on the order](docs/figures/profit_by_model_edge.svg)
+![Profit per contract by the model's edge on the order](figures/profit_by_model_edge.svg)
 
 ## The research, test by test
 
-Every test below was written into [RESEARCH_LOG.md](RESEARCH_LOG.md) before
+Every test below was written into [RESEARCH_LOG.md](../RESEARCH_LOG.md) before
 its data was downloaded, run once, and recomputed with separate code. One
 season of Kalshi prices (2025-26) unless stated.
 
@@ -71,7 +71,7 @@ season of Kalshi prices (2025-26) unless stated.
 | Markouts and toxicity | Are our fills the ones a sharp sweeps? | Price drifts 1¢ against us after a fill and stays, yet settles +1.65¢; no pre-posting feature separates good fills from bad | No veto; edge is in settlement, not the mark |
 | Quote placement | Join the bid, 1¢ or 2¢ inside? | Per 100 orders: join +86¢, 1¢ +171¢, 2¢ +168¢; 1¢ with a 2¢ model edge +191¢ | Current 1¢ rule kept |
 
-![Resting "no" orders across Kalshi series: props pay, big-league winners lose](docs/figures/scan_props_vs_winners.svg)
+![Resting "no" orders across Kalshi series: props pay, big-league winners lose](figures/scan_props_vs_winners.svg)
 
 The scan is the clearest statement of the mechanism. In a prop market
 ("does Jokić score 25?") the "yes" side is what fans buy, so selling it pays.
@@ -92,7 +92,7 @@ raises the end and cuts the drawdown (five sports from $25,000: median
 $116,000, worst drawdown 2%). All in-sample and one season; the live ledgers
 are the test.
 
-![Bankroll replay, $500 and $5,000 starts](docs/figures/bankroll_replay.svg)
+![Bankroll replay, $500 and $5,000 starts](figures/bankroll_replay.svg)
 
 ## What runs
 
@@ -113,7 +113,7 @@ Fills are read from Kalshi's public trade prints with price priority (an
 order fills only with contracts that traded through its price), and
 positions settle from Kalshi's results. Scorecards:
 `outputs/paper_maker/` (NBA, from opening night 2026-10-20),
-[`outputs/paper_markets/`](outputs/paper_markets/) (everything else).
+[`outputs/paper_markets/`](../outputs/paper_markets/) (everything else).
 Pass criteria are fixed in the log; nothing is traded with money until the
 dry run and a demo-account run have shown real fills matching the paper
 ledger's assumptions.
