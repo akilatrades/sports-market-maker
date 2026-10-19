@@ -12,6 +12,29 @@
 > The goal is positive net trading income eventually, but profitability,
 > scale and dependable income have **not** been demonstrated.
 
+## Monday October 19, 16:44 UTC — funded-account live-feed check passed
+
+Owner's DigitalOcean screenshot confirms a successful **signed, GET-only**
+one-shot check of `live.public_pnl_feed --once` after updating the checkout:
+
+- `refresh_type=signed_live_account_settlements_30s`, exit code **0**.
+- **FUNDED ACCOUNT** API-visible settled-market P&L: **−$0.69**,
+  four settled markets.
+- **NFL** reconciled settled P&L: **−$0.69**, four settled
+  markets, ten accepted orders.
+- **NBA**: awaiting first order, zero accepted orders or settlements.
+- Funded-account and NFL subtotals currently agree. No raw
+  identifiers, balances, market tickers or credentials were exposed.
+- This proves that a one-time signed settlement read and redacted
+  aggregation work. **It does not mean the local 30-second feed service
+  or public HTTPS proxy has been started**. Next steps: stage the
+  localhost-only systemd service; verify `127.0.0.1:8766/v1/pnl`;
+  then configure restricted free HTTPS and finally set the public
+  dashboard's nonsecret `live-pnl-source.json` URL.
+- Strictly settled-market total: early closed cash-outs and archived
+  settled markets are outside the current account aggregation.
+  No production trading order or risk setting was changed.
+
 ## Free public P&L hostname selection — October 19
 
 User chose a **FREE** domain option. Staged
