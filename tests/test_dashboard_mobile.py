@@ -28,10 +28,10 @@ def test_dashboard_mobile_scroll_does_not_reload():
     assert "location.reload(" not in html
     assert "const nextWidth = document.documentElement.clientWidth" in html
     assert "if (Math.abs(nextWidth - pageWidth) < 2) return" in html
-    assert "renderCharts(latestDashboard.s, latestDashboard.pf)" in html
+    assert "renderCharts(latestDashboard.s)" in html
     assert re.search(r"overflow-x:\s*auto", html)
     assert re.search(r"touch-action:\s*pan-x pan-y", html)
-    assert 'class="scroll heat-scroll" id="heat"' in html
+    assert 'id="live-pnl-grid"' in html
 
 
 def test_dashboard_nav_and_data_mounts_exist():
@@ -41,7 +41,7 @@ def test_dashboard_nav_and_data_mounts_exist():
     assert all(anchor in tags.ids for anchor in tags.nav_targets)
     mounted = set(re.findall(r'document.getElementById\("([^"]+)"\)', html))
     assert mounted <= tags.ids
-    assert "No settled exchange results in the saved logs" in html
+    assert "No authenticated production P&L snapshot has been published" in html
     assert "Not a real-time feed of the account." in html
 
 
@@ -57,12 +57,16 @@ def test_dashboard_inline_javascript_parses(tmp_path):
     subprocess.run([node, "--check", str(js)], check=True)
 
 
-def test_paper_ledgers_and_hypothetical_sensitivity_are_separate():
+def test_only_verified_nfl_and_nba_production_pnl_is_displayed():
     html = DASHBOARD.read_text()
-    assert "The sum of separate $500 research ledgers" in html
-    assert "not a single tradable portfolio" in html
-    assert 'id="scenario-impact"' in html
+    assert 'id="production-pnl"' in html
+    assert 'id="live-pnl-grid"' in html
+    assert '"../outputs/dashboard/production_pnl.json"' in html
+    assert "NFL / settled P&amp;L" in html
+    assert "NBA / settled P&amp;L" in html
+    assert 'id="paper"' not in html
+    assert 'id="strategy-summary"' not in html
+    assert 'id="cumulative"' not in html
+    assert 'id="scenario-impact"' not in html
+    assert 'id="profit-scenarios"' not in html
     assert "DEMO_REFERENCE" not in html
-    assert "Execution sensitivity: contracts × net edge" in html
-    assert "Not a forecast." in html
-    assert "touch-action: auto" in html
