@@ -15,7 +15,6 @@ import time
 from datetime import UTC, datetime
 from decimal import Decimal, InvalidOperation
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
-from pathlib import Path
 from urllib.parse import urlsplit
 
 from live.account_dashboard import ReadOnlyClient, read_journal
