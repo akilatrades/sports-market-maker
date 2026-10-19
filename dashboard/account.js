@@ -33,7 +33,7 @@ const AccountView = (() => {
       const show = state === "live" && verified;
       const profit = show ? cohort.settled_profit_dollars : null;
       set(amountId, money(profit));
-      node(amountId).className = verified ? (profit < 0 ? "negative" : "positive") : "";
+      node(amountId).className = show ? (profit < 0 ? "negative" : "positive") : "";
       const note = state !== "live" ? "Account report stale or disconnected; current P&L hidden" :
         verified ? `${count(cohort.settled_markets)} verified settled markets · net of fees` :
         cohort.status === "incomplete_settlement" ? "Settlement accounting incomplete; P&L not reported" :
