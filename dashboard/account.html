@@ -16,7 +16,7 @@
   </header>
   <main>
     <section class="heading" id="overview">
-      <div><p class="eyebrow">KALSHI / PRODUCTION</p><h1>Your account, clearly.</h1><p class="subtitle">Live account snapshots. Actual fills. Settled results.</p></div>
+      <div><p class="eyebrow">KALSHI / PRODUCTION</p><h1>Your account, clearly.</h1><p class="subtitle">Live account snapshots. Actual fills. Separate verified NFL and NBA settlements.</p></div>
       <div class="refresh"><button type="button" id="refresh">Refresh account <span aria-hidden="true">↻</span></button><p id="updated">No production snapshot loaded</p></div>
     </section>
     <aside class="notice" id="notice" role="status" aria-live="polite">Connect to your private server view to load account balances.</aside>
@@ -24,7 +24,10 @@
       <article class="metric"><p>Cash balance <span>ACCOUNT</span></p><strong id="cash">—</strong><small>Cash reported by Kalshi</small></article>
       <article class="metric"><p>Open position value <span>ACCOUNT</span></p><strong id="value">—</strong><small>Exchange estimate; not guaranteed exit proceeds</small></article>
       <article class="metric"><p>Total account value <span>ACCOUNT</span></p><strong id="equity">—</strong><small>Cash + open position value; not trading profit</small></article>
-      <article class="metric accent"><p>Settled profit / loss <span>NFL STRATEGY</span></p><strong id="profit">—</strong><small id="settled-note">Waiting for verified settlement accounting</small></article>
+    </section>
+    <section class="metrics pnl-metrics" aria-label="Exchange-confirmed NFL and NBA profit and loss">
+      <article class="metric accent"><p>Settled P&amp;L <span>NFL · REAL TRADES</span></p><strong id="profit">—</strong><small id="settled-note">Waiting for verified NFL settlements</small></article>
+      <article class="metric accent"><p>Settled P&amp;L <span>NBA · REAL TRADES</span></p><strong id="nba-profit">—</strong><small id="nba-settled-note">Waiting for verified NBA settlements</small></article>
     </section>
     <section class="panel connection-help" id="connect-help">
       <div class="section-title"><div><p class="eyebrow">PRIVATE ACCOUNT ACCESS</p><h2>Connect once. Keep balances private.</h2></div><span class="tag">Read only</span></div>
@@ -34,7 +37,7 @@
       <a class="text-link" href="https://github.com/akilatrades/sports-market-maker/blob/main/deploy/ACCOUNT_DASHBOARD.md">Setup instructions ↗</a>
     </section>
     <div class="two-column">
-      <section class="panel"><div class="section-title"><div><p class="eyebrow">EXECUTION</p><h2>What actually traded</h2></div><span class="tag">NFL only</span></div>
+      <section class="panel"><div class="section-title"><div><p class="eyebrow">EXECUTION</p><h2>What actually traded</h2></div><span class="tag">Selected trading cohort</span></div>
         <div class="execution-grid"><div><strong id="accepted">—</strong><span>Orders accepted</span></div><div><strong id="filled">—</strong><span>Orders with a fill</span></div><div><strong id="contracts">—</strong><span>Contracts bought</span></div></div>
         <dl class="details"><div><dt>Cost of filled contracts</dt><dd id="fill-cost">—</dd></div><div><dt>Reported fill fees</dt><dd id="fees">—</dd></div><div><dt>Orders still resting · whole account</dt><dd id="resting">—</dd></div></dl>
         <p class="footnote">A filled order spends cash to buy a position. That cost is not automatically a loss. Multiple fill records can belong to one order.</p>
