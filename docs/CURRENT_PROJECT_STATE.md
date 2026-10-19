@@ -1,5 +1,10 @@
 # CURRENT PROJECT STATE — Sports Market Maker
 
+> **Tuesday launch operations:** Follow
+> [TUESDAY_NBA_GO_NO_GO_2026-10-20.md](TUESDAY_NBA_GO_NO_GO_2026-10-20.md).
+> This is an owner-operated bounded real-money launch with explicit
+> go/no-go conditions, not automatic activation.
+
 > **Single source of truth for continuing this project in one ChatGPT chat.**
 > Updated after code/source review on October 18–19, 2026. Update after a
 > deployment, authenticated exchange reconciliation or important decision.
