@@ -35,11 +35,10 @@ def dollars(row, key, legacy=None):
 
 
 def fill_direction(fill):
-    """Resolve current Kalshi V2 fields and legacy action/side consistently.
+    """Canonical V2 outcome/book fields take precedence over deprecated fields.
 
-    Under the V2 single-YES-book protocol, a buy-NO order is an ASK that can
-    appear as legacy sell-YES. Direction is NO in both cases. An unmatched or
-    contradictory record is reported for investigation, never assumed to be NO.
+    Legacy action+side can conflict in the wild. Preserve that discrepancy for
+    audit without discarding a correctly identified canonical NO fill.
     """
     fields = {
         key: str(fill[key]).strip().lower() if fill.get(key) is not None else None
@@ -50,38 +49,30 @@ def fill_direction(fill):
     action = fields["action"]
     side = fields["side"]
     issues = []
-    if outcome not in (None, "yes", "no"):
-        issues.append("invalid_outcome_side")
-    if book not in (None, "bid", "ask"):
-        issues.append("invalid_book_side")
-    if action not in (None, "buy", "sell"):
-        issues.append("invalid_legacy_action")
-    if side not in (None, "yes", "no"):
-        issues.append("invalid_legacy_side")
-    if (action is None) != (side is None):
-        issues.append("incomplete_legacy_direction")
+    if outcome not in (None, "yes", "no") or book not in (None, "bid", "ask"):
+        return "review_required", ["invalid_canonical_direction"], fields
+    from_book = {"bid": "yes", "ask": "no"}.get(book)
+    if outcome is not None and from_book is not None and outcome != from_book:
+        return "review_required", ["conflicting_canonical_directions"], fields
+    canonical = outcome if outcome is not None else from_book
     legacy = {
         ("buy", "yes"): "yes",
         ("sell", "no"): "yes",
         ("buy", "no"): "no",
         ("sell", "yes"): "no",
     }.get((action, side))
-    directions = [
-        v
-        for v in (
-            outcome if outcome in ("yes", "no") else None,
-            {"bid": "yes", "ask": "no"}.get(book),
-            legacy,
+    if canonical is not None:
+        if (action is not None or side is not None) and legacy != canonical:
+            issues.append("legacy_direction_mismatch")
+        return (
+            "verified_no" if canonical == "no" else "review_required",
+            issues if canonical == "no" else issues + ["unexpected_yes_direction"],
+            fields,
         )
-        if v is not None
-    ]
-    if not directions:
-        issues.append("no_direction_evidence")
-    if len(set(directions)) > 1:
-        issues.append("conflicting_direction_fields")
-    if directions and directions[0] != "no":
-        issues.append("unexpected_yes_direction")
-    return ("verified_no" if not issues else "review_required", issues, fields)
+    if legacy == "no":
+        return "verified_no", ["legacy_only_direction"], fields
+    return "review_required", ["no_confirmed_no_direction"], fields
+
 
 
 def build(events, actual_fills, settlements):
@@ -218,6 +209,10 @@ def build(events, actual_fills, settlements):
             ), 8),
             "direction_review_fill_events": sum(
                 f["direction_status"] != "verified_no" for f in fill_rows
+            ),
+            "legacy_direction_warning_events": sum(
+                "legacy_direction_mismatch" in f["direction_issues"]
+                for f in fill_rows
             ),
             "distinct_orders_filled": len(set(f["order_ref"] for f in fill_rows)),
             "other_exchange_fill_events_excluded": foreign_count,
