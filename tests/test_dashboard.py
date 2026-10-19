@@ -35,8 +35,8 @@ def test_dashboard_has_unique_essential_sections_and_education():
     for section in (
         "overview",
         "forward",
-        "paper",
-        "strategies",
+        "production-pnl",
+        "live-pnl-grid",
         "risk",
         "research-section",
         "methodology",
@@ -44,12 +44,10 @@ def test_dashboard_has_unique_essential_sections_and_education():
         "hero-metrics",
         "forward-view",
         "system-view",
-        "cumulative",
-        "stats",
         "live",
     ):
         assert section in parser.ids
-    for label in ("Simulated", "Volume capture", "Drawdown", "500"):
+    for label in ("Exchange-confirmed", "Volume capture", "NFL", "NBA"):
         assert label.lower() in page.lower()
 
 
