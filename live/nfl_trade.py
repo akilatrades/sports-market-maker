@@ -49,6 +49,10 @@ COLUMNS = [
 ]
 
 
+# Retrieval stamp of the committed schedule/injury snapshot (live/fetch_nfl_data.py).
+RETRIEVAL = Path("data/nfl/retrieval.json")
+
+
 def priced_frame(markets, p_model, now):
     """Open markets as one priced frame; ``p_model`` maps ticker to P(over)."""
     m = pd.DataFrame(markets)
@@ -105,7 +109,7 @@ def candidates(now):
     try:
         if games is None:
             raise ValueError("NFL schedule unavailable")
-        retrieved = json.loads(Path("data/nfl/retrieval.json").read_text())
+        retrieved = json.loads(Path(RETRIEVAL).read_text())
         stamp = datetime.fromisoformat(retrieved["retrieved"]).replace(tzinfo=UTC)
         if not (
             0 <= (pd.Timestamp(now) - pd.Timestamp(stamp)).total_seconds() <= 48 * 3600

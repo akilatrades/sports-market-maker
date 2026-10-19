@@ -399,6 +399,11 @@ def test_nfl_market_dry_run(tmp_path, monkeypatch):
         ]
     )
     monkeypatch.setattr(nfl, "load_schedule", lambda: schedule)
+    # Pin the snapshot stamp to the fixture's date: the committed file is
+    # refreshed by a scheduled job and must not decide this test's outcome.
+    retrieval = tmp_path / "retrieval.json"
+    retrieval.write_text('{"retrieved": "2026-10-18"}')
+    monkeypatch.setattr(nfl, "RETRIEVAL", retrieval)
     monkeypatch.setattr(
         nfl,
         "current_rosters",
