@@ -677,7 +677,10 @@ function renderProductionPnl(snapshot) {
     const show = fresh && verified;
     const p = show ? item.settled_profit_dollars : null;
     const value = p === null ? "—" : signed(p);
-    const caption = !fresh ? "Verified report is stale; current result unavailable"
+    const caption = !fresh
+      ? verified
+        ? `Stale report · Last verified ${signed(item.settled_profit_dollars)} across ${item.settled_markets} settled markets, as of ${stamp.slice(0,16).replace("T"," ")} UTC; current result unknown`
+        : "Stale report · No verified current settled result"
       : verified ? `${item.settled_markets} settled markets · after reported fees`
       : "No current verified settled results";
     const tone = p === null ? "" : p > 0 ? "positive" : p < 0 ? "negative" : "";
@@ -688,7 +691,7 @@ function renderProductionPnl(snapshot) {
     "No authenticated production P&L snapshot has been published; research returns are never substituted." :
     `Last verified production snapshot: ${stamp.slice(0,16).replace("T"," ")} UTC. ${fresh ?
       "Public aggregate only; may lag new fills and settlements. Refresh checks every minute." :
-      "Report expired (over 15 minutes). Live results intentionally hidden until a new verified publication arrives."
+      "Report expired (over 15 minutes). Current result hidden; the last verified historical result, if available, remains labeled as stale."
     } Open positions and unreported outcomes are not counted as realized P&L.`;
 }
 let latestDashboard = null;
