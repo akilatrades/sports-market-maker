@@ -33,16 +33,17 @@ historical replay is not evidence of repeatable trading income.**
 
 ## Evidence / deployment status
 
-*Snapshot basis: latest owner-provided authenticated NFL export generated
-2026-10-19 01:34 UTC and source review on October 18/19. Current private
-account, Droplet deployment and GitHub Actions job results are not
-remotely verified from this repository.*
+*Status is a timestamped snapshot; consult the [living project state]
+(docs/CURRENT_PROJECT_STATE.md) for current Monday/Tuesday readiness.
+NFL P&L below is grounded in the 2026-10-19 01:34 UTC authenticated
+export; more recent server diagnostics and public NBA input updates are
+recorded separately. This file is not a live account feed.*
 
 | Component | Status | What is actually established |
 |---|---|---|
 | NBA historical research | Exploratory, incomplete certainty | 2025–26 replay is encouraging on some NO-maker subsets. Conservative game-clustered intervals for the strict two-book sample **include zero**. Not real fills. |
 | NFL production pilot | **Real exchange orders and maker fills confirmed** | 10 accepted orders, 4 filled orders, 13 contracts; **2 settled markets and +$1.99 realized** in the provided snapshot. Two more filled positions were unsettled then. No income conclusion. |
-| NBA production pilot | **Not confirmed ready or active** | Source checks exist; production projection pair was **not published on main** at the audit check. Published book coverage contained **zero NBA rows**. Actual signed server preflight, ownership isolation and first order unverified. |
+| NBA production pilot | **Staged, not activated; launch gated** | Production projection pair is now published and synced to DigitalOcean (312 markets). Monday's first two-game odds feed has 71 exact two-book model matches; third game and fresh Tuesday quotes remain to be confirmed. Latest signed preflight still blocked by NFL service isolation and previously missing odds; new preflight required before any authorization. |
 | Github dry runs and paper accounts | Research only | Recorded dry submissions and synthetic/print-based fills are **not authenticated Kalshi positions or P&L**. |
 | Public dashboard | Sanitized snapshot | Only verified NFL/NBA settled P&L is shown as financial performance. No private account balances or simulated ledger profits. NBA unavailable stays blank. |
 | Private dashboard | Read-only server code | Authenticated GET-only account view with separate NFL/NBA production P&L; actual deployment is operator-confirmed, not inferred from git. |
