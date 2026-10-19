@@ -1,0 +1,24 @@
+[Unit]
+Description=Publish verified, redacted NFL/NBA settled PnL to public research dashboard
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=oneshot
+User=trader
+Group=trader
+WorkingDirectory=/home/trader/sports-market-maker-prod-auto
+# The Kalshi file exists already. Separate short-lived GitHub Contents token
+# must be created by the OWNER; it is not in GitHub or in this repository.
+EnvironmentFile=/etc/market-maker-prod-auto.env
+EnvironmentFile=/etc/market-maker-pnl-publisher.env
+Environment=PYTHONUNBUFFERED=1
+ExecStart=/home/trader/sports-market-maker-prod-auto/.venv/bin/python -m tools.publish_production_pnl --publish
+TimeoutStartSec=180
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
