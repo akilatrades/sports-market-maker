@@ -3,6 +3,7 @@
 Does not arm service timers, modify risk files, submit, or cancel orders.
 Requires production Kalshi reads and the two private journals.
 """
+
 import json
 from datetime import UTC, datetime
 
@@ -25,9 +26,7 @@ def report(client, now):
         }
     if context is None:
         raise TradingError("Missing shared account snapshot")
-    checks = room(
-        context["ownership"], context["active_client_ids"], 0.01, now
-    )
+    checks = room(context["ownership"], context["active_client_ids"], 0.01, now)
     # A 1c hypothetical new order is only a *budget read*, NOT an order
     # or signal; do not present it as a launch eligibility prediction.
     return {
