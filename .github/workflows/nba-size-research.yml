@@ -1,0 +1,26 @@
+name: NBA sizing research (no trading)
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'research/nba_size_sensitivity.py'
+      - '.github/workflows/nba-size-research.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  analyze:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install research dependencies
+        run: pip install -r requirements.txt
+      - name: Replay strict NBA hypothetical fills and sizing
+        run: python -m research.nba_size_sensitivity
