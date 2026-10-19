@@ -7,6 +7,36 @@
 > The goal is positive net trading income eventually, but profitability,
 > scale and dependable income have **not** been demonstrated.
 
+## DigitalOcean status update — October 19, 03:19 UTC
+
+**Owner-provided terminal verification after the maintenance deployment:**
+
+- **Deployed checkout:** `f31ce87` (now substantially newer than the previously
+  observed `49cda56`); updated private dashboard bound to
+  `127.0.0.1:8765`. This is the owner-observed deployed code, **not
+  necessarily the newest subsequent GitHub commit**.
+- **NBA input sync succeeded:** fresh `nba-opening-v2` CSV and SHA-256
+  metadata at `/home/trader/prod-nba-auto/inputs/`, **312 rows**,
+  approximately **0.27 hours** old, schema/checksum/age valid.
+- **NBA sportsbook sync produced 0 rows**, status
+  `file_present_not_feed_approval`. This is **not eligible launch
+  coverage**. No two-book opening-night confirmation yet.
+- **NBA** production service and timer both **inactive**; journal has
+  **0 intents, 0 accepted orders, 0 fills, 0 settlements**.
+- **NFL** timer remained **active** and worker inactive between scans;
+  local journal preserved **10 intents, 10 accepted orders, 4 fill
+  events, 2 settlement events, 0 uncertain submissions**.
+- These are local server/journal diagnostics, **not a new authenticated
+  Kalshi settlement reconciliation**. NFL final profit and all
+  unsettled outcomes remain pending an updated signed account export.
+- The NBA producer and GitHub publisher are now verified functional.
+  Remaining NBA critical gates: sportsbook coverage inside provider's
+  36-hour fixture horizon, then a fresh server sync, updated injuries
+  and roster verification, NFL shutdown/position isolation during
+  owner-approved handoff, and signed **GET-only** preflight.
+- Do **not** activate NBA or disable its protective book requirement
+  while sportsbook coverage is zero.
+
 ## If you are just joining this project
 
 The experiment trades small Kalshi NBA/NFL **NO** sports-prop contracts.
@@ -50,9 +80,10 @@ From an owner-provided authenticated snapshot exported at **2026-10-19
   `Result=success`, `ExecMainStatus=0`, ~9 second successful scan,
   `decision=no_eligible_candidates`. NFL **timer active**, worker
   inactive between scans. This does not confirm it still operates *now*.
-- Last observed deployed Droplet commit **49cda56**, behind current
-  GitHub code. Git checkout showed only untracked `.venv/`, later ignored
-  in GitHub. **No production code update was performed automatically.**
+- The **earlier** deployed Droplet commit was **49cda56**. The
+  October 19 owner-run maintenance deployed **f31ce87** and restored
+  the NFL timer. Subsequent GitHub commits may still be ahead of the
+  server and require a separate, controlled deployment.
 
 ### NBA, opening Tuesday October 20
 
