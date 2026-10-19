@@ -272,6 +272,19 @@ cd /home/trader/sports-market-maker-prod-auto
 sudo -u trader .venv/bin/python -m tools.production_status
 ```
 
+If the Droplet has not been updated and reports `No module named
+tools.production_status`, do **not** pull/restart live trading merely to
+inspect its state. Run the standalone, standard-library-only diagnostic
+instead (as root in the existing checkout):
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/akilatrades/sports-market-maker/main/tools/production_status.py -o /tmp/production_status.py
+sudo -u trader python3 /tmp/production_status.py
+```
+
+The script does not read production credentials, call Kalshi, change
+orders or alter systemd units.
+
 It shows the deployed git SHA, local timer states, NBA model input
 presence/age/checksum, sportsbook file coverage, and counts from local
 private journal event types. It does **not** log in to Kalshi, reveal order
