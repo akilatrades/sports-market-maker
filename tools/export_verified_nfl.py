@@ -118,6 +118,7 @@ def build(events, actual_fills, settlements):
             "queue_last": None,
             "queue_observations": 0,
             "queue_failures": 0,
+            "queue_history": [],
             "settlement": None,
         }
         rows.append(row)
@@ -137,6 +138,16 @@ def build(events, actual_fills, settlements):
         row["queue_last"] = num(samples[-1].get("ahead"))
         row["queue_observations"] = len(samples)
         row["queue_failures"] = sum(bool(s.get("issue")) for s in samples)
+        # Full chronology makes resting-priority and fill-time analysis possible
+        # without disclosing exchange order IDs or modifying live execution.
+        row["queue_history"] = [
+            {
+                "utc": item.get("utc"),
+                "ahead": num(item.get("ahead")),
+                "issue": item.get("issue"),
+            }
+            for item in samples
+        ]
 
     fill_rows, seen_fill_ids, foreign_count = [], set(), 0
     for fill in actual_fills:
