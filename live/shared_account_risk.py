@@ -57,7 +57,7 @@ def ownership(events_by_sport):
             client_ids.add(cid)
             tickers[ticker] = sport
             by_id[cid] = e
-            attempts.append(e)
+            attempts.append({**e, "_cohort": sport})
         seen = set()
         for e in accepted:
             cid, oid = e.get("client_order_id"), e.get("order_id")
@@ -128,3 +128,84 @@ def room(owner, active_client_ids, cost, now):
         "shared_daily": daily + proposed <= LIMITS["daily"] + 1e-9,
         "shared_active": active + proposed <= LIMITS["active"] + 1e-9,
     }
+
+
+def dual_mode(env):
+    """Opt-in requires both an env setting and an owner-created root marker."""
+    requested = env.get("SMM_DUAL_MARKET", "") == "YES"
+    if env.get("SMM_DUAL_MARKET", "") not in ("", "NO", "YES"):
+        raise TradingError("Invalid shared-account configuration")
+    marker = Path("/etc/market-maker-shared-account.enabled")
+    if requested and not marker.exists():
+        raise TradingError("Owner has not enabled shared-account mode")
+    return requested
+
+
+def state_for(client, sport, now):
+    """Read both journals and the entire exchange under the shared process lock.
+
+    All known orders and held positions must belong to exactly one journal.
+    Release an expired unfilled order from active capacity only through the
+    legacy verified-expiry function, using signed fills and account holdings.
+    Lifetime and daily submission charges are never recycled.
+    """
+    if sport not in ("nfl", "nba"):
+        raise TradingError("Unknown shared account cohort")
+    from live import prod_nba_auto, prod_nfl_auto
+
+    modules = {"nfl": prod_nfl_auto, "nba": prod_nba_auto}
+    events = {name: journal_events(name) for name in modules}
+    owner = ownership(events)
+    resting = client.orders("resting")
+    positions = client.positions()
+    classified = classify(resting, positions, owner)
+    attempts = owner["attempts"]
+    settlements = client.settlements() if attempts else []
+    if not isinstance(settlements, list):
+        raise TradingError("Missing signed settlement history")
+    start = min(
+        int(datetime.fromisoformat(a["utc"]).timestamp()) for a in attempts
+    ) - 60 if attempts else int(now.timestamp()) - 60
+    fills = client.fills(min_ts=start) if attempts else []
+    if not isinstance(fills, list):
+        raise TradingError("Missing signed fill history")
+    for fill in fills:
+        ticker = fill.get("ticker") or fill.get("market_ticker")
+        if ticker in owner["tickers"] and str(fill.get("order_id")) not in owner["orders"]:
+            raise TradingError("Unowned fill on pilot market: HALT")
+    settled = {
+        r.get("market_ticker") or r.get("ticker")
+        for r in settlements if isinstance(r, dict)
+    }
+    snapshots = {}
+    active_ids = set()
+    for name, module in modules.items():
+        own = [a for a in attempts if a["_cohort"] == name]
+        accepted = {
+            e["client_order_id"]: e for e in events[name]
+            if e.get("event") == "accepted"
+        }
+        own_tickers = {a["ticker"] for a in own}
+        state = {
+            "resting": classified[name]["resting"],
+            "held": classified[name]["held"],
+            "settled": settled & own_tickers,
+            "settlements": settlements,
+            "active": [a for a in own if a["ticker"] not in settled],
+        }
+        active, _ = module.reconcile_expired_unfilled(
+            own, accepted, state, fills, now
+        )
+        state["active"] = active
+        snapshots[name] = state
+        active_ids.update(a["client_order_id"] for a in active)
+    return snapshots[sport], {
+        "ownership": owner,
+        "active_client_ids": active_ids,
+    }
+
+
+def fits(context, cost, now):
+    return all(room(
+        context["ownership"], context["active_client_ids"], cost, now
+    ).values())
