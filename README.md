@@ -76,19 +76,27 @@ fills together average +2.04¢ with an interval of −0.20 to +4.27.
 
 | Market | Accepted orders | Filled orders | Contracts filled | Settled markets | Realized P&L | As of |
 |---|---:|---:|---:|---:|---:|---|
-| NFL receiving yards | 10 | 4 | 13 | 2 | +$1.99 | 2026-10-19 01:34 UTC |
+| NFL receiving yards | 10 | 4† | 13† | 4 | **−$0.69** | 2026-10-19 14:40 UTC |
 | NBA player props | Not started | | | | | |
 
-The +$1.99 is **historical as of October 19, 01:34 UTC—not current
-profit**. It covers seven contracts in two settled markets; another six
-filled contracts had not settled at that timestamp. A later Matthew
-Golden loss has been reported but **its signed exchange settlement and
-revised after-fee total have not yet been verified for public publication**.
+The **−$0.69** figure is from an owner-run signed, GET-only production
+reconciliation at **14:40 UTC on October 19**: ten accepted NFL orders,
+four settled markets, costs and fees matched to private owned order journals.
+The earlier **+$1.99** at 01:34 UTC covered two settled markets; the net
+realized NFL figure decreased by **$2.68** as two more markets settled.
+The owner reports a Matthew Golden loss, but this public aggregate cannot
+attribute the whole decrease to that trade. **†Filled-order (4) and
+contract (13) counts were last independently reported by the earlier
+exchange reconciliation and are not newly established by the 14:40 report.**
+NBA has zero accepted orders as of this snapshot.
+
 The public [dashboard](https://akilatrades.github.io/sports-market-maker/dashboard/)
-now hides stale profit and polls a redacted public report each minute.
-Authenticated automatic settlement publishing is staged but needs an
-owner-controlled [Droplet setup](deploy/PUBLIC_PNL_REFRESH.md).
-Neither the earlier +$1.99 nor simulated fills establish profitability.
+checks for a refreshed verified aggregate each minute. It treats reports
+over 15 minutes old as **historical**—showing the last verified figure
+clearly labelled stale, not as current profit. Automated signed
+publication is staged but requires the owner's separate
+[Droplet setup](deploy/PUBLIC_PNL_REFRESH.md); publication is
+**not yet enabled**. No simulated fill is counted as live P&L.
 
 ## How it works
 
