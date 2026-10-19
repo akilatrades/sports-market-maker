@@ -12,6 +12,35 @@
 > The goal is positive net trading income eventually, but profitability,
 > scale and dependable income have **not** been demonstrated.
 
+## Monday October 19 — public HTTPS GET succeeds; dashboard deployed
+
+Owner-provided DigitalOcean terminal screenshot verifies the **HTTPS
+end-to-end GET** to the sanitized account feed:
+
+- `curl -i -H "Origin: https://akilatrades.github.io"
+  https://157-230-146-86.sslip.io/v1/pnl` returned **HTTP/2 200**.
+- The response includes
+  `Access-Control-Allow-Origin: https://akilatrades.github.io`,
+  `Cache-Control: no-store, max-age=0`, JSON content type and a
+  current `as_of_utc` timestamp.
+- Funded-account settled P&L: **−$0.69**, NFL: **−$0.69** over four
+  settled markets, NBA awaiting first order; no secrets or account
+  identifiers were included in the visible JSON.
+- The nonsecret dashboard config points to the HTTPS endpoint
+  `https://157-230-146-86.sslip.io/v1/pnl`. GitHub Pages deployment
+  for commit `882a195a` completed **successfully** (run
+  `39328222758`); its test workflow also passed.
+- **Next user-visible validation:** open the public GitHub Pages
+  dashboard in a browser and verify FUNDED ACCOUNT, NFL and NBA
+  cards load without CORS/mixed-content errors. Tool-side webpage
+  retrieval of the public server was unavailable, so a browser check
+  remains outstanding.
+- The feed is a 30-second authenticated read refreshed in the browser
+  every 15 seconds, **not tick-by-tick real-time**. It includes
+  API-visible settled markets, not early exits, archived results,
+  unrealized P&L, rebates or credits. Both trading timers remain
+  separate and were not enabled by reporting work.
+
 ## Monday October 19 — free TLS certificate issued; public feed test outstanding
 
 Owner-provided Caddy journal screenshot confirms that Let's Encrypt
