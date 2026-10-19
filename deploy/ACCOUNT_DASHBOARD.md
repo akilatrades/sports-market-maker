@@ -1,7 +1,10 @@
 # Production account dashboard
 
-The public dashboard at `/dashboard/` presents research, models and results for
-portfolio visitors. The separate account view is served by the read-only service
+The public dashboard at `/dashboard/` presents research, models and **only
+exchange-verified NFL/NBA settled P&L** for portfolio visitors. The public P&L
+comes from an owner-approved timestamped `outputs/dashboard/production_pnl.json`
+snapshot, **not** a continuously authenticated Kalshi feed. No independent
+paper-ledger profits are displayed. The separate account view is served by the read-only service
 on the existing trading Droplet at `http://127.0.0.1:8765`. Publishing the public
 research page requires no terminal or SSH setup.
 No balances, keys, raw journals or order IDs are uploaded to GitHub. The account
@@ -55,9 +58,12 @@ account collector or change trading.
 - **Cash:** exchange-reported cash across the account.
 - **Position value:** Kalshi's estimate of current open positions, not guaranteed
   proceeds from closing them. Total value is cash plus this estimate, not P/L.
-- **Settled NFL P/L:** owned strategy markets' settlement revenue minus entry
-  costs and actual reported fees, across entry versions. An absent fee/cost makes
-  the result unknown. With no settlements, display “No settled NFL markets yet.”
+- **Settled NFL and NBA P/L:** separate authenticated, owned strategy markets'
+  settlement revenue minus entry costs and actual reported fees, across entry
+  versions. Each cohort is matched through its own production order journal.
+  A missing journal, absent fee/cost or unsettled order is shown as unavailable
+  rather than $0. The private view refreshes both cohorts on account reads,
+  independent of which market controls the execution/positions panel.
 - **Filled orders / contracts:** one partially executed order can generate
   several fill records. Fills are deduplicated by exchange identity.
 - **Submission allowance:** the existing lifetime $50 cap counts every attempted
@@ -86,3 +92,17 @@ This remains a passive directional NO strategy holding to settlement. Improving
 the price can improve execution but also reduce expected return. The optional
 second tick falls back to the baseline maker quote when it would consume the
 new minimum edge. An existing fill is not re-priced or liquidated by this update.
+
+## Public P&L snapshot policy
+
+The recruiter-facing dashboard shows **no simulated ledger P&L, strategy-paper
+equity curve or hypothetical profit scenarios**. Public NFL and NBA settled P&L
+is sourced only from manually approved, sanitized exchange verification. The
+JSON contains no account balance, API credential, private order ID or account
+journal. A timestamp and stale notice make clear that it is not streaming.
+
+To show newly settled P&L publicly, the account owner must approve/publish a
+fresh sanitized snapshot; no scheduled job automatically publishes private
+account results. NBA stays unknown until its first verified report. The private
+dashboard, after deployment, provides continuously refreshed authenticated
+NFL and NBA P&L without exposing those values through GitHub Pages.
