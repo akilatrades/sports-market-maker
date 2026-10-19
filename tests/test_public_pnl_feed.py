@@ -5,16 +5,23 @@ from datetime import UTC, datetime
 
 import pytest
 
-from live.public_pnl_feed import Cache, account_settlement_pnl, collect_public, handler_for
+from live.public_pnl_feed import (
+    Cache,
+    account_settlement_pnl,
+    collect_public,
+    handler_for,
+)
 
 NOW = datetime(2026, 10, 19, 14, 40, tzinfo=UTC)
 
 
 def settlement(ticker, revenue, no_cost, yes_cost="0.00", fee="0.00"):
     return {
-        "ticker": ticker, "revenue_dollars": str(revenue),
+        "ticker": ticker,
+        "revenue_dollars": str(revenue),
         "no_total_cost_dollars": str(no_cost),
-        "yes_total_cost_dollars": str(yes_cost), "fee_cost": str(fee),
+        "yes_total_cost_dollars": str(yes_cost),
+        "fee_cost": str(fee),
     }
 
 
@@ -50,21 +57,33 @@ def test_zero_settlements_are_not_a_fabricated_zero_return():
     assert result["settled_profit_dollars"] is None
 
 
-def test_signed_data_used_and_public_report_never_contains_account_identifiers(tmp_path):
+def test_signed_data_used_and_public_report_never_contains_account_identifiers(
+    tmp_path,
+):
     nfl = tmp_path / "nfl.jsonl"
     nba = tmp_path / "nba.jsonl"
     # A manual winning market and independent owned losing NFL market.
     nfl.write_text(
-        json.dumps({
-            "event": "intent", "utc": "2026-10-18T12:00:00+00:00",
-            "client_order_id": "client_secret_id", "ticker": "NFL-SECRET",
-        }) + "\n" +
-        json.dumps({
-            "event": "accepted", "client_order_id": "client_secret_id",
-            "order_id": "order_secret_id",
-        }) + "\n"
+        json.dumps(
+            {
+                "event": "intent",
+                "utc": "2026-10-18T12:00:00+00:00",
+                "client_order_id": "client_secret_id",
+                "ticker": "NFL-SECRET",
+            }
+        )
+        + "\n"
+        + json.dumps(
+            {
+                "event": "accepted",
+                "client_order_id": "client_secret_id",
+                "order_id": "order_secret_id",
+            }
+        )
+        + "\n"
     )
     nba.write_text("")
+
     class FakeClient:
         def __init__(self):
             self.requests = []
@@ -76,27 +95,34 @@ def test_signed_data_used_and_public_report_never_contains_account_identifiers(t
                     settlement("NFL-SECRET", 0, "0.60"),
                     settlement("MANUAL-PRIVATE", 2, "1.00"),
                 ]
-            return [{
-                "ticker": "NFL-SECRET", "order_id": "order_secret_id",
-                "fill_id": "fill_secret_id", "count_fp": "1",
-                "no_price_dollars": "0.60", "outcome_side": "no",
-                "book_side": "ask",
-            }]
+            return [
+                {
+                    "ticker": "NFL-SECRET",
+                    "order_id": "order_secret_id",
+                    "fill_id": "fill_secret_id",
+                    "count_fp": "1",
+                    "no_price_dollars": "0.60",
+                    "outcome_side": "no",
+                    "book_side": "ask",
+                }
+            ]
 
     c = FakeClient()
-    report = collect_public(
-        client=c, journal_paths={"nfl": nfl, "nba": nba}, now=NOW
-    )
+    report = collect_public(client=c, journal_paths={"nfl": nfl, "nba": nba}, now=NOW)
     assert report["account"]["settled_profit_dollars"] == 0.40
     assert report["markets"]["nfl"]["settled_profit_dollars"] == -0.60
     assert report["markets"]["nba"]["settled_profit_dollars"] is None
-    assert [r[0] for r in c.requests] == [
-        "/portfolio/settlements", "/portfolio/fills"
-    ]
+    assert [r[0] for r in c.requests] == ["/portfolio/settlements", "/portfolio/fills"]
     assert c.requests[0][2] == {}  # all accessible account settlements
     data = json.dumps(report)
-    for private in ("NFL-SECRET", "MANUAL-PRIVATE", "client_secret_id",
-                    "order_secret_id", "fill_secret_id", "balance"):
+    for private in (
+        "NFL-SECRET",
+        "MANUAL-PRIVATE",
+        "client_secret_id",
+        "order_secret_id",
+        "fill_secret_id",
+        "balance",
+    ):
         assert private not in data
 
 
