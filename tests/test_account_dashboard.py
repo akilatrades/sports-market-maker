@@ -12,7 +12,13 @@ from pathlib import Path
 from unittest.mock import Mock, patch
 
 from kalshi.trading import TradingClient, TradingError
-from live.account_dashboard import ReadOnlyClient, Snapshot, handler_for, summarize
+from live.account_dashboard import (
+    ReadOnlyClient,
+    Snapshot,
+    cohort_settled_pnl,
+    handler_for,
+    summarize,
+)
 
 
 class AccountAccounting(unittest.TestCase):
@@ -142,6 +148,53 @@ class AccountAccounting(unittest.TestCase):
         self.assertIsNone(
             self.report(settlements=[result])["strategy"]["settled_profit_dollars"]
         )
+
+    def test_live_cohorts_use_exchange_settlements_not_paper(self):
+        nfl_events = [
+            {"event": "intent", "client_order_id": "n1", "ticker": "KXNFL-X"},
+            {"event": "accepted", "client_order_id": "n1", "order_id": "o1"},
+        ]
+        nba_events = [
+            {"event": "intent", "client_order_id": "b1", "ticker": "KXNBA-X"},
+            {"event": "accepted", "client_order_id": "b1", "order_id": "o2"},
+        ]
+        settlements = [
+            {
+                "ticker": "KXNFL-X",
+                "revenue_dollars": "4.00",
+                "yes_total_cost_dollars": "0",
+                "no_total_cost_dollars": "2.64",
+                "fee_cost": "0",
+            },
+            {
+                "ticker": "KXNBA-X",
+                "revenue_dollars": "0",
+                "yes_total_cost_dollars": "0",
+                "no_total_cost_dollars": "2.00",
+                "fee_cost": "0.02",
+            },
+        ]
+        nfl = cohort_settled_pnl(nfl_events, settlements)
+        nba = cohort_settled_pnl(nba_events, settlements)
+        self.assertEqual(nfl["settled_profit_dollars"], 1.36)
+        self.assertEqual(nba["settled_profit_dollars"], -2.02)
+        self.assertEqual((nfl["settled_markets"], nba["settled_markets"]), (1, 1))
+        self.assertEqual(nfl["status"], "verified")
+        self.assertEqual(nba["status"], "verified")
+
+    def test_unavailable_pnl_is_not_zero(self):
+        events = [
+            {"event": "intent", "client_order_id": "c", "ticker": "KXNFL-Y"},
+            {"event": "accepted", "client_order_id": "c", "order_id": "o"},
+        ]
+        empty = cohort_settled_pnl(events, [])
+        self.assertEqual(empty["status"], "awaiting_settlement")
+        self.assertIsNone(empty["settled_profit_dollars"])
+        incomplete = cohort_settled_pnl(
+            events, [{"ticker": "KXNFL-Y", "fee_cost": None}]
+        )
+        self.assertEqual(incomplete["status"], "incomplete_settlement")
+        self.assertIsNone(incomplete["settled_profit_dollars"])
 
     def test_duplicate_fills_are_counted_once(self):
         report = self.report(fills=self.fills + self.fills)
