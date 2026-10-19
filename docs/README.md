@@ -44,6 +44,7 @@ are kept unchanged as part of the record.
 | [Supervised NFL pilot](../deploy/PROD_NFL_PILOT.md) | The first single-order production test |
 | [NBA go/no-go, October 20](TUESDAY_NBA_GO_NO_GO_2026-10-20.md) | Launch conditions for the first NBA night |
 | [Account dashboard](../deploy/ACCOUNT_DASHBOARD.md) | Private read-only account view and public P&L snapshots |
+| [Public NFL/NBA P&L refresh](../deploy/PUBLIC_PNL_REFRESH.md) | Signed settlement reconciliation, staleness handling and opt-in automatic sanitized publishing |
 | [NFL worker memory repair](../deploy/NFL_WORKER_MEMORY.md) | Incident note |
 
 ## Working notes and archive
