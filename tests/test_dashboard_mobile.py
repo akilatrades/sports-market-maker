@@ -41,7 +41,7 @@ def test_dashboard_nav_and_data_mounts_exist():
     assert all(anchor in tags.ids for anchor in tags.nav_targets)
     mounted = set(re.findall(r'document.getElementById\("([^"]+)"\)', html))
     assert mounted <= tags.ids
-    assert "No authenticated production P&L snapshot has been published" in html
+    assert "Live account P&L feed unavailable or not configured" in html
     assert "Not a real-time feed of the account." in html
 
 
