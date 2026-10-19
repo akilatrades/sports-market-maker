@@ -12,6 +12,30 @@
 > The goal is positive net trading income eventually, but profitability,
 > scale and dependable income have **not** been demonstrated.
 
+## Monday October 19 — successful read-only NBA preflight
+
+The owner ran the signed GET-only preflight after stopping the NFL
+timer. The reported result was `ready=true`, `failures=[]`, with
+a successful exit.
+
+- Both the NFL timer and worker were inactive at the check.
+- No resting or held markets, no NBA budget reserved.
+- `nba-opening-v2` inputs passed: 312 model rows, about 0.9 hours old.
+- 312 open market quotes, 172 rows with sportsbook coverage, 69
+  currently verified projection rows. Another 241 required stronger
+  independent-book corroboration due to season/role changes.
+- No game was in the 2–6-hour entry window on Monday.
+- No orders were submitted. NBA activation remains a separate decision.
+
+This is a **point-in-time readiness result**, not a fill, profit
+estimate or permanent launch clearance. Before Tuesday activation,
+refresh model and sportsbook inputs, confirm the account remains
+free of other positions and orders, repeat signed GET-only preflight,
+verify NFL isolation and deliberately authorize only the unchanged
+bounded pilot. Never publish private account values or keys.
+
+See [Tuesday runbook](TUESDAY_NBA_GO_NO_GO_2026-10-20.md).
+
 ## Monday NBA readiness progress — 07:49 AM Central
 
 **Source-confirmed, production-market data-only updates:**
