@@ -359,7 +359,7 @@ footer p { max-width:100ch; font-size:10px; color:var(--ink-3); }
 <div class="sitebar">
   <a href="#top" class="brand"><span class="brand-mark" aria-hidden="true">AJ</span><span>Sports Market Maker<small>QUANTITATIVE RESEARCH</small></span></a>
   <nav class="toplinks" aria-label="Dashboard sections">
-    <a href="#overview">Overview</a><a href="#research-section">Research</a><a href="#methodology">Model &amp; execution</a><a href="#forward">Validation</a><a href="#paper">Paper results</a><a class="source-link" href="https://github.com/akilatrades/sports-market-maker">Source ↗</a>
+    <a href="#overview">Overview</a><a href="#research-section">Research</a><a href="#methodology">Model &amp; execution</a><a href="#forward">Validation</a><a href="#production-pnl">Live P&amp;L</a><a class="source-link" href="https://github.com/akilatrades/sports-market-maker">Source ↗</a>
   </nav>
 </div>
 <main>
@@ -417,26 +417,16 @@ footer p { max-width:100ch; font-size:10px; color:var(--ink-3); }
   <div class="section-heading"><div><div class="eyebrow"><span class="section-number">04 /</span> FORWARD VALIDATION</div><h2>The execution test is the next proof point.</h2><p class="desc">Published NBA exchange evidence. A missing report is not zero profit or proof that trading has stopped. NFL activity is evaluated in its own cohort.</p></div><span class="stage">Exchange-confirmed only</span></div>
   <div class="metric-grid" id="hero-metrics" aria-live="polite"></div>
   <div class="panel-grid"><article class="panel"><h3>NBA validation checkpoint</h3><p class="desc">30 days and 500 settled fill events trigger a review, not automatic scaling.</p><div id="forward-view" aria-live="polite">Loading published evidence…</div></article><article class="panel"><h3>Evidence and provenance</h3><p class="desc">Not a real-time feed of the account.</p><div id="system-view" aria-live="polite">Loading report coverage…</div></article></div>
-  <details class="quick-guide"><summary>Metric definitions &amp; reading guide</summary><dl><dt>Order / fill / contract</dt><dd>An order can receive multiple fill events; each fill can contain multiple contracts. These counts answer different questions.</dd><dt>Settled P&amp;L</dt><dd>Final contract payout minus entry cost and actual fees. Open position cost is not a realized loss.</dd><dt>Volume capture</dt><dd>Actual filled contracts divided by qualifying printed volume in comparable, fully observed resting-order windows.</dd><dt>Drawdown</dt><dd>The decline from a previous peak in cumulative profit. Paper-ledger drawdowns remain separate from funded account risk.</dd><dt>Standard error</dt><dd>Uncertainty around an estimated mean. Correlated fills and selected experiments limit what a conventional error bar can establish.</dd></dl></details>
+  <details class="quick-guide"><summary>Metric definitions &amp; reading guide</summary><dl><dt>Order / fill / contract</dt><dd>An order can receive multiple fill events; each fill can contain multiple contracts. These counts answer different questions.</dd><dt>Settled P&amp;L</dt><dd>Final contract payout minus entry cost and actual fees. Open position cost is not a realized loss.</dd><dt>Volume capture</dt><dd>Actual filled contracts divided by qualifying printed volume in comparable, fully observed resting-order windows.</dd><dt>Unsettled exposure</dt><dd>Outstanding orders and open positions are not included in the reported settled P&amp;L.</dd><dt>Standard error</dt><dd>Uncertainty around an estimated mean. Correlated fills and selected experiments limit what a conventional error bar can establish.</dd></dl></details>
 </section>
 
-<section class="chart-panel" id="paper">
-  <div class="section-heading"><div><div class="eyebrow"><span class="section-number">05 /</span> PAPER OBSERVATION</div><h2>Forward paper results</h2><p class="desc">The sum of separate $500 research ledgers, not a single tradable portfolio or account balance. Fills are estimated from public prints.</p></div><span class="stage sim">Simulated</span></div>
-  <div class="evidence-note">These ledgers test forward behavior under the paper fill model. They do not establish actual exchange fill rates or realized account returns.</div>
-  <div id="cumulative"></div><div class="legend"><span style="--c:var(--algo)"><i></i>Independent paper-ledger totals</span><span style="--c:var(--bench)"><i></i>Backtest benchmark applied to the same fills</span></div>
-  <details class="stats-details"><summary>Sample sizes &amp; paper statistics</summary><div class="stats" id="stats"></div></details>
-</section>
-<details class="diagnostics"><summary>Explore the paper diagnostics <span>RETURNS / DRAWDOWN / DISTRIBUTIONS</span></summary>
-  <section><div class="two"><div><h2>Daily settlement P&amp;L</h2><p class="desc">Paper profit by settlement day, in dollars.</p><div id="daily"></div></div><div><h2>Return distribution</h2><p class="desc">Profit per contract across settled paper fills, in cents.</p><div id="hist"></div></div></div></section>
-  <section class="chart-panel"><h2>Monthly attribution</h2><p class="desc">Paper P&amp;L by ledger. Dashed cells have no settlements.</p><div class="scroll heat-scroll" id="heat" role="region" tabindex="0" aria-label="Monthly paper profit by ledger; scroll sideways to see more months"></div></section>
-  <section class="chart-panel"><h2>Drawdown</h2><p class="desc">Aggregate drawdown across separate paper experiments. The three largest periods are shaded.</p><div id="underwater"></div><div class="scroll" id="ddtable"></div></section>
-  <section><div class="two"><div><h2>Rolling edge</h2><p class="desc">Net cents per contract across the trailing 7 and 30 settlement days.</p><div id="rolling"></div><div class="legend"><span style="--c:var(--algo)"><i></i>30 days</span><span style="--c:var(--algo-soft)"><i></i>7 days</span><span style="--c:var(--bench)"><i></i>Historical reference</span></div></div><div><h2>Edge by ledger</h2><p class="desc">±2 reported standard errors; minimum five fills. Hollow markers are historical references.</p><div id="forest"></div></div></div></section>
-  <section class="chart-panel"><h2>Contract allocation</h2><p class="desc">Share of settled paper contracts by strategy.</p><div class="expo" id="expo"></div></section>
-</details>
-
-<section class="chart-panel" id="strategies">
-  <div class="section-heading"><div><div class="eyebrow">PAPER / STRATEGY ATTRIBUTION</div><h2>Independent research ledgers</h2><p class="desc">Separate $500 paper bankrolls. Compare sample size and exposure alongside each result.</p></div><span class="stage sim">Simulated</span></div>
-  <div class="scroll"><table id="strategy-summary"></table></div><details class="stats-details"><summary>Full ledger statistics</summary><div class="scroll" style="margin-bottom:16px"><table id="ledgers"></table></div></details><div id="idle"></div>
+<section id="production-pnl" aria-labelledby="production-pnl-title">
+  <div class="section-heading"><div><div class="eyebrow"><span class="section-number">05 /</span> LIVE-TRADING RESULTS</div><h2 id="production-pnl-title">Verified P&amp;L · NFL / NBA</h2><p class="desc">Only actual exchange settlements, net of contract costs and fees. NFL and NBA are tracked separately. Paper and historical P&amp;L are excluded.</p></div><span class="stage">Exchange-confirmed</span></div>
+  <div class="metric-grid live-pnl-grid" id="live-pnl-grid" aria-live="polite">
+    <article class="metric-card"><span class="metric-label">NFL / settled P&amp;L</span><div class="metric-value">—</div><span class="metric-caption">Awaiting verified snapshot</span></article>
+    <article class="metric-card"><span class="metric-label">NBA / settled P&amp;L</span><div class="metric-value">—</div><span class="metric-caption">Awaiting verified snapshot</span></article>
+  </div>
+  <p class="note" id="live-pnl-asof" aria-live="polite">This public dashboard is not directly connected to a private Kalshi account. Published snapshots are timestamped; unreported results are not zero.</p>
 </section>
 
 <section id="risk">
@@ -450,13 +440,8 @@ footer p { max-width:100ch; font-size:10px; color:var(--ink-3); }
   <article class="panel"><div id="exchange-watch-data" aria-live="polite">Loading the latest public-market scan…</div><p class="note">Public production feeds. Contract wording, settlement rules, depth and costs must align before a price difference has trading meaning. <a href="https://github.com/akilatrades/sports-market-maker/blob/main/docs/CROSS_EXCHANGE_PROP_WATCH.md">Research specification ↗</a></p></article>
 </section>
 
-<section id="profit-scenarios" aria-labelledby="scenarios-heading">
-  <details class="diagnostics"><summary id="scenarios-heading">Execution sensitivity: contracts × net edge <span>HYPOTHETICAL / NOT A FORECAST</span></summary>
-    <div class="scenario-panel"><p class="desc">Hold settled contract count fixed and vary realized net cents per contract. This isolates the arithmetic; it does not estimate fills, capacity or future returns.</p><div class="scenario-layout" style="margin-top:20px"><div><label class="scenario-label" for="scenario-contracts"><span>Settled contracts</span><strong id="scenario-count">300</strong></label><input id="scenario-contracts" type="range" min="0" max="1000" step="25" value="300" aria-describedby="scenario-helper"><p id="scenario-helper" class="note">Count contracts, not orders or fill records.</p></div><div class="scenario-results" role="group" aria-label="Hypothetical P and L"><div class="scenario-result"><span>−5¢ / contract</span><strong class="neg" id="scenario-loss">−$15.00</strong></div><div class="scenario-result"><span>0¢ / contract</span><strong id="scenario-even">$0.00</strong></div><div class="scenario-result"><span>+2.93¢ / contract</span><strong class="pos" id="scenario-backtest">+$8.79</strong></div></div></div><p class="scenario-small" id="scenario-impact" aria-live="polite"></p><p class="scenario-small">The positive case uses the historical NBA model-veto estimate after modeled fees. It is not an NFL estimate. The −5¢ case is an example, not a worst-case loss bound.</p></div>
-  </details>
-</section>
 </main>
-<footer><div class="footer-top"><strong>AJ / SPORTS MARKET MAKER</strong><div><a href="https://github.com/akilatrades/sports-market-maker">Repository ↗</a> &nbsp; / &nbsp; <a href="../outputs/dashboard/summary.json">Published data ↗</a> &nbsp; / &nbsp; <a href="https://github.com/akilatrades/sports-market-maker/blob/main/docs/FORWARD_VALIDATION.md">Validation protocol ↗</a></div></div><p>Independent quantitative research. Backtests, paper ledgers and exchange-confirmed results remain separate. This page reads published GitHub reports; private account data is not exposed here. Historical results do not establish future returns.</p></footer>
+<footer><div class="footer-top"><strong>AJ / SPORTS MARKET MAKER</strong><div><a href="https://github.com/akilatrades/sports-market-maker">Repository ↗</a> &nbsp; / &nbsp; <a href="../outputs/dashboard/summary.json">Published data ↗</a> &nbsp; / &nbsp; <a href="https://github.com/akilatrades/sports-market-maker/blob/main/docs/FORWARD_VALIDATION.md">Validation protocol ↗</a></div></div><p>Independent quantitative research. Financial P&amp;L shown here is exclusively from approved, exchange-verified settlement snapshots. This public page is not a streaming account connection; private balances, credentials and order identifiers are not published.</p></footer>
 <div class="tt" id="tt"></div>
 
 <script>
@@ -700,7 +685,7 @@ function overview(snapshot){
  const events=observed?Number(f.settled_buy_fill_events||0):null;
  const card=(label,value,caption,tone="")=>`<article class="metric-card"><span class="metric-label">${esc(label)}</span><div class="metric-value ${tone}">${esc(value)}</div><span class="metric-caption">${esc(caption)}</span></article>`;
  document.getElementById("hero-metrics").innerHTML=[
-  card("Realized P&L",realized==null?"—":money(realized),realized==null?"No settled exchange results in the saved logs":"NBA settlements from the published cohort",realized>0?"positive":realized<0?"negative":""),
+  card("Live strategy P&L","NFL + NBA","See verified exchange-settlement results below"),
   card("Settled NO contracts",contracts==null?"—":contracts.toLocaleString(),contracts==null?"No settled NBA contracts in the published cohort":"NBA contracts confirmed by the exchange"),
   card("Volume capture",capture==null?"—":pct(capture),capture==null?"No completed order window to measure yet":"Backtest assumption: 50%"),
   card("Settled fill events",events==null?"— / 500":events.toLocaleString()+" / 500",events==null?"No NBA fill-event count published":"Checkpoint: 30 days and 500 settled fills")
@@ -724,7 +709,7 @@ function overview(snapshot){
  `<div class="progress-track" role="progressbar" aria-label="Settlement-fill checkpoint" aria-valuemin="0" aria-valuemax="500" aria-valuenow="${Math.min(500,count)}"><span style="width:${pc}%"></span></div>`+
  `<div class="progress-labels" style="margin-top:17px"><span>Observation period</span><strong>${esc(ready?days.toFixed(1)+" / 30 days":"Not started")}</strong></div>`+
  `<div class="progress-track" role="progressbar" aria-label="Observation-day checkpoint" aria-valuemin="0" aria-valuemax="30" aria-valuenow="${Math.min(30,days)}"><span style="width:${pd}%"></span></div>`+
- `<div style="margin-top:19px">${row("Real profit / settled contract",f.cents_per_settled_contract==null?"—":cents(f.cents_per_settled_contract))}${row("Historical reference","+2.9¢ / contract")}${row("Volume data recorded",f.mature_volume_coverage==null?"—":pct(f.mature_volume_coverage))}${row("Independent games",f.independent_games==null?"—":String(f.independent_games))}${row("Position sizing","Frozen until the checkpoint review")}</div>`+
+ `<div style="margin-top:19px">${row("Production P&L","See separate NFL and NBA results below")}${row("Volume data recorded",f.mature_volume_coverage==null?"—":pct(f.mature_volume_coverage))}${row("Independent games",f.independent_games==null?"—":String(f.independent_games))}${row("Position sizing","Frozen until the checkpoint review")}</div>`+
  `<p class="note">The checkpoint covers NBA “NO” buys only. The edge is judged on exchange-confirmed fills after fees and settlement, not on the backtest.</p>`;
  const statusLine=(name,item)=>`<div class="fwd-row"><span>${esc(name)} trader · ${esc(item.run_utc?String(item.mode||"unknown").toUpperCase():"NO LOG")}</span><strong>${esc(item.run_utc?String(item.run_utc).slice(0,16).replace("T"," ")+" UTC":"Not published")}</strong></div>`;
  const errors=[live.forward_validation_error,nfl.forward_validation_error].filter(Boolean).join(" · ");
@@ -756,56 +741,37 @@ function renderStudy(s) {
   forest(el, rows.filter(([,r])=>r && Number.isFinite(r.cents)).map(([label,r])=>({label,est:r.cents,se:r.se,color:label==="Filter retained"?"var(--accent)":"var(--bench)",sub:`${r.fills.toLocaleString()} simulated fills`})), {labelW:138});
   document.getElementById("study-source").textContent = `2025–26 replay · ${b.games} games sampled · after modeled fees. Not live performance. Fills are not independent games.`;
 }
-function renderCharts(s, pf) {
+function renderCharts(s) {
   renderStudy(s);
-  lines(document.getElementById("cumulative"), pf.days, [
-    {label: "Benchmark (backtest edge)", v: pf.bench, color: "var(--bench)", width: 2},
-    {label: "Paper ledgers", v: pf.eq, color: "var(--algo)", width: 2.5},
-  ], 260);
-  bars(document.getElementById("daily"), pf.days, pf.daily.map(d => d.profit), 200, {tip: i => `${pf.days[i]}\n${money(pf.daily[i].profit)}  (${pf.daily[i].fills} fills, ${pf.daily[i].contracts} contracts)`});
-  const h = s.per_fill_histogram || {}; const hk = Object.keys(h).map(Number).sort((a, b) => a - b);
-  const any = hk.some(k => h[k]);
-  bars(document.getElementById("hist"), any ? hk.map(String) : [], hk.map(k => h[k]), 200, {fmt: v => String(Math.round(v)), lab: d => `${d}¢`, color: (v, i) => hk[i] >= 0 ? "var(--up)" : "var(--down)", tip: i => `${hk[i]} to ${hk[i] + 10}¢ per contract\n${h[hk[i]]} fills`, empty: "No settled fills yet."});
-  heatmap(s);
-  const periods = drawdownPeriods(pf), bandColors = ["var(--s8)", "var(--s2)", "var(--s4)"];
-  lines(document.getElementById("underwater"), pf.days, [{label: "Drawdown", v: pf.dd, color: "var(--neg)", area: true, width: 1.5}], 160, {bands: periods.map((p, i) => ({from: p.from, to: p.to, color: bandColors[i]}))});
-  document.getElementById("ddtable").innerHTML = periods.length ? `<table><thead><tr><th>Drawdown period</th><th>From</th><th>Trough</th><th>Recovered</th><th class="num">Depth</th></tr></thead><tbody>${periods.map((p, i) => `<tr><td><span class="dot" style="--c:${bandColors[i]}"></span>${i + 1}</td><td>${pf.days[p.from]}</td><td>${pf.days[p.troughI]}</td><td>${p.open ? "not yet" : pf.days[p.to]}</td><td class="num neg">${money(p.trough)}</td></tr>`).join("")}</tbody></table>` : "";
-  const roll = n => pf.days.map((d, i) => { const w = pf.daily.slice(Math.max(0, i - n + 1), i + 1); const c = w.reduce((a, x) => a + x.contracts, 0); return c ? 100 * w.reduce((a, x) => a + x.profit, 0) / c : 0; });
-  lines(document.getElementById("rolling"), pf.days, [
-    {label: "Backtest edge", v: pf.days.map(() => 2.93), color: "var(--bench)", width: 1.5, dash: true, fmt: cents},
-    {label: "Trailing 7 days", v: roll(7), color: "var(--algo-soft)", width: 2, fmt: cents},
-    {label: "Trailing 30 days", v: roll(30), color: "var(--algo)", width: 2.5, fmt: cents},
-  ], 200, {fmt: v => `${v > 0 ? "+" : ""}${v}¢`});
-  const live5 = s.paper.ledgers.filter(l => l.fills >= 5 && l.cents_per_contract != null).map(l => ({label: name(l.ledger), est: l.cents_per_contract, se: l.se_cents, color: colorOf(l.ledger), sub: `${l.fills} fills, t ${fmt1(l.t)}, hit ${pct(l.hit_rate)}`}));
-  const refs = [{label: "NBA + model veto, 2025-26", est: 2.93, se: 0.48, color: "var(--bench)", hollow: true, sub: "21,373 fills, backtest"}, {label: "NBA + book veto, 2025-26", est: 3.81, se: 1.59, color: "var(--bench)", hollow: true, sub: "1,647 fills, backtest"}];
-  forest(document.getElementById("forest"), [...live5, ...refs], {empty: "No ledger has five fills yet."});
-  const eqs = {}; for (const l of s.paper.ledgers.filter(l => l.fills > 0)) { let c = 0; const by = Object.fromEntries(s.paper.daily.filter(d => d.ledger === l.ledger).map(d => [d.day, d.profit])); eqs[l.ledger] = pf.days.map(d => (c += by[d] || 0)); }
-  ledgerTable(s, eqs); exposure(s);
   forest(document.getElementById("scan"), (s.scan_top || []).map(r => ({label: name(r.series), est: r.cents, se: r.se, color: r.passes ? "var(--algo)" : "var(--bench)", hollow: !r.passes, sub: `${r.fills.toLocaleString()} fills, t ${r.t}${r.passes ? ", passed" : ""}`})), {labelW: 220});
   research(s);
 }
-function hypotheticalProfit(contracts, centsPerContract) {
-  return contracts * centsPerContract / 100;
-}
-function renderScenarios() {
-  const input = document.getElementById("scenario-contracts");
-  const n = Number(input.value);
-  document.getElementById("scenario-count").textContent = n.toLocaleString();
-  const signedMoney = value => value > 0 ? "+" + money(value) : money(value);
-  document.getElementById("scenario-loss").textContent = signedMoney(hypotheticalProfit(n, -5));
-  document.getElementById("scenario-even").textContent = money(0);
-  document.getElementById("scenario-backtest").textContent = signedMoney(hypotheticalProfit(n, 2.93));
-  const gain = hypotheticalProfit(n, 2.93);
-  document.getElementById("scenario-impact").textContent = `${n.toLocaleString()} settled contracts × 2.93¢ = ${money(gain)} in the historical-reference case. Not a forecast. No assumption is made about how many orders will fill.`;
+function renderProductionPnl(snapshot) {
+  const markets = snapshot?.markets || {};
+  const signed = v => v > 0 ? "+" + money(v) : money(v);
+  const card = (label, key) => {
+    const item = markets[key] || {};
+    const verified = item.status === "verified_snapshot" && typeof item.settled_profit_dollars === "number" && Number.isFinite(item.settled_profit_dollars);
+    const p = verified ? item.settled_profit_dollars : null;
+    const value = p === null ? "—" : signed(p);
+    const caption = verified ? `${item.settled_markets} settled markets · after reported fees` : "No verified settled results published";
+    const tone = p === null ? "" : p > 0 ? "positive" : p < 0 ? "negative" : "";
+    return `<article class="metric-card"><span class="metric-label">${label} / settled P&amp;L</span><div class="metric-value ${tone}">${esc(value)}</div><span class="metric-caption">${esc(caption)}</span></article>`;
+  };
+  document.getElementById("live-pnl-grid").innerHTML = card("NFL", "nfl") + card("NBA", "nba");
+  const stamp = snapshot?.as_of_utc && Number.isFinite(Date.parse(snapshot.as_of_utc)) ? snapshot.as_of_utc : null;
+  const age = stamp ? Date.now() - Date.parse(stamp) : Infinity;
+  const stale = age > 8 * 3600000 || age < -60000;
+  document.getElementById("live-pnl-asof").textContent = stamp ?
+    `Last verified production snapshot: ${stamp.slice(0,16).replace("T"," ")} UTC. ${stale ? "Snapshot may be stale. " : ""}Not a real-time stream. Outstanding/open positions excluded; missing reports are not zero profit.` :
+    "No authenticated production P&L snapshot has been published; simulated P&L is never substituted.";
 }
 let latestDashboard = null;
 fetch("../outputs/dashboard/summary.json", {cache: "no-store"}).then(r => { if (!r.ok) throw new Error(r.status); return r.json(); }).then(s => {
-  const pf = portfolio(s);
-  latestDashboard = {s, pf};
-  document.getElementById("stamp").innerHTML = `<strong>Data as of</strong> ${esc(s.updated_utc.slice(0, 16).replace("T", " "))} UTC`;
-  stats(s, pf);
+  latestDashboard = {s};
+  document.getElementById("stamp").innerHTML = `<strong>Research data as of</strong> ${esc(s.updated_utc.slice(0, 16).replace("T", " "))} UTC`;
   overview(s);
-  renderCharts(s, pf);
+  renderCharts(s);
   document.getElementById("live").innerHTML = liveBlock(s.live || {}, "NBA props", s.limits || {}) + liveBlock(s.live_nfl || {}, "NFL props", s.limits || {});
 }).catch(e => {
   document.getElementById("stamp").textContent = "Could not load the published data (" + e.message + ")";
@@ -814,6 +780,10 @@ fetch("../outputs/dashboard/summary.json", {cache: "no-store"}).then(r => { if (
   overview({});
   document.getElementById("system-view").textContent = "Source unavailable; do not infer live account status.";
 });
+fetch("../outputs/dashboard/production_pnl.json", {cache:"no-store"})
+  .then(r => { if (!r.ok) throw new Error("No production P&L report"); return r.json(); })
+  .then(data => { if (data.schema_version !== 1) throw new Error("Invalid production P&L schema"); renderProductionPnl(data); })
+  .catch(() => renderProductionPnl(null));
 // Optional read-only cross-exchange snapshot. Never infer live trading status.
 fetch("../outputs/cross_exchange/latest.json", {cache:"no-store"})
   .then(r => { if (!r.ok) throw new Error("not published"); return r.json(); })
