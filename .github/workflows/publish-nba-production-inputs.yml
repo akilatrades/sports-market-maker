@@ -8,6 +8,7 @@ on:
       - 'live/nba_publish_check.py'
       - 'live/nba_projections.py'
       - 'live/nba_inputs.py'
+      - 'live/nba_publish_guard.py'
   schedule:
     # Opening week: an early 11:30 UTC (6:30 AM Central) backup run,
     # a 12:30 UTC (7:30 AM Central) refresh, then three later updates.
@@ -63,33 +64,7 @@ jobs:
             # disk. Never mistake those new files for published repo content.
             # Only compare with the exact metadata blob in the Git HEAD.
             set +e
-            python - "$RUNNER_TEMP/nba-latest-meta.json" <<'PY'
-          import json
-          import pathlib
-          import subprocess
-          import sys
-          from datetime import datetime
-
-          fresh = json.loads(pathlib.Path(sys.argv[1]).read_text())
-          baseline = subprocess.run(
-              ["git", "show", "HEAD:outputs/projections/latest_meta.json"],
-              capture_output=True,
-              text=True,
-              check=False,
-          )
-          if baseline.returncode == 0:
-              remote = json.loads(baseline.stdout)
-              newest = datetime.fromisoformat(fresh["generated_utc"].replace("Z", "+00:00"))
-              previous = datetime.fromisoformat(remote["generated_utc"].replace("Z", "+00:00"))
-              if previous >= newest:
-                  # Only a COMMITTED same/newer bundle is a real publish.
-                  subprocess.run(
-                      ["git", "cat-file", "-e", "HEAD:outputs/projections/latest.csv"],
-                      check=True,
-                  )
-                  print("A newer or equal COMMITTED projection bundle is published.")
-                  sys.exit(10)
-          PY
+            python -m live.nba_publish_guard --fresh-meta "$RUNNER_TEMP/nba-latest-meta.json"
             code=$?
             set -e
             if [[ "$code" == "10" ]]; then exit 0; fi
