@@ -98,6 +98,15 @@ publication is staged but requires the owner's separate
 [Droplet setup](deploy/PUBLIC_PNL_REFRESH.md); publication is
 **not yet enabled**. No simulated fill is counted as live P&L.
 
+A new [direct funded-account settled P&L feed](deploy/LIVE_ACCOUNT_PNL.md)
+is staged in GitHub. Once an owner-approved HTTPS endpoint is configured,
+GitHub Pages will poll actual signed Kalshi account settlements every
+15 seconds (Droplet refresh every 30 seconds), without manual GitHub
+commits. It will show FUNDED ACCOUNT, NFL and NBA separately. The public
+source is **not deployed/connected yet**. Account-wide settlement P&L
+is not the same as complete lifetime realized P&L if trades exit early
+or move to historical storage.
+
 ## How it works
 
 ```
