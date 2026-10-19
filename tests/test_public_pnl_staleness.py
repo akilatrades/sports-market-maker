@@ -24,7 +24,7 @@ def test_published_aggregate_is_polled_without_cache_and_stale_values_hidden(tmp
     script = tmp_path / "verify-public-pnl.cjs"
     script.write_text(
         """
-const money = v => "$" + v.toFixed(2);
+const money = v => v < 0 ? "-$" + Math.abs(v).toFixed(2) : "$" + v.toFixed(2);
 const esc = v => String(v);
 """
         + bootstrap
