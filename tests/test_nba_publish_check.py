@@ -73,9 +73,7 @@ def test_refuse_empty_snapshot_when_games_and_markets_open(tmp_path):
     data, meta = bundle(tmp_path, now, empty)
     with pytest.raises(ValueError, match="no_priced_rows"):
         inspect(data, meta, now)
-    data, meta = bundle(
-        tmp_path, now, empty, schedule_games=0, open_markets=0
-    )
+    data, meta = bundle(tmp_path, now, empty, schedule_games=0, open_markets=0)
     assert inspect(data, meta, now)["rows"] == 0
 
 
