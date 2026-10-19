@@ -142,3 +142,71 @@ def test_incomplete_or_corrupt_journal_halts(monkeypatch, tmp_path):
     path.write_text('{"event":"intent",\n')
     with pytest.raises(TradingError, match="Invalid production"):
         shared.journal_events("nba")
+
+
+def test_full_signed_reconciliation_keeps_both_sports_active(monkeypatch, tmp_path):
+    import json
+
+    monkeypatch.setattr(shared, "ROOT", tmp_path)
+    for sport, key in (("nfl", "a"), ("nba", "b")):
+        directory = tmp_path / f"prod-{sport}-auto"
+        directory.mkdir()
+        (directory / "journal.jsonl").write_text(
+            "".join(json.dumps(e) + "\\n" for e in pair(sport, key))
+        )
+
+    class Exchange:
+        def orders(self, status):
+            assert status == "resting"
+            return [
+                {"order_id": "order-client-nfl-a", "ticker": "KXNFL-TEST-a"},
+                {"order_id": "order-client-nba-b", "ticker": "KXNBA-TEST-b"},
+            ]
+
+        def positions(self):
+            return [
+                {"market_ticker": "KXNFL-TEST-a", "position_fp": "-1"},
+                {"market_ticker": "KXNBA-TEST-b", "position_fp": "-2"},
+            ]
+
+        def settlements(self):
+            return []
+
+        def fills(self, min_ts):
+            assert min_ts < NOW.timestamp()
+            return []
+
+    for sport in ("nfl", "nba"):
+        state, context = shared.state_for(Exchange(), sport, NOW)
+        assert len(state["resting"]) == 1
+        assert len(state["held"]) == 1
+        assert len(context["active_client_ids"]) == 2
+        assert shared.fits(context, 3, NOW)
+
+
+def test_inconsistent_foreign_fill_on_our_market_halts(monkeypatch, tmp_path):
+    import json
+
+    monkeypatch.setattr(shared, "ROOT", tmp_path)
+    for sport, key in (("nfl", "a"), ("nba", "b")):
+        directory = tmp_path / f"prod-{sport}-auto"
+        directory.mkdir()
+        (directory / "journal.jsonl").write_text(
+            "".join(json.dumps(e) + "\\n" for e in pair(sport, key))
+        )
+
+    class Exchange:
+        def orders(self, status):
+            return []
+
+        def positions(self):
+            return []
+
+        def settlements(self):
+            return []
+
+        def fills(self, min_ts):
+            return [{"ticker": "KXNFL-TEST-a", "order_id": "manual-fill"}]
+
+    with pytest.raises(TradingError, match="Unowned fill"):
+        shared.state_for(Exchange(), "nba", NOW)
