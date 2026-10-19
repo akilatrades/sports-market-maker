@@ -1,13 +1,14 @@
-"""Keep the public research evidence separate from account and scenario data."""
+"""Public dashboard must never mistake paper results for settled account P&L."""
 
-import re
+import json
 import shutil
 import subprocess
 from pathlib import Path
 
 import pytest
 
-DASHBOARD = Path(__file__).resolve().parents[1] / "dashboard" / "index.html"
+ROOT = Path(__file__).resolve().parents[1]
+DASHBOARD = ROOT / "dashboard" / "index.html"
 
 
 def test_public_research_has_no_private_account_or_demo_balance_panel():
@@ -18,67 +19,93 @@ def test_public_research_has_no_private_account_or_demo_balance_panel():
     assert 'src="account.js"' not in source
     assert "HISTORICAL REPLAY" in source
     assert "not live performance" in source
-    assert "Each strategy runs on a separate $500 paper bankroll" in source
 
 
-@pytest.mark.parametrize(
-    ("contracts", "edge", "expected_dollars"),
-    [
-        (0, 2.93, 0.0),
-        (100, 2.93, 2.93),
-        (300, 2.93, 8.79),
-        (1000, 2.93, 29.30),
-        (300, -5, -15.0),
-        (300, 0, 0.0),
-    ],
-)
-def test_scenario_math_uses_filled_contracts_not_deposit(
-    tmp_path, contracts, edge, expected_dollars
-):
-    if not shutil.which("node"):
-        pytest.skip("Node.js not installed")
+def test_hypothetical_profit_section_was_removed():
     html = DASHBOARD.read_text()
-    script = re.search(r"<script>(.*?)</script>", html, flags=re.S).group(1)
-    extract = script.split('fetch("../outputs/dashboard/summary.json"')[0]
-    harness = tmp_path / "scenario.cjs"
+    assert 'id="production-pnl"' in html
+    assert 'id="live-pnl-grid"' in html
+    assert 'fetch("../outputs/dashboard/production_pnl.json"' in html
+    for retired in (
+        'id="paper"',
+        'id="profit-scenarios"',
+        'id="scenario-contracts"',
+        "function hypotheticalProfit(",
+        'id="strategy-summary"',
+    ):
+        assert retired not in html
+
+
+@pytest.mark.parametrize("verified", [True, False])
+def test_browser_production_pnl_uses_verified_snapshots_only(tmp_path, verified):
+    if not shutil.which("node"):
+        pytest.skip("Node.js is not available")
+    harness = tmp_path / "check-live-pnl.cjs"
     harness.write_text(
-        """
-const vm = require("vm");
+        r"""
 const fs = require("fs");
-const source = fs.readFileSync(process.argv[2], "utf8");
-const inline = source.match(/<script>([\\s\\S]*?)<\\/script>/)[1];
-const code = inline.split('fetch("../outputs/dashboard/summary.json"')[0];
-const input = {value: process.argv[3]};
+const vm = require("vm");
+const html = fs.readFileSync(process.argv[2], "utf8");
+const matched = html.match(/<script>([\s\S]*?)<\/script>/);
+if (!matched) throw Error("Public dashboard has no inline script");
+const script = matched[1];
+const start = script.indexOf("function renderProductionPnl(");
+const end = script.indexOf("let latestDashboard = null;", start);
+if (start < 0 || end < 0) throw Error("No verified P&L renderer");
 const nodes = {
-  "scenario-contracts": input,
-  "scenario-count": {textContent:""},
-  "scenario-loss": {textContent:""},
-  "scenario-even": {textContent:""},
-  "scenario-backtest": {textContent:""}
+  "live-pnl-grid": {innerHTML: ""},
+  "live-pnl-asof": {textContent: ""}
 };
-const document = {getElementById:(id) => nodes[id] || {innerHTML:"",style:{}}};
-const exercise = [
-  "const result = hypotheticalProfit(Number(" + JSON.stringify(process.argv[3]) +
-  "), Number(" + JSON.stringify(process.argv[4]) + "));",
-  "console.log(result);"
-].join("\\n");
-vm.runInNewContext(code + exercise, {document, console, Object});
+const context = {
+  input: JSON.parse(process.argv[3]),
+  document: {getElementById: key => nodes[key]},
+  esc: value => String(value),
+  money: value => "$" + value.toFixed(2),
+  Date, Number
+};
+vm.runInNewContext(
+  script.slice(start, end) + "\nrenderProductionPnl(input);",
+  context
+);
+console.log(JSON.stringify(nodes));
 """.strip()
         + "\n"
     )
-    # Also ensure the source prefix actually contains the pure JS calculation.
-    assert "function hypotheticalProfit(" in extract
-    out = subprocess.run(
-        ["node", str(harness), str(DASHBOARD), str(contracts), str(edge)],
+    report = (
+        {
+            "schema_version": 1,
+            "as_of_utc": "2026-10-19T01:34:46Z",
+            "markets": {
+                "nfl": {
+                    "status": "verified_snapshot",
+                    "settled_profit_dollars": 1.99,
+                    "settled_markets": 2,
+                },
+                "nba": {
+                    "status": "awaiting_verified_report",
+                    "settled_profit_dollars": None,
+                },
+            },
+        }
+        if verified
+        else None
+    )
+    run = subprocess.run(
+        ["node", str(harness), str(DASHBOARD), json.dumps(report)],
         capture_output=True,
         text=True,
         check=True,
     )
-    assert float(out.stdout.strip()) == pytest.approx(expected_dollars, abs=1e-10)
-
-
-def test_no_unverified_live_profit_is_invented():
-    source = DASHBOARD.read_text()
-    assert 'card("Realized P&L",realized==null?"—"' in source
-    assert 'const realized=observed&&typeof live.realized_total==="number"' in source
-    assert 'row("Missing observations","Unknown; never replaced with zero")' in source
+    data = json.loads(run.stdout)
+    pnl_html = data["live-pnl-grid"]["innerHTML"]
+    assert "NFL / settled P&amp;L" in pnl_html
+    assert "NBA / settled P&amp;L" in pnl_html
+    assert "—" in pnl_html
+    assert "NBA / settled P&amp;L</span><div class=\"metric-value \">—" in pnl_html
+    assert "$0.00" not in pnl_html
+    if verified:
+        assert "+$1.99" in pnl_html
+        assert "Last verified production snapshot" in data["live-pnl-asof"]["textContent"]
+    else:
+        assert "$1.99" not in pnl_html
+        assert "No authenticated production P&L snapshot" in data["live-pnl-asof"]["textContent"]
