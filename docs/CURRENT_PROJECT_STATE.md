@@ -7,6 +7,38 @@
 > The goal is positive net trading income eventually, but profitability,
 > scale and dependable income have **not** been demonstrated.
 
+## Signed NBA production preflight — October 19, 03:22 UTC
+
+Owner ran a signed, **GET-only** NBA preflight with input synchronization.
+The exchange/account request succeeded far enough to check live account
+positions. Exit code **2** means no trading authorization, not a worker crash.
+
+- NBA input model `nba-opening-v2` approximately **0.33 h** old; **312**
+  currently quoted markets, **0 verified candidates**, **0 two-book lines**.
+  Every priced row was excluded with
+  `SEASON_OR_ROLE_CHANGE_NEEDS_TWO_BOOKS`. **0 in entry window** is also
+  expected because this was Sunday evening, not 2–6 h before Tuesday tip.
+- Three blockers: `NFL production still active: NBA trading HALTED`,
+  `no_verified_projection_rows`, and
+  `Foreign open production position: HALT`. The last means a current
+  position is **not owned by NBA's empty order journal**, *not* proof it
+  is unauthorized; an NFL-owned position would be classified foreign
+  to NBA. No current authenticated position ticker/order attribution
+  has yet been provided in this conversation.
+- The `account.verified=false` result is due to the foreign-position
+  risk halt; it does **not** establish that Kalshi credentials are wrong.
+  Do not disable safeguards, close positions automatically or activate
+  NBA while this is unresolved.
+- A GET-only operator diagnostic, `tools/check_account_isolation.py`,
+  now reports **aggregate** open position and resting order ownership
+  grouped by NFL-journal, NBA-journal, or unknown, without printing
+  balances or raw order/market identifiers. Run it with the protected
+  `/etc/market-maker-prod-nba-auto.env` environment on the Droplet
+  before deciding whether NFL positions need to settle or whether
+  unrelated manual trades need a separate account/handoff review.
+- The diagnostics, like a preflight, are point-in-time observations; do
+  not infer positions automatically close when a game ends.
+
 ## DigitalOcean status update — October 19, 03:19 UTC
 
 **Owner-provided terminal verification after the maintenance deployment:**
