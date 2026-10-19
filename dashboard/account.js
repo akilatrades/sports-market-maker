@@ -29,10 +29,13 @@ const AccountView = (() => {
     [["nfl","profit","settled-note"],["nba","nba-profit","nba-settled-note"]].forEach(([key,amountId,noteId]) => {
       const cohort = livePnl[key] || {};
       const verified = cohort.status === "verified" && finite(cohort.settled_profit_dollars);
-      const profit = verified ? cohort.settled_profit_dollars : null;
+      // A failed/old account read cannot be represented as current green P&L.
+      const show = state === "live" && verified;
+      const profit = show ? cohort.settled_profit_dollars : null;
       set(amountId, money(profit));
       node(amountId).className = verified ? (profit < 0 ? "negative" : "positive") : "";
-      const note = verified ? `${count(cohort.settled_markets)} verified settled markets · net of fees` :
+      const note = state !== "live" ? "Account report stale or disconnected; current P&L hidden" :
+        verified ? `${count(cohort.settled_markets)} verified settled markets · net of fees` :
         cohort.status === "incomplete_settlement" ? "Settlement accounting incomplete; P&L not reported" :
         cohort.status === "awaiting_first_order" ? "No live orders accepted yet" :
         cohort.status === "awaiting_settlement" ? "Live orders exist; awaiting completed settlements" :
