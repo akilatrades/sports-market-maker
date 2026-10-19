@@ -2,6 +2,7 @@
 
 This command is read-only: no authenticated Kalshi calls, no trading, no writes.
 """
+
 import argparse
 import csv
 import io
@@ -21,13 +22,22 @@ def inspect(data, meta, now):
         meta.get("open_markets", 0) <= 0 or meta.get("schedule_games", 0) <= 0
     ):
         raise ValueError("positive_rows_without_live_games_or_markets")
-    if (meta.get("schedule_games", 0) > 0 and meta.get("open_markets", 0) > 0
-            and meta["rows"] == 0):
+    if (
+        meta.get("schedule_games", 0) > 0
+        and meta.get("open_markets", 0) > 0
+        and meta["rows"] == 0
+    ):
         raise ValueError("open_games_and_props_but_no_priced_rows")
     reader = csv.DictReader(io.StringIO(data.decode("utf-8-sig")))
     required = {
-        "ticker", "p_model", "tip_utc", "injury_status", "game_id",
-        "player_id", "requires_book", "team_espn",
+        "ticker",
+        "p_model",
+        "tip_utc",
+        "injury_status",
+        "game_id",
+        "player_id",
+        "requires_book",
+        "team_espn",
     }
     if not reader.fieldnames or not required.issubset(reader.fieldnames):
         raise ValueError("missing_published_projection_columns")
