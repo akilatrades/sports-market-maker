@@ -1,0 +1,26 @@
+[Unit]
+Description=Read-only Kalshi funded account realized settlement PnL (sanitized localhost feed)
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=simple
+User=trader
+Group=trader
+WorkingDirectory=/home/trader/sports-market-maker-prod-auto
+EnvironmentFile=/etc/market-maker-prod-auto.env
+Environment=PYTHONUNBUFFERED=1
+ExecStart=/home/trader/sports-market-maker-prod-auto/.venv/bin/python -m live.public_pnl_feed --port 8766 --interval 30
+Restart=on-failure
+RestartSec=15s
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+ReadOnlyPaths=/home/trader/prod-nfl-auto /home/trader/prod-nba-auto
+
+[Install]
+WantedBy=multi-user.target
