@@ -3,6 +3,7 @@
 import json
 import shutil
 import subprocess
+from datetime import UTC, datetime
 from pathlib import Path
 
 import pytest
@@ -74,7 +75,7 @@ console.log(JSON.stringify(nodes));
     report = (
         {
             "schema_version": 1,
-            "as_of_utc": "2026-10-19T01:34:46Z",
+            "as_of_utc": datetime.now(UTC).isoformat(),
             "markets": {
                 "nfl": {
                     "status": "verified_snapshot",
