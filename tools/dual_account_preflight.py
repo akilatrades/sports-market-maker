@@ -45,10 +45,14 @@ def main():
         client = ReadOnlyClient(dry_run=True, env="prod")
         print(json.dumps(report(client, now), indent=2, sort_keys=True))
     except Exception as error:
-        print(json.dumps({
-            "status": "RECONCILIATION_UNAVAILABLE_DO_NOT_ACTIVATE",
-            "reason_type": type(error).__name__,
-        }))
+        print(
+            json.dumps(
+                {
+                    "status": "RECONCILIATION_UNAVAILABLE_DO_NOT_ACTIVATE",
+                    "reason_type": type(error).__name__,
+                }
+            )
+        )
         raise SystemExit(2) from None
 
 
