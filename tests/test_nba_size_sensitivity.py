@@ -48,8 +48,11 @@ def test_250_cash_with_same_caps_does_not_increase_risk_or_profit():
 
 def test_reserved_lifetime_cost_never_recycles_on_unfilled_orders():
     row = sample_game()
-    low = replay([row, {**row, "game_id": 11, "tip_utc": "2026-01-13T20:00:00Z"}],
-                 POLICIES[0], fill_capture=0)
+    low = replay(
+        [row, {**row, "game_id": 11, "tip_utc": "2026-01-13T20:00:00Z"}],
+        POLICIES[0],
+        fill_capture=0,
+    )
     assert low["profit"] == 0
     assert low["filled"] == 0
     assert low["reserve"] == 5.28
