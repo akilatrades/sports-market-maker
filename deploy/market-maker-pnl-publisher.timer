@@ -1,0 +1,11 @@
+[Unit]
+Description=Refresh sanitized public NFL/NBA settled PnL approximately every 10 minutes
+
+[Timer]
+OnBootSec=2min
+OnUnitActiveSec=10min
+AccuracySec=1min
+Unit=market-maker-pnl-publisher.service
+
+[Install]
+WantedBy=timers.target
