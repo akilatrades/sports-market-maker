@@ -16,10 +16,18 @@ def test_published_aggregate_is_polled_without_cache_and_stale_values_hidden(tmp
     page = PAGE.read_text()
     scripts = re.findall(r"<script(?:\s[^>]*)?>(.*?)</script>", page, re.S)
     assert len(scripts) == 1
-    bootstrap = scripts[0].split("let latestDashboard = null;")[0]
+    source = scripts[0]
+    start = source.index("function renderProductionPnl(")
+    end = source.index("let latestDashboard = null;", start)
+    assert start >= 0 and end > start
+    bootstrap = source[start:end]
     script = tmp_path / "verify-public-pnl.cjs"
     script.write_text(
-        bootstrap
+        """
+const money = v => "$" + v.toFixed(2);
+const esc = v => String(v);
+"""
+        + bootstrap
         + """
 const nodes = {};
 const documentStub = {
