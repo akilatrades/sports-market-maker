@@ -141,3 +141,22 @@ def test_invalid_validation_file_is_declared_not_silently_successful(tmp_path):
     output = live_status(tmp_path)
     assert "forward_validation" not in output
     assert output.get("forward_validation_error")
+
+
+def test_public_profit_file_contains_only_verified_market_aggregates():
+    data = json.loads(
+        (ROOT / "outputs/dashboard/production_pnl.json").read_text()
+    )
+    assert data["schema_version"] == 1
+    assert set(data["markets"]) == {"nfl", "nba"}
+    assert data["markets"]["nfl"]["status"] == "verified_snapshot"
+    assert data["markets"]["nfl"]["settled_profit_dollars"] == 1.99
+    assert data["markets"]["nba"]["settled_profit_dollars"] is None
+    assert not any(
+        key in data for key in ("paper", "ledgers", "balance", "api_keys")
+    )
+    assert all(
+        "balance" not in key and "order_id" not in key and "token" not in key
+        for market in data["markets"].values()
+        for key in market
+    )
