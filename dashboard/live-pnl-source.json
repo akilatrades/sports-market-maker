@@ -1,4 +1,4 @@
 {
-  "api_url": "",
-  "note": "Once the HTTPS-only read-only endpoint is deployed, set api_url to its full https:// hostname and /v1/pnl path. No keys or private fields go here."
+  "api_url": "https://157-230-146-86.sslip.io/v1/pnl",
+  "note": "Public aggregate-only Kalshi funded-account settled PnL via read-only Caddy HTTPS proxy. Browser polls every 15 seconds. No credentials or order IDs."
 }
