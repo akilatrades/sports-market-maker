@@ -663,24 +663,33 @@ function renderCharts(s) {
   research(s);
 }
 function renderProductionPnl(snapshot) {
+  const stamp = snapshot?.as_of_utc && Number.isFinite(Date.parse(snapshot.as_of_utc)) ? snapshot.as_of_utc : null;
+  const age = stamp ? Date.now() - Date.parse(stamp) : Infinity;
+  // Static, publicly cached HTML is not an account connection. A historic
+  // positive settlement must NOT look current while later games settle.
+  const fresh = age >= -60000 && age <= 15 * 60000;
   const markets = snapshot?.markets || {};
   const signed = v => v > 0 ? "+" + money(v) : money(v);
   const card = (label, key) => {
     const item = markets[key] || {};
-    const verified = item.status === "verified_snapshot" && typeof item.settled_profit_dollars === "number" && Number.isFinite(item.settled_profit_dollars);
-    const p = verified ? item.settled_profit_dollars : null;
+    const verified = (item.status === "verified_snapshot" || item.status === "verified")
+      && typeof item.settled_profit_dollars === "number" && Number.isFinite(item.settled_profit_dollars);
+    const show = fresh && verified;
+    const p = show ? item.settled_profit_dollars : null;
     const value = p === null ? "—" : signed(p);
-    const caption = verified ? `${item.settled_markets} settled markets · after reported fees` : "No verified settled results published";
+    const caption = !fresh ? "Verified report is stale; current result unavailable"
+      : verified ? `${item.settled_markets} settled markets · after reported fees`
+      : "No current verified settled results";
     const tone = p === null ? "" : p > 0 ? "positive" : p < 0 ? "negative" : "";
     return `<article class="metric-card"><span class="metric-label">${label} / settled P&amp;L</span><div class="metric-value ${tone}">${esc(value)}</div><span class="metric-caption">${esc(caption)}</span></article>`;
   };
   document.getElementById("live-pnl-grid").innerHTML = card("NFL", "nfl") + card("NBA", "nba");
-  const stamp = snapshot?.as_of_utc && Number.isFinite(Date.parse(snapshot.as_of_utc)) ? snapshot.as_of_utc : null;
-  const age = stamp ? Date.now() - Date.parse(stamp) : Infinity;
-  const stale = age > 8 * 3600000 || age < -60000;
-  document.getElementById("live-pnl-asof").textContent = stamp ?
-    `Last verified production snapshot: ${stamp.slice(0,16).replace("T"," ")} UTC. ${stale ? "Snapshot may be stale. " : ""}Not a real-time stream. Outstanding/open positions excluded; missing reports are not zero profit.` :
-    "No authenticated production P&L snapshot has been published; simulated P&L is never substituted.";
+  document.getElementById("live-pnl-asof").textContent = !stamp ?
+    "No authenticated production P&L has been published; research returns are never substituted." :
+    `Last signed production settlement report: ${stamp.slice(0,16).replace("T"," ")} UTC. ${fresh ?
+      "Public aggregate only; may lag new fills and settlements. Refresh checks every minute." :
+      "Report expired (over 15 minutes). Live results intentionally hidden until a new verified publication arrives."
+    } Open positions and unreported outcomes are not counted as realized P&L.`;
 }
 let latestDashboard = null;
 fetch("../outputs/dashboard/summary.json", {cache: "no-store"}).then(r => { if (!r.ok) throw new Error(r.status); return r.json(); }).then(s => {
@@ -696,10 +705,19 @@ fetch("../outputs/dashboard/summary.json", {cache: "no-store"}).then(r => { if (
   overview({});
   document.getElementById("system-view").textContent = "Source unavailable; do not infer live account status.";
 });
-fetch("../outputs/dashboard/production_pnl.json", {cache:"no-store"})
-  .then(r => { if (!r.ok) throw new Error("No production P&L report"); return r.json(); })
-  .then(data => { if (data.schema_version !== 1) throw new Error("Invalid production P&L schema"); renderProductionPnl(data); })
-  .catch(() => renderProductionPnl(null));
+async function refreshVerifiedPnl() {
+  try {
+    const response = await fetch("../outputs/dashboard/production_pnl.json", {cache:"no-store"});
+    if (!response.ok) throw new Error("No production P&L report");
+    const data = await response.json();
+    if (data.schema_version !== 1) throw new Error("Invalid production P&L schema");
+    renderProductionPnl(data);
+  } catch (_) {
+    renderProductionPnl(null); // never leave a stale green profit onscreen
+  }
+}
+refreshVerifiedPnl();
+setInterval(refreshVerifiedPnl, 60000);
 // Optional read-only cross-exchange snapshot. Never infer live trading status.
 fetch("../outputs/cross_exchange/latest.json", {cache:"no-store"})
   .then(r => { if (!r.ok) throw new Error("not published"); return r.json(); })
