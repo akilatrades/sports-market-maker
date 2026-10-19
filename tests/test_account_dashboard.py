@@ -81,6 +81,26 @@ class AccountAccounting(unittest.TestCase):
         self.assertIsNone(s["settled_profit_dollars"])
         self.assertEqual(report["positions"][0]["cost_dollars"], 2.64)
 
+    def test_v2_sell_yes_is_reported_as_no_position_fill(self):
+        for fill in self.fills:
+            fill.update({
+                "action": "sell",
+                "side": "yes",
+                "outcome_side": "no",
+                "book_side": "ask",
+            })
+        report = self.report()
+        self.assertEqual(report["strategy"]["contracts_filled"], 4)
+        self.assertEqual(report["strategy"]["fill_cost_dollars"], 2.64)
+
+    def test_conflicting_v2_fill_direction_fails_closed(self):
+        self.fills[0].update({
+            "action": "sell", "side": "yes",
+            "outcome_side": "yes", "book_side": "ask",
+        })
+        with self.assertRaises(TradingError):
+            self.report()
+
     def test_missing_balance_is_not_zero(self):
         with self.assertRaises(TradingError):
             self.report(balance={"portfolio_value": 264})
