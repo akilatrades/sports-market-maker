@@ -819,11 +819,6 @@ fetch("../outputs/cross_exchange/latest.json", {cache:"no-store"})
       "No completed Polymarket US scan published yet. Waiting on the scheduled research job.";
   });
 
-document.querySelectorAll("details.diagnostics").forEach(detail => detail.addEventListener("toggle", () => {
-  if (detail.open && latestDashboard) renderCharts(latestDashboard.s, latestDashboard.pf);
-}));
-document.getElementById("scenario-contracts").addEventListener("input", renderScenarios);
-renderScenarios();
 let pageWidth = document.documentElement.clientWidth;
 let resizeTimer = null;
 window.addEventListener("resize", () => {
@@ -832,7 +827,7 @@ window.addEventListener("resize", () => {
   pageWidth = nextWidth;
   clearTimeout(resizeTimer);
   resizeTimer = setTimeout(() => {
-    if (latestDashboard) renderCharts(latestDashboard.s, latestDashboard.pf);
+    if (latestDashboard) renderCharts(latestDashboard.s);
   }, 180);
 }, {passive: true});
 
