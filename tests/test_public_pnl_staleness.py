@@ -76,5 +76,6 @@ console.log("stale-labelled / current-negative-displayed");
 
 def test_page_repolls_public_pnl_once_per_minute():
     s = PAGE.read_text()
-    assert "setInterval(refreshVerifiedPnl, 60000)" in s
-    assert 'fetch("../outputs/dashboard/production_pnl.json", {cache:"no-store"})' in s
+    assert "setInterval(refreshVerifiedPnl, 15000)" in s
+    assert '"../outputs/dashboard/production_pnl.json"' in s
+    assert 'fetch("./live-pnl-source.json", {cache:"no-store"})' in s
