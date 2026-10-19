@@ -79,12 +79,16 @@ fills together average +2.04¢ with an interval of −0.20 to +4.27.
 | NFL receiving yards | 10 | 4 | 13 | 2 | +$1.99 | 2026-10-19 01:34 UTC |
 | NBA player props | Not started | | | | | |
 
-The realized figure covers the 7 contracts in the two settled markets; the
-other 6 filled contracts had not settled at the snapshot. The NFL pilot
-tests the order, fill, settlement and reconciliation pipeline on a $50
-lifetime budget and says nothing about edge. Live figures on the
-[dashboard](https://akilatrades.github.io/sports-market-maker/dashboard/) are
-manually verified exchange settlements, not simulations.
+The +$1.99 is **historical as of October 19, 01:34 UTC—not current
+profit**. It covers seven contracts in two settled markets; another six
+filled contracts had not settled at that timestamp. A later Matthew
+Golden loss has been reported but **its signed exchange settlement and
+revised after-fee total have not yet been verified for public publication**.
+The public [dashboard](https://akilatrades.github.io/sports-market-maker/dashboard/)
+now hides stale profit and polls a redacted public report each minute.
+Authenticated automatic settlement publishing is staged but needs an
+owner-controlled [Droplet setup](deploy/PUBLIC_PNL_REFRESH.md).
+Neither the earlier +$1.99 nor simulated fills establish profitability.
 
 ## How it works
 
