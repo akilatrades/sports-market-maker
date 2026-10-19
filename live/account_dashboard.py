@@ -136,6 +136,10 @@ def summarize(balance, positions, resting, fills, settlements, events, scan, now
                 "no_price_dollars": event.get("no_price"),
                 "fee_cost": event.get("fee"),
                 "is_taker": event.get("is_taker"),
+                # Journal fills are tied to an accepted NO-only worker order.
+                # Exchange payload fields take precedence when available.
+                "outcome_side": "no",
+                "book_side": "ask",
             }
     for fill in fills:
         if fill.get("order_id") not in owned:
@@ -150,11 +154,25 @@ def summarize(balance, positions, resting, fills, settlements, events, scan, now
     for fill in executed:
         # This strategy only buys NO; an unexpected buy/sell must not be
         # silently interpreted as the entry cost of a NO contract.
+        # V2 asks/sells YES to buy NO. Legacy fill fields may therefore be
+        # action=sell, side=yes even though the exposure is long NO.
+        # Validate all available representations; never treat a YES-direction
+        # fill as NO just because the order ID is owned.
+        outcome = fill.get("outcome_side")
+        book_side = fill.get("book_side")
+        action = fill.get("action")
+        side = fill.get("side")
         if (
-            fill.get("action", "buy") != "buy"
-            or fill.get("outcome_side", fill.get("side", "no")) != "no"
+            (outcome is not None and outcome != "no")
+            or (book_side is not None and book_side != "ask")
+            or ((action is None) != (side is None))
+            or (
+                action is not None
+                and (action, side) not in {("buy", "no"), ("sell", "yes")}
+            )
+            or (outcome is None and book_side is None and action is None)
         ):
-            raise TradingError("Unexpected strategy fill side or action")
+            raise TradingError("Unexpected or unverified strategy fill direction")
         n = number(fill.get("count_fp", fill.get("count")))
         p = dollars(fill, "no_price_dollars", "no_price")
         costs.append(n * p if n is not None and p is not None else None)
