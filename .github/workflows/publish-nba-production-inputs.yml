@@ -2,9 +2,10 @@ name: Publish NBA production inputs (data only)
 
 on:
   schedule:
-    # Opening week: four checkpoints each day. The 12:30 UTC run is 30 min
-    # before Tuesday's first eligible 8 AM Central entry window.
-    - cron: '30 12,15,18,21 * * *'
+    # Opening week: an early 11:30 UTC (6:30 AM Central) backup run,
+    # a 12:30 UTC (7:30 AM Central) refresh, then three later updates.
+    # Scheduled Actions may start late: do not infer freshness from the cron.
+    - cron: '30 11,12,15,18,21 * * *'
   workflow_dispatch:
 
 permissions:
@@ -33,7 +34,7 @@ jobs:
         env:
           KALSHI_ENV: prod
         run: python -m live.nba_projections
-      - name: Verify checksum, timestamp, schema, odds and duplicate tickers
+      - name: Verify model checksum, timestamp, probabilities and ticker uniqueness
         run: python -m live.nba_publish_check
       - name: Publish only versioned projection inputs
         shell: bash
