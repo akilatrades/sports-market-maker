@@ -45,6 +45,7 @@ are kept unchanged as part of the record.
 | [NBA go/no-go, October 20](TUESDAY_NBA_GO_NO_GO_2026-10-20.md) | Launch conditions for the first NBA night |
 | [Account dashboard](../deploy/ACCOUNT_DASHBOARD.md) | Private read-only account view and public P&L snapshots |
 | [Public NFL/NBA P&L refresh](../deploy/PUBLIC_PNL_REFRESH.md) | Signed settlement reconciliation, staleness handling and opt-in automatic sanitized publishing |
+| [Near-live funded account P&L](../deploy/LIVE_ACCOUNT_PNL.md) | HTTPS-proxied GET-only 30-second account settlement feed for GitHub Pages |
 | [NFL worker memory repair](../deploy/NFL_WORKER_MEMORY.md) | Incident note |
 
 ## Working notes and archive
