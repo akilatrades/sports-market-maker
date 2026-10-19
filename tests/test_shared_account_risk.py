@@ -15,9 +15,13 @@ def pair(sport, key, cost=2.0, utc=None):
     cid = f"client-{sport}-{key}"
     return [
         {
-            "event": "intent", "client_order_id": cid, "ticker": ticker,
-            "utc": (utc or NOW).isoformat(), "cost": cost,
-            "count": 4, "tip_utc": (NOW + timedelta(hours=4)).isoformat(),
+            "event": "intent",
+            "client_order_id": cid,
+            "ticker": ticker,
+            "utc": (utc or NOW).isoformat(),
+            "cost": cost,
+            "count": 4,
+            "tip_utc": (NOW + timedelta(hours=4)).isoformat(),
         },
         {"event": "accepted", "client_order_id": cid, "order_id": f"order-{cid}"},
     ]
@@ -58,8 +62,11 @@ def test_unknown_outcome_missing_acceptance_and_duplicate_id_block_all_trading()
     base = both()
     for events in [
         {"nfl": base["nfl"][:-1], "nba": base["nba"]},
-        {"nfl": base["nfl"] + [{"event": "unknown_outcome", "client_order_id": "client-nfl-a"}],
-         "nba": base["nba"]},
+        {
+            "nfl": base["nfl"]
+            + [{"event": "unknown_outcome", "client_order_id": "client-nfl-a"}],
+            "nba": base["nba"],
+        },
         {"nfl": base["nfl"] + base["nfl"], "nba": base["nba"]},
     ]:
         with pytest.raises(TradingError):
@@ -92,10 +99,12 @@ def test_cumulative_spend_never_resets_when_an_order_settles():
 
 def test_daily_risk_uses_new_york_rollover():
     old = NOW - timedelta(days=1)
-    owner = shared.ownership({
-        "nfl": pair("nfl", "a", 23, utc=old),
-        "nba": pair("nba", "b", 16),
-    })
+    owner = shared.ownership(
+        {
+            "nfl": pair("nfl", "a", 23, utc=old),
+            "nba": pair("nba", "b", 16),
+        }
+    )
     # The older trade remains in lifetime exposure even on a new date.
     assert shared.room(owner, set(), 10, NOW)["shared_daily"]
     assert not shared.room(owner, set(), 90, NOW)["shared_lifetime"]
