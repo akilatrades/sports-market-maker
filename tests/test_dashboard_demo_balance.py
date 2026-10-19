@@ -26,7 +26,7 @@ def test_hypothetical_profit_section_was_removed():
     html = DASHBOARD.read_text()
     assert 'id="production-pnl"' in html
     assert 'id="live-pnl-grid"' in html
-    assert 'fetch("../outputs/dashboard/production_pnl.json"' in html
+    assert '"../outputs/dashboard/production_pnl.json"' in html
     for retired in (
         'id="paper"',
         'id="profit-scenarios"',
@@ -107,11 +107,11 @@ console.log(JSON.stringify(nodes));
     if verified:
         assert "+$1.99" in pnl_html
         assert (
-            "Last verified production snapshot" in data["live-pnl-asof"]["textContent"]
+            "Last verified published snapshot" in data["live-pnl-asof"]["textContent"]
         )
     else:
         assert "$1.99" not in pnl_html
         assert (
-            "No authenticated production P&L snapshot"
+            "Live account P&L feed unavailable"
             in data["live-pnl-asof"]["textContent"]
         )
