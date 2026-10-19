@@ -12,6 +12,43 @@
 > The goal is positive net trading income eventually, but profitability,
 > scale and dependable income have **not** been demonstrated.
 
+## October 19 NBA budget and historical edge review
+
+**NEW reproducible research only; no change to production caps:**
+[opening-night sizing audit](NBA_OPENING_NIGHT_SIZING_RESEARCH_2026-10-19.md)
+and [actual replay output](../outputs/sizing/nba_oct2026_sensitivity.json).
+
+- Replayed historical 4,862 possible-fill NBA NO rows, filtered to
+  **1,033** two-book bounded-edge/price rows over **142 games**.
+  One hypothetical book-edge-selected row per game and
+  nonrecyclable lifetime reserved allowance, 2–6h entry window.
+  This is an outcome/fill-selected **historical sensitivity**, not a
+  chronological live-equivalent backtest or independent edge proof.
+- Capped history across ~20 selected dates: current $50 lifetime/
+  $3-game limits hypothetically earned **+$9.37**; keeping those caps
+  with $250 account cash generated **identical results**.
+- Changing the caps to $75 lifetime/$4.50-game earned **+$12.54**;
+  FIVEFOLD $250 lifetime/$15-game earned **+$28.43** under
+  idealized capture assumptions. At only 25% public-print capture,
+  they generated **+$6.00 base vs +$6.27 fivefold**. Do not interpret
+  these sums as forecasts or real exchange returns.
+- Game-resampled conditional 5th-percentile loss about **−$10.24
+  (base)** versus **−$53.84 (fivefold)**. Bootstrap excludes
+  unfilled order opportunities and is not a calibrated risk forecast.
+- Current stricter Oct 18 two-book fee-bound mean remains **+3.40¢**
+  with 95% *game-clustered* interval **−0.59¢ to +7.39¢**;
+  no statistically reliable all-season NBA live edge established.
+- For tomorrow's three games at a purely illustrative 60¢ NO entry
+  and +3.4¢ true expected edge, current $3/game limit can submit up
+  to **4 contracts per game**, approximately **+$0.41 total** if
+  all three fill and the assumed edge is real; a fivefold $15/game
+  limit fits 22/game (up to **+$2.24 total**) but increases gross
+  all-losing contract cost from **$7.20 to $39.60** across three.
+- **Decision:** keep the initial $50, $3/game pilot unchanged for
+  opening night. Reconcile real NBA fills and multiple independent
+  games before considering any increased allowance. Do not use
+  optimistic 2025–26 bankroll replay numbers as expected income.
+
 ## Monday October 19 — successful read-only NBA preflight
 
 The owner ran the signed GET-only preflight after stopping the NFL
