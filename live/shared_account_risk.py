@@ -223,3 +223,6 @@ def state_for(client, sport, now):
 
 
 def fits(context, cost, now):
+    return all(
+        room(context["ownership"], context["active_client_ids"], cost, now).values()
+    )
