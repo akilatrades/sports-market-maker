@@ -1,0 +1,185 @@
+# CURRENT PROJECT STATE — Sports Market Maker
+
+> **Single source of truth for continuing this project in one ChatGPT chat.**
+> Updated after code/source review on October 18–19, 2026. Update after a
+> deployment, authenticated exchange reconciliation or important decision.
+> Separate **observed evidence**, **merged code**, and **unknown live state**.
+> The goal is positive net trading income eventually, but profitability,
+> scale and dependable income have **not** been demonstrated.
+
+## If you are just joining this project
+
+The experiment trades small Kalshi NBA/NFL **NO** sports-prop contracts.
+It estimates the chance a player stays under a quoted line, compares the
+estimated value to the exchange price (and sportsbook comparisons where
+required), rests **post-only maker orders**, observes real fills, and
+settles positions. This is passive *directional* NO trading, not true
+two-sided hedged market making.
+
+**Do not confuse:**
+1. Historical backtest -> simulated opportunity; replay fills are *not* our fills.
+2. GitHub dry-run / paper ledgers -> real public quotes, hypothetical orders.
+3. Kalshi Demo -> exchange-like testing in a non-funded venue.
+4. Kalshi production NFL/NBA -> signed real-money worker and private journal.
+5. Public portfolio dashboard -> research **plus only manually approved,
+   timestamped, exchange-verified realized P&L**.
+6. Private account dashboard -> authenticated GET-only positions, actual fills
+   and independent NFL/NBA settlement P&L; must be deployed to DigitalOcean.
+
+## Verified evidence (do not extrapolate)
+
+### NFL, Kalshi production
+
+From an owner-provided authenticated snapshot exported at **2026-10-19
+01:34:46 UTC**, independently compared to local NFL journal counters:
+
+- **10/10 attempted orders exchange accepted**, no ambiguous attempts.
+- **4 filled maker orders; 13 contracts; $7.69 total purchase cost**.
+  6 accepted orders did not fill in that snapshot.
+- Two settled NO orders: Brock Bowers 100+ rec yards (4 at 66¢, +$1.36)
+  and Xavier Worthy 80+ rec yards (3 at 79¢, +$0.63).
+  **Total realized net NFL P&L: +$1.99** from those two settlements only.
+- Two filled Matthew Golden NO lines (5 at 43¢ and 1 at 53¢) were still
+  unresolved at the authenticated export timestamp. **Do not present their
+  outcome or profit as verified until a new exchange reconciliation.**
+- Zero fill fees reported on the four maker fill events. V2 canonical
+  `outcome_side=no/book_side=ask` and accepted order IDs match; older
+  action/side labels conflicted. The exporter and private dashboard were
+  corrected and regressions added.
+- Production worker systemd diagnostic **at 2026-10-19 02:35 UTC**:
+  `Result=success`, `ExecMainStatus=0`, ~9 second successful scan,
+  `decision=no_eligible_candidates`. NFL **timer active**, worker
+  inactive between scans. This does not confirm it still operates *now*.
+- Last observed deployed Droplet commit **49cda56**, behind current
+  GitHub code. Git checkout showed only untracked `.venv/`, later ignored
+  in GitHub. **No production code update was performed automatically.**
+
+### NBA, opening Tuesday October 20
+
+- Model **priced 312 of 312 then-open props** for three opening-day games
+  in a signed-free public producer check. This demonstrates model/data
+  coverage, not edge or real execution.
+- **Fixed a critical GitHub Actions publishing false-success bug:** the
+  workflow formerly compared an *untracked, newly generated* metadata
+  file to itself after `git reset --hard`, exited successfully and
+  committed nothing. It now checks **committed** `HEAD:` blobs, protects
+  against publishing an older dataset, pushes a versioned CSV+metadata
+  pair, and checks that both blobs exist on `origin/main`. Added regression
+  tests with a disposable real Git repository.
+- **Verified published on GitHub:** `outputs/projections/latest.csv`
+  (312 priced rows) and `latest_meta.json` (schema 2,
+  `nba-opening-v2`, SHA-256, generated 2026-10-19 02:56 UTC).
+  The NBA worker still needs to sync a **fresh** copy and verify injuries
+  and venue quotes on the actual launch day (input age cutoff nine hours).
+- **Sportsbook coverage is still the open input gate.**
+  `outputs/books/nba_latest.csv` had only its header at last check.
+  The Odds API scheduled job on 2026-10-19 01:39 UTC was successful:
+  87,567 credits reported remaining, NFL rows from eight books,
+  **zero NBA events in its next-36-hour horizon at that time**.
+  Opening games enter that horizon later Monday; rerun/inspect scheduled
+  collections then. A successful collection is not proof of two *fresh,
+  exact-line, event-matched* sportsbook quotes.
+- NBA DigitalOcean diagnostic showed **worker inactive, timer inactive,
+  0 intents and fills, missing local projection/book files**. An NBA
+  journal exists, but staging status is partial/unknown.
+- **Do not activate** until owner deliberately completes deployment,
+  isolation from NFL, current signed GET-only `--preflight --sync-inputs`,
+  freshness/roster/injury/two-book checks, and confirms there are no
+  foreign resting orders, positions or unsettled NFL exposure.
+- NBA pilot risk caps remain **$50 cumulative gross reserved
+  submissions**, $3/order/game/team, $15 active, $30/day, five
+  contracts/order, one new order per scan, passive only. No automatic
+  funding increase.
+- Important strategy nuance: baseline estimated net edge must be
+  **positive**, while the optional aggressive *extra maker tick* needs
+  **3¢** after its price improvement. The latter is **not** a universal
+  baseline 3¢ rule.
+
+## Engineering / GitHub state
+
+- Main README rewritten to explain **research vs dry-run vs funded**.
+  Original optimistic README archived at
+  `docs/ARCHIVED_EARLY_README_2026-10-17.md`.
+- Full technical, statistical and production audit:
+  `docs/PROJECT_MAP_AND_PRODUCTION_AUDIT_2026-10-18.md`.
+- Public dashboard now shows **only verified NFL/NBA settled P&L** as
+  financial performance. Latest owner-approved public snapshot:
+  `outputs/dashboard/production_pnl.json`, NFL +$1.99 and NBA
+  *unknown*, with timestamp. **Not streaming.**
+- Private account dashboard has separate cohorts and improved strict
+  fill-ownership/cost reconciliation. These changes are merged into
+  GitHub; deployed DigitalOcean version has not been verified updated.
+- The Python 3.11 + 3.12 CI suite at commit `730ae61` passed
+  **292 tests, 89 subtests**, before the later NBA publisher fix.
+  Re-check CI for the latest HEAD before staging or deploying.
+- `tools/production_status.py` can run read-only without credentials,
+  including standalone via `/tmp`. It reports local services/inputs
+  and journal counts, **not** signed exchange accounting.
+- No change to production trade side/amount, kill switches, or arming
+  during recent documentation, publishing and dashboard work.
+
+## Project economics: what is actually required for income
+
+Prove (a) true after-fee probability edge and (b) enough **verified
+exchange-filled liquidity** without adverse selection. Measure by
+independent game/market and per posted opportunity, not just profitable
+fills. Costs include subscription data, Droplet, fees, missed fills,
+losses and taxes. Hypothetical historical cents-per-fill and bankroll
+replays must never be advertised or budgeted as stable monthly income.
+
+The project is a **research-to-production experiment**, not an
+established business. No present evidence supports a $5k/month claim.
+
+## Work queue (strict priority)
+
+| Rank | Item | State / success criterion |
+|---|---|---|
+| P0 | NBA input publishing | **Fixed and files confirmed on GitHub.** Check scheduled refresh + SHA and freshness on Tuesday |
+| P0 | NBA sportsbook coverage | **Pending:** two fresh exact-line game-matched books for eligible Tuesday players; check new job results inside 36h |
+| P0 | Latest full CI | Ensure **both** Python versions pass for current HEAD before any deployment |
+| P0 | DigitalOcean version | **Pending owner maintenance:** Git SHA update and NBA staging, without NBA activation or resetting NFL |
+| P0 | Read-only signed NBA preflight | **Pending:** verify exchange ownership/positions, fresh roster/injuries, fees, quotes, account funds and isolation |
+| P1 | NFL final reconciliation | Export refreshed exchange fills+settlements for both Golden positions and all unfilled/expired orders |
+| P1 | Fill-vs-replay reality check | Study queue, accepted->filled, maker/taker, markouts, real net settlement by game/cohort |
+| P1 | Private dashboard deployment | Confirm separate NFL and NBA authenticated P&L appears after code update |
+| P2 | Future research / scale | Only after sample size, liquidity, drawdowns and income economics justify it |
+
+## The next owner/DigitalOcean operation
+
+**Do not run `activate_nba_auto.sh` while any P0 remains.**
+
+At the last confirmed server state, the NFL timer was active and healthy.
+The code update *changes real-money NFL worker code*, so verify current
+main CI is green before running the owner-maintenance script. It
+temporarily stops then restores the previously active NFL timer.
+
+1. Observe GitHub Actions `tests` green for latest main commit.
+2. Follow `deploy/PROD_NBA_AUTO.md` to update the server and **stage
+   only** NBA without arming it.
+3. Run `sudo -u trader .venv/bin/python -m tools.production_status`
+   after a successful update, plus the signed NBA **read-only** preflight
+   from `deploy/PROD_NBA_AUTO.md` during a safe NFL handoff window.
+4. Review the outputs and all P0 gates before *separately deciding*
+   whether to run any owner activation.
+
+Do not send keys, environment files, order IDs or raw private journals
+to GitHub or this chat. Summaries and sanitized verified fills suffice.
+
+## Continuing this one conversation
+
+Use this file and the audit as durable project memory. No new chat is
+needed to work here; when the conversation becomes long, **refer to this
+living file rather than reconstructing old answers**. Bring updated
+terminal outputs, authenticated sanitized fill reports or CI results
+back **to the same conversation**. Every future major change should
+update the work queue with its commit, evidence, and outstanding blockers.
+
+Links:
+- [Project README](../README.md)
+- [Detailed audit](PROJECT_MAP_AND_PRODUCTION_AUDIT_2026-10-18.md)
+- [NBA rollout instructions](../deploy/PROD_NBA_AUTO.md)
+- [Private dashboard](../deploy/ACCOUNT_DASHBOARD.md)
+- [Production input publisher](../.github/workflows/publish-nba-production-inputs.yml)
+- [Official live model inputs](../outputs/projections/latest_meta.json)
+- [Latest sportsbook file](../outputs/books/nba_latest.csv)
+- [Real settled P&L public snapshot](../outputs/dashboard/production_pnl.json)
