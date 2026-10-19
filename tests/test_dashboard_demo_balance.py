@@ -112,6 +112,5 @@ console.log(JSON.stringify(nodes));
     else:
         assert "$1.99" not in pnl_html
         assert (
-            "Live account P&L feed unavailable"
-            in data["live-pnl-asof"]["textContent"]
+            "Live account P&L feed unavailable" in data["live-pnl-asof"]["textContent"]
         )
