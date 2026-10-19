@@ -548,7 +548,7 @@ def pre_submit_kickoff_ok(tip_utc, now):
         return False
 
 
-def room_for(attempts, active, row, cost, now):
+def room_for(attempts, active, row, cost, now, shared=None):
     today = now.astimezone(__import__("zoneinfo").ZoneInfo("America/New_York")).date()
     total = sum(reserve(a["cost"]) for a in attempts)
     open_now = sum(reserve(a["cost"]) for a in active)
@@ -566,8 +566,11 @@ def room_for(attempts, active, row, cost, now):
         == today
     )
     r = reserve(cost)
+    from live.shared_account_risk import fits
+
     return (
-        total + r <= MAX_GROSS_COST + 1e-9
+        (shared is None or fits(shared, cost, now))
+        and total + r <= MAX_GROSS_COST + 1e-9
         and open_now + r <= MAX_ACTIVE_COST + 1e-9
         and game_cost + r <= MAX_GAME_COST + 1e-9
         and team_cost + r <= MAX_TEAM_COST + 1e-9
@@ -606,8 +609,14 @@ def pass_once(client, env, frame, now, journal, *, dry=False):
         guard(env, client)
     events = load_journal(journal)
     attempts, accepted = records(events)
+    shared = None
     if not dry:
-        state = current_production_state(client, attempts, accepted)
+        from live.shared_account_risk import dual_mode, state_for
+
+        if dual_mode(env):
+            state, shared = state_for(client, "nba", now)
+        else:
+            state = current_production_state(client, attempts, accepted)
         free = money(client.balance()["balance"])
     else:
         state = {"active": []}
@@ -670,7 +679,7 @@ def pass_once(client, env, frame, now, journal, *, dry=False):
             skipped["invalid_order_or_price"] += 1
             continue
         while order.count > 0 and not room_for(
-            attempts, state["active"], row, cost, now
+            attempts, state["active"], row, cost, now, shared=shared
         ):
             order.count -= 1
             cost = round(order.count * order.price_cents / 100, 2)
@@ -1096,7 +1105,10 @@ def main():
             if (directory / "KILL").exists():
                 cancel_owned_on_kill(client, journal)
                 return
-            assert_nfl_production_stopped()
+            from live.shared_account_risk import dual_mode
+
+            if not dual_mode(os.environ):
+                assert_nfl_production_stopped()
         now = datetime.now(UTC)
         latest = Path("outputs/projections/latest.csv")
         if args.sync_inputs:
@@ -1133,9 +1145,14 @@ def preflight(client, frame, now, journal):
     failures = []
     if client.env != "prod" or not client.can_sign:
         failures.append("signed_production_reads_required")
+    from live.shared_account_risk import dual_mode, state_for
+
     try:
-        assert_nfl_production_stopped()
+        dual = dual_mode(os.environ)
+        if not dual:
+            assert_nfl_production_stopped()
     except TradingError as error:
+        dual = False
         failures.append(str(error))
     if (journal.parent / "KILL").exists():
         failures.append("NBA_KILL_exists")
@@ -1143,7 +1160,10 @@ def preflight(client, frame, now, journal):
         failures.append("no_verified_projection_rows")
     try:
         attempts, accepted = records(load_journal(journal))
-        state = current_production_state(client, attempts, accepted)
+        if dual:
+            state, _shared = state_for(client, "nba", now)
+        else:
+            state = current_production_state(client, attempts, accepted)
         cash = money(client.balance()["balance"])
         if cash < MAX_ORDER_COST:
             failures.append("cash_below_order_cap")
