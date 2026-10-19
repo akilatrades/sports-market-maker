@@ -174,13 +174,56 @@ class AccountAccounting(unittest.TestCase):
                 "fee_cost": "0.02",
             },
         ]
-        nfl = cohort_settled_pnl(nfl_events, settlements)
-        nba = cohort_settled_pnl(nba_events, settlements)
+        fills = [
+            {
+                "fill_id": "fn", "order_id": "o1", "ticker": "KXNFL-X",
+                "count_fp": "4", "no_price_dollars": "0.66",
+                "outcome_side": "no", "book_side": "ask",
+            },
+            {
+                "fill_id": "fb", "order_id": "o2", "ticker": "KXNBA-X",
+                "count_fp": "2", "no_price_dollars": "1.00",
+                "outcome_side": "no", "book_side": "ask",
+            },
+        ]
+        nfl = cohort_settled_pnl(nfl_events, settlements, fills)
+        nba = cohort_settled_pnl(nba_events, settlements, fills)
         self.assertEqual(nfl["settled_profit_dollars"], 1.36)
         self.assertEqual(nba["settled_profit_dollars"], -2.02)
         self.assertEqual((nfl["settled_markets"], nba["settled_markets"]), (1, 1))
         self.assertEqual(nfl["status"], "verified")
         self.assertEqual(nba["status"], "verified")
+
+    def test_live_profit_blocks_unowned_same_ticker_fill(self):
+        events = [
+            {"event": "intent", "client_order_id": "c", "ticker": "NFL-X"},
+            {"event": "accepted", "client_order_id": "c", "order_id": "owned"},
+        ]
+        settlements = [{
+            "ticker": "NFL-X", "revenue_dollars": "4.00",
+            "no_total_cost_dollars": "2.64",
+            "yes_total_cost_dollars": "0", "fee_cost": "0",
+        }]
+        fills = [{
+            "ticker": "NFL-X", "order_id": "owned", "fill_id": "f1",
+            "count_fp": "4", "no_price_dollars": "0.66",
+            "outcome_side": "no", "book_side": "ask",
+        }]
+        self.assertEqual(
+            cohort_settled_pnl(events, settlements, fills)["settled_profit_dollars"],
+            1.36,
+        )
+        fills.append({
+            "ticker": "NFL-X", "order_id": "manual", "fill_id": "f2",
+            "count_fp": "1", "no_price_dollars": "0.50",
+        })
+        unsafe = cohort_settled_pnl(events, settlements, fills)
+        self.assertEqual(unsafe["status"], "cost_or_ownership_mismatch")
+        self.assertIsNone(unsafe["settled_profit_dollars"])
+        fills.pop()
+        fills[0]["no_price_dollars"] = "0.60"
+        unsafe = cohort_settled_pnl(events, settlements, fills)
+        self.assertEqual(unsafe["status"], "cost_or_ownership_mismatch")
 
     def test_unavailable_pnl_is_not_zero(self):
         events = [
