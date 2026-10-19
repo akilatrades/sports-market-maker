@@ -91,8 +91,8 @@ received evidence; it is necessary to explain this correction.
 
 **Caveats:** Small, selected and correlated sample. Both Golden lines are
 in one game/player. There is no contemporaneous two-book confirmation
-for the final Golden entries (`probability_source=model`). Eight of ten
-orders span eight games and six are unfilled. The oldest accepted orders
+for the final Golden entries (`probability_source=model`). The ten orders
+span eight games and six are unfilled. The oldest accepted orders
 took ~3 minutes from *recorded intent to acceptance*; the newest two
 ~9 seconds, but these timestamps are not isolated exchange roundtrip
 measurements. Extra maker tick was **not** used by the four fills.
@@ -264,6 +264,19 @@ Before raising capital, require chronological forward evidence of:
 5. **Performance review:** game-clustered returns, per-posted-opportunity
    economics, adverse selection, operational failures and operating costs.
    Do not increase account caps in response to a lucky single slate.
+
+A credential-free operator snapshot is available in updated checkouts:
+
+```bash
+cd /home/trader/sports-market-maker-prod-auto
+sudo -u trader .venv/bin/python -m tools.production_status
+```
+
+It shows the deployed git SHA, local timer states, NBA model input
+presence/age/checksum, sportsbook file coverage, and counts from local
+private journal event types. It does **not** log in to Kalshi, reveal order
+identifiers, verify exchange fills, or place orders. Send this output when
+requesting a live-server go/no-go review.
 
 Read-only commands on DigitalOcean **after the user has staged NBA**:
 
