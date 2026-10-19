@@ -8,6 +8,7 @@ Never includes balances, position/order identities, journal entries, player
 names, market tickers, trades, private URLs or credentials in the published file.
 The public site is a lagged 10-15-minute snapshot, NOT streaming real-time.
 """
+
 import argparse
 import base64
 import json
@@ -127,7 +128,9 @@ def call_github(method, url, token, payload=None):
     except (HTTPError, URLError) as error:
         # Never print exception strings or request metadata: auth tokens,
         # endpoint responses and internal account details must remain private.
-        raise RuntimeError(f"github_publisher_request_failed_{type(error).__name__}") from None
+        raise RuntimeError(
+            f"github_publisher_request_failed_{type(error).__name__}"
+        ) from None
 
 
 def publish(report, token):
@@ -141,7 +144,9 @@ def publish(report, token):
         (json.dumps(report, indent=2, allow_nan=False) + "\n").encode()
     ).decode()
     call_github(
-        "PUT", API, token,
+        "PUT",
+        API,
+        token,
         {
             "message": "Refresh sanitized NFL/NBA signed settlement snapshot (data only)",
             "branch": "main",
@@ -153,14 +158,19 @@ def publish(report, token):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--publish", action="store_true",
-                        help="Explicitly publish aggregate report using GitHub token")
+    parser.add_argument(
+        "--publish",
+        action="store_true",
+        help="Explicitly publish aggregate report using GitHub token",
+    )
     args = parser.parse_args()
     try:
         report = collect_report()
         if args.publish:
             publish(report, os.environ.get("GITHUB_PNL_PUBLISH_TOKEN", ""))
-            print("PUBLIC NBA/NFL SETTLEMENT SNAPSHOT PUBLISHED (no account identifiers)")
+            print(
+                "PUBLIC NBA/NFL SETTLEMENT SNAPSHOT PUBLISHED (no account identifiers)"
+            )
         else:
             print(json.dumps(report, indent=2, allow_nan=False))
             print("READ ONLY: nothing published; set --publish for opt-in.")
