@@ -7,6 +7,7 @@ new-season role changes and 1h order expiry CANNOT be reconstructed here.
 Results are conditional historical sensitivity, not a new holdout or a
 prediction of opening-night profits. No exchange access or orders.
 """
+
 import json
 import math
 from dataclasses import dataclass
@@ -47,9 +48,7 @@ def fee_per_contract(price):
 
 def prepare(raw, window=True):
     q = raw[
-        raw.price.between(0.1, 0.9)
-        & raw.book_edge.between(0, 0.15)
-        & (raw.book_n >= 2)
+        raw.price.between(0.1, 0.9) & raw.book_edge.between(0, 0.15) & (raw.book_n >= 2)
     ].copy()
     strict_two_book_rows = len(q)
     if window:
@@ -94,15 +93,26 @@ def replay(rows, policy, *, fill_capture=1.0, extra_drag_c=0.0):
     quote failures; cannot be used as a full live worker profit estimate.
     """
     remaining = policy.lifetime
-    result = {"placed": 0, "filled": 0, "contracts": 0, "reserve": 0.0,
-              "filled_cost": 0.0, "profit": 0.0, "games": 0,
-              "days": set()}
+    result = {
+        "placed": 0,
+        "filled": 0,
+        "contracts": 0,
+        "reserve": 0.0,
+        "filled_cost": 0.0,
+        "profit": 0.0,
+        "games": 0,
+        "days": set(),
+    }
     reserved_day = {}
     for r in rows:
         date = str(pd.Timestamp(r["tip_utc"]).date())
         left_day = policy.daily - reserved_day.get(date, 0.0)
         limit = min(
-            remaining, left_day, policy.order, policy.game, policy.team,
+            remaining,
+            left_day,
+            policy.order,
+            policy.game,
+            policy.team,
             policy.active,
         )
         n = max_contracts(float(r["price"]), limit, policy.contracts)
@@ -190,10 +200,11 @@ def main():
         out["drag_sensitivity"][policy.name] = {
             f"extra_{drag}c": replay(
                 rows.to_dict("records"), policy, extra_drag_c=drag
-            )["profit"] for drag in (0, 1, 2, 4)
+            )["profit"]
+            for drag in (0, 1, 2, 4)
         }
         out["capture_sensitivity"][policy.name] = {
-            f"public_print_capture_{int(capture*100)}pct": replay(
+            f"public_print_capture_{int(capture * 100)}pct": replay(
                 rows.to_dict("records"), policy, fill_capture=capture
             )
             for capture in (0.25, 0.5, 1.0)
