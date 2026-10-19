@@ -52,8 +52,9 @@ def settlement(market, cost, revenue):
 
 def test_negative_losing_nfl_settlement_replaces_stale_positive_report():
     cohorts = {"nfl": events("NFL", "n1"), "nba": []}
-    payload = build_report(cohorts, fills("NFL", "n1", 1.50, 3),
-                           [settlement("NFL", 1.50, 0)], NOW)
+    payload = build_report(
+        cohorts, fills("NFL", "n1", 1.50, 3), [settlement("NFL", 1.50, 0)], NOW
+    )
     assert payload["markets"]["nfl"]["status"] == "verified_snapshot"
     assert payload["markets"]["nfl"]["settled_profit_dollars"] == -1.50
     assert payload["markets"]["nba"]["settled_profit_dollars"] is None
@@ -66,8 +67,10 @@ def test_negative_losing_nfl_settlement_replaces_stale_positive_report():
 def test_separate_nfl_and_nba_aggregate_results_do_not_cross():
     cohorts = {"nfl": events("NFL", "n1"), "nba": events("NBA", "b2")}
     payload = build_report(
-        cohorts, fills("NFL", "n1", 1.50, 3) + fills("NBA", "b2", 1.20, 2),
-        [settlement("NFL", 1.50, 0), settlement("NBA", 1.20, 2)], NOW
+        cohorts,
+        fills("NFL", "n1", 1.50, 3) + fills("NBA", "b2", 1.20, 2),
+        [settlement("NFL", 1.50, 0), settlement("NBA", 1.20, 2)],
+        NOW,
     )
     assert payload["markets"]["nfl"]["settled_profit_dollars"] == -1.50
     assert payload["markets"]["nba"]["settled_profit_dollars"] == 0.80
@@ -85,8 +88,7 @@ def test_mismatched_settlement_cost_blocks_publishing():
     cohorts = {"nfl": events("NFL", "n1"), "nba": []}
     with pytest.raises(ValueError, match="reconciliation_incomplete"):
         build_report(
-            cohorts, fills("NFL", "n1", 1.50, 3),
-            [settlement("NFL", 2.0, 0)], NOW
+            cohorts, fills("NFL", "n1", 1.50, 3), [settlement("NFL", 2.0, 0)], NOW
         )
 
 
@@ -104,9 +106,11 @@ def test_only_signed_exchange_read_and_private_journals(tmp_path):
 
         def pages(self, path, key, **params):
             self.calls.append((path, key, params))
-            return fills("NFL", "n1", 1.50, 3) if key == "fills" else [
-                settlement("NFL", 1.50, 0)
-            ]
+            return (
+                fills("NFL", "n1", 1.50, 3)
+                if key == "fills"
+                else [settlement("NFL", 1.50, 0)]
+            )
 
     n = tmp_path / "nfl.jsonl"
     b = tmp_path / "nba.jsonl"
@@ -116,6 +120,7 @@ def test_only_signed_exchange_read_and_private_journals(tmp_path):
     report = collect_report(now=NOW, client=client, journals={"nfl": n, "nba": b})
     assert report["markets"]["nfl"]["settled_profit_dollars"] == -1.50
     assert [x[0] for x in client.calls] == [
-        "/portfolio/fills", "/portfolio/settlements"
+        "/portfolio/fills",
+        "/portfolio/settlements",
     ]
     assert not any("balance" in x[0] for x in client.calls)
