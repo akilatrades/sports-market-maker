@@ -108,7 +108,7 @@ def replay(rows, policy, *, fill_capture=1.0, extra_drag_c=0.0):
         n = max_contracts(float(r["price"]), limit, policy.contracts)
         if n < 1:
             continue
-        reserve = math.ceil(n * float(r.price) * 1.1 * 100 - 1e-9) / 100
+        reserve = math.ceil(n * float(r["price"]) * 1.1 * 100 - 1e-9) / 100
         remaining = round(remaining - reserve, 5)
         reserved_day[date] = reserved_day.get(date, 0.0) + reserve
         result["placed"] += 1
@@ -121,7 +121,7 @@ def replay(rows, policy, *, fill_capture=1.0, extra_drag_c=0.0):
         if got:
             result["filled"] += 1
             result["contracts"] += got
-            result["filled_cost"] += got * float(r.price)
+            result["filled_cost"] += got * float(r["price"])
             result["profit"] += got * (float(r["pnl"]) - extra_drag_c / 100)
     result["days"] = len(result["days"])
     for k in ("reserve", "filled_cost", "profit"):
