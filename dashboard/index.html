@@ -685,8 +685,8 @@ function renderProductionPnl(snapshot) {
   };
   document.getElementById("live-pnl-grid").innerHTML = card("NFL", "nfl") + card("NBA", "nba");
   document.getElementById("live-pnl-asof").textContent = !stamp ?
-    "No authenticated production P&L has been published; research returns are never substituted." :
-    `Last signed production settlement report: ${stamp.slice(0,16).replace("T"," ")} UTC. ${fresh ?
+    "No authenticated production P&L snapshot has been published; research returns are never substituted." :
+    `Last verified production snapshot: ${stamp.slice(0,16).replace("T"," ")} UTC. ${fresh ?
       "Public aggregate only; may lag new fills and settlements. Refresh checks every minute." :
       "Report expired (over 15 minutes). Live results intentionally hidden until a new verified publication arrives."
     } Open positions and unreported outcomes are not counted as realized P&L.`;
