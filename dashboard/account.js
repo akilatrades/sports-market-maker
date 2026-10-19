@@ -22,12 +22,23 @@ const AccountView = (() => {
     set("updated", data.updated_utc ? "Account snapshot: " + time(data.updated_utc) : "No production snapshot loaded");
     node("connect-help").hidden = state !== "unavailable";
     node("notice").className = "notice " + (state === "live" ? "ok" : "warning");
-    set("notice", state === "live" ? "Connected to production. Account snapshots refresh every 60 seconds. Profit below includes settled positions from the selected strategy only." : state === "stale" ? "The account feed is stale or unavailable. Values shown are from the last successful snapshot; do not treat them as current." : "No verified production data is available. Missing balances are shown as —, never as zero.");
+    set("notice", state === "live" ? "Connected to Kalshi production. NFL and NBA realized P&L use separate authenticated settlement records, not simulated ledgers." : state === "stale" ? "The account feed is stale or unavailable. Values shown are from the last successful snapshot; do not treat them as current." : "No verified production data is available. Missing balances are shown as —, never as zero.");
     const a = data.account || {}, s = data.strategy || {};
     set("cash", money(a.cash_dollars)); set("value", money(a.position_value_dollars)); set("equity", money(a.equity_dollars));
-    set("profit", money(s.settled_profit_dollars));
-    node("profit").className = finite(s.settled_profit_dollars) ? (s.settled_profit_dollars < 0 ? "negative" : "positive") : "";
-    set("settled-note", !finite(s.settled_markets) ? "Waiting for verified settlement accounting" : s.settled_markets === 0 ? "No settled strategy markets yet" : !finite(s.settled_profit_dollars) ? "Settlement cost or fee data incomplete" : `${count(s.settled_markets)} settled markets · after reported fees · all entry versions`);
+    const livePnl = data.live_pnl || {};
+    [["nfl","profit","settled-note"],["nba","nba-profit","nba-settled-note"]].forEach(([key,amountId,noteId]) => {
+      const cohort = livePnl[key] || {};
+      const verified = cohort.status === "verified" && finite(cohort.settled_profit_dollars);
+      const profit = verified ? cohort.settled_profit_dollars : null;
+      set(amountId, money(profit));
+      node(amountId).className = verified ? (profit < 0 ? "negative" : "positive") : "";
+      const note = verified ? `${count(cohort.settled_markets)} verified settled markets · net of fees` :
+        cohort.status === "incomplete_settlement" ? "Settlement accounting incomplete; P&L not reported" :
+        cohort.status === "awaiting_first_order" ? "No live orders accepted yet" :
+        cohort.status === "awaiting_settlement" ? "Live orders exist; awaiting completed settlements" :
+        "No authenticated production report available";
+      set(noteId, note);
+    });
     set("accepted", count(s.accepted_orders)); set("filled", count(s.filled_orders)); set("contracts", count(s.contracts_filled));
     set("fill-cost", money(s.fill_cost_dollars)); set("fees", money(s.fill_fees_dollars)); set("resting", count(a.resting_orders));
     set("budget", money(s.remaining_submission_budget_dollars));
