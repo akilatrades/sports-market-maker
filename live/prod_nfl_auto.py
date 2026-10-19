@@ -509,11 +509,15 @@ def room_for(attempts, active, row, cost, now):
     return not budget_blockers(attempts, active, row, cost, now)
 
 
-def fit_order_to_budget(order, attempts, active, row, now):
+def fit_order_to_budget(order, attempts, active, row, now, shared=None):
     """Reduce quantity until cost plus reserve fits every existing cap."""
     for count in range(order.count, 0, -1):
         cost = round(count * order.price_cents / 100, 2)
-        if room_for(attempts, active, row, cost, now):
+        from live.shared_account_risk import fits
+
+        if room_for(attempts, active, row, cost, now) and (
+            shared is None or fits(shared, cost, now)
+        ):
             order.count = count
             return cost
     return None
@@ -560,8 +564,14 @@ def pass_once(client, env, frame, now, journal, *, dry=False):
         guard(env, client)
     events = load_journal(journal)
     attempts, accepted = records(events)
+    shared = None
     if not dry:
-        state = current_production_state(client, attempts, accepted)
+        from live.shared_account_risk import dual_mode, state_for
+
+        if dual_mode(env):
+            state, shared = state_for(client, "nfl", now)
+        else:
+            state = current_production_state(client, attempts, accepted)
         free = money(client.balance()["balance"])
         if free < MAX_ORDER_COST * FEE_RESERVE:
             raise TradingError("Production cash balance insufficient")
@@ -640,7 +650,9 @@ def pass_once(client, env, frame, now, journal, *, dry=False):
         except TradingError:
             skipped["invalid_order_or_price"] += 1
             continue
-        cost = fit_order_to_budget(order, attempts, state["active"], row, now)
+        cost = fit_order_to_budget(
+            order, attempts, state["active"], row, now, shared=shared
+        )
         if cost is None:
             skipped.update(
                 budget_blockers(
@@ -657,7 +669,9 @@ def pass_once(client, env, frame, now, journal, *, dry=False):
                 quoted, extra_ticks = float(row.price), 0
                 execution_edge = float(row.edge)
                 order, cost = order_from_row(row, now, no_price=quoted)
-                cost = fit_order_to_budget(order, attempts, state["active"], row, now)
+                cost = fit_order_to_budget(
+                    order, attempts, state["active"], row, now, shared=shared
+                )
                 if cost is None:
                     skipped["baseline_budget"] += 1
                     continue
@@ -769,6 +783,27 @@ def pass_once(client, env, frame, now, journal, *, dry=False):
     return finish("all_candidates_blocked")
 
 
+def assert_nba_production_stopped():
+    """Legacy isolated mode must not submit while NBA is active."""
+    import subprocess
+
+    for unit in (
+        "market-maker-prod-nba-auto.timer",
+        "market-maker-prod-nba-auto.service",
+    ):
+        try:
+            result = subprocess.run(
+                ["systemctl", "is-active", "--quiet", unit],
+                timeout=5,
+                capture_output=True,
+                check=False,
+            )
+        except (OSError, subprocess.TimeoutExpired) as error:
+            raise TradingError("Cannot verify isolated NFL account") from error
+        if result.returncode == 0 or result.returncode not in (3, 4):
+            raise TradingError("NBA production active or uncertain: NFL HALTED")
+
+
 def main():
     from contextlib import nullcontext
     from live.production_lock import account_lock
@@ -811,6 +846,10 @@ def main():
         client = TradingClient(dry_run=args.dry_run, env="prod")
         if args.live:
             guard(os.environ, client)
+            from live.shared_account_risk import dual_mode
+
+            if not dual_mode(os.environ):
+                assert_nba_production_stopped()
             if (directory / "KILL").exists():
                 cancel_owned_on_kill(client, journal)
                 return
