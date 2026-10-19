@@ -12,6 +12,32 @@
 > The goal is positive net trading income eventually, but profitability,
 > scale and dependable income have **not** been demonstrated.
 
+## October 19 — funded account near-live dashboard plumbing (STAGED)
+
+The user wants **realized wins and losses on the FUNDED Kalshi account**
+updated automatically on the recruiter-facing GitHub Pages dashboard.
+Earlier static GitHub JSON publication was not a live connection.
+
+- Added `live/public_pnl_feed.py`: **GET-only** Kalshi account
+  settlements and separate NFL/NBA cohort reconciliation, 30-second
+  background polling, localhost-only sanitized `/v1/pnl` JSON.
+- Includes account-wide API-visible settlements, even manual trades.
+  Explicitly *does not* include all early cash-outs, archived
+  settlements or credits; do not call this all-time realized P&L.
+- Public dashboard now polls **every 15 seconds** from an opt-in
+  `dashboard/live-pnl-source.json` **HTTPS** endpoint, with no Kalshi
+  key in the browser. Default config is blank and keeps the existing
+  historical fallback (clearly marked stale).
+- Staged `deploy/market-maker-live-pnl.service` and
+  [secure setup and accounting limitations](../deploy/LIVE_ACCOUNT_PNL.md).
+- **NOT YET DEPLOYED OR EXPOSED** to the internet. We need a stable,
+  owner-approved HTTPS domain, valid certificate, initial signed
+  account-wide read-only reconciliation, and the owner's explicit
+  decision to show aggregate account P&L publicly.
+- No changes to trading entry, risk caps, NFT/NBA timers,
+  Kalshi credentials or manual publisher token. No automatic service
+  enablement has occurred.
+
 ## October 19, 14:40 UTC — new signed NFL settlement reconciliation
 
 **Source: owner-provided DigitalOcean terminal result** from
