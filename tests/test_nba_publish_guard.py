@@ -31,7 +31,7 @@ def repo(tmp_path):
     return root
 
 
-FIXTURE_CSV = b"ticker,p_model\\nA,0.5\\n"
+FIXTURE_CSV = b"ticker,p_model\nA,0.5\n"
 
 
 def metadata(stamp):
@@ -87,7 +87,7 @@ def test_missing_committed_csv_never_counts_as_success(repo):
 
 def test_committed_but_corrupt_csv_is_not_considered_published(repo):
     save_pair(repo, "2026-10-19T01:00:00+00:00", commit=True)
-    (repo / "outputs/projections/latest.csv").write_text("ticker,p_model\\nBAD,1\\n")
+    (repo / "outputs/projections/latest.csv").write_text("ticker,p_model\nBAD,1\n")
     git(repo, "add", "outputs/projections/latest.csv")
     git(repo, "commit", "-m", "bad-csv")
     assert decision(repo, metadata("2026-10-19T01:00:00+00:00")) == (
