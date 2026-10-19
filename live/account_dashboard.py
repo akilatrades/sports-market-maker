@@ -310,11 +310,15 @@ def cohort_settled_pnl(events, settlements):
             results[ticker] = settlement_accounting(item)
     values = [r.get("net_profit_dollars") for r in results.values()]
     complete = bool(values) and all(number(value) is not None for value in values)
+    status = "awaiting_first_order"
+    if intents:
+        status = "awaiting_settlement"
+    if values:
+        status = "incomplete_settlement"
+    if complete:
+        status = "verified"
     return {
-        "status": (
-            "verified" if complete else "incomplete_settlement" if values
-            else "awaiting_settlement" if intents else "awaiting_first_order"
-        ),
+        "status": status,
         "settled_profit_dollars": total(values) if complete else None,
         "settled_markets": len(results),
         "accepted_orders": len(intents),
