@@ -83,7 +83,9 @@ def classify(resting, positions, owner):
         result[sport]["resting"].append(row)
     for row in positions:
         try:
-            raw = row.get("position_fp", row.get("position"))
+            raw = row.get("position_fp")
+            if raw is None:
+                raw = row.get("position")
             qty = float(raw)
         except (TypeError, ValueError) as error:
             raise TradingError("Unreadable account position") from error
@@ -95,6 +97,13 @@ def classify(resting, positions, owner):
         sport = owner["tickers"].get(ticker)
         if sport not in result or qty > 0:
             raise TradingError("Unowned or wrong-side account position: HALT")
+        owned_count = sum(
+            float(a["count"])
+            for a in owner["attempts"]
+            if a["ticker"] == ticker
+        )
+        if abs(qty) > owned_count + 1e-8:
+            raise TradingError("Held inventory exceeds accepted intent: HALT")
         result[sport]["held"].append(ticker)
     return result
 
