@@ -162,17 +162,16 @@ def summarize(balance, positions, resting, fills, settlements, events, scan, now
         book_side = fill.get("book_side")
         action = fill.get("action")
         side = fill.get("side")
-        if (
-            (outcome is not None and outcome != "no")
-            or (book_side is not None and book_side != "ask")
-            or ((action is None) != (side is None))
-            or (
-                action is not None
-                and (action, side) not in {("buy", "no"), ("sell", "yes")}
-            )
-            or (outcome is None and book_side is None and action is None)
-        ):
-            raise TradingError("Unexpected or unverified strategy fill direction")
+        # Canonical outcome/book are authoritative; legacy action/side fields
+        # have been observed to disagree in real Kalshi production fill data.
+        # Do not reject an exchange-verified NO fill on deprecated fields.
+        if outcome is not None or book_side is not None:
+            if (outcome not in (None, "no")) or (
+                book_side not in (None, "ask")
+            ):
+                raise TradingError("Unexpected canonical strategy fill direction")
+        elif (action, side) not in {("buy", "no"), ("sell", "yes")}:
+            raise TradingError("Unverified legacy strategy fill direction")
         n = number(fill.get("count_fp", fill.get("count")))
         p = dollars(fill, "no_price_dollars", "no_price")
         costs.append(n * p if n is not None and p is not None else None)
