@@ -42,7 +42,7 @@ def report(client, now):
 def main():
     try:
         now = datetime.now(UTC)
-        client = ReadOnlyClient(dry_run=True, env="prod")
+        client = ReadOnlyClient()  # Enforces KALSHI_ENV=prod and signed GET-only access.
         print(json.dumps(report(client, now), indent=2, sort_keys=True))
     except Exception as error:
         print(
