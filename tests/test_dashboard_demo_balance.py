@@ -101,11 +101,16 @@ console.log(JSON.stringify(nodes));
     assert "NFL / settled P&amp;L" in pnl_html
     assert "NBA / settled P&amp;L" in pnl_html
     assert "—" in pnl_html
-    assert "NBA / settled P&amp;L</span><div class=\"metric-value \">—" in pnl_html
+    assert 'NBA / settled P&amp;L</span><div class="metric-value ">—' in pnl_html
     assert "$0.00" not in pnl_html
     if verified:
         assert "+$1.99" in pnl_html
-        assert "Last verified production snapshot" in data["live-pnl-asof"]["textContent"]
+        assert (
+            "Last verified production snapshot" in data["live-pnl-asof"]["textContent"]
+        )
     else:
         assert "$1.99" not in pnl_html
-        assert "No authenticated production P&L snapshot" in data["live-pnl-asof"]["textContent"]
+        assert (
+            "No authenticated production P&L snapshot"
+            in data["live-pnl-asof"]["textContent"]
+        )
