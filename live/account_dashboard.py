@@ -166,9 +166,7 @@ def summarize(balance, positions, resting, fills, settlements, events, scan, now
         # have been observed to disagree in real Kalshi production fill data.
         # Do not reject an exchange-verified NO fill on deprecated fields.
         if outcome is not None or book_side is not None:
-            if (outcome not in (None, "no")) or (
-                book_side not in (None, "ask")
-            ):
+            if (outcome not in (None, "no")) or (book_side not in (None, "ask")):
                 raise TradingError("Unexpected canonical strategy fill direction")
         elif (action, side) not in {("buy", "no"), ("sell", "yes")}:
             raise TradingError("Unverified legacy strategy fill direction")
@@ -368,7 +366,6 @@ def cohort_settled_pnl(events, settlements, exchange_fills=None):
         "accepted_orders": len(owned_orders),
         "source": "authenticated_exchange_settlements_and_owned_fill_ids",
     }
-
 
 
 def collect(client, state=STATE):

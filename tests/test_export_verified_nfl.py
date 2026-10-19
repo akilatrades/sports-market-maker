@@ -42,9 +42,7 @@ class Direction(unittest.TestCase):
         self.assertEqual(issues, ["legacy_direction_mismatch"])
 
     def test_conflicting_canonical_fields_never_count_as_no(self):
-        status, issues, _ = fill_direction(
-            {"outcome_side": "yes", "book_side": "ask"}
-        )
+        status, issues, _ = fill_direction({"outcome_side": "yes", "book_side": "ask"})
         self.assertEqual(status, "review_required")
         self.assertIn("conflicting_canonical_directions", issues)
 

@@ -89,31 +89,41 @@ class AccountAccounting(unittest.TestCase):
 
     def test_v2_sell_yes_is_reported_as_no_position_fill(self):
         for fill in self.fills:
-            fill.update({
-                "action": "sell",
-                "side": "yes",
-                "outcome_side": "no",
-                "book_side": "ask",
-            })
+            fill.update(
+                {
+                    "action": "sell",
+                    "side": "yes",
+                    "outcome_side": "no",
+                    "book_side": "ask",
+                }
+            )
         report = self.report()
         self.assertEqual(report["strategy"]["contracts_filled"], 4)
         self.assertEqual(report["strategy"]["fill_cost_dollars"], 2.64)
 
     def test_actual_v2_with_legacy_mismatch_uses_canonical_no(self):
         for fill in self.fills:
-            fill.update({
-                "action": "sell", "side": "no",
-                "outcome_side": "no", "book_side": "ask",
-            })
+            fill.update(
+                {
+                    "action": "sell",
+                    "side": "no",
+                    "outcome_side": "no",
+                    "book_side": "ask",
+                }
+            )
         report = self.report()
         self.assertEqual(report["strategy"]["contracts_filled"], 4)
         self.assertEqual(report["strategy"]["filled_orders"], 1)
 
     def test_conflicting_v2_fill_direction_fails_closed(self):
-        self.fills[0].update({
-            "action": "sell", "side": "yes",
-            "outcome_side": "yes", "book_side": "ask",
-        })
+        self.fills[0].update(
+            {
+                "action": "sell",
+                "side": "yes",
+                "outcome_side": "yes",
+                "book_side": "ask",
+            }
+        )
         with self.assertRaises(TradingError):
             self.report()
 
@@ -176,14 +186,22 @@ class AccountAccounting(unittest.TestCase):
         ]
         fills = [
             {
-                "fill_id": "fn", "order_id": "o1", "ticker": "KXNFL-X",
-                "count_fp": "4", "no_price_dollars": "0.66",
-                "outcome_side": "no", "book_side": "ask",
+                "fill_id": "fn",
+                "order_id": "o1",
+                "ticker": "KXNFL-X",
+                "count_fp": "4",
+                "no_price_dollars": "0.66",
+                "outcome_side": "no",
+                "book_side": "ask",
             },
             {
-                "fill_id": "fb", "order_id": "o2", "ticker": "KXNBA-X",
-                "count_fp": "2", "no_price_dollars": "1.00",
-                "outcome_side": "no", "book_side": "ask",
+                "fill_id": "fb",
+                "order_id": "o2",
+                "ticker": "KXNBA-X",
+                "count_fp": "2",
+                "no_price_dollars": "1.00",
+                "outcome_side": "no",
+                "book_side": "ask",
             },
         ]
         nfl = cohort_settled_pnl(nfl_events, settlements, fills)
@@ -199,24 +217,39 @@ class AccountAccounting(unittest.TestCase):
             {"event": "intent", "client_order_id": "c", "ticker": "NFL-X"},
             {"event": "accepted", "client_order_id": "c", "order_id": "owned"},
         ]
-        settlements = [{
-            "ticker": "NFL-X", "revenue_dollars": "4.00",
-            "no_total_cost_dollars": "2.64",
-            "yes_total_cost_dollars": "0", "fee_cost": "0",
-        }]
-        fills = [{
-            "ticker": "NFL-X", "order_id": "owned", "fill_id": "f1",
-            "count_fp": "4", "no_price_dollars": "0.66",
-            "outcome_side": "no", "book_side": "ask",
-        }]
+        settlements = [
+            {
+                "ticker": "NFL-X",
+                "revenue_dollars": "4.00",
+                "no_total_cost_dollars": "2.64",
+                "yes_total_cost_dollars": "0",
+                "fee_cost": "0",
+            }
+        ]
+        fills = [
+            {
+                "ticker": "NFL-X",
+                "order_id": "owned",
+                "fill_id": "f1",
+                "count_fp": "4",
+                "no_price_dollars": "0.66",
+                "outcome_side": "no",
+                "book_side": "ask",
+            }
+        ]
         self.assertEqual(
             cohort_settled_pnl(events, settlements, fills)["settled_profit_dollars"],
             1.36,
         )
-        fills.append({
-            "ticker": "NFL-X", "order_id": "manual", "fill_id": "f2",
-            "count_fp": "1", "no_price_dollars": "0.50",
-        })
+        fills.append(
+            {
+                "ticker": "NFL-X",
+                "order_id": "manual",
+                "fill_id": "f2",
+                "count_fp": "1",
+                "no_price_dollars": "0.50",
+            }
+        )
         unsafe = cohort_settled_pnl(events, settlements, fills)
         self.assertEqual(unsafe["status"], "cost_or_ownership_mismatch")
         self.assertIsNone(unsafe["settled_profit_dollars"])

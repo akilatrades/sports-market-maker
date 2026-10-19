@@ -7,6 +7,7 @@ Run from an updated checkout or as a standalone downloaded script:
     python -m tools.production_status
     python /tmp/production_status.py
 """
+
 import csv
 import hashlib
 import json
@@ -86,9 +87,7 @@ def model_bundle(folder, now):
             return {"status": "blocked", "reason": "schema_or_model_version"}
         if hashlib.sha256(data).hexdigest() != meta.get("sha256"):
             return {"status": "blocked", "reason": "checksum_mismatch"}
-        stamp = datetime.fromisoformat(
-            meta["generated_utc"].replace("Z", "+00:00")
-        )
+        stamp = datetime.fromisoformat(meta["generated_utc"].replace("Z", "+00:00"))
         if stamp.tzinfo is None:
             return {"status": "blocked", "reason": "naive_timestamp"}
         age = (now - stamp).total_seconds() / 3600
@@ -116,9 +115,7 @@ def sportsbook_rows(path):
         return {
             "status": "file_present_not_feed_approval",
             "rows": len(rows),
-            "rows_with_two_books": sum(
-                float(r.get("book_n") or 0) >= 2 for r in rows
-            ),
+            "rows_with_two_books": sum(float(r.get("book_n") or 0) >= 2 for r in rows),
         }
     except (OSError, ValueError, csv.Error):
         return {"status": "unreadable", "rows": None}
@@ -135,15 +132,12 @@ def snapshot(root=STATE_ROOT, now=None):
         ),
         "deployed_commit": command(["git", "rev-parse", "--short", "HEAD"]),
         "systemd": {
-            key: {unit: service(unit) for unit in units}
-            for key, units in UNITS.items()
+            key: {unit: service(unit) for unit in units} for key, units in UNITS.items()
         },
         "nba_inputs": model_bundle(nba, now),
         "nba_sportsbooks": sportsbook_rows(nba / "nba_books.csv"),
         "journals": {
-            market: journal_summary(
-                root / f"prod-{market}-auto" / "journal.jsonl"
-            )
+            market: journal_summary(root / f"prod-{market}-auto" / "journal.jsonl")
             for market in MARKETS
         },
     }

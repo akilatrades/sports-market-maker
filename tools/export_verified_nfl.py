@@ -7,6 +7,7 @@ client order IDs, exchange order IDs or exchange fill IDs.
 Run on the DigitalOcean worker with the production EnvironmentFile loaded:
   python tools/export_verified_nfl.py --output /tmp/nfl_verified_execution.json
 """
+
 import argparse
 import json
 import math
@@ -72,7 +73,6 @@ def fill_direction(fill):
     if legacy == "no":
         return "verified_no", ["legacy_only_direction"], fields
     return "review_required", ["no_confirmed_no_direction"], fields
-
 
 
 def build(events, actual_fills, settlements):
@@ -177,21 +177,24 @@ def build(events, actual_fills, settlements):
             row["filled_cost"] = round(row["filled_cost"] + count * price, 8)
             row["reported_fill_fees"] = (
                 round(row["reported_fill_fees"] + fee, 8)
-                if fee is not None and row["reported_fill_fees"] is not None else None
+                if fee is not None and row["reported_fill_fees"] is not None
+                else None
             )
-        fill_rows.append({
-            "direction_status": direction,
-            "direction_issues": direction_issues,
-            "direction_fields": direction_fields,
-            "order_ref": row["ref"],
-            "ticker": row["ticker"],
-            "player": row["player"],
-            "filled_utc": fill.get("created_time"),
-            "contracts": count,
-            "no_price": price,
-            "fee": fee,
-            "is_taker": fill.get("is_taker"),
-        })
+        fill_rows.append(
+            {
+                "direction_status": direction,
+                "direction_issues": direction_issues,
+                "direction_fields": direction_fields,
+                "order_ref": row["ref"],
+                "ticker": row["ticker"],
+                "player": row["player"],
+                "filled_utc": fill.get("created_time"),
+                "contracts": count,
+                "no_price": price,
+                "fee": fee,
+                "is_taker": fill.get("is_taker"),
+            }
+        )
 
     settled = {}
     for s in settlements:
@@ -214,16 +217,19 @@ def build(events, actual_fills, settlements):
             "exchange_matched_filled_contracts_all_directions": round(
                 sum(f["contracts"] for f in fill_rows), 8
             ),
-            "exchange_verified_filled_contracts": round(sum(
-                f["contracts"] for f in fill_rows
-                if f["direction_status"] == "verified_no"
-            ), 8),
+            "exchange_verified_filled_contracts": round(
+                sum(
+                    f["contracts"]
+                    for f in fill_rows
+                    if f["direction_status"] == "verified_no"
+                ),
+                8,
+            ),
             "direction_review_fill_events": sum(
                 f["direction_status"] != "verified_no" for f in fill_rows
             ),
             "legacy_direction_warning_events": sum(
-                "legacy_direction_mismatch" in f["direction_issues"]
-                for f in fill_rows
+                "legacy_direction_mismatch" in f["direction_issues"] for f in fill_rows
             ),
             "distinct_orders_filled": len(set(f["order_ref"] for f in fill_rows)),
             "other_exchange_fill_events_excluded": foreign_count,
@@ -256,9 +262,11 @@ def main():
     args.output.write_text(json.dumps(report, indent=2, allow_nan=False) + "\n")
     args.output.chmod(0o600)
     s = report["summary"]
-    print(f"EXCHANGE VERIFIED: {s['exchange_verified_fill_events']} fill events, "
-          f"{s['exchange_verified_filled_contracts']} contracts; "
-          f"{s['exchange_accepted_orders']} accepted orders.")
+    print(
+        f"EXCHANGE VERIFIED: {s['exchange_verified_fill_events']} fill events, "
+        f"{s['exchange_verified_filled_contracts']} contracts; "
+        f"{s['exchange_accepted_orders']} accepted orders."
+    )
     print(
         f"Sanitized output: {args.output}. "
         "Upload the JSON file, not raw journal or credentials."
