@@ -7,6 +7,48 @@
 > The goal is positive net trading income eventually, but profitability,
 > scale and dependable income have **not** been demonstrated.
 
+## Monday NBA readiness progress — 07:49 AM Central
+
+**Source-confirmed, production-market data-only updates:**
+
+- The scheduled NBA sportsbook collector succeeded around **12:47 UTC**
+  (07:47 Central), and a separately triggered one-off refresh around
+  **12:48 UTC** also succeeded. Both are GitHub public-data workflows,
+  **not real-money trades**.
+- `outputs/books/nba_latest.csv` now holds **823** exact sportsbook
+  player-prop consensus lines across **Boston–Detroit and
+  Philadelphia–New York**, including **309** lines with at least two
+  contributing books. No Thunder–Spurs book event yet; it approaches
+  the Odds API 36-hour lookahead later this morning.
+- Joining the fresh book data with the **312** currently published
+  Kalshi model rows by **game day + normalized player + stat +
+  exact threshold**, **172** lines match at least one book and **71**
+  match at least two books (**29** DET/BOS, **42** NY/PHI, **0** SA/OKC).
+  This is a **research-only static join**; it does not check venue
+  live quote changes, current injuries, final fee bounds, queue
+  availability, or the still-closed Tuesday entry windows.
+- **39** of those two-book-matched model rows showed positive
+  previously saved `edge_no` values. `edge_no` is **model-derived**
+  and cannot substitute for the actual book-based `candidate_orders`
+  edge, fresh maker executable quotes, or net real-money profitability.
+  This is not an approved trade count or earnings prediction.
+- Added a one-time GitHub book-collector refresh on workflow changes
+  and an extra **14:15 UTC / 09:15 Central** daily backup sportsbook
+  checkpoint to support Tuesday entry-window freshness. These consume
+  limited Odds API credits; monitor source usage.
+- The last authenticated owner screenshot showed **no open resting
+  orders or held positions**, but the NFL scheduled timer was still
+  active. **NBA remains disabled** and must pass signed GET-only
+  preflight *after* a deliberate NFL handoff and current input sync.
+  No automatic activation or risk-limit increase authorized.
+
+**Owner's next read-only step today:** re-sync the NBA inputs and run
+`live.prod_nba_auto --preflight --sync-inputs` using protected
+production credentials. An `NFL production still active` blocker is
+expected until handoff; verify book-covered / verified rows, current
+rosters/injuries and account access independently. Do not arm NBA while
+any failure remains.
+
 ## Monday morning, October 19 — signed account isolation result
 
 **Owner-provided DigitalOcean screenshot:** executed the GET-only,
