@@ -7,6 +7,36 @@
 > The goal is positive net trading income eventually, but profitability,
 > scale and dependable income have **not** been demonstrated.
 
+## Monday morning, October 19 — 07:38 AM Central
+
+**New public data verified by repository inspection:**
+
+- `outputs/books/nba_latest.csv` **is no longer empty**: **404**
+  observed sportsbook consensus player-prop line rows from the
+  2026-10-19 08:45 UTC (3:45 AM Central) collection; **157** rows had
+  at least two sportsbook contributors.
+- That collection covers **only Boston at Detroit** so far (one
+  event). The 312-row NBA model already matches **76** of the
+  exact player/stat/threshold lines at one or more books, but only
+  **31** match at **two or more books**; the 31 cover Boston/Detroit.
+  The missing two games still require fresh market coverage.
+- Book freshness cutoff in `kalshi.books.attach_latest` is **four
+  hours** using both snapshot and last contributed price update, so
+  08:45 UTC lines become ineligible around 12:45 UTC (07:45 AM
+  Central). The next sportsbook collection must be independently
+  confirmed, then the Droplet re-synced.
+- The newer NBA producer successfully published a fresh 312-row
+  model bundle at **2026-10-19 12:06 UTC**.
+- The last owner-observed Droplet state still had NBA **inactive**,
+  NFL timer **active**, and an open account position that NBA marked
+  `Foreign open production position: HALT`. No new signed
+  account-isolation report has been supplied yet. **Do not activate
+  NBA** based on the arrival of odds alone.
+- Next safe owner diagnostic: re-sync inputs after a **fresh** book run;
+  separately run `tools/check_account_isolation.py` using protected
+  GET-only production credentials to classify NFL/NBA/other held
+  exposure. No positions should be automatically liquidated.
+
 ## Signed NBA production preflight — October 19, 03:22 UTC
 
 Owner ran a signed, **GET-only** NBA preflight with input synchronization.
