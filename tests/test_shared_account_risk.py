@@ -93,7 +93,9 @@ def test_cumulative_spend_never_resets_when_an_order_settles():
     result = shared.room(owner, none_active, 3, NOW)
     assert result["shared_active"]
     # Even though no contracts are currently held, old submissions count.
-    assert sum(shared.reserved(x["cost"]) for x in owner["attempts"]) == 4.4
+    from live.nfl_policy import reserve
+
+    assert sum(reserve(x["cost"]) for x in owner["attempts"]) == 4.4
     assert not shared.room(owner, none_active, 100, NOW)["shared_lifetime"]
 
 
