@@ -94,6 +94,16 @@ This only enables the **read-only reporting service**; it does not
 start NBA or NFL trading. It does not expose port 8766 externally.
 The printed response must contain **only** redacted aggregates.
 
+## Free HTTPS hostname (no signup)
+
+If you do **not** own a domain, use
+[FREE_PNL_HTTPS_SSLIP.md](FREE_PNL_HTTPS_SSLIP.md):
+free `sslip.io` DNS maps your Droplet public IP to a hostname, and
+Caddy provides a free auto-renewed HTTPS certificate. Start with the
+**read-only** `deploy/free_pnl_https_check.sh` before touching ports or
+services. Once the signed amounts and external HTTPS URL are verified,
+configure the same `dashboard/live-pnl-source.json` below.
+
 ## Phase C: HTTPS with your domain
 
 GitHub Pages uses HTTPS, so a plain HTTP Droplet URL will be blocked
