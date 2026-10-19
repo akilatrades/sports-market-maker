@@ -59,7 +59,7 @@ accepted order, nor evidence of profitability.
 
 1. The account owner must verify $250 *available in Kalshi Production* and
    independently create **production API credentials**. Demo keys are different.
-   Never send keys to ChatGPT or publish/commit them to GitHub.
+   Never share keys in chat or support tools, or publish/commit them to GitHub.
 2. Ensure Kalshi Production has **no pre-existing resting orders or open positions**.
    This trial assumes a dedicated, otherwise empty production trading account.
 3. Root-only `/etc/market-maker-prod-auto.env` (permissions 0600) must include

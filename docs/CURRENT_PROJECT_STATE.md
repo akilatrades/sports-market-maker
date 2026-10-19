@@ -5,7 +5,7 @@
 > This is an owner-operated bounded real-money launch with explicit
 > go/no-go conditions, not automatic activation.
 
-> **Single source of truth for continuing this project in one ChatGPT chat.**
+> **Running project status notes, updated as evidence arrives.**
 > Updated after code/source review on October 18–19, 2026. Update after a
 > deployment, authenticated exchange reconciliation or important decision.
 > Separate **observed evidence**, **merged code**, and **unknown live state**.
