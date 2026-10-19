@@ -281,12 +281,76 @@ def summarize(balance, positions, resting, fills, settlements, events, scan, now
     }
 
 
+def cohort_settled_pnl(events, settlements):
+    """Calculate one production cohort's net settled P&L.
+
+    Ownership comes only from this cohort's accepted, journaled orders. No
+    backtests, paper fills or inferred costs can enter the result. A missing
+    settlement field makes P&L unknown, never silently zero.
+    """
+    accepted_ids = {
+        e["client_order_id"]
+        for e in events
+        if e.get("event") == "accepted" and e.get("client_order_id")
+    }
+    intents = [
+        e
+        for e in events
+        if e.get("event") == "intent" and e.get("client_order_id") in accepted_ids
+    ]
+    tickers = {e["ticker"] for e in intents}
+    results = {
+        e["ticker"]: e
+        for e in events
+        if e.get("event") == "settlement" and e.get("ticker") in tickers
+    }
+    for item in settlements:
+        ticker = item.get("market_ticker") or item.get("ticker")
+        if ticker in tickers:
+            results[ticker] = settlement_accounting(item)
+    values = [r.get("net_profit_dollars") for r in results.values()]
+    complete = bool(values) and all(number(value) is not None for value in values)
+    return {
+        "status": (
+            "verified" if complete else "incomplete_settlement" if values
+            else "awaiting_settlement" if intents else "awaiting_first_order"
+        ),
+        "settled_profit_dollars": total(values) if complete else None,
+        "settled_markets": len(results),
+        "accepted_orders": len(intents),
+        "source": "authenticated_exchange_settlements_and_owned_order_journal",
+    }
+
+
 def collect(client, state=STATE):
     events = read_journal(state / "journal.jsonl")
+    # Both journals feed the P&L cards, irrespective of which market controls
+    # the execution/positions panel. Missing staging is unknown, not $0.
+    cohort_paths = {
+        "nfl": STATE / "journal.jsonl",
+        "nba": Path("/home/trader/prod-nba-auto/journal.jsonl"),
+    }
+    cohort_events = {}
+    for market, journal in cohort_paths.items():
+        if journal == state / "journal.jsonl":
+            cohort_events[market] = events
+        elif journal.exists():
+            try:
+                cohort_events[market] = read_journal(journal)
+            except (OSError, ValueError, TradingError, json.JSONDecodeError):
+                cohort_events[market] = None
+        else:
+            cohort_events[market] = None
     balance = client._request("GET", "/portfolio/balance")
     positions = client.pages("/portfolio/positions", "market_positions")
     resting = client.pages("/portfolio/orders", "orders", status="resting")
-    starts = [e["utc"] for e in events if e.get("event") == "intent"]
+    starts = [
+        e["utc"]
+        for cohort in cohort_events.values()
+        if cohort is not None
+        for e in cohort
+        if e.get("event") == "intent"
+    ]
     params = (
         {"min_ts": int(datetime.fromisoformat(min(starts)).timestamp()) - 60}
         if starts
@@ -317,6 +381,19 @@ def collect(client, state=STATE):
                 "passed_book_or_model_and_spread": scan.get("candidate_count"),
             }
             scan["skip_reasons"] = scan.get("skipped", {})
+    result["live_pnl"] = {
+        market: (
+            cohort_settled_pnl(cohort, settlements)
+            if cohort is not None
+            else {
+                "status": "unavailable",
+                "settled_profit_dollars": None,
+                "settled_markets": None,
+                "accepted_orders": None,
+            }
+        )
+        for market, cohort in cohort_events.items()
+    }
     result["kill_switch"] = (state / "KILL").exists()
     titles = market_titles()
     if state.name == "prod-nba-auto":
