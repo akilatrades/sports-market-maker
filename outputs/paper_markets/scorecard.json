@@ -1,14 +1,14 @@
 {
   "KXITFMATCH": {
-    "orders": 270,
+    "orders": 299,
     "vetoed": 0,
-    "open": 32,
-    "fill_rate": 0.7689075630252101,
-    "fills_settled": 183,
-    "bankroll": 434.18,
-    "cents_per_contract": 0.91,
-    "t": 0.73,
-    "profit_dollars": -65.82
+    "open": 34,
+    "fill_rate": 0.7433962264150943,
+    "fills_settled": 197,
+    "bankroll": 432.67,
+    "cents_per_contract": 1.21,
+    "t": 1.02,
+    "profit_dollars": -67.33
   },
   "KXNASCARRACE": {
     "orders": 77,
@@ -54,13 +54,13 @@
   "KXNFLRECYDS": {
     "orders": 175,
     "vetoed": 0,
-    "open": 28,
-    "fill_rate": 0.4217687074829932,
-    "fills_settled": 62,
-    "bankroll": 385.69,
-    "cents_per_contract": -18.85,
-    "t": -2.98,
-    "profit_dollars": -114.31
+    "open": 0,
+    "fill_rate": 0.5142857142857142,
+    "fills_settled": 90,
+    "bankroll": 393.14,
+    "cents_per_contract": -11.17,
+    "t": -1.42,
+    "profit_dollars": -106.86
   },
   "KXCLUBFBTTS": {
     "orders": 0,
@@ -143,26 +143,26 @@
   "KXNFLRECYDS+model": {
     "orders": 168,
     "vetoed": 813,
-    "open": 29,
-    "fill_rate": 0.31654676258992803,
-    "fills_settled": 44,
-    "bankroll": 391.59,
-    "cents_per_contract": -29.11,
-    "t": -7.12,
-    "profit_dollars": -108.41,
-    "vetoed_would_have_made_cents": -5.36,
-    "vetoed_settled": 323
+    "open": 0,
+    "fill_rate": 0.43452380952380953,
+    "fills_settled": 73,
+    "bankroll": 394.73,
+    "cents_per_contract": -13.52,
+    "t": -1.19,
+    "profit_dollars": -105.27,
+    "vetoed_would_have_made_cents": -4.87,
+    "vetoed_settled": 356
   },
   "KXITFMATCH+no30": {
-    "orders": 124,
+    "orders": 148,
     "vetoed": 0,
-    "open": 24,
-    "fill_rate": 0.84,
-    "fills_settled": 84,
-    "bankroll": 523.52,
-    "cents_per_contract": 2.69,
-    "t": 1.07,
-    "profit_dollars": 23.52
+    "open": 35,
+    "fill_rate": 0.8141592920353983,
+    "fills_settled": 92,
+    "bankroll": 529.3,
+    "cents_per_contract": 3.3,
+    "t": 1.31,
+    "profit_dollars": 29.3
   },
-  "updated_utc": "2026-10-19T03:29+00:00"
+  "updated_utc": "2026-10-19T06:40+00:00"
 }
