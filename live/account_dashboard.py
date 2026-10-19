@@ -281,24 +281,27 @@ def summarize(balance, positions, resting, fills, settlements, events, scan, now
     }
 
 
-def cohort_settled_pnl(events, settlements):
-    """Calculate one production cohort's net settled P&L.
+def cohort_settled_pnl(events, settlements, exchange_fills=None):
+    """Report owned market settlement only if authenticated fill cost reconciles.
 
-    Ownership comes only from this cohort's accepted, journaled orders. No
-    backtests, paper fills or inferred costs can enter the result. A missing
-    settlement field makes P&L unknown, never silently zero.
+    Exchange market settlements can contain another order's positions for the
+    same ticker. Ownership of *one* order is not proof the entire market cost
+    belongs to this strategy. Never claim verified strategy P&L if the
+    settlement's NO cost does not match all owned exchange fill costs.
     """
-    accepted_ids = {
-        e["client_order_id"]
+    owned_orders = {}
+    intents = {
+        e["client_order_id"]: e
         for e in events
-        if e.get("event") == "accepted" and e.get("client_order_id")
+        if e.get("event") == "intent" and e.get("client_order_id")
     }
-    intents = [
-        e
-        for e in events
-        if e.get("event") == "intent" and e.get("client_order_id") in accepted_ids
-    ]
-    tickers = {e["ticker"] for e in intents}
+    for event in events:
+        if event.get("event") != "accepted":
+            continue
+        intent = intents.get(event.get("client_order_id"))
+        if intent and event.get("order_id"):
+            owned_orders[event["order_id"]] = intent["ticker"]
+    tickers = set(owned_orders.values())
     results = {
         e["ticker"]: e
         for e in events
@@ -309,21 +312,63 @@ def cohort_settled_pnl(events, settlements):
         if ticker in tickers:
             results[ticker] = settlement_accounting(item)
     values = [r.get("net_profit_dollars") for r in results.values()]
-    complete = bool(values) and all(number(value) is not None for value in values)
+    complete = bool(values) and all(number(v) is not None for v in values)
+
+    cost_matches = exchange_fills is not None
+    fill_costs = {}
+    counted_ids = set()
+    if exchange_fills is not None:
+        for fill in exchange_fills:
+            ticker = fill.get("market_ticker") or fill.get("ticker")
+            if ticker not in results:
+                continue
+            oid = fill.get("order_id")
+            fid = fill.get("fill_id") or fill.get("trade_id")
+            if oid not in owned_orders or owned_orders[oid] != ticker or not fid:
+                cost_matches = False
+                continue
+            if fid in counted_ids:
+                continue
+            counted_ids.add(fid)
+            count = number(fill.get("count_fp", fill.get("count")))
+            price = dollars(fill, "no_price_dollars", "no_price")
+            if count is None or count <= 0 or price is None or not 0 <= price <= 1:
+                cost_matches = False
+                continue
+            outcome = fill.get("outcome_side")
+            book = fill.get("book_side")
+            if outcome not in (None, "no") or book not in (None, "ask"):
+                cost_matches = False
+                continue
+            fill_costs[ticker] = fill_costs.get(ticker, 0) + count * price
+        for ticker, result in results.items():
+            no_cost = number(result.get("no_cost_dollars"))
+            yes_cost = number(result.get("yes_cost_dollars"))
+            if (
+                no_cost is None
+                or yes_cost is None
+                or abs(yes_cost) > 0.005
+                or abs(no_cost - fill_costs.get(ticker, 0)) > 0.015
+            ):
+                cost_matches = False
+    else:
+        cost_matches = False
+
     status = "awaiting_first_order"
-    if intents:
+    if owned_orders:
         status = "awaiting_settlement"
     if values:
         status = "incomplete_settlement"
     if complete:
-        status = "verified"
+        status = "verified" if cost_matches else "cost_or_ownership_mismatch"
     return {
         "status": status,
-        "settled_profit_dollars": total(values) if complete else None,
+        "settled_profit_dollars": total(values) if status == "verified" else None,
         "settled_markets": len(results),
-        "accepted_orders": len(intents),
-        "source": "authenticated_exchange_settlements_and_owned_order_journal",
+        "accepted_orders": len(owned_orders),
+        "source": "authenticated_exchange_settlements_and_owned_fill_ids",
     }
+
 
 
 def collect(client, state=STATE):
@@ -387,7 +432,7 @@ def collect(client, state=STATE):
             scan["skip_reasons"] = scan.get("skipped", {})
     result["live_pnl"] = {
         market: (
-            cohort_settled_pnl(cohort, settlements)
+            cohort_settled_pnl(cohort, settlements, fills)
             if cohort is not None
             else {
                 "status": "unavailable",
