@@ -62,10 +62,11 @@ From an owner-provided authenticated snapshot exported at **2026-10-19
 - **Fixed a critical GitHub Actions publishing false-success bug:** the
   workflow formerly compared an *untracked, newly generated* metadata
   file to itself after `git reset --hard`, exited successfully and
-  committed nothing. It now checks **committed** `HEAD:` blobs, protects
+  committed nothing. It now checks **committed** `HEAD:` blobs, verifies
+  both blobs' presence, checksum and schema before skipping, protects
   against publishing an older dataset, pushes a versioned CSV+metadata
   pair, and checks that both blobs exist on `origin/main`. Added regression
-  tests with a disposable real Git repository.
+  tests with a disposable real Git repository, including corrupt data.
 - **Verified published on GitHub:** `outputs/projections/latest.csv`
   (312 priced rows) and `latest_meta.json` (schema 2,
   `nba-opening-v2`, SHA-256, generated 2026-10-19 02:56 UTC).
@@ -76,6 +77,8 @@ From an owner-provided authenticated snapshot exported at **2026-10-19
   The Odds API scheduled job on 2026-10-19 01:39 UTC was successful:
   87,567 credits reported remaining, NFL rows from eight books,
   **zero NBA events in its next-36-hour horizon at that time**.
+  An **early 08:15 UTC** collection checkpoint was added to the
+  sportsbook workflow, in addition to the existing daily refreshes.
   Opening games enter that horizon later Monday; rerun/inspect scheduled
   collections then. A successful collection is not proof of two *fresh,
   exact-line, event-matched* sportsbook quotes.
@@ -109,9 +112,10 @@ From an owner-provided authenticated snapshot exported at **2026-10-19
 - Private account dashboard has separate cohorts and improved strict
   fill-ownership/cost reconciliation. These changes are merged into
   GitHub; deployed DigitalOcean version has not been verified updated.
-- The Python 3.11 + 3.12 CI suite at commit `730ae61` passed
-  **292 tests, 89 subtests**, before the later NBA publisher fix.
-  Re-check CI for the latest HEAD before staging or deploying.
+- Following the NBA publisher regression, Python 3.11 + 3.12 CI
+  passed **298 tests and 89 subtests** on commit `61aa477` (two
+  nonfatal warnings). The documentation-only next commit also passed.
+  **Always verify CI on the newest HEAD** before deploying to the Droplet.
 - `tools/production_status.py` can run read-only without credentials,
   including standalone via `/tmp`. It reports local services/inputs
   and journal counts, **not** signed exchange accounting.
