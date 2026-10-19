@@ -1,0 +1,90 @@
+name: Publish NBA production inputs (data only)
+
+on:
+  schedule:
+    # Opening week: four checkpoints each day. The 12:30 UTC run is 30 min
+    # before Tuesday's first eligible 8 AM Central entry window.
+    - cron: '30 12,15,18,21 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: publish-nba-production-inputs
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install model dependencies
+        run: pip install -r requirements.txt
+      - name: Download NBA history
+        run: python -m live.fetch_nba_data
+      - name: Price current Kalshi production markets (NO orders)
+        env:
+          KALSHI_ENV: prod
+        run: python -m live.nba_projections
+      - name: Verify checksum, timestamp, schema, odds and duplicate tickers
+        run: python -m live.nba_publish_check
+      - name: Publish only versioned projection inputs
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s outputs/projections/latest.csv
+          test -s outputs/projections/latest_meta.json
+          # Save just the verified data pair before bringing this disposable
+          # Actions checkout up to the latest main. Never publish generated
+          # ledgers or automatically deploy/re-arm any trading code.
+          cp outputs/projections/latest.csv "$RUNNER_TEMP/nba-latest.csv"
+          cp outputs/projections/latest_meta.json "$RUNNER_TEMP/nba-latest-meta.json"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          for attempt in 1 2 3; do
+            git fetch origin main
+            git reset --hard origin/main
+            # A previously published NEWER dataset must never be replaced with
+            # an older snapshot (e.g. due to delayed concurrent workflows).
+            python - "$RUNNER_TEMP/nba-latest-meta.json" <<'PY'
+          import json
+          import pathlib
+          import sys
+          from datetime import datetime
+
+          local = json.loads(pathlib.Path(sys.argv[1]).read_text())
+          path = pathlib.Path("outputs/projections/latest_meta.json")
+          if path.exists():
+              remote = json.loads(path.read_text())
+              t_new = datetime.fromisoformat(local["generated_utc"].replace("Z", "+00:00"))
+              t_old = datetime.fromisoformat(remote["generated_utc"].replace("Z", "+00:00"))
+              if t_old >= t_new:
+                  print("Newer or equal projection bundle already published.")
+                  sys.exit(10)
+          PY
+            code=$?
+            if [[ "$code" == "10" ]]; then exit 0; fi
+            cp "$RUNNER_TEMP/nba-latest.csv" outputs/projections/latest.csv
+            cp "$RUNNER_TEMP/nba-latest-meta.json" outputs/projections/latest_meta.json
+            python -m live.nba_publish_check
+            git add -- outputs/projections/latest.csv outputs/projections/latest_meta.json
+            if git diff --cached --quiet; then
+              echo "Identical projection files already committed."
+              exit 0
+            fi
+            git commit -m "NBA verified projection input snapshot"
+            if git push origin HEAD:main; then
+              echo "Published validated NBA model input pair."
+              exit 0
+            fi
+            echo "Main advanced during data publish; retrying ($attempt/3)."
+          done
+          echo "Unable to publish NBA inputs; no unverified success." >&2
+          exit 1
