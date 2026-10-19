@@ -7,7 +7,6 @@ Run from the deployed checkout:
     python -m tools.production_status
 """
 import csv
-import hashlib
 import json
 import subprocess
 from collections import Counter
@@ -38,9 +37,11 @@ def command(args):
 
 def service(unit):
     state = command(["systemctl", "is-active", unit])
-    return state if state in {
-        "active", "inactive", "failed", "activating", "deactivating"
-    } else "unavailable"
+    return (
+        state
+        if state in {"active", "inactive", "failed", "activating", "deactivating"}
+        else "unavailable"
+    )
 
 
 def journal_summary(path):
