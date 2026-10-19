@@ -7,6 +7,42 @@
 > The goal is positive net trading income eventually, but profitability,
 > scale and dependable income have **not** been demonstrated.
 
+## Monday morning, October 19 — signed account isolation result
+
+**Owner-provided DigitalOcean screenshot:** executed the GET-only,
+aggregate-only `tools/check_account_isolation.py` successfully
+(exit 0; local machine timestamp 2026-10-19 12:36 UTC).
+
+- `status=NO_RESTING_ORDERS_OR_POSITIONS_AT_THIS_INSTANT`.
+- **NFL** known accepted orders: **10**, but **no currently open NFL
+  positions or resting orders** in this authenticated production read.
+- **NBA** known accepted orders: **0**, with no positions or resting orders.
+- `other_or_unrecognized={}`: no unrecognized open exposure at the
+  instant sampled.
+- This **resolves the prior foreign/open-position blocker at the time
+  of that diagnostic**, not permanently. The account can change if the
+  still-active NFL timer accepts fresh orders or manual account
+  activity occurs. A new signed NBA preflight is required at handoff.
+- Crucially, **a flat position is not proof of settlement/P&L**.
+  Refresh the authenticated NFL fills+settlements to determine all
+  outcomes, including the previously unsettled Golden lines.
+- The NFL timer was last observed **active**, NBA timer **inactive**.
+  Do not run simultaneous production timers on the same account.
+  Account isolation is **one of multiple gates**, not approval to arm NBA.
+
+**Repository recheck after the screenshot:** `outputs/books/nba_latest.csv`
+has 404 rows, 157 with two or more books, but the 08:45 UTC (03:45
+Central) quote snapshot is nearing its **four-hour freshness cutoff**.
+31 current model rows match at least two books, all for Boston–Detroit.
+The other two games and revised injury/roster context still require
+fresh source verification. Model pair at 12:06 UTC contains 312 rows.
+
+**Next step:** await/verify new sportsbook collection, sync fresh
+inputs to the staged NBA worker, and run signed GET-only
+`--preflight --sync-inputs`. NFL timer isolation must be planned and
+rechecked immediately before any owner-approved activation. No trading
+activation was performed.
+
 ## Monday morning, October 19 — 07:38 AM Central
 
 **New public data verified by repository inspection:**
