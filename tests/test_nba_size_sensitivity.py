@@ -20,6 +20,7 @@ def sample_game():
         "book_n": 2,
         "hours_before": 3.5,
         "pnl_no_fee": 0.4,
+        "pnl": 0.39,  # conservative one-contract fee; prepare() recomputes it
         "filled_contracts": 20,
         "tip_utc": "2026-01-12T20:00:00Z",
     }
