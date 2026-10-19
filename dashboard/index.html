@@ -399,8 +399,9 @@ footer p { max-width:100ch; font-size:10px; color:var(--ink-3); }
 </section>
 
 <section id="production-pnl" aria-labelledby="production-pnl-title">
-  <div class="section-heading"><div><div class="eyebrow"><span class="section-number">LIVE /</span> EXCHANGE RESULTS</div><h2 id="production-pnl-title">Verified P&amp;L · NFL / NBA</h2><p class="desc">Only actual exchange settlements, net of contract costs and fees. NFL and NBA are tracked separately. Paper and historical P&amp;L are excluded.</p></div><span class="stage">Exchange-confirmed</span></div>
+  <div class="section-heading"><div><div class="eyebrow"><span class="section-number">LIVE /</span> EXCHANGE RESULTS</div><h2 id="production-pnl-title">Realized P&amp;L · funded Kalshi account</h2><p class="desc">Actual settled-market results on the funded Kalshi account, with NFL and NBA trading-system results shown separately. Updated automatically when the secure live connection is configured. Open positions, early cash-outs and account credits are not included in settled-market P&amp;L.</p></div><span class="stage">Exchange-confirmed</span></div>
   <div class="metric-grid live-pnl-grid" id="live-pnl-grid" aria-live="polite">
+    <article class="metric-card"><span class="metric-label">Funded account / settled P&amp;L</span><div class="metric-value">—</div><span class="metric-caption">Awaiting secure live feed</span></article>
     <article class="metric-card"><span class="metric-label">NFL / settled P&amp;L</span><div class="metric-value">—</div><span class="metric-caption">Awaiting verified snapshot</span></article>
     <article class="metric-card"><span class="metric-label">NBA / settled P&amp;L</span><div class="metric-value">—</div><span class="metric-caption">Awaiting verified snapshot</span></article>
   </div>
@@ -665,34 +666,37 @@ function renderCharts(s) {
 function renderProductionPnl(snapshot) {
   const stamp = snapshot?.as_of_utc && Number.isFinite(Date.parse(snapshot.as_of_utc)) ? snapshot.as_of_utc : null;
   const age = stamp ? Date.now() - Date.parse(stamp) : Infinity;
-  // Static, publicly cached HTML is not an account connection. A historic
-  // positive settlement must NOT look current while later games settle.
-  const fresh = age >= -60000 && age <= 15 * 60000;
+  const live = snapshot?.refresh_type === "signed_live_account_settlements_30s";
+  const fresh = age >= -60000 && age <= (live ? 90 * 1000 : 15 * 60000);
   const markets = snapshot?.markets || {};
   const signed = v => v > 0 ? "+" + money(v) : money(v);
-  const card = (label, key) => {
-    const item = markets[key] || {};
-    const verified = (item.status === "verified_snapshot" || item.status === "verified")
-      && typeof item.settled_profit_dollars === "number" && Number.isFinite(item.settled_profit_dollars);
+  const card = (label, item, statuses, extraCaption = "") => {
+    item = item || {};
+    const verified = statuses.includes(item.status)
+      && typeof item.settled_profit_dollars === "number"
+      && Number.isFinite(item.settled_profit_dollars);
     const show = fresh && verified;
-    const p = show ? item.settled_profit_dollars : null;
-    const value = p === null ? "—" : signed(p);
+    const amount = show ? item.settled_profit_dollars : null;
+    const value = amount === null ? "—" : signed(amount);
     const caption = !fresh
       ? verified
         ? `Stale report · Last verified ${signed(item.settled_profit_dollars)} across ${item.settled_markets} settled markets, as of ${stamp.slice(0,16).replace("T"," ")} UTC; current result unknown`
-        : "Stale report · No verified current settled result"
-      : verified ? `${item.settled_markets} settled markets · after reported fees`
-      : "No current verified settled results";
-    const tone = p === null ? "" : p > 0 ? "positive" : p < 0 ? "negative" : "";
+        : "Live result unavailable; no verified current settlement"
+      : verified ? `${item.settled_markets} settled markets${extraCaption} · net of reported costs/fees`
+      : "No current verified settled result";
+    const tone = amount === null ? "" : amount > 0 ? "positive" : amount < 0 ? "negative" : "";
     return `<article class="metric-card"><span class="metric-label">${label} / settled P&amp;L</span><div class="metric-value ${tone}">${esc(value)}</div><span class="metric-caption">${esc(caption)}</span></article>`;
   };
-  document.getElementById("live-pnl-grid").innerHTML = card("NFL", "nfl") + card("NBA", "nba");
+  document.getElementById("live-pnl-grid").innerHTML =
+    card("FUNDED ACCOUNT", snapshot?.account, ["verified_settlement_snapshot"], " across account") +
+    card("NFL", markets.nfl, ["verified_snapshot", "verified"]) +
+    card("NBA", markets.nba, ["verified_snapshot", "verified"]);
   document.getElementById("live-pnl-asof").textContent = !stamp ?
-    "No authenticated production P&L snapshot has been published; research returns are never substituted." :
-    `Last verified production snapshot: ${stamp.slice(0,16).replace("T"," ")} UTC. ${fresh ?
-      "Public aggregate only; may lag new fills and settlements. Refresh checks every minute." :
-      "Report expired (over 15 minutes). Current result hidden; the last verified historical result, if available, remains labeled as stale."
-    } Open positions and unreported outcomes are not counted as realized P&L.`;
+    "Live account P&L feed unavailable or not configured. The last repository snapshot is not assumed to be current." :
+    `Last verified ${live ? "secure Kalshi read" : "published snapshot"}: ${stamp.slice(0,16).replace("T"," ")} UTC. ${fresh ?
+      "Automatic updates are enabled for the available source." :
+      "Report expired. Last verified values appear only as labelled historical results."
+    } Funded-account totals cover API-visible settlements; they do not include unrealized positions, non-settlement exits, credits or archived history.`;
 }
 let latestDashboard = null;
 fetch("../outputs/dashboard/summary.json", {cache: "no-store"}).then(r => { if (!r.ok) throw new Error(r.status); return r.json(); }).then(s => {
@@ -710,17 +714,34 @@ fetch("../outputs/dashboard/summary.json", {cache: "no-store"}).then(r => { if (
 });
 async function refreshVerifiedPnl() {
   try {
-    const response = await fetch("../outputs/dashboard/production_pnl.json", {cache:"no-store"});
-    if (!response.ok) throw new Error("No production P&L report");
+    // No Kalshi secret is ever sent to GitHub Pages. This config contains
+    // only an optional publicly accessible, HTTPS-only sanitized data URL.
+    const configResponse = await fetch("./live-pnl-source.json", {cache:"no-store"});
+    const config = configResponse.ok ? await configResponse.json() : {};
+    let url = "../outputs/dashboard/production_pnl.json";
+    const raw = typeof config.api_url === "string" ? config.api_url.trim() : "";
+    if (raw) {
+      const endpoint = new URL(raw);
+      if (endpoint.protocol !== "https:" || endpoint.username || endpoint.password) {
+        throw new Error("Live P&L endpoint must use HTTPS without credentials");
+      }
+      url = endpoint.href;
+    }
+    // Once a live endpoint is configured, NEVER silently fall back to
+    // stale GitHub JSON after a failure: show the feed as unavailable.
+    const response = await fetch(url, {cache:"no-store"});
+    if (!response.ok) throw new Error("P&L source unavailable");
     const data = await response.json();
-    if (data.schema_version !== 1) throw new Error("Invalid production P&L schema");
+    if (data.schema_version !== 1 || data.status === "unavailable") {
+      throw new Error("Invalid or unavailable verified P&L report");
+    }
     renderProductionPnl(data);
   } catch (_) {
-    renderProductionPnl(null); // never leave a stale green profit onscreen
+    renderProductionPnl(null);
   }
 }
 refreshVerifiedPnl();
-setInterval(refreshVerifiedPnl, 60000);
+setInterval(refreshVerifiedPnl, 15000);
 // Optional read-only cross-exchange snapshot. Never infer live trading status.
 fetch("../outputs/cross_exchange/latest.json", {cache:"no-store"})
   .then(r => { if (!r.ok) throw new Error("not published"); return r.json(); })
