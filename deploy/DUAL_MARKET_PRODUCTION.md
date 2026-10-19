@@ -123,6 +123,10 @@ if the owner authorizes active simultaneous real-money operation:
    `/etc/market-maker-prod-auto.env` and
    `/etc/market-maker-prod-nba-auto.env`. Keep original Kalshi keys
    and all existing trading caps/KILL controls unchanged.
+   The NBA production env must additionally have
+   `PROD_NBA_AUTO_ARM=YES` **only when the owner deliberately
+   authorizes actual real-money NBA trading**; staging sets it to NO.
+   NFL retains its existing `PROD_NFL_AUTO_ARM=YES` guard.
 3. Create root-owned marker `/etc/market-maker-shared-account.enabled`
    with restrictive permissions; this represents the owner opt-in.
 4. Run the **signed GET-only NBA preflight with --sync-inputs** using
