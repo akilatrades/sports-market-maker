@@ -8,6 +8,10 @@ and compare modeled edges with **real exchange orders, fills and final
 after-fee settlements**. This is a directional passive-NO strategy, not a
 continuously hedged two-sided traditional market maker.
 
+**Continue the ongoing project in one chat:** [CURRENT PROJECT STATE /
+living handoff](docs/CURRENT_PROJECT_STATE.md) — verified results, deployment
+state, NBA blockers and next tasks, updated as new evidence arrives.
+
 **Start here: [Project explanation, production audit and open risks
 (October 18/19)](docs/PROJECT_MAP_AND_PRODUCTION_AUDIT_2026-10-18.md).**
 
