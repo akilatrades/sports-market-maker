@@ -93,6 +93,16 @@ class AccountAccounting(unittest.TestCase):
         self.assertEqual(report["strategy"]["contracts_filled"], 4)
         self.assertEqual(report["strategy"]["fill_cost_dollars"], 2.64)
 
+    def test_actual_v2_with_legacy_mismatch_uses_canonical_no(self):
+        for fill in self.fills:
+            fill.update({
+                "action": "sell", "side": "no",
+                "outcome_side": "no", "book_side": "ask",
+            })
+        report = self.report()
+        self.assertEqual(report["strategy"]["contracts_filled"], 4)
+        self.assertEqual(report["strategy"]["filled_orders"], 1)
+
     def test_conflicting_v2_fill_direction_fails_closed(self):
         self.fills[0].update({
             "action": "sell", "side": "yes",
