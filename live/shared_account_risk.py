@@ -3,6 +3,7 @@
 Import from the two production workers only while their existing account_lock
 is held. Absent, ambiguous or unowned account data must stop new entries.
 """
+
 from datetime import datetime
 from pathlib import Path
 import json
@@ -112,12 +113,14 @@ def room(owner, active_client_ids, cost, now):
         proposed = reserve(cost)
         lifetime = sum(reserve(a["cost"]) for a in attempts)
         active = sum(
-            reserve(a["cost"]) for a in attempts
+            reserve(a["cost"])
+            for a in attempts
             if a["client_order_id"] in active_client_ids
         )
         local_date = now.astimezone(LOCAL_DAY).date()
         daily = sum(
-            reserve(a["cost"]) for a in attempts
+            reserve(a["cost"])
+            for a in attempts
             if datetime.fromisoformat(a["utc"]).astimezone(LOCAL_DAY).date()
             == local_date
         )
@@ -163,26 +166,33 @@ def state_for(client, sport, now):
     settlements = client.settlements() if attempts else []
     if not isinstance(settlements, list):
         raise TradingError("Missing signed settlement history")
-    start = min(
-        int(datetime.fromisoformat(a["utc"]).timestamp()) for a in attempts
-    ) - 60 if attempts else int(now.timestamp()) - 60
+    start = (
+        min(int(datetime.fromisoformat(a["utc"]).timestamp()) for a in attempts) - 60
+        if attempts
+        else int(now.timestamp()) - 60
+    )
     fills = client.fills(min_ts=start) if attempts else []
     if not isinstance(fills, list):
         raise TradingError("Missing signed fill history")
     for fill in fills:
         ticker = fill.get("ticker") or fill.get("market_ticker")
-        if ticker in owner["tickers"] and str(fill.get("order_id")) not in owner["orders"]:
+        if (
+            ticker in owner["tickers"]
+            and str(fill.get("order_id")) not in owner["orders"]
+        ):
             raise TradingError("Unowned fill on pilot market: HALT")
     settled = {
         r.get("market_ticker") or r.get("ticker")
-        for r in settlements if isinstance(r, dict)
+        for r in settlements
+        if isinstance(r, dict)
     }
     snapshots = {}
     active_ids = set()
     for name, module in modules.items():
         own = [a for a in attempts if a["_cohort"] == name]
         accepted = {
-            e["client_order_id"]: e for e in events[name]
+            e["client_order_id"]: e
+            for e in events[name]
             if e.get("event") == "accepted"
         }
         own_tickers = {a["ticker"] for a in own}
@@ -193,9 +203,7 @@ def state_for(client, sport, now):
             "settlements": settlements,
             "active": [a for a in own if a["ticker"] not in settled],
         }
-        active, _ = module.reconcile_expired_unfilled(
-            own, accepted, state, fills, now
-        )
+        active, _ = module.reconcile_expired_unfilled(own, accepted, state, fills, now)
         state["active"] = active
         snapshots[name] = state
         active_ids.update(a["client_order_id"] for a in active)
@@ -206,6 +214,3 @@ def state_for(client, sport, now):
 
 
 def fits(context, cost, now):
-    return all(room(
-        context["ownership"], context["active_client_ids"], cost, now
-    ).values())
