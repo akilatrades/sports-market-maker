@@ -1,5 +1,6 @@
 """Regression tests for NBA publishing's false-positive success bug."""
 
+import hashlib
 import json
 import subprocess
 
@@ -30,8 +31,16 @@ def repo(tmp_path):
     return root
 
 
+FIXTURE_CSV = b"ticker,p_model\\nA,0.5\\n"
+
+
 def metadata(stamp):
-    return {"generated_utc": stamp, "sha256": "fixture"}
+    return {
+        "generated_utc": stamp,
+        "sha256": hashlib.sha256(FIXTURE_CSV).hexdigest(),
+        "schema_version": 2,
+        "model_version": "nba-opening-v2",
+    }
 
 
 def save_pair(root, stamp, commit=False, include_csv=True):
@@ -39,7 +48,7 @@ def save_pair(root, stamp, commit=False, include_csv=True):
     folder.mkdir(parents=True, exist_ok=True)
     (folder / "latest_meta.json").write_text(json.dumps(metadata(stamp)))
     if include_csv:
-        (folder / "latest.csv").write_text("ticker,p_model\nA,0.5\n")
+        (folder / "latest.csv").write_bytes(FIXTURE_CSV)
     if commit:
         git(root, "add", "outputs/projections")
         git(root, "commit", "-m", "published pair")
@@ -73,6 +82,16 @@ def test_missing_committed_csv_never_counts_as_success(repo):
     save_pair(repo, "2026-10-19T01:00:00+00:00", commit=True, include_csv=False)
     assert decision(repo, metadata("2026-10-19T01:00:00+00:00")) == (
         "publish_missing_committed_csv"
+    )
+
+
+def test_committed_but_corrupt_csv_is_not_considered_published(repo):
+    save_pair(repo, "2026-10-19T01:00:00+00:00", commit=True)
+    (repo / "outputs/projections/latest.csv").write_text("ticker,p_model\\nBAD,1\\n")
+    git(repo, "add", "outputs/projections/latest.csv")
+    git(repo, "commit", "-m", "bad-csv")
+    assert decision(repo, metadata("2026-10-19T01:00:00+00:00")) == (
+        "publish_corrupt_committed_bundle"
     )
 
 
