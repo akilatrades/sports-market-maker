@@ -12,6 +12,26 @@
 > The goal is positive net trading income eventually, but profitability,
 > scale and dependable income have **not** been demonstrated.
 
+## Monday October 19 — read-only P&L service now active on DigitalOcean
+
+Owner-provided DigitalOcean screenshot confirms:
+- `market-maker-live-pnl.service` installed and **active**, configured
+  to start automatically at boot.
+- Signed sanitized GET request to `http://127.0.0.1:8766/v1/pnl`
+  succeeded, with `refresh_type=signed_live_account_settlements_30s`.
+- **Funded-account settled P&L −$0.69**, **NFL bot −$0.69** across
+  four settled markets, and NBA awaiting first settlement.
+- `ss` verified port 8766 is bound to **127.0.0.1:8766** only,
+  not public `0.0.0.0`. Private dashboard remains on
+  `127.0.0.1:8765`. Neither endpoint has been approved for open
+  external network exposure.
+- Live data is **not yet connected to GitHub Pages**. Still pending
+  free `sslip.io` hostname + Caddy HTTPS restriction to `GET /v1/pnl`,
+  TLS/firewall verification, and updating
+  `dashboard/live-pnl-source.json` after the HTTPS URL is proven.
+- Does not represent every early exit, credit, archived settlement or
+  unrealized P&L. No trades/risks were changed to deploy this service.
+
 ## Monday October 19, 16:44 UTC — funded-account live-feed check passed
 
 Owner's DigitalOcean screenshot confirms a successful **signed, GET-only**
