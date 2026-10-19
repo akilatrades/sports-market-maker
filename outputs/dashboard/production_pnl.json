@@ -1,0 +1,26 @@
+{
+  "schema_version": 1,
+  "as_of_utc": "2026-10-19T01:34:46.976295+00:00",
+  "source": "Owner-provided sanitized Kalshi production GET /portfolio/settlements matched to NFL accepted orders; public aggregated metrics only",
+  "refresh_type": "manual_verified_snapshot_not_real_time",
+  "markets": {
+    "nfl": {
+      "status": "verified_snapshot",
+      "settled_profit_dollars": 1.99,
+      "settled_markets": 2,
+      "exchange_accepted_orders": 10,
+      "filled_orders": 4,
+      "filled_contracts": 13,
+      "note": "Two settled NFL markets as of timestamp; two additional filled positions were unsettled. P&L is realized only."
+    },
+    "nba": {
+      "status": "awaiting_verified_report",
+      "settled_profit_dollars": null,
+      "settled_markets": null,
+      "exchange_accepted_orders": null,
+      "filled_orders": null,
+      "filled_contracts": null,
+      "note": "No authenticated production NBA settlement snapshot supplied; cannot infer zero."
+    }
+  }
+}
