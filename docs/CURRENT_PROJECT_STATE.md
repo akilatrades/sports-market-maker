@@ -27,10 +27,15 @@ with NBA awaiting first order.
 - External end-to-end HTTPS `GET /v1/pnl`, browser CORS, and non-P&L
   routes must still be explicitly checked; an external tool was not
   able to reach the hostname for independent verification.
-- GitHub Pages config `dashboard/live-pnl-source.json` remains
-  **blank**. It should only be set after a valid public HTTPS
-  response is checked; avoid a nonfunctional live source masking
-  the previously published historical snapshot.
+- GitHub Pages config `dashboard/live-pnl-source.json` was
+  subsequently updated on October 19 (commit `d0066e1`) to reference
+  the owner-configured HTTPS endpoint `https://157-230-146-86.sslip.io/v1/pnl`.
+  **External end-to-end browser confirmation is still outstanding**;
+  neither DNS nor outbound HTTPS to this host can be tested in the
+  current assistant execution sandbox. On network/CORS failure the
+  public UI shows current P&L unavailable instead of stale gains.
+  Verify HTTPS from a real browser, correct Access-Control-Allow-Origin,
+  and a 404 on the root route.
 - User has selected **public, aggregate-only** settlement P&L.
   Port 8765 (private account dashboard) and port 8766 (internal feed)
   must remain unexposed.
