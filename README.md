@@ -138,6 +138,11 @@ normal [test workflow](https://github.com/akilatrades/sports-market-maker/action
 must pass before any deployment; no passing result for the newest HEAD
 was verified as part of this snapshot audit.
 
+A credential-free deployment sanity check, once the updated code is staged
+on the Droplet, is `python -m tools.production_status`. It prints local
+service/input/journal status **without accessing exchange credentials** and
+does not verify the actual Kalshi balance or latest fills.
+
 **For read-only production checks and owner-run procedures**, use
 [deploy/PROD_NBA_AUTO.md](deploy/PROD_NBA_AUTO.md),
 [deploy/PROD_NFL_AUTO.md](deploy/PROD_NFL_AUTO.md) and
