@@ -361,7 +361,7 @@ footer p { max-width:100ch; font-size:10px; color:var(--ink-3); }
 <div class="sitebar">
   <a href="#top" class="brand"><span class="brand-mark" aria-hidden="true">AJ</span><span>Sports Market Maker<small>QUANTITATIVE RESEARCH</small></span></a>
   <nav class="toplinks" aria-label="Dashboard sections">
-    <a href="#overview">Overview</a><a href="#research-section">Research</a><a href="#methodology">Model &amp; execution</a><a href="#forward">Validation</a><a href="#production-pnl">Live P&amp;L</a><a class="source-link" href="https://github.com/akilatrades/sports-market-maker">Source ↗</a>
+    <a href="#overview">Overview</a><a href="#production-pnl">Live P&amp;L</a><a href="#research-section">Research</a><a href="#methodology">Model &amp; execution</a><a href="#forward">Validation</a><a class="source-link" href="https://github.com/akilatrades/sports-market-maker">Source ↗</a>
   </nav>
 </div>
 <main>
@@ -398,6 +398,15 @@ footer p { max-width:100ch; font-size:10px; color:var(--ink-3); }
   </div>
 </section>
 
+<section id="production-pnl" aria-labelledby="production-pnl-title">
+  <div class="section-heading"><div><div class="eyebrow"><span class="section-number">LIVE /</span> EXCHANGE RESULTS</div><h2 id="production-pnl-title">Verified P&amp;L · NFL / NBA</h2><p class="desc">Only actual exchange settlements, net of contract costs and fees. NFL and NBA are tracked separately. Paper and historical P&amp;L are excluded.</p></div><span class="stage">Exchange-confirmed</span></div>
+  <div class="metric-grid live-pnl-grid" id="live-pnl-grid" aria-live="polite">
+    <article class="metric-card"><span class="metric-label">NFL / settled P&amp;L</span><div class="metric-value">—</div><span class="metric-caption">Awaiting verified snapshot</span></article>
+    <article class="metric-card"><span class="metric-label">NBA / settled P&amp;L</span><div class="metric-value">—</div><span class="metric-caption">Awaiting verified snapshot</span></article>
+  </div>
+  <p class="note" id="live-pnl-asof" aria-live="polite">This public dashboard is not directly connected to a private Kalshi account. Published snapshots are timestamped; unreported results are not zero.</p>
+</section>
+
 <section id="research-section">
   <div class="section-heading"><div><div class="eyebrow"><span class="section-number">02 /</span> HISTORICAL EVIDENCE</div><h2>Test the mechanism. Report the failures.</h2><p class="desc">Market selection and trade filtering are separate experiments. Estimates below describe their own historical samples.</p></div><a href="https://github.com/akilatrades/sports-market-maker/blob/main/RESEARCH_LOG.md">Full experiment log ↗</a></div>
   <div class="two"><div><h2>Where did the NO edge appear?</h2><p class="desc">Net cents per simulated contract across scanned markets.</p><div id="scan"></div></div><div><h2>Does the sportsbook filter help?</h2><p class="desc">Historical fills, grouped by contemporaneous sportsbook-line filters.</p><div id="research"></div></div></div>
@@ -422,15 +431,6 @@ footer p { max-width:100ch; font-size:10px; color:var(--ink-3); }
   <details class="quick-guide"><summary>Metric definitions &amp; reading guide</summary><dl><dt>Order / fill / contract</dt><dd>An order can receive multiple fill events; each fill can contain multiple contracts. These counts answer different questions.</dd><dt>Settled P&amp;L</dt><dd>Final contract payout minus entry cost and actual fees. Open position cost is not a realized loss.</dd><dt>Volume capture</dt><dd>Actual filled contracts divided by qualifying printed volume in comparable, fully observed resting-order windows.</dd><dt>Unsettled exposure</dt><dd>Outstanding orders and open positions are not included in the reported settled P&amp;L.</dd><dt>Standard error</dt><dd>Uncertainty around an estimated mean. Correlated fills and selected experiments limit what a conventional error bar can establish.</dd></dl></details>
 </section>
 
-<section id="production-pnl" aria-labelledby="production-pnl-title">
-  <div class="section-heading"><div><div class="eyebrow"><span class="section-number">05 /</span> LIVE-TRADING RESULTS</div><h2 id="production-pnl-title">Verified P&amp;L · NFL / NBA</h2><p class="desc">Only actual exchange settlements, net of contract costs and fees. NFL and NBA are tracked separately. Paper and historical P&amp;L are excluded.</p></div><span class="stage">Exchange-confirmed</span></div>
-  <div class="metric-grid live-pnl-grid" id="live-pnl-grid" aria-live="polite">
-    <article class="metric-card"><span class="metric-label">NFL / settled P&amp;L</span><div class="metric-value">—</div><span class="metric-caption">Awaiting verified snapshot</span></article>
-    <article class="metric-card"><span class="metric-label">NBA / settled P&amp;L</span><div class="metric-value">—</div><span class="metric-caption">Awaiting verified snapshot</span></article>
-  </div>
-  <p class="note" id="live-pnl-asof" aria-live="polite">This public dashboard is not directly connected to a private Kalshi account. Published snapshots are timestamped; unreported results are not zero.</p>
-</section>
-
 <section id="risk">
   <div class="section-heading"><div><div class="eyebrow"><span class="section-number">06 /</span> RISK &amp; ENGINEERING</div><h2>Constraints are part of the strategy.</h2><p class="desc">Execution safeguards and an auditable record make the model testable under real operational limits.</p></div><a href="https://github.com/akilatrades/sports-market-maker/tree/main/tests">Inspect the tests ↗</a></div>
   <div class="risk-grid"><article class="risk-card"><b>PRE-TRADE</b><h3>Fresh inputs. Bounded exposure.</h3><p>Projection age, availability checks and fee-aware edge filters precede order submission. Per-order, game, team and active-exposure limits constrain the NFL runner.</p></article><article class="risk-card"><b>EXECUTION</b><h3>Orders are not fills.</h3><p>Resting quotes, cancellations and partial fills have distinct states. The account service is read-only; reporting does not submit orders.</p></article><article class="risk-card"><b>MEASUREMENT</b><h3>Keep a traceable research record.</h3><p>Preserve rule versions, probability sources and timestamps. Missing outcomes and fees remain unknown; a checkpoint prompts review rather than automatic sizing.</p></article></div>
@@ -443,7 +443,7 @@ footer p { max-width:100ch; font-size:10px; color:var(--ink-3); }
 </section>
 
 </main>
-<footer><div class="footer-top"><strong>AJ / SPORTS MARKET MAKER</strong><div><a href="https://github.com/akilatrades/sports-market-maker">Repository ↗</a> &nbsp; / &nbsp; <a href="../outputs/dashboard/summary.json">Published data ↗</a> &nbsp; / &nbsp; <a href="https://github.com/akilatrades/sports-market-maker/blob/main/docs/FORWARD_VALIDATION.md">Validation protocol ↗</a></div></div><p>Independent quantitative research. Financial P&amp;L shown here is exclusively from approved, exchange-verified settlement snapshots. This public page is not a streaming account connection; private balances, credentials and order identifiers are not published.</p></footer>
+<footer><div class="footer-top"><strong>AJ / SPORTS MARKET MAKER</strong><div><a href="https://github.com/akilatrades/sports-market-maker">Repository ↗</a> &nbsp; / &nbsp; <a href="../outputs/dashboard/production_pnl.json">Verified P&amp;L snapshot ↗</a> &nbsp; / &nbsp; <a href="https://github.com/akilatrades/sports-market-maker/blob/main/docs/FORWARD_VALIDATION.md">Validation protocol ↗</a></div></div><p>Independent quantitative research. Financial P&amp;L shown here is exclusively from approved, exchange-verified settlement snapshots. This public page is not a streaming account connection; private balances, credentials and order identifiers are not published.</p></footer>
 <div class="tt" id="tt"></div>
 
 <script>
