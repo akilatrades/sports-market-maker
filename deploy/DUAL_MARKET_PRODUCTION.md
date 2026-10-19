@@ -47,6 +47,23 @@ requiring NFL stopped; NFL also now checks whether NBA is stopped.
 The old `deploy/activate_nba_auto.sh` is a single-sport handoff
 and **must not be used for dual activation**.
 
+## Automated owner activation after the lock fix
+
+The preferred deployment path is now `deploy/activate_dual_market.sh` in the
+production checkout. It stops both timers, waits for active workers, updates
+code, runs the shared-account and both-worker regression tests, confirms the
+signed exchange reconciliation, then sets only the two-sport opt-in flags and
+NBA live arm flag. The root-owned marker is created only after the checks.
+It repeats signed account reconciliation plus an NBA inputs preflight before
+enabling timers and running one scan of each worker. Failure rolls back the
+authorization files and disables both timers; any orders already accepted
+before a subsequent failure remain live and must be inspected in Kalshi.
+
+This script **runs only on the owner's DigitalOcean host with root access**.
+A GitHub commit is **not** a remote deployment. Do not use the old
+single-market `activate_nba_auto.sh` for this operation. No credentials,
+private journals or P&L dashboard settings are modified by this script.
+
 ## Step 1. Wait for green CI and schedule availability
 
 Confirm GitHub Actions **tests** are green for both supported Python
