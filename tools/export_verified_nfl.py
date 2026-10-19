@@ -34,6 +34,54 @@ def dollars(row, key, legacy=None):
     return round(v / 100, 8) if v is not None else None
 
 
+
+def fill_direction(fill):
+    """Resolve current Kalshi V2 fields and legacy action/side consistently.
+
+    Under the V2 single-YES-book protocol, a buy-NO order is an ASK that can
+    appear as legacy sell-YES. Direction is NO in both cases. An unmatched or
+    contradictory record is reported for investigation, never assumed to be NO.
+    """
+    fields = {
+        key: (str(fill[key]).strip().lower()
+              if fill.get(key) is not None else None)
+        for key in ("outcome_side", "book_side", "action", "side")
+    }
+    outcome = fields["outcome_side"]
+    book = fields["book_side"]
+    action = fields["action"]
+    side = fields["side"]
+    issues = []
+    if outcome not in (None, "yes", "no"):
+        issues.append("invalid_outcome_side")
+    if book not in (None, "bid", "ask"):
+        issues.append("invalid_book_side")
+    if action not in (None, "buy", "sell"):
+        issues.append("invalid_legacy_action")
+    if side not in (None, "yes", "no"):
+        issues.append("invalid_legacy_side")
+    if (action is None) != (side is None):
+        issues.append("incomplete_legacy_direction")
+    legacy = {
+        ("buy", "yes"): "yes",
+        ("sell", "no"): "yes",
+        ("buy", "no"): "no",
+        ("sell", "yes"): "no",
+    }.get((action, side))
+    directions = [v for v in (
+        outcome if outcome in ("yes", "no") else None,
+        {"bid": "yes", "ask": "no"}.get(book),
+        legacy,
+    ) if v is not None]
+    if not directions:
+        issues.append("no_direction_evidence")
+    if len(set(directions)) > 1:
+        issues.append("conflicting_direction_fields")
+    if directions and directions[0] != "no":
+        issues.append("unexpected_yes_direction")
+    return ("verified_no" if not issues else "review_required", issues, fields)
+
+
 def build(events, actual_fills, settlements):
     intents = [x for x in events if x.get("event") == "intent"]
     accepted = {x["client_order_id"]: x for x in events
@@ -105,23 +153,26 @@ def build(events, actual_fills, settlements):
         actual_ticker = fill.get("ticker") or fill.get("market_ticker")
         if actual_ticker and actual_ticker != row["ticker"]:
             raise ValueError("Exchange ticker does not match accepted order")
-        if fill.get("action", "buy") != "buy" or fill.get(
-            "outcome_side", fill.get("side", "no")
-        ) != "no":
-            raise ValueError("Unexpected exchange fill action/outcome")
+        direction, direction_issues, direction_fields = fill_direction(fill)
         count = num(fill.get("count_fp", fill.get("count")))
         price = dollars(fill, "no_price_dollars", "no_price")
         fee = num(fill.get("fee_cost"))
         if count is None or count <= 0 or price is None or not 0 <= price <= 1:
             raise ValueError("Invalid/missing fill quantity or price")
-        row["fill_records"] += 1
-        row["filled_contracts"] = round(row["filled_contracts"] + count, 8)
-        row["filled_cost"] = round(row["filled_cost"] + count * price, 8)
-        row["reported_fill_fees"] = (
-            round(row["reported_fill_fees"] + fee, 8)
-            if fee is not None and row["reported_fill_fees"] is not None else None
-        )
+        # Only validated NO-direction fills contribute to modeled entry cost.
+        # Keep direction anomalies as evidence; do not silently drop them.
+        if direction == "verified_no":
+            row["fill_records"] += 1
+            row["filled_contracts"] = round(row["filled_contracts"] + count, 8)
+            row["filled_cost"] = round(row["filled_cost"] + count * price, 8)
+            row["reported_fill_fees"] = (
+                round(row["reported_fill_fees"] + fee, 8)
+                if fee is not None and row["reported_fill_fees"] is not None else None
+            )
         fill_rows.append({
+            "direction_status": direction,
+            "direction_issues": direction_issues,
+            "direction_fields": direction_fields,
             "order_ref": row["ref"],
             "ticker": row["ticker"],
             "player": row["player"],
@@ -147,7 +198,16 @@ def build(events, actual_fills, settlements):
             "attempted_orders": len(intents),
             "exchange_accepted_orders": len(by_order_id),
             "exchange_verified_fill_events": len(fill_rows),
-            "exchange_verified_filled_contracts": round(sum(f["contracts"] for f in fill_rows), 8),
+            "exchange_matched_filled_contracts_all_directions": round(
+                sum(f["contracts"] for f in fill_rows), 8
+            ),
+            "exchange_verified_filled_contracts": round(sum(
+                f["contracts"] for f in fill_rows
+                if f["direction_status"] == "verified_no"
+            ), 8),
+            "direction_review_fill_events": sum(
+                f["direction_status"] != "verified_no" for f in fill_rows
+            ),
             "distinct_orders_filled": len(set(f["order_ref"] for f in fill_rows)),
             "other_exchange_fill_events_excluded": foreign_count,
             "settled_owned_orders": sum(r["settlement"] is not None for r in rows),
