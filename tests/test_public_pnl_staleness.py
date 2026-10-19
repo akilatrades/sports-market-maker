@@ -45,9 +45,10 @@ let snapshot = {
   }
 };
 renderProductionPnl(snapshot);
-if (!nodes["live-pnl-grid"].innerHTML.includes("stale") ||
-    nodes["live-pnl-grid"].innerHTML.includes("+\u00241.99")) {
-  throw new Error("Stale positive P&L was still shown");
+if (!nodes["live-pnl-grid"].innerHTML.includes("Stale report") ||
+    !nodes["live-pnl-grid"].innerHTML.includes("Last verified +\u00241.99") ||
+    !nodes["live-pnl-grid"].innerHTML.includes('metric-value ">—')) {
+  throw new Error("A stale settlement was presented as current rather than labelled historical");
 }
 snapshot.as_of_utc = new Date().toISOString();
 snapshot.markets.nfl.settled_profit_dollars = -1.50;
@@ -57,7 +58,14 @@ if (!nodes["live-pnl-grid"].innerHTML.includes("-\u00241.50") ||
     !nodes["live-pnl-grid"].innerHTML.includes("negative")) {
   throw new Error("Current losing NFL settlement was not displayed");
 }
-console.log("stale-hidden / negative-settlement-displayed");
+snapshot.as_of_utc = new Date(Date.now()-20*60*1000).toISOString();
+renderProductionPnl(snapshot);
+if (!nodes["live-pnl-grid"].innerHTML.includes("Last verified -\u00241.50") ||
+    !nodes["live-pnl-grid"].innerHTML.includes("Stale report") ||
+    nodes["live-pnl-grid"].innerHTML.includes('metric-value negative">-\u00241.50')) {
+  throw new Error("Last verified negative settlement must be visible but labelled stale");
+}
+console.log("stale-labelled / current-negative-displayed");
 """
     )
     result = subprocess.run(
