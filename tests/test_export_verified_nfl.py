@@ -48,6 +48,17 @@ class Direction(unittest.TestCase):
         self.assertEqual(status, "review_required")
         self.assertIn("conflicting_canonical_directions", issues)
 
+    def test_actual_production_payload_with_legacy_mismatch_is_counted(self):
+        data = {
+            "outcome_side": "no",
+            "book_side": "ask",
+            "action": "sell",
+            "side": "no",
+        }
+        status, issues, _ = fill_direction(data)
+        self.assertEqual(status, "verified_no")
+        self.assertEqual(issues, ["legacy_direction_mismatch"])
+
     def test_unknown_direction_is_reported(self):
         self.assertEqual(fill_direction({})[0], "review_required")
 
@@ -100,6 +111,10 @@ class Direction(unittest.TestCase):
         self.assertEqual(result["summary"]["direction_review_fill_events"], 0)
         self.assertEqual(result["orders_including_zero_fills"][0]["filled_cost"], 1.2)
         self.assertEqual(result["orders_including_zero_fills"][0]["queue_initial"], 6)
+        self.assertEqual(
+            result["orders_including_zero_fills"][0]["queue_history"][0]["ahead"],
+            6,
+        )
         fills[0]["outcome_side"] = "yes"
         changed = build(events, fills, [])
         self.assertEqual(changed["summary"]["exchange_verified_filled_contracts"], 0)
