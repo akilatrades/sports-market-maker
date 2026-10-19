@@ -5,7 +5,9 @@ name: book lines
 # About 8 Odds API credits per game, roughly 15,000 a month.
 on:
   schedule:
-    - cron: "15 12,15,18,21,23 * * *"
+    # Opening-week early check after the first game enters the 36h horizon.
+    # Later runs refresh prices in the 2–6h production entry windows.
+    - cron: "15 8,12,15,18,21,23 * * *"
     - cron: "15 1 * * *"
   workflow_dispatch:
 permissions:
