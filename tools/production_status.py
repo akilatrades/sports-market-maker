@@ -3,17 +3,22 @@
 No Kalshi credentials are loaded. This never contacts an exchange, places an
 order, changes a systemd service or prints account balances / order IDs.
 
-Run from the deployed checkout:
+Run from an updated checkout or as a standalone downloaded script:
     python -m tools.production_status
+    python /tmp/production_status.py
 """
 import csv
+import hashlib
 import json
 import subprocess
 from collections import Counter
 from datetime import UTC, datetime
 from pathlib import Path
 
-from live.nba_inputs import validate
+# Keep this diagnostic independent of the server's Python checkout version.
+# It can run as a standalone downloaded script without installing new modules.
+EXPECTED_SCHEMA = 2
+EXPECTED_MODEL_VERSION = "nba-opening-v2"
 
 STATE_ROOT = Path("/home/trader")
 MARKETS = ("nfl", "nba")
@@ -74,7 +79,21 @@ def model_bundle(folder, now):
     try:
         data = csv_path.read_bytes()
         meta = json.loads(meta_path.read_text())
-        age = validate(data, meta, now)
+        if (
+            meta.get("schema_version") != EXPECTED_SCHEMA
+            or meta.get("model_version") != EXPECTED_MODEL_VERSION
+        ):
+            return {"status": "blocked", "reason": "schema_or_model_version"}
+        if hashlib.sha256(data).hexdigest() != meta.get("sha256"):
+            return {"status": "blocked", "reason": "checksum_mismatch"}
+        stamp = datetime.fromisoformat(
+            meta["generated_utc"].replace("Z", "+00:00")
+        )
+        if stamp.tzinfo is None:
+            return {"status": "blocked", "reason": "naive_timestamp"}
+        age = (now - stamp).total_seconds() / 3600
+        if not 0 <= age <= 9:
+            return {"status": "blocked", "reason": "timestamp_outside_9_hours"}
         rows = sum(1 for _ in csv.DictReader(data.decode().splitlines()))
         if rows != meta["rows"]:
             return {"status": "row_count_mismatch"}
