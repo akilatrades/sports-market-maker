@@ -1,6 +1,13 @@
 name: Publish NBA production inputs (data only)
 
 on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/publish-nba-production-inputs.yml'
+      - 'live/nba_publish_check.py'
+      - 'live/nba_projections.py'
+      - 'live/nba_inputs.py'
   schedule:
     # Opening week: an early 11:30 UTC (6:30 AM Central) backup run,
     # a 12:30 UTC (7:30 AM Central) refresh, then three later updates.
@@ -52,23 +59,35 @@ jobs:
           for attempt in 1 2 3; do
             git fetch origin main
             git reset --hard origin/main
-            # A previously published NEWER dataset must never be replaced with
-            # an older snapshot (e.g. due to delayed concurrent workflows).
+            # CRITICAL: git reset --hard leaves UNTRACKED generated inputs on
+            # disk. Never mistake those new files for published repo content.
+            # Only compare with the exact metadata blob in the Git HEAD.
             set +e
             python - "$RUNNER_TEMP/nba-latest-meta.json" <<'PY'
           import json
           import pathlib
+          import subprocess
           import sys
           from datetime import datetime
 
-          local = json.loads(pathlib.Path(sys.argv[1]).read_text())
-          path = pathlib.Path("outputs/projections/latest_meta.json")
-          if path.exists():
-              remote = json.loads(path.read_text())
-              t_new = datetime.fromisoformat(local["generated_utc"].replace("Z", "+00:00"))
-              t_old = datetime.fromisoformat(remote["generated_utc"].replace("Z", "+00:00"))
-              if t_old >= t_new:
-                  print("Newer or equal projection bundle already published.")
+          fresh = json.loads(pathlib.Path(sys.argv[1]).read_text())
+          baseline = subprocess.run(
+              ["git", "show", "HEAD:outputs/projections/latest_meta.json"],
+              capture_output=True,
+              text=True,
+              check=False,
+          )
+          if baseline.returncode == 0:
+              remote = json.loads(baseline.stdout)
+              newest = datetime.fromisoformat(fresh["generated_utc"].replace("Z", "+00:00"))
+              previous = datetime.fromisoformat(remote["generated_utc"].replace("Z", "+00:00"))
+              if previous >= newest:
+                  # Only a COMMITTED same/newer bundle is a real publish.
+                  subprocess.run(
+                      ["git", "cat-file", "-e", "HEAD:outputs/projections/latest.csv"],
+                      check=True,
+                  )
+                  print("A newer or equal COMMITTED projection bundle is published.")
                   sys.exit(10)
           PY
             code=$?
@@ -85,7 +104,11 @@ jobs:
             fi
             git commit -m "NBA verified projection input snapshot"
             if git push origin HEAD:main; then
-              echo "Published validated NBA model input pair."
+              git fetch origin main
+              # A passing job must verify both blobs exist ON THE REMOTE.
+              git cat-file -e origin/main:outputs/projections/latest.csv
+              git cat-file -e origin/main:outputs/projections/latest_meta.json
+              echo "Published and remotely verified NBA model input pair."
               exit 0
             fi
             echo "Main advanced during data publish; retrying ($attempt/3)."
