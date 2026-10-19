@@ -1,5 +1,17 @@
 # Project map and production-readiness audit — 2026-10-18/19
 
+> **Update after this snapshot:** The NBA publishing false-success bug was
+> diagnosed and corrected on October 19. The model CSV and checksummed
+> metadata are now **actually committed on GitHub with 312 rows**. The
+> sportsbook file was still empty at the last check (the games were then
+> outside the collector's 36-hour horizon), and NBA production still
+> requires fresh book coverage, a server deployment, and signed read-only
+> preflight. For the **latest status**, see
+> [CURRENT_PROJECT_STATE.md](CURRENT_PROJECT_STATE.md). Historical
+> references below to missing model inputs describe the pre-fix audit
+> state, not an ongoing model publishing failure.
+
+
 > **Read this first.** Sports Market Maker is experimental software, **not a
 > verified income-producing business**. This audit distinguishes what the
 > repository implements from what was actually observed on Kalshi and what
