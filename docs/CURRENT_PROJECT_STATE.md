@@ -12,6 +12,44 @@
 > The goal is positive net trading income eventually, but profitability,
 > scale and dependable income have **not** been demonstrated.
 
+## October 19, 14:40 UTC — new signed NFL settlement reconciliation
+
+**Source: owner-provided DigitalOcean terminal result** from
+`tools.publish_production_pnl` with signed production **GET-only**
+Kalshi fills and settlements, matched to separate private NFL and NBA
+accepted-order journals. Exit code 0, **no GitHub write** from Droplet.
+
+- NFL **−$0.69 realized after costs and fees** across **4** settled
+  markets, **10** exchange-accepted orders, status
+  `verified_snapshot`. This supersedes the historic **+$1.99 / 2
+  settled markets** at 01:34 UTC (a net decrease of **$2.68**).
+- The owner reports a loss on Matthew Golden. The aggregate reconciles
+  the NFL cohort, but **does not establish Golden's individual realized
+  settlement cost or which other market(s) changed**. Do not attribute
+  the full decrease to one player without an itemized signed export.
+- NBA: `awaiting_first_order`, **0** accepted orders and **0**
+  settled markets; NFL/NBA accounting remains separate, and no NBA
+  realized profit is claimed.
+- The public sanitized
+  [production P&L snapshot](../outputs/dashboard/production_pnl.json)
+  has now been committed with the exact 14:40 UTC as-of timestamp
+  and **−$0.69**. Neither private balances nor tickers, raw fills,
+  personal identifiers or account credentials are published.
+- The public page polls JSON every **60 seconds** and labels
+  snapshots older than **15 minutes** stale. It shows the last
+  verified historical figure in a caption, but will **not** show it
+  as fresh/current P&L without a new signed report.
+- [Automated publisher](../deploy/PUBLIC_PNL_REFRESH.md) code and
+  a ten-minute timer have been staged **but are NOT enabled** on the
+  owner's VPS. They require a separate fine-grained publisher token
+  and explicit owner deployment. Never use GitHub historical JSON to
+  calculate live risk, and don't place orders through the publisher.
+
+**Risk policy and deployment are unchanged**: NFL worker stopped,
+NBA activation remains a separate owner action after signed
+preflight. A corrected NFL loss is evidence about the small pilot,
+not an estimate of the NBA strategy's edge or income capacity.
+
 ## October 19 NBA budget and historical edge review
 
 **NEW reproducible research only; no change to production caps:**
