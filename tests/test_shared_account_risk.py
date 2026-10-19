@@ -152,7 +152,7 @@ def test_full_signed_reconciliation_keeps_both_sports_active(monkeypatch, tmp_pa
         directory = tmp_path / f"prod-{sport}-auto"
         directory.mkdir()
         (directory / "journal.jsonl").write_text(
-            "".join(json.dumps(e) + "\\n" for e in pair(sport, key))
+            "".join(json.dumps(e) + "\n" for e in pair(sport, key))
         )
 
     class Exchange:
@@ -192,7 +192,7 @@ def test_inconsistent_foreign_fill_on_our_market_halts(monkeypatch, tmp_path):
         directory = tmp_path / f"prod-{sport}-auto"
         directory.mkdir()
         (directory / "journal.jsonl").write_text(
-            "".join(json.dumps(e) + "\\n" for e in pair(sport, key))
+            "".join(json.dumps(e) + "\n" for e in pair(sport, key))
         )
 
     class Exchange:
