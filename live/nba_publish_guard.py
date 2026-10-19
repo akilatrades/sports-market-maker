@@ -41,9 +41,7 @@ def decision(repo, fresh_meta):
     new_time = datetime.fromisoformat(
         fresh_meta["generated_utc"].replace("Z", "+00:00")
     )
-    old_time = datetime.fromisoformat(
-        old["generated_utc"].replace("Z", "+00:00")
-    )
+    old_time = datetime.fromisoformat(old["generated_utc"].replace("Z", "+00:00"))
     if new_time.tzinfo is None or old_time.tzinfo is None:
         raise ValueError("Projection timestamps must include timezone")
     if old_time >= new_time:
