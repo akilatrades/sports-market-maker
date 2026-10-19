@@ -12,6 +12,29 @@
 > The goal is positive net trading income eventually, but profitability,
 > scale and dependable income have **not** been demonstrated.
 
+## Monday October 19 — free TLS certificate issued; public feed test outstanding
+
+Owner-provided Caddy journal screenshot confirms that Let's Encrypt
+**validated** `157-230-146-86.sslip.io` via HTTP-01 and Caddy logged
+`certificate obtained successfully` for that hostname.
+Caddy listened on both **:80** and **:443** and the sslip.io A record
+resolved to the Droplet's public IPv4. The signed `127.0.0.1:8766/v1/pnl`
+GET still returned account and NFL **−$0.69** settled-market results
+with NBA awaiting first order.
+
+- The previous TLS internal-error occurred before certificate issuance.
+  Do **not** assume that error persists after issuance.
+- External end-to-end HTTPS `GET /v1/pnl`, browser CORS, and non-P&L
+  routes must still be explicitly checked; an external tool was not
+  able to reach the hostname for independent verification.
+- GitHub Pages config `dashboard/live-pnl-source.json` remains
+  **blank**. It should only be set after a valid public HTTPS
+  response is checked; avoid a nonfunctional live source masking
+  the previously published historical snapshot.
+- User has selected **public, aggregate-only** settlement P&L.
+  Port 8765 (private account dashboard) and port 8766 (internal feed)
+  must remain unexposed.
+
 ## Monday October 19 — read-only P&L service now active on DigitalOcean
 
 Owner-provided DigitalOcean screenshot confirms:
