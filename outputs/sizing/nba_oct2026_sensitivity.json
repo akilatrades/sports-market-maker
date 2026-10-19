@@ -1,0 +1,258 @@
+{
+  "source": "outputs/bookline/fills_with_book.csv.gz",
+  "selection": {
+    "two_book_possible_fill_rows": 1033,
+    "within_2_to_6_hours_possible_fill_rows": 1033,
+    "distinct_games_with_candidates": 142
+  },
+  "reference_without_live_entry_window": {
+    "two_book_possible_fill_rows": 1033,
+    "within_2_to_6_hours_possible_fill_rows": 1033,
+    "distinct_games_with_candidates": 142
+  },
+  "fee_assumption": "ceil to cent for one-contract 0.0175*p*(1-p)",
+  "capital_vs_limits": "All scenarios assume $250 capital; only limits alter throughput.",
+  "historical_replay_one_eligible_print_fill_per_game": {
+    "current_50_lifetime": {
+      "placed": 22,
+      "filled": 22,
+      "contracts": 99,
+      "reserve": 49.86,
+      "filled_cost": 42.64,
+      "profit": 9.37,
+      "games": 22,
+      "days": 20
+    },
+    "250_cash_unchanged_caps": {
+      "placed": 22,
+      "filled": 22,
+      "contracts": 99,
+      "reserve": 49.86,
+      "filled_cost": 42.64,
+      "profit": 9.37,
+      "games": 22,
+      "days": 20
+    },
+    "moderate_75_lifetime": {
+      "placed": 21,
+      "filled": 21,
+      "contracts": 144,
+      "reserve": 74.83,
+      "filled_cost": 62.02,
+      "profit": 12.54,
+      "games": 21,
+      "days": 19
+    },
+    "fivefold_250_lifetime": {
+      "placed": 22,
+      "filled": 22,
+      "contracts": 395,
+      "reserve": 249.97,
+      "filled_cost": 172.62,
+      "profit": 28.43,
+      "games": 22,
+      "days": 20
+    }
+  },
+  "bootstrap_game_conditional": {
+    "current_50_lifetime": {
+      "replications": 800,
+      "median_profit": 7.72,
+      "p05_profit": -10.24,
+      "p95_profit": 24.58,
+      "fraction_negative": 0.254,
+      "warning": "Conditional-on-hypothetical-fill bootstrap; not a trading forecast."
+    },
+    "250_cash_unchanged_caps": {
+      "replications": 800,
+      "median_profit": 7.72,
+      "p05_profit": -10.24,
+      "p95_profit": 24.58,
+      "fraction_negative": 0.254,
+      "warning": "Conditional-on-hypothetical-fill bootstrap; not a trading forecast."
+    },
+    "moderate_75_lifetime": {
+      "replications": 800,
+      "median_profit": 11.41,
+      "p05_profit": -16.94,
+      "p95_profit": 36.63,
+      "fraction_negative": 0.261,
+      "warning": "Conditional-on-hypothetical-fill bootstrap; not a trading forecast."
+    },
+    "fivefold_250_lifetime": {
+      "replications": 800,
+      "median_profit": 27.73,
+      "p05_profit": -53.84,
+      "p95_profit": 108.22,
+      "fraction_negative": 0.287,
+      "warning": "Conditional-on-hypothetical-fill bootstrap; not a trading forecast."
+    }
+  },
+  "drag_sensitivity": {
+    "current_50_lifetime": {
+      "extra_0c": 9.37,
+      "extra_1c": 8.38,
+      "extra_2c": 7.39,
+      "extra_4c": 5.41
+    },
+    "250_cash_unchanged_caps": {
+      "extra_0c": 9.37,
+      "extra_1c": 8.38,
+      "extra_2c": 7.39,
+      "extra_4c": 5.41
+    },
+    "moderate_75_lifetime": {
+      "extra_0c": 12.54,
+      "extra_1c": 11.1,
+      "extra_2c": 9.66,
+      "extra_4c": 6.78
+    },
+    "fivefold_250_lifetime": {
+      "extra_0c": 28.43,
+      "extra_1c": 24.48,
+      "extra_2c": 20.53,
+      "extra_4c": 12.63
+    }
+  },
+  "capture_sensitivity": {
+    "current_50_lifetime": {
+      "public_print_capture_25pct": {
+        "placed": 22,
+        "filled": 19,
+        "contracts": 78,
+        "reserve": 49.86,
+        "filled_cost": 34.22,
+        "profit": 6,
+        "games": 22,
+        "days": 20
+      },
+      "public_print_capture_50pct": {
+        "placed": 22,
+        "filled": 22,
+        "contracts": 93,
+        "reserve": 49.86,
+        "filled_cost": 40.36,
+        "profit": 9.71,
+        "games": 22,
+        "days": 20
+      },
+      "public_print_capture_100pct": {
+        "placed": 22,
+        "filled": 22,
+        "contracts": 99,
+        "reserve": 49.86,
+        "filled_cost": 42.64,
+        "profit": 9.37,
+        "games": 22,
+        "days": 20
+      }
+    },
+    "250_cash_unchanged_caps": {
+      "public_print_capture_25pct": {
+        "placed": 22,
+        "filled": 19,
+        "contracts": 78,
+        "reserve": 49.86,
+        "filled_cost": 34.22,
+        "profit": 6,
+        "games": 22,
+        "days": 20
+      },
+      "public_print_capture_50pct": {
+        "placed": 22,
+        "filled": 22,
+        "contracts": 93,
+        "reserve": 49.86,
+        "filled_cost": 40.36,
+        "profit": 9.71,
+        "games": 22,
+        "days": 20
+      },
+      "public_print_capture_100pct": {
+        "placed": 22,
+        "filled": 22,
+        "contracts": 99,
+        "reserve": 49.86,
+        "filled_cost": 42.64,
+        "profit": 9.37,
+        "games": 22,
+        "days": 20
+      }
+    },
+    "moderate_75_lifetime": {
+      "public_print_capture_25pct": {
+        "placed": 21,
+        "filled": 18,
+        "contracts": 106,
+        "reserve": 74.83,
+        "filled_cost": 46.6,
+        "profit": 5.34,
+        "games": 21,
+        "days": 19
+      },
+      "public_print_capture_50pct": {
+        "placed": 21,
+        "filled": 21,
+        "contracts": 128,
+        "reserve": 74.83,
+        "filled_cost": 55.26,
+        "profit": 8.46,
+        "games": 21,
+        "days": 19
+      },
+      "public_print_capture_100pct": {
+        "placed": 21,
+        "filled": 21,
+        "contracts": 144,
+        "reserve": 74.83,
+        "filled_cost": 62.02,
+        "profit": 12.54,
+        "games": 21,
+        "days": 19
+      }
+    },
+    "fivefold_250_lifetime": {
+      "public_print_capture_25pct": {
+        "placed": 22,
+        "filled": 19,
+        "contracts": 227,
+        "reserve": 249.97,
+        "filled_cost": 100.46,
+        "profit": 6.27,
+        "games": 22,
+        "days": 20
+      },
+      "public_print_capture_50pct": {
+        "placed": 22,
+        "filled": 22,
+        "contracts": 308,
+        "reserve": 249.97,
+        "filled_cost": 135.48,
+        "profit": 14.44,
+        "games": 22,
+        "days": 20
+      },
+      "public_print_capture_100pct": {
+        "placed": 22,
+        "filled": 22,
+        "contracts": 395,
+        "reserve": 249.97,
+        "filled_cost": 172.62,
+        "profit": 28.43,
+        "games": 22,
+        "days": 20
+      }
+    }
+  },
+  "not_reproduced": [
+    "unfilled historical quote denominator",
+    "actual queue priority",
+    "one-hour order expiry and polling latency",
+    "live quote/fee/roster/injury revalidation",
+    "team-level correlation beyond one selected order per game",
+    "live capital recycling or settled bankroll path"
+  ],
+  "analysis_run_url": "https://github.com/akilatrades/sports-market-maker/actions/runs/39259222191",
+  "source_code_commit": "6789501a6cf33a0c6d81973a8f97d2d1203900ef",
+  "run_date_utc": "2026-10-19"
+}
