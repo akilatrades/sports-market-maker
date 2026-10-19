@@ -12,6 +12,40 @@
 > The goal is positive net trading income eventually, but profitability,
 > scale and dependable income have **not** been demonstrated.
 
+## October 19 — simultaneous NFL + NBA code staged, OFF on Droplet
+
+The owner requested that both models be capable of trading the SAME
+funded Kalshi account concurrently, rather than alternating NFL and NBA
+timers. Code committed to `main` in:
+
+- `live/shared_account_risk.py`: signed both-journal order and NO
+  position recognition, foreign-order/fill veto, verified active
+  exposure, and global combined budget checks.
+- `live/prod_nfl_auto.py` and `live/prod_nba_auto.py`: optional
+  `SMM_DUAL_MARKET=YES` path under existing exclusive
+  `/home/trader/production-execution.lock`. Both retain their
+  $3 order/game/team and $50 per-cohort budget limits.
+- `tools/dual_account_preflight.py`: GET-only, credential-redacted
+  ownership and combined cap check, and regression tests at
+  `tests/test_shared_account_risk.py`.
+- Owner-only deployment and rollback:
+  [DUAL_MARKET_PRODUCTION.md](../deploy/DUAL_MARKET_PRODUCTION.md).
+
+Proposed combined caps implemented in code: **$100 cumulative gross
+submission allowance**, **$40/day** and **$25 active reserved**,
+with **10% buffer**. Limits do NOT recycle from settlements and
+no sizing edge has been established.
+
+**CRITICAL deployment state:** the existing DigitalOcean NFL and NBA
+timers remain in their last owner-observed states (both stopped).
+These changes are **not deployed and cannot cause live orders** until
+the owner explicitly stages the new code, verifies both journals and
+signed GET-only preflight, sets the root-owned dual-mode approval marker
+and both production env flags, and enables both timers. Old one-sport
+activation script should not be used for concurrent operation.
+Production P&L live HTTPS dashboard is independent of these changes.
+No Kalshi API keys or private account records were modified.
+
 ## Monday October 19 — public HTTPS GET succeeds; dashboard deployed
 
 Owner-provided DigitalOcean terminal screenshot verifies the **HTTPS
