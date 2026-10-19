@@ -8,6 +8,7 @@ Trading methods are unavailable through ReadOnlyClient.
 Account-wide amount is the sum of currently API-available SETTLED
 markets, NOT account cash and NOT all-time realized cash-outs.
 """
+
 import argparse
 import json
 import threading
@@ -73,8 +74,7 @@ def collect_public(client=None, journal_paths=None, now=None):
     client = client or ReadOnlyClient()
     paths = journal_paths or JOURNALS
     cohorts = {
-        m: read_journal(paths[m]) if paths[m].exists() else None
-        for m in ("nfl", "nba")
+        m: read_journal(paths[m]) if paths[m].exists() else None for m in ("nfl", "nba")
     }
     # Account-level collection MUST NOT be limited by the bot's first order.
     # All visible account settlements, including manual markets, are included.
@@ -127,8 +127,10 @@ def handler_for(cache):
             result = cache.read()
             stamp = result.get("as_of_utc")
             if stamp:
-                age = (datetime.now(UTC) -
-                       datetime.fromisoformat(stamp.replace("Z", "+00:00"))).total_seconds()
+                age = (
+                    datetime.now(UTC)
+                    - datetime.fromisoformat(stamp.replace("Z", "+00:00"))
+                ).total_seconds()
             else:
                 age = float("inf")
             if age > MAX_AGE_SECONDS or age < -60:
@@ -172,14 +174,14 @@ def main():
                 # A missing/failed Kalshi call invalidates the entire current
                 # snapshot; never keep yesterday's profit on the LIVE surface.
                 cache.update({"schema_version": 1, "status": "unavailable"})
-                print("Public P&L refresh unavailable:", type(error).__name__, flush=True)
+                print(
+                    "Public P&L refresh unavailable:", type(error).__name__, flush=True
+                )
             time.sleep(args.interval)
 
     threading.Thread(target=update_loop, daemon=True).start()
     print(f"Redacted account P&L on 127.0.0.1:{args.port}; GET-only", flush=True)
-    ThreadingHTTPServer(
-        ("127.0.0.1", args.port), handler_for(cache)
-    ).serve_forever()
+    ThreadingHTTPServer(("127.0.0.1", args.port), handler_for(cache)).serve_forever()
 
 
 if __name__ == "__main__":
