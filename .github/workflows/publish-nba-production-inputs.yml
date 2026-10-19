@@ -53,6 +53,7 @@ jobs:
             git reset --hard origin/main
             # A previously published NEWER dataset must never be replaced with
             # an older snapshot (e.g. due to delayed concurrent workflows).
+            set +e
             python - "$RUNNER_TEMP/nba-latest-meta.json" <<'PY'
           import json
           import pathlib
@@ -70,7 +71,9 @@ jobs:
                   sys.exit(10)
           PY
             code=$?
+            set -e
             if [[ "$code" == "10" ]]; then exit 0; fi
+            if [[ "$code" != "0" ]]; then exit "$code"; fi
             cp "$RUNNER_TEMP/nba-latest.csv" outputs/projections/latest.csv
             cp "$RUNNER_TEMP/nba-latest-meta.json" outputs/projections/latest_meta.json
             python -m live.nba_publish_check
