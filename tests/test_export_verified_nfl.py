@@ -29,17 +29,24 @@ class Direction(unittest.TestCase):
             "verified_no",
         )
 
-    def test_conflicting_direction_is_never_counted_as_no(self):
+    def test_canonical_no_overrides_conflicting_deprecated_fields(self):
         status, issues, _ = fill_direction(
             {
-                "action": "buy",
-                "side": "yes",
+                "action": "sell",
+                "side": "no",
                 "outcome_side": "no",
                 "book_side": "ask",
             }
         )
+        self.assertEqual(status, "verified_no")
+        self.assertEqual(issues, ["legacy_direction_mismatch"])
+
+    def test_conflicting_canonical_fields_never_count_as_no(self):
+        status, issues, _ = fill_direction(
+            {"outcome_side": "yes", "book_side": "ask"}
+        )
         self.assertEqual(status, "review_required")
-        self.assertIn("conflicting_direction_fields", issues)
+        self.assertIn("conflicting_canonical_directions", issues)
 
     def test_unknown_direction_is_reported(self):
         self.assertEqual(fill_direction({})[0], "review_required")
