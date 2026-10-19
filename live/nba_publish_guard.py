@@ -10,6 +10,7 @@ other nonzero exit codes block the workflow. No orders or API calls.
 """
 
 import argparse
+import hashlib
 import json
 import subprocess
 from datetime import datetime
@@ -38,6 +39,12 @@ def decision(repo, fresh_meta):
     if not csv.stdout.strip():
         return "publish_empty_committed_csv"
     old = json.loads(current.stdout)
+    # A committed timestamp is not enough. A partially committed or
+    # corrupted bundle must be repaired rather than counted as ready.
+    if old.get("sha256") != hashlib.sha256(csv.stdout).hexdigest():
+        return "publish_corrupt_committed_bundle"
+    if old.get("schema_version") != 2 or old.get("model_version") != "nba-opening-v2":
+        return "publish_old_schema_bundle"
     new_time = datetime.fromisoformat(
         fresh_meta["generated_utc"].replace("Z", "+00:00")
     )
