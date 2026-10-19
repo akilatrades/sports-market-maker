@@ -4,10 +4,17 @@ name: book lines
 # projection run so the paper ledgers and the trader see fresh lines.
 # About 8 Odds API credits per game, roughly 15,000 a month.
 on:
+  # Workflow-file updates trigger one immediate data-only refresh, instead
+  # of waiting for the next best-effort scheduled slot. Generated book output
+  # commits do not retrigger this workflow.
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/books.yml"
   schedule:
-    # Opening-week early check after the first game enters the 36h horizon.
-    # Later runs refresh prices in the 2–6h production entry windows.
-    - cron: "15 8,12,15,18,21,23 * * *"
+    # Cover the early 8 AM Central NBA entry window. GitHub may start
+    # scheduled jobs late, so keep more than one pregame source checkpoint.
+    - cron: "15 8,12,14,15,18,21,23 * * *"
     - cron: "15 1 * * *"
   workflow_dispatch:
 permissions:
