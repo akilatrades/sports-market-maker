@@ -12,6 +12,19 @@
 > The goal is positive net trading income eventually, but profitability,
 > scale and dependable income have **not** been demonstrated.
 
+## Free public P&L hostname selection — October 19
+
+User chose a **FREE** domain option. Staged
+[free sslip.io + Caddy HTTPS instructions](../deploy/FREE_PNL_HTTPS_SSLIP.md)
+and a safe, **read-only** DNS/port/service preflight at
+`deploy/free_pnl_https_check.sh`. No domain registration or paid TLS
+needed. A stable HTTPS hostname is formed dynamically from the current
+Droplet public IP. **No DNS, service, firewall, HTTPS configuration or
+public live feed has yet been activated on the owner's Droplet.**
+First owner step is to run the preflight and share the listener status.
+The future endpoint will publicly expose sanitized account P&L, not
+the private 8765 account dashboard.
+
 ## October 19 — funded account near-live dashboard plumbing (STAGED)
 
 The user wants **realized wins and losses on the FUNDED Kalshi account**
