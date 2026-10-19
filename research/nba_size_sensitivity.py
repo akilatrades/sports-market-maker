@@ -9,7 +9,7 @@ prediction of opening-night profits. No exchange access or orders.
 """
 import json
 import math
-from dataclasses import asdict, dataclass
+from dataclasses import dataclass
 from pathlib import Path
 
 import numpy as np
@@ -99,13 +99,13 @@ def replay(rows, policy, *, fill_capture=1.0, extra_drag_c=0.0):
               "days": set()}
     reserved_day = {}
     for r in rows:
-        date = str(pd.Timestamp(r.tip_utc).date())
+        date = str(pd.Timestamp(r["tip_utc"]).date())
         left_day = policy.daily - reserved_day.get(date, 0.0)
         limit = min(
             remaining, left_day, policy.order, policy.game, policy.team,
             policy.active,
         )
-        n = max_contracts(float(r.price), limit, policy.contracts)
+        n = max_contracts(float(r["price"]), limit, policy.contracts)
         if n < 1:
             continue
         reserve = math.ceil(n * float(r.price) * 1.1 * 100 - 1e-9) / 100
@@ -117,12 +117,12 @@ def replay(rows, policy, *, fill_capture=1.0, extra_drag_c=0.0):
         result["days"].add(date)
         # Public print volume is NOT own fill probability. This is a
         # counterfactual capture fraction of historical traded volume.
-        got = min(n, max(0, math.floor(fill_capture * float(r.filled_contracts))))
+        got = min(n, max(0, math.floor(fill_capture * float(r["filled_contracts"]))))
         if got:
             result["filled"] += 1
             result["contracts"] += got
             result["filled_cost"] += got * float(r.price)
-            result["profit"] += got * (float(r.pnl) - extra_drag_c / 100)
+            result["profit"] += got * (float(r["pnl"]) - extra_drag_c / 100)
     result["days"] = len(result["days"])
     for k in ("reserve", "filled_cost", "profit"):
         result[k] = round(result[k], 2)
