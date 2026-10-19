@@ -10,7 +10,7 @@ Run on the DigitalOcean worker with the production EnvironmentFile loaded:
 import argparse
 import json
 import math
-from collections import Counter, defaultdict
+from collections import defaultdict
 from datetime import UTC, datetime
 from pathlib import Path
 
@@ -34,7 +34,6 @@ def dollars(row, key, legacy=None):
     return round(v / 100, 8) if v is not None else None
 
 
-
 def fill_direction(fill):
     """Resolve current Kalshi V2 fields and legacy action/side consistently.
 
@@ -43,8 +42,7 @@ def fill_direction(fill):
     contradictory record is reported for investigation, never assumed to be NO.
     """
     fields = {
-        key: (str(fill[key]).strip().lower()
-              if fill.get(key) is not None else None)
+        key: str(fill[key]).strip().lower() if fill.get(key) is not None else None
         for key in ("outcome_side", "book_side", "action", "side")
     }
     outcome = fields["outcome_side"]
@@ -68,11 +66,15 @@ def fill_direction(fill):
         ("buy", "no"): "no",
         ("sell", "yes"): "no",
     }.get((action, side))
-    directions = [v for v in (
-        outcome if outcome in ("yes", "no") else None,
-        {"bid": "yes", "ask": "no"}.get(book),
-        legacy,
-    ) if v is not None]
+    directions = [
+        v
+        for v in (
+            outcome if outcome in ("yes", "no") else None,
+            {"bid": "yes", "ask": "no"}.get(book),
+            legacy,
+        )
+        if v is not None
+    ]
     if not directions:
         issues.append("no_direction_evidence")
     if len(set(directions)) > 1:
@@ -84,8 +86,11 @@ def fill_direction(fill):
 
 def build(events, actual_fills, settlements):
     intents = [x for x in events if x.get("event") == "intent"]
-    accepted = {x["client_order_id"]: x for x in events
-                if x.get("event") == "accepted" and x.get("client_order_id")}
+    accepted = {
+        x["client_order_id"]: x
+        for x in events
+        if x.get("event") == "accepted" and x.get("client_order_id")
+    }
     if len({x.get("client_order_id") for x in intents}) != len(intents):
         raise ValueError("Ambiguous intent identities; audit locally")
     rows, by_order_id = [], {}
@@ -107,8 +112,11 @@ def build(events, actual_fills, settlements):
             "edge_after_fee_buffer": num(entry.get("edge_after_fee_buffer")),
             "baseline_edge": num(entry.get("baseline_edge")),
             "extra_maker_ticks": entry.get("extra_maker_ticks"),
-            "quoted_price": round(num(entry.get("price_cents")) / 100, 4)
-                            if num(entry.get("price_cents")) is not None else None,
+            "quoted_price": (
+                round(num(entry.get("price_cents")) / 100, 4)
+                if num(entry.get("price_cents")) is not None
+                else None
+            ),
             "quoted_count": num(entry.get("count")),
             "quoted_cost": num(entry.get("cost")),
             "fill_records": 0,
@@ -191,7 +199,10 @@ def build(events, actual_fills, settlements):
     for row in rows:
         row["settlement"] = settled.get(row["ticker"])
     return {
-        "provenance": "Kalshi production signed GET /portfolio/fills and /portfolio/settlements joined with private NFL order journal",
+        "provenance": (
+            "Kalshi production signed GET /portfolio/fills and /portfolio/settlements "
+            "joined with private NFL order journal"
+        ),
         "generated_utc": datetime.now(UTC).isoformat(),
         "privacy": "No keys, account balances or raw order/fill IDs are included.",
         "summary": {
@@ -220,7 +231,9 @@ def build(events, actual_fills, settlements):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--output", type=Path, default=Path("/tmp/nfl_verified_execution.json"))
+    parser.add_argument(
+        "--output", type=Path, default=Path("/tmp/nfl_verified_execution.json")
+    )
     args = parser.parse_args()
     events = read_journal(STATE / "journal.jsonl")
     intents = [e for e in events if e.get("event") == "intent"]
@@ -228,7 +241,9 @@ def main():
     if intents:
         stamp = min(datetime.fromisoformat(e["utc"]).timestamp() for e in intents)
         fills = client.pages("/portfolio/fills", "fills", min_ts=int(stamp) - 60)
-        settlements = client.pages("/portfolio/settlements", "settlements", min_ts=int(stamp) - 60)
+        settlements = client.pages(
+            "/portfolio/settlements", "settlements", min_ts=int(stamp) - 60
+        )
     else:
         fills, settlements = [], []
     report = build(events, fills, settlements)
@@ -238,7 +253,10 @@ def main():
     print(f"EXCHANGE VERIFIED: {s['exchange_verified_fill_events']} fill events, "
           f"{s['exchange_verified_filled_contracts']} contracts; "
           f"{s['exchange_accepted_orders']} accepted orders.")
-    print(f"Sanitized output: {args.output}. Upload the JSON file, not raw journal or credentials.")
+    print(
+        f"Sanitized output: {args.output}. "
+        "Upload the JSON file, not raw journal or credentials."
+    )
 
 
 if __name__ == "__main__":
