@@ -4,6 +4,7 @@ Shows AGGREGATE counts only (no ticker, order IDs, balances, keys or raw respons
 No order submissions, cancellations or service changes. Must run with the
 protected production EnvironmentFile through systemd-run (see project audit).
 """
+
 import json
 import math
 from collections import Counter
@@ -114,10 +115,14 @@ def main():
         print(json.dumps(report, indent=2, sort_keys=True))
     except Exception as error:
         # No raw Kalshi HTTP response/body or account identifiers in output.
-        print(json.dumps({
-            "status": "AUDIT_UNAVAILABLE_DO_NOT_ACTIVATE",
-            "reason_type": type(error).__name__,
-        }))
+        print(
+            json.dumps(
+                {
+                    "status": "AUDIT_UNAVAILABLE_DO_NOT_ACTIVATE",
+                    "reason_type": type(error).__name__,
+                }
+            )
+        )
         raise SystemExit(2) from None
 
 
