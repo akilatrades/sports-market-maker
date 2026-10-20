@@ -745,9 +745,7 @@ def test_late_window_candidates_are_shadow_only_even_if_they_qualify(tmp_path):
     assert not (tmp_path / "last_scan.json").exists()
 
 
-def test_single_sportsbook_cannot_be_used_as_consensus_at_entry(
-    tmp_path, monkeypatch
-):
+def test_single_sportsbook_cannot_be_used_as_consensus_at_entry(tmp_path, monkeypatch):
     import kalshi.books as books
     import live.nba_trade as trader
     import markets.nba.live as live
@@ -776,9 +774,7 @@ def test_single_sportsbook_cannot_be_used_as_consensus_at_entry(
     assert nba.select_candidates(out, [], {"active": []}, NOW) == []
 
 
-def test_probable_teammate_update_does_not_block_whole_team(
-    tmp_path, monkeypatch
-):
+def test_probable_teammate_update_does_not_block_whole_team(tmp_path, monkeypatch):
     import kalshi.books as books
     import live.nba_trade as trader
     import markets.nba.live as live
@@ -807,9 +803,7 @@ def test_probable_teammate_update_does_not_block_whole_team(
     assert len(nba.select_candidates(out, [], {"active": []}, NOW)) == 1
 
 
-def test_questionable_teammate_update_blocks_changed_team(
-    tmp_path, monkeypatch
-):
+def test_questionable_teammate_update_blocks_changed_team(tmp_path, monkeypatch):
     import kalshi.books as books
     import live.nba_trade as trader
     import markets.nba.live as live
