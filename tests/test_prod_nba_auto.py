@@ -257,10 +257,9 @@ def test_dry_scan_cannot_overwrite_production_scan_status(tmp_path):
     journal = tmp_path / "journal.jsonl"
     report = tmp_path / "last_scan.json"
     report.write_text('{"decision":"exchange_accepted","mode":"live"}')
-    assert not nba.pass_once(
-        None, {}, pd.DataFrame(), NOW, journal, dry=True
-    )
+    assert not nba.pass_once(None, {}, pd.DataFrame(), NOW, journal, dry=True)
     assert json.loads(report.read_text()) == {
-        "decision": "exchange_accepted", "mode": "live"
+        "decision": "exchange_accepted",
+        "mode": "live",
     }
     assert not journal.exists()
