@@ -91,10 +91,7 @@ def main():
         ("feb_finals", dates >= pd.Timestamp("2026-02-01", tz="UTC")),
     ):
         sub = quotes.loc[mask]
-        period_results[name] = [
-            evaluate(sub, prints, cutoff, 0)
-            for cutoff in (2, 0.5)
-        ]
+        period_results[name] = [evaluate(sub, prints, cutoff, 0) for cutoff in (2, 0.5)]
     report = {
         "description": "Same 2025-26 snapshot and public-trade-replay; does NOT establish an edge or real fill probability.",
         "model": "Frozen 2025-26 historical NBA, not an improved 2026-27 forecast",
