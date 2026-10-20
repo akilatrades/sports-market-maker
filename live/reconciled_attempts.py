@@ -36,7 +36,11 @@ def rejected_client_ids(events):
             or cid not in unknown
             or cid in accepted
             or cid in resolved
-            or event.get("evidence") != "signed_get_no_order_fill_position_and_owner_ui"
+            or event.get("evidence")
+            not in (
+                "signed_get_no_order_fill_position_and_owner_ui",
+                "signed_get_no_order_fill_position_and_explicit_shard_404",
+            )
             or event.get("submission_http_status") != 404
             or not event.get("utc")
         ):
