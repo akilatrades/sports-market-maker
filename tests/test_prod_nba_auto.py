@@ -222,3 +222,45 @@ def test_shared_account_allows_only_known_inactive_states(monkeypatch):
     monkeypatch.setattr(subprocess, "run", unverified)
     with pytest.raises(TradingError, match="Uncertain"):
         nba.assert_nfl_production_stopped()
+
+
+def test_selection_funnel_counts_each_gate_without_loosening_it():
+    """Zero submitted orders must have an actionable, staged explanation."""
+    f = priced()
+    stats = {}
+    rows = nba.select_candidates(f, [], {"active": []}, NOW, diagnostics=stats)
+    assert len(rows) == 1
+    assert stats == {
+        "open_markets": 1,
+        "verified_availability_and_tip": 1,
+        "in_entry_window": 1,
+        "supported_prop_series": 1,
+        "passed_book_model_and_spread": 1,
+        "no_side_candidates": 1,
+        "passed_edge_sanity": 1,
+        "not_previously_attempted": 1,
+    }
+    f.loc[0, "hours_to_tip"] = 1.5
+    stats = {}
+    assert nba.select_candidates(f, [], {"active": []}, NOW, diagnostics=stats) == []
+    assert stats["in_entry_window"] == 0
+    assert stats["open_markets"] == 1
+    f.loc[0, "hours_to_tip"] = 4.0
+    f.loc[0, "injury_status"] = "UNVERIFIED_CURRENT_ROSTER_OR_GAME"
+    stats = {}
+    assert nba.select_candidates(f, [], {"active": []}, NOW, diagnostics=stats) == []
+    assert stats["verified_availability_and_tip"] == 0
+
+
+def test_dry_scan_cannot_overwrite_production_scan_status(tmp_path):
+    """Health telemetry must not be faked by a research/dry scan."""
+    journal = tmp_path / "journal.jsonl"
+    report = tmp_path / "last_scan.json"
+    report.write_text('{"decision":"exchange_accepted","mode":"live"}')
+    assert not nba.pass_once(
+        None, {}, pd.DataFrame(), NOW, journal, dry=True
+    )
+    assert json.loads(report.read_text()) == {
+        "decision": "exchange_accepted", "mode": "live"
+    }
+    assert not journal.exists()
