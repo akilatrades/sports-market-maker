@@ -36,7 +36,15 @@ as old versions and drained safely before new v4 entries.
 
 A separate **30-minute to 2-hour shadow** candidate funnel now runs
 alongside the existing 2–6h production funnel. It never submits or cancels
-real-money orders. Live expiry remains two hours before tip-off.
+real-money orders. **In the staged version, existing orders now have a tip-off exchange expiry.**
+The live entry window remains 2–6 hours before tip: no newly placed orders
+during the last two hours, but a previously accepted order can remain
+resting unless injury/lineup availability, market status, the original
+after-fee edge, maker passivity or verified data integrity invalidates it.
+A missing or stale required feed still fails closed; this is not an
+unconditional promise that every contract remains open at tip. Five-minute
+worker scans have latency and do not substitute for a verified confirmed
+starting-lineup source.
 
 ## Historical replay results
 
