@@ -479,6 +479,16 @@ def collect(client, state=STATE):
             )
         except Exception:
             result["order_audit"][sport] = {"status": "unavailable", "orders": []}
+    from live.execution_scorecard import observed_execution
+
+    result["execution_scorecard"] = {
+        sport: (
+            observed_execution(result["order_audit"].get(sport, {}), cohort)
+            if cohort is not None
+            else {"status": "unavailable"}
+        )
+        for sport, cohort in cohort_events.items()
+    }
     result["kill_switch"] = (state / "KILL").exists()
     titles = market_titles()
     if state.name == "prod-nba-auto":
