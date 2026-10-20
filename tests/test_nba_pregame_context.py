@@ -2,6 +2,7 @@
 
 No paid credentials or exchange writes are required.
 """
+
 from datetime import UTC, datetime, timedelta
 
 import pandas as pd
@@ -22,31 +23,39 @@ DATE = "2026-10-20"
 def game(players=None, status=None):
     return {
         "Date": DATE,
-        "Games": [{
-            "DateTime": "2026-10-20T19:30:00-04:00",
-            "Teams": [{
-                "Code": "LAL",
-                "LineupStatus": status,
-                "Players": players if players is not None else [
-                    {"FirstName": "Test", "LastName": "Player"},
-                    {"FirstName": "Test", "LastName": "Second"},
-                    {"FirstName": "Test", "LastName": "Third"},
-                    {"FirstName": "Test", "LastName": "Fourth"},
-                    {"FirstName": "Test", "LastName": "Fifth"},
+        "Games": [
+            {
+                "DateTime": "2026-10-20T19:30:00-04:00",
+                "Teams": [
+                    {
+                        "Code": "LAL",
+                        "LineupStatus": status,
+                        "Players": players
+                        if players is not None
+                        else [
+                            {"FirstName": "Test", "LastName": "Player"},
+                            {"FirstName": "Test", "LastName": "Second"},
+                            {"FirstName": "Test", "LastName": "Third"},
+                            {"FirstName": "Test", "LastName": "Fourth"},
+                            {"FirstName": "Test", "LastName": "Fifth"},
+                        ],
+                    }
                 ],
-            }],
-        }],
+            }
+        ],
     }
 
 
 def minute_players():
-    return game([
-        {
-            "FirstName": "Test",
-            "LastName": "Player",
-            "Projections": {"Minutes": 24},
-        }
-    ])
+    return game(
+        [
+            {
+                "FirstName": "Test",
+                "LastName": "Player",
+                "Projections": {"Minutes": 24},
+            }
+        ]
+    )
 
 
 def test_explicit_minutes_and_lineups_are_separate():
@@ -70,9 +79,7 @@ def test_bad_minute_values_never_become_forecasts(minutes):
 
 def test_duplicate_players_and_malformed_starters_fail_closed():
     p = minute_players()
-    p["Games"][0]["Teams"][0]["Players"].append(
-        p["Games"][0]["Teams"][0]["Players"][0]
-    )
+    p["Games"][0]["Teams"][0]["Players"].append(p["Games"][0]["Teams"][0]["Players"][0])
     with pytest.raises(ValueError, match="duplicate"):
         parse_minutes(p, DATE)
     with pytest.raises(ValueError, match="starting five"):
@@ -80,10 +87,15 @@ def test_duplicate_players_and_malformed_starters_fail_closed():
 
 
 def test_late_license_data_is_timestamped_and_identity_joined():
-    frame = pd.DataFrame([{
-        "tip_utc": pd.Timestamp("2026-10-20T23:30:00Z"),
-        "team_espn": "LAL", "player": "Test Player",
-    }])
+    frame = pd.DataFrame(
+        [
+            {
+                "tip_utc": pd.Timestamp("2026-10-20T23:30:00Z"),
+                "team_espn": "LAL",
+                "player": "Test Player",
+            }
+        ]
+    )
     context = {
         "configured": True,
         "fetched_utc": NOW.isoformat(),
@@ -108,11 +120,15 @@ def test_no_api_key_is_explicitly_unverified(monkeypatch):
 
 
 def test_historical_minutes_is_a_prior_only_uncalibrated_estimate():
-    f = pd.DataFrame([{
-        "historical_minutes_baseline": 30,
-        "last_game_minutes": 20,
-        "recent_start_rate": 0.8,
-    }])
+    f = pd.DataFrame(
+        [
+            {
+                "historical_minutes_baseline": 30,
+                "last_game_minutes": 20,
+                "recent_start_rate": 0.8,
+            }
+        ]
+    )
     result = historical_minutes_projection(f)
     assert result.minutes_forecast_internal.iloc[0] == 28
     assert result.minutes_uncertainty_heuristic.iloc[0] == 11
