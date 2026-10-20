@@ -544,27 +544,15 @@ def test_active_and_shared_risk_limits_cannot_be_overridden():
 
 
 def test_v3_guard_blocks_old_or_unknown_resting_orders():
-    old = {
-        "client_order_id": "old", "strategy_version": "nba-no-v2-opening-audit"
-    }
-    new = {
-        "client_order_id": "new", "strategy_version": nba.STRATEGY_VERSION
-    }
+    old = {"client_order_id": "old", "strategy_version": "nba-no-v2-opening-audit"}
+    new = {"client_order_id": "new", "strategy_version": nba.STRATEGY_VERSION}
     accepted = {
         "old": {"order_id": "order-v2"},
         "new": {"order_id": "order-v3"},
     }
     with pytest.raises(TradingError, match="Legacy or unknown"):
-        nba.verify_no_legacy_resting(
-            [old, new], accepted,
-            [{"order_id": "order-v2"}]
-        )
+        nba.verify_no_legacy_resting([old, new], accepted, [{"order_id": "order-v2"}])
     with pytest.raises(TradingError, match="Legacy or unknown"):
-        nba.verify_no_legacy_resting(
-            [old, new], accepted,
-            [{"order_id": "unknown"}]
-        )
-    nba.verify_no_legacy_resting(
-        [old, new], accepted, [{"order_id": "order-v3"}]
-    )
+        nba.verify_no_legacy_resting([old, new], accepted, [{"order_id": "unknown"}])
+    nba.verify_no_legacy_resting([old, new], accepted, [{"order_id": "order-v3"}])
     nba.verify_no_legacy_resting([old, new], accepted, [])
