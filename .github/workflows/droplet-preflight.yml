@@ -1,0 +1,60 @@
+name: Droplet read-only preflight
+
+# Intentionally manual: this workflow must not affect live Kalshi trading.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: droplet-readonly
+  cancel-in-progress: false
+
+jobs:
+  status:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check connection settings
+        env:
+          DROPLET_HOST: ${{ secrets.DROPLET_HOST }}
+          DROPLET_USER: ${{ secrets.DROPLET_USER }}
+          DROPLET_SSH_KEY: ${{ secrets.DROPLET_SSH_KEY }}
+          DROPLET_KNOWN_HOSTS: ${{ secrets.DROPLET_KNOWN_HOSTS }}
+        run: |
+          set -euo pipefail
+          for value in DROPLET_HOST DROPLET_USER DROPLET_SSH_KEY DROPLET_KNOWN_HOSTS; do
+            if [[ -z "${!value}" ]]; then
+              echo "::error::Missing required secret: $value"
+              exit 1
+            fi
+          done
+          # A host public key must be pinned before making any connection.
+          if [[ "$DROPLET_KNOWN_HOSTS" != *ssh-ed25519* ]]; then
+            echo "::error::Pin the verified ED25519 SSH host key"
+            exit 1
+          fi
+      - name: Prepare temporary SSH identity
+        env:
+          DROPLET_SSH_KEY: ${{ secrets.DROPLET_SSH_KEY }}
+          DROPLET_KNOWN_HOSTS: ${{ secrets.DROPLET_KNOWN_HOSTS }}
+        run: |
+          set -euo pipefail
+          umask 077
+          mkdir -p ~/.ssh
+          printf '%s\n' "$DROPLET_SSH_KEY" > ~/.ssh/droplet_ci
+          printf '%s\n' "$DROPLET_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/droplet_ci ~/.ssh/known_hosts
+          ssh-keygen -y -f ~/.ssh/droplet_ci > /dev/null
+      - name: Inspect remote release and services (GET only)
+        env:
+          DROPLET_HOST: ${{ secrets.DROPLET_HOST }}
+          DROPLET_USER: ${{ secrets.DROPLET_USER }}
+        run: |
+          set -euo pipefail
+          ssh -T -o BatchMode=yes -o IdentitiesOnly=yes \
+            -o StrictHostKeyChecking=yes -o ConnectTimeout=12 \
+            -i ~/.ssh/droplet_ci \
+            "$DROPLET_USER@$DROPLET_HOST" \
+            'set -eu; echo "Deployed git SHA:"; git -C /home/trader/sports-market-maker rev-parse HEAD; echo "Service states:"; systemctl show market-maker.timer market-maker.service market-maker-prod-nba-auto.timer market-maker-prod-nfl-auto.timer market-maker-dashboard.service market-maker-live-pnl.service -p Id -p ActiveState -p SubState --no-pager; echo "Auto-git-pull present in installed runner:"; if grep -Eq "git[[:space:]]+pull" /home/trader/run.sh; then echo YES; else echo NO; fi'
