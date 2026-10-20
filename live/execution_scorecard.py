@@ -53,7 +53,7 @@ def observed_execution(audit, events):
             elapsed = (first - submitted).total_seconds() / 60
             if elapsed >= 0:
                 observed_windows.append(elapsed)
-        except (TypeError, ValueError):
+        except (KeyError, TypeError, ValueError):
             continue
 
     # The intent field is the edge forecast at quote time, NOT a realized
