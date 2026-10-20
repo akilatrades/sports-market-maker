@@ -11,6 +11,13 @@ from live import nba_inputs, prod_nba_auto as nba
 from markets.nba.live import parse_injuries, parse_scoreboard
 
 
+@pytest.fixture(autouse=True)
+def mocked_production_shard_for_offline_tests(monkeypatch):
+    # These legacy unit clients are intentionally offline stubs. Separate
+    # tests/test_shard_funding.py validates the actual signed-GET gate.
+    monkeypatch.setattr(nba, "require_funded_shard", lambda *args: 3)
+
+
 def test_sizing_includes_reserve_and_expiry_stays_before_last_two_hours():
     now = datetime.now(UTC)
     row = SimpleNamespace(
