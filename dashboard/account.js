@@ -85,7 +85,7 @@ const AccountView = (() => {
     set("nba-study-budget", pilotReady ? money(pilot.lifetime_allowance_remaining_dollars) : "—");
     set("nba-study-note", pilotReady
       ? "First accepted order: " + time(pilot.start_utc) + ". Review due: " + time(pilot.review_due_utc) +
-        ". Filled-contract estimates are separate from net settlements. The $50 lifetime cap does not reset automatically."
+        ". Filled-contract estimates are separate from net settlements. The ${money(pilot.lifetime_limit_dollars)} lifetime submission cap does not reset automatically."
       : "No complete, current NBA order audit. Missing or unsettled data never count as profit or confirmed zero fills.");
     const orderAudits = data.order_audit || {};
     const nflAudit = orderAudits.nfl || {}, nbaAudit = orderAudits.nba || {};
