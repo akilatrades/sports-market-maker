@@ -229,7 +229,10 @@ def resting_cancel_reason(row, intent, market, fee_bound):
         return "unverified_roster_injury_or_model"
     try:
         hours = float(row["hours_to_tip"])
-        if not math.isfinite(hours) or not RESTING_WINDOW[0] < hours <= RESTING_WINDOW[1]:
+        if (
+            not math.isfinite(hours)
+            or not RESTING_WINDOW[0] < hours <= RESTING_WINDOW[1]
+        ):
             return "outside_verified_pretip_window"
 
         cents = int(intent["price_cents"])
