@@ -158,9 +158,7 @@ def nfl_data_status(path, now):
             raise ValueError("No timezone")
         check_age = (now - stamp).total_seconds() / 60
         retrieved = json.loads((bundle / "data/nfl/retrieval.json").read_text())
-        source_date = datetime.fromisoformat(retrieved["retrieved"]).replace(
-            tzinfo=UTC
-        )
+        source_date = datetime.fromisoformat(retrieved["retrieved"]).replace(tzinfo=UTC)
         age = (now - source_date).total_seconds() / 3600
         if check_age < 0 or age < 0:
             raise ValueError("Future data")
