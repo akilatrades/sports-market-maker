@@ -94,6 +94,9 @@ def test_bad_digest_preserves_last_verified_bundle(monkeypatch, tmp_path):
     before = (tmp_path / "active").resolve()
     other, other_tree = sources(NOW + timedelta(hours=1))
     other["data/nfl/games.csv"] = b"tampered"
+    for entry in other_tree["tree"]:
+        if entry["path"] == "data/nfl/games.csv":
+            entry["sha"] = hashlib.sha1(b"tampered").hexdigest()
     changed = "b" * 40
 
     def bad_fetch(url):
