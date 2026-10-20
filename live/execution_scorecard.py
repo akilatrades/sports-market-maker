@@ -13,10 +13,19 @@ def observed_execution(audit, events):
     rows = audit.get("orders")
     if not isinstance(rows, list) or not isinstance(events, list):
         return {"status": "unavailable"}
-    intents = {
-        e.get("ticker"): e
+    by_client = {
+        str(e["client_order_id"]): e
         for e in events
-        if e.get("event") == "intent" and e.get("ticker")
+        if e.get("event") == "intent" and e.get("client_order_id")
+    }
+    # One ticker can have more than one order over time. Mapping by ticker
+    # silently attributes a newer forecast to the wrong historical fill.
+    by_order = {
+        str(e["order_id"]): by_client[e["client_order_id"]]
+        for e in events
+        if e.get("event") == "accepted"
+        and e.get("order_id")
+        and e.get("client_order_id") in by_client
     }
     filled = [
         row
@@ -60,7 +69,7 @@ def observed_execution(audit, events):
     # win or an estimate of the chance to be filled.
     edges = []
     for row in filled:
-        signal = intents.get(row.get("ticker"), {})
+        signal = by_order.get(str(row.get("order_id")), {})
         edge = signal.get("net_edge_after_fee_bound")
         if edge is None or not isinstance(edge, (float, int)):
             break
