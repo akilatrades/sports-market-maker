@@ -857,3 +857,47 @@ def test_v4_handback_waits_for_v3_resting_orders():
         == 1
     )
     assert nba.legacy_resting_count([v3], accepted, []) == 0
+
+
+@pytest.mark.parametrize("hours_to_tip", [1.95, 1.0, 0.5, 0.05])
+def test_accepted_nba_order_may_stay_resting_near_tip(hours_to_tip):
+    # These quotes could never be new *entries* this close to tip,
+    # but already-accepted orders must not be auto-canceled solely because
+    # the 2h entry cutoff passed.
+    row = priced().iloc[0].copy()
+    row["hours_to_tip"] = hours_to_tip
+    intent = {
+        "ticker": row.ticker,
+        "price_cents": 51,
+        "count": 2,
+        "probability_source": "sportsbook",
+    }
+    market = {
+        "status": "active",
+        "yes_bid_dollars": 0.40,
+        "yes_ask_dollars": 0.50,
+    }
+    assert nba.resting_cancel_reason(row, intent, market, 0.0) is None
+    frame = pd.DataFrame([row])
+    assert nba.select_candidates(frame, [], {"active": []}, NOW) == []
+
+
+@pytest.mark.parametrize("hours_to_tip", [0.0, -0.01])
+def test_expired_nba_order_no_longer_valid_at_or_after_tip(hours_to_tip):
+    row = priced().iloc[0].copy()
+    row["hours_to_tip"] = hours_to_tip
+    intent = {
+        "ticker": row.ticker,
+        "price_cents": 51,
+        "count": 2,
+        "probability_source": "sportsbook",
+    }
+    market = {
+        "status": "active",
+        "yes_bid_dollars": 0.40,
+        "yes_ask_dollars": 0.50,
+    }
+    assert (
+        nba.resting_cancel_reason(row, intent, market, 0.0)
+        == "outside_verified_pretip_window"
+    )
