@@ -65,6 +65,18 @@ const AccountView = (() => {
     const orderAudits = data.order_audit || {};
     const nflAudit = orderAudits.nfl || {}, nbaAudit = orderAudits.nba || {};
     const auditReady = state === "live" && nflAudit.status === "verified_snapshot" && nbaAudit.status === "verified_snapshot";
+    const quality = data.execution_scorecard || {};
+    const observed = ["nfl", "nba"].map(sport => ({sport, report: quality[sport] || {}}));
+    node("execution-quality").innerHTML = observed.map(({sport,report}) => {
+      if (state !== "live" || report.status !== "observed_not_backtested") {
+        return `<div><span>${escape(sport.toUpperCase())} fill metrics</span><b>Not verified</b></div>`;
+      }
+      const percentage = x => finite(x) ? (100*x).toFixed(1) + "%" : "—";
+      return `<div><span>${escape(sport.toUpperCase())} · closed-order fill rate</span><b>${escape(percentage(report.closed_order_fill_rate))}</b></div>
+      <div><span>Maker share of verified filled contracts</span><b>${escape(percentage(report.maker_share))}</b></div>
+      <div><span>Mean time to first fill</span><b>${finite(report.mean_minutes_to_first_fill) ? count(report.mean_minutes_to_first_fill) + " min" : "—"}</b></div>
+      <div><span>Quote-time model edge on orders that filled (not profit)</span><b>${escape(percentage(report.model_estimated_net_edge_on_filled))}</b></div>`;
+    }).join("");
     set("unfilled-nfl", auditReady ? count(nflAudit.confirmed_unfilled) : "—");
     set("unfilled-nba", auditReady ? count(nbaAudit.confirmed_unfilled) : "—");
     set("unfilled-unknown", auditReady ? count((nflAudit.unknown_or_unreconciled || 0) + (nbaAudit.unknown_or_unreconciled || 0)) : "—");
