@@ -834,18 +834,13 @@ def test_questionable_teammate_update_blocks_changed_team(tmp_path, monkeypatch)
 def test_daily_team_cap_resets_without_resetting_game_or_lifetime():
     row = SimpleNamespace(game_id="new-game", team="LAL")
     yesterday = NOW - timedelta(days=1)
-    past = [
-        _past_attempt(i, "old-game", "LAL", 2.7)
-        for i in range(3)
-    ]
+    past = [_past_attempt(i, "old-game", "LAL", 2.7) for i in range(3)]
     for a in past:
         a["utc"] = yesterday.isoformat()
     assert nba.room_for(past, [], row, 1.0, NOW)
     for a in past:
         a["utc"] = NOW.isoformat()
-    assert "nba_per_team_submissions" in nba.budget_blockers(
-        past, [], row, 1.0, NOW
-    )
+    assert "nba_per_team_submissions" in nba.budget_blockers(past, [], row, 1.0, NOW)
 
 
 def test_v4_handback_waits_for_v3_resting_orders():
@@ -855,7 +850,10 @@ def test_v4_handback_waits_for_v3_resting_orders():
         "strategy_version": "nba-no-v3-long-resting-throughput",
     }
     accepted = {"cid-v3": {"order_id": "oid-v3"}}
-    assert nba.legacy_resting_count(
-        [v3], accepted, [{"order_id": "oid-v3", "ticker": "KXNBA-V3"}]
-    ) == 1
+    assert (
+        nba.legacy_resting_count(
+            [v3], accepted, [{"order_id": "oid-v3", "ticker": "KXNBA-V3"}]
+        )
+        == 1
+    )
     assert nba.legacy_resting_count([v3], accepted, []) == 0
