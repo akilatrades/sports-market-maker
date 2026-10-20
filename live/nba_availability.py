@@ -12,6 +12,7 @@ import re
 _LIMIT = re.compile(
     r"\b(?:minutes?\s+(?:limit(?:ation)?|restriction|cap)|"
     r"(?:limited|restricted)\s+to\s+\d{1,2}\s+minutes?|"
+    r"(?:will\s+)?limit\s+(?:him|her|them)\s+to\s+\d{1,2}\s+minutes?|"
     r"(?:will|expected\s+to)\s+play\s+(?:limited|restricted)\s+minutes|"
     r"(?:on|under)\s+(?:a|an)\s+minutes?\s+restriction)\b",
     re.IGNORECASE,
