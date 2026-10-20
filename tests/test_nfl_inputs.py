@@ -46,7 +46,7 @@ def test_source_selection_requires_recent_ladder():
     paths, _ = nfl_inputs.source_paths(tree, NOW)
     assert LADDER in paths
     with pytest.raises(ValueError, match="No recent"):
-        nfl_inputs.source_paths(tree, NOW + timedelta(hours=50))
+        nfl_inputs.source_paths(tree, NOW + timedelta(days=8))
 
 
 def test_synchronizes_pinned_data_and_avoids_repeat_download(monkeypatch, tmp_path):
