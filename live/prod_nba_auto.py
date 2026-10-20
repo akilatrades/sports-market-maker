@@ -517,8 +517,9 @@ def record_markouts(journal, frame, now):
 
 
 # Guardrail for the small pilot. No change to maker/taker status or risk caps.
-# Only improve a quote by a second tick in a spread wide enough to stay passive.
-EXTRA_MAKER_TICK = 0.0  # freeze NBA baseline pricing; no NFL 2-tick experiment
+# Add at most one cent to a NO maker quote in >=3c spreads, only if
+# after-fee edge remains >=3c and the new quote stays strictly post-only.
+EXTRA_MAKER_TICK = 0.01  # v3 higher-capture experiment; never marketable
 MIN_EDGE_AFTER_IMPROVEMENT = 0.03
 RESTING_MIN_NET_EDGE = 0.03  # require a fresh after-fee edge to keep waiting
 
