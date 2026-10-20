@@ -1,7 +1,6 @@
 """Regression: no blind resubmission or exchange writes after shard rejection."""
 
 from datetime import UTC, datetime, timedelta
-from types import SimpleNamespace
 
 import pytest
 
