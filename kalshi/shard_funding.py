@@ -5,7 +5,6 @@ is not proof that the instance owning a market can collateralize an order.
 Never transfer funds or mutate the account from this helper.
 """
 
-import math
 from decimal import Decimal, InvalidOperation
 
 from kalshi.trading import TradingError
