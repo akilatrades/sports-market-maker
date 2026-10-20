@@ -75,9 +75,12 @@ def source_paths(tree, now):
                 ladders.append((made, path))
     if not ladders:
         raise ValueError("No recent NFL projection ladder in verified source")
-    newest = max(ladders)[1]
+    # One fresh file is not enough: a delayed score feed can publish an old
+    # fixture week's ladder more recently than the correct upcoming week.
+    # Download a bounded set and let each ticker match its own verified game.
+    recent = [p for _, p in sorted(ladders, reverse=True)[:12]]
     # Optional books are data, never a substitute for verified model/roster.
-    paths = (*REQUIRED, newest)
+    paths = (*REQUIRED, *recent)
     if BOOK in entries:
         paths += (BOOK,)
     return paths, entries
@@ -93,8 +96,10 @@ def verify_bundle(files, ladder, now):
         data = files["data/nfl/" + name]
         if hashlib.sha256(data).hexdigest() != checksums[name]:
             raise ValueError("NFL source checksum mismatch")
-    if not files[ladder].startswith(b"\x1f\x8b"):
-        raise ValueError("Invalid compressed NFL model ladder")
+    for name, data in files.items():
+        if name.startswith("outputs/nfl/projections/ladders/"):
+            if not data.startswith(b"\x1f\x8b"):
+                raise ValueError("Invalid compressed NFL model ladder")
     if BOOK in files and not files[BOOK].startswith(b"player_key,"):
         raise ValueError("Unrecognized NFL sportsbook file schema")
 
