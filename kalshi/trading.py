@@ -307,7 +307,9 @@ class TradingClient:
                 "production order placement disabled: explicit ALLOW_PRODUCTION_TRADING=YES required"
             )
         if self.env == "prod" and order.exchange_index is None:
-            raise TradingError("Production order missing verified shard index; no POST sent")
+            raise TradingError(
+                "Production order missing verified shard index; no POST sent"
+            )
         result = self._request("POST", "/portfolio/events/orders", body=body)
         order_id = result.get("order_id")
         if not order_id:
