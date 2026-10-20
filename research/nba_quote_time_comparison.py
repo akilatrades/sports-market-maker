@@ -20,15 +20,18 @@ OUT = Path("outputs/research/nba_quote_time_comparison.json")
 
 
 def evaluate(q, trades, cutoff_hours, min_model_edge):
-    """Keep a complete eligible denominator, including orders with no prints."""
+    """Use a PAIRED denominator, including quotes that expire upon placement.
+
+    This is essential: a policy that cannot place the quote at its proposed
+    cutoff must count as an eligible-but-unfilled opportunity (not vanish).
+    """
     x = q[q.edge >= min_model_edge].copy()
     x["effective_end_ts"] = x.tip_ts - int(cutoff_hours * 3600)
-    x = x[x.effective_end_ts > x.end_ts].copy()
-    # fills() uses tip_ts as the endpoint; preserve the original as a separate
-    # column so we're not inadvertently changing market-outcome information.
-    x["actual_tip_ts"] = x.tip_ts
-    x["tip_ts"] = x.effective_end_ts
-    observed = fills(x, trades) if len(x) else pd.Series(dtype=float)
+    can_place = x.effective_end_ts > x.end_ts
+    valid = x[can_place].copy()
+    # fills() interprets tip_ts as the last allowed print time.
+    valid["tip_ts"] = valid.effective_end_ts
+    observed = fills(valid, trades) if len(valid) else pd.Series(dtype=float)
     x["could_fill"] = x.ticker.map(observed).fillna(0) >= 1
     x["pnl_if_fill"] = (
         (1 - x.over.astype(float))
@@ -45,20 +48,22 @@ def evaluate(q, trades, cutoff_hours, min_model_edge):
         "cutoff_hours_before_tip": cutoff_hours,
         "model_edge_filter": min_model_edge,
         "eligible_quotes": len(x),
+        "placeable_quotes": int(can_place.sum()),
+        "expired_at_submission": int((~can_place).sum()),
         "independent_games": int(x.game_id.nunique()),
         "possible_print_fill_quotes": int(x.could_fill.sum()),
-        "possible_print_fill_rate": round(float(x.could_fill.mean()), 4)
-        if len(x)
-        else None,
-        "hypothetical_cents_per_eligible_order": round(100 * float(mean), 3)
-        if np.isfinite(mean)
-        else None,
+        "possible_print_fill_rate": (
+            round(float(x.could_fill.mean()), 4) if len(x) else None
+        ),
+        "hypothetical_cents_per_eligible_order": (
+            round(100 * float(mean), 3) if np.isfinite(mean) else None
+        ),
         "game_cluster_t": round(float(t_stat), 3) if np.isfinite(t_stat) else None,
-        "hypothetical_cents_per_possible_fill": round(
-            100 * float(x.loc[x.could_fill, "pnl_if_fill"].mean()), 3
-        )
-        if x.could_fill.any()
-        else None,
+        "hypothetical_cents_per_possible_fill": (
+            round(100 * float(x.loc[x.could_fill, "pnl_if_fill"].mean()), 3)
+            if x.could_fill.any()
+            else None
+        ),
     }
 
 
