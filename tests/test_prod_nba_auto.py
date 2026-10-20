@@ -263,3 +263,161 @@ def test_dry_scan_cannot_overwrite_production_scan_status(tmp_path):
         "mode": "live",
     }
     assert not journal.exists()
+
+
+def test_extended_order_expiration_never_exceeds_existing_pretip_cutoff():
+    from kalshi.trading import Order
+
+    for h in (2.5, 4.0, 6.0):
+        f = priced()
+        f.loc[0, "tip_utc"] = pd.Timestamp(NOW + timedelta(hours=h))
+        f.loc[0, "hours_to_tip"] = h
+        rows = nba.select_candidates(f, [], {"active": []}, NOW)
+        assert len(rows) == 1
+        order, _ = nba.order_from_row(rows[0], NOW)
+        expected = int((NOW + timedelta(hours=h)).timestamp()) - 7200
+        assert order.expiration_ts == expected
+        assert order.expiration_ts > int(NOW.timestamp())
+        assert order.expiration_ts - int(NOW.timestamp()) > 0
+        assert order.expiration_ts - int(NOW.timestamp()) <= 4 * 3600
+        assert Order(**{
+            "ticker": order.ticker, "side": order.side,
+            "count": order.count, "price_cents": order.price_cents,
+            "expiration_ts": order.expiration_ts,
+        }).body()["expiration_time"] == expected
+
+
+def test_resting_quote_retains_order_while_edge_remains_valid():
+    row = priced().iloc[0]
+    intent = {
+        "ticker": row.ticker,
+        "price_cents": 51,
+        "count": 2,
+        "probability_source": "sportsbook",
+    }
+    market = {"status": "active", "yes_bid_dollars": 0.40,
+              "yes_ask_dollars": 0.50}
+    assert nba.resting_cancel_reason(row, intent, market, 0.0) is None
+
+
+@pytest.mark.parametrize(
+    "change, expected",
+    [
+        ({"injury_status": "NEW_INJURY_NEWS"}, "unverified_roster_injury_or_model"),
+        ({"hours_to_tip": 1.9}, "outside_verified_pretip_window"),
+        ({"book_n": 1}, "fresh_two_book_consensus_missing"),
+        ({"p_book": 0.48}, "current_net_edge_below_minimum"),
+        ({"p_book": float("nan"), "book_n": 0},
+         "fresh_two_book_consensus_missing"),
+        ({"requires_book": "unknown"}, "unverified_book_requirement"),
+    ],
+)
+def test_resting_order_is_canceled_when_signal_decays(change, expected):
+    row = priced().iloc[0].copy()
+    for key, val in change.items():
+        row[key] = val
+    intent = {
+        "ticker": row.ticker, "price_cents": 51, "count": 2,
+        "probability_source": "sportsbook",
+    }
+    market = {"status": "active", "yes_bid_dollars": 0.40,
+              "yes_ask_dollars": 0.50}
+    assert nba.resting_cancel_reason(row, intent, market, 0.0) == expected
+
+
+def test_resting_market_or_fee_change_forces_cancel():
+    row = priced().iloc[0]
+    intent = {
+        "ticker": row.ticker, "price_cents": 51, "count": 2,
+        "probability_source": "sportsbook",
+    }
+    market = {"status": "active", "yes_bid_dollars": 0.40,
+              "yes_ask_dollars": 0.50}
+    assert nba.resting_cancel_reason(
+        row, intent, {**market, "yes_bid_dollars": 0.50, "yes_ask_dollars": 0.55}, 0
+    ) == "resting_quote_no_longer_passive"
+    assert nba.resting_cancel_reason(
+        row, intent, {**market, "status": "closed"}, 0
+    ) == "market_not_active"
+    assert nba.resting_cancel_reason(
+        row, intent, market, 0.50
+    ) == "fee_exceeds_original_reservation"
+
+
+def test_resting_recheck_cancels_only_bad_order_and_journals_reason(tmp_path, monkeypatch):
+    from kalshi import fees
+
+    row = priced().iloc[0]
+    ticker = str(row.ticker)
+    row = row.copy()
+    row["p_book"] = 0.49
+    events = [
+        {"event": "intent", "client_order_id": "cid", "ticker": ticker,
+         "price_cents": 51, "count": 2, "probability_source": "sportsbook"},
+        {"event": "accepted", "client_order_id": "cid", "order_id": "oid"},
+    ]
+
+    class Client:
+        calls = []
+
+        def cancel(self, order_id, ticker=None):
+            self.calls.append((order_id, ticker))
+
+    monkeypatch.setattr(nba, "fetch_market", lambda ticker: {
+        "status": "active", "yes_bid_dollars": 0.40, "yes_ask_dollars": 0.50
+    })
+    monkeypatch.setattr(fees, "live_maker_fee_bound", lambda *args: (0.0, {}))
+    client = Client()
+    journal = tmp_path / "journal.jsonl"
+    count = nba.cancel_invalid_resting(
+        client, journal, {"resting": [{"order_id": "oid", "ticker": ticker}]},
+        pd.DataFrame([row]), NOW, events
+    )
+    assert count == 1
+    assert client.calls == [("oid", ticker)]
+    saved = [json.loads(line) for line in journal.read_text().splitlines()]
+    assert [r["event"] for r in saved] == ["cancel_intent", "cancel_accepted"]
+    assert saved[0]["reason"] == "current_net_edge_below_minimum"
+
+
+def test_resting_recheck_does_not_place_on_unverified_order(tmp_path, monkeypatch):
+    from kalshi import fees
+
+    row = priced().iloc[0]
+    ticker = str(row.ticker)
+    monkeypatch.setattr(nba, "fetch_market", lambda ticker: {
+        "status": "active", "yes_bid_dollars": 0.40, "yes_ask_dollars": 0.50
+    })
+    monkeypatch.setattr(fees, "live_maker_fee_bound", lambda *args: (0.0, {}))
+    with pytest.raises(TradingError, match="reconcile"):
+        nba.cancel_invalid_resting(
+            SimpleNamespace(), tmp_path / "journal.jsonl",
+            {"resting": [{"order_id": "unrecognized", "ticker": ticker}]},
+            priced(), NOW, []
+        )
+
+
+def test_unavailable_live_resting_quote_halts_until_exchange_expiry(
+    tmp_path, monkeypatch
+):
+    from kalshi import fees
+
+    row = priced().iloc[0]
+    ticker = str(row.ticker)
+    events = [
+        {"event": "intent", "client_order_id": "cid", "ticker": ticker,
+         "price_cents": 51, "count": 2, "probability_source": "sportsbook"},
+        {"event": "accepted", "client_order_id": "cid", "order_id": "oid"},
+    ]
+
+    def bad_quote(ticker):
+        raise OSError("network failure")
+
+    monkeypatch.setattr(nba, "fetch_market", bad_quote)
+    monkeypatch.setattr(fees, "live_maker_fee_bound", lambda *args: (0.0, {}))
+    with pytest.raises(TradingError, match="HALT new placements"):
+        nba.cancel_invalid_resting(
+            SimpleNamespace(), tmp_path / "journal.jsonl",
+            {"resting": [{"order_id": "oid", "ticker": ticker}]},
+            priced(), NOW, events
+        )
