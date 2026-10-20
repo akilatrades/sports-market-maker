@@ -94,9 +94,10 @@ def test_nba_baseline_retains_no_side_and_passive_price():
     rows = nba.select_candidates(f, [], {"active": []}, NOW)
     assert len(rows) == 1
     quote, edge, extra = nba.execution_quote(rows[0])
-    assert extra == 0
-    assert quote == rows[0].price
-    assert edge == rows[0].edge
+    assert extra == 1  # wide spread and sufficient after-fee edge
+    assert quote == round(rows[0].price + 0.01, 2)
+    assert edge == round(rows[0].edge - 0.01, 5)
+    assert round(1 - quote, 2) > round(rows[0].yes_bid, 2)
     order, cost = nba.order_from_row(rows[0], NOW, no_price=quote)
     assert order.side == "no"
     assert order.post_only
@@ -556,3 +557,23 @@ def test_v3_guard_blocks_old_or_unknown_resting_orders():
         nba.verify_no_legacy_resting([old, new], accepted, [{"order_id": "unknown"}])
     nba.verify_no_legacy_resting([old, new], accepted, [{"order_id": "order-v3"}])
     nba.verify_no_legacy_resting([old, new], accepted, [])
+
+
+def test_more_competitive_maker_quote_never_spends_last_3c_edge():
+    good = SimpleNamespace(
+        price=0.51, edge=0.08, yes_bid=0.40, yes_ask=0.50
+    )
+    price, edge, extra = nba.execution_quote(good)
+    assert (price, edge, extra) == (0.52, 0.07, 1)
+    narrow = SimpleNamespace(
+        price=0.51, edge=0.08, yes_bid=0.48, yes_ask=0.50
+    )
+    assert nba.execution_quote(narrow)[2] == 0
+    low_edge = SimpleNamespace(
+        price=0.51, edge=0.035, yes_bid=0.40, yes_ask=0.50
+    )
+    assert nba.execution_quote(low_edge)[2] == 0
+    would_cross = SimpleNamespace(
+        price=0.51, edge=0.08, yes_bid=0.48, yes_ask=0.55
+    )
+    assert nba.execution_quote(would_cross)[2] == 0
