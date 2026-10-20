@@ -421,10 +421,25 @@ def collect(client, state=STATE):
         balance, positions, resting, fills, settlements, events, scan, datetime.now(UTC)
     )
     if state.name == "prod-nba-auto":
+        from live import prod_nba_auto as nba
+
+        used = result["strategy"]["submitted_reserved_dollars"]
         result["strategy"].update(
             name="NBA passive NO entries",
-            version="nba-no-v2-opening-audit",
+            version=nba.STRATEGY_VERSION,
             min_reserved_edge=None,
+            submission_limit_dollars=nba.MAX_GROSS_COST,
+            remaining_submission_budget_dollars=round(
+                max(0, nba.MAX_GROSS_COST - used), 2
+            ),
+            limits={
+                "per_order": nba.MAX_ORDER_COST,
+                "per_game": nba.MAX_GAME_COST,
+                "per_team": nba.MAX_TEAM_COST,
+                "active": nba.MAX_ACTIVE_COST,
+                "daily": nba.MAX_DAILY_COST,
+                "lifetime": nba.MAX_GROSS_COST,
+            },
         )
         if scan:
             scan["run_utc"] = scan.get("utc")
