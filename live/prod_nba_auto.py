@@ -1411,10 +1411,9 @@ def nba_candidates(now, latest=Path("outputs/projections/latest.csv")):
             )
             # This requirement is explicit opt-in. Do not trust an expected
             # or projected lineup as confirmed in the final pre-tip half hour.
-            missing_starters = (
-                frame.hours_to_tip.between(0, 0.5)
-                & frame.lineup_confirmation_status.ne("confirmed")
-            )
+            missing_starters = frame.hours_to_tip.between(
+                0, 0.5
+            ) & frame.lineup_confirmation_status.ne("confirmed")
             frame.loc[missing_starters, "injury_status"] = (
                 "FINAL_PREGAME_CONFIRMED_STARTERS_REQUIRED"
             )
@@ -1477,14 +1476,8 @@ def nba_candidates(now, latest=Path("outputs/projections/latest.csv")):
                 frame.book_updated_utc, utc=True, errors="coerce"
             )
             age_minutes = (pd.Timestamp(now) - book_stamp).dt.total_seconds() / 60
-            max_minutes = frame.hours_to_tip.le(2.5).map(
-                {True: 75, False: 120}
-            )
-            stale = (
-                book_stamp.isna()
-                | age_minutes.lt(0)
-                | age_minutes.gt(max_minutes)
-            )
+            max_minutes = frame.hours_to_tip.le(2.5).map({True: 75, False: 120})
+            stale = book_stamp.isna() | age_minutes.lt(0) | age_minutes.gt(max_minutes)
         else:
             stale = frame.book_n.ge(2)
         diagnostics["sportsbook_age_rejected"] = int(stale.sum())
