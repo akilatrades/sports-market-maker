@@ -26,7 +26,8 @@ def test_sizing_includes_reserve_and_expiry_stays_before_last_two_hours():
     order, cost = nba.order_from_row(row, now)
     assert order.count == 4
     assert cost == 2.4 and nba.reserve(cost) == 2.64
-    assert order.expiration_ts == int(now.timestamp()) + 3600
+    # New maker orders may rest until the same verified 2h pre-tip cutoff.
+    assert order.expiration_ts == int(now.timestamp()) + 7200
     row.tip_utc = now + timedelta(hours=2, minutes=20)
     assert nba.order_from_row(row, now)[0].expiration_ts == int(now.timestamp()) + 1200
 
