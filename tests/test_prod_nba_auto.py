@@ -732,9 +732,7 @@ def test_late_window_candidates_are_shadow_only_even_if_they_qualify(tmp_path):
     # Regular production window stays at 2-6 hours. The research cohort
     # observes but can NEVER feed the production POST loop.
     assert nba.select_candidates(row, [], {"active": []}, NOW) == []
-    study = nba.select_candidates(
-        row, [], {"active": []}, NOW, window=(0.5, 2.0)
-    )
+    study = nba.select_candidates(row, [], {"active": []}, NOW, window=(0.5, 2.0))
     assert len(study) == 1
 
     class NoTradingClient:
