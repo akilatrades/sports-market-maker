@@ -62,6 +62,32 @@ const AccountView = (() => {
     const summary = [["Open markets scanned",filters.open_markets],["Within entry window",filters.in_entry_window],["Passed model / book check",filters.passed_book_or_model_and_spread]];
     const skips = Object.entries(scan?.skip_reasons || {}).sort((a,b) => b[1]-a[1]);
     node("scan-details").innerHTML = [...summary.filter(([,v]) => finite(v)), ...skips.map(([k,v]) => [reasons[k] || k.replaceAll("_"," "),v])].map(([label,v]) => `<div><span>${escape(label)}</span><b>${count(v)}</b></div>`).join("");
+    const orderAudits = data.order_audit || {};
+    const nflAudit = orderAudits.nfl || {}, nbaAudit = orderAudits.nba || {};
+    const auditReady = state === "live" && nflAudit.status === "verified_snapshot" && nbaAudit.status === "verified_snapshot";
+    set("unfilled-nfl", auditReady ? count(nflAudit.confirmed_unfilled) : "—");
+    set("unfilled-nba", auditReady ? count(nbaAudit.confirmed_unfilled) : "—");
+    set("unfilled-unknown", auditReady ? count((nflAudit.unknown_or_unreconciled || 0) + (nbaAudit.unknown_or_unreconciled || 0)) : "—");
+    const outstanding = ["nfl", "nba"].flatMap(sport => {
+      const view = orderAudits[sport];
+      return view?.status === "verified_snapshot" && Array.isArray(view.orders) ?
+        view.orders.filter(order => order.state !== "fully_filled").map(order => ({...order, sport})) : [];
+    }).sort((a,b) => (b.submitted_utc || "").localeCompare(a.submitted_utc || ""));
+    const orderLabels = {confirmed_unfilled:"Closed · 0 fills",resting_no_fill:"Resting · 0 fills",
+      partially_filled_resting:"Resting · partial",partially_filled_closed:"Closed · partial",
+      unconfirmed_unfilled:"Closed · unconfirmed",exchange_order_unavailable:"Missing from recent Kalshi history",
+      unreconciled_fill_count:"Fill discrepancy",exchange_status_unknown:"Unknown exchange status",
+      pending:"Pending exchange status"};
+    set("unfilled-note", !auditReady ? "Authenticated order audit unavailable or stale. No unfilled status is assumed." :
+      `Kalshi order/fill history: NFL ${count(nflAudit.accepted_orders)} accepted, NBA ${count(nbaAudit.accepted_orders)} accepted. Displaying ${count(Math.min(outstanding.length, 50))} recent orders without full fills.`);
+    node("unfilled-body").innerHTML = !auditReady ?
+      '<tr><td colspan="5" class="empty">Exchange order history is unavailable or stale.</td></tr>' :
+      !outstanding.length ? '<tr><td colspan="5" class="empty">No accepted orders awaiting or missing complete fills.</td></tr>' :
+      outstanding.slice(0, 50).map(o => `<tr><td><strong>${escape(o.sport.toUpperCase())}</strong> · ${escape(o.player)}<small>${escape(o.ticker)} · ${escape(time(o.submitted_utc))}</small></td>
+      <td>${escape(orderLabels[o.state] || o.state)}<small>Kalshi: ${escape(o.exchange_status)}</small></td>
+      <td>${count(o.filled_contracts)} / ${count(o.ordered_contracts)}</td>
+      <td>${count(o.queue_ahead_initial)} → ${count(o.queue_ahead_latest)}</td>
+      <td>${finite(o.public_contra_contracts) ? count(o.public_contra_contracts) + " contracts (not guaranteed)" : "Not verified"}</td></tr>`).join("");
     if (s.unconfirmed_intents > 0 || data.kill_switch) {
       node("notice").className = "notice warning";
       set("notice", s.unconfirmed_intents > 0 ? "An order submission lacks a confirmed receipt. Automatic entries must remain halted until the exchange is reconciled." : "The production kill switch is present. Review outstanding orders and positions in Kalshi.");
