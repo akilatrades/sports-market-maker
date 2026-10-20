@@ -390,6 +390,13 @@ def collect(client, state=STATE):
     balance = client._request("GET", "/portfolio/balance")
     positions = client.pages("/portfolio/positions", "market_positions")
     resting = client.pages("/portfolio/orders", "orders", status="resting")
+    # GET /portfolio/orders without status includes executed/canceled history.
+    # Fetch separately from resting so we can see accepted-but-unfilled orders.
+    # This cannot mutate the exchange or create an order.
+    try:
+        exchange_orders = client.pages("/portfolio/orders", "orders")
+    except Exception:
+        exchange_orders = None
     starts = [
         e["utc"]
         for cohort in cohort_events.values()
@@ -440,6 +447,25 @@ def collect(client, state=STATE):
         )
         for market, cohort in cohort_events.items()
     }
+    # Private, exchange-grounded unfilled/partial/resting audit for BOTH
+    # production cohorts, irrespective of which cohort the dashboard selects.
+    # A failed status/print read must not turn unknown orders into zero fills
+    # or erase independently verified P&L from this account snapshot.
+    from live.order_opportunity_audit import audit_cohort, trade_through_samples
+
+    result["order_audit"] = {}
+    for sport, cohort in cohort_events.items():
+        if cohort is None or exchange_orders is None:
+            result["order_audit"][sport] = {"status": "unavailable", "orders": []}
+            continue
+        try:
+            samples = trade_through_samples(client, cohort, exchange_orders, datetime.now(UTC))
+            result["order_audit"][sport] = audit_cohort(
+                cohort, exchange_orders, fills, sport=sport,
+                now=datetime.now(UTC), prints_by_order=samples,
+            )
+        except Exception:
+            result["order_audit"][sport] = {"status": "unavailable", "orders": []}
     result["kill_switch"] = (state / "KILL").exists()
     titles = market_titles()
     if state.name == "prod-nba-auto":
