@@ -68,7 +68,10 @@ def source_paths(tree, now):
             made = datetime.strptime(match.group(1), "%Y-%m-%dT%H%MZ").replace(
                 tzinfo=UTC
             )
-            if timedelta() <= now - made <= timedelta(hours=36):
+            # Input transport may retain an older ladder between slates; the
+            # existing 36-hour model-age admission check still rejects stale
+            # probabilities when an actual game becomes eligible.
+            if timedelta() <= now - made <= timedelta(days=7):
                 ladders.append((made, path))
     if not ladders:
         raise ValueError("No recent NFL projection ladder in verified source")
