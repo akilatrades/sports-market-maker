@@ -627,7 +627,7 @@ def test_v3_scan_records_fills_and_waits_for_v2_expiry_without_trading(
     monkeypatch.setattr(nba, "load_journal", lambda journal: [])
     monkeypatch.setattr(nba, "records", lambda events: ([attempt], accepted))
     monkeypatch.setattr(nba, "current_production_state", lambda *args: state)
-    monkeypatch.setattr(nba, "reconcile_expired_unfilled", lambda *args: ([], 0))
+    monkeypatch.setattr(nba, "reconcile_expired_unfilled", lambda *args, **kwargs: ([], 0))
     monkeypatch.setattr(nba, "record_execution", lambda *args: None)
     monkeypatch.setattr(nba, "record_queue_observation", lambda *args: None)
     monkeypatch.setattr(nba, "record_markouts", lambda *args: None)
