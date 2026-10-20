@@ -43,8 +43,12 @@ def test_cancel_ack_without_signed_reconciliation_does_not_release():
         ([], [], [TICKER]),
     ]:
         active, released = nba.reconcile_expired_unfilled(
-            [INTENT], ACCEPTED, state(resting=waiting, held=held),
-            fills, NOW, events=cancel()
+            [INTENT],
+            ACCEPTED,
+            state(resting=waiting, held=held),
+            fills,
+            NOW,
+            events=cancel(),
         )
         assert len(active) == 1
         assert released == 0
@@ -57,12 +61,14 @@ def test_verified_zero_fill_cancel_recycles_active_not_submitted_budget():
     assert active == []
     assert released == 1
     row = type("Row", (), {"game_id": "NEXT", "team": "OTHER"})()
-    prior = [{
-        **INTENT,
-        "utc": NOW.isoformat(),
-        "game_id": "PREVIOUS",
-        "team": "OTHER",
-    }]
+    prior = [
+        {
+            **INTENT,
+            "utc": NOW.isoformat(),
+            "game_id": "PREVIOUS",
+            "team": "OTHER",
+        }
+    ]
     # The cancelled submission remains charged to lifetime/daily quotas.
     assert nba.budget_blockers(prior, [], row, 74.0, NOW)
 
@@ -117,12 +123,15 @@ def test_realized_loss_cumulative_stop_and_ignore_nfl():
     assert report["loss_stop"] is True
 
 
-@pytest.mark.parametrize("change", [
-    {"fee_cost": None},
-    {"settled_time": ""},
-    {"no_total_cost_dollars": None},
-    {"settled_time": (NOW + timedelta(days=1)).isoformat()},
-])
+@pytest.mark.parametrize(
+    "change",
+    [
+        {"fee_cost": None},
+        {"settled_time": ""},
+        {"no_total_cost_dollars": None},
+        {"settled_time": (NOW + timedelta(days=1)).isoformat()},
+    ],
+)
 def test_incomplete_or_future_settlement_blocks_new_orders(change):
     result = {**settled(), **change}
     with pytest.raises(TradingError):
