@@ -113,6 +113,13 @@ def price_markets(players, games, schedule, markets, report, now=None):
         mean = model.mean(feats)
         ask["model_mean"] = mean
         ask["p_model"] = model.prob_over(feats, ask.line.to_numpy(float), mean)
+        # Historical as-of playing time is an INPUT to the stat model,
+        # NOT a verified tonight-specific projected-minutes forecast.
+        ask["historical_minutes_baseline"] = feats.ew_minutes.to_numpy(float)
+        ask["last_game_minutes"] = feats.last_minutes.to_numpy(float)
+        ask["recent_start_rate"] = feats.ew_starter.to_numpy(float)
+        ask["minutes_estimate_source"] = "prior_games_only"
+        ask["lineup_confirmation_status"] = "unverified"
         ask["teammates_out_minutes"] = feats.vacated_share_minutes.to_numpy() * 240
         out.append(ask)
     if not out:
@@ -148,6 +155,11 @@ COLUMNS = [
     "hours_to_tip",
     "injury_status",
     "teammates_out_minutes",
+    "historical_minutes_baseline",
+    "last_game_minutes",
+    "recent_start_rate",
+    "minutes_estimate_source",
+    "lineup_confirmation_status",
     "game_id",
     "player_id",
     "season_type",
