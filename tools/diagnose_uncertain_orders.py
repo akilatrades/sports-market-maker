@@ -7,6 +7,7 @@ Launch via the protected production EnvironmentFile under systemd-run.
 
 import json
 from datetime import datetime
+import math
 from pathlib import Path
 
 from live.account_dashboard import ReadOnlyClient
@@ -20,7 +21,7 @@ def numeric_quantity(position):
     if raw is None:
         raise ValueError("position_quantity_unavailable")
     n = float(raw)
-    if not __import__("math").isfinite(n):
+    if not math.isfinite(n):
         raise ValueError("position_quantity_nonfinite")
     return n
 
@@ -34,12 +35,9 @@ def inspect(events, orders, fills, positions):
         for e in events
         if e.get("event") == "intent" and e.get("client_order_id")
     }
-    uncertain = [
-        e for e in events if e.get("event") == "unknown_outcome"
-    ]
+    uncertain = [e for e in events if e.get("event") == "unknown_outcome"]
     prior_acceptances = {
-        e.get("client_order_id")
-        for e in events if e.get("event") == "accepted"
+        e.get("client_order_id") for e in events if e.get("event") == "accepted"
     }
     reports = []
     for item in uncertain:
@@ -58,35 +56,53 @@ def inspect(events, orders, fills, positions):
         else:
             classification = "NO_EXACT_MATCH_NOT_PROOF_OF_REJECTION"
         exact_ids = {str(o.get("order_id")) for o in exact if o.get("order_id")}
-        same_ticker_fills = [f for f in fills if (f.get("ticker") or f.get("market_ticker")) == ticker]
+        same_ticker_fills = [
+            f for f in fills if (f.get("ticker") or f.get("market_ticker")) == ticker
+        ]
         held_qty = [
             numeric_quantity(p)
             for p in positions
             if (p.get("ticker") or p.get("market_ticker")) == ticker
         ]
-        reports.append({
-            "classification": classification,
-            "journal_error_type": item.get("type", "unknown"),
-            "attempt_utc": attempt.get("utc"),
-            "exchange_exact_matches": len(exact),
-            "exchange_status": str(exact[0].get("status", "unknown")) if len(exact) == 1 else None,
-            "exact_order_fill_records": sum(str(f.get("order_id")) in exact_ids for f in fills),
-            "same_ticker_fill_records": len(same_ticker_fills),
-            "same_ticker_nonzero_position_records": sum(abs(n) > 1e-9 for n in held_qty),
-            "already_accepted_in_journal": cid in prior_acceptances,
-        })
+        reports.append(
+            {
+                "classification": classification,
+                "journal_error_type": item.get("type", "unknown"),
+                "attempt_utc": attempt.get("utc"),
+                "exchange_exact_matches": len(exact),
+                "exchange_status": str(exact[0].get("status", "unknown"))
+                if len(exact) == 1
+                else None,
+                "exact_order_fill_records": sum(
+                    str(f.get("order_id")) in exact_ids for f in fills
+                ),
+                "same_ticker_fill_records": len(same_ticker_fills),
+                "same_ticker_nonzero_position_records": sum(
+                    abs(n) > 1e-9 for n in held_qty
+                ),
+                "already_accepted_in_journal": cid in prior_acceptances,
+            }
+        )
     return reports
 
 
 def collect(client, journals):
     unknowns = [
-        e for group in journals.values() for e in group if e.get("event") == "unknown_outcome"
+        e
+        for group in journals.values()
+        for e in group
+        if e.get("event") == "unknown_outcome"
     ]
     if not unknowns:
-        return {"status": "NO_UNKNOWN_OUTCOME_EVENT", "ready_to_trade": False, "cases": []}
+        return {
+            "status": "NO_UNKNOWN_OUTCOME_EVENT",
+            "ready_to_trade": False,
+            "cases": [],
+        }
     times = [
         datetime.fromisoformat(e["utc"]).timestamp()
-        for group in journals.values() for e in group
+        for group in journals.values()
+        for e in group
         if e.get("event") == "intent"
     ]
     if not times:
@@ -117,11 +133,15 @@ def main():
         client = ReadOnlyClient()
         print(json.dumps(collect(client, journals), indent=2, sort_keys=True))
     except Exception as error:
-        print(json.dumps({
-            "status": "AUDIT_FAILED_LEAVE_BOTH_TIMERS_STOPPED",
-            "ready_to_trade": False,
-            "reason_type": type(error).__name__,
-        }))
+        print(
+            json.dumps(
+                {
+                    "status": "AUDIT_FAILED_LEAVE_BOTH_TIMERS_STOPPED",
+                    "ready_to_trade": False,
+                    "reason_type": type(error).__name__,
+                }
+            )
+        )
         raise SystemExit(2) from None
 
 
