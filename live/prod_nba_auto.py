@@ -85,7 +85,10 @@ def records(events):
         raise TradingError("Duplicate client order ID in production journal")
     rejected = rejected_client_ids(events)
     for attempt in attempts:
-        if attempt["client_order_id"] not in accepted and attempt["client_order_id"] not in rejected:
+        if (
+            attempt["client_order_id"] not in accepted
+            and attempt["client_order_id"] not in rejected
+        ):
             raise TradingError(
                 "Uncertain production order attempt: HALT, reconcile manually"
             )
@@ -140,7 +143,8 @@ def current_production_state(client, attempts, accepted, rejected=frozenset()):
     # (canceled, filled, exchange failure). Never free reservation unless
     # settlement is verified. Conservatively keeps it in active exposure.
     still_at_risk = [
-        a for a in attempts
+        a
+        for a in attempts
         if a["ticker"] not in settled and a["client_order_id"] not in rejected
     ]
     return {
