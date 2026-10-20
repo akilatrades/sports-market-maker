@@ -37,6 +37,7 @@ def priced():
                 "p_model": 0.35,
                 "p_book": 0.40,
                 "book_n": 2,
+                "book_updated_utc": NOW.isoformat(),
                 "injury_status": "",
                 "team_espn": "LAL",
                 "home_espn": "GS",
@@ -968,3 +969,32 @@ def test_uncertain_teammate_requires_independent_books(tmp_path, monkeypatch):
     publish(snapshot, tmp_path, NOW)
     verified = nba.nba_candidates(NOW, latest=tmp_path / "latest.csv")
     assert verified.injury_status.iloc[0] == ""
+
+
+def test_old_sportsbook_consensus_is_not_used_to_retain_nba_orders(
+    tmp_path, monkeypatch
+):
+    import kalshi.books as books
+    import live.nba_trade as trader
+    import markets.nba.live as live
+
+    monkeypatch.setattr(trader, "refresh_quotes", lambda f, now: f.copy())
+    monkeypatch.setattr(books, "attach_latest", lambda f: f.copy())
+    monkeypatch.setattr(
+        live,
+        "injuries",
+        lambda: pd.DataFrame(columns=["player_id", "team", "updated", "out"]),
+    )
+    q = priced()
+    q["book_updated_utc"] = (NOW - timedelta(hours=3)).isoformat()
+    publish(q, tmp_path, NOW)
+    result = nba.nba_candidates(NOW, latest=tmp_path / "latest.csv")
+    assert pd.isna(result.p_book.iloc[0])
+    assert result.book_n.iloc[0] == 0
+    assert result.attrs["diagnostics"]["sportsbook_age_rejected"] == 1
+
+    q["book_updated_utc"] = (NOW - timedelta(minutes=30)).isoformat()
+    publish(q, tmp_path, NOW)
+    fresh = nba.nba_candidates(NOW, latest=tmp_path / "latest.csv")
+    assert fresh.book_n.iloc[0] == 2
+    assert fresh.p_book.iloc[0] == 0.4
