@@ -23,10 +23,16 @@ or offseason-inactive players still require two books.
 
 ## Execution consistency
 New entries accepted any positive net after-fee edge, whereas subsequent
-resting scans used an unvalidated 3-cent minimum, leading to potential
-early cancellations. Resting scans now use the same positive net-edge floor
-as entry. One-cent extra maker-price improvement still requires at least
-3 cents of remaining estimated edge. No change to per-order/account caps.
+resting scans previously required 3 cents. The staged v4 pilot now requires
+3 cents of verified after-fee edge at **both entry and retention**.
+The optional extra second tick is disabled; baseline quoting already moves
+one tick inside a sufficiently wide spread. No evidence establishes that
+paying the second tick improves actual per-order P&L. New orders are capped
+at **2 contracts**, down from 8, to gather smaller diversified observations.
+The $8 per-team submission allowance resets by New York trading day while
+the $12 per-game / $20 NBA active / $75 lifetime / $35 daily and shared
+cross-sport caps remain binding. Previously accepted v3 orders are treated
+as old versions and drained safely before new v4 entries.
 
 A separate **30-minute to 2-hour shadow** candidate funnel now runs
 alongside the existing 2–6h production funnel. It never submits or cancels
@@ -68,3 +74,20 @@ actual Kalshi queue capture, order lifetime, price movement and
 settlement returns across independent games. Keep signed exchange
 reconciliation, risk caps and owner's explicit deployment approval.
 Pushing code to GitHub is not a funded-account deployment.
+
+
+## Follow-up risk controls not changed in this PR
+- Fully canceled zero-fill orders should release their active hold only after
+  a **fresh authenticated** order/position/fill reconciliation. A cancel
+  response alone cannot establish absence of a partial fill. Existing
+  conservative release holds remain until this is separately tested.
+- Do **not** replace daily and lifetime submitted-cost caps with filled-only
+  caps: an accepted order can still fill and count toward aggregate
+  exposures; realized loss is delayed to settlement. Add a verified P&L
+  circuit breaker **in addition to**, not instead of, trading-rate limits.
+- ESPN Day-To-Day is not a confirmed DNP. The official NBA injury report is
+  refreshed frequently, but independent minutes forecasts and confirmed
+  starting-lineup feeds have not been integrated or demonstrated reliable.
+- The prior historical 2-tick quote-placement table has a documented stale
+  price-priority issue; do not treat exploratory differences as live causal
+  evidence. NFL's 1c experiment requires a **separate** NFL evaluation.
