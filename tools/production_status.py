@@ -61,13 +61,20 @@ def journal_summary(path):
     except (OSError, ValueError):
         return {"status": "unreadable"}
     count = Counter(e.get("event") for e in events)
+    from live.reconciled_attempts import rejected_client_ids
+
+    try:
+        rejected = rejected_client_ids(events)
+    except Exception:
+        return {"status": "unreadable_or_invalid_reconciliation"}
     return {
         "status": "local_snapshot_only_not_exchange_reconciled",
         "intents": count["intent"],
         "accepted": count["accepted"],
         "fill_events": count["fill"],
         "settlement_events": count["settlement"],
-        "unknown_submissions": count["unknown_outcome"],
+        "unknown_submissions": count["unknown_outcome"] - len(rejected),
+        "reconciled_rejections": len(rejected),
         "last_event_utc": events[-1].get("utc") if events else None,
     }
 
