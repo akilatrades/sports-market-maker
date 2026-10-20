@@ -1,0 +1,29 @@
+name: NBA quote timing research (no trading)
+
+on:
+  pull_request:
+    paths:
+      - 'research/nba_quote_time_comparison.py'
+      - '.github/workflows/nba-quote-time-research.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  sensitivity:
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install offline research dependencies
+        run: pip install -r requirements.txt
+      - name: Compare model-vetoed resting quotes by pregame cutoff
+        run: python -m research.nba_quote_time_comparison
+      - uses: actions/upload-artifact@v4
+        with:
+          name: nba-quote-timing-sensitivity
+          path: outputs/research/nba_quote_time_comparison.json

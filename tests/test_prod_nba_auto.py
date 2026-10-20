@@ -94,9 +94,9 @@ def test_nba_baseline_retains_no_side_and_passive_price():
     rows = nba.select_candidates(f, [], {"active": []}, NOW)
     assert len(rows) == 1
     quote, edge, extra = nba.execution_quote(rows[0])
-    assert extra == 1  # wide spread and sufficient after-fee edge
-    assert quote == round(rows[0].price + 0.01, 2)
-    assert edge == round(rows[0].edge - 0.01, 5)
+    assert extra == 0  # historical baseline one-tick improvement, no extra tick
+    assert quote == rows[0].price
+    assert edge == rows[0].edge
     assert round(1 - quote, 2) > round(rows[0].yes_bid, 2)
     order, cost = nba.order_from_row(rows[0], NOW, no_price=quote)
     assert order.side == "no"
@@ -114,7 +114,7 @@ def test_separate_risk_caps_and_state():
     assert nba.MAX_TEAM_COST == 8
     assert nba.MAX_DAILY_COST == 35
     assert nba.MAX_GAME_ORDERS == 4
-    assert nba.MAX_CONTRACTS == 8
+    assert nba.MAX_CONTRACTS == 2
     assert nba.WINDOW == (2.0, 6.0)
 
 
@@ -270,7 +270,7 @@ def test_dry_scan_cannot_overwrite_production_scan_status(tmp_path):
     assert not journal.exists()
 
 
-def test_extended_order_expiration_never_exceeds_existing_pretip_cutoff():
+def test_existing_nba_orders_rest_to_verified_tip_not_two_hours_early():
     from kalshi.trading import Order
 
     for h in (2.5, 4.0, 6.0):
@@ -280,11 +280,11 @@ def test_extended_order_expiration_never_exceeds_existing_pretip_cutoff():
         rows = nba.select_candidates(f, [], {"active": []}, NOW)
         assert len(rows) == 1
         order, _ = nba.order_from_row(rows[0], NOW)
-        expected = int((NOW + timedelta(hours=h)).timestamp()) - 7200
+        expected = int((NOW + timedelta(hours=h)).timestamp())
         assert order.expiration_ts == expected
         assert order.expiration_ts > int(NOW.timestamp())
         assert order.expiration_ts - int(NOW.timestamp()) > 0
-        assert order.expiration_ts - int(NOW.timestamp()) <= 4 * 3600
+        assert order.expiration_ts - int(NOW.timestamp()) <= 6 * 3600
         assert (
             Order(
                 **{
@@ -315,9 +315,9 @@ def test_resting_quote_retains_order_while_edge_remains_valid():
     "change, expected",
     [
         ({"injury_status": "NEW_INJURY_NEWS"}, "unverified_roster_injury_or_model"),
-        ({"hours_to_tip": 1.9}, "outside_verified_pretip_window"),
+        ({"hours_to_tip": -0.01}, "outside_verified_pretip_window"),
         ({"book_n": 1}, "fresh_two_book_consensus_missing"),
-        ({"p_book": 0.48}, "current_net_edge_below_minimum"),
+        ({"p_book": 0.51}, "current_net_edge_below_minimum"),
         ({"p_book": float("nan"), "book_n": 0}, "fresh_two_book_consensus_missing"),
         ({"requires_book": "unknown"}, "unverified_book_requirement"),
     ],
@@ -369,7 +369,7 @@ def test_resting_recheck_cancels_only_bad_order_and_journals_reason(
     row = priced().iloc[0]
     ticker = str(row.ticker)
     row = row.copy()
-    row["p_book"] = 0.49
+    row["p_book"] = 0.52  # negative after-fee remaining edge
     events = [
         {
             "event": "intent",
@@ -641,18 +641,263 @@ def test_v3_scan_records_fills_and_waits_for_v2_expiry_without_trading(
     assert not nba.pass_once(Client(), ARMED, pd.DataFrame(), NOW, journal)
     status = json.loads((tmp_path / "last_scan.json").read_text())
     assert status["strategy_version"] == nba.STRATEGY_VERSION
-    assert status["decision"] == "waiting_for_legacy_v2_orders"
-    assert status["legacy_v2_resting_orders"] == 1
+    assert status["decision"] == "waiting_for_prior_version_orders"
+    assert status["legacy_prior_version_resting_orders"] == 1
     assert status["placed"] is False
 
 
 def test_more_competitive_maker_quote_never_spends_last_3c_edge():
     good = SimpleNamespace(price=0.51, edge=0.08, yes_bid=0.40, yes_ask=0.50)
     price, edge, extra = nba.execution_quote(good)
-    assert (price, edge, extra) == (0.52, 0.07, 1)
+    assert (price, edge, extra) == (0.51, 0.08, 0)
     narrow = SimpleNamespace(price=0.51, edge=0.08, yes_bid=0.48, yes_ask=0.50)
     assert nba.execution_quote(narrow)[2] == 0
     low_edge = SimpleNamespace(price=0.51, edge=0.035, yes_bid=0.40, yes_ask=0.50)
     assert nba.execution_quote(low_edge)[2] == 0
     would_cross = SimpleNamespace(price=0.51, edge=0.08, yes_bid=0.48, yes_ask=0.55)
     assert nba.execution_quote(would_cross)[2] == 0
+
+
+def test_resting_edge_rule_does_not_cancel_accepted_positive_edge():
+    row = priced().iloc[0].copy()
+    row["p_book"] = 0.45  # positive 4 cent edge after a 51c NO quote
+    intent = {
+        "ticker": row.ticker,
+        "price_cents": 51,
+        "count": 2,
+        "probability_source": "sportsbook",
+    }
+    market = {"status": "active", "yes_bid_dollars": 0.40, "yes_ask_dollars": 0.50}
+    assert nba.RESTING_MIN_NET_EDGE == nba.ENTRY_MIN_NET_EDGE == 0.03
+    assert nba.resting_cancel_reason(row, intent, market, 0.0) is None
+
+
+def test_explicit_minutes_restriction_blocks_player_even_with_old_news(
+    tmp_path, monkeypatch
+):
+    import kalshi.books as books
+    import live.nba_trade as trader
+    import markets.nba.live as live
+
+    monkeypatch.setattr(trader, "refresh_quotes", lambda f, now: f.copy())
+    monkeypatch.setattr(books, "attach_latest", lambda f: f.copy())
+    snapshot = priced()
+    snapshot["historical_minutes_baseline"] = 33.0
+    publish(snapshot, tmp_path, NOW - timedelta(hours=1))
+    monkeypatch.setattr(
+        live,
+        "injuries",
+        lambda: pd.DataFrame(
+            [
+                {
+                    "player_id": 1234,
+                    "team": "LAL",
+                    "updated": (NOW - timedelta(hours=2)).isoformat(),
+                    "out": False,
+                    "comment": "Expected to play limited minutes tonight",
+                }
+            ]
+        ),
+    )
+    out = nba.nba_candidates(NOW, latest=tmp_path / "latest.csv")
+    assert out.injury_status.iloc[0] == "REPORTED_MINUTES_RESTRICTION"
+    assert out.attrs["diagnostics"]["historical_minutes_available"] == 1
+    assert nba.select_candidates(out, [], {"active": []}, NOW) == []
+
+
+def test_invalid_reported_historical_minutes_fail_closed(tmp_path, monkeypatch):
+    import kalshi.books as books
+    import live.nba_trade as trader
+    import markets.nba.live as live
+
+    monkeypatch.setattr(trader, "refresh_quotes", lambda f, now: f.copy())
+    monkeypatch.setattr(books, "attach_latest", lambda f: f.copy())
+    monkeypatch.setattr(
+        live,
+        "injuries",
+        lambda: pd.DataFrame(columns=["player_id", "team", "updated", "out"]),
+    )
+    frame = priced()
+    frame["historical_minutes_baseline"] = 84.0
+    publish(frame, tmp_path, NOW)
+    out = nba.nba_candidates(NOW, latest=tmp_path / "latest.csv")
+    assert out.injury_status.iloc[0] == "UNVERIFIED_HISTORICAL_MINUTES"
+
+
+def test_late_window_candidates_are_shadow_only_even_if_they_qualify(tmp_path):
+    row = priced()
+    row.loc[0, "tip_utc"] = pd.Timestamp(NOW + timedelta(hours=1))
+    row.loc[0, "hours_to_tip"] = 1.0
+
+    # Regular production window stays at 2-6 hours. The research cohort
+    # observes but can NEVER feed the production POST loop.
+    assert nba.select_candidates(row, [], {"active": []}, NOW) == []
+    study = nba.select_candidates(row, [], {"active": []}, NOW, window=(0.5, 2.0))
+    assert len(study) == 1
+
+    class NoTradingClient:
+        def place(self, *_):
+            raise AssertionError("Shadow data placed a funded NBA trade")
+
+    assert not nba.pass_once(
+        NoTradingClient(), {}, row, NOW, tmp_path / "journal.jsonl", dry=True
+    )
+    assert not (tmp_path / "last_scan.json").exists()
+
+
+def test_single_sportsbook_cannot_be_used_as_consensus_at_entry(tmp_path, monkeypatch):
+    import kalshi.books as books
+    import live.nba_trade as trader
+    import markets.nba.live as live
+
+    monkeypatch.setattr(trader, "refresh_quotes", lambda f, now: f.copy())
+    monkeypatch.setattr(books, "attach_latest", lambda f: f.copy())
+    monkeypatch.setattr(
+        live,
+        "injuries",
+        lambda: pd.DataFrame(columns=["player_id", "team", "updated", "out"]),
+    )
+    frame = priced()
+    frame["book_n"] = 1
+    publish(frame, tmp_path, NOW)
+    out = nba.nba_candidates(NOW, latest=tmp_path / "latest.csv")
+    assert len(out) == 1
+    assert pd.isna(out.p_book.iloc[0])
+    assert out.injury_status.iloc[0] == ""
+    # In-season market may use the independently modeled probability.
+    assert len(nba.select_candidates(out, [], {"active": []}, NOW)) == 1
+
+    frame["requires_book"] = True
+    publish(frame, tmp_path, NOW)
+    out = nba.nba_candidates(NOW, latest=tmp_path / "latest.csv")
+    assert out.injury_status.iloc[0] == "SEASON_OR_ROLE_CHANGE_NEEDS_TWO_BOOKS"
+    assert nba.select_candidates(out, [], {"active": []}, NOW) == []
+
+
+def test_probable_teammate_update_does_not_block_whole_team(tmp_path, monkeypatch):
+    import kalshi.books as books
+    import live.nba_trade as trader
+    import markets.nba.live as live
+
+    monkeypatch.setattr(trader, "refresh_quotes", lambda f, now: f.copy())
+    monkeypatch.setattr(books, "attach_latest", lambda f: f.copy())
+    monkeypatch.setattr(
+        live,
+        "injuries",
+        lambda: pd.DataFrame(
+            [
+                {
+                    "player_id": 999,
+                    "team": "LAL",
+                    "updated": NOW.isoformat(),
+                    "out": False,
+                    "status": "probable",
+                    "comment": "Minor ankle soreness, probable",
+                }
+            ]
+        ),
+    )
+    publish(priced(), tmp_path, NOW - timedelta(hours=1))
+    out = nba.nba_candidates(NOW, latest=tmp_path / "latest.csv")
+    assert out.injury_status.iloc[0] == ""
+    assert len(nba.select_candidates(out, [], {"active": []}, NOW)) == 1
+
+
+def test_questionable_teammate_update_blocks_changed_team(tmp_path, monkeypatch):
+    import kalshi.books as books
+    import live.nba_trade as trader
+    import markets.nba.live as live
+
+    monkeypatch.setattr(trader, "refresh_quotes", lambda f, now: f.copy())
+    monkeypatch.setattr(books, "attach_latest", lambda f: f.copy())
+    monkeypatch.setattr(
+        live,
+        "injuries",
+        lambda: pd.DataFrame(
+            [
+                {
+                    "player_id": 999,
+                    "team": "LAL",
+                    "updated": NOW.isoformat(),
+                    "out": False,
+                    "status": "questionable",
+                    "comment": "Game-time decision",
+                }
+            ]
+        ),
+    )
+    publish(priced(), tmp_path, NOW - timedelta(hours=1))
+    out = nba.nba_candidates(NOW, latest=tmp_path / "latest.csv")
+    assert out.injury_status.iloc[0] == "TEAM_INJURY_CHANGE"
+
+
+def test_daily_team_cap_resets_without_resetting_game_or_lifetime():
+    row = SimpleNamespace(game_id="new-game", team="LAL")
+    yesterday = NOW - timedelta(days=1)
+    past = [_past_attempt(i, "old-game", "LAL", 2.7) for i in range(3)]
+    for a in past:
+        a["utc"] = yesterday.isoformat()
+    assert nba.room_for(past, [], row, 1.0, NOW)
+    for a in past:
+        a["utc"] = NOW.isoformat()
+    assert "nba_per_team_submissions" in nba.budget_blockers(past, [], row, 1.0, NOW)
+
+
+def test_v4_handback_waits_for_v3_resting_orders():
+    v3 = {
+        "client_order_id": "cid-v3",
+        "ticker": "KXNBA-V3",
+        "strategy_version": "nba-no-v3-long-resting-throughput",
+    }
+    accepted = {"cid-v3": {"order_id": "oid-v3"}}
+    assert (
+        nba.legacy_resting_count(
+            [v3], accepted, [{"order_id": "oid-v3", "ticker": "KXNBA-V3"}]
+        )
+        == 1
+    )
+    assert nba.legacy_resting_count([v3], accepted, []) == 0
+
+
+@pytest.mark.parametrize("hours_to_tip", [1.95, 1.0, 0.5, 0.05])
+def test_accepted_nba_order_may_stay_resting_near_tip(hours_to_tip):
+    # These quotes could never be new *entries* this close to tip,
+    # but already-accepted orders must not be auto-canceled solely because
+    # the 2h entry cutoff passed.
+    row = priced().iloc[0].copy()
+    row["hours_to_tip"] = hours_to_tip
+    intent = {
+        "ticker": row.ticker,
+        "price_cents": 51,
+        "count": 2,
+        "probability_source": "sportsbook",
+    }
+    market = {
+        "status": "active",
+        "yes_bid_dollars": 0.40,
+        "yes_ask_dollars": 0.50,
+    }
+    assert nba.resting_cancel_reason(row, intent, market, 0.0) is None
+    frame = pd.DataFrame([row])
+    assert nba.select_candidates(frame, [], {"active": []}, NOW) == []
+
+
+@pytest.mark.parametrize("hours_to_tip", [0.0, -0.01])
+def test_expired_nba_order_no_longer_valid_at_or_after_tip(hours_to_tip):
+    row = priced().iloc[0].copy()
+    row["hours_to_tip"] = hours_to_tip
+    intent = {
+        "ticker": row.ticker,
+        "price_cents": 51,
+        "count": 2,
+        "probability_source": "sportsbook",
+    }
+    market = {
+        "status": "active",
+        "yes_bid_dollars": 0.40,
+        "yes_ask_dollars": 0.50,
+    }
+    assert (
+        nba.resting_cancel_reason(row, intent, market, 0.0)
+        == "outside_verified_pretip_window"
+    )

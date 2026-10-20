@@ -24,7 +24,7 @@ from live.nfl_policy import settlement_accounting
 from live.nba_inputs import MODEL_VERSION
 from live.reconciled_attempts import rejected_client_ids
 
-STRATEGY_VERSION = "nba-no-v3-long-resting-throughput"
+STRATEGY_VERSION = "nba-no-v4-smaller-orders-edge3-baseline"
 
 # Larger high-throughput NBA pilot: retains the independent shared-account
 # $25 active / $40 daily / $100 cumulative caps and original safety vetoes.
@@ -36,9 +36,14 @@ MAX_GAME_COST = 12.0
 MAX_TEAM_COST = 8.0
 MAX_DAILY_COST = 35.0
 MAX_GAME_ORDERS = 4
-MAX_CONTRACTS = 8
+MAX_CONTRACTS = 2  # smaller live validation fills; sample more markets
 FEE_RESERVE = 1.10
-WINDOW = (2.0, 6.0)  # baseline NBA rule: 2–6 h before verified tip
+WINDOW = (2.0, 6.0)  # NEW orders still start 2–6 hours before tip
+# ALREADY-ACCEPTED orders may rest until the verified scheduled tip.
+# This is separate from the entry window: the final two hours were not
+# eligible for new posts, but cutting off existing maker liquidity then
+# made the live execution policy differ from historical tests.
+RESTING_WINDOW = (0.0, 6.0)
 STATE = Path("/home/trader/prod-nba-auto")
 REQUIRED = {
     "KALSHI_ENV": "prod",
@@ -224,7 +229,10 @@ def resting_cancel_reason(row, intent, market, fee_bound):
         return "unverified_roster_injury_or_model"
     try:
         hours = float(row["hours_to_tip"])
-        if not math.isfinite(hours) or not WINDOW[0] < hours <= WINDOW[1]:
+        if (
+            not math.isfinite(hours)
+            or not RESTING_WINDOW[0] < hours <= RESTING_WINDOW[1]
+        ):
             return "outside_verified_pretip_window"
 
         cents = int(intent["price_cents"])
@@ -519,9 +527,13 @@ def record_markouts(journal, frame, now):
 # Guardrail for the small pilot. No change to maker/taker status or risk caps.
 # Add at most one cent to a NO maker quote in >=3c spreads, only if
 # after-fee edge remains >=3c and the new quote stays strictly post-only.
-EXTRA_MAKER_TICK = 0.01  # v3 higher-capture experiment; never marketable
+EXTRA_MAKER_TICK = 0.0  # historical baseline already improves one tick
 MIN_EDGE_AFTER_IMPROVEMENT = 0.03
-RESTING_MIN_NET_EDGE = 0.03  # require a fresh after-fee edge to keep waiting
+# New entries accept any positive verified after-fee edge. Requiring 3c on
+# later resting scans prematurely canceled otherwise-valid 0-3c orders and
+# was never tested as a distinct entry policy. Keep the SAME sign test.
+ENTRY_MIN_NET_EDGE = 0.03  # conservative versioned validation cohort
+RESTING_MIN_NET_EDGE = ENTRY_MIN_NET_EDGE
 
 
 def execution_quote(candidate):
@@ -590,7 +602,7 @@ def verify_quote(candidate, proposed_no_price=None):
         raise TradingError("Proposed maker quote would cross the YES bid")
 
 
-def select_candidates(frame, events, state, now, diagnostics=None):
+def select_candidates(frame, events, state, now, diagnostics=None, window=WINDOW):
     """Return executable signals and record where candidate opportunities die.
 
     Stage counts are private aggregate telemetry; they do not authorize
@@ -603,7 +615,7 @@ def select_candidates(frame, events, state, now, diagnostics=None):
     attempts, _ = records(events)
     verified = frame[frame.injury_status.fillna("").eq("") & frame.tip_utc.notna()]
     counts["verified_availability_and_tip"] = len(verified)
-    in_window = verified[verified.hours_to_tip.between(*WINDOW)]
+    in_window = verified[verified.hours_to_tip.between(*window)]
     counts["in_entry_window"] = len(in_window)
     eligible = in_window[
         in_window.ticker.astype(str).str.startswith(
@@ -613,7 +625,7 @@ def select_candidates(frame, events, state, now, diagnostics=None):
     counts["supported_prop_series"] = len(eligible)
     if eligible.empty:
         return []
-    found = candidate_orders(eligible, "no_seller_bookline", window=WINDOW)
+    found = candidate_orders(eligible, "no_seller_bookline", window=window)
     counts["passed_book_model_and_spread"] = len(found)
     if found.empty:
         return []
@@ -654,9 +666,10 @@ def order_from_row(row, now, no_price=None):
         side="no",
         count=count,
         price_cents=cents,
-        # Longer maker wait, bounded by the existing 2h pre-tip safety cutoff.
-        # Exchange-side expiry protects against bot/network outage.
-        expiration_ts=int(tip.timestamp()) - 7200,
+        # Existing orders rest until *scheduled tip* unless a verified
+        # injury, roster, probability, market or fee change cancels earlier.
+        # Exchange-side expiry still works even if the bot is offline.
+        expiration_ts=int(tip.timestamp()),
         post_only=True,
     )
     return order, cost
@@ -701,7 +714,13 @@ def budget_blockers(
         if a["game_id"] == str(row.game_id)
     )
     team_cost = sum(
-        reserve(a["cost"]) for a in accepted_attempts if a["team"] == str(row.team)
+        reserve(a["cost"])
+        for a in accepted_attempts
+        if a["team"] == str(row.team)
+        and datetime.fromisoformat(a["utc"])
+        .astimezone(__import__("zoneinfo").ZoneInfo("America/New_York"))
+        .date()
+        == today
     )
     game_orders = sum(a["game_id"] == str(row.game_id) for a in accepted_attempts)
     day_cost = sum(
@@ -761,7 +780,10 @@ def legacy_resting_count(attempts, accepted, resting):
         if str(intent.get("ticker")) != ticker:
             raise TradingError("Resting NBA order/ticker mismatch: HALT")
         version = intent.get("strategy_version")
-        if version == "nba-no-v2-opening-audit":
+        if version in {
+            "nba-no-v2-opening-audit",
+            "nba-no-v3-long-resting-throughput",
+        }:
             count += 1
         elif version != STRATEGY_VERSION:
             raise TradingError("Unknown NBA resting order version: HALT")
@@ -782,9 +804,17 @@ def pass_once(client, env, frame, now, journal, *, dry=False):
             "strategy_version": STRATEGY_VERSION,
             "decision": decision,
             "placed": placed,
-            "legacy_v2_resting_orders": legacy_resting,
+            "legacy_prior_version_resting_orders": legacy_resting,
             "candidate_count": len(candidates),
             "selection_funnel": dict(funnel),
+            "late_window_shadow": {
+                "candidate_count": len(late_shadow_candidates),
+                "selection_funnel": dict(late_funnel),
+                "execution_enabled": False,
+                "note": "Research only. No order placement or late risk allocation.",
+            },
+            "resting_order_count": len(state.get("resting", [])),
+            "verified_zero_fill_expiries_this_scan": released,
             "quote_research": research_quotes,
             "skipped": dict(skipped),
             "inputs": frame.attrs.get("diagnostics", {}),
@@ -807,6 +837,7 @@ def pass_once(client, env, frame, now, journal, *, dry=False):
     rejected = rejected_client_ids(events)
     shared = None
     legacy_resting = 0
+    released = 0
     if not dry:
         from live.shared_account_risk import dual_mode, state_for
 
@@ -820,6 +851,13 @@ def pass_once(client, env, frame, now, journal, *, dry=False):
     else:
         state = {"active": []}
     candidates = select_candidates(frame, events, state, now, diagnostics=funnel)
+    # Observe the historically promising 30m-2h window without changing
+    # exchange risk. A confirmed lineup source is NOT available in this
+    # pipeline, so these candidates must never enter the live POST loop.
+    late_funnel = {}
+    late_shadow_candidates = select_candidates(
+        frame, events, state, now, diagnostics=late_funnel, window=(0.5, 2.0)
+    )
     from live.quote_shadow import shadow_quotes
 
     research_quotes = [
@@ -868,10 +906,10 @@ def pass_once(client, env, frame, now, journal, *, dry=False):
             # successful scan. When exchange-confirmed resting drops to
             # zero, the next scan resumes v3 automatically.
             print(
-                f"NBA TRANSITION: waiting for {legacy_resting} v2 resting "
-                "order(s) to close under their original expiry; no new posts"
+                f"NBA TRANSITION: waiting for {legacy_resting} prior-version "
+                "resting NBA order(s) to close; no new orders"
             )
-            return finish("waiting_for_legacy_v2_orders")
+            return finish("waiting_for_prior_version_orders")
         canceled = cancel_invalid_resting(
             client, journal, state, frame, now, load_journal(journal)
         )
@@ -923,7 +961,7 @@ def pass_once(client, env, frame, now, journal, *, dry=False):
             p_book = float(getattr(row, "p_book", float("nan")))
             p_yes = p_book if math.isfinite(p_book) else float(row.p_model)
             net_edge = 1 - p_yes - quoted - fee_bound / order.count
-            if not 0 < net_edge <= 0.15:
+            if not ENTRY_MIN_NET_EDGE - 1e-9 <= net_edge <= 0.15:
                 raise TradingError("nonpositive_or_outlier_net_edge")
             if cost + fee_bound > reserve(cost) + 1e-9:
                 raise TradingError("fee_exceeds_reservation")
@@ -1162,6 +1200,8 @@ def nba_candidates(now, latest=Path("outputs/projections/latest.csv")):
         ] = "UNVERIFIED_MODEL_OR_TIP"
         # Check the current injury feed, not only the cached injury column.
         report = injuries()
+        from live.nba_availability import explicit_minutes_limit
+
         if not isinstance(report, pd.DataFrame) or not {
             "player_id",
             "team",
@@ -1181,9 +1221,37 @@ def nba_candidates(now, latest=Path("outputs/projections/latest.csv")):
             flagged = set(players[fresh | out].dropna().astype(int))
             frame_ids = pd.to_numeric(frame.player_id, errors="coerce")
             frame.loc[frame_ids.isin(flagged), "injury_status"] = "NEW_INJURY_NEWS"
-            newly_out_teams = set(report.loc[fresh, "team"].dropna())
+            # A fresh "probable" update does not mean the entire team has
+            # a changed minute distribution. Preserve direct player veto for
+            # all fresh news; team-wide veto is for credible role disruption.
+            high_risk = out
+            if "status" in report:
+                status = report.status.fillna("").astype(str).str.lower()
+                high_risk = high_risk | status.isin({"out", "doubtful", "questionable"})
+            # Historical minutes do not predict newly imposed coach caps.
+            limited = (
+                report.comment.map(explicit_minutes_limit).fillna(False)
+                if "comment" in report
+                else pd.Series(False, index=report.index)
+            )
+            newly_out_teams = set(
+                report.loc[fresh & (high_risk | limited), "team"].dropna()
+            )
             frame.loc[frame.team_espn.isin(newly_out_teams), "injury_status"] = (
                 "TEAM_INJURY_CHANGE"
+            )
+            limited_ids = set(players[limited].dropna().astype(int))
+            frame.loc[frame_ids.isin(limited_ids), "injury_status"] = (
+                "REPORTED_MINUTES_RESTRICTION"
+            )
+        # Keep the baseline explicitly labeled. It is a trailing historical
+        # minutes estimate, not a current coach-confirmed playing-time target.
+        if "historical_minutes_baseline" in frame:
+            minute_base = pd.to_numeric(
+                frame.historical_minutes_baseline, errors="coerce"
+            )
+            frame.loc[~minute_base.between(0, 48), "injury_status"] = (
+                "UNVERIFIED_HISTORICAL_MINUTES"
             )
         frame = refresh_quotes(frame, now)
         book_path = latest.parent / "nba_books.csv"
@@ -1218,6 +1286,13 @@ def nba_candidates(now, latest=Path("outputs/projections/latest.csv")):
             )
             frame.loc[game_gap > 900, "p_book"] = float("nan")
             frame.loc[game_gap > 900, "book_n"] = 0
+        # Never use a solitary sportsbook as a consensus probability.
+        # Previously the entry logic could accept book_n=1, while the v3
+        # resting recheck required two books and canceled the same order
+        # on the next pass. With only one book, fall back to the historical
+        # model ONLY when this market is independently role-verified.
+        weak_books = pd.to_numeric(frame.book_n, errors="coerce").fillna(0) < 2
+        frame.loc[weak_books, "p_book"] = float("nan")
         # Opening-night, long-absence and transferred-player roles are not
         # established by last season's box scores. Require two fresh books.
         required = frame.requires_book.astype(str).str.lower().isin({"true", "1"})
@@ -1242,6 +1317,14 @@ def nba_candidates(now, latest=Path("outputs/projections/latest.csv")):
             in_entry_window=int(frame.hours_to_tip.between(*WINDOW).sum()),
             verified=int(frame.injury_status.eq("").sum()),
             book_covered=int(frame.p_book.notna().sum()),
+            historical_minutes_available=int(
+                pd.to_numeric(
+                    frame.get("historical_minutes_baseline", pd.Series(dtype=float)),
+                    errors="coerce",
+                )
+                .notna()
+                .sum()
+            ),
             exclusions=frame.loc[frame.injury_status.ne(""), "injury_status"]
             .value_counts()
             .to_dict(),
@@ -1431,9 +1514,9 @@ def preflight(client, frame, now, journal):
             "cash_dollars": cash,
             "gross_reserved": budget,
             "resting": len(state["resting"]),
-            "legacy_v2_resting_orders": old_resting,
+            "legacy_prior_version_resting_orders": old_resting,
             "entry_state": (
-                "waiting_for_legacy_v2_orders" if old_resting else "eligible_for_v3"
+                "waiting_for_prior_version_orders" if old_resting else "eligible_for_v4"
             ),
             "held_markets": len(state["held"]),
         }
