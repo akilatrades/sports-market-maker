@@ -5,7 +5,7 @@ from datetime import UTC, datetime, timedelta
 import pytest
 
 from kalshi.trading import TradingError
-from live.order_opportunity_audit import audit_cohort, contra_volume
+from live.order_opportunity_audit import audit_cohort, backfill_owned_orders, contra_volume
 
 NOW = datetime(2026, 10, 20, 1, 0, tzinfo=UTC)
 
@@ -117,3 +117,60 @@ def test_unknown_fill_identity_refuses_incomplete_history():
             sport="nfl",
             now=NOW,
         )
+
+
+def test_archived_past_fill_detail_contains_real_execution_economics():
+    now = NOW
+    orders = [{"order_id": "o1", "status": "executed", "fill_count_fp": "4"}]
+    fills = [
+        {"order_id": "o1", "fill_id": "f1", "count_fp": "2",
+         "no_price_dollars": "0.6000", "fee_cost": "0.0100",
+         "is_taker": False, "created_time": (NOW - timedelta(minutes=95)).isoformat()},
+        {"order_id": "o1", "fill_id": "f2", "count_fp": "2",
+         "no_price_dollars": "0.6200", "fee_cost": "0.0200",
+         "is_taker": False, "created_time": (NOW - timedelta(minutes=85)).isoformat()},
+    ]
+    audit = audit_cohort(journal(), orders, fills, sport="nfl", now=now)
+    assert audit["fully_filled"] == 1
+    assert audit["fill_records"] == 2
+    assert audit["filled_contracts"] == 4
+    order = audit["orders"][0]
+    assert order["vwap_no_price_dollars"] == 0.61
+    assert order["fill_fees_dollars"] == 0.03
+    assert order["maker_filled_contracts"] == 4
+    assert order["first_fill_utc"] != order["last_fill_utc"]
+
+
+def test_missing_fee_and_maker_metadata_remain_unknown():
+    fills = [{"order_id": "o1", "fill_id": "f1",
+              "count_fp": "4", "no_price_dollars": "0.6"}]
+    orders = [{"order_id": "o1", "status": "executed", "fill_count_fp": "4"}]
+    row = audit_cohort(journal(), orders, fills, sport="nba", now=NOW)["orders"][0]
+    assert row["state"] == "fully_filled"
+    assert row["fill_fees_dollars"] is None
+    assert row["maker_filled_contracts"] is None
+
+
+def test_individual_order_signed_backfill_recovers_old_closed_order(monkeypatch):
+    from live import order_opportunity_audit as module
+
+    module._CLOSED_ORDER_CACHE.clear()
+
+    class SignedReads:
+        def __init__(self):
+            self.calls = []
+
+        def _request(self, method, path):
+            self.calls.append((method, path))
+            assert method == "GET"
+            return {"order": {"order_id": "o1", "status": "canceled",
+                              "fill_count_fp": "0"}}
+
+    client = SignedReads()
+    result = backfill_owned_orders(client, {"nfl": journal(), "nba": []}, [])
+    assert result[0]["order_id"] == "o1"
+    assert client.calls == [("GET", "/portfolio/orders/o1")]
+    result = backfill_owned_orders(client, {"nfl": journal()}, [])
+    assert len(result) == 1
+    assert len(client.calls) == 1
+    module._CLOSED_ORDER_CACHE.clear()
