@@ -513,6 +513,7 @@ def select_candidates(frame, events, state, now, diagnostics=None):
         return []
     return list(found.sort_values("edge", ascending=False).itertuples())
 
+
 def order_from_row(row, now, no_price=None):
     price = float(row.price) if no_price is None else float(no_price)
     if not math.isfinite(price):
@@ -640,8 +641,7 @@ def pass_once(client, env, frame, now, journal, *, dry=False):
     from live.quote_shadow import shadow_quotes
 
     research_quotes = [
-        {"ticker": str(row.ticker), **shadow_quotes(row)}
-        for row in candidates[:5]
+        {"ticker": str(row.ticker), **shadow_quotes(row)} for row in candidates[:5]
     ]
     if not dry:
         min_ts = (
