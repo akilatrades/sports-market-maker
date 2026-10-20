@@ -428,9 +428,8 @@ def collect(client, state=STATE):
         )
         if scan:
             scan["run_utc"] = scan.get("utc")
-            scan["filters"] = {
+            scan["filters"] = scan.get("selection_funnel", {}) or {
                 "open_markets": scan.get("inputs", {}).get("rows"),
-                "in_entry_window": scan.get("inputs", {}).get("in_entry_window"),
                 "passed_book_or_model_and_spread": scan.get("candidate_count"),
             }
             scan["skip_reasons"] = scan.get("skipped", {})
