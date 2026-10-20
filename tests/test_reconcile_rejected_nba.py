@@ -126,12 +126,15 @@ def test_rejected_submissions_do_not_use_nba_game_slots_but_remain_charged():
         },
     ]
     rejected = {"reject-one", "reject-two"}
-    assert not nba.room_for(prior, [], row, 0.8, NOW)
+    # Higher v3 limits permit additional orders; confirmed rejects still
+    # count toward daily/lifetime cost but not the game/team live-order slots.
+    assert nba.room_for(prior, [], row, 0.8, NOW)
     assert nba.room_for(prior, [], row, 0.8, NOW, rejected=rejected)
     assert not nba.room_for(prior, [], row, 49.0, NOW, rejected=rejected)
-    # An accepted trade remains subject to game/team exposure limits.
     assert nba.room_for(prior, [], row, 0.8, NOW, rejected={"reject-one"})
-    with_one_large_acceptance = [prior[0], {**prior[1], "cost": 2.5}]
-    assert not nba.room_for(
-        with_one_large_acceptance, [], row, 0.8, NOW, rejected={"reject-one"}
-    )
+    still_accepted = [
+        prior[0],
+        {**prior[1], "cost": 4.0},
+        {**prior[1], "client_order_id": "accepted-third", "cost": 3.0},
+    ]
+    assert not nba.room_for(still_accepted, [], row, 0.8, NOW, rejected={"reject-one"})

@@ -94,9 +94,10 @@ def test_nba_baseline_retains_no_side_and_passive_price():
     rows = nba.select_candidates(f, [], {"active": []}, NOW)
     assert len(rows) == 1
     quote, edge, extra = nba.execution_quote(rows[0])
-    assert extra == 0
-    assert quote == rows[0].price
-    assert edge == rows[0].edge
+    assert extra == 1  # wide spread and sufficient after-fee edge
+    assert quote == round(rows[0].price + 0.01, 2)
+    assert edge == round(rows[0].edge - 0.01, 5)
+    assert round(1 - quote, 2) > round(rows[0].yes_bid, 2)
     order, cost = nba.order_from_row(rows[0], NOW, no_price=quote)
     assert order.side == "no"
     assert order.post_only
@@ -106,10 +107,14 @@ def test_nba_baseline_retains_no_side_and_passive_price():
 
 def test_separate_risk_caps_and_state():
     assert str(nba.STATE).endswith("prod-nba-auto")
-    assert nba.MAX_GROSS_COST == 50
-    assert nba.MAX_ACTIVE_COST == 15
-    assert nba.MAX_ORDER_COST == 3
-    assert nba.MAX_DAILY_COST == 30
+    assert nba.MAX_GROSS_COST == 75
+    assert nba.MAX_ACTIVE_COST == 20
+    assert nba.MAX_ORDER_COST == 4
+    assert nba.MAX_GAME_COST == 12
+    assert nba.MAX_TEAM_COST == 8
+    assert nba.MAX_DAILY_COST == 35
+    assert nba.MAX_GAME_ORDERS == 4
+    assert nba.MAX_CONTRACTS == 8
     assert nba.WINDOW == (2.0, 6.0)
 
 
@@ -263,3 +268,304 @@ def test_dry_scan_cannot_overwrite_production_scan_status(tmp_path):
         "mode": "live",
     }
     assert not journal.exists()
+
+
+def test_extended_order_expiration_never_exceeds_existing_pretip_cutoff():
+    from kalshi.trading import Order
+
+    for h in (2.5, 4.0, 6.0):
+        f = priced()
+        f.loc[0, "tip_utc"] = pd.Timestamp(NOW + timedelta(hours=h))
+        f.loc[0, "hours_to_tip"] = h
+        rows = nba.select_candidates(f, [], {"active": []}, NOW)
+        assert len(rows) == 1
+        order, _ = nba.order_from_row(rows[0], NOW)
+        expected = int((NOW + timedelta(hours=h)).timestamp()) - 7200
+        assert order.expiration_ts == expected
+        assert order.expiration_ts > int(NOW.timestamp())
+        assert order.expiration_ts - int(NOW.timestamp()) > 0
+        assert order.expiration_ts - int(NOW.timestamp()) <= 4 * 3600
+        assert (
+            Order(
+                **{
+                    "ticker": order.ticker,
+                    "side": order.side,
+                    "count": order.count,
+                    "price_cents": order.price_cents,
+                    "expiration_ts": order.expiration_ts,
+                }
+            ).body()["expiration_time"]
+            == expected
+        )
+
+
+def test_resting_quote_retains_order_while_edge_remains_valid():
+    row = priced().iloc[0]
+    intent = {
+        "ticker": row.ticker,
+        "price_cents": 51,
+        "count": 2,
+        "probability_source": "sportsbook",
+    }
+    market = {"status": "active", "yes_bid_dollars": 0.40, "yes_ask_dollars": 0.50}
+    assert nba.resting_cancel_reason(row, intent, market, 0.0) is None
+
+
+@pytest.mark.parametrize(
+    "change, expected",
+    [
+        ({"injury_status": "NEW_INJURY_NEWS"}, "unverified_roster_injury_or_model"),
+        ({"hours_to_tip": 1.9}, "outside_verified_pretip_window"),
+        ({"book_n": 1}, "fresh_two_book_consensus_missing"),
+        ({"p_book": 0.48}, "current_net_edge_below_minimum"),
+        ({"p_book": float("nan"), "book_n": 0}, "fresh_two_book_consensus_missing"),
+        ({"requires_book": "unknown"}, "unverified_book_requirement"),
+    ],
+)
+def test_resting_order_is_canceled_when_signal_decays(change, expected):
+    row = priced().iloc[0].copy()
+    for key, val in change.items():
+        row[key] = val
+    intent = {
+        "ticker": row.ticker,
+        "price_cents": 51,
+        "count": 2,
+        "probability_source": "sportsbook",
+    }
+    market = {"status": "active", "yes_bid_dollars": 0.40, "yes_ask_dollars": 0.50}
+    assert nba.resting_cancel_reason(row, intent, market, 0.0) == expected
+
+
+def test_resting_market_or_fee_change_forces_cancel():
+    row = priced().iloc[0]
+    intent = {
+        "ticker": row.ticker,
+        "price_cents": 51,
+        "count": 2,
+        "probability_source": "sportsbook",
+    }
+    market = {"status": "active", "yes_bid_dollars": 0.40, "yes_ask_dollars": 0.50}
+    assert (
+        nba.resting_cancel_reason(
+            row, intent, {**market, "yes_bid_dollars": 0.50, "yes_ask_dollars": 0.55}, 0
+        )
+        == "resting_quote_no_longer_passive"
+    )
+    assert (
+        nba.resting_cancel_reason(row, intent, {**market, "status": "closed"}, 0)
+        == "market_not_active"
+    )
+    assert (
+        nba.resting_cancel_reason(row, intent, market, 0.50)
+        == "fee_exceeds_original_reservation"
+    )
+
+
+def test_resting_recheck_cancels_only_bad_order_and_journals_reason(
+    tmp_path, monkeypatch
+):
+    from kalshi import fees
+
+    row = priced().iloc[0]
+    ticker = str(row.ticker)
+    row = row.copy()
+    row["p_book"] = 0.49
+    events = [
+        {
+            "event": "intent",
+            "client_order_id": "cid",
+            "ticker": ticker,
+            "price_cents": 51,
+            "count": 2,
+            "probability_source": "sportsbook",
+        },
+        {"event": "accepted", "client_order_id": "cid", "order_id": "oid"},
+    ]
+
+    class Client:
+        calls = []
+
+        def cancel(self, order_id, ticker=None):
+            self.calls.append((order_id, ticker))
+
+    monkeypatch.setattr(
+        nba,
+        "fetch_market",
+        lambda ticker: {
+            "status": "active",
+            "yes_bid_dollars": 0.40,
+            "yes_ask_dollars": 0.50,
+        },
+    )
+    monkeypatch.setattr(fees, "live_maker_fee_bound", lambda *args: (0.0, {}))
+    client = Client()
+    journal = tmp_path / "journal.jsonl"
+    count = nba.cancel_invalid_resting(
+        client,
+        journal,
+        {"resting": [{"order_id": "oid", "ticker": ticker}]},
+        pd.DataFrame([row]),
+        NOW,
+        events,
+    )
+    assert count == 1
+    assert client.calls == [("oid", ticker)]
+    saved = [json.loads(line) for line in journal.read_text().splitlines()]
+    assert [r["event"] for r in saved] == ["cancel_intent", "cancel_accepted"]
+    assert saved[0]["reason"] == "current_net_edge_below_minimum"
+
+
+def test_resting_recheck_does_not_place_on_unverified_order(tmp_path, monkeypatch):
+    from kalshi import fees
+
+    row = priced().iloc[0]
+    ticker = str(row.ticker)
+    monkeypatch.setattr(
+        nba,
+        "fetch_market",
+        lambda ticker: {
+            "status": "active",
+            "yes_bid_dollars": 0.40,
+            "yes_ask_dollars": 0.50,
+        },
+    )
+    monkeypatch.setattr(fees, "live_maker_fee_bound", lambda *args: (0.0, {}))
+    with pytest.raises(TradingError, match="reconcile"):
+        nba.cancel_invalid_resting(
+            SimpleNamespace(),
+            tmp_path / "journal.jsonl",
+            {"resting": [{"order_id": "unrecognized", "ticker": ticker}]},
+            priced(),
+            NOW,
+            [],
+        )
+
+
+def test_unavailable_live_resting_quote_halts_until_exchange_expiry(
+    tmp_path, monkeypatch
+):
+    from kalshi import fees
+
+    row = priced().iloc[0]
+    ticker = str(row.ticker)
+    events = [
+        {
+            "event": "intent",
+            "client_order_id": "cid",
+            "ticker": ticker,
+            "price_cents": 51,
+            "count": 2,
+            "probability_source": "sportsbook",
+        },
+        {"event": "accepted", "client_order_id": "cid", "order_id": "oid"},
+    ]
+
+    def bad_quote(ticker):
+        raise OSError("network failure")
+
+    monkeypatch.setattr(nba, "fetch_market", bad_quote)
+    monkeypatch.setattr(fees, "live_maker_fee_bound", lambda *args: (0.0, {}))
+    with pytest.raises(TradingError, match="HALT new placements"):
+        nba.cancel_invalid_resting(
+            SimpleNamespace(),
+            tmp_path / "journal.jsonl",
+            {"resting": [{"order_id": "oid", "ticker": ticker}]},
+            priced(),
+            NOW,
+            events,
+        )
+
+
+def _past_attempt(n, game, team, cost):
+    return {
+        "client_order_id": "test-client-" + str(n),
+        "game_id": str(game),
+        "team": team,
+        "cost": cost,
+        "utc": NOW.isoformat(),
+    }
+
+
+def test_more_distinct_orders_can_fit_without_bypassing_order_limits():
+    row = SimpleNamespace(game_id=20261020, team="LAL")
+    old_attempts = [
+        _past_attempt(1, 20261020, "LAL", 2),
+        _past_attempt(2, 20261020, "LAL", 2),
+    ]
+    assert nba.room_for(old_attempts, [], row, 1.0, NOW)
+    assert not nba.budget_blockers(old_attempts, [], row, 1.0, NOW)
+    assert nba.reserve(4.0) <= nba.MAX_ACTIVE_COST
+    assert nba.MAX_ACTIVE_COST <= 25.0  # shared cross-sport active cap
+    assert nba.MAX_DAILY_COST <= 40.0  # shared daily cap
+    assert nba.MAX_GROSS_COST <= 100.0  # shared lifetime cap
+
+
+def test_game_and_team_budget_reasons_are_distinct():
+    row = SimpleNamespace(game_id=20261020, team="LAL")
+    team_filled = [_past_attempt(i, 20261020, "LAL", 2.5) for i in range(3)]
+    reasons = nba.budget_blockers(team_filled, [], row, 1.0, NOW)
+    assert "nba_per_team_submissions" in reasons
+    assert "nba_per_game_submissions" not in reasons
+    assert "nba_game_order_count" not in reasons
+
+    game_filled = [_past_attempt(i, 20261020, "OTHER" + str(i), 3.0) for i in range(3)]
+    reasons = nba.budget_blockers(game_filled, [], row, 2.0, NOW)
+    assert "nba_per_game_submissions" in reasons
+    assert "nba_per_team_submissions" not in reasons
+
+
+def test_order_count_and_remaining_submission_allowance_still_bind():
+    row = SimpleNamespace(game_id=20261020, team="LAL")
+    past = [
+        _past_attempt(i, 20261020, "OTHER" + str(i), 1.0)
+        for i in range(nba.MAX_GAME_ORDERS)
+    ]
+    reasons = nba.budget_blockers(past, [], row, 0.5, NOW)
+    assert "nba_game_order_count" in reasons
+    assert "nba_per_game_submissions" not in reasons
+
+    many_games = [_past_attempt(i, i + 100, "OTHER" + str(i), 4.0) for i in range(20)]
+    for a in many_games:
+        a["utc"] = (NOW - timedelta(days=7)).isoformat()
+    reasons = nba.budget_blockers(many_games, [], row, 0.5, NOW)
+    assert "nba_lifetime_submissions" in reasons
+    assert "nba_daily_submissions" not in reasons
+
+
+def test_active_and_shared_risk_limits_cannot_be_overridden():
+    row = SimpleNamespace(game_id=20261020, team="LAL")
+    active = [_past_attempt(i, i + 100, "OTHER" + str(i), 3.5) for i in range(5)]
+    reasons = nba.budget_blockers(active, active, row, 2.0, NOW)
+    assert "nba_active_exposure" in reasons
+
+    import live.shared_account_risk as shared_risk
+
+    # These caps remain independent, even when the NBA cohort enlarges.
+    assert shared_risk.LIMITS == {"lifetime": 100, "daily": 40, "active": 25}
+
+
+def test_v3_guard_blocks_old_or_unknown_resting_orders():
+    old = {"client_order_id": "old", "strategy_version": "nba-no-v2-opening-audit"}
+    new = {"client_order_id": "new", "strategy_version": nba.STRATEGY_VERSION}
+    accepted = {
+        "old": {"order_id": "order-v2"},
+        "new": {"order_id": "order-v3"},
+    }
+    with pytest.raises(TradingError, match="Legacy or unknown"):
+        nba.verify_no_legacy_resting([old, new], accepted, [{"order_id": "order-v2"}])
+    with pytest.raises(TradingError, match="Legacy or unknown"):
+        nba.verify_no_legacy_resting([old, new], accepted, [{"order_id": "unknown"}])
+    nba.verify_no_legacy_resting([old, new], accepted, [{"order_id": "order-v3"}])
+    nba.verify_no_legacy_resting([old, new], accepted, [])
+
+
+def test_more_competitive_maker_quote_never_spends_last_3c_edge():
+    good = SimpleNamespace(price=0.51, edge=0.08, yes_bid=0.40, yes_ask=0.50)
+    price, edge, extra = nba.execution_quote(good)
+    assert (price, edge, extra) == (0.52, 0.07, 1)
+    narrow = SimpleNamespace(price=0.51, edge=0.08, yes_bid=0.48, yes_ask=0.50)
+    assert nba.execution_quote(narrow)[2] == 0
+    low_edge = SimpleNamespace(price=0.51, edge=0.035, yes_bid=0.40, yes_ask=0.50)
+    assert nba.execution_quote(low_edge)[2] == 0
+    would_cross = SimpleNamespace(price=0.51, edge=0.08, yes_bid=0.48, yes_ask=0.55)
+    assert nba.execution_quote(would_cross)[2] == 0

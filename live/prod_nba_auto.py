@@ -1,7 +1,7 @@
 """Bounded unattended NBA production experiment. SEPARATE from NFL and Demo.
 
 This worker is isolated from the Demo service and has a lifetime *gross-cost*
-budget below $50 including a fee buffer. One new post-only order max per pass,
+budget below $75 including a fee buffer. One new post-only order max per pass,
 no automatic re-arming, and durable journal before each network write. Fail
 closed on inconsistent balances, orders, positions, fills or model data.
 """
@@ -24,16 +24,19 @@ from live.nfl_policy import settlement_accounting
 from live.nba_inputs import MODEL_VERSION
 from live.reconciled_attempts import rejected_client_ids
 
-STRATEGY_VERSION = "nba-no-v2-opening-audit"
+STRATEGY_VERSION = "nba-no-v3-long-resting-throughput"
 
-MAX_GROSS_COST = 50.0
-MAX_ORDER_COST = 3.0
-MAX_ACTIVE_COST = 15.0
-MAX_GAME_COST = 3.0
-MAX_TEAM_COST = 3.0
-MAX_DAILY_COST = 30.0
-MAX_GAME_ORDERS = 2
-MAX_CONTRACTS = 5
+# Larger high-throughput NBA pilot: retains the independent shared-account
+# $25 active / $40 daily / $100 cumulative caps and original safety vetoes.
+# Submitted cost is charged even when an order expires without a fill.
+MAX_GROSS_COST = 75.0
+MAX_ORDER_COST = 4.0
+MAX_ACTIVE_COST = 20.0
+MAX_GAME_COST = 12.0
+MAX_TEAM_COST = 8.0
+MAX_DAILY_COST = 35.0
+MAX_GAME_ORDERS = 4
+MAX_CONTRACTS = 8
 FEE_RESERVE = 1.10
 WINDOW = (2.0, 6.0)  # baseline NBA rule: 2–6 h before verified tip
 STATE = Path("/home/trader/prod-nba-auto")
@@ -209,30 +212,127 @@ def reconcile_expired_unfilled(attempts, accepted, state, fills, now):
     return still_active, released
 
 
-def cancel_invalid_resting(client, journal, state, frame, now):
-    """Withdraw owned orders after new roster/injury/market safety failures."""
+def resting_cancel_reason(row, intent, market, fee_bound):
+    """Fail closed on stale/changed probability, fee, maker price or availability.
+
+    Evaluate the ORIGINAL resting NO price, not the latest hypothetical maker
+    quote. An order only remains valid if its expected net return still clears
+    the minimum. Input freshness/roster/injury vetos were applied by
+    nba_candidates before this point.
+    """
+    if row is None or str(row.get("injury_status") or ""):
+        return "unverified_roster_injury_or_model"
+    try:
+        hours = float(row["hours_to_tip"])
+        if not math.isfinite(hours) or not WINDOW[0] < hours <= WINDOW[1]:
+            return "outside_verified_pretip_window"
+
+        cents = int(intent["price_cents"])
+        count = int(intent["count"])
+        if not 10 <= cents <= 90 or not 0 < count <= MAX_CONTRACTS:
+            return "invalid_original_order"
+        no_price = cents / 100
+
+        source = str(intent["probability_source"])
+        if source not in {"sportsbook", "model"}:
+            return "unverified_original_probability_source"
+        raw_book_n = float(row.get("book_n", 0))
+        book_n = raw_book_n if math.isfinite(raw_book_n) else 0
+        p_book = float(row.get("p_book", float("nan")))
+        required = str(row.get("requires_book", "")).lower()
+        if required not in {"true", "false", "1", "0"}:
+            return "unverified_book_requirement"
+        has_books = book_n >= 2 and math.isfinite(p_book) and 0 <= p_book <= 1
+        # Never degrade an originally sportsbook-confirmed signal to a
+        # model-only signal; opening-week/role-change veto remains binding.
+        if (source == "sportsbook" or required in {"true", "1"}) and not has_books:
+            return "fresh_two_book_consensus_missing"
+        p_yes = p_book if has_books else float(row["p_model"])
+        if not math.isfinite(p_yes) or not 0 <= p_yes <= 1:
+            return "unverified_current_probability"
+
+        if not isinstance(market, dict) or market.get("status") not in {
+            "active",
+            "open",
+        }:
+            return "market_not_active"
+        bid = float(market["yes_bid_dollars"])
+        ask = float(market["yes_ask_dollars"])
+        if not all(math.isfinite(v) for v in (bid, ask)) or not 0 < bid < ask < 1:
+            return "invalid_fresh_exchange_book"
+        # A resting NO buy is a YES ask. If now marketable, cancel any
+        # still-resting remainder rather than relying on a stale passive quote.
+        if round(1 - no_price, 2) <= round(bid, 2):
+            return "resting_quote_no_longer_passive"
+        if not isinstance(fee_bound, (float, int)) or not math.isfinite(fee_bound):
+            return "unknown_current_fees"
+        if (
+            fee_bound < 0
+            or count * no_price + fee_bound > reserve(count * no_price) + 1e-9
+        ):
+            return "fee_exceeds_original_reservation"
+        net_edge = 1 - p_yes - no_price - fee_bound / count
+        if not math.isfinite(net_edge) or net_edge < RESTING_MIN_NET_EDGE - 1e-9:
+            return "current_net_edge_below_minimum"
+    except (KeyError, ValueError, TypeError, OverflowError):
+        return "unverifiable_resting_order_or_market_data"
+    return None
+
+
+def cancel_invalid_resting(client, journal, state, frame, now, events):
+    """Cancel owned resting orders when fresh checks invalidate original quotes.
+
+    GET or fee-service failures stop the pass; exchange-side order expiration
+    remains as a hard safety limit. Never manufacture successful cancellations.
+    """
+    from kalshi.fees import live_maker_fee_bound
+
+    accepted_by_id = {
+        str(event["order_id"]): str(event["client_order_id"])
+        for event in events
+        if event.get("event") == "accepted"
+        and event.get("order_id")
+        and event.get("client_order_id")
+    }
+    intents_by_client = {
+        str(event["client_order_id"]): event
+        for event in events
+        if event.get("event") == "intent" and event.get("client_order_id")
+    }
     if frame.empty:
-        invalid = set(o.get("order_id") for o in state["resting"])
+        current = {}
     else:
-        status = frame.set_index("ticker")["injury_status"].fillna("UNVERIFIED")
-        valid = set(status[status.eq("")].index)
-        invalid = set()
-        for resting in state["resting"]:
-            ticker = resting.get("ticker")
-            if ticker not in valid:
-                invalid.add(resting["order_id"])
-                continue
-            row = frame.set_index("ticker").loc[ticker]
-            if not WINDOW[0] < float(row.hours_to_tip) <= WINDOW[1]:
-                invalid.add(resting["order_id"])
+        if frame.ticker.duplicated().any():
+            raise TradingError("Duplicate NBA tickers in resting recheck: HALT")
+        current = {str(t): row for t, row in frame.set_index("ticker").iterrows()}
     canceled = 0
     for resting in state["resting"]:
-        order_id = resting.get("order_id")
-        if order_id not in invalid:
+        order_id = str(resting.get("order_id") or "")
+        ticker = str(resting.get("ticker") or "")
+        intent = intents_by_client.get(accepted_by_id.get(order_id))
+        if (
+            not order_id
+            or not ticker
+            or intent is None
+            or intent.get("ticker") != ticker
+        ):
+            raise TradingError("Cannot reconcile owned resting order: HALT")
+
+        row = current.get(ticker)
+        if row is None or str(row.get("injury_status") or ""):
+            reason = "unverified_roster_injury_or_model"
+        else:
+            try:
+                market = fetch_market(ticker)
+                cents, count = int(intent["price_cents"]), int(intent["count"])
+                fee_bound, _ = live_maker_fee_bound(ticker, cents / 100, count)
+            except Exception as error:
+                raise TradingError(
+                    "Fresh resting quote/fee read failed; HALT new placements"
+                ) from error
+            reason = resting_cancel_reason(row, intent, market, fee_bound)
+        if reason is None:
             continue
-        ticker = resting.get("ticker")
-        if not ticker:
-            raise TradingError("Cannot cancel order without its ticker: HALT")
         write_event(
             journal,
             {
@@ -240,7 +340,8 @@ def cancel_invalid_resting(client, journal, state, frame, now):
                 "utc": now.isoformat(),
                 "order_id": order_id,
                 "ticker": ticker,
-                "reason": "availability no longer verified",
+                "reason": reason,
+                "strategy_version": STRATEGY_VERSION,
             },
         )
         try:
@@ -255,6 +356,7 @@ def cancel_invalid_resting(client, journal, state, frame, now):
                 "event": "cancel_accepted",
                 "utc": datetime.now(UTC).isoformat(),
                 "order_id": order_id,
+                "reason": reason,
             },
         )
         canceled += 1
@@ -415,9 +517,11 @@ def record_markouts(journal, frame, now):
 
 
 # Guardrail for the small pilot. No change to maker/taker status or risk caps.
-# Only improve a quote by a second tick in a spread wide enough to stay passive.
-EXTRA_MAKER_TICK = 0.0  # freeze NBA baseline pricing; no NFL 2-tick experiment
+# Add at most one cent to a NO maker quote in >=3c spreads, only if
+# after-fee edge remains >=3c and the new quote stays strictly post-only.
+EXTRA_MAKER_TICK = 0.01  # v3 higher-capture experiment; never marketable
 MIN_EDGE_AFTER_IMPROVEMENT = 0.03
+RESTING_MIN_NET_EDGE = 0.03  # require a fresh after-fee edge to keep waiting
 
 
 def execution_quote(candidate):
@@ -550,7 +654,9 @@ def order_from_row(row, now, no_price=None):
         side="no",
         count=count,
         price_cents=cents,
-        expiration_ts=min(int(now.timestamp()) + 3600, int(tip.timestamp()) - 7200),
+        # Longer maker wait, bounded by the existing 2h pre-tip safety cutoff.
+        # Exchange-side expiry protects against bot/network outage.
+        expiration_ts=int(tip.timestamp()) - 7200,
         post_only=True,
     )
     return order, cost
@@ -573,13 +679,19 @@ def pre_submit_kickoff_ok(tip_utc, now):
         return False
 
 
-def room_for(attempts, active, row, cost, now, shared=None, rejected=frozenset()):
+def budget_blockers(
+    attempts, active, row, cost, now, shared=None, rejected=frozenset()
+):
+    """Explain every binding risk cap; never weaken the underlying admission.
+
+    Daily/lifetime limits count all attempts, including zero-fill expiries.
+    Game/team caps use accepted attempts, including later cancellations.
+    """
     today = now.astimezone(__import__("zoneinfo").ZoneInfo("America/New_York")).date()
     total = sum(reserve(a["cost"]) for a in attempts)
     open_now = sum(reserve(a["cost"]) for a in active)
     # An exchange-confirmed rejected submission never became a position.
-    # Preserve it in lifetime/daily spend but do not consume the exposure
-    # slots reserved for genuinely accepted orders on the same game/team.
+    # Preserve it in lifetime/daily spend but not game/team slots.
     accepted_attempts = [
         a for a in attempts if a.get("client_order_id") not in rejected
     ]
@@ -603,15 +715,47 @@ def room_for(attempts, active, row, cost, now, shared=None, rejected=frozenset()
     r = reserve(cost)
     from live.shared_account_risk import fits
 
-    return (
-        (shared is None or fits(shared, cost, now))
-        and total + r <= MAX_GROSS_COST + 1e-9
-        and open_now + r <= MAX_ACTIVE_COST + 1e-9
-        and game_cost + r <= MAX_GAME_COST + 1e-9
-        and team_cost + r <= MAX_TEAM_COST + 1e-9
-        and day_cost + r <= MAX_DAILY_COST + 1e-9
-        and game_orders < MAX_GAME_ORDERS
+    reasons = []
+    if shared is not None and not fits(shared, cost, now):
+        reasons.append("shared_account_cap")
+    if total + r > MAX_GROSS_COST + 1e-9:
+        reasons.append("nba_lifetime_submissions")
+    if open_now + r > MAX_ACTIVE_COST + 1e-9:
+        reasons.append("nba_active_exposure")
+    if game_cost + r > MAX_GAME_COST + 1e-9:
+        reasons.append("nba_per_game_submissions")
+    if team_cost + r > MAX_TEAM_COST + 1e-9:
+        reasons.append("nba_per_team_submissions")
+    if day_cost + r > MAX_DAILY_COST + 1e-9:
+        reasons.append("nba_daily_submissions")
+    if game_orders >= MAX_GAME_ORDERS:
+        reasons.append("nba_game_order_count")
+    return reasons
+
+
+def room_for(attempts, active, row, cost, now, shared=None, rejected=frozenset()):
+    return not budget_blockers(
+        attempts, active, row, cost, now, shared=shared, rejected=rejected
     )
+
+
+def verify_no_legacy_resting(attempts, accepted, resting):
+    """Never silently apply new v3 cancellation policy to old v2 orders."""
+    version_by_client = {
+        str(intent["client_order_id"]): intent.get("strategy_version")
+        for intent in attempts
+    }
+    version_by_order = {
+        str(order["order_id"]): version_by_client.get(str(cid))
+        for cid, order in accepted.items()
+    }
+    if any(
+        version_by_order.get(str(order.get("order_id"))) != STRATEGY_VERSION
+        for order in resting
+    ):
+        raise TradingError(
+            "Legacy or unknown NBA resting order: HALT until exchange closes it"
+        )
 
 
 def pass_once(client, env, frame, now, journal, *, dry=False):
@@ -659,6 +803,7 @@ def pass_once(client, env, frame, now, journal, *, dry=False):
         else:
             state = current_production_state(client, attempts, accepted, rejected)
         state["rejected_client_ids"] = rejected
+        verify_no_legacy_resting(attempts, accepted, state["resting"])
         free = money(client.balance()["balance"])
     else:
         state = {"active": []}
@@ -705,7 +850,9 @@ def pass_once(client, env, frame, now, journal, *, dry=False):
         for resting in state["resting"]:
             record_queue_observation(client, journal, resting["order_id"], now)
         record_markouts(journal, frame, now)
-        canceled = cancel_invalid_resting(client, journal, state, frame, now)
+        canceled = cancel_invalid_resting(
+            client, journal, state, frame, now, load_journal(journal)
+        )
         if canceled:
             print(f"PROD AUTO: canceled {canceled} unsafe resting orders")
             # Require another reconciliation pass after cancellation.
@@ -725,13 +872,24 @@ def pass_once(client, env, frame, now, journal, *, dry=False):
         except TradingError:
             skipped["invalid_order_or_price"] += 1
             continue
-        while order.count > 0 and not room_for(
-            attempts, state["active"], row, cost, now, shared=shared, rejected=rejected
-        ):
+        blockers = []
+        while order.count > 0:
+            blockers = budget_blockers(
+                attempts,
+                state["active"],
+                row,
+                cost,
+                now,
+                shared=shared,
+                rejected=rejected,
+            )
+            if not blockers:
+                break
             order.count -= 1
             cost = round(order.count * order.price_cents / 100, 2)
         if order.count <= 0:
-            skipped["risk_budget"] += 1
+            for reason in blockers or ["unknown_risk_cap"]:
+                skipped["risk_" + reason] += 1
             continue
         if not dry and free < reserve(cost):
             skipped["cash_balance"] += 1
