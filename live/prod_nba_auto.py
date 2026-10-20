@@ -21,6 +21,7 @@ from kalshi.paper_props import candidate_orders
 from kalshi.trading import Order, TradingClient, TradingError
 from live.nfl_policy import settlement_accounting
 from live.nba_inputs import MODEL_VERSION
+from live.reconciled_attempts import rejected_client_ids
 
 STRATEGY_VERSION = "nba-no-v2-opening-audit"
 
@@ -82,15 +83,16 @@ def records(events):
     accepted = {e["client_order_id"]: e for e in events if e.get("event") == "accepted"}
     if len({e["client_order_id"] for e in attempts}) != len(attempts):
         raise TradingError("Duplicate client order ID in production journal")
+    rejected = rejected_client_ids(events)
     for attempt in attempts:
-        if attempt["client_order_id"] not in accepted:
+        if attempt["client_order_id"] not in accepted and attempt["client_order_id"] not in rejected:
             raise TradingError(
                 "Uncertain production order attempt: HALT, reconcile manually"
             )
     return attempts, accepted
 
 
-def current_production_state(client, attempts, accepted):
+def current_production_state(client, attempts, accepted, rejected=frozenset()):
     """Verify every live order/position belongs to the strategy journal."""
     resting = client.orders("resting")
     positions = client.positions()
@@ -137,7 +139,10 @@ def current_production_state(client, attempts, accepted):
     # A buy can be accepted and disappear from resting before a later GET
     # (canceled, filled, exchange failure). Never free reservation unless
     # settlement is verified. Conservatively keeps it in active exposure.
-    still_at_risk = [a for a in attempts if a["ticker"] not in settled]
+    still_at_risk = [
+        a for a in attempts
+        if a["ticker"] not in settled and a["client_order_id"] not in rejected
+    ]
     return {
         "resting": resting,
         "held": held,
@@ -166,7 +171,10 @@ def reconcile_expired_unfilled(attempts, accepted, state, fills, now):
     from datetime import timedelta
 
     released = 0
+    rejected = state.get("rejected_client_ids", set())
     for attempt in attempts:
+        if attempt["client_order_id"] in rejected:
+            continue
         ticker = attempt["ticker"]
         if ticker in state["settled"]:
             continue
@@ -626,6 +634,7 @@ def pass_once(client, env, frame, now, journal, *, dry=False):
         guard(env, client)
     events = load_journal(journal)
     attempts, accepted = records(events)
+    rejected = rejected_client_ids(events)
     shared = None
     if not dry:
         from live.shared_account_risk import dual_mode, state_for
@@ -633,7 +642,8 @@ def pass_once(client, env, frame, now, journal, *, dry=False):
         if dual_mode(env):
             state, shared = state_for(client, "nba", now)
         else:
-            state = current_production_state(client, attempts, accepted)
+            state = current_production_state(client, attempts, accepted, rejected)
+        state["rejected_client_ids"] = rejected
         free = money(client.balance()["balance"])
     else:
         state = {"active": []}
@@ -1181,11 +1191,13 @@ def preflight(client, frame, now, journal):
     if frame.empty or not frame.injury_status.eq("").any():
         failures.append("no_verified_projection_rows")
     try:
-        attempts, accepted = records(load_journal(journal))
+        events = load_journal(journal)
+        attempts, accepted = records(events)
+        rejected = rejected_client_ids(events)
         if dual:
             state, _shared = state_for(client, "nba", now)
         else:
-            state = current_production_state(client, attempts, accepted)
+            state = current_production_state(client, attempts, accepted, rejected)
         cash = money(client.balance()["balance"])
         if cash < MAX_ORDER_COST:
             failures.append("cash_below_order_cap")
