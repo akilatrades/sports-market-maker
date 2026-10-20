@@ -51,7 +51,7 @@ def minute_players():
 
 def test_explicit_minutes_and_lineups_are_separate():
     mins = parse_minutes(minute_players(), DATE)
-    assert mins[(DATE, "LAL", "testplayer")] == 24
+    assert mins[(DATE, "LAL", "test player")] == 24
     tentative, statuses = parse_lineups(game(status="Projected"), DATE)
     assert tentative == {}
     assert statuses[(DATE, "LAL")] == "unverified"
