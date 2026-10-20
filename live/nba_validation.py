@@ -11,7 +11,7 @@ from kalshi.trading import TradingError
 from live.nfl_policy import reserve
 
 WINDOW_DAYS = 30
-NBA_LIFETIME_RESERVE = 50.0
+from live.prod_nba_auto import MAX_GROSS_COST as NBA_LIFETIME_RESERVE
 CLOSED_STATES = {"fully_filled", "partially_filled_closed", "confirmed_unfilled"}
 FILLED_STATES = {"fully_filled", "partially_filled_resting", "partially_filled_closed"}
 
