@@ -228,7 +228,8 @@ def state_for(client, sport, now):
             "settled": settled & own_tickers,
             "settlements": settlements,
             "active": [
-                a for a in own
+                a
+                for a in own
                 if a["ticker"] not in settled
                 and a["client_order_id"] not in owner["rejected_by_sport"][name]
             ],
