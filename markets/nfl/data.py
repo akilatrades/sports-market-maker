@@ -1,5 +1,6 @@
 """Load the saved data and reshape it into team-game and player-game tables."""
 
+import os
 from pathlib import Path
 
 import numpy as np
@@ -8,7 +9,7 @@ import pandas as pd
 from markets.nfl.odds import no_vig
 from markets.nfl.kalshi import normalize_name
 
-DATA = Path("data/nfl")
+DATA = Path(os.environ.get("SMM_NFL_DATA_DIR", "data/nfl"))
 # The schedule keeps a franchise's code at the time; box scores use today's.
 TEAM_ALIASES = {"OAK": "LV", "SD": "LAC", "STL": "LA"}
 SKILL = ["WR", "TE", "RB", "FB"]
