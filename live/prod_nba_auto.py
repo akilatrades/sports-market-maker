@@ -1349,12 +1349,14 @@ def nba_candidates(now, latest=Path("outputs/projections/latest.csv")):
         licensed_days = {
             pd.Timestamp(tip).tz_convert("America/New_York").strftime("%Y-%m-%d")
             for tip in frame.tip_utc.dropna()
-            if 0 < (pd.Timestamp(tip) - pd.Timestamp(now)).total_seconds()
-            <= 8 * 3600
+            if 0 < (pd.Timestamp(tip) - pd.Timestamp(now)).total_seconds() <= 8 * 3600
         }
         context = load(licensed_days, now) if licensed_days else {"configured": False}
-        if {"historical_minutes_baseline", "last_game_minutes",
-            "recent_start_rate"}.issubset(frame.columns):
+        if {
+            "historical_minutes_baseline",
+            "last_game_minutes",
+            "recent_start_rate",
+        }.issubset(frame.columns):
             frame = historical_minutes_projection(frame)
         frame = enrich(frame, context, now)
         # When independently projected minutes diverge from the training
@@ -1367,19 +1369,21 @@ def nba_candidates(now, latest=Path("outputs/projections/latest.csv")):
             independent = pd.to_numeric(frame.projected_minutes, errors="coerce")
             available = independent.notna()
             shift = (independent - historical).abs()
-            material = available & (shift > 6) & (
-                shift > 0.20 * historical.clip(lower=1)
+            material = (
+                available & (shift > 6) & (shift > 0.20 * historical.clip(lower=1))
             )
             frame.loc[material, "injury_status"] = (
                 "INDEPENDENT_MINUTES_SHIFT_REQUIRES_MODEL_REPRICE"
             )
-            frame.loc[
-                available & independent.lt(8), "injury_status"
-            ] = "PROJECTED_LOW_OR_NO_PLAYING_TIME"
+            frame.loc[available & independent.lt(8), "injury_status"] = (
+                "PROJECTED_LOW_OR_NO_PLAYING_TIME"
+            )
             # Different starting assignment from established recent role:
             # existing game-specific mean is invalid, regardless of books.
             start_rate = pd.to_numeric(
-                frame.get("recent_start_rate", pd.Series(float("nan"), index=frame.index)),
+                frame.get(
+                    "recent_start_rate", pd.Series(float("nan"), index=frame.index)
+                ),
                 errors="coerce",
             )
             established = (
@@ -1387,16 +1391,14 @@ def nba_candidates(now, latest=Path("outputs/projections/latest.csv")):
                 & frame.confirmed_starter.notna()
             )
             unexpected_bench = (
-                established & frame.confirmed_starter.eq(False)
-                & start_rate.ge(0.8)
+                established & frame.confirmed_starter.eq(False) & start_rate.ge(0.8)
             )
             unexpected_start = (
-                established & frame.confirmed_starter.eq(True)
-                & start_rate.le(0.2)
+                established & frame.confirmed_starter.eq(True) & start_rate.le(0.2)
             )
-            frame.loc[
-                unexpected_bench | unexpected_start, "injury_status"
-            ] = "CONFIRMED_STARTING_ROLE_CHANGED"
+            frame.loc[unexpected_bench | unexpected_start, "injury_status"] = (
+                "CONFIRMED_STARTING_ROLE_CHANGED"
+            )
         # A server configured to REQUIRE independent feed never silently
         # trades from only historical data if credentials are unavailable.
         if os.environ.get("NBA_REQUIRE_VERIFIED_CONTEXT") == "YES":
