@@ -774,3 +774,64 @@ def test_single_sportsbook_cannot_be_used_as_consensus_at_entry(
     out = nba.nba_candidates(NOW, latest=tmp_path / "latest.csv")
     assert out.injury_status.iloc[0] == "SEASON_OR_ROLE_CHANGE_NEEDS_TWO_BOOKS"
     assert nba.select_candidates(out, [], {"active": []}, NOW) == []
+
+
+def test_probable_teammate_update_does_not_block_whole_team(
+    tmp_path, monkeypatch
+):
+    import kalshi.books as books
+    import live.nba_trade as trader
+    import markets.nba.live as live
+
+    monkeypatch.setattr(trader, "refresh_quotes", lambda f, now: f.copy())
+    monkeypatch.setattr(books, "attach_latest", lambda f: f.copy())
+    monkeypatch.setattr(
+        live,
+        "injuries",
+        lambda: pd.DataFrame(
+            [
+                {
+                    "player_id": 999,
+                    "team": "LAL",
+                    "updated": NOW.isoformat(),
+                    "out": False,
+                    "status": "probable",
+                    "comment": "Minor ankle soreness, probable",
+                }
+            ]
+        ),
+    )
+    publish(priced(), tmp_path, NOW - timedelta(hours=1))
+    out = nba.nba_candidates(NOW, latest=tmp_path / "latest.csv")
+    assert out.injury_status.iloc[0] == ""
+    assert len(nba.select_candidates(out, [], {"active": []}, NOW)) == 1
+
+
+def test_questionable_teammate_update_blocks_changed_team(
+    tmp_path, monkeypatch
+):
+    import kalshi.books as books
+    import live.nba_trade as trader
+    import markets.nba.live as live
+
+    monkeypatch.setattr(trader, "refresh_quotes", lambda f, now: f.copy())
+    monkeypatch.setattr(books, "attach_latest", lambda f: f.copy())
+    monkeypatch.setattr(
+        live,
+        "injuries",
+        lambda: pd.DataFrame(
+            [
+                {
+                    "player_id": 999,
+                    "team": "LAL",
+                    "updated": NOW.isoformat(),
+                    "out": False,
+                    "status": "questionable",
+                    "comment": "Game-time decision",
+                }
+            ]
+        ),
+    )
+    publish(priced(), tmp_path, NOW - timedelta(hours=1))
+    out = nba.nba_candidates(NOW, latest=tmp_path / "latest.csv")
+    assert out.injury_status.iloc[0] == "TEAM_INJURY_CHANGE"
