@@ -1208,9 +1208,7 @@ def nba_candidates(now, latest=Path("outputs/projections/latest.csv")):
             high_risk = out
             if "status" in report:
                 status = report.status.fillna("").astype(str).str.lower()
-                high_risk = high_risk | status.isin(
-                    {"out", "doubtful", "questionable"}
-                )
+                high_risk = high_risk | status.isin({"out", "doubtful", "questionable"})
             # Historical minutes do not predict newly imposed coach caps.
             limited = (
                 report.comment.map(explicit_minutes_limit).fillna(False)
