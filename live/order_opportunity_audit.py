@@ -71,7 +71,6 @@ def contra_volume(prints, no_price, started, ended):
     return round(total, 4)
 
 
-
 # Bound the optional public market-print reads. These are observation-only
 # and never authorize, cancel, or modify any production order.
 _MAX_PRINT_ORDERS = 6
@@ -92,8 +91,7 @@ def trade_through_samples(client, events, exchange_orders, now):
         if isinstance(order, dict) and order.get("order_id")
     }
     intents = {
-        e.get("client_order_id"): e for e in events
-        if e.get("event") == "intent"
+        e.get("client_order_id"): e for e in events if e.get("event") == "intent"
     }
     matched = []
     for e in events:
@@ -131,7 +129,9 @@ def trade_through_samples(client, events, exchange_orders, now):
         ticker = intent.get("ticker")
         if not ticker or not isinstance(ticker, str):
             continue
-        matched.append((start, oid, ticker, int(start.timestamp()), int(end.timestamp()), end))
+        matched.append(
+            (start, oid, ticker, int(start.timestamp()), int(end.timestamp()), end)
+        )
     matched.sort(reverse=True)
     results = {}
     for _start, oid, ticker, first, last, end in matched[:_MAX_PRINT_ORDERS]:
@@ -142,7 +142,12 @@ def trade_through_samples(client, events, exchange_orders, now):
             rows, cursor, seen = [], "", set()
             try:
                 for _ in range(6):
-                    params = {"ticker": ticker, "min_ts": first, "max_ts": last, "limit": 200}
+                    params = {
+                        "ticker": ticker,
+                        "min_ts": first,
+                        "max_ts": last,
+                        "limit": 200,
+                    }
                     if cursor:
                         params["cursor"] = cursor
                     page = client._request("GET", "/markets/trades", params)
