@@ -7,11 +7,34 @@ from live.nfl_projections import next_week
 
 
 def test_delayed_monday_score_does_not_publish_old_week():
-    games = pd.DataFrame([
-        {"gameday": "2026-10-19", "gametime": "20:15", "season": 2026, "week": 6, "home_score": None, "total_line": 47},
-        {"gameday": "2026-10-22", "gametime": "20:15", "season": 2026, "week": 7, "home_score": None, "total_line": 45},
-        {"gameday": "2026-10-25", "gametime": "13:00", "season": 2026, "week": 7, "home_score": None, "total_line": 48},
-    ])
+    games = pd.DataFrame(
+        [
+            {
+                "gameday": "2026-10-19",
+                "gametime": "20:15",
+                "season": 2026,
+                "week": 6,
+                "home_score": None,
+                "total_line": 47,
+            },
+            {
+                "gameday": "2026-10-22",
+                "gametime": "20:15",
+                "season": 2026,
+                "week": 7,
+                "home_score": None,
+                "total_line": 45,
+            },
+            {
+                "gameday": "2026-10-25",
+                "gametime": "13:00",
+                "season": 2026,
+                "week": 7,
+                "home_score": None,
+                "total_line": 48,
+            },
+        ]
+    )
     assert next_week(games, pd.Timestamp("2026-10-19T23:00:00Z")) == (2026, 6)
     assert next_week(games, pd.Timestamp("2026-10-20T02:15:00Z")) == (2026, 7)
     assert next_week(games, pd.Timestamp("2026-10-20T14:15:00Z")) == (2026, 7)
@@ -20,7 +43,15 @@ def test_delayed_monday_score_does_not_publish_old_week():
 
 
 def test_next_week_rejects_naive_clock():
-    games = pd.DataFrame({"gameday": ["2026-10-22"], "season": [2026],
-                          "week": [7], "home_score": [None], "total_line": [44], "gametime": ["20:15"]})
+    games = pd.DataFrame(
+        {
+            "gameday": ["2026-10-22"],
+            "season": [2026],
+            "week": [7],
+            "home_score": [None],
+            "total_line": [44],
+            "gametime": ["20:15"],
+        }
+    )
     with pytest.raises(ValueError, match="aware"):
         next_week(games, pd.Timestamp("2026-10-20T12:00:00"))
