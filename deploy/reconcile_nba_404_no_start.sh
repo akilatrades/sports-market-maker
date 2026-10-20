@@ -25,9 +25,14 @@ runuser -u trader -- .venv/bin/python -m pytest -q \
 JOURNAL=/home/trader/prod-nba-auto/journal.jsonl
 [[ -f "$JOURNAL" ]] || { echo "Missing NBA journal"; exit 2; }
 BACKUP=/home/trader/prod-nba-auto/journal.before-404-reconciliation.20261020.jsonl
-[[ ! -e "$BACKUP" ]] || { echo "Original backup already exists; refusing overwrite."; exit 2; }
-cp -p -- "$JOURNAL" "$BACKUP"
-chmod 600 "$BACKUP"
+if [[ -e "$BACKUP" ]]; then
+    cmp -s "$JOURNAL" "$BACKUP" || {
+        echo "Journal differs from original backup; refusing repeat reconciliation."; exit 2;
+    }
+else
+    cp -p -- "$JOURNAL" "$BACKUP"
+    chmod 600 "$BACKUP"
+fi
 echo "Verifying signed Kalshi orders, fills and positions; no exchange writes..."
 systemd-run --wait --pipe --collect \
     --uid=trader \
