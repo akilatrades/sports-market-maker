@@ -49,6 +49,8 @@ Before deploying or enabling v3 on the live Droplet:
    failures or document a focused equivalent test run.
 2. Compare existing NBA accepted/resting orders and budget with the signed,
    **read-only** exchange account. Explicitly resolve every unknown order.
+   Require **zero resting v2 NBA orders** before v3 activation so the new
+   cancellation policy never silently changes an already-posted v2 order.
 3. Verify systemd worker revision, model/books/injury source timestamps,
    account/shard funding, shared NFL account locks, and Kill switch.
 4. Require owner authorization for the new strategy cohort and approval to
