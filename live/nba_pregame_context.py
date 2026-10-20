@@ -22,10 +22,21 @@ from kalshi.books import normalize_name
 API = "https://api.rotowire.com/Basketball/NBA"
 ALLOWED_ENDPOINTS = {"DailyProjectedMinutes", "Lineups"}
 TEAM_ALIASES = {
-    "BKN": "BKN", "BRK": "BKN", "BK": "BKN",
-    "GS": "GS", "GSW": "GS", "NYK": "NY", "NY": "NY",
-    "NOP": "NO", "NO": "NO", "PHX": "PHX", "PHO": "PHX",
-    "SAS": "SA", "SA": "SA", "UTA": "UTAH", "UTAH": "UTAH",
+    "BKN": "BKN",
+    "BRK": "BKN",
+    "BK": "BKN",
+    "GS": "GS",
+    "GSW": "GS",
+    "NYK": "NY",
+    "NY": "NY",
+    "NOP": "NO",
+    "NO": "NO",
+    "PHX": "PHX",
+    "PHO": "PHX",
+    "SAS": "SA",
+    "SA": "SA",
+    "UTA": "UTAH",
+    "UTAH": "UTAH",
 }
 MAX_SOURCE_AGE_MINUTES = 15
 
@@ -56,10 +67,16 @@ def fetch(endpoint, day, key):
     """Read only from documented licensed endpoints, never cache API keys."""
     if endpoint not in ALLOWED_ENDPOINTS or not key:
         raise ValueError("Unconfigured or unsupported pregame vendor endpoint")
-    url = API + "/" + endpoint + ".php?" + urllib.parse.urlencode(
-        {"key": key, "date": day, "format": "json"}
+    url = (
+        API
+        + "/"
+        + endpoint
+        + ".php?"
+        + urllib.parse.urlencode({"key": key, "date": day, "format": "json"})
     )
-    request = urllib.request.Request(url, headers={"User-Agent": "sports-market-maker/1"})
+    request = urllib.request.Request(
+        url, headers={"User-Agent": "sports-market-maker/1"}
+    )
     with urllib.request.urlopen(request, timeout=12) as response:
         if response.geturl().split("?")[0] != API + "/" + endpoint + ".php":
             raise ValueError("Pregame vendor unexpectedly redirected")
@@ -115,7 +132,11 @@ def parse_lineups(payload, day):
             key = (day, code)
             if not code or key in status:
                 raise ValueError("Duplicate or missing pregame lineup team")
-            value = str(team.get("LineupStatus") or team.get("Status") or "").strip().lower()
+            value = (
+                str(team.get("LineupStatus") or team.get("Status") or "")
+                .strip()
+                .lower()
+            )
             is_confirmed = value in {"c", "confirmed", "official"}
             status[key] = "confirmed" if is_confirmed else "unverified"
             if not is_confirmed:
@@ -195,9 +216,7 @@ def enrich(frame, context, now):
         lineup_statuses.get((k[0], k[1]), "unverified") for k in keys
     ]
     out["confirmed_starter"] = [
-        k[2] in starters[(k[0], k[1])]
-        if (k[0], k[1]) in starters
-        else None
+        k[2] in starters[(k[0], k[1])] if (k[0], k[1]) in starters else None
         for k in keys
     ]
     return out
