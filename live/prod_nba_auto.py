@@ -573,15 +573,29 @@ def pre_submit_kickoff_ok(tip_utc, now):
         return False
 
 
-def room_for(attempts, active, row, cost, now, shared=None):
+def room_for(attempts, active, row, cost, now, shared=None, rejected=frozenset()):
     today = now.astimezone(__import__("zoneinfo").ZoneInfo("America/New_York")).date()
     total = sum(reserve(a["cost"]) for a in attempts)
     open_now = sum(reserve(a["cost"]) for a in active)
+    # An exchange-confirmed rejected submission never became a position.
+    # Preserve it in lifetime/daily spend but do not consume the exposure
+    # slots reserved for genuinely accepted orders on the same game/team.
+    accepted_attempts = [
+        a for a in attempts if a.get("client_order_id") not in rejected
+    ]
     game_cost = sum(
-        reserve(a["cost"]) for a in attempts if a["game_id"] == str(row.game_id)
+        reserve(a["cost"])
+        for a in accepted_attempts
+        if a["game_id"] == str(row.game_id)
     )
-    team_cost = sum(reserve(a["cost"]) for a in attempts if a["team"] == str(row.team))
-    game_orders = sum(a["game_id"] == str(row.game_id) for a in attempts)
+    team_cost = sum(
+        reserve(a["cost"])
+        for a in accepted_attempts
+        if a["team"] == str(row.team)
+    )
+    game_orders = sum(
+        a["game_id"] == str(row.game_id) for a in accepted_attempts
+    )
     day_cost = sum(
         reserve(a["cost"])
         for a in attempts
@@ -716,7 +730,7 @@ def pass_once(client, env, frame, now, journal, *, dry=False):
             skipped["invalid_order_or_price"] += 1
             continue
         while order.count > 0 and not room_for(
-            attempts, state["active"], row, cost, now, shared=shared
+            attempts, state["active"], row, cost, now, shared=shared, rejected=rejected
         ):
             order.count -= 1
             cost = round(order.count * order.price_cents / 100, 2)
