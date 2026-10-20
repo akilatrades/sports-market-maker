@@ -45,6 +45,8 @@ const AccountView = (() => {
     set("accepted", count(s.accepted_orders)); set("filled", count(s.filled_orders)); set("contracts", count(s.contracts_filled));
     set("fill-cost", money(s.fill_cost_dollars)); set("fees", money(s.fill_fees_dollars)); set("resting", count(a.resting_orders));
     set("budget", money(s.remaining_submission_budget_dollars));
+    set("order-game-limits", finite(s.limits?.per_order) && finite(s.limits?.per_game) ? `${money(s.limits.per_order)} / ${money(s.limits.per_game)}` : "—");
+    set("active-limit", money(s.limits?.active));
     node("budget-bar").value = s.submitted_reserved_dollars ?? 0;
     node("budget-bar").max = s.submission_limit_dollars ?? 50;
     node("budget-bar").hidden = !finite(s.submitted_reserved_dollars);
