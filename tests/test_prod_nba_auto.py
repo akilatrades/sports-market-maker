@@ -106,10 +106,14 @@ def test_nba_baseline_retains_no_side_and_passive_price():
 
 def test_separate_risk_caps_and_state():
     assert str(nba.STATE).endswith("prod-nba-auto")
-    assert nba.MAX_GROSS_COST == 50
-    assert nba.MAX_ACTIVE_COST == 15
-    assert nba.MAX_ORDER_COST == 3
-    assert nba.MAX_DAILY_COST == 30
+    assert nba.MAX_GROSS_COST == 75
+    assert nba.MAX_ACTIVE_COST == 20
+    assert nba.MAX_ORDER_COST == 4
+    assert nba.MAX_GAME_COST == 12
+    assert nba.MAX_TEAM_COST == 8
+    assert nba.MAX_DAILY_COST == 35
+    assert nba.MAX_GAME_ORDERS == 4
+    assert nba.MAX_CONTRACTS == 8
     assert nba.WINDOW == (2.0, 6.0)
 
 
@@ -469,3 +473,80 @@ def test_unavailable_live_resting_quote_halts_until_exchange_expiry(
             NOW,
             events,
         )
+
+
+def _past_attempt(n, game, team, cost):
+    return {
+        "client_order_id": "test-client-" + str(n),
+        "game_id": str(game),
+        "team": team,
+        "cost": cost,
+        "utc": NOW.isoformat(),
+    }
+
+
+def test_more_distinct_orders_can_fit_without_bypassing_order_limits():
+    row = SimpleNamespace(game_id=20261020, team="LAL")
+    old_attempts = [
+        _past_attempt(1, 20261020, "LAL", 2),
+        _past_attempt(2, 20261020, "LAL", 2),
+    ]
+    assert nba.room_for(old_attempts, [], row, 1.0, NOW)
+    assert not nba.budget_blockers(old_attempts, [], row, 1.0, NOW)
+    assert nba.reserve(4.0) <= nba.MAX_ACTIVE_COST
+    assert nba.MAX_ACTIVE_COST <= 25.0  # shared cross-sport active cap
+    assert nba.MAX_DAILY_COST <= 40.0  # shared daily cap
+    assert nba.MAX_GROSS_COST <= 100.0  # shared lifetime cap
+
+
+def test_game_and_team_budget_reasons_are_distinct():
+    row = SimpleNamespace(game_id=20261020, team="LAL")
+    team_filled = [
+        _past_attempt(i, 20261020, "LAL", 2.5) for i in range(3)
+    ]
+    reasons = nba.budget_blockers(team_filled, [], row, 1.0, NOW)
+    assert "nba_per_team_submissions" in reasons
+    assert "nba_per_game_submissions" not in reasons
+    assert "nba_game_order_count" not in reasons
+
+    game_filled = [
+        _past_attempt(i, 20261020, "OTHER" + str(i), 3.0) for i in range(3)
+    ]
+    reasons = nba.budget_blockers(game_filled, [], row, 2.0, NOW)
+    assert "nba_per_game_submissions" in reasons
+    assert "nba_per_team_submissions" not in reasons
+
+
+def test_order_count_and_remaining_submission_allowance_still_bind():
+    row = SimpleNamespace(game_id=20261020, team="LAL")
+    past = [
+        _past_attempt(i, 20261020, "OTHER" + str(i), 1.0)
+        for i in range(nba.MAX_GAME_ORDERS)
+    ]
+    reasons = nba.budget_blockers(past, [], row, 0.5, NOW)
+    assert "nba_game_order_count" in reasons
+    assert "nba_per_game_submissions" not in reasons
+
+    many_games = [
+        _past_attempt(i, i + 100, "OTHER" + str(i), 4.0)
+        for i in range(20)
+    ]
+    for a in many_games:
+        a["utc"] = (NOW - timedelta(days=7)).isoformat()
+    reasons = nba.budget_blockers(many_games, [], row, 0.5, NOW)
+    assert "nba_lifetime_submissions" in reasons
+    assert "nba_daily_submissions" not in reasons
+
+
+def test_active_and_shared_risk_limits_cannot_be_overridden():
+    row = SimpleNamespace(game_id=20261020, team="LAL")
+    active = [
+        _past_attempt(i, i + 100, "OTHER" + str(i), 3.5)
+        for i in range(5)
+    ]
+    reasons = nba.budget_blockers(active, active, row, 2.0, NOW)
+    assert "nba_active_exposure" in reasons
+
+    import live.shared_account_risk as shared_risk
+    # These caps remain independent, even when the NBA cohort enlarges.
+    assert shared_risk.LIMITS == {"lifetime": 100, "daily": 40, "active": 25}
