@@ -38,7 +38,12 @@ MAX_DAILY_COST = 35.0
 MAX_GAME_ORDERS = 4
 MAX_CONTRACTS = 2  # smaller live validation fills; sample more markets
 FEE_RESERVE = 1.10
-WINDOW = (2.0, 6.0)  # baseline NBA rule: 2–6 h before verified tip
+WINDOW = (2.0, 6.0)  # NEW orders still start 2–6 hours before tip
+# ALREADY-ACCEPTED orders may rest until the verified scheduled tip.
+# This is separate from the entry window: the final two hours were not
+# eligible for new posts, but cutting off existing maker liquidity then
+# made the live execution policy differ from historical tests.
+RESTING_WINDOW = (0.0, 6.0)
 STATE = Path("/home/trader/prod-nba-auto")
 REQUIRED = {
     "KALSHI_ENV": "prod",
@@ -224,7 +229,7 @@ def resting_cancel_reason(row, intent, market, fee_bound):
         return "unverified_roster_injury_or_model"
     try:
         hours = float(row["hours_to_tip"])
-        if not math.isfinite(hours) or not WINDOW[0] < hours <= WINDOW[1]:
+        if not math.isfinite(hours) or not RESTING_WINDOW[0] < hours <= RESTING_WINDOW[1]:
             return "outside_verified_pretip_window"
 
         cents = int(intent["price_cents"])
@@ -658,9 +663,10 @@ def order_from_row(row, now, no_price=None):
         side="no",
         count=count,
         price_cents=cents,
-        # Longer maker wait, bounded by the existing 2h pre-tip safety cutoff.
-        # Exchange-side expiry protects against bot/network outage.
-        expiration_ts=int(tip.timestamp()) - 7200,
+        # Existing orders rest until *scheduled tip* unless a verified
+        # injury, roster, probability, market or fee change cancels earlier.
+        # Exchange-side expiry still works even if the bot is offline.
+        expiration_ts=int(tip.timestamp()),
         post_only=True,
     )
     return order, cost
