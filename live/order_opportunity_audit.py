@@ -183,9 +183,10 @@ def trade_through_samples(client, events, exchange_orders, now):
 
 
 _CLOSED_ORDER_CACHE = {}
+_ORDER_LOOKUP_OFFSET = 0
 
 
-def backfill_owned_orders(client, cohorts, exchange_orders, *, limit=30):
+def backfill_owned_orders(client, cohorts, exchange_orders, *, limit=3):
     """Read older owned order IDs missing from the general order list.
 
     Kalshi may paginate or age out records from the aggregate listing; a
@@ -211,7 +212,15 @@ def backfill_owned_orders(client, cohorts, exchange_orders, *, limit=30):
                 found[oid] = _CLOSED_ORDER_CACHE[oid]
             elif oid and re.fullmatch(r"[A-Za-z0-9-]{1,128}", oid):
                 missing.append(oid)
-    for oid in list(dict.fromkeys(missing))[:limit]:
+    unique = list(dict.fromkeys(missing))
+    global _ORDER_LOOKUP_OFFSET
+    if unique:
+        offset = _ORDER_LOOKUP_OFFSET % len(unique)
+        to_check = (unique[offset:] + unique[:offset])[:limit]
+        _ORDER_LOOKUP_OFFSET += limit
+    else:
+        to_check = []
+    for oid in to_check:
         try:
             page = client._request("GET", f"/portfolio/orders/{oid}")
             record = page.get("order")
