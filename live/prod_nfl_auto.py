@@ -582,8 +582,7 @@ def pass_once(client, env, frame, now, journal, *, dry=False):
     from live.quote_shadow import shadow_quotes
 
     research_quotes = [
-        {"ticker": str(row.ticker), **shadow_quotes(row)}
-        for row in candidates[:5]
+        {"ticker": str(row.ticker), **shadow_quotes(row)} for row in candidates[:5]
     ]
     skipped = Counter()
 
