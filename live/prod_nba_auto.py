@@ -854,8 +854,13 @@ def pass_once(client, env, frame, now, journal, *, dry=False):
         blockers = []
         while order.count > 0:
             blockers = budget_blockers(
-                attempts, state["active"], row, cost, now,
-                shared=shared, rejected=rejected
+                attempts,
+                state["active"],
+                row,
+                cost,
+                now,
+                shared=shared,
+                rejected=rejected,
             )
             if not blockers:
                 break
