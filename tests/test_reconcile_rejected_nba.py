@@ -129,5 +129,9 @@ def test_rejected_submissions_do_not_use_nba_game_slots_but_remain_charged():
     assert not nba.room_for(prior, [], row, 0.8, NOW)
     assert nba.room_for(prior, [], row, 0.8, NOW, rejected=rejected)
     assert not nba.room_for(prior, [], row, 49.0, NOW, rejected=rejected)
-    # Accepted trades still use the original game/team dollar and order caps.
-    assert not nba.room_for(prior, [], row, 0.8, NOW, rejected={"reject-one"})
+    # An accepted trade remains subject to game/team exposure limits.
+    assert nba.room_for(prior, [], row, 0.8, NOW, rejected={"reject-one"})
+    with_one_large_acceptance = [prior[0], {**prior[1], "cost": 2.5}]
+    assert not nba.room_for(
+        with_one_large_acceptance, [], row, 0.8, NOW, rejected={"reject-one"}
+    )
