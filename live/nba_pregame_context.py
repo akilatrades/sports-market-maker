@@ -231,7 +231,10 @@ def historical_minutes_projection(frame):
     baseline = pd.to_numeric(frame.historical_minutes_baseline, errors="coerce")
     last = pd.to_numeric(frame.last_game_minutes, errors="coerce")
     starts = pd.to_numeric(frame.recent_start_rate, errors="coerce")
-    estimate = (0.80 * baseline + 0.20 * last).clip(0, 44)
+    # Held-out 2025-26 minute accuracy: the 80/20 last-game blend WORSE
+    # than the prior-only EW benchmark (MAE 4.969 vs 4.953 minutes).
+    # Therefore keep the empirically stronger EW baseline unaltered.
+    estimate = baseline.clip(0, 44)
     # Wide enough to communicate rotation instability, not a calibrated CI.
     uncertainty = 6.0 + 0.5 * (last - baseline).abs()
     unstable = starts.isna() | (starts.between(0.2, 0.8))
