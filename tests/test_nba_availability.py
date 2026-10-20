@@ -24,7 +24,9 @@ def test_reported_minutes_cap_is_not_ignored(comment):
         "Probable with minor ankle soreness",
         "Questionable, decision expected before game",
         "Minutes increased each of last three games",
-        "", None, float("nan"),
+        "",
+        None,
+        float("nan"),
     ],
 )
 def test_no_invented_minutes_cap_from_unrelated_news(comment):
