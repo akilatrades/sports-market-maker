@@ -20,11 +20,27 @@ OUT = Path("outputs/nfl/projections")
 LADDERS = OUT / "ladders"
 
 
-def next_week(games):
-    upcoming = games[games.home_score.isna() & games.total_line.notna()]
+def next_week(games, now=None):
+    """Never regenerate a finished fixture week from delayed result feeds.
+
+    NFLverse scores can lag Monday night's final for hours. Filtering only on
+    missing scores republished the OLD week with a fresh timestamp, making the
+    execution worker report a fresh model that could not price next-week props.
+    Dates refer to the actual game day, not the market occurrence timestamp.
+    """
+    now = pd.Timestamp(now if now is not None else datetime.now(UTC))
+    if now.tzinfo is None:
+        raise ValueError("next_week requires an aware timestamp")
+    today = now.tz_convert("America/New_York").date()
+    gameday = pd.to_datetime(games.gameday, errors="coerce").dt.date
+    upcoming = games[
+        games.home_score.isna()
+        & games.total_line.notna()
+        & gameday.ge(today)
+    ]
     if upcoming.empty:
         return None
-    first = upcoming.sort_values(["season", "week"]).iloc[0]
+    first = upcoming.sort_values(["gameday", "season", "week"]).iloc[0]
     return int(first.season), int(first.week)
 
 
