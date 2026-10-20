@@ -473,34 +473,45 @@ def verify_quote(candidate, proposed_no_price=None):
         raise TradingError("Proposed maker quote would cross the YES bid")
 
 
-def select_candidates(frame, events, state, now):
-    attempts, _ = records(events)
+def select_candidates(frame, events, state, now, diagnostics=None):
+    """Return executable signals and record where candidate opportunities die.
+
+    Stage counts are private aggregate telemetry; they do not authorize
+    an order and never relax the frozen production entry policy.
+    """
+    counts = diagnostics if diagnostics is not None else {}
+    counts["open_markets"] = len(frame)
     if frame.empty:
         return []
-    eligible = frame[
-        frame.injury_status.fillna("").eq("")
-        & frame.hours_to_tip.between(*WINDOW)
-        & frame.tip_utc.notna()
-        & frame.ticker.astype(str).str.startswith(
+    attempts, _ = records(events)
+    verified = frame[frame.injury_status.fillna("").eq("") & frame.tip_utc.notna()]
+    counts["verified_availability_and_tip"] = len(verified)
+    in_window = verified[verified.hours_to_tip.between(*WINDOW)]
+    counts["in_entry_window"] = len(in_window)
+    eligible = in_window[
+        in_window.ticker.astype(str).str.startswith(
             ("KXNBAPTS-", "KXNBAREB-", "KXNBAAST-", "KXNBA3PT-")
         )
     ]
+    counts["supported_prop_series"] = len(eligible)
     if eligible.empty:
         return []
     found = candidate_orders(eligible, "no_seller_bookline", window=WINDOW)
+    counts["passed_book_model_and_spread"] = len(found)
     if found.empty:
         return []
     found = found[found.side.eq("no")].copy()
+    counts["no_side_candidates"] = len(found)
     found["edge"] = pd.to_numeric(found.edge, errors="coerce")
-    # Extremely large modeled edges are suspicious: wrong player, mismatched
-    # line, or stale sportsbook feed. Such markets need human review.
+    # Large apparent edges often imply a wrong line or stale book.
     found = found[found.edge.between(0, 0.15)]
+    counts["passed_edge_sanity"] = len(found)
     already = {a["ticker"] for a in attempts}
     found = found[~found.ticker.isin(already)]
+    counts["not_previously_attempted"] = len(found)
     if found.empty:
         return []
     return list(found.sort_values("edge", ascending=False).itertuples())
-
 
 def order_from_row(row, now, no_price=None):
     price = float(row.price) if no_price is None else float(no_price)
@@ -585,6 +596,7 @@ def pass_once(client, env, frame, now, journal, *, dry=False):
     from kalshi.fees import live_maker_fee_bound
 
     skipped = Counter()
+    funnel = {}
 
     def finish(decision, placed=False):
         report = {
@@ -593,15 +605,18 @@ def pass_once(client, env, frame, now, journal, *, dry=False):
             "decision": decision,
             "placed": placed,
             "candidate_count": len(candidates),
+            "selection_funnel": dict(funnel),
             "skipped": dict(skipped),
             "inputs": frame.attrs.get("diagnostics", {}),
             "attempts": len(attempts),
             "gross_reserved": sum(reserve(a["cost"]) for a in attempts),
         }
-        atomic_write(
-            journal.parent / "last_scan.json",
-            (json.dumps(report, indent=2) + "\n").encode(),
-        )
+        # A read-only dry scan must NEVER replace the last live scan report.
+        if not dry:
+            atomic_write(
+                journal.parent / "last_scan.json",
+                (json.dumps(report, indent=2) + "\n").encode(),
+            )
         print("NBA DECISION:", decision, dict(skipped), flush=True)
         return placed
 
@@ -620,7 +635,7 @@ def pass_once(client, env, frame, now, journal, *, dry=False):
         free = money(client.balance()["balance"])
     else:
         state = {"active": []}
-    candidates = select_candidates(frame, events, state, now)
+    candidates = select_candidates(frame, events, state, now, diagnostics=funnel)
     if not dry:
         min_ts = (
             int(datetime.fromisoformat(attempts[0]["utc"]).timestamp()) - 60
