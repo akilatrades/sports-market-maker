@@ -14,3 +14,30 @@ data/hoopr/
 /data/books/
 /outputs/model_refresh/*.parquet
 /outputs/polymarket/markets.csv.gz
+
+# Local secrets and credentials (never commit these)
+.env
+.env.*
+!.env.example
+!.env.sample
+*.pem
+*.key
+*.p8
+*.p12
+*.pfx
+*.secrets.json
+*.credentials.json
+credentials.json
+id_rsa
+id_rsa.*
+id_ed25519
+id_ed25519.*
+secrets/
+private-keys/
+*.sqlite
+*.sqlite3
+*.db
+*.log
+# Owner-only trade journals and local account snapshots
+journal.jsonl
+*.private.json
