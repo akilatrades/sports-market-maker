@@ -488,6 +488,21 @@ def collect(client, state=STATE):
         )
         for sport, cohort in cohort_events.items()
     }
+    # Account-only forward test: never exported to the recruiter-facing site.
+    from live.nba_validation import summarize_nba_validation
+
+    if cohort_events["nba"] is None:
+        result["nba_validation"] = {"status": "unavailable"}
+    else:
+        try:
+            result["nba_validation"] = summarize_nba_validation(
+                cohort_events["nba"],
+                result["order_audit"]["nba"],
+                result["live_pnl"]["nba"],
+                datetime.now(UTC),
+            )
+        except TradingError:
+            result["nba_validation"] = {"status": "invalid_or_unreconciled"}
     result["kill_switch"] = (state / "KILL").exists()
     titles = market_titles()
     if state.name == "prod-nba-auto":
