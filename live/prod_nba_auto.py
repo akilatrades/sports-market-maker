@@ -248,7 +248,10 @@ def resting_cancel_reason(row, intent, market, fee_bound):
         if not math.isfinite(p_yes) or not 0 <= p_yes <= 1:
             return "unverified_current_probability"
 
-        if not isinstance(market, dict) or market.get("status") not in {"active", "open"}:
+        if not isinstance(market, dict) or market.get("status") not in {
+            "active",
+            "open",
+        }:
             return "market_not_active"
         bid = float(market["yes_bid_dollars"])
         ask = float(market["yes_ask_dollars"])
@@ -260,9 +263,10 @@ def resting_cancel_reason(row, intent, market, fee_bound):
             return "resting_quote_no_longer_passive"
         if not isinstance(fee_bound, (float, int)) or not math.isfinite(fee_bound):
             return "unknown_current_fees"
-        if fee_bound < 0 or count * no_price + fee_bound > reserve(
-            count * no_price
-        ) + 1e-9:
+        if (
+            fee_bound < 0
+            or count * no_price + fee_bound > reserve(count * no_price) + 1e-9
+        ):
             return "fee_exceeds_original_reservation"
         net_edge = 1 - p_yes - no_price - fee_bound / count
         if not math.isfinite(net_edge) or net_edge < RESTING_MIN_NET_EDGE - 1e-9:
@@ -303,7 +307,12 @@ def cancel_invalid_resting(client, journal, state, frame, now, events):
         order_id = str(resting.get("order_id") or "")
         ticker = str(resting.get("ticker") or "")
         intent = intents_by_client.get(accepted_by_id.get(order_id))
-        if not order_id or not ticker or intent is None or intent.get("ticker") != ticker:
+        if (
+            not order_id
+            or not ticker
+            or intent is None
+            or intent.get("ticker") != ticker
+        ):
             raise TradingError("Cannot reconcile owned resting order: HALT")
 
         row = current.get(ticker)
