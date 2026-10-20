@@ -722,3 +722,26 @@ def test_invalid_reported_historical_minutes_fail_closed(tmp_path, monkeypatch):
     publish(frame, tmp_path, NOW)
     out = nba.nba_candidates(NOW, latest=tmp_path / "latest.csv")
     assert out.injury_status.iloc[0] == "UNVERIFIED_HISTORICAL_MINUTES"
+
+
+def test_late_window_candidates_are_shadow_only_even_if_they_qualify(tmp_path):
+    row = priced()
+    row.loc[0, "tip_utc"] = pd.Timestamp(NOW + timedelta(hours=1))
+    row.loc[0, "hours_to_tip"] = 1.0
+
+    # Regular production window stays at 2-6 hours. The research cohort
+    # observes but can NEVER feed the production POST loop.
+    assert nba.select_candidates(row, [], {"active": []}, NOW) == []
+    study = nba.select_candidates(
+        row, [], {"active": []}, NOW, window=(0.5, 2.0)
+    )
+    assert len(study) == 1
+
+    class NoTradingClient:
+        def place(self, *_):
+            raise AssertionError("Shadow data placed a funded NBA trade")
+
+    assert not nba.pass_once(
+        NoTradingClient(), {}, row, NOW, tmp_path / "journal.jsonl", dry=True
+    )
+    assert not (tmp_path / "last_scan.json").exists()
