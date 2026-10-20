@@ -74,8 +74,10 @@ def contra_volume(prints, no_price, started, ended):
 
 # Bound the optional public market-print reads. These are observation-only
 # and never authorize, cancel, or modify any production order.
-_MAX_PRINT_ORDERS = 6
+_MAX_PRINT_ORDERS = 2
+_MAX_PRINT_PAGES = 2
 _PRINT_CACHE = {}
+_PRINT_ROUND_ROBIN = 0
 
 
 def trade_through_samples(client, events, exchange_orders, now):
@@ -135,14 +137,21 @@ def trade_through_samples(client, events, exchange_orders, now):
         )
     matched.sort(reverse=True)
     results = {}
-    for _start, oid, ticker, first, last, end in matched[:_MAX_PRINT_ORDERS]:
+    global _PRINT_ROUND_ROBIN
+    if matched:
+        offset = _PRINT_ROUND_ROBIN % len(matched)
+        selected = (matched[offset:] + matched[:offset])[:_MAX_PRINT_ORDERS]
+        _PRINT_ROUND_ROBIN += _MAX_PRINT_ORDERS
+    else:
+        selected = []
+    for _start, oid, ticker, first, last, end in selected:
         key = (ticker, first, last)
         if key in _PRINT_CACHE:
             rows = _PRINT_CACHE[key]
         else:
             rows, cursor, seen = [], "", set()
             try:
-                for _ in range(6):
+                for _ in range(_MAX_PRINT_PAGES):
                     params = {
                         "ticker": ticker,
                         "min_ts": first,
