@@ -121,6 +121,61 @@ def sportsbook_rows(path):
         return {"status": "unreadable", "rows": None}
 
 
+def scan_result(path, now):
+    """A working timer is not proof that the last trading scan succeeded."""
+    if not path.exists():
+        return {"status": "no_completed_scan"}
+    try:
+        info = json.loads(path.read_text())
+        when = datetime.fromisoformat(
+            str(info.get("run_utc") or info.get("utc")).replace("Z", "+00:00")
+        )
+        if when.tzinfo is None:
+            raise ValueError("Naive timestamp")
+        age = (now - when).total_seconds() / 60
+        if age < 0:
+            raise ValueError("Scan timestamp in the future")
+        return {
+            "status": "recent_completed_scan" if age <= 20 else "stale_scan",
+            "age_minutes": round(age, 1),
+            "decision": info.get("decision"),
+            "strategy_version": info.get("strategy_version"),
+        }
+    except (OSError, TypeError, ValueError, KeyError):
+        return {"status": "unreadable_scan"}
+
+
+def nfl_data_status(path, now):
+    """Local input freshness only; NOT a validation of any trading edge."""
+    bundle = path / "active"
+    check = path / "last_check.json"
+    if not bundle.is_dir() or not check.exists():
+        return {"status": "missing_verified_bundle"}
+    try:
+        receipt = json.loads(check.read_text())
+        stamp = datetime.fromisoformat(receipt["checked_utc"])
+        if stamp.tzinfo is None:
+            raise ValueError("No timezone")
+        check_age = (now - stamp).total_seconds() / 60
+        retrieved = json.loads((bundle / "data/nfl/retrieval.json").read_text())
+        source_date = datetime.fromisoformat(retrieved["retrieved"]).replace(
+            tzinfo=UTC
+        )
+        age = (now - source_date).total_seconds() / 3600
+        if check_age < 0 or age < 0:
+            raise ValueError("Future data")
+        okay = check_age <= 20 and age <= 48
+        return {
+            "status": "locally_fresh" if okay else "stale",
+            "check_age_minutes": round(check_age, 1),
+            "schedule_age_hours": round(age, 1),
+            "model_ladder": receipt.get("model_ladder"),
+            "source_commit_short": str(receipt.get("source_commit", ""))[:12],
+        }
+    except (OSError, TypeError, ValueError, KeyError):
+        return {"status": "unreadable_verified_bundle"}
+
+
 def snapshot(root=STATE_ROOT, now=None):
     now = now or datetime.now(UTC)
     nba = root / "prod-nba-auto" / "inputs"
@@ -135,6 +190,13 @@ def snapshot(root=STATE_ROOT, now=None):
             key: {unit: service(unit) for unit in units} for key, units in UNITS.items()
         },
         "nba_inputs": model_bundle(nba, now),
+        "nfl_verified_inputs": nfl_data_status(
+            root / "prod-nfl-auto" / "inputs" / "nfl", now
+        ),
+        "last_completed_scans": {
+            sport: scan_result(root / f"prod-{sport}-auto" / "last_scan.json", now)
+            for sport in MARKETS
+        },
         "nba_sportsbooks": sportsbook_rows(nba / "nba_books.csv"),
         "journals": {
             market: journal_summary(root / f"prod-{market}-auto" / "journal.jsonl")
