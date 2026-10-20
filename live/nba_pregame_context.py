@@ -237,7 +237,7 @@ def historical_minutes_projection(frame):
     estimate = baseline.clip(0, 44)
     # Wide enough to communicate rotation instability, not a calibrated CI.
     uncertainty = 6.0 + 0.5 * (last - baseline).abs()
-    unstable = starts.isna() | (starts.between(0.2, 0.8))
+    unstable = starts.isna() | (starts.between(0.2, 0.8, inclusive="neither"))
     uncertainty = uncertainty + unstable.astype(float) * 2
     result = frame.copy()
     result["minutes_forecast_internal"] = estimate
