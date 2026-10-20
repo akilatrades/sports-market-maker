@@ -5,8 +5,10 @@
 | Tip-off (ET) | Player | Bet | Price | Model | Edge | Contracts | Risk | Mode |
 |---|---|---|---:|---:|---:|---:|---:|---|
 | Tue 3:00 PM | Ausar Thompson | NO 15+ points | 79¢ | 89% | 9¢ | 6 | $4.81 | paper |
+| Tue 3:00 PM | Ausar Thompson | NO 6+ rebounds | 41¢ | 53% | 10¢ | 12 | $5.13 | paper |
 | Tue 3:00 PM | Cade Cunningham | NO 10+ assists | 56¢ | 74% | 17¢ | 8 | $4.62 | paper |
 | Tue 3:00 PM | Cade Cunningham | NO 25+ points | 52¢ | 62% | 8¢ | 9 | $4.84 | paper |
+| Tue 3:00 PM | Cade Cunningham | NO 6+ rebounds | 59¢ | 75% | 14¢ | 8 | $4.86 | paper |
 | Tue 3:00 PM | Derrick White | NO 15+ points | 45¢ | 68% | 21¢ | 11 | $5.15 | paper |
 | Tue 3:00 PM | Derrick White | NO 3+ threes | 52¢ | 61% | 7¢ | 9 | $4.84 | paper |
 | Tue 3:00 PM | Derrick White | NO 8+ assists | 91¢ | 98% | 6¢ | 5 | $4.58 | paper |

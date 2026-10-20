@@ -6,5 +6,5 @@ It goes to real money only after the test in RESEARCH_LOG.md is met.
 | Measure | Value |
 |---|---:|
 | positions | 0 |
-| open | 0 |
-| updated utc | 2026-10-20T13:14+00:00 |
+| open | 15 |
+| updated utc | 2026-10-20T16:03+00:00 |
