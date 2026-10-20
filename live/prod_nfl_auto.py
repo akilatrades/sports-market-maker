@@ -20,6 +20,7 @@ import pandas as pd
 
 from kalshi.api import fetch_market
 from kalshi.paper_props import candidate_orders
+from kalshi.shard_funding import require_funded_shard
 from kalshi.trading import Order, TradingClient, TradingError
 from live.nfl_policy import (
     FEE_RESERVE,
@@ -721,6 +722,17 @@ def pass_once(client, env, frame, now, journal, *, dry=False):
                 f"Skipped {order.ticker}: too close to verified kickoff at submission"
             )
             continue
+
+        # Prevent attempts with no collateral on the market's actual shard.
+        try:
+            order.exchange_index = require_funded_shard(
+                client, order.ticker, reserve(cost)
+            )
+        except TradingError as error:
+            if str(error).startswith("SHARD_UNFUNDED_"):
+                skipped["exchange_shard_unfunded"] += 1
+                return finish("exchange_shard_unfunded")
+            raise
 
         # Durable intent first; any failure after this (including a timeout)
         # disables all future automatic orders until manually investigated.
