@@ -40,6 +40,7 @@ on_exit() {
   if (( finished )); then
     echo "RELEASE VERIFIED: tests and signed preflights passed; old timers restored."
     echo "No exchange POSTs were made by the release script."
+    runuser -u trader -- .venv/bin/python -m tools.production_status || true
   fi
 }
 trap on_exit EXIT
@@ -67,6 +68,7 @@ updated=1
 runuser -u trader -- .venv/bin/python -m pytest -q \
   tests/test_nfl_inputs.py \
   tests/test_nfl_memory.py \
+  tests/test_production_status_health.py \
   tests/test_order_opportunity_audit.py \
   tests/test_account_dashboard.py \
   tests/test_shared_account_risk.py \
