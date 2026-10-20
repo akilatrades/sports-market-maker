@@ -52,3 +52,22 @@ assert(nodes['unfilled-body'].innerHTML.includes('$0.61'));
 assert(nodes['unfilled-body'].innerHTML.includes('$0.03'));
 assert(nodes['unfilled-body'].innerHTML.includes('Closed · 0 fills'));
 assert(!nodes['unfilled-body'].innerHTML.includes('<script>'));
+
+const nbaStudy = {...tradeData, nba_validation:{
+  status:"collecting_live_outcomes", days_elapsed:0,
+  independent_games_accepted:1, independent_games_filled:1,
+  accepted_orders:1, confirmed_zero_fill_orders:0,
+  closed_order_fill_rate:1, maker_share:1,
+  settled_profit_dollars:null, lifetime_allowance_remaining_dollars:44,
+  start_utc:new Date(now-60000).toISOString(), review_due_utc:new Date(now+30*86400000).toISOString()
+}};
+view.render(nbaStudy,document,now);
+assert.equal(nodes['nba-study-day'].textContent,'1');
+assert.equal(nodes['nba-study-games'].textContent,'1');
+assert.equal(nodes['nba-study-filled-games'].textContent,'1');
+assert.equal(nodes['nba-study-fill-rate'].textContent,'100.0%');
+assert.equal(nodes['nba-study-pnl'].textContent,'—');
+assert.equal(nodes['nba-study-budget'].textContent,'$44.00');
+view.render({...nbaStudy,status:"error"},document,now);
+assert.equal(nodes['nba-study-pnl'].textContent,'—');
+assert.equal(nodes['nba-study-fill-rate'].textContent,'—');
