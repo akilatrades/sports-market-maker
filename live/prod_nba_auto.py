@@ -1333,9 +1333,9 @@ def nba_candidates(now, latest=Path("outputs/projections/latest.csv")):
             frame.loc[frame_ids.isin(limited_ids), "injury_status"] = (
                 "REPORTED_MINUTES_RESTRICTION"
             )
-            frame.loc[
-                frame_ids.isin(uncertain_players), "injury_status"
-            ] = "UNCERTAIN_PLAYER_AVAILABILITY"
+            frame.loc[frame_ids.isin(uncertain_players), "injury_status"] = (
+                "UNCERTAIN_PLAYER_AVAILABILITY"
+            )
         else:
             uncertain_teams = set()
         # Keep the baseline explicitly labeled. It is a trailing historical
@@ -1414,9 +1414,9 @@ def nba_candidates(now, latest=Path("outputs/projections/latest.csv")):
             & (frame.p_book.isna() | (frame.book_n < 2))
             & frame.injury_status.eq("")
         )
-        frame.loc[
-            uncertain_no_books, "injury_status"
-        ] = "UNCERTAIN_TEAM_REQUIRES_TWO_BOOKS"
+        frame.loc[uncertain_no_books, "injury_status"] = (
+            "UNCERTAIN_TEAM_REQUIRES_TWO_BOOKS"
+        )
         diagnostics.update(
             rows=len(frame),
             in_entry_window=int(frame.hours_to_tip.between(*WINDOW).sum()),
