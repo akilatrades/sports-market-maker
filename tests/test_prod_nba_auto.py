@@ -317,7 +317,7 @@ def test_resting_quote_retains_order_while_edge_remains_valid():
         ({"injury_status": "NEW_INJURY_NEWS"}, "unverified_roster_injury_or_model"),
         ({"hours_to_tip": 1.9}, "outside_verified_pretip_window"),
         ({"book_n": 1}, "fresh_two_book_consensus_missing"),
-        ({"p_book": 0.48}, "current_net_edge_below_minimum"),
+        ({"p_book": 0.51}, "current_net_edge_below_minimum"),
         ({"p_book": float("nan"), "book_n": 0}, "fresh_two_book_consensus_missing"),
         ({"requires_book": "unknown"}, "unverified_book_requirement"),
     ],
@@ -656,3 +656,64 @@ def test_more_competitive_maker_quote_never_spends_last_3c_edge():
     assert nba.execution_quote(low_edge)[2] == 0
     would_cross = SimpleNamespace(price=0.51, edge=0.08, yes_bid=0.48, yes_ask=0.55)
     assert nba.execution_quote(would_cross)[2] == 0
+
+
+def test_resting_edge_rule_does_not_cancel_accepted_positive_edge():
+    row = priced().iloc[0].copy()
+    row["p_book"] = 0.48  # positive 1 cent edge after a 51c NO quote
+    intent = {
+        "ticker": row.ticker, "price_cents": 51, "count": 2,
+        "probability_source": "sportsbook",
+    }
+    market = {"status": "active", "yes_bid_dollars": 0.40,
+              "yes_ask_dollars": 0.50}
+    assert nba.RESTING_MIN_NET_EDGE == 0.0
+    assert nba.resting_cancel_reason(row, intent, market, 0.0) is None
+
+
+def test_explicit_minutes_restriction_blocks_player_even_with_old_news(
+    tmp_path, monkeypatch
+):
+    import kalshi.books as books
+    import live.nba_trade as trader
+    import markets.nba.live as live
+
+    monkeypatch.setattr(trader, "refresh_quotes", lambda f, now: f.copy())
+    monkeypatch.setattr(books, "attach_latest", lambda f: f.copy())
+    snapshot = priced()
+    snapshot["historical_minutes_baseline"] = 33.0
+    publish(snapshot, tmp_path, NOW - timedelta(hours=1))
+    monkeypatch.setattr(
+        live,
+        "injuries",
+        lambda: pd.DataFrame([
+            {
+                "player_id": 1234, "team": "LAL",
+                "updated": (NOW - timedelta(hours=2)).isoformat(),
+                "out": False,
+                "comment": "Expected to play limited minutes tonight",
+            }
+        ]),
+    )
+    out = nba.nba_candidates(NOW, latest=tmp_path / "latest.csv")
+    assert out.injury_status.iloc[0] == "REPORTED_MINUTES_RESTRICTION"
+    assert out.attrs["diagnostics"]["historical_minutes_available"] == 1
+    assert nba.select_candidates(out, [], {"active": []}, NOW) == []
+
+
+def test_invalid_reported_historical_minutes_fail_closed(tmp_path, monkeypatch):
+    import kalshi.books as books
+    import live.nba_trade as trader
+    import markets.nba.live as live
+
+    monkeypatch.setattr(trader, "refresh_quotes", lambda f, now: f.copy())
+    monkeypatch.setattr(books, "attach_latest", lambda f: f.copy())
+    monkeypatch.setattr(
+        live, "injuries",
+        lambda: pd.DataFrame(columns=["player_id", "team", "updated", "out"])
+    )
+    frame = priced()
+    frame["historical_minutes_baseline"] = 84.0
+    publish(frame, tmp_path, NOW)
+    out = nba.nba_candidates(NOW, latest=tmp_path / "latest.csv")
+    assert out.injury_status.iloc[0] == "UNVERIFIED_HISTORICAL_MINUTES"
