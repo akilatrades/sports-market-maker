@@ -101,9 +101,7 @@ def use_bundle(bundle):
     if not (bundle / "data/nfl/retrieval.json").exists():
         raise ValueError("Incomplete NFL production input bundle")
     os.environ["SMM_NFL_DATA_DIR"] = str(bundle / "data/nfl")
-    os.environ["SMM_NFL_LADDERS_DIR"] = str(
-        bundle / "outputs/nfl/projections/ladders"
-    )
+    os.environ["SMM_NFL_LADDERS_DIR"] = str(bundle / "outputs/nfl/projections/ladders")
     os.environ["SMM_NFL_RETRIEVAL"] = str(bundle / "data/nfl/retrieval.json")
     os.environ["SMM_NFL_BOOKS"] = str(bundle / BOOK)
 
@@ -132,12 +130,14 @@ def sync(directory=CACHE, now=None):
     if not re.fullmatch(r"[0-9a-f]{40}", head):
         raise ValueError("Invalid pinned GitHub commit")
     tree = json.loads(
-        download(f"https://api.github.com/repos/{REPOSITORY}/git/trees/{head}?recursive=1")
+        download(
+            f"https://api.github.com/repos/{REPOSITORY}/git/trees/{head}?recursive=1"
+        )
     )
     paths, blob_shas = source_paths(tree, now)
-    digest = hashlib.sha256(
-        "".join(blob_shas[p] for p in paths).encode()
-    ).hexdigest()[:24]
+    digest = hashlib.sha256("".join(blob_shas[p] for p in paths).encode()).hexdigest()[
+        :24
+    ]
     version = directory / "versions" / digest
     ladder = next(p for p in paths if p.startswith("outputs/nfl/projections/ladders/"))
 
@@ -179,12 +179,17 @@ def sync(directory=CACHE, now=None):
         tmp_link.unlink()
     tmp_link.symlink_to(version, target_is_directory=True)
     os.replace(tmp_link, active)
-    check.write_text(json.dumps({
-        "checked_utc": now.isoformat(),
-        "source_commit": head,
-        "bundle": digest,
-        "model_ladder": ladder.split("/")[-1],
-    }) + "\n")
+    check.write_text(
+        json.dumps(
+            {
+                "checked_utc": now.isoformat(),
+                "source_commit": head,
+                "bundle": digest,
+                "model_ladder": ladder.split("/")[-1],
+            }
+        )
+        + "\n"
+    )
     check.chmod(0o600)
     use_bundle(active)
     return {"status": "verified", "source_commit": head}
