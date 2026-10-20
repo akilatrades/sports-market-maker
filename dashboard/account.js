@@ -69,6 +69,7 @@ const AccountView = (() => {
       awaiting_exchange_audit:"Authenticated NBA order history unavailable",
       incomplete_exchange_order_history:"NBA exchange order history incomplete",
       needs_exchange_reconciliation:"Some NBA orders require reconciliation",
+      needs_submission_reconciliation:"HALT: an NBA submission needs signed exchange reconciliation",
       collecting_live_outcomes:"Live NBA observations · not proof of profitability",
       "30_day_review_due":"30-day checkpoint due · review results before increasing risk",
       invalid_or_unreconciled:"NBA journal validation unavailable"
