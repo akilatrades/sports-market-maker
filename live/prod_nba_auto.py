@@ -1409,6 +1409,15 @@ def nba_candidates(now, latest=Path("outputs/projections/latest.csv")):
             frame.loc[required_context, "injury_status"] = (
                 "INDEPENDENT_PREGAME_MINUTES_REQUIRED"
             )
+            # This requirement is explicit opt-in. Do not trust an expected
+            # or projected lineup as confirmed in the final pre-tip half hour.
+            missing_starters = (
+                frame.hours_to_tip.between(0, 0.5)
+                & frame.lineup_confirmation_status.ne("confirmed")
+            )
+            frame.loc[missing_starters, "injury_status"] = (
+                "FINAL_PREGAME_CONFIRMED_STARTERS_REQUIRED"
+            )
         diagnostics.update(
             vendor_context_configured=bool(context.get("configured")),
             vendor_context_reason=context.get("reason", "available"),
@@ -1459,6 +1468,28 @@ def nba_candidates(now, latest=Path("outputs/projections/latest.csv")):
             )
             frame.loc[game_gap > 900, "p_book"] = float("nan")
             frame.loc[game_gap > 900, "book_n"] = 0
+        # A sportsbook quote may have been cached for four hours. Those
+        # probabilities are too old to validate a live resting order near
+        # tip, especially after lineup/injury changes. Hard age bounds:
+        # 2h early; 75m inside 2.5h of tip. No synthetic fresh timestamps.
+        if "book_updated_utc" in frame:
+            book_stamp = pd.to_datetime(
+                frame.book_updated_utc, utc=True, errors="coerce"
+            )
+            age_minutes = (pd.Timestamp(now) - book_stamp).dt.total_seconds() / 60
+            max_minutes = frame.hours_to_tip.le(2.5).map(
+                {True: 75, False: 120}
+            )
+            stale = (
+                book_stamp.isna()
+                | age_minutes.lt(0)
+                | age_minutes.gt(max_minutes)
+            )
+        else:
+            stale = frame.book_n.ge(2)
+        diagnostics["sportsbook_age_rejected"] = int(stale.sum())
+        frame.loc[stale, "p_book"] = float("nan")
+        frame.loc[stale, "book_n"] = 0
         # Never use a solitary sportsbook as a consensus probability.
         # Previously the entry logic could accept book_n=1, while the v3
         # resting recheck required two books and canceled the same order
