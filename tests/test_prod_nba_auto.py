@@ -545,20 +545,32 @@ def test_active_and_shared_risk_limits_cannot_be_overridden():
 
 
 def test_v3_guard_drains_known_v2_and_rejects_unowned_resting_orders():
-    old = {"client_order_id": "old", "ticker": "KXNBA-V2",
-           "strategy_version": "nba-no-v2-opening-audit"}
-    new = {"client_order_id": "new", "ticker": "KXNBA-V3",
-           "strategy_version": nba.STRATEGY_VERSION}
+    old = {
+        "client_order_id": "old",
+        "ticker": "KXNBA-V2",
+        "strategy_version": "nba-no-v2-opening-audit",
+    }
+    new = {
+        "client_order_id": "new",
+        "ticker": "KXNBA-V3",
+        "strategy_version": nba.STRATEGY_VERSION,
+    }
     accepted = {
         "old": {"order_id": "order-v2"},
         "new": {"order_id": "order-v3"},
     }
-    assert nba.legacy_resting_count(
-        [old, new], accepted, [{"order_id": "order-v2", "ticker": "KXNBA-V2"}]
-    ) == 1
-    assert nba.legacy_resting_count(
-        [old, new], accepted, [{"order_id": "order-v3", "ticker": "KXNBA-V3"}]
-    ) == 0
+    assert (
+        nba.legacy_resting_count(
+            [old, new], accepted, [{"order_id": "order-v2", "ticker": "KXNBA-V2"}]
+        )
+        == 1
+    )
+    assert (
+        nba.legacy_resting_count(
+            [old, new], accepted, [{"order_id": "order-v3", "ticker": "KXNBA-V3"}]
+        )
+        == 0
+    )
     assert nba.legacy_resting_count([old, new], accepted, []) == 0
     for order in (
         {"order_id": "unknown", "ticker": "KXNBA-V2"},
@@ -570,8 +582,7 @@ def test_v3_guard_drains_known_v2_and_rejects_unowned_resting_orders():
     unknown = {**old, "strategy_version": "unknown"}
     with pytest.raises(TradingError, match="HALT"):
         nba.legacy_resting_count(
-            [unknown, new], accepted,
-            [{"order_id": "order-v2", "ticker": "KXNBA-V2"}]
+            [unknown, new], accepted, [{"order_id": "order-v2", "ticker": "KXNBA-V2"}]
         )
 
 
@@ -581,14 +592,19 @@ def test_v3_scan_records_fills_and_waits_for_v2_expiry_without_trading(
     import live.shared_account_risk as shared_risk
 
     attempt = {
-        "client_order_id": "cid-v2", "ticker": "KXNBA-V2",
-        "cost": 1.4, "utc": NOW.isoformat(),
-        "strategy_version": "nba-no-v2-opening-audit"
+        "client_order_id": "cid-v2",
+        "ticker": "KXNBA-V2",
+        "cost": 1.4,
+        "utc": NOW.isoformat(),
+        "strategy_version": "nba-no-v2-opening-audit",
     }
     accepted = {"cid-v2": {"order_id": "order-v2"}}
     state = {
         "resting": [{"order_id": "order-v2", "ticker": "KXNBA-V2"}],
-        "settled": set(), "settlements": [], "held": [], "active": []
+        "settled": set(),
+        "settlements": [],
+        "held": [],
+        "active": [],
     }
 
     class Client:
@@ -615,8 +631,10 @@ def test_v3_scan_records_fills_and_waits_for_v2_expiry_without_trading(
     monkeypatch.setattr(nba, "record_execution", lambda *args: None)
     monkeypatch.setattr(nba, "record_queue_observation", lambda *args: None)
     monkeypatch.setattr(nba, "record_markouts", lambda *args: None)
+
     def forbid_cancel(*args):
         raise AssertionError("No v2 cancellation allowed")
+
     monkeypatch.setattr(nba, "cancel_invalid_resting", forbid_cancel)
 
     journal = tmp_path / "journal.jsonl"
