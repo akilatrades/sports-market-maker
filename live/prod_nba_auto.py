@@ -1313,6 +1313,16 @@ def nba_candidates(now, latest=Path("outputs/projections/latest.csv")):
                 if "comment" in report
                 else pd.Series(False, index=report.index)
             )
+            # "Day-To-Day" is ESPN's uncertain playing-status label, NOT
+            # equivalent to Out or confirmed available. Do not price a
+            # directly uncertain player's prop using historical minutes.
+            uncertain = (
+                status.isin({"day-to-day", "day to day", "questionable"})
+                if "status" in report
+                else pd.Series(False, index=report.index)
+            )
+            uncertain_players = set(players[uncertain].dropna().astype(int))
+            uncertain_teams = set(report.loc[uncertain, "team"].dropna())
             newly_out_teams = set(
                 report.loc[fresh & (high_risk | limited), "team"].dropna()
             )
@@ -1323,6 +1333,11 @@ def nba_candidates(now, latest=Path("outputs/projections/latest.csv")):
             frame.loc[frame_ids.isin(limited_ids), "injury_status"] = (
                 "REPORTED_MINUTES_RESTRICTION"
             )
+            frame.loc[
+                frame_ids.isin(uncertain_players), "injury_status"
+            ] = "UNCERTAIN_PLAYER_AVAILABILITY"
+        else:
+            uncertain_teams = set()
         # Keep the baseline explicitly labeled. It is a trailing historical
         # minutes estimate, not a current coach-confirmed playing-time target.
         if "historical_minutes_baseline" in frame:
@@ -1391,6 +1406,17 @@ def nba_candidates(now, latest=Path("outputs/projections/latest.csv")):
             invalid_flag | (required & (frame.p_book.isna() | (frame.book_n < 2))),
             "injury_status",
         ] = "SEASON_OR_ROLE_CHANGE_NEEDS_TWO_BOOKS"
+        # Teammates of a day-to-day/questionable rotation player are not
+        # modeled by a single fixed minutes scenario. Require an independent
+        # two-book consensus, but never override a stronger existing veto.
+        uncertain_no_books = (
+            frame.team_espn.isin(uncertain_teams)
+            & (frame.p_book.isna() | (frame.book_n < 2))
+            & frame.injury_status.eq("")
+        )
+        frame.loc[
+            uncertain_no_books, "injury_status"
+        ] = "UNCERTAIN_TEAM_REQUIRES_TWO_BOOKS"
         diagnostics.update(
             rows=len(frame),
             in_entry_window=int(frame.hours_to_tip.between(*WINDOW).sum()),
