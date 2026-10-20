@@ -593,7 +593,7 @@ def verify_quote(candidate, proposed_no_price=None):
         raise TradingError("Proposed maker quote would cross the YES bid")
 
 
-def select_candidates(frame, events, state, now, diagnostics=None):
+def select_candidates(frame, events, state, now, diagnostics=None, window=WINDOW):
     """Return executable signals and record where candidate opportunities die.
 
     Stage counts are private aggregate telemetry; they do not authorize
@@ -606,7 +606,7 @@ def select_candidates(frame, events, state, now, diagnostics=None):
     attempts, _ = records(events)
     verified = frame[frame.injury_status.fillna("").eq("") & frame.tip_utc.notna()]
     counts["verified_availability_and_tip"] = len(verified)
-    in_window = verified[verified.hours_to_tip.between(*WINDOW)]
+    in_window = verified[verified.hours_to_tip.between(*window)]
     counts["in_entry_window"] = len(in_window)
     eligible = in_window[
         in_window.ticker.astype(str).str.startswith(
@@ -616,7 +616,7 @@ def select_candidates(frame, events, state, now, diagnostics=None):
     counts["supported_prop_series"] = len(eligible)
     if eligible.empty:
         return []
-    found = candidate_orders(eligible, "no_seller_bookline", window=WINDOW)
+    found = candidate_orders(eligible, "no_seller_bookline", window=window)
     counts["passed_book_model_and_spread"] = len(found)
     if found.empty:
         return []
@@ -788,6 +788,14 @@ def pass_once(client, env, frame, now, journal, *, dry=False):
             "legacy_v2_resting_orders": legacy_resting,
             "candidate_count": len(candidates),
             "selection_funnel": dict(funnel),
+            "late_window_shadow": {
+                "candidate_count": len(late_shadow_candidates),
+                "selection_funnel": dict(late_funnel),
+                "execution_enabled": False,
+                "note": "Research only. No order placement or late risk allocation.",
+            },
+            "resting_order_count": len(state.get("resting", [])),
+            "verified_zero_fill_expiries_this_scan": released,
             "quote_research": research_quotes,
             "skipped": dict(skipped),
             "inputs": frame.attrs.get("diagnostics", {}),
@@ -810,6 +818,7 @@ def pass_once(client, env, frame, now, journal, *, dry=False):
     rejected = rejected_client_ids(events)
     shared = None
     legacy_resting = 0
+    released = 0
     if not dry:
         from live.shared_account_risk import dual_mode, state_for
 
@@ -823,6 +832,14 @@ def pass_once(client, env, frame, now, journal, *, dry=False):
     else:
         state = {"active": []}
     candidates = select_candidates(frame, events, state, now, diagnostics=funnel)
+    # Observe the historically promising 30m-2h window without changing
+    # exchange risk. A confirmed lineup source is NOT available in this
+    # pipeline, so these candidates must never enter the live POST loop.
+    late_funnel = {}
+    late_shadow_candidates = select_candidates(
+        frame, events, state, now,
+        diagnostics=late_funnel, window=(0.5, 2.0)
+    )
     from live.quote_shadow import shadow_quotes
 
     research_quotes = [
