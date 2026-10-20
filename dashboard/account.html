@@ -57,6 +57,27 @@
       <section class="panel"><div class="section-title"><div><p class="eyebrow">RESTING ORDERS</p><h2>Waiting to trade</h2></div></div><div id="orders-list" class="list-empty">Connect to load resting orders.</div><p class="footnote">An accepted order is not a fill. Its price and the volume trading against it determine whether it executes.</p></section>
       <section class="panel"><div class="section-title"><div><p class="eyebrow">LAST STRATEGY SCAN</p><h2 id="scan-title">No scan loaded</h2></div></div><p id="scan-stamp" class="section-caption">A recent account snapshot does not prove the trader is running.</p><div id="scan-details" class="scan-details"></div></section>
     </div>
+    <section class="panel" id="nba-validation">
+      <div class="section-title">
+        <div><p class="eyebrow">NBA / FORWARD VALIDATION</p><h2>30-day live evidence</h2></div>
+        <span class="tag">Read only · private</span>
+      </div>
+      <p class="section-caption" id="nba-study-status">Awaiting authenticated NBA execution history.</p>
+      <div class="execution-grid">
+        <div><strong id="nba-study-day">—</strong><span>Day of 30-day review window</span></div>
+        <div><strong id="nba-study-games">—</strong><span>Independent games with accepted orders</span></div>
+        <div><strong id="nba-study-filled-games">—</strong><span>Independent games with actual fills</span></div>
+      </div>
+      <dl class="details">
+        <div><dt>Exchange-accepted NBA orders</dt><dd id="nba-study-orders">—</dd></div>
+        <div><dt>Confirmed closed orders without fills</dt><dd id="nba-study-zero">—</dd></div>
+        <div><dt>Known closed-order fill rate</dt><dd id="nba-study-fill-rate">—</dd></div>
+        <div><dt>Verified maker share by filled contracts</dt><dd id="nba-study-maker">—</dd></div>
+        <div><dt>Verified settled NBA net P&amp;L to date</dt><dd id="nba-study-pnl">—</dd></div>
+        <div><dt>Remaining $50 cumulative submission allowance</dt><dd id="nba-study-budget">—</dd></div>
+      </dl>
+      <p class="footnote" id="nba-study-note">No positive-edge claim is made from early fills. Missing exchange records, unsettled markets and uncertain maker flags remain unknown.</p>
+    </section>
     <section class="panel" id="unfilled">
       <div class="section-title">
         <div><p class="eyebrow">KALSHI / EXCHANGE ORDER HISTORY</p><h2>Execution history: filled and missed</h2></div>
