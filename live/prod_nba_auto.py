@@ -837,8 +837,7 @@ def pass_once(client, env, frame, now, journal, *, dry=False):
     # pipeline, so these candidates must never enter the live POST loop.
     late_funnel = {}
     late_shadow_candidates = select_candidates(
-        frame, events, state, now,
-        diagnostics=late_funnel, window=(0.5, 2.0)
+        frame, events, state, now, diagnostics=late_funnel, window=(0.5, 2.0)
     )
     from live.quote_shadow import shadow_quotes
 
