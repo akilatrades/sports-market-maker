@@ -17,6 +17,9 @@ from research.quote_placement import policy_orders
 
 class ExecutionRepairs(unittest.TestCase):
     def setUp(self):
+        shard = patch.object(auto, "require_funded_shard", return_value=0)
+        shard.start()
+        self.addCleanup(shard.stop)
         self.now = datetime.now(UTC)
         self.row = SimpleNamespace(
             ticker="KXNFLRECYDS-TEST-PLAYER-30",
