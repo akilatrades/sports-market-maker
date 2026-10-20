@@ -521,7 +521,10 @@ def record_markouts(journal, frame, now):
 # after-fee edge remains >=3c and the new quote stays strictly post-only.
 EXTRA_MAKER_TICK = 0.01  # v3 higher-capture experiment; never marketable
 MIN_EDGE_AFTER_IMPROVEMENT = 0.03
-RESTING_MIN_NET_EDGE = 0.03  # require a fresh after-fee edge to keep waiting
+# New entries accept any positive verified after-fee edge. Requiring 3c on
+# later resting scans prematurely canceled otherwise-valid 0-3c orders and
+# was never tested as a distinct entry policy. Keep the SAME sign test.
+RESTING_MIN_NET_EDGE = 0.0
 
 
 def execution_quote(candidate):
@@ -1162,6 +1165,8 @@ def nba_candidates(now, latest=Path("outputs/projections/latest.csv")):
         ] = "UNVERIFIED_MODEL_OR_TIP"
         # Check the current injury feed, not only the cached injury column.
         report = injuries()
+        from live.nba_availability import explicit_minutes_limit
+
         if not isinstance(report, pd.DataFrame) or not {
             "player_id",
             "team",
@@ -1185,6 +1190,24 @@ def nba_candidates(now, latest=Path("outputs/projections/latest.csv")):
             frame.loc[frame.team_espn.isin(newly_out_teams), "injury_status"] = (
                 "TEAM_INJURY_CHANGE"
             )
+            # Historical minutes are not a projection of a newly announced
+            # minutes cap. ESPN's free injury endpoint has comments but no
+            # guaranteed explicit projected-minutes or confirmed starters.
+            if "comment" in report:
+                limited = report.comment.map(explicit_minutes_limit).fillna(False)
+                limited_ids = set(players[limited].dropna().astype(int))
+                frame.loc[
+                    frame_ids.isin(limited_ids), "injury_status"
+                ] = "REPORTED_MINUTES_RESTRICTION"
+        # Keep the baseline explicitly labeled. It is a trailing historical
+        # minutes estimate, not a current coach-confirmed playing-time target.
+        if "historical_minutes_baseline" in frame:
+            minute_base = pd.to_numeric(
+                frame.historical_minutes_baseline, errors="coerce"
+            )
+            frame.loc[
+                ~minute_base.between(0, 48), "injury_status"
+            ] = "UNVERIFIED_HISTORICAL_MINUTES"
         frame = refresh_quotes(frame, now)
         book_path = latest.parent / "nba_books.csv"
         if book_path.exists() and book_path.stat().st_size == 0:
@@ -1242,6 +1265,12 @@ def nba_candidates(now, latest=Path("outputs/projections/latest.csv")):
             in_entry_window=int(frame.hours_to_tip.between(*WINDOW).sum()),
             verified=int(frame.injury_status.eq("").sum()),
             book_covered=int(frame.p_book.notna().sum()),
+            historical_minutes_available=int(
+                pd.to_numeric(
+                    frame.get("historical_minutes_baseline", pd.Series(dtype=float)),
+                    errors="coerce",
+                ).notna().sum()
+            ),
             exclusions=frame.loc[frame.injury_status.ne(""), "injury_status"]
             .value_counts()
             .to_dict(),
