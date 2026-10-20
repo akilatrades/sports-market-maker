@@ -71,6 +71,102 @@ def contra_volume(prints, no_price, started, ended):
     return round(total, 4)
 
 
+
+# Bound the optional public market-print reads. These are observation-only
+# and never authorize, cancel, or modify any production order.
+_MAX_PRINT_ORDERS = 6
+_PRINT_CACHE = {}
+
+
+def trade_through_samples(client, events, exchange_orders, now):
+    """Get bounded recent public trades during *known* resting lifetimes.
+
+    Closed orders without an exchange-reported stop timestamp have unknown
+    opportunity windows and are intentionally excluded. A cache prevents a
+    successful immutable window from being queried every account refresh.
+    All errors result in missing coverage, never a false zero.
+    """
+    active = {
+        str(order["order_id"]): order
+        for order in exchange_orders
+        if isinstance(order, dict) and order.get("order_id")
+    }
+    intents = {
+        e.get("client_order_id"): e for e in events
+        if e.get("event") == "intent"
+    }
+    matched = []
+    for e in events:
+        if e.get("event") != "accepted":
+            continue
+        intent = intents.get(e.get("client_order_id"))
+        if not intent:
+            continue
+        oid = str(e.get("order_id"))
+        order = active.get(oid)
+        start = instant(e.get("utc")) or instant(intent.get("utc"))
+        if not order or start is None or (now - start).total_seconds() > 3 * 86400:
+            continue
+        status = str(order.get("status", "")).lower()
+        expiry = instant(intent.get("tip_utc"))
+        if intent.get("expiration_ts") is not None:
+            try:
+                expiry = datetime.fromtimestamp(int(intent["expiration_ts"]), UTC)
+            except (TypeError, ValueError, OSError, OverflowError):
+                continue
+        if status == "resting":
+            end = min(now, expiry) if expiry is not None else now
+        elif status in CLOSED_STATUSES:
+            end = None
+            for key in ("canceled_time", "last_update_time", "updated_time"):
+                end = instant(order.get(key))
+                if end is not None:
+                    break
+            if end is not None and expiry is not None:
+                end = min(end, expiry)
+        else:
+            continue
+        if end is None or end <= start:
+            continue
+        ticker = intent.get("ticker")
+        if not ticker or not isinstance(ticker, str):
+            continue
+        matched.append((start, oid, ticker, int(start.timestamp()), int(end.timestamp()), end))
+    matched.sort(reverse=True)
+    results = {}
+    for _start, oid, ticker, first, last, end in matched[:_MAX_PRINT_ORDERS]:
+        key = (ticker, first, last)
+        if key in _PRINT_CACHE:
+            rows = _PRINT_CACHE[key]
+        else:
+            rows, cursor, seen = [], "", set()
+            try:
+                for _ in range(6):
+                    params = {"ticker": ticker, "min_ts": first, "max_ts": last, "limit": 200}
+                    if cursor:
+                        params["cursor"] = cursor
+                    page = client._request("GET", "/markets/trades", params)
+                    batch = page.get("trades")
+                    if not isinstance(batch, list):
+                        raise TradingError("Missing public trade prints")
+                    rows.extend(batch)
+                    cursor = page.get("cursor") or ""
+                    if not cursor:
+                        break
+                    if cursor in seen:
+                        raise TradingError("Duplicate public trade cursor")
+                    seen.add(cursor)
+                else:
+                    raise TradingError("Public trade history truncated")
+            except Exception:
+                continue
+            if len(_PRINT_CACHE) > 120:
+                _PRINT_CACHE.clear()
+            _PRINT_CACHE[key] = rows
+        results[oid] = {"trades": rows, "end_utc": end.isoformat()}
+    return results
+
+
 def audit_cohort(events, exchange_orders, fills, *, sport, now, prints_by_order=None):
     """Count actual accepted orders, partials, no-fills, and unknowns.
 
@@ -176,7 +272,7 @@ def audit_cohort(events, exchange_orders, fills, *, sport, now, prints_by_order=
             if trade_rows is not None:
                 flow = contra_volume(
                     trade_rows, price / 100 if price is not None else None,
-                    opened, end or min(now, expiry) if expiry is not None else now
+                    opened, end or (min(now, expiry) if expiry is not None else now)
                 )
         rows.append({
             "cohort": sport,
