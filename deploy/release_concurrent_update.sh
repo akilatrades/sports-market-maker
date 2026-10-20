@@ -67,6 +67,8 @@ runuser -u trader -- git pull --ff-only origin main
 updated=1
 runuser -u trader -- .venv/bin/python -m pytest -q \
   tests/test_nfl_inputs.py \
+  tests/test_nfl_projection_week.py \
+  tests/test_execution_scorecard.py \
   tests/test_nfl_memory.py \
   tests/test_production_status_health.py \
   tests/test_order_opportunity_audit.py \
@@ -75,6 +77,7 @@ runuser -u trader -- .venv/bin/python -m pytest -q \
   tests/test_prod_nfl_auto.py \
   tests/test_prod_nba_auto.py \
   tests/test_production_lock.py
+node tests/account_dashboard.cjs
 
 systemd-run --wait --pipe --collect --uid=trader \
   -p WorkingDirectory="$ROOT" \
