@@ -183,8 +183,11 @@ def backfill_owned_orders(client, cohorts, exchange_orders, *, limit=30):
     missing result is unknown, never proof of no fill. Only GET is allowed.
     Cache terminal states to avoid repeated account requests each minute.
     """
-    found = {str(row["order_id"]): row for row in exchange_orders
-             if isinstance(row, dict) and row.get("order_id")}
+    found = {
+        str(row["order_id"]): row
+        for row in exchange_orders
+        if isinstance(row, dict) and row.get("order_id")
+    }
     missing = []
     for events in cohorts.values():
         if events is None:
@@ -301,22 +304,27 @@ def audit_cohort(events, exchange_orders, fills, *, sport, now, prints_by_order=
         prices = [amount(f.get("no_price_dollars")) for f in chunks]
         fees = [amount(f.get("fee_cost")) for f in chunks]
         fee_total = (
-            round(sum(fees), 6)
-            if chunks and all(v is not None for v in fees)
-            else None
+            round(sum(fees), 6) if chunks and all(v is not None for v in fees) else None
         )
         vwap = (
             round(sum(n * p for n, p in zip(measured, prices, strict=True)) / actual, 6)
-            if actual and all(n is not None for n in measured)
+            if actual
+            and all(n is not None for n in measured)
             and all(p is not None for p in prices)
             else None
         )
         maker = (
-            round(sum(n for n, f in zip(measured, chunks, strict=True)
-                      if f["is_taker"] is False), 4)
-            if chunks and all(n is not None for n in measured)
-            and all("is_taker" in f and isinstance(f["is_taker"], bool)
-                    for f in chunks)
+            round(
+                sum(
+                    n
+                    for n, f in zip(measured, chunks, strict=True)
+                    if f["is_taker"] is False
+                ),
+                4,
+            )
+            if chunks
+            and all(n is not None for n in measured)
+            and all("is_taker" in f and isinstance(f["is_taker"], bool) for f in chunks)
             else None
         )
         filled_times = [instant(f.get("created_time")) for f in chunks]
@@ -385,8 +393,12 @@ def audit_cohort(events, exchange_orders, fills, *, sport, now, prints_by_order=
                 "vwap_no_price_dollars": vwap,
                 "fill_fees_dollars": fee_total,
                 "maker_filled_contracts": maker,
-                "first_fill_utc": min(observed_times).isoformat() if observed_times else None,
-                "last_fill_utc": max(observed_times).isoformat() if observed_times else None,
+                "first_fill_utc": min(observed_times).isoformat()
+                if observed_times
+                else None,
+                "last_fill_utc": max(observed_times).isoformat()
+                if observed_times
+                else None,
                 "price_dollars": price / 100 if price is not None else None,
                 "queue_ahead_initial": valid_ahead[0] if valid_ahead else None,
                 "queue_ahead_latest": valid_ahead[-1] if valid_ahead else None,
