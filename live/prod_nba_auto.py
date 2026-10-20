@@ -815,9 +815,7 @@ def pass_once(client, env, frame, now, journal, *, dry=False):
         else:
             state = current_production_state(client, attempts, accepted, rejected)
         state["rejected_client_ids"] = rejected
-        legacy_resting = legacy_resting_count(
-            attempts, accepted, state["resting"]
-        )
+        legacy_resting = legacy_resting_count(attempts, accepted, state["resting"])
         free = money(client.balance()["balance"])
     else:
         state = {"active": []}
