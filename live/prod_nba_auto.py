@@ -24,7 +24,7 @@ from live.nfl_policy import settlement_accounting
 from live.nba_inputs import MODEL_VERSION
 from live.reconciled_attempts import rejected_client_ids
 
-STRATEGY_VERSION = "nba-no-v3-long-resting-throughput"
+STRATEGY_VERSION = "nba-no-v4-smaller-orders-edge3-baseline"
 
 # Larger high-throughput NBA pilot: retains the independent shared-account
 # $25 active / $40 daily / $100 cumulative caps and original safety vetoes.
@@ -36,7 +36,7 @@ MAX_GAME_COST = 12.0
 MAX_TEAM_COST = 8.0
 MAX_DAILY_COST = 35.0
 MAX_GAME_ORDERS = 4
-MAX_CONTRACTS = 8
+MAX_CONTRACTS = 2  # smaller live validation fills; sample more markets
 FEE_RESERVE = 1.10
 WINDOW = (2.0, 6.0)  # baseline NBA rule: 2–6 h before verified tip
 STATE = Path("/home/trader/prod-nba-auto")
@@ -272,7 +272,7 @@ def resting_cancel_reason(row, intent, market, fee_bound):
         ):
             return "fee_exceeds_original_reservation"
         net_edge = 1 - p_yes - no_price - fee_bound / count
-        if not math.isfinite(net_edge) or net_edge <= RESTING_MIN_NET_EDGE + 1e-9:
+        if not math.isfinite(net_edge) or net_edge < RESTING_MIN_NET_EDGE - 1e-9:
             return "current_net_edge_below_minimum"
     except (KeyError, ValueError, TypeError, OverflowError):
         return "unverifiable_resting_order_or_market_data"
@@ -519,12 +519,13 @@ def record_markouts(journal, frame, now):
 # Guardrail for the small pilot. No change to maker/taker status or risk caps.
 # Add at most one cent to a NO maker quote in >=3c spreads, only if
 # after-fee edge remains >=3c and the new quote stays strictly post-only.
-EXTRA_MAKER_TICK = 0.01  # v3 higher-capture experiment; never marketable
+EXTRA_MAKER_TICK = 0.0  # historical baseline already improves one tick
 MIN_EDGE_AFTER_IMPROVEMENT = 0.03
 # New entries accept any positive verified after-fee edge. Requiring 3c on
 # later resting scans prematurely canceled otherwise-valid 0-3c orders and
 # was never tested as a distinct entry policy. Keep the SAME sign test.
-RESTING_MIN_NET_EDGE = 0.0
+ENTRY_MIN_NET_EDGE = 0.03  # conservative versioned validation cohort
+RESTING_MIN_NET_EDGE = ENTRY_MIN_NET_EDGE
 
 
 def execution_quote(candidate):
@@ -704,7 +705,13 @@ def budget_blockers(
         if a["game_id"] == str(row.game_id)
     )
     team_cost = sum(
-        reserve(a["cost"]) for a in accepted_attempts if a["team"] == str(row.team)
+        reserve(a["cost"])
+        for a in accepted_attempts
+        if a["team"] == str(row.team)
+        and datetime.fromisoformat(a["utc"])
+        .astimezone(__import__("zoneinfo").ZoneInfo("America/New_York"))
+        .date()
+        == today
     )
     game_orders = sum(a["game_id"] == str(row.game_id) for a in accepted_attempts)
     day_cost = sum(
@@ -942,7 +949,7 @@ def pass_once(client, env, frame, now, journal, *, dry=False):
             p_book = float(getattr(row, "p_book", float("nan")))
             p_yes = p_book if math.isfinite(p_book) else float(row.p_model)
             net_edge = 1 - p_yes - quoted - fee_bound / order.count
-            if not 0 < net_edge <= 0.15:
+            if not ENTRY_MIN_NET_EDGE - 1e-9 <= net_edge <= 0.15:
                 raise TradingError("nonpositive_or_outlier_net_edge")
             if cost + fee_bound > reserve(cost) + 1e-9:
                 raise TradingError("fee_exceeds_reservation")
