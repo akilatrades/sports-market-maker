@@ -606,6 +606,7 @@ def pass_once(client, env, frame, now, journal, *, dry=False):
             "placed": placed,
             "candidate_count": len(candidates),
             "selection_funnel": dict(funnel),
+            "quote_research": research_quotes,
             "skipped": dict(skipped),
             "inputs": frame.attrs.get("diagnostics", {}),
             "attempts": len(attempts),
@@ -636,6 +637,12 @@ def pass_once(client, env, frame, now, journal, *, dry=False):
     else:
         state = {"active": []}
     candidates = select_candidates(frame, events, state, now, diagnostics=funnel)
+    from live.quote_shadow import shadow_quotes
+
+    research_quotes = [
+        {"ticker": str(row.ticker), **shadow_quotes(row)}
+        for row in candidates[:5]
+    ]
     if not dry:
         min_ts = (
             int(datetime.fromisoformat(attempts[0]["utc"]).timestamp()) - 60
