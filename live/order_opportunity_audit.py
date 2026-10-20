@@ -8,6 +8,7 @@ Never upload these rows, client IDs, tickers, or trade data to public Pages.
 """
 
 import math
+import re
 from collections import Counter, defaultdict
 from datetime import UTC, datetime
 
@@ -170,6 +171,48 @@ def trade_through_samples(client, events, exchange_orders, now):
             _PRINT_CACHE[key] = rows
         results[oid] = {"trades": rows, "end_utc": end.isoformat()}
     return results
+
+
+_CLOSED_ORDER_CACHE = {}
+
+
+def backfill_owned_orders(client, cohorts, exchange_orders, *, limit=30):
+    """Read older owned order IDs missing from the general order list.
+
+    Kalshi may paginate or age out records from the aggregate listing; a
+    missing result is unknown, never proof of no fill. Only GET is allowed.
+    Cache terminal states to avoid repeated account requests each minute.
+    """
+    found = {str(row["order_id"]): row for row in exchange_orders
+             if isinstance(row, dict) and row.get("order_id")}
+    missing = []
+    for events in cohorts.values():
+        if events is None:
+            continue
+        for event in reversed(events):
+            if event.get("event") != "accepted":
+                continue
+            oid = str(event.get("order_id", ""))
+            if oid in found:
+                continue
+            if oid in _CLOSED_ORDER_CACHE:
+                found[oid] = _CLOSED_ORDER_CACHE[oid]
+            elif oid and re.fullmatch(r"[A-Za-z0-9-]{1,128}", oid):
+                missing.append(oid)
+    for oid in list(dict.fromkeys(missing))[:limit]:
+        try:
+            page = client._request("GET", f"/portfolio/orders/{oid}")
+            record = page.get("order")
+            if not isinstance(record, dict) or str(record.get("order_id")) != oid:
+                continue
+            found[oid] = record
+            if str(record.get("status", "")).lower() in CLOSED_STATUSES:
+                if len(_CLOSED_ORDER_CACHE) > 512:
+                    _CLOSED_ORDER_CACHE.clear()
+                _CLOSED_ORDER_CACHE[oid] = record
+        except Exception:
+            continue  # Authenticated missing order still remains uncertain.
+    return list(found.values())
 
 
 def audit_cohort(events, exchange_orders, fills, *, sport, now, prints_by_order=None):
