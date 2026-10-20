@@ -1202,19 +1202,31 @@ def nba_candidates(now, latest=Path("outputs/projections/latest.csv")):
             flagged = set(players[fresh | out].dropna().astype(int))
             frame_ids = pd.to_numeric(frame.player_id, errors="coerce")
             frame.loc[frame_ids.isin(flagged), "injury_status"] = "NEW_INJURY_NEWS"
-            newly_out_teams = set(report.loc[fresh, "team"].dropna())
+            # A fresh "probable" update does not mean the entire team has
+            # a changed minute distribution. Preserve direct player veto for
+            # all fresh news; team-wide veto is for credible role disruption.
+            high_risk = out
+            if "status" in report:
+                status = report.status.fillna("").astype(str).str.lower()
+                high_risk = high_risk | status.isin(
+                    {"out", "doubtful", "questionable"}
+                )
+            # Historical minutes do not predict newly imposed coach caps.
+            limited = (
+                report.comment.map(explicit_minutes_limit).fillna(False)
+                if "comment" in report
+                else pd.Series(False, index=report.index)
+            )
+            newly_out_teams = set(
+                report.loc[fresh & (high_risk | limited), "team"].dropna()
+            )
             frame.loc[frame.team_espn.isin(newly_out_teams), "injury_status"] = (
                 "TEAM_INJURY_CHANGE"
             )
-            # Historical minutes are not a projection of a newly announced
-            # minutes cap. ESPN's free injury endpoint has comments but no
-            # guaranteed explicit projected-minutes or confirmed starters.
-            if "comment" in report:
-                limited = report.comment.map(explicit_minutes_limit).fillna(False)
-                limited_ids = set(players[limited].dropna().astype(int))
-                frame.loc[frame_ids.isin(limited_ids), "injury_status"] = (
-                    "REPORTED_MINUTES_RESTRICTION"
-                )
+            limited_ids = set(players[limited].dropna().astype(int))
+            frame.loc[frame_ids.isin(limited_ids), "injury_status"] = (
+                "REPORTED_MINUTES_RESTRICTION"
+            )
         # Keep the baseline explicitly labeled. It is a trailing historical
         # minutes estimate, not a current coach-confirmed playing-time target.
         if "historical_minutes_baseline" in frame:
