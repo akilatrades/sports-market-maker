@@ -9,6 +9,7 @@ from datetime import UTC, datetime, timedelta
 
 from kalshi.trading import TradingError
 from live.nfl_policy import reserve
+from live.reconciled_attempts import rejected_client_ids
 
 WINDOW_DAYS = 30
 NBA_LIFETIME_RESERVE = 50.0
@@ -39,6 +40,7 @@ def summarize_nba_validation(events, audit, pnl, now):
     now = now.astimezone(UTC)
     intents = {}
     accepted = {}
+    accepted_clients = set()
     spent = 0.0
     for event in events:
         if not isinstance(event, dict):
@@ -60,15 +62,22 @@ def summarize_nba_validation(events, audit, pnl, now):
         elif event.get("event") == "accepted":
             cid = event.get("client_order_id")
             oid = str(event.get("order_id") or "")
-            if cid not in intents or not oid or oid in accepted:
+            if cid not in intents or not oid or oid in accepted or cid in accepted_clients:
                 raise TradingError("Unreconciled NBA acceptance")
+            accepted_clients.add(cid)
             accepted[oid] = (intents[cid], _time(event.get("utc")))
+    # An unresolved submission can be live on the exchange even if absent from
+    # the accepted journal. Never present that situation as healthy collection.
+    rejected = rejected_client_ids(events)
+    unresolved = set(intents) - accepted_clients - rejected
     first = min((t for _, t in accepted.values()), default=None)
     if first is not None and first > now + timedelta(minutes=1):
         raise TradingError("NBA journal acceptance timestamp is in the future")
     end = first + timedelta(days=WINDOW_DAYS) if first else None
     basic = {
-        "status": "awaiting_first_accepted_order"
+        "status": "needs_submission_reconciliation"
+        if unresolved
+        else "awaiting_first_accepted_order"
         if first is None
         else "awaiting_exchange_audit",
         "start_utc": first.isoformat() if first else None,
@@ -77,6 +86,7 @@ def summarize_nba_validation(events, audit, pnl, now):
         "window_days": WINDOW_DAYS,
         "accepted_orders": len(accepted),
         "attempted_orders": len(intents),
+        "unresolved_submission_attempts": len(unresolved),
         "reserved_submissions_dollars": round(spent, 2),
         "lifetime_limit_dollars": NBA_LIFETIME_RESERVE,
         "lifetime_allowance_remaining_dollars": round(
@@ -113,7 +123,9 @@ def summarize_nba_validation(events, audit, pnl, now):
     rows = audit["orders"]
     by_id = {str(row.get("order_id")): row for row in rows if isinstance(row, dict)}
     if len(by_id) != len(rows) or set(by_id) != set(accepted):
-        basic["status"] = "incomplete_exchange_order_history"
+        basic["status"] = (
+            "needs_submission_reconciliation" if unresolved else "incomplete_exchange_order_history"
+        )
         return basic
     filled = []
     closed = []
@@ -122,11 +134,17 @@ def summarize_nba_validation(events, audit, pnl, now):
     for oid, row in by_id.items():
         state = row.get("state")
         count = row.get("filled_contracts")
+        maker_count = row.get("maker_filled_contracts")
         if (
             count is None
             or not isinstance(count, (int, float))
             or not math.isfinite(count)
             or count < 0
+            or (state in {"resting_no_fill", "confirmed_unfilled"} and count != 0)
+            or (
+                isinstance(maker_count, (int, float))
+                and (not math.isfinite(maker_count) or maker_count < 0 or maker_count > count)
+            )
         ):
             unknown.append(oid)
             continue
@@ -157,7 +175,9 @@ def summarize_nba_validation(events, audit, pnl, now):
     full_qty = sum(filled_counts) if fully_observed else None
     basic.update(
         status=(
-            "needs_exchange_reconciliation"
+            "needs_submission_reconciliation"
+            if unresolved
+            else "needs_exchange_reconciliation"
             if unknown
             else "30_day_review_due"
             if now >= end
