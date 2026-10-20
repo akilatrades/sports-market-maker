@@ -11,6 +11,7 @@ import math
 from zoneinfo import ZoneInfo
 
 from kalshi.trading import TradingError
+from live.reconciled_attempts import rejected_client_ids
 
 ROOT = Path("/home/trader")
 LIMITS = {"lifetime": 100.0, "daily": 40.0, "active": 25.0}
@@ -35,11 +36,19 @@ def journal_events(sport):
 def ownership(events_by_sport):
     orders, tickers, attempts = {}, {}, []
     client_ids = set()
+    rejected_tickers = set()
+    rejected_by_sport = {}
     for sport in ("nfl", "nba"):
         events = events_by_sport[sport]
         intents = [e for e in events if e.get("event") == "intent"]
         accepted = [e for e in events if e.get("event") == "accepted"]
-        if any(e.get("event") == "unknown_outcome" for e in events):
+        rejected = rejected_client_ids(events)
+        rejected_by_sport[sport] = rejected
+        if any(
+            e.get("event") == "unknown_outcome"
+            and e.get("client_order_id") not in rejected
+            for e in events
+        ):
             raise TradingError("Ambiguous production order: HALT")
         by_id = {}
         for e in intents:
@@ -58,6 +67,8 @@ def ownership(events_by_sport):
             client_ids.add(cid)
             tickers[ticker] = sport
             by_id[cid] = e
+            if cid in rejected:
+                rejected_tickers.add(ticker)
             attempts.append({**e, "_cohort": sport})
         seen = set()
         for e in accepted:
@@ -66,9 +77,15 @@ def ownership(events_by_sport):
                 raise TradingError("Invalid production acceptance")
             seen.add(cid)
             orders[str(oid)] = sport
-        if seen != set(by_id):
+        if seen != set(by_id) - rejected:
             raise TradingError("Unreconciled production submission: HALT")
-    return {"orders": orders, "tickers": tickers, "attempts": attempts}
+    return {
+        "orders": orders,
+        "tickers": tickers,
+        "attempts": attempts,
+        "rejected_tickers": rejected_tickers,
+        "rejected_by_sport": rejected_by_sport,
+    }
 
 
 def classify(resting, positions, owner):
@@ -95,6 +112,8 @@ def classify(resting, positions, owner):
             continue
         ticker = row.get("market_ticker") or row.get("ticker")
         sport = owner["tickers"].get(ticker)
+        if ticker in owner.get("rejected_tickers", set()):
+            raise TradingError("Position appeared for reconciled rejected order: HALT")
         if sport not in result or qty > 0:
             raise TradingError("Unowned or wrong-side account position: HALT")
         owned_count = sum(
@@ -208,7 +227,12 @@ def state_for(client, sport, now):
             "held": classified[name]["held"],
             "settled": settled & own_tickers,
             "settlements": settlements,
-            "active": [a for a in own if a["ticker"] not in settled],
+            "active": [
+                a for a in own
+                if a["ticker"] not in settled
+                and a["client_order_id"] not in owner["rejected_by_sport"][name]
+            ],
+            "rejected_client_ids": owner["rejected_by_sport"][name],
         }
         active, _ = module.reconcile_expired_unfilled(own, accepted, state, fills, now)
         state["active"] = active
