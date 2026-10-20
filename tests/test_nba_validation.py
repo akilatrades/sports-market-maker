@@ -79,7 +79,10 @@ def test_one_real_fill_not_edge_proof():
 
 def test_confirmed_no_fill_counts_as_order_not_fill():
     report = summarize_nba_validation(
-        entries(), audit("confirmed_unfilled", 0, None), {"status": "verified", "settled_profit_dollars": -1.0}, NOW
+        entries(),
+        audit("confirmed_unfilled", 0, None),
+        {"status": "verified", "settled_profit_dollars": -1.0},
+        NOW,
     )
     assert report["confirmed_zero_fill_orders"] == 1
     assert report["closed_known_orders"] == 1
@@ -90,7 +93,10 @@ def test_confirmed_no_fill_counts_as_order_not_fill():
 
 def test_missing_exchange_order_keeps_outcomes_unknown():
     report = summarize_nba_validation(
-        entries(), {"status": "unavailable", "orders": []}, {"status": "incomplete_settlement"}, NOW
+        entries(),
+        {"status": "unavailable", "orders": []},
+        {"status": "incomplete_settlement"},
+        NOW,
     )
     assert report["status"] == "awaiting_exchange_audit"
     assert report["filled_contracts"] is None
@@ -102,7 +108,9 @@ def test_missing_exchange_order_keeps_outcomes_unknown():
 
 
 def test_partial_resting_not_misreported_as_closed():
-    report = summarize_nba_validation(entries(), audit("partially_filled_resting", 2, 2), {}, NOW)
+    report = summarize_nba_validation(
+        entries(), audit("partially_filled_resting", 2, 2), {}, NOW
+    )
     assert report["open_orders"] == 1
     assert report["closed_known_orders"] == 0
     assert report["filled_contracts"] == 2
