@@ -96,6 +96,7 @@ class Order:
     # order in the account (Kalshi echoes client_order_id back on orders).
     client_order_id: str = field(default_factory=lambda: f"smm-{uuid.uuid4()}")
     action: str = "buy"  # "sell" closes contracts we hold (the early exit)
+    exchange_index: int | None = None  # assigned by signed market-shard verification
 
     def validate(self):
         if self.side not in ("yes", "no"):
@@ -106,6 +107,10 @@ class Order:
             raise TradingError(f"bad count {self.count!r}")
         if not isinstance(self.price_cents, int) or not 1 <= self.price_cents <= 99:
             raise TradingError(f"bad price {self.price_cents!r}")
+        if self.exchange_index is not None and (
+            type(self.exchange_index) is not int or not 0 <= self.exchange_index <= 100
+        ):
+            raise TradingError("Invalid exchange_index")
         if self.expiration_ts is not None and self.expiration_ts <= time.time():
             raise TradingError(f"expiration {self.expiration_ts} is in the past")
 
@@ -133,6 +138,8 @@ class Order:
             "post_only": self.post_only,
             "cancel_order_on_pause": True,
         }
+        if self.exchange_index is not None:
+            body["exchange_index"] = self.exchange_index
         if self.expiration_ts is not None:
             body["expiration_time"] = int(self.expiration_ts)
         return body
@@ -295,6 +302,8 @@ class TradingClient:
             entry["order_id"] = "dry-run"
             self.log.append(entry)
             return entry
+        if self.env == "prod" and order.exchange_index is None:
+            raise TradingError("Production order missing verified shard index; no POST sent")
         if self.env == "prod" and os.environ.get("ALLOW_PRODUCTION_TRADING") != "YES":
             raise TradingError(
                 "production order placement disabled: explicit ALLOW_PRODUCTION_TRADING=YES required"
