@@ -9,6 +9,10 @@ on:
     inputs:
       command:
         description: fetch (spends credits) or score (offline)
+        type: choice
+        options:
+          - fetch
+          - score
         default: fetch
 permissions:
   contents: write
@@ -28,9 +32,16 @@ jobs:
           python-version: "3.12"
       - run: pip install -r requirements.txt
       - name: Run
+        env:
+          REQUESTED_COMMAND: ${{ inputs.command }}
         run: |
-          set -o pipefail
-          python -m research.bookline_backtest ${{ inputs.command }} 2>&1 | tee run.log || {
+          set -euo pipefail
+          # Never splice a workflow input directly into executable shell.
+          case "$REQUESTED_COMMAND" in
+            fetch|score) ;;
+            *) echo "::error::Unsupported research command"; exit 2 ;;
+          esac
+          python -m research.bookline_backtest "$REQUESTED_COMMAND" 2>&1 | tee run.log || {
             echo "::error::$(tail -c 3000 run.log | sed ':a;N;$!ba;s/%/%25/g;s/\n/%0A/g')"
             exit 1
           }
