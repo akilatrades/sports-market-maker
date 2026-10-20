@@ -5,7 +5,7 @@ from datetime import UTC, datetime, timedelta
 import pytest
 
 from kalshi.trading import TradingError
-from live.nba_validation import summarize_nba_validation
+from live.nba_validation import NBA_LIFETIME_RESERVE, summarize_nba_validation
 
 NOW = datetime(2026, 10, 21, 12, tzinfo=UTC)
 
@@ -74,7 +74,8 @@ def test_one_real_fill_not_edge_proof():
     assert report["settled_profit_dollars"] is None
     assert report["proof_of_edge"] is False
     assert report["reserved_submissions_dollars"] > 3
-    assert report["lifetime_allowance_remaining_dollars"] < 47
+    assert report["lifetime_limit_dollars"] == NBA_LIFETIME_RESERVE
+    assert report["lifetime_allowance_remaining_dollars"] < NBA_LIFETIME_RESERVE - 3
 
 
 def test_confirmed_no_fill_counts_as_order_not_fill():
