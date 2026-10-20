@@ -31,12 +31,18 @@ def next_week(games, now=None):
     now = pd.Timestamp(now if now is not None else datetime.now(UTC))
     if now.tzinfo is None:
         raise ValueError("next_week requires an aware timestamp")
-    today = now.tz_convert("America/New_York").date()
-    gameday = pd.to_datetime(games.gameday, errors="coerce").dt.date
+    # The schedule publishes kickoff as Eastern gameday + gametime; comparing
+    # calendar dates alone would keep an already-started Monday night game.
+    if "gametime" not in games:
+        raise ValueError("NFL schedule missing game kickoff time")
+    kickoff = pd.to_datetime(
+        games.gameday.astype(str) + " " + games.gametime.astype(str),
+        errors="coerce",
+    ).dt.tz_localize("America/New_York", ambiguous="NaT", nonexistent="NaT")
     upcoming = games[
         games.home_score.isna()
         & games.total_line.notna()
-        & gameday.ge(today)
+        & kickoff.gt(now.tz_convert("America/New_York"))
     ]
     if upcoming.empty:
         return None
