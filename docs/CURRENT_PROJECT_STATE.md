@@ -12,7 +12,40 @@
 > The goal is positive net trading income eventually, but profitability,
 > scale and dependable income have **not** been demonstrated.
 
-## October 19 — simultaneous NFL + NBA code staged, OFF on Droplet
+## October 19 evening — owner-confirmed dual activation; follow-on fixes NOT yet deployed
+
+The owner-provided DigitalOcean console output reported
+`DUAL MARKET ACTIVE: Both timers and both worker scans succeeded.`
+A later console screenshot showed a successful pull/test of the private
+missed-order dashboard, followed by `restoring previous timer states`.
+This confirms initial deployment and the successful updater exit, **not**
+ongoing live fills, current service health, or absence of future errors.
+
+After that deployment, code review found an NFL data-refresh gap: the
+production NFL worker used schedule/injuries/model files from the executable
+checkout instead of independently refreshing verified data. New
+`live/nfl_inputs.py` pins a public GitHub revision, checks file hashes,
+and switches immutable bundles atomically. The live worker now uses the
+verified bundle; its existing 36-hour model probability age limit,
+risk caps and post-only price checks are unchanged. Source download or
+validation failure prevents new NFL orders.
+
+Also added: local scan/input freshness status, unit tests, and a guarded
+`deploy/release_concurrent_update.sh` which checks both cohorts and
+**leaves order-submitting timers stopped when verification of newly pulled
+code fails**. The older read-only dashboard updater was also corrected
+not to restart live trading after failed post-pull tests.
+
+**Deployment boundary:** these new follow-on fixes are committed to GitHub
+but have not been observed running on the Droplet. The authorized
+concurrent-trading mode previously worked in initial scans; no current
+exchange order/fill or profitability claim is made from this code review.
+Run the guarded release only after green CI and signed preflights. Live
+trading must be described as unverified after the last screenshot, not
+as definitely running or definitely stopped.
+
+## Historical October 19 — initial simultaneous code staging, before activation
+
 
 The owner requested that both models be capable of trading the SAME
 funded Kalshi account concurrently, rather than alternating NFL and NBA
