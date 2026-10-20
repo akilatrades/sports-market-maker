@@ -19,8 +19,12 @@ def test_fill_metrics_are_conditioned_on_terminal_orders_only():
         {"ticker": "C", "state": "resting_no_fill", "filled_contracts": 0.0},
     ]
     events = [
-        {"event": "intent", "ticker": "A", "client_order_id": "client-old",
-         "net_edge_after_fee_bound": 0.07},
+        {
+            "event": "intent",
+            "ticker": "A",
+            "client_order_id": "client-old",
+            "net_edge_after_fee_bound": 0.07,
+        },
         {"event": "accepted", "client_order_id": "client-old", "order_id": "order-old"},
     ]
     report = observed_execution(
@@ -64,19 +68,36 @@ def test_repeat_ticker_does_not_overwrite_old_fill_forecast():
         "status": "verified_snapshot",
         "unknown_or_unreconciled": 0,
         "orders": [
-            {"order_id": "o1", "ticker": "SAME", "state": "fully_filled",
-             "filled_contracts": 2, "maker_filled_contracts": 2,
-             "fill_fees_dollars": 0.02},
-            {"order_id": "o2", "ticker": "SAME", "state": "confirmed_unfilled",
-             "filled_contracts": 0},
+            {
+                "order_id": "o1",
+                "ticker": "SAME",
+                "state": "fully_filled",
+                "filled_contracts": 2,
+                "maker_filled_contracts": 2,
+                "fill_fees_dollars": 0.02,
+            },
+            {
+                "order_id": "o2",
+                "ticker": "SAME",
+                "state": "confirmed_unfilled",
+                "filled_contracts": 0,
+            },
         ],
     }
     events = [
-        {"event": "intent", "client_order_id": "c1", "ticker": "SAME",
-         "net_edge_after_fee_bound": 0.04},
+        {
+            "event": "intent",
+            "client_order_id": "c1",
+            "ticker": "SAME",
+            "net_edge_after_fee_bound": 0.04,
+        },
         {"event": "accepted", "client_order_id": "c1", "order_id": "o1"},
-        {"event": "intent", "client_order_id": "c2", "ticker": "SAME",
-         "net_edge_after_fee_bound": 0.13},
+        {
+            "event": "intent",
+            "client_order_id": "c2",
+            "ticker": "SAME",
+            "net_edge_after_fee_bound": 0.13,
+        },
         {"event": "accepted", "client_order_id": "c2", "order_id": "o2"},
     ]
     result = observed_execution(audit, events)
