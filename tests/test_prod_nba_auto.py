@@ -901,3 +901,64 @@ def test_expired_nba_order_no_longer_valid_at_or_after_tip(hours_to_tip):
         nba.resting_cancel_reason(row, intent, market, 0.0)
         == "outside_verified_pretip_window"
     )
+
+
+def test_day_to_day_player_is_not_priced_as_confirmed_available(
+    tmp_path, monkeypatch
+):
+    import kalshi.books as books
+    import live.nba_trade as trader
+    import markets.nba.live as live
+
+    monkeypatch.setattr(trader, "refresh_quotes", lambda f, now: f.copy())
+    monkeypatch.setattr(books, "attach_latest", lambda f: f.copy())
+    monkeypatch.setattr(
+        live,
+        "injuries",
+        lambda: pd.DataFrame(
+            [{
+                "player_id": 1234, "team": "LAL",
+                "updated": (NOW - timedelta(hours=2)).isoformat(),
+                "out": False, "status": "Day-To-Day",
+                "comment": "Ankle",
+            }]
+        ),
+    )
+    publish(priced(), tmp_path, NOW)
+    result = nba.nba_candidates(NOW, latest=tmp_path / "latest.csv")
+    assert result.injury_status.iloc[0] == "UNCERTAIN_PLAYER_AVAILABILITY"
+    assert not nba.select_candidates(result, [], {"active": []}, NOW)
+
+
+def test_uncertain_teammate_requires_independent_books(
+    tmp_path, monkeypatch
+):
+    import kalshi.books as books
+    import live.nba_trade as trader
+    import markets.nba.live as live
+
+    monkeypatch.setattr(trader, "refresh_quotes", lambda f, now: f.copy())
+    monkeypatch.setattr(books, "attach_latest", lambda f: f.copy())
+    monkeypatch.setattr(
+        live,
+        "injuries",
+        lambda: pd.DataFrame(
+            [{
+                "player_id": 9999, "team": "LAL",
+                "updated": (NOW - timedelta(hours=2)).isoformat(),
+                "out": False, "status": "Day-To-Day",
+                "comment": "Knee",
+            }]
+        ),
+    )
+    snapshot = priced()
+    snapshot["book_n"] = 0
+    snapshot["p_book"] = float("nan")
+    publish(snapshot, tmp_path, NOW)
+    result = nba.nba_candidates(NOW, latest=tmp_path / "latest.csv")
+    assert result.injury_status.iloc[0] == "UNCERTAIN_TEAM_REQUIRES_TWO_BOOKS"
+    snapshot["book_n"] = 2
+    snapshot["p_book"] = 0.4
+    publish(snapshot, tmp_path, NOW)
+    verified = nba.nba_candidates(NOW, latest=tmp_path / "latest.csv")
+    assert verified.injury_status.iloc[0] == ""
