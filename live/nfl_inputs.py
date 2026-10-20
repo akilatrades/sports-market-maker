@@ -196,3 +196,12 @@ def sync(directory=CACHE, now=None):
     check.chmod(0o600)
     use_bundle(active)
     return {"status": "verified", "source_commit": head}
+
+
+def main():
+    # Data-only invocation for preflight/deployment. No exchange connection.
+    print(json.dumps(sync(), sort_keys=True))
+
+
+if __name__ == "__main__":
+    main()
