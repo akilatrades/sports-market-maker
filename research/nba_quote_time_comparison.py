@@ -38,7 +38,8 @@ def evaluate(q, trades, cutoff_hours, min_model_edge):
     x["pnl_per_eligible"] = x.pnl_if_fill.where(x.could_fill, 0)
     mean, t_stat = (
         clustered_mean_t(x.pnl_per_eligible, x.game_id)
-        if len(x) > 1 else (float("nan"), float("nan"))
+        if len(x) > 1
+        else (float("nan"), float("nan"))
     )
     return {
         "cutoff_hours_before_tip": cutoff_hours,
@@ -47,14 +48,17 @@ def evaluate(q, trades, cutoff_hours, min_model_edge):
         "independent_games": int(x.game_id.nunique()),
         "possible_print_fill_quotes": int(x.could_fill.sum()),
         "possible_print_fill_rate": round(float(x.could_fill.mean()), 4)
-        if len(x) else None,
+        if len(x)
+        else None,
         "hypothetical_cents_per_eligible_order": round(100 * float(mean), 3)
-        if np.isfinite(mean) else None,
-        "game_cluster_t": round(float(t_stat), 3)
-        if np.isfinite(t_stat) else None,
+        if np.isfinite(mean)
+        else None,
+        "game_cluster_t": round(float(t_stat), 3) if np.isfinite(t_stat) else None,
         "hypothetical_cents_per_possible_fill": round(
             100 * float(x.loc[x.could_fill, "pnl_if_fill"].mean()), 3
-        ) if x.could_fill.any() else None,
+        )
+        if x.could_fill.any()
+        else None,
     }
 
 
