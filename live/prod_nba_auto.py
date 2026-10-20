@@ -771,7 +771,10 @@ def legacy_resting_count(attempts, accepted, resting):
         if str(intent.get("ticker")) != ticker:
             raise TradingError("Resting NBA order/ticker mismatch: HALT")
         version = intent.get("strategy_version")
-        if version == "nba-no-v2-opening-audit":
+        if version in {
+            "nba-no-v2-opening-audit",
+            "nba-no-v3-long-resting-throughput",
+        }:
             count += 1
         elif version != STRATEGY_VERSION:
             raise TradingError("Unknown NBA resting order version: HALT")
@@ -792,7 +795,7 @@ def pass_once(client, env, frame, now, journal, *, dry=False):
             "strategy_version": STRATEGY_VERSION,
             "decision": decision,
             "placed": placed,
-            "legacy_v2_resting_orders": legacy_resting,
+            "legacy_prior_version_resting_orders": legacy_resting,
             "candidate_count": len(candidates),
             "selection_funnel": dict(funnel),
             "late_window_shadow": {
@@ -894,10 +897,10 @@ def pass_once(client, env, frame, now, journal, *, dry=False):
             # successful scan. When exchange-confirmed resting drops to
             # zero, the next scan resumes v3 automatically.
             print(
-                f"NBA TRANSITION: waiting for {legacy_resting} v2 resting "
-                "order(s) to close under their original expiry; no new posts"
+                f"NBA TRANSITION: waiting for {legacy_resting} prior-version "
+                "resting NBA order(s) to close; no new orders"
             )
-            return finish("waiting_for_legacy_v2_orders")
+            return finish("waiting_for_prior_version_orders")
         canceled = cancel_invalid_resting(
             client, journal, state, frame, now, load_journal(journal)
         )
@@ -1502,9 +1505,9 @@ def preflight(client, frame, now, journal):
             "cash_dollars": cash,
             "gross_reserved": budget,
             "resting": len(state["resting"]),
-            "legacy_v2_resting_orders": old_resting,
+            "legacy_prior_version_resting_orders": old_resting,
             "entry_state": (
-                "waiting_for_legacy_v2_orders" if old_resting else "eligible_for_v3"
+                "waiting_for_prior_version_orders" if old_resting else "eligible_for_v4"
             ),
             "held_markets": len(state["held"]),
         }
