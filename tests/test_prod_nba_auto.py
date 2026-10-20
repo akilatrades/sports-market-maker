@@ -743,3 +743,34 @@ def test_late_window_candidates_are_shadow_only_even_if_they_qualify(tmp_path):
         NoTradingClient(), {}, row, NOW, tmp_path / "journal.jsonl", dry=True
     )
     assert not (tmp_path / "last_scan.json").exists()
+
+
+def test_single_sportsbook_cannot_be_used_as_consensus_at_entry(
+    tmp_path, monkeypatch
+):
+    import kalshi.books as books
+    import live.nba_trade as trader
+    import markets.nba.live as live
+
+    monkeypatch.setattr(trader, "refresh_quotes", lambda f, now: f.copy())
+    monkeypatch.setattr(books, "attach_latest", lambda f: f.copy())
+    monkeypatch.setattr(
+        live,
+        "injuries",
+        lambda: pd.DataFrame(columns=["player_id", "team", "updated", "out"]),
+    )
+    frame = priced()
+    frame["book_n"] = 1
+    publish(frame, tmp_path, NOW)
+    out = nba.nba_candidates(NOW, latest=tmp_path / "latest.csv")
+    assert len(out) == 1
+    assert pd.isna(out.p_book.iloc[0])
+    assert out.injury_status.iloc[0] == ""
+    # In-season market may use the independently modeled probability.
+    assert len(nba.select_candidates(out, [], {"active": []}, NOW)) == 1
+
+    frame["requires_book"] = True
+    publish(frame, tmp_path, NOW)
+    out = nba.nba_candidates(NOW, latest=tmp_path / "latest.csv")
+    assert out.injury_status.iloc[0] == "SEASON_OR_ROLE_CHANGE_NEEDS_TWO_BOOKS"
+    assert nba.select_candidates(out, [], {"active": []}, NOW) == []
