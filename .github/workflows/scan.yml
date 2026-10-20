@@ -23,7 +23,12 @@ jobs:
         with:
           python-version: "3.12"
       - run: pip install -r requirements.txt
-      - run: python -m research.scan_markets list --skip-done --series "${{ inputs.series }}"
+      # Passing the user-supplied selector through an environment variable
+      # prevents shell injection even when it contains quotes or metacharacters.
+      - name: List eligible series
+        env:
+          SELECTED_SERIES: ${{ inputs.series }}
+        run: python -m research.scan_markets list --skip-done --series "$SELECTED_SERIES"
       - uses: actions/upload-artifact@v4
         with:
           name: scan-series
