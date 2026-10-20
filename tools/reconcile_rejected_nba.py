@@ -51,7 +51,9 @@ def verify(events, orders, fills, positions, now):
         raise TradingError("Rejected order already reconciled")
     intents = [e for e in events if e.get("event") == "intent"]
     unknowns = [e for e in events if e.get("event") == "unknown_outcome"]
-    accept_ids = {e.get("client_order_id") for e in events if e.get("event") == "accepted"}
+    accept_ids = {
+        e.get("client_order_id") for e in events if e.get("event") == "accepted"
+    }
     if len(unknowns) != 1:
         raise TradingError("Exactly one unknown NBA submission required: HALT")
     case = unknowns[0]
@@ -70,7 +72,9 @@ def verify(events, orders, fills, positions, now):
         raise TradingError("Missing journal ticker")
     # An order with any status might have existed and expired immediately.
     # Check both client id and ticker; unknown alternate order is a veto.
-    if any(o.get("client_order_id") == cid or o.get("ticker") == ticker for o in orders):
+    if any(
+        o.get("client_order_id") == cid or o.get("ticker") == ticker for o in orders
+    ):
         raise TradingError("Matching exchange order exists: HALT")
     if any(
         f.get("order_id") == cid
@@ -90,7 +94,11 @@ def verify(events, orders, fills, positions, now):
 def reconcile(client, now=None):
     now = now or datetime.now(UTC)
     ensure_paused()
-    if os.environ.get("KALSHI_ENV") != "prod" or client.env != "prod" or not client.can_sign:
+    if (
+        os.environ.get("KALSHI_ENV") != "prod"
+        or client.env != "prod"
+        or not client.can_sign
+    ):
         raise TradingError("Signed production GET access required")
     if client.base != "https://external-api.kalshi.com":
         raise TradingError("Expected documented production host not deployed")
