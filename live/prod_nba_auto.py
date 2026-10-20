@@ -1379,7 +1379,8 @@ def nba_candidates(now, latest=Path("outputs/projections/latest.csv")):
             # Different starting assignment from established recent role:
             # existing game-specific mean is invalid, regardless of books.
             start_rate = pd.to_numeric(
-                frame.get("recent_start_rate"), errors="coerce"
+                frame.get("recent_start_rate", pd.Series(float("nan"), index=frame.index)),
+                errors="coerce",
             )
             established = (
                 frame.lineup_confirmation_status.eq("confirmed")
