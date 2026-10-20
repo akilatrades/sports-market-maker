@@ -272,7 +272,7 @@ def resting_cancel_reason(row, intent, market, fee_bound):
         ):
             return "fee_exceeds_original_reservation"
         net_edge = 1 - p_yes - no_price - fee_bound / count
-        if not math.isfinite(net_edge) or net_edge < RESTING_MIN_NET_EDGE - 1e-9:
+        if not math.isfinite(net_edge) or net_edge <= RESTING_MIN_NET_EDGE + 1e-9:
             return "current_net_edge_below_minimum"
     except (KeyError, ValueError, TypeError, OverflowError):
         return "unverifiable_resting_order_or_market_data"
