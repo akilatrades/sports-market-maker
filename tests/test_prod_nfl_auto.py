@@ -16,6 +16,12 @@ ARMED = {
 }
 
 
+@pytest.fixture(autouse=True)
+def mocked_production_shard_for_offline_tests(monkeypatch):
+    # No HTTP dependency in legacy execution-state tests.
+    monkeypatch.setattr(auto, "require_funded_shard", lambda *args: 0)
+
+
 def frame(ticker="KXNFLRECYDS-26OCT18CARPHI-PHIXPLAYER-30", injury=""):
     return pd.DataFrame(
         [
