@@ -39,6 +39,13 @@ def entries():
             "client_order_id": "rejected",
             "utc": NOW.isoformat(),
         },
+        {
+            "event": "reconciled_rejected",
+            "client_order_id": "rejected",
+            "utc": NOW.isoformat(),
+            "submission_http_status": 404,
+            "evidence": "signed_get_no_order_fill_position_and_owner_ui",
+        },
     ]
 
 
@@ -136,3 +143,37 @@ def test_duplicate_intent_rejected():
     events = entries()
     with pytest.raises(TradingError):
         summarize_nba_validation(events + [events[0]], audit(), {}, NOW)
+
+
+def test_unresolved_attempt_flags_private_validation_even_with_valid_fills():
+    events = [e for e in entries() if e["event"] != "reconciled_rejected"]
+    report = summarize_nba_validation(events, audit(), {}, NOW)
+    assert report["status"] == "needs_submission_reconciliation"
+    assert report["unresolved_submission_attempts"] == 1
+    assert report["reserved_submissions_dollars"] > 3
+    assert report["proof_of_edge"] is False
+
+
+def test_unresolved_attempt_before_first_acceptance_is_not_a_clean_wait():
+    events = [e for e in entries() if e["event"] == "intent" and e["client_order_id"] == "a"]
+    report = summarize_nba_validation(events, {"status": "unavailable"}, {}, NOW)
+    assert report["status"] == "needs_submission_reconciliation"
+    assert report["accepted_orders"] == 0
+
+
+def test_reject_duplicate_acceptance_for_same_client_id():
+    events = entries() + [{"event": "accepted", "client_order_id": "a", "order_id": "id-b", "utc": NOW.isoformat()}]
+    with pytest.raises(TradingError, match="Unreconciled NBA acceptance"):
+        summarize_nba_validation(events, audit(), {}, NOW)
+
+
+@pytest.mark.parametrize("state, count, maker", [
+    ("confirmed_unfilled", 2, None),
+    ("resting_no_fill", 1, None),
+    ("fully_filled", 3, 4),
+])
+def test_impossible_exchange_fill_state_requires_reconciliation(state, count, maker):
+    report = summarize_nba_validation(entries(), audit(state, count, maker), {}, NOW)
+    assert report["status"] == "needs_exchange_reconciliation"
+    assert report["unknown_orders"] == 1
+    assert report["filled_contracts"] is None
