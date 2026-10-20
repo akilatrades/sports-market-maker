@@ -71,21 +71,22 @@ const AccountView = (() => {
     const outstanding = ["nfl", "nba"].flatMap(sport => {
       const view = orderAudits[sport];
       return view?.status === "verified_snapshot" && Array.isArray(view.orders) ?
-        view.orders.filter(order => order.state !== "fully_filled").map(order => ({...order, sport})) : [];
+        view.orders.map(order => ({...order, sport})) : [];
     }).sort((a,b) => (b.submitted_utc || "").localeCompare(a.submitted_utc || ""));
     const orderLabels = {confirmed_unfilled:"Closed · 0 fills",resting_no_fill:"Resting · 0 fills",
       partially_filled_resting:"Resting · partial",partially_filled_closed:"Closed · partial",
       unconfirmed_unfilled:"Closed · unconfirmed",exchange_order_unavailable:"Missing from recent Kalshi history",
       unreconciled_fill_count:"Fill discrepancy",exchange_status_unknown:"Unknown exchange status",
-      pending:"Pending exchange status"};
+      pending:"Pending exchange status", fully_filled:"Filled completely"};
     set("unfilled-note", !auditReady ? "Authenticated order audit unavailable or stale. No unfilled status is assumed." :
-      `Kalshi order/fill history: NFL ${count(nflAudit.accepted_orders)} accepted, NBA ${count(nbaAudit.accepted_orders)} accepted. Displaying ${count(Math.min(outstanding.length, 50))} recent orders without full fills.`);
+      `Kalshi order/fill history: NFL ${count(nflAudit.accepted_orders)} accepted, NBA ${count(nbaAudit.accepted_orders)} accepted. Displaying ${count(Math.min(outstanding.length, 50))} accepted orders, including historical complete and partial fills.`);
     node("unfilled-body").innerHTML = !auditReady ?
-      '<tr><td colspan="5" class="empty">Exchange order history is unavailable or stale.</td></tr>' :
-      !outstanding.length ? '<tr><td colspan="5" class="empty">No accepted orders awaiting or missing complete fills.</td></tr>' :
+      '<tr><td colspan="6" class="empty">Exchange order history is unavailable or stale.</td></tr>' :
+      !outstanding.length ? '<tr><td colspan="6" class="empty">No exchange-accepted orders recorded yet.</td></tr>' :
       outstanding.slice(0, 50).map(o => `<tr><td><strong>${escape(o.sport.toUpperCase())}</strong> · ${escape(o.player)}<small>${escape(o.ticker)} · ${escape(time(o.submitted_utc))}</small></td>
       <td>${escape(orderLabels[o.state] || o.state)}<small>Kalshi: ${escape(o.exchange_status)}</small></td>
-      <td>${count(o.filled_contracts)} / ${count(o.ordered_contracts)}</td>
+      <td>${count(o.filled_contracts)} / ${count(o.ordered_contracts)}<small>${o.first_fill_utc ? "First fill: " + escape(time(o.first_fill_utc)) : "No confirmed fill"}</small></td>
+      <td>${money(o.vwap_no_price_dollars)}<small>Fees: ${money(o.fill_fees_dollars)} · Maker contracts: ${count(o.maker_filled_contracts)}</small></td>
       <td>${count(o.queue_ahead_initial)} → ${count(o.queue_ahead_latest)}</td>
       <td>${finite(o.public_contra_contracts) ? count(o.public_contra_contracts) + " contracts (not guaranteed)" : "Not verified"}</td></tr>`).join("");
     if (s.unconfirmed_intents > 0 || data.kill_switch) {
