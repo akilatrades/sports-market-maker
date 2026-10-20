@@ -62,8 +62,15 @@ def test_append_only_reconciliation_is_accepted_but_its_cost_is_not_recycled():
     assert owner["rejected_by_sport"]["nba"] == {CID}
     assert shared.room(owner, set(), 2.0, NOW)["shared_lifetime"]
     assert shared.room(owner, set(), 99.0, NOW)["shared_lifetime"] is False
-    state = {"resting": [], "held": [], "settled": set(), "rejected_client_ids": rejected}
-    active, released = nba.reconcile_expired_unfilled(attempts, accepted, state, [], NOW)
+    state = {
+        "resting": [],
+        "held": [],
+        "settled": set(),
+        "rejected_client_ids": rejected,
+    }
+    active, released = nba.reconcile_expired_unfilled(
+        attempts, accepted, state, [], NOW
+    )
     assert active == [] and released == 0
 
 
