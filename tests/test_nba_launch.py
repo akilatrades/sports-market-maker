@@ -29,7 +29,10 @@ def test_nba_orders_expire_at_tip_despite_early_entry_cutoff():
     # New maker orders are submitted 2-6h before tip, but may rest until tip.
     assert order.expiration_ts == int(now.timestamp()) + 4 * 3600
     row.tip_utc = now + timedelta(hours=2, minutes=20)
-    assert nba.order_from_row(row, now)[0].expiration_ts == int(now.timestamp()) + 2 * 3600 + 1200
+    assert (
+        nba.order_from_row(row, now)[0].expiration_ts
+        == int(now.timestamp()) + 2 * 3600 + 1200
+    )
 
 
 def test_bundle_detects_mixed_generation_future_and_stale(tmp_path):
