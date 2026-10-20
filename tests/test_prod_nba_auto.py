@@ -662,11 +662,12 @@ def test_resting_edge_rule_does_not_cancel_accepted_positive_edge():
     row = priced().iloc[0].copy()
     row["p_book"] = 0.48  # positive 1 cent edge after a 51c NO quote
     intent = {
-        "ticker": row.ticker, "price_cents": 51, "count": 2,
+        "ticker": row.ticker,
+        "price_cents": 51,
+        "count": 2,
         "probability_source": "sportsbook",
     }
-    market = {"status": "active", "yes_bid_dollars": 0.40,
-              "yes_ask_dollars": 0.50}
+    market = {"status": "active", "yes_bid_dollars": 0.40, "yes_ask_dollars": 0.50}
     assert nba.RESTING_MIN_NET_EDGE == 0.0
     assert nba.resting_cancel_reason(row, intent, market, 0.0) is None
 
@@ -686,14 +687,17 @@ def test_explicit_minutes_restriction_blocks_player_even_with_old_news(
     monkeypatch.setattr(
         live,
         "injuries",
-        lambda: pd.DataFrame([
-            {
-                "player_id": 1234, "team": "LAL",
-                "updated": (NOW - timedelta(hours=2)).isoformat(),
-                "out": False,
-                "comment": "Expected to play limited minutes tonight",
-            }
-        ]),
+        lambda: pd.DataFrame(
+            [
+                {
+                    "player_id": 1234,
+                    "team": "LAL",
+                    "updated": (NOW - timedelta(hours=2)).isoformat(),
+                    "out": False,
+                    "comment": "Expected to play limited minutes tonight",
+                }
+            ]
+        ),
     )
     out = nba.nba_candidates(NOW, latest=tmp_path / "latest.csv")
     assert out.injury_status.iloc[0] == "REPORTED_MINUTES_RESTRICTION"
@@ -709,8 +713,9 @@ def test_invalid_reported_historical_minutes_fail_closed(tmp_path, monkeypatch):
     monkeypatch.setattr(trader, "refresh_quotes", lambda f, now: f.copy())
     monkeypatch.setattr(books, "attach_latest", lambda f: f.copy())
     monkeypatch.setattr(
-        live, "injuries",
-        lambda: pd.DataFrame(columns=["player_id", "team", "updated", "out"])
+        live,
+        "injuries",
+        lambda: pd.DataFrame(columns=["player_id", "team", "updated", "out"]),
     )
     frame = priced()
     frame["historical_minutes_baseline"] = 84.0
