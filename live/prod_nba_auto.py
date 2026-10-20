@@ -739,23 +739,33 @@ def room_for(attempts, active, row, cost, now, shared=None, rejected=frozenset()
     )
 
 
-def verify_no_legacy_resting(attempts, accepted, resting):
-    """Never silently apply new v3 cancellation policy to old v2 orders."""
-    version_by_client = {
-        str(intent["client_order_id"]): intent.get("strategy_version")
-        for intent in attempts
-    }
-    version_by_order = {
-        str(order["order_id"]): version_by_client.get(str(cid))
-        for cid, order in accepted.items()
-    }
-    if any(
-        version_by_order.get(str(order.get("order_id"))) != STRATEGY_VERSION
-        for order in resting
-    ):
-        raise TradingError(
-            "Legacy or unknown NBA resting order: HALT until exchange closes it"
-        )
+def legacy_resting_count(attempts, accepted, resting):
+    """Count verified v2 resting orders without changing their exchange state.
+
+    The old one-hour expiry remains the exchange-side safety boundary for
+    already-accepted orders. Any unowned or unknown-version order still HALTs.
+    """
+    intents = {str(a["client_order_id"]): a for a in attempts}
+    count = 0
+    for order in resting:
+        order_id = str(order.get("order_id") or "")
+        ticker = str(order.get("ticker") or "")
+        owner = [
+            intents.get(str(cid))
+            for cid, record in accepted.items()
+            if str(record.get("order_id")) == order_id
+        ]
+        if not order_id or not ticker or len(owner) != 1 or owner[0] is None:
+            raise TradingError("Unowned NBA resting order: HALT")
+        intent = owner[0]
+        if str(intent.get("ticker")) != ticker:
+            raise TradingError("Resting NBA order/ticker mismatch: HALT")
+        version = intent.get("strategy_version")
+        if version == "nba-no-v2-opening-audit":
+            count += 1
+        elif version != STRATEGY_VERSION:
+            raise TradingError("Unknown NBA resting order version: HALT")
+    return count
 
 
 def pass_once(client, env, frame, now, journal, *, dry=False):
@@ -772,6 +782,7 @@ def pass_once(client, env, frame, now, journal, *, dry=False):
             "strategy_version": STRATEGY_VERSION,
             "decision": decision,
             "placed": placed,
+            "legacy_v2_resting_orders": legacy_resting,
             "candidate_count": len(candidates),
             "selection_funnel": dict(funnel),
             "quote_research": research_quotes,
@@ -795,6 +806,7 @@ def pass_once(client, env, frame, now, journal, *, dry=False):
     attempts, accepted = records(events)
     rejected = rejected_client_ids(events)
     shared = None
+    legacy_resting = 0
     if not dry:
         from live.shared_account_risk import dual_mode, state_for
 
@@ -803,7 +815,7 @@ def pass_once(client, env, frame, now, journal, *, dry=False):
         else:
             state = current_production_state(client, attempts, accepted, rejected)
         state["rejected_client_ids"] = rejected
-        verify_no_legacy_resting(attempts, accepted, state["resting"])
+        legacy_resting = legacy_resting_count(attempts, accepted, state["resting"])
         free = money(client.balance()["balance"])
     else:
         state = {"active": []}
@@ -850,6 +862,16 @@ def pass_once(client, env, frame, now, journal, *, dry=False):
         for resting in state["resting"]:
             record_queue_observation(client, journal, resting["order_id"], now)
         record_markouts(journal, frame, now)
+        if legacy_resting:
+            # Never alter a previously submitted v2 order or mix its risk
+            # policy with v3. Still reconcile signed fills and publish a
+            # successful scan. When exchange-confirmed resting drops to
+            # zero, the next scan resumes v3 automatically.
+            print(
+                f"NBA TRANSITION: waiting for {legacy_resting} v2 resting "
+                "order(s) to close under their original expiry; no new posts"
+            )
+            return finish("waiting_for_legacy_v2_orders")
         canceled = cancel_invalid_resting(
             client, journal, state, frame, now, load_journal(journal)
         )
@@ -1384,6 +1406,7 @@ def preflight(client, frame, now, journal):
             state, _shared = state_for(client, "nba", now)
         else:
             state = current_production_state(client, attempts, accepted, rejected)
+        old_resting = legacy_resting_count(attempts, accepted, state["resting"])
         cash = money(client.balance()["balance"])
         if cash < MAX_ORDER_COST:
             failures.append("cash_below_order_cap")
@@ -1408,6 +1431,10 @@ def preflight(client, frame, now, journal):
             "cash_dollars": cash,
             "gross_reserved": budget,
             "resting": len(state["resting"]),
+            "legacy_v2_resting_orders": old_resting,
+            "entry_state": (
+                "waiting_for_legacy_v2_orders" if old_resting else "eligible_for_v3"
+            ),
             "held_markets": len(state["held"]),
         }
     except Exception as error:
