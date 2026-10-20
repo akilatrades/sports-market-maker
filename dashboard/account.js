@@ -62,6 +62,31 @@ const AccountView = (() => {
     const summary = [["Open markets scanned",filters.open_markets],["Within entry window",filters.in_entry_window],["Passed model / book check",filters.passed_book_or_model_and_spread]];
     const skips = Object.entries(scan?.skip_reasons || {}).sort((a,b) => b[1]-a[1]);
     node("scan-details").innerHTML = [...summary.filter(([,v]) => finite(v)), ...skips.map(([k,v]) => [reasons[k] || k.replaceAll("_"," "),v])].map(([label,v]) => `<div><span>${escape(label)}</span><b>${count(v)}</b></div>`).join("");
+    const pilot = state === "live" ? data.nba_validation || {} : {};
+    const pilotReady = ["collecting_live_outcomes", "30_day_review_due", "needs_exchange_reconciliation"].includes(pilot.status);
+    const pilotStates = {
+      awaiting_first_accepted_order:"Waiting for first accepted NBA order",
+      awaiting_exchange_audit:"Authenticated NBA order history unavailable",
+      incomplete_exchange_order_history:"NBA exchange order history incomplete",
+      needs_exchange_reconciliation:"Some NBA orders require reconciliation",
+      collecting_live_outcomes:"Live NBA observations · not proof of profitability",
+      "30_day_review_due":"30-day checkpoint due · review results before increasing risk",
+      invalid_or_unreconciled:"NBA journal validation unavailable"
+    };
+    set("nba-study-status", state !== "live" ? "Authenticated report unavailable or stale" : pilotStates[pilot.status] || "NBA validation report unavailable");
+    set("nba-study-day", pilotReady && finite(pilot.days_elapsed) ? count(Math.min(30,pilot.days_elapsed+1)) : "—");
+    set("nba-study-games", pilotReady ? count(pilot.independent_games_accepted) : "—");
+    set("nba-study-filled-games", pilotReady ? count(pilot.independent_games_filled) : "—");
+    set("nba-study-orders", pilotReady ? count(pilot.accepted_orders) : "—");
+    set("nba-study-zero", pilotReady ? count(pilot.confirmed_zero_fill_orders) : "—");
+    set("nba-study-fill-rate", pilotReady && finite(pilot.closed_order_fill_rate) ? (pilot.closed_order_fill_rate*100).toFixed(1) + "%" : "—");
+    set("nba-study-maker", pilotReady && finite(pilot.maker_share) ? (pilot.maker_share*100).toFixed(1) + "%" : "—");
+    set("nba-study-pnl", pilotReady ? money(pilot.settled_profit_dollars) : "—");
+    set("nba-study-budget", pilotReady ? money(pilot.lifetime_allowance_remaining_dollars) : "—");
+    set("nba-study-note", pilotReady
+      ? "First accepted order: " + time(pilot.start_utc) + ". Review due: " + time(pilot.review_due_utc) +
+        ". Filled-contract estimates are separate from net settlements. The $50 lifetime cap does not reset automatically."
+      : "No complete, current NBA order audit. Missing or unsettled data never count as profit or confirmed zero fills.");
     const orderAudits = data.order_audit || {};
     const nflAudit = orderAudits.nfl || {}, nbaAudit = orderAudits.nba || {};
     const auditReady = state === "live" && nflAudit.status === "verified_snapshot" && nbaAudit.status === "verified_snapshot";
