@@ -253,6 +253,31 @@ def audit_cohort(events, exchange_orders, fills, *, sport, now, prints_by_order=
         actual = (
             round(sum(measured), 4) if all(v is not None for v in measured) else None
         )
+        # Historical fills are not just counts: retain their price, fee,
+        # maker/taker classification and time. Unknown is never a fake zero.
+        prices = [amount(f.get("no_price_dollars")) for f in chunks]
+        fees = [amount(f.get("fee_cost")) for f in chunks]
+        fee_total = (
+            round(sum(fees), 6)
+            if chunks and all(v is not None for v in fees)
+            else None
+        )
+        vwap = (
+            round(sum(n * p for n, p in zip(measured, prices, strict=True)) / actual, 6)
+            if actual and all(n is not None for n in measured)
+            and all(p is not None for p in prices)
+            else None
+        )
+        maker = (
+            round(sum(n for n, f in zip(measured, chunks, strict=True)
+                      if f["is_taker"] is False), 4)
+            if chunks and all(n is not None for n in measured)
+            and all("is_taker" in f and isinstance(f["is_taker"], bool)
+                    for f in chunks)
+            else None
+        )
+        filled_times = [instant(f.get("created_time")) for f in chunks]
+        observed_times = [t for t in filled_times if t is not None]
         status = str(exchange.get("status", "")).lower() if exchange else "not_returned"
         exchange_filled = filled_count(exchange) if exchange else None
         if (
@@ -313,6 +338,12 @@ def audit_cohort(events, exchange_orders, fills, *, sport, now, prints_by_order=
                 "state": state,
                 "ordered_contracts": qty,
                 "filled_contracts": actual,
+                "fill_records": len(chunks),
+                "vwap_no_price_dollars": vwap,
+                "fill_fees_dollars": fee_total,
+                "maker_filled_contracts": maker,
+                "first_fill_utc": min(observed_times).isoformat() if observed_times else None,
+                "last_fill_utc": max(observed_times).isoformat() if observed_times else None,
                 "price_dollars": price / 100 if price is not None else None,
                 "queue_ahead_initial": valid_ahead[0] if valid_ahead else None,
                 "queue_ahead_latest": valid_ahead[-1] if valid_ahead else None,
@@ -331,6 +362,12 @@ def audit_cohort(events, exchange_orders, fills, *, sport, now, prints_by_order=
         "partially_filled": counts["partially_filled_resting"]
         + counts["partially_filled_closed"],
         "fully_filled": counts["fully_filled"],
+        "fill_records": sum(r["fill_records"] for r in rows),
+        "filled_contracts": (
+            round(sum(r["filled_contracts"] for r in rows), 4)
+            if all(r["filled_contracts"] is not None for r in rows)
+            else None
+        ),
         "unknown_or_unreconciled": sum(
             v
             for k, v in counts.items()
