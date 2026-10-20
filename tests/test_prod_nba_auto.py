@@ -270,7 +270,7 @@ def test_dry_scan_cannot_overwrite_production_scan_status(tmp_path):
     assert not journal.exists()
 
 
-def test_extended_order_expiration_never_exceeds_existing_pretip_cutoff():
+def test_existing_nba_orders_rest_to_verified_tip_not_two_hours_early():
     from kalshi.trading import Order
 
     for h in (2.5, 4.0, 6.0):
@@ -280,11 +280,11 @@ def test_extended_order_expiration_never_exceeds_existing_pretip_cutoff():
         rows = nba.select_candidates(f, [], {"active": []}, NOW)
         assert len(rows) == 1
         order, _ = nba.order_from_row(rows[0], NOW)
-        expected = int((NOW + timedelta(hours=h)).timestamp()) - 7200
+        expected = int((NOW + timedelta(hours=h)).timestamp())
         assert order.expiration_ts == expected
         assert order.expiration_ts > int(NOW.timestamp())
         assert order.expiration_ts - int(NOW.timestamp()) > 0
-        assert order.expiration_ts - int(NOW.timestamp()) <= 4 * 3600
+        assert order.expiration_ts - int(NOW.timestamp()) <= 6 * 3600
         assert (
             Order(
                 **{
@@ -315,7 +315,7 @@ def test_resting_quote_retains_order_while_edge_remains_valid():
     "change, expected",
     [
         ({"injury_status": "NEW_INJURY_NEWS"}, "unverified_roster_injury_or_model"),
-        ({"hours_to_tip": 1.9}, "outside_verified_pretip_window"),
+        ({"hours_to_tip": -0.01}, "outside_verified_pretip_window"),
         ({"book_n": 1}, "fresh_two_book_consensus_missing"),
         ({"p_book": 0.51}, "current_net_edge_below_minimum"),
         ({"p_book": float("nan"), "book_n": 0}, "fresh_two_book_consensus_missing"),
