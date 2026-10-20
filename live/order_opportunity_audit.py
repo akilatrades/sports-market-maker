@@ -63,6 +63,8 @@ def contra_volume(prints, no_price, started, ended):
         side = row.get("taker_outcome_side") or row.get("taker_side")
         if at is None or yes is None or qty is None or side is None:
             return None  # Cannot assert zero when public prints are incomplete.
+        if row.get("is_block_trade"):
+            continue  # Block prints are not resting queue flow.
         if started <= at <= ended and str(side).lower() == "yes":
             if yes + 1e-9 >= 1 - no_price:
                 total += qty
@@ -168,10 +170,14 @@ def audit_cohort(events, exchange_orders, fills, *, sport, now, prints_by_order=
         valid_ahead = [v for v in valid_ahead if v is not None]
         flow = None
         if prints_by_order is not None and oid in prints_by_order:
-            flow = contra_volume(
-                prints_by_order[oid], price / 100 if price is not None else None,
-                opened, min(now, expiry) if expiry is not None else now
-            )
+            sample = prints_by_order[oid]
+            trade_rows = sample.get("trades") if isinstance(sample, dict) else sample
+            end = instant(sample.get("end_utc")) if isinstance(sample, dict) else None
+            if trade_rows is not None:
+                flow = contra_volume(
+                    trade_rows, price / 100 if price is not None else None,
+                    opened, end or min(now, expiry) if expiry is not None else now
+                )
         rows.append({
             "cohort": sport,
             "ticker": intent.get("ticker"),
