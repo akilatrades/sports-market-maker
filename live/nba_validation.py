@@ -68,7 +68,9 @@ def summarize_nba_validation(events, audit, pnl, now):
         raise TradingError("NBA journal acceptance timestamp is in the future")
     end = first + timedelta(days=WINDOW_DAYS) if first else None
     basic = {
-        "status": "awaiting_first_accepted_order" if first is None else "awaiting_exchange_audit",
+        "status": "awaiting_first_accepted_order"
+        if first is None
+        else "awaiting_exchange_audit",
         "start_utc": first.isoformat() if first else None,
         "review_due_utc": end.isoformat() if end else None,
         "days_elapsed": max(0, (now - first).days) if first else None,
@@ -77,7 +79,9 @@ def summarize_nba_validation(events, audit, pnl, now):
         "attempted_orders": len(intents),
         "reserved_submissions_dollars": round(spent, 2),
         "lifetime_limit_dollars": NBA_LIFETIME_RESERVE,
-        "lifetime_allowance_remaining_dollars": round(max(0, NBA_LIFETIME_RESERVE - spent), 2),
+        "lifetime_allowance_remaining_dollars": round(
+            max(0, NBA_LIFETIME_RESERVE - spent), 2
+        ),
         "closed_known_orders": None,
         "closed_order_fill_rate": None,
         "confirmed_zero_fill_orders": None,
@@ -89,17 +93,22 @@ def summarize_nba_validation(events, audit, pnl, now):
         "independent_games_filled": None,
         "settled_profit_dollars": (
             pnl.get("settled_profit_dollars")
-            if pnl.get("status") == "verified" and isinstance(pnl.get("settled_profit_dollars"), (int, float))
+            if pnl.get("status") == "verified"
+            and isinstance(pnl.get("settled_profit_dollars"), (int, float))
             else None
         ),
-        "settled_markets": pnl.get("settled_markets") if pnl.get("status") == "verified" else None,
+        "settled_markets": pnl.get("settled_markets")
+        if pnl.get("status") == "verified"
+        else None,
         "profit_source": pnl.get("status", "unavailable"),
         "proof_of_edge": False,
         "note": "Descriptive live study; no automatic risk reset. No statistical significance claimed.",
     }
     if first is None:
         return basic
-    if audit.get("status") != "verified_snapshot" or not isinstance(audit.get("orders"), list):
+    if audit.get("status") != "verified_snapshot" or not isinstance(
+        audit.get("orders"), list
+    ):
         return basic
     rows = audit["orders"]
     by_id = {str(row.get("order_id")): row for row in rows if isinstance(row, dict)}
@@ -113,7 +122,12 @@ def summarize_nba_validation(events, audit, pnl, now):
     for oid, row in by_id.items():
         state = row.get("state")
         count = row.get("filled_contracts")
-        if count is None or not isinstance(count, (int, float)) or not math.isfinite(count) or count < 0:
+        if (
+            count is None
+            or not isinstance(count, (int, float))
+            or not math.isfinite(count)
+            or count < 0
+        ):
             unknown.append(oid)
             continue
         if state in FILLED_STATES and count > 0:
@@ -130,11 +144,15 @@ def summarize_nba_validation(events, audit, pnl, now):
     games_accepted = {intent.get("game_id") for intent, _ in accepted.values()}
     games_filled = {accepted[oid][0].get("game_id") for oid in filled}
     games_complete = None not in games_accepted and all(bool(g) for g in games_accepted)
-    filled_games_complete = None not in games_filled and all(bool(g) for g in games_filled)
+    filled_games_complete = None not in games_filled and all(
+        bool(g) for g in games_filled
+    )
     fully_observed = not unknown
     filled_counts = [by_id[oid]["filled_contracts"] for oid in by_id]
     makers = [by_id[oid].get("maker_filled_contracts") for oid in filled]
-    maker_known = all(isinstance(v, (int, float)) and math.isfinite(v) and v >= 0 for v in makers)
+    maker_known = all(
+        isinstance(v, (int, float)) and math.isfinite(v) and v >= 0 for v in makers
+    )
     maker_known = maker_known and fully_observed
     full_qty = sum(filled_counts) if fully_observed else None
     basic.update(
@@ -147,16 +165,18 @@ def summarize_nba_validation(events, audit, pnl, now):
         ),
         closed_known_orders=len(closed),
         closed_order_fill_rate=(
-            round(sum(oid in filled for oid in closed) / len(closed), 4) if closed else None
+            round(sum(oid in filled for oid in closed) / len(closed), 4)
+            if closed
+            else None
         ),
-        confirmed_zero_fill_orders=sum(by_id[oid]["state"] == "confirmed_unfilled" for oid in closed),
+        confirmed_zero_fill_orders=sum(
+            by_id[oid]["state"] == "confirmed_unfilled" for oid in closed
+        ),
         open_orders=len(waiting),
         unknown_orders=len(unknown),
         filled_contracts=round(full_qty, 4) if full_qty is not None else None,
         maker_share=(
-            round(sum(makers) / full_qty, 4)
-            if maker_known and full_qty
-            else None
+            round(sum(makers) / full_qty, 4) if maker_known and full_qty else None
         ),
         independent_games_accepted=len(games_accepted) if games_complete else None,
         independent_games_filled=len(games_filled) if filled_games_complete else None,
