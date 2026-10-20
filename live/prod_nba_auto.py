@@ -37,6 +37,9 @@ MAX_TEAM_COST = 8.0
 MAX_DAILY_COST = 35.0
 MAX_GAME_ORDERS = 4
 MAX_CONTRACTS = 2  # smaller live validation fills; sample more markets
+# Additional P&L circuit breakers: do not weaken existing spend/activity limits.
+MAX_REALIZED_DAILY_LOSS = 12.0
+MAX_REALIZED_CUMULATIVE_LOSS = 25.0
 FEE_RESERVE = 1.10
 WINDOW = (2.0, 6.0)  # NEW orders still start 2–6 hours before tip
 # ALREADY-ACCEPTED orders may rest until the verified scheduled tip.
@@ -228,6 +231,61 @@ def reconcile_expired_unfilled(attempts, accepted, state, fills, now, events=())
         else:
             still_active.append(attempt)
     return still_active, released
+
+
+def nba_realized_pnl(settlements, owned_tickers, now):
+    """Read-only settlement P&L guard. Never infer profit from unfilled orders.
+
+    Exchange outcomes must have complete unit-normalized accounting and
+    timestamp; duplicate pages cannot inflate or erase a stop. Checks
+    apply only to NBA cohort-owned markets; shared submission caps stay.
+    """
+    from zoneinfo import ZoneInfo
+
+    if not isinstance(settlements, list):
+        raise TradingError("Unverified NBA settlement ledger: HALT")
+    local_today = now.astimezone(ZoneInfo("America/New_York")).date()
+    seen = {}
+    daily = cumulative = 0.0
+    for item in settlements:
+        if not isinstance(item, dict):
+            raise TradingError("Malformed NBA settlement: HALT")
+        ticker = item.get("market_ticker") or item.get("ticker")
+        if ticker not in owned_tickers:
+            continue
+        accounted = settlement_accounting(item)
+        amount = accounted.get("net_profit_dollars")
+        try:
+            when = pd.Timestamp(item["settled_time"])
+        except (ValueError, TypeError, KeyError) as error:
+            raise TradingError("Undated NBA settlement: HALT") from error
+        if (
+            not accounted["accounting_complete"]
+            or amount is None
+            or not math.isfinite(float(amount))
+            or pd.isna(when)
+            or when.tzinfo is None
+            or when > pd.Timestamp(now) + pd.Timedelta(minutes=5)
+        ):
+            raise TradingError("Incomplete or future NBA settlement: HALT")
+        key = (str(ticker), when.isoformat())
+        if key in seen:
+            if seen[key] != accounted:
+                raise TradingError("Conflicting NBA settlement copies: HALT")
+            continue
+        seen[key] = accounted
+        cumulative += float(amount)
+        if when.tz_convert("America/New_York").date() == local_today:
+            daily += float(amount)
+    return {
+        "daily_realized_pnl_dollars": round(daily, 4),
+        "cumulative_realized_pnl_dollars": round(cumulative, 4),
+        "settlement_records": len(seen),
+        "loss_stop": (
+            daily <= -MAX_REALIZED_DAILY_LOSS
+            or cumulative <= -MAX_REALIZED_CUMULATIVE_LOSS
+        ),
+    }
 
 
 def resting_cancel_reason(row, intent, market, fee_bound):
@@ -828,6 +886,7 @@ def pass_once(client, env, frame, now, journal, *, dry=False):
             },
             "resting_order_count": len(state.get("resting", [])),
             "verified_zero_fill_expiries_this_scan": released,
+            "realized_pnl_stop": realized_pnl,
             "quote_research": research_quotes,
             "skipped": dict(skipped),
             "inputs": frame.attrs.get("diagnostics", {}),
@@ -851,6 +910,7 @@ def pass_once(client, env, frame, now, journal, *, dry=False):
     shared = None
     legacy_resting = 0
     released = 0
+    realized_pnl = {"status": "not_evaluated_in_dry_mode"}
     if not dry:
         from live.shared_account_risk import dual_mode, state_for
 
@@ -930,6 +990,12 @@ def pass_once(client, env, frame, now, journal, *, dry=False):
             print(f"PROD AUTO: canceled {canceled} unsafe resting orders")
             # Require another reconciliation pass after cancellation.
             return finish("unsafe_resting_canceled")
+        realized_pnl = nba_realized_pnl(
+            state["settlements"], {a["ticker"] for a in attempts}, now
+        )
+        if realized_pnl["loss_stop"]:
+            print("NBA REALIZED LOSS STOP: no additional orders")
+            return finish("realized_loss_stop")
         print(
             f"PROD AUTO: attempts={len(attempts)}, resting={len(state['resting'])}, "
             f"held={len(state['held'])}, settled_tickers={len(state['settled'])}, "
@@ -1520,6 +1586,11 @@ def preflight(client, frame, now, journal):
                     if str(error).startswith("SHARD_UNFUNDED_")
                     else "shard_funding_or_routing_unverifiable"
                 )
+        pnl_check = nba_realized_pnl(
+            state["settlements"], {a["ticker"] for a in attempts}, now
+        )
+        if pnl_check["loss_stop"]:
+            failures.append("nba_realized_loss_stop")
         budget = sum(reserve(a["cost"]) for a in attempts)
         if budget >= MAX_GROSS_COST:
             failures.append("lifetime_budget_exhausted")
@@ -1532,6 +1603,7 @@ def preflight(client, frame, now, journal):
                 "waiting_for_prior_version_orders" if old_resting else "eligible_for_v4"
             ),
             "held_markets": len(state["held"]),
+            "realized_pnl_stop": pnl_check,
         }
     except Exception as error:
         failures.append(
