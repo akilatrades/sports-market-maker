@@ -11,10 +11,6 @@ from kalshi.trading import TradingClient, TradingError
 
 
 def main():
-    import os
-
-    key_id = os.environ.get("KALSHI_KEY_ID", "")
-    pem = os.environ.get("KALSHI_PRIVATE_KEY", "")
     try:
         client = TradingClient(dry_run=True)
     except Exception as error:  # noqa: BLE001 - report, without the key material
