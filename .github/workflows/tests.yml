@@ -20,5 +20,7 @@ jobs:
       - run: ruff check . && ruff format --check --diff .
       - name: Validate production deployment shell syntax
         run: bash -n deploy/*.sh
+      - name: Validate private account dashboard JavaScript (historical fills, escaping)
+        run: node tests/account_dashboard.cjs
       - run: pytest
 
