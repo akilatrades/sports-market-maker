@@ -15,7 +15,6 @@ import math
 import os
 import urllib.parse
 import urllib.request
-from zoneinfo import ZoneInfo
 
 import pandas as pd
 from kalshi.books import normalize_name
