@@ -229,7 +229,8 @@ def test_full_pass_records_fee_evidence_and_never_retries_an_uncertain_post(
             self.posts += 1
             assert (
                 order.post_only
-                and nba.reserve(order.count * order.price_cents / 100) <= nba.MAX_ORDER_COST
+                and nba.reserve(order.count * order.price_cents / 100)
+                <= nba.MAX_ORDER_COST
             )
             if self.fail:
                 raise OSError("timeout")
