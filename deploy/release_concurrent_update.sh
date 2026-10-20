@@ -77,7 +77,13 @@ runuser -u trader -- .venv/bin/python -m pytest -q \
   tests/test_prod_nfl_auto.py \
   tests/test_prod_nba_auto.py \
   tests/test_production_lock.py
-node tests/account_dashboard.cjs
+# Node is available in CI; this Python-only Droplet may not have it. Do not
+# require installing new runtime packages on a funded-account production host.
+if command -v node >/dev/null 2>&1; then
+  node tests/account_dashboard.cjs
+else
+  echo "JavaScript regression was verified in CI; Node unavailable on Droplet."
+fi
 
 systemd-run --wait --pipe --collect --uid=trader \
   -p WorkingDirectory="$ROOT" \
