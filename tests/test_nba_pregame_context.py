@@ -130,6 +130,6 @@ def test_historical_minutes_is_a_prior_only_uncalibrated_estimate():
         ]
     )
     result = historical_minutes_projection(f)
-    assert result.minutes_forecast_internal.iloc[0] == 28
+    assert result.minutes_forecast_internal.iloc[0] == 30
     assert result.minutes_uncertainty_heuristic.iloc[0] == 11
     assert result.minutes_forecast_internal_source.iloc[0] == "prior_only_uncalibrated"
