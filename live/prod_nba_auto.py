@@ -18,6 +18,7 @@ import pandas as pd
 
 from kalshi.api import fetch_market
 from kalshi.paper_props import candidate_orders
+from kalshi.shard_funding import require_funded_shard
 from kalshi.trading import Order, TradingClient, TradingError
 from live.nfl_policy import settlement_accounting
 from live.nba_inputs import MODEL_VERSION
@@ -774,6 +775,19 @@ def pass_once(client, env, frame, now, journal, *, dry=False):
             skipped["entry_window_elapsed"] += 1
             continue
 
+        # Validate the target matching engine and its own collateral before
+        # the durable intent. A shard without funding must never create a
+        # phantom submission or block the other cohort.
+        try:
+            order.exchange_index = require_funded_shard(
+                client, order.ticker, reserve(cost)
+            )
+        except TradingError as error:
+            if str(error).startswith("SHARD_UNFUNDED_"):
+                skipped["exchange_shard_unfunded"] += 1
+                return finish("exchange_shard_unfunded")
+            raise
+
         # Durable intent first; any failure after this (including a timeout)
         # disables all future automatic orders until manually investigated.
         write_event(
@@ -1205,6 +1219,20 @@ def preflight(client, frame, now, journal):
         cash = money(client.balance()["balance"])
         if cash < MAX_ORDER_COST:
             failures.append("cash_below_order_cap")
+        # Aggregated account cash is not usable collateral on another shard.
+        # Check one representative eligible market without submitting anything.
+        verified = frame[frame.injury_status.fillna("").eq("")]
+        if not verified.empty:
+            try:
+                require_funded_shard(
+                    client, str(verified.iloc[0].ticker), reserve(MAX_ORDER_COST)
+                )
+            except TradingError as error:
+                failures.append(
+                    str(error)
+                    if str(error).startswith("SHARD_UNFUNDED_")
+                    else "shard_funding_or_routing_unverifiable"
+                )
         budget = sum(reserve(a["cost"]) for a in attempts)
         if budget >= MAX_GROSS_COST:
             failures.append("lifetime_budget_exhausted")
