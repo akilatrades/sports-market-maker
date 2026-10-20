@@ -1338,6 +1338,82 @@ def nba_candidates(now, latest=Path("outputs/projections/latest.csv")):
             )
         else:
             uncertain_teams = set()
+        # Fetch ONLY an explicitly configured licensed pregame provider.
+        # Do not mislabel historical minutes as independent projections.
+        from live.nba_pregame_context import (
+            enrich,
+            historical_minutes_projection,
+            load,
+        )
+
+        licensed_days = {
+            pd.Timestamp(tip).tz_convert("America/New_York").strftime("%Y-%m-%d")
+            for tip in frame.tip_utc.dropna()
+            if 0 < (pd.Timestamp(tip) - pd.Timestamp(now)).total_seconds()
+            <= 8 * 3600
+        }
+        context = load(licensed_days, now) if licensed_days else {"configured": False}
+        if {"historical_minutes_baseline", "last_game_minutes",
+            "recent_start_rate"}.issubset(frame.columns):
+            frame = historical_minutes_projection(frame)
+        frame = enrich(frame, context, now)
+        # When independently projected minutes diverge from the training
+        # forecast, do not keep trading the old p_model or pretend to
+        # have recalibrated its distribution. Block until repriced.
+        if "historical_minutes_baseline" in frame:
+            historical = pd.to_numeric(
+                frame.historical_minutes_baseline, errors="coerce"
+            )
+            independent = pd.to_numeric(frame.projected_minutes, errors="coerce")
+            available = independent.notna()
+            shift = (independent - historical).abs()
+            material = available & (shift > 6) & (
+                shift > 0.20 * historical.clip(lower=1)
+            )
+            frame.loc[material, "injury_status"] = (
+                "INDEPENDENT_MINUTES_SHIFT_REQUIRES_MODEL_REPRICE"
+            )
+            frame.loc[
+                available & independent.lt(8), "injury_status"
+            ] = "PROJECTED_LOW_OR_NO_PLAYING_TIME"
+            # Different starting assignment from established recent role:
+            # existing game-specific mean is invalid, regardless of books.
+            start_rate = pd.to_numeric(
+                frame.get("recent_start_rate"), errors="coerce"
+            )
+            established = (
+                frame.lineup_confirmation_status.eq("confirmed")
+                & frame.confirmed_starter.notna()
+            )
+            unexpected_bench = (
+                established & frame.confirmed_starter.eq(False)
+                & start_rate.ge(0.8)
+            )
+            unexpected_start = (
+                established & frame.confirmed_starter.eq(True)
+                & start_rate.le(0.2)
+            )
+            frame.loc[
+                unexpected_bench | unexpected_start, "injury_status"
+            ] = "CONFIRMED_STARTING_ROLE_CHANGED"
+        # A server configured to REQUIRE independent feed never silently
+        # trades from only historical data if credentials are unavailable.
+        if os.environ.get("NBA_REQUIRE_VERIFIED_CONTEXT") == "YES":
+            required_context = (
+                frame.projected_minutes.isna()
+                | frame.projected_minutes_source.ne("rotowire_licensed")
+            )
+            frame.loc[required_context, "injury_status"] = (
+                "INDEPENDENT_PREGAME_MINUTES_REQUIRED"
+            )
+        diagnostics.update(
+            vendor_context_configured=bool(context.get("configured")),
+            vendor_context_reason=context.get("reason", "available"),
+            projected_minutes_verified=int(frame.projected_minutes.notna().sum()),
+            confirmed_starter_rows=int(
+                frame.lineup_confirmation_status.eq("confirmed").sum()
+            ),
+        )
         # Keep the baseline explicitly labeled. It is a trailing historical
         # minutes estimate, not a current coach-confirmed playing-time target.
         if "historical_minutes_baseline" in frame:
