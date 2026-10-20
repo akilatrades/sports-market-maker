@@ -1196,18 +1196,18 @@ def nba_candidates(now, latest=Path("outputs/projections/latest.csv")):
             if "comment" in report:
                 limited = report.comment.map(explicit_minutes_limit).fillna(False)
                 limited_ids = set(players[limited].dropna().astype(int))
-                frame.loc[
-                    frame_ids.isin(limited_ids), "injury_status"
-                ] = "REPORTED_MINUTES_RESTRICTION"
+                frame.loc[frame_ids.isin(limited_ids), "injury_status"] = (
+                    "REPORTED_MINUTES_RESTRICTION"
+                )
         # Keep the baseline explicitly labeled. It is a trailing historical
         # minutes estimate, not a current coach-confirmed playing-time target.
         if "historical_minutes_baseline" in frame:
             minute_base = pd.to_numeric(
                 frame.historical_minutes_baseline, errors="coerce"
             )
-            frame.loc[
-                ~minute_base.between(0, 48), "injury_status"
-            ] = "UNVERIFIED_HISTORICAL_MINUTES"
+            frame.loc[~minute_base.between(0, 48), "injury_status"] = (
+                "UNVERIFIED_HISTORICAL_MINUTES"
+            )
         frame = refresh_quotes(frame, now)
         book_path = latest.parent / "nba_books.csv"
         if book_path.exists() and book_path.stat().st_size == 0:
@@ -1269,7 +1269,9 @@ def nba_candidates(now, latest=Path("outputs/projections/latest.csv")):
                 pd.to_numeric(
                     frame.get("historical_minutes_baseline", pd.Series(dtype=float)),
                     errors="coerce",
-                ).notna().sum()
+                )
+                .notna()
+                .sum()
             ),
             exclusions=frame.loc[frame.injury_status.ne(""), "injury_status"]
             .value_counts()
