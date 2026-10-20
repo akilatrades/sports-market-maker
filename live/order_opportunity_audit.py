@@ -226,11 +226,21 @@ def audit_cohort(events, exchange_orders, fills, *, sport, now, prints_by_order=
         exchange = orders.get(oid)
         qty = amount(intent.get("count"))
         price = amount(intent.get("price_cents"))
-        opened = instant(next(
-            (e.get("utc") for e in events
-             if e.get("event") == "accepted" and str(e.get("order_id")) == oid), None
-        )) or instant(intent.get("utc"))
-        expiry = instant(intent.get("expiration_ts")) if isinstance(intent.get("expiration_ts"), str) else None
+        opened = instant(
+            next(
+                (
+                    e.get("utc")
+                    for e in events
+                    if e.get("event") == "accepted" and str(e.get("order_id")) == oid
+                ),
+                None,
+            )
+        ) or instant(intent.get("utc"))
+        expiry = (
+            instant(intent.get("expiration_ts"))
+            if isinstance(intent.get("expiration_ts"), str)
+            else None
+        )
         if expiry is None and intent.get("expiration_ts") is not None:
             try:
                 expiry = datetime.fromtimestamp(int(intent["expiration_ts"]), UTC)
@@ -240,10 +250,16 @@ def audit_cohort(events, exchange_orders, fills, *, sport, now, prints_by_order=
             expiry = instant(intent.get("tip_utc"))
         chunks = list(found.get(oid, {}).values())
         measured = [amount(f.get("count_fp", f.get("count"))) for f in chunks]
-        actual = round(sum(measured), 4) if all(v is not None for v in measured) else None
+        actual = (
+            round(sum(measured), 4) if all(v is not None for v in measured) else None
+        )
         status = str(exchange.get("status", "")).lower() if exchange else "not_returned"
         exchange_filled = filled_count(exchange) if exchange else None
-        if exchange_filled is not None and actual is not None and abs(exchange_filled - actual) > 1e-5:
+        if (
+            exchange_filled is not None
+            and actual is not None
+            and abs(exchange_filled - actual) > 1e-5
+        ):
             state = "unreconciled_fill_count"
         elif qty is None or qty <= 0 or actual is None or actual > qty + 1e-5:
             state = "unreconciled_fill_count"
@@ -256,7 +272,11 @@ def audit_cohort(events, exchange_orders, fills, *, sport, now, prints_by_order=
         elif actual >= qty - 1e-5:
             state = "fully_filled"
         elif actual > 0:
-            state = "partially_filled_resting" if status == "resting" else "partially_filled_closed"
+            state = (
+                "partially_filled_resting"
+                if status == "resting"
+                else "partially_filled_closed"
+            )
         elif status == "resting":
             state = "resting_no_fill"
         elif exchange_filled == 0:
@@ -276,26 +296,30 @@ def audit_cohort(events, exchange_orders, fills, *, sport, now, prints_by_order=
             end = instant(sample.get("end_utc")) if isinstance(sample, dict) else None
             if trade_rows is not None:
                 flow = contra_volume(
-                    trade_rows, price / 100 if price is not None else None,
-                    opened, end or (min(now, expiry) if expiry is not None else now)
+                    trade_rows,
+                    price / 100 if price is not None else None,
+                    opened,
+                    end or (min(now, expiry) if expiry is not None else now),
                 )
-        rows.append({
-            "cohort": sport,
-            "ticker": intent.get("ticker"),
-            "player": intent.get("player") or intent.get("ticker"),
-            "stat": intent.get("stat"),
-            "submitted_utc": opened.isoformat() if opened else None,
-            "expiration_utc": expiry.isoformat() if expiry else None,
-            "exchange_status": status,
-            "state": state,
-            "ordered_contracts": qty,
-            "filled_contracts": actual,
-            "price_dollars": price / 100 if price is not None else None,
-            "queue_ahead_initial": valid_ahead[0] if valid_ahead else None,
-            "queue_ahead_latest": valid_ahead[-1] if valid_ahead else None,
-            "public_contra_contracts": flow,
-            "public_flow_is_not_guaranteed_fill": True,
-        })
+        rows.append(
+            {
+                "cohort": sport,
+                "ticker": intent.get("ticker"),
+                "player": intent.get("player") or intent.get("ticker"),
+                "stat": intent.get("stat"),
+                "submitted_utc": opened.isoformat() if opened else None,
+                "expiration_utc": expiry.isoformat() if expiry else None,
+                "exchange_status": status,
+                "state": state,
+                "ordered_contracts": qty,
+                "filled_contracts": actual,
+                "price_dollars": price / 100 if price is not None else None,
+                "queue_ahead_initial": valid_ahead[0] if valid_ahead else None,
+                "queue_ahead_latest": valid_ahead[-1] if valid_ahead else None,
+                "public_contra_contracts": flow,
+                "public_flow_is_not_guaranteed_fill": True,
+            }
+        )
     rows.sort(key=lambda r: r["submitted_utc"] or "", reverse=True)
     counts = Counter(row["state"] for row in rows)
     return {
@@ -304,11 +328,21 @@ def audit_cohort(events, exchange_orders, fills, *, sport, now, prints_by_order=
         "confirmed_unfilled": counts["confirmed_unfilled"],
         "unconfirmed_unfilled": counts["unconfirmed_unfilled"],
         "resting_no_fill": counts["resting_no_fill"],
-        "partially_filled": counts["partially_filled_resting"] + counts["partially_filled_closed"],
+        "partially_filled": counts["partially_filled_resting"]
+        + counts["partially_filled_closed"],
         "fully_filled": counts["fully_filled"],
-        "unknown_or_unreconciled": sum(v for k, v in counts.items() if k in {
-            "unreconciled_fill_count", "exchange_order_unavailable",
-            "exchange_status_unknown", "pending", "unconfirmed_unfilled"}),
+        "unknown_or_unreconciled": sum(
+            v
+            for k, v in counts.items()
+            if k
+            in {
+                "unreconciled_fill_count",
+                "exchange_order_unavailable",
+                "exchange_status_unknown",
+                "pending",
+                "unconfirmed_unfilled",
+            }
+        ),
         "orders": rows,
         "note": "Actual outcomes from signed Kalshi orders/fills. Public YES-taker volume is possible contra flow, not a proven missed fill.",
     }
