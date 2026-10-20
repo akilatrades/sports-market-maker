@@ -8,6 +8,8 @@ cd /home/trader/sports-market-maker-prod-auto
 nfl_was=0
 nba_was=0
 dashboard_was=0
+updated=0
+validated=0
 systemctl is-active --quiet market-maker-prod-nfl-auto.timer && nfl_was=1
 systemctl is-active --quiet market-maker-prod-nba-auto.timer && nba_was=1
 systemctl is-active --quiet market-maker-dashboard.service && dashboard_was=1
@@ -16,6 +18,11 @@ restore() {
   status=$?
   trap - EXIT
   restore_failed=0
+  if (( updated && ! validated )); then
+    echo "Tests failed after the git update; trading timers remain stopped." >&2
+    if (( dashboard_was )); then systemctl restart market-maker-dashboard.service || true; fi
+    exit "$status"
+  fi
   if (( dashboard_was )); then
     systemctl restart market-maker-dashboard.service || {
       echo "Private dashboard restart failed." >&2
@@ -55,9 +62,11 @@ done
 
 if (( dashboard_was )); then systemctl stop market-maker-dashboard.service; fi
 runuser -u trader -- git pull --ff-only origin main
+updated=1
 runuser -u trader -- .venv/bin/python -m pytest -q \
   tests/test_order_opportunity_audit.py \
   tests/test_account_dashboard.py \
   tests/test_shared_account_risk.py
+validated=1
 systemctl daemon-reload
 echo "Private Kalshi order audit updated; restoring previous timer states."
