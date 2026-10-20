@@ -66,7 +66,13 @@ updated=1
 runuser -u trader -- .venv/bin/python -m pytest -q \
   tests/test_order_opportunity_audit.py \
   tests/test_account_dashboard.py \
+  tests/test_nba_validation.py \
   tests/test_shared_account_risk.py
+if command -v node >/dev/null 2>&1; then
+  node tests/account_dashboard.cjs
+else
+  echo "Dashboard JS test verified by CI; Node unavailable on Droplet."
+fi
 validated=1
 systemctl daemon-reload
 echo "Private Kalshi order audit updated; restoring previous timer states."
