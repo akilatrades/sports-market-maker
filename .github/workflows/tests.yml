@@ -18,5 +18,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - run: pip install -r requirements.txt ruff==0.11.13
       - run: ruff check . && ruff format --check --diff .
+      - name: Validate production deployment shell syntax
+        run: bash -n deploy/*.sh
       - run: pytest
 
