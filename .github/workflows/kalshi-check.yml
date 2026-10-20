@@ -1,5 +1,6 @@
-name: kalshi credentials check
-# Read-only: confirms the API key works by reading the account balance.
+name: Kalshi public API availability (no account secrets)
+# Never load a funded-account trading private key on a hosted Actions runner.
+# Authenticated checks belong on the private Droplet in a secured session.
 on:
   workflow_dispatch:
 permissions:
@@ -8,14 +9,17 @@ jobs:
   check:
     runs-on: ubuntu-latest
     timeout-minutes: 5
-    env:
-      KALSHI_ENV: ${{ vars.KALSHI_ENV || 'demo' }}
-      KALSHI_KEY_ID: ${{ secrets.KALSHI_KEY_ID }}
-      KALSHI_PRIVATE_KEY: ${{ secrets.KALSHI_PRIVATE_KEY }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-      - run: pip install -r requirements.txt
-      - run: python -m live.check_credentials
+      - name: Verify public market data availability without credentials
+        run: |
+          python3 - <<'PY'
+          import json
+          from urllib.request import urlopen
+
+          url = "https://api.elections.kalshi.com/trade-api/v2/markets?limit=1"
+          with urlopen(url, timeout=15) as response:
+              payload = json.load(response)
+          if not isinstance(payload.get("markets"), list):
+              raise RuntimeError("Public Kalshi market endpoint returned an unexpected response")
+          print("Kalshi production public API is reachable. No private keys were used.")
+          PY
