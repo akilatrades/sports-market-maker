@@ -560,20 +560,12 @@ def test_v3_guard_blocks_old_or_unknown_resting_orders():
 
 
 def test_more_competitive_maker_quote_never_spends_last_3c_edge():
-    good = SimpleNamespace(
-        price=0.51, edge=0.08, yes_bid=0.40, yes_ask=0.50
-    )
+    good = SimpleNamespace(price=0.51, edge=0.08, yes_bid=0.40, yes_ask=0.50)
     price, edge, extra = nba.execution_quote(good)
     assert (price, edge, extra) == (0.52, 0.07, 1)
-    narrow = SimpleNamespace(
-        price=0.51, edge=0.08, yes_bid=0.48, yes_ask=0.50
-    )
+    narrow = SimpleNamespace(price=0.51, edge=0.08, yes_bid=0.48, yes_ask=0.50)
     assert nba.execution_quote(narrow)[2] == 0
-    low_edge = SimpleNamespace(
-        price=0.51, edge=0.035, yes_bid=0.40, yes_ask=0.50
-    )
+    low_edge = SimpleNamespace(price=0.51, edge=0.035, yes_bid=0.40, yes_ask=0.50)
     assert nba.execution_quote(low_edge)[2] == 0
-    would_cross = SimpleNamespace(
-        price=0.51, edge=0.08, yes_bid=0.48, yes_ask=0.55
-    )
+    would_cross = SimpleNamespace(price=0.51, edge=0.08, yes_bid=0.48, yes_ask=0.55)
     assert nba.execution_quote(would_cross)[2] == 0
