@@ -37,6 +37,9 @@ MAX_TEAM_COST = 8.0
 MAX_DAILY_COST = 35.0
 MAX_GAME_ORDERS = 4
 MAX_CONTRACTS = 2  # smaller live validation fills; sample more markets
+# Additional P&L circuit breakers: do not weaken existing spend/activity limits.
+MAX_REALIZED_DAILY_LOSS = 12.0
+MAX_REALIZED_CUMULATIVE_LOSS = 25.0
 FEE_RESERVE = 1.10
 WINDOW = (2.0, 6.0)  # NEW orders still start 2–6 hours before tip
 # ALREADY-ACCEPTED orders may rest until the verified scheduled tip.
@@ -165,12 +168,13 @@ def current_production_state(client, attempts, accepted, rejected=frozenset()):
     }
 
 
-def reconcile_expired_unfilled(attempts, accepted, state, fills, now):
+def reconcile_expired_unfilled(attempts, accepted, state, fills, now, events=()):
     """Release *active* capacity only on robust evidence of zero execution.
 
     Full historical attempt cost still counts toward the lifetime and daily
-    gross-spend caps. Never release recent, partially filled, resting, or
-    unaccounted orders. Check the exchange again on every subsequent pass.
+    gross-spend caps. Also release VERIFIED zero-fill cancellations on the
+    following signed exchange snapshot; the acknowledgment alone is NOT
+    sufficient and no filled or unreconciled orders are recycled.
     """
     still_active = []
     resting_ids = {str(o.get("order_id")) for o in state["resting"]}
@@ -181,6 +185,13 @@ def reconcile_expired_unfilled(attempts, accepted, state, fills, now):
         for f in fills
         if f.get("ticker") or f.get("market_ticker")
     }
+    canceled_ids = {
+        str(e.get("order_id"))
+        for e in events
+        if e.get("event") == "cancel_accepted" and e.get("order_id")
+    }
+    # State and fills must both be fresh signed exchange reads; this function
+    # NEVER treats a cancel_ack itself as proof of zero execution.
     from datetime import timedelta
 
     released = 0
@@ -200,11 +211,16 @@ def reconcile_expired_unfilled(attempts, accepted, state, fills, now):
             if attempt.get("expiration_ts") is not None
             else pd.Timestamp(attempt["tip_utc"])
         )
-        # Require 10 extra minutes after nominal expiration to tolerate late
-        # exchange events. No history, no balance release.
+        # Legacy expiry still waits 10m; explicit owned cancellations may
+        # recycle ACTIVE capacity after a second, authenticated snapshot.
+        # Canceled/expired attempts continue counting toward all daily and
+        # lifetime SUBMISSION limits.
+        past_safe_expiry = pd.notna(tip) and now >= tip.to_pydatetime() + timedelta(
+            minutes=10
+        )
+        cancel_verified = oid in canceled_ids
         can_release = (
-            pd.notna(tip)
-            and now >= tip.to_pydatetime() + timedelta(minutes=10)
+            (past_safe_expiry or cancel_verified)
             and oid not in resting_ids
             and oid not in filled_ids
             and ticker not in filled_tickers
@@ -215,6 +231,61 @@ def reconcile_expired_unfilled(attempts, accepted, state, fills, now):
         else:
             still_active.append(attempt)
     return still_active, released
+
+
+def nba_realized_pnl(settlements, owned_tickers, now):
+    """Read-only settlement P&L guard. Never infer profit from unfilled orders.
+
+    Exchange outcomes must have complete unit-normalized accounting and
+    timestamp; duplicate pages cannot inflate or erase a stop. Checks
+    apply only to NBA cohort-owned markets; shared submission caps stay.
+    """
+    from zoneinfo import ZoneInfo
+
+    if not isinstance(settlements, list):
+        raise TradingError("Unverified NBA settlement ledger: HALT")
+    local_today = now.astimezone(ZoneInfo("America/New_York")).date()
+    seen = {}
+    daily = cumulative = 0.0
+    for item in settlements:
+        if not isinstance(item, dict):
+            raise TradingError("Malformed NBA settlement: HALT")
+        ticker = item.get("market_ticker") or item.get("ticker")
+        if ticker not in owned_tickers:
+            continue
+        accounted = settlement_accounting(item)
+        amount = accounted.get("net_profit_dollars")
+        try:
+            when = pd.Timestamp(item["settled_time"])
+        except (ValueError, TypeError, KeyError) as error:
+            raise TradingError("Undated NBA settlement: HALT") from error
+        if (
+            not accounted["accounting_complete"]
+            or amount is None
+            or not math.isfinite(float(amount))
+            or pd.isna(when)
+            or when.tzinfo is None
+            or when > pd.Timestamp(now) + pd.Timedelta(minutes=5)
+        ):
+            raise TradingError("Incomplete or future NBA settlement: HALT")
+        key = (str(ticker), when.isoformat())
+        if key in seen:
+            if seen[key] != accounted:
+                raise TradingError("Conflicting NBA settlement copies: HALT")
+            continue
+        seen[key] = accounted
+        cumulative += float(amount)
+        if when.tz_convert("America/New_York").date() == local_today:
+            daily += float(amount)
+    return {
+        "daily_realized_pnl_dollars": round(daily, 4),
+        "cumulative_realized_pnl_dollars": round(cumulative, 4),
+        "settlement_records": len(seen),
+        "loss_stop": (
+            daily <= -MAX_REALIZED_DAILY_LOSS
+            or cumulative <= -MAX_REALIZED_CUMULATIVE_LOSS
+        ),
+    }
 
 
 def resting_cancel_reason(row, intent, market, fee_bound):
@@ -815,6 +886,7 @@ def pass_once(client, env, frame, now, journal, *, dry=False):
             },
             "resting_order_count": len(state.get("resting", [])),
             "verified_zero_fill_expiries_this_scan": released,
+            "realized_pnl_stop": realized_pnl,
             "quote_research": research_quotes,
             "skipped": dict(skipped),
             "inputs": frame.attrs.get("diagnostics", {}),
@@ -838,6 +910,7 @@ def pass_once(client, env, frame, now, journal, *, dry=False):
     shared = None
     legacy_resting = 0
     released = 0
+    realized_pnl = {"status": "not_evaluated_in_dry_mode"}
     if not dry:
         from live.shared_account_risk import dual_mode, state_for
 
@@ -882,7 +955,7 @@ def pass_once(client, env, frame, now, journal, *, dry=False):
         ):
             raise TradingError("Foreign fill in an owned NBA market: HALT")
         active, released = reconcile_expired_unfilled(
-            attempts, accepted, state, fills, now
+            attempts, accepted, state, fills, now, events=events
         )
         state["active"] = active
         if released:
@@ -917,6 +990,12 @@ def pass_once(client, env, frame, now, journal, *, dry=False):
             print(f"PROD AUTO: canceled {canceled} unsafe resting orders")
             # Require another reconciliation pass after cancellation.
             return finish("unsafe_resting_canceled")
+        realized_pnl = nba_realized_pnl(
+            state["settlements"], {a["ticker"] for a in attempts}, now
+        )
+        if realized_pnl["loss_stop"]:
+            print("NBA REALIZED LOSS STOP: no additional orders")
+            return finish("realized_loss_stop")
         print(
             f"PROD AUTO: attempts={len(attempts)}, resting={len(state['resting'])}, "
             f"held={len(state['held'])}, settled_tickers={len(state['settled'])}, "
@@ -1234,6 +1313,16 @@ def nba_candidates(now, latest=Path("outputs/projections/latest.csv")):
                 if "comment" in report
                 else pd.Series(False, index=report.index)
             )
+            # "Day-To-Day" is ESPN's uncertain playing-status label, NOT
+            # equivalent to Out or confirmed available. Do not price a
+            # directly uncertain player's prop using historical minutes.
+            uncertain = (
+                status.isin({"day-to-day", "day to day", "questionable"})
+                if "status" in report
+                else pd.Series(False, index=report.index)
+            )
+            uncertain_players = set(players[uncertain].dropna().astype(int))
+            uncertain_teams = set(report.loc[uncertain, "team"].dropna())
             newly_out_teams = set(
                 report.loc[fresh & (high_risk | limited), "team"].dropna()
             )
@@ -1244,6 +1333,11 @@ def nba_candidates(now, latest=Path("outputs/projections/latest.csv")):
             frame.loc[frame_ids.isin(limited_ids), "injury_status"] = (
                 "REPORTED_MINUTES_RESTRICTION"
             )
+            frame.loc[frame_ids.isin(uncertain_players), "injury_status"] = (
+                "UNCERTAIN_PLAYER_AVAILABILITY"
+            )
+        else:
+            uncertain_teams = set()
         # Keep the baseline explicitly labeled. It is a trailing historical
         # minutes estimate, not a current coach-confirmed playing-time target.
         if "historical_minutes_baseline" in frame:
@@ -1312,6 +1406,17 @@ def nba_candidates(now, latest=Path("outputs/projections/latest.csv")):
             invalid_flag | (required & (frame.p_book.isna() | (frame.book_n < 2))),
             "injury_status",
         ] = "SEASON_OR_ROLE_CHANGE_NEEDS_TWO_BOOKS"
+        # Teammates of a day-to-day/questionable rotation player are not
+        # modeled by a single fixed minutes scenario. Require an independent
+        # two-book consensus, but never override a stronger existing veto.
+        uncertain_no_books = (
+            frame.team_espn.isin(uncertain_teams)
+            & (frame.p_book.isna() | (frame.book_n < 2))
+            & frame.injury_status.eq("")
+        )
+        frame.loc[uncertain_no_books, "injury_status"] = (
+            "UNCERTAIN_TEAM_REQUIRES_TWO_BOOKS"
+        )
         diagnostics.update(
             rows=len(frame),
             in_entry_window=int(frame.hours_to_tip.between(*WINDOW).sum()),
@@ -1507,6 +1612,11 @@ def preflight(client, frame, now, journal):
                     if str(error).startswith("SHARD_UNFUNDED_")
                     else "shard_funding_or_routing_unverifiable"
                 )
+        pnl_check = nba_realized_pnl(
+            state["settlements"], {a["ticker"] for a in attempts}, now
+        )
+        if pnl_check["loss_stop"]:
+            failures.append("nba_realized_loss_stop")
         budget = sum(reserve(a["cost"]) for a in attempts)
         if budget >= MAX_GROSS_COST:
             failures.append("lifetime_budget_exhausted")
@@ -1519,6 +1629,7 @@ def preflight(client, frame, now, journal):
                 "waiting_for_prior_version_orders" if old_resting else "eligible_for_v4"
             ),
             "held_markets": len(state["held"]),
+            "realized_pnl_stop": pnl_check,
         }
     except Exception as error:
         failures.append(
