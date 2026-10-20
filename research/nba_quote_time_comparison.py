@@ -82,6 +82,19 @@ def main():
         for cutoff in (2, 1, 0.5, 0)
         for minimum in (0, 0.03)
     ]
+    # Fixed calendar split: do not select windows by hindsight. This remains
+    # historical/exploratory, but flags concentration of results by period.
+    dates = pd.to_datetime(quotes.tip_utc, utc=True)
+    period_results = {}
+    for name, mask in (
+        ("nov_jan", dates < pd.Timestamp("2026-02-01", tz="UTC")),
+        ("feb_finals", dates >= pd.Timestamp("2026-02-01", tz="UTC")),
+    ):
+        sub = quotes.loc[mask]
+        period_results[name] = [
+            evaluate(sub, prints, cutoff, 0)
+            for cutoff in (2, 0.5)
+        ]
     report = {
         "description": "Same 2025-26 snapshot and public-trade-replay; does NOT establish an edge or real fill probability.",
         "model": "Frozen 2025-26 historical NBA, not an improved 2026-27 forecast",
@@ -96,6 +109,7 @@ def main():
             "Research policies compared on the same history, not a new holdout.",
         ],
         "results": results,
+        "fixed_period_comparison": period_results,
     }
     OUT.parent.mkdir(parents=True, exist_ok=True)
     OUT.write_text(json.dumps(report, indent=2) + "\n")
