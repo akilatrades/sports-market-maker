@@ -65,6 +65,11 @@ done
 
 runuser -u trader -- git pull --ff-only origin main
 updated=1
+# A git pull by itself does NOT update the installed systemd timer unit.
+# Safely activate the repo's versioned two-minute pregame checks while both
+# market timers are stopped; preserve previous active/inactive state.
+install -o root -g root -m 0644 "deploy/$NBA_TIMER" "/etc/systemd/system/$NBA_TIMER"
+systemctl daemon-reload
 runuser -u trader -- .venv/bin/python -m pytest -q \
   tests/test_nfl_inputs.py \
   tests/test_nfl_projection_week.py \
@@ -76,6 +81,8 @@ runuser -u trader -- .venv/bin/python -m pytest -q \
   tests/test_shared_account_risk.py \
   tests/test_prod_nfl_auto.py \
   tests/test_prod_nba_auto.py \
+  tests/test_nba_pregame_context.py \
+  tests/test_nba_accounting_guards.py \
   tests/test_production_lock.py
 # Node is available in CI; this Python-only Droplet may not have it. Do not
 # require installing new runtime packages on a funded-account production host.
