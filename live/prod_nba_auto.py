@@ -165,12 +165,13 @@ def current_production_state(client, attempts, accepted, rejected=frozenset()):
     }
 
 
-def reconcile_expired_unfilled(attempts, accepted, state, fills, now):
+def reconcile_expired_unfilled(attempts, accepted, state, fills, now, events=()):
     """Release *active* capacity only on robust evidence of zero execution.
 
     Full historical attempt cost still counts toward the lifetime and daily
-    gross-spend caps. Never release recent, partially filled, resting, or
-    unaccounted orders. Check the exchange again on every subsequent pass.
+    gross-spend caps. Also release VERIFIED zero-fill cancellations on the
+    following signed exchange snapshot; the acknowledgment alone is NOT
+    sufficient and no filled or unreconciled orders are recycled.
     """
     still_active = []
     resting_ids = {str(o.get("order_id")) for o in state["resting"]}
@@ -181,6 +182,13 @@ def reconcile_expired_unfilled(attempts, accepted, state, fills, now):
         for f in fills
         if f.get("ticker") or f.get("market_ticker")
     }
+    canceled_ids = {
+        str(e.get("order_id"))
+        for e in events
+        if e.get("event") == "cancel_accepted" and e.get("order_id")
+    }
+    # State and fills must both be fresh signed exchange reads; this function
+    # NEVER treats a cancel_ack itself as proof of zero execution.
     from datetime import timedelta
 
     released = 0
@@ -200,11 +208,16 @@ def reconcile_expired_unfilled(attempts, accepted, state, fills, now):
             if attempt.get("expiration_ts") is not None
             else pd.Timestamp(attempt["tip_utc"])
         )
-        # Require 10 extra minutes after nominal expiration to tolerate late
-        # exchange events. No history, no balance release.
+        # Legacy expiry still waits 10m; explicit owned cancellations may
+        # recycle ACTIVE capacity after a second, authenticated snapshot.
+        # Canceled/expired attempts continue counting toward all daily and
+        # lifetime SUBMISSION limits.
+        past_safe_expiry = (
+            pd.notna(tip) and now >= tip.to_pydatetime() + timedelta(minutes=10)
+        )
+        cancel_verified = oid in canceled_ids
         can_release = (
-            pd.notna(tip)
-            and now >= tip.to_pydatetime() + timedelta(minutes=10)
+            (past_safe_expiry or cancel_verified)
             and oid not in resting_ids
             and oid not in filled_ids
             and ticker not in filled_tickers
@@ -882,7 +895,7 @@ def pass_once(client, env, frame, now, journal, *, dry=False):
         ):
             raise TradingError("Foreign fill in an owned NBA market: HALT")
         active, released = reconcile_expired_unfilled(
-            attempts, accepted, state, fills, now
+            attempts, accepted, state, fills, now, events=events
         )
         state["active"] = active
         if released:
