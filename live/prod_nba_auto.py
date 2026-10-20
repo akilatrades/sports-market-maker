@@ -215,8 +215,8 @@ def reconcile_expired_unfilled(attempts, accepted, state, fills, now, events=())
         # recycle ACTIVE capacity after a second, authenticated snapshot.
         # Canceled/expired attempts continue counting toward all daily and
         # lifetime SUBMISSION limits.
-        past_safe_expiry = (
-            pd.notna(tip) and now >= tip.to_pydatetime() + timedelta(minutes=10)
+        past_safe_expiry = pd.notna(tip) and now >= tip.to_pydatetime() + timedelta(
+            minutes=10
         )
         cancel_verified = oid in canceled_ids
         can_release = (
