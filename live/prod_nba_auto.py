@@ -738,6 +738,25 @@ def room_for(attempts, active, row, cost, now, shared=None, rejected=frozenset()
     )
 
 
+def verify_no_legacy_resting(attempts, accepted, resting):
+    """Never silently apply new v3 cancellation policy to old v2 orders."""
+    version_by_client = {
+        str(intent["client_order_id"]): intent.get("strategy_version")
+        for intent in attempts
+    }
+    version_by_order = {
+        str(order["order_id"]): version_by_client.get(str(cid))
+        for cid, order in accepted.items()
+    }
+    if any(
+        version_by_order.get(str(order.get("order_id"))) != STRATEGY_VERSION
+        for order in resting
+    ):
+        raise TradingError(
+            "Legacy or unknown NBA resting order: HALT until exchange closes it"
+        )
+
+
 def pass_once(client, env, frame, now, journal, *, dry=False):
     from collections import Counter
     from live.nba_inputs import atomic_write
@@ -783,6 +802,7 @@ def pass_once(client, env, frame, now, journal, *, dry=False):
         else:
             state = current_production_state(client, attempts, accepted, rejected)
         state["rejected_client_ids"] = rejected
+        verify_no_legacy_resting(attempts, accepted, state["resting"])
         free = money(client.balance()["balance"])
     else:
         state = {"active": []}
