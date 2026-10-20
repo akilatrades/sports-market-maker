@@ -451,7 +451,16 @@ def collect(client, state=STATE):
     # production cohorts, irrespective of which cohort the dashboard selects.
     # A failed status/print read must not turn unknown orders into zero fills
     # or erase independently verified P&L from this account snapshot.
-    from live.order_opportunity_audit import audit_cohort, trade_through_samples
+    from live.order_opportunity_audit import (
+        audit_cohort,
+        backfill_owned_orders,
+        trade_through_samples,
+    )
+
+    if exchange_orders is not None:
+        exchange_orders = backfill_owned_orders(
+            client, cohort_events, exchange_orders
+        )
 
     result["order_audit"] = {}
     for sport, cohort in cohort_events.items():
