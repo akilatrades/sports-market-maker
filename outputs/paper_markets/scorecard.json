@@ -1,14 +1,14 @@
 {
   "KXITFMATCH": {
-    "orders": 388,
+    "orders": 403,
     "vetoed": 0,
     "open": 36,
-    "fill_rate": 0.75,
-    "fills_settled": 264,
-    "bankroll": 402.72,
-    "cents_per_contract": 0.35,
-    "t": 0.33,
-    "profit_dollars": -97.28
+    "fill_rate": 0.7411444141689373,
+    "fills_settled": 272,
+    "bankroll": 400.81,
+    "cents_per_contract": 0.76,
+    "t": 0.7,
+    "profit_dollars": -99.19
   },
   "KXNASCARRACE": {
     "orders": 77,
@@ -54,13 +54,13 @@
   "KXNFLRECYDS": {
     "orders": 250,
     "vetoed": 0,
-    "open": 50,
-    "fill_rate": 0.45,
-    "fills_settled": 90,
-    "bankroll": 393.14,
-    "cents_per_contract": -11.17,
-    "t": -1.42,
-    "profit_dollars": -106.86
+    "open": 0,
+    "fill_rate": 0.56,
+    "fills_settled": 140,
+    "bankroll": 359.44,
+    "cents_per_contract": -8.91,
+    "t": -1.72,
+    "profit_dollars": -140.56
   },
   "KXCLUBFBTTS": {
     "orders": 0,
@@ -143,26 +143,26 @@
   "KXNFLRECYDS+model": {
     "orders": 231,
     "vetoed": 868,
-    "open": 38,
-    "fill_rate": 0.37823834196891193,
-    "fills_settled": 73,
-    "bankroll": 394.73,
-    "cents_per_contract": -13.52,
-    "t": -1.19,
-    "profit_dollars": -105.27,
-    "vetoed_would_have_made_cents": -4.87,
-    "vetoed_settled": 356
+    "open": 0,
+    "fill_rate": 0.4805194805194805,
+    "fills_settled": 111,
+    "bankroll": 384.34,
+    "cents_per_contract": -9.15,
+    "t": -1.21,
+    "profit_dollars": -115.66,
+    "vetoed_would_have_made_cents": -5.87,
+    "vetoed_settled": 402
   },
   "KXITFMATCH+no30": {
-    "orders": 224,
+    "orders": 238,
     "vetoed": 0,
     "open": 38,
-    "fill_rate": 0.7903225806451613,
-    "fills_settled": 147,
-    "bankroll": 544.88,
-    "cents_per_contract": 3.78,
-    "t": 1.97,
-    "profit_dollars": 44.88
+    "fill_rate": 0.805,
+    "fills_settled": 161,
+    "bankroll": 561.67,
+    "cents_per_contract": 4.63,
+    "t": 2.57,
+    "profit_dollars": 61.67
   },
-  "updated_utc": "2026-10-20T03:29+00:00"
+  "updated_utc": "2026-10-20T06:34+00:00"
 }
