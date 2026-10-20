@@ -62,7 +62,12 @@ def summarize_nba_validation(events, audit, pnl, now):
         elif event.get("event") == "accepted":
             cid = event.get("client_order_id")
             oid = str(event.get("order_id") or "")
-            if cid not in intents or not oid or oid in accepted or cid in accepted_clients:
+            if (
+                cid not in intents
+                or not oid
+                or oid in accepted
+                or cid in accepted_clients
+            ):
                 raise TradingError("Unreconciled NBA acceptance")
             accepted_clients.add(cid)
             accepted[oid] = (intents[cid], _time(event.get("utc")))
@@ -124,7 +129,9 @@ def summarize_nba_validation(events, audit, pnl, now):
     by_id = {str(row.get("order_id")): row for row in rows if isinstance(row, dict)}
     if len(by_id) != len(rows) or set(by_id) != set(accepted):
         basic["status"] = (
-            "needs_submission_reconciliation" if unresolved else "incomplete_exchange_order_history"
+            "needs_submission_reconciliation"
+            if unresolved
+            else "incomplete_exchange_order_history"
         )
         return basic
     filled = []
@@ -143,7 +150,11 @@ def summarize_nba_validation(events, audit, pnl, now):
             or (state in {"resting_no_fill", "confirmed_unfilled"} and count != 0)
             or (
                 isinstance(maker_count, (int, float))
-                and (not math.isfinite(maker_count) or maker_count < 0 or maker_count > count)
+                and (
+                    not math.isfinite(maker_count)
+                    or maker_count < 0
+                    or maker_count > count
+                )
             )
         ):
             unknown.append(oid)
