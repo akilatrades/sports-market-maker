@@ -369,7 +369,7 @@ def test_resting_recheck_cancels_only_bad_order_and_journals_reason(
     row = priced().iloc[0]
     ticker = str(row.ticker)
     row = row.copy()
-    row["p_book"] = 0.49
+    row["p_book"] = 0.52  # negative after-fee remaining edge
     events = [
         {
             "event": "intent",
