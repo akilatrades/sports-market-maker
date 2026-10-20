@@ -27,6 +27,12 @@ logic. This change is an execution hypothesis, **not** proof of profitability.
   model-only probability because book data went missing. Unverifiable identity,
   unknown original order provenance, or GET/fee errors fail closed: no new
   entries; exchange-side expirations remain as the backstop.
+- **More competitive maker quotes:** improve the baseline NO quote by **1¢**
+  only if the Kalshi spread is at least 3¢ wide, the proposed price remains
+  strictly passive (not crossing YES bid), and at least **3¢ of estimated edge
+  remains after the improvement**. Actual fee metadata and original maker
+  validations still veto unsafe orders. More aggressive prices can reduce
+  profit per fill and are not proof of a better strategy.
 - **Larger, bounded NBA throughput limits:** $4 per order, $12 per game,
   $8 per team, up to four attempted orders per game, eight contracts per order,
   $20 active, $35 NBA submitted per day, **$75 NBA cumulative submitted**.
