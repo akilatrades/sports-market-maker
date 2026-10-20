@@ -579,6 +579,12 @@ def pass_once(client, env, frame, now, journal, *, dry=False):
         state = {"active": []}
     diagnostics = {}
     candidates = select_candidates(frame, events, state, now, diagnostics)
+    from live.quote_shadow import shadow_quotes
+
+    research_quotes = [
+        {"ticker": str(row.ticker), **shadow_quotes(row)}
+        for row in candidates[:5]
+    ]
     skipped = Counter()
 
     def finish(decision, *, placed=False, **details):
@@ -590,6 +596,7 @@ def pass_once(client, env, frame, now, journal, *, dry=False):
             "min_edge_after_fee_buffer": MIN_RESERVED_EDGE,
             "decision": decision,
             "filters": diagnostics,
+            "quote_research": research_quotes,
             "skip_reasons": dict(skipped),
             **details,
         }
