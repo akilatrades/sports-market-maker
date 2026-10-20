@@ -235,9 +235,14 @@ def state_for(client, sport, now):
             ],
             "rejected_client_ids": owner["rejected_by_sport"][name],
         }
-        active, _ = module.reconcile_expired_unfilled(
-            own, accepted, state, fills, now, events=events[name]
-        )
+        if name == "nba":
+            active, _ = module.reconcile_expired_unfilled(
+                own, accepted, state, fills, now, events=events[name]
+            )
+        else:
+            active, _ = module.reconcile_expired_unfilled(
+                own, accepted, state, fills, now
+            )
         state["active"] = active
         snapshots[name] = state
         active_ids.update(a["client_order_id"] for a in active)
