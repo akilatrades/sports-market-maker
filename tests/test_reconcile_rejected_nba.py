@@ -137,6 +137,4 @@ def test_rejected_submissions_do_not_use_nba_game_slots_but_remain_charged():
         {**prior[1], "cost": 4.0},
         {**prior[1], "client_order_id": "accepted-third", "cost": 3.0},
     ]
-    assert not nba.room_for(
-        still_accepted, [], row, 0.8, NOW, rejected={"reject-one"}
-    )
+    assert not nba.room_for(still_accepted, [], row, 0.8, NOW, rejected={"reject-one"})
