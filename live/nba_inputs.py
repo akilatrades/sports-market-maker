@@ -35,7 +35,10 @@ def atomic_write(path, data):
 
 def publish(frame, directory, now, **evidence):
     """A crash between renames produces a rejected hash, never mixed inputs."""
-    data = frame.round(6).to_csv(index=False).encode()
+    numeric = frame.select_dtypes(include="number").columns
+    clean = frame.copy()
+    clean[numeric] = clean[numeric].round(6)
+    data = clean.to_csv(index=False).encode()
     meta = {
         **evidence,
         "schema_version": SCHEMA,
