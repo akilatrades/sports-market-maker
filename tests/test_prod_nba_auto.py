@@ -903,9 +903,7 @@ def test_expired_nba_order_no_longer_valid_at_or_after_tip(hours_to_tip):
     )
 
 
-def test_day_to_day_player_is_not_priced_as_confirmed_available(
-    tmp_path, monkeypatch
-):
+def test_day_to_day_player_is_not_priced_as_confirmed_available(tmp_path, monkeypatch):
     import kalshi.books as books
     import live.nba_trade as trader
     import markets.nba.live as live
@@ -916,12 +914,16 @@ def test_day_to_day_player_is_not_priced_as_confirmed_available(
         live,
         "injuries",
         lambda: pd.DataFrame(
-            [{
-                "player_id": 1234, "team": "LAL",
-                "updated": (NOW - timedelta(hours=2)).isoformat(),
-                "out": False, "status": "Day-To-Day",
-                "comment": "Ankle",
-            }]
+            [
+                {
+                    "player_id": 1234,
+                    "team": "LAL",
+                    "updated": (NOW - timedelta(hours=2)).isoformat(),
+                    "out": False,
+                    "status": "Day-To-Day",
+                    "comment": "Ankle",
+                }
+            ]
         ),
     )
     publish(priced(), tmp_path, NOW)
@@ -930,9 +932,7 @@ def test_day_to_day_player_is_not_priced_as_confirmed_available(
     assert not nba.select_candidates(result, [], {"active": []}, NOW)
 
 
-def test_uncertain_teammate_requires_independent_books(
-    tmp_path, monkeypatch
-):
+def test_uncertain_teammate_requires_independent_books(tmp_path, monkeypatch):
     import kalshi.books as books
     import live.nba_trade as trader
     import markets.nba.live as live
@@ -943,12 +943,16 @@ def test_uncertain_teammate_requires_independent_books(
         live,
         "injuries",
         lambda: pd.DataFrame(
-            [{
-                "player_id": 9999, "team": "LAL",
-                "updated": (NOW - timedelta(hours=2)).isoformat(),
-                "out": False, "status": "Day-To-Day",
-                "comment": "Knee",
-            }]
+            [
+                {
+                    "player_id": 9999,
+                    "team": "LAL",
+                    "updated": (NOW - timedelta(hours=2)).isoformat(),
+                    "out": False,
+                    "status": "Day-To-Day",
+                    "comment": "Knee",
+                }
+            ]
         ),
     )
     snapshot = priced()
