@@ -19,7 +19,8 @@ def observed_execution(audit, events):
         if e.get("event") == "intent" and e.get("ticker")
     }
     filled = [
-        row for row in rows
+        row
+        for row in rows
         if isinstance(row.get("filled_contracts"), (int, float))
         and row["filled_contracts"] > 0
     ]
@@ -36,12 +37,12 @@ def observed_execution(audit, events):
     )
     maker = (
         round(sum(row["maker_filled_contracts"] for row in filled), 4)
-        if maker_known else None
+        if maker_known
+        else None
     )
     fee_known = all(row.get("fill_fees_dollars") is not None for row in filled)
     fees = (
-        round(sum(row["fill_fees_dollars"] for row in filled), 6)
-        if fee_known else None
+        round(sum(row["fill_fees_dollars"] for row in filled), 6) if fee_known else None
     )
 
     observed_windows = []
@@ -65,18 +66,21 @@ def observed_execution(audit, events):
             break
         edges.append((row["filled_contracts"], float(edge)))
     edge_per_contract = (
-        round(sum(count * edge for count, edge in edges) /
-              sum(count for count, _ in edges), 6)
+        round(
+            sum(count * edge for count, edge in edges)
+            / sum(count for count, _ in edges),
+            6,
+        )
         if edges and len(edges) == len(filled)
         else None
     )
     closed = sum(
-        row["state"] in {"fully_filled", "partially_filled_closed", "confirmed_unfilled"}
+        row["state"]
+        in {"fully_filled", "partially_filled_closed", "confirmed_unfilled"}
         for row in rows
     )
     closed_filled = sum(
-        row["state"] in {"fully_filled", "partially_filled_closed"}
-        for row in rows
+        row["state"] in {"fully_filled", "partially_filled_closed"} for row in rows
     )
     return {
         "status": "observed_not_backtested",
@@ -88,10 +92,13 @@ def observed_execution(audit, events):
         "filled_contracts": contracts,
         "total_reported_fees_dollars": fees,
         "maker_contracts": maker,
-        "maker_share": round(maker / contracts, 4) if maker is not None and contracts else None,
+        "maker_share": round(maker / contracts, 4)
+        if maker is not None and contracts
+        else None,
         "mean_minutes_to_first_fill": (
             round(sum(observed_windows) / len(observed_windows), 2)
-            if len(observed_windows) == len(filled) and filled else None
+            if len(observed_windows) == len(filled) and filled
+            else None
         ),
         "model_estimated_net_edge_on_filled": edge_per_contract,
         "unreconciled_or_unknown_orders": audit.get("unknown_or_unreconciled"),
