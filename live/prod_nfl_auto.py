@@ -854,6 +854,13 @@ def main():
                 cancel_owned_on_kill(client, journal)
                 return
         now = datetime.now(UTC)
+        if args.live:
+            # Refresh only signed, checksummed public INPUT DATA. Never pull
+            # executable trading code or change live risk settings on a timer.
+            from live.nfl_inputs import sync
+
+            source = sync(now=now)
+            print(f"NFL INPUT SOURCE: {source['status']}", flush=True)
         print(f"NFL WORKER: started {now.isoformat()}", flush=True)
         from live.nfl_trade import candidates
 
