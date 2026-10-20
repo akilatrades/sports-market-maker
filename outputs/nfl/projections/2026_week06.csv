@@ -1,7 +1,7 @@
 game_id,team,opp,player,player_id,position,injury_status,stat,expected,p10,p25,p50,p75,p90,prob_1plus,prob_2plus,prob_3plus
 2026_06_ARI_LA,LA,ARI,Matthew Stafford,00-0026498,QB,,passing_tds,2.6,,,,,,0.9538,0.7843,0.5084
 2026_06_DAL_GB,DAL,GB,Dak Prescott,00-0033077,QB,,passing_tds,2.08,,,,,,0.9063,0.6524,0.347
-2026_06_WAS_SF,SF,WAS,Brock Purdy,00-0037834,QB,,passing_tds,2.07,,,,,,0.9054,0.6504,0.3448
+2026_06_WAS_SF,SF,WAS,Brock Purdy,00-0037834,QB,,passing_tds,2.08,,,,,,0.9058,0.6512,0.3457
 2026_06_BUF_LV,BUF,LV,Josh Allen,00-0034857,QB,,passing_tds,2.01,,,,,,0.8977,0.6324,0.3263
 2026_06_CHI_ATL,CHI,ATL,Caleb Williams,00-0039918,QB,Questionable,passing_tds,1.88,,,,,,0.8779,0.5887,0.2842
 2026_06_DAL_GB,GB,DAL,Jordan Love,00-0036264,QB,,passing_tds,1.82,,,,,,0.8693,0.5709,0.2681
@@ -11,7 +11,7 @@ game_id,team,opp,player,player_id,position,injury_status,stat,expected,p10,p25,p
 2026_06_TEN_IND,IND,TEN,Daniel Jones,00-0035710,QB,,passing_tds,1.56,,,,,,0.8192,0.4786,0.1935
 2026_06_CHI_ATL,ATL,CHI,Michael Penix Jr.,00-0039917,QB,,passing_tds,1.56,,,,,,0.8187,0.4777,0.1929
 2026_06_LAC_KC,KC,LAC,Patrick Mahomes,00-0033873,QB,,passing_tds,1.54,,,,,,0.8147,0.4712,0.1881
-2026_06_WAS_SF,WAS,SF,Jayden Daniels,00-0039910,QB,,passing_tds,1.48,,,,,,0.8006,0.4484,0.1721
+2026_06_WAS_SF,WAS,SF,Jayden Daniels,00-0039910,QB,,passing_tds,1.47,,,,,,0.8,0.4476,0.1715
 2026_06_NO_NYG,NYG,NO,Jameis Winston,00-0031503,QB,,passing_tds,1.44,,,,,,0.791,0.4337,0.1621
 2026_06_HOU_JAX,JAX,HOU,Trevor Lawrence,00-0036971,QB,,passing_tds,1.43,,,,,,0.7892,0.4309,0.1603
 2026_06_CAR_PHI,CAR,PHI,Bryce Young,00-0039150,QB,,passing_tds,1.37,,,,,,0.7731,0.4072,0.145
@@ -30,7 +30,7 @@ game_id,team,opp,player,player_id,position,injury_status,stat,expected,p10,p25,p
 2026_06_ARI_LA,LA,ARI,Matthew Stafford,00-0026498,QB,,passing_yards,308.57,197.9,248.3,303.7,360.7,403.3,,,
 2026_06_DAL_GB,DAL,GB,Dak Prescott,00-0033077,QB,,passing_yards,274.31,175.9,220.8,270.0,320.7,358.5,,,
 2026_06_CHI_ATL,CHI,ATL,Caleb Williams,00-0039918,QB,Questionable,passing_yards,262.56,168.4,211.3,258.4,306.9,343.2,,,
-2026_06_WAS_SF,SF,WAS,Brock Purdy,00-0037834,QB,,passing_yards,261.63,167.8,210.6,257.5,305.8,341.9,,,
+2026_06_WAS_SF,SF,WAS,Brock Purdy,00-0037834,QB,,passing_yards,262.0,168.0,210.9,257.9,306.3,342.4,,,
 2026_06_DAL_GB,GB,DAL,Jordan Love,00-0036264,QB,,passing_yards,260.34,167.0,209.5,256.2,304.3,340.2,,,
 2026_06_BUF_LV,BUF,LV,Josh Allen,00-0034857,QB,,passing_yards,255.76,153.7,209.5,255.0,298.7,350.8,,,
 2026_06_BUF_LV,LV,BUF,Kirk Cousins,00-0029604,QB,,passing_yards,253.69,152.5,207.8,253.0,296.3,347.9,,,
@@ -41,7 +41,7 @@ game_id,team,opp,player,player_id,position,injury_status,stat,expected,p10,p25,p
 2026_06_ARI_LA,ARI,LA,Jacoby Brissett,00-0033119,QB,,passing_yards,232.25,149.9,182.3,235.0,294.4,330.7,,,
 2026_06_HOU_JAX,HOU,JAX,C.J. Stroud,00-0039163,QB,,passing_yards,225.67,141.0,186.9,224.4,269.7,305.3,,,
 2026_06_HOU_JAX,JAX,HOU,Trevor Lawrence,00-0036971,QB,,passing_yards,224.38,140.2,185.8,223.1,268.1,303.6,,,
-2026_06_WAS_SF,WAS,SF,Jayden Daniels,00-0039910,QB,,passing_yards,224.38,140.2,185.8,223.1,268.1,303.6,,,
+2026_06_WAS_SF,WAS,SF,Jayden Daniels,00-0039910,QB,,passing_yards,224.07,140.0,185.6,222.8,267.8,303.1,,,
 2026_06_NO_NYG,NYG,NO,Jameis Winston,00-0031503,QB,,passing_yards,222.43,139.0,184.2,221.2,265.8,300.9,,,
 2026_06_PIT_TB,PIT,TB,Aaron Rodgers,00-0023459,QB,,passing_yards,220.6,137.9,182.7,219.4,263.6,298.5,,,
 2026_06_LAC_KC,KC,LAC,Patrick Mahomes,00-0033873,QB,,passing_yards,219.82,104.2,163.1,207.9,255.2,315.3,,,
@@ -59,7 +59,6 @@ game_id,team,opp,player,player_id,position,injury_status,stat,expected,p10,p25,p
 2026_06_SEA_DEN,SEA,DEN,Jaxon Smith-Njigba,00-0038543,WR,,receiving_yards,82.16,24.1,45.6,75.6,113.3,149.9,,,
 2026_06_NO_NYG,NO,NYG,Chris Olave,00-0037239,WR,Questionable,receiving_yards,76.78,22.5,42.6,70.6,105.9,140.1,,,
 2026_06_DAL_GB,DAL,GB,CeeDee Lamb,00-0036358,WR,,receiving_yards,75.98,22.3,42.2,69.9,104.8,138.7,,,
-2026_06_ARI_LA,LA,ARI,Davante Adams,00-0031381,WR,,receiving_yards,70.83,20.8,39.3,65.1,97.7,129.3,,,
 2026_06_CHI_ATL,ATL,CHI,Drake London,00-0037238,WR,,receiving_yards,70.71,20.7,39.2,65.0,97.5,129.0,,,
 2026_06_DAL_GB,GB,DAL,Christian Watson,00-0038124,WR,,receiving_yards,70.07,20.5,38.9,64.4,96.7,127.9,,,
 2026_06_DAL_GB,DAL,GB,George Pickens,00-0037247,WR,,receiving_yards,69.06,20.2,38.3,63.5,95.3,126.0,,,
@@ -70,24 +69,23 @@ game_id,team,opp,player,player_id,position,injury_status,stat,expected,p10,p25,p
 2026_06_BAL_CLE,BAL,CLE,Zay Flowers,00-0039064,WR,,receiving_yards,64.74,19.0,35.9,59.5,89.3,118.1,,,
 2026_06_ARI_LA,ARI,LA,Michael Wilson,00-0038559,WR,,receiving_yards,62.59,18.3,34.7,57.6,86.3,114.2,,,
 2026_06_HOU_JAX,HOU,JAX,Nico Collins,00-0036554,WR,,receiving_yards,62.09,18.2,34.5,57.1,85.7,113.3,,,
-2026_06_NYJ_NE,NE,NYJ,A.J. Brown,00-0035676,WR,Questionable,receiving_yards,61.45,18.0,34.1,56.5,84.8,112.1,,,
 2026_06_CAR_PHI,CAR,PHI,DeVonta Smith,00-0036912,WR,,receiving_yards,61.28,18.0,34.0,56.4,84.5,111.8,,,
 2026_06_TEN_IND,TEN,IND,Carnell Tate,00-0041438,WR,,receiving_yards,59.57,17.5,33.1,54.8,82.2,108.7,,,
 2026_06_NYJ_NE,NYJ,NE,Garrett Wilson,00-0037740,WR,,receiving_yards,57.65,16.9,32.0,53.0,79.5,105.2,,,
-2026_06_WAS_SF,SF,WAS,George Kittle,00-0033288,TE,,receiving_yards,57.28,16.8,31.8,52.7,79.0,104.5,,,
+2026_06_WAS_SF,SF,WAS,George Kittle,00-0033288,TE,,receiving_yards,57.33,16.8,31.8,52.7,79.1,104.6,,,
 2026_06_CHI_ATL,CHI,ATL,Luther Burden III,00-0040735,WR,,receiving_yards,57.22,16.8,31.7,52.6,78.9,104.4,,,
 2026_06_HOU_JAX,JAX,HOU,Parker Washington,00-0038606,WR,,receiving_yards,56.36,16.5,31.3,51.8,77.7,102.8,,,
 2026_06_DAL_GB,GB,DAL,Matthew Golden,00-0040667,WR,,receiving_yards,55.93,16.4,31.0,51.4,77.2,102.1,,,
 2026_06_CAR_PHI,PHI,CAR,DeVonta Smith,00-0036912,WR,,receiving_yards,55.81,16.4,31.0,51.3,77.0,101.9,,,
 2026_06_BAL_CLE,CLE,BAL,Denzel Boston,00-0041037,WR,,receiving_yards,53.29,15.6,29.6,49.0,73.5,97.2,,,
 2026_06_CHI_ATL,CHI,ATL,Rome Odunze,00-0039919,WR,,receiving_yards,51.69,11.1,26.1,47.5,77.2,108.7,,,
-2026_06_WAS_SF,WAS,SF,Terry McLaurin,00-0035659,WR,,receiving_yards,51.15,11.0,25.8,47.0,76.4,107.6,,,
 2026_06_PIT_TB,PIT,TB,DK Metcalf,00-0035640,WR,,receiving_yards,50.4,10.8,25.5,46.3,75.3,106.0,,,
 2026_06_TEN_IND,TEN,IND,Wan'Dale Robinson,00-0038117,WR,,receiving_yards,50.1,10.8,25.3,46.0,74.8,105.4,,,
 2026_06_NO_NYG,NYG,NO,Isaiah Likely,00-0037838,TE,,receiving_yards,49.06,10.5,24.8,45.1,73.3,103.2,,,
 2026_06_CAR_PHI,CAR,PHI,Jalen Coker,00-0039491,WR,,receiving_yards,48.34,10.4,24.4,44.4,72.2,101.6,,,
 2026_06_DAL_GB,GB,DAL,Tucker Kraft,00-0038996,TE,,receiving_yards,47.57,10.2,24.0,43.7,71.1,100.0,,,
 2026_06_NO_NYG,NO,NYG,Devaughn Vele,00-0039424,WR,,receiving_yards,47.47,10.2,24.0,43.6,70.9,99.8,,,
+2026_06_WAS_SF,WAS,SF,Stefon Diggs,00-0031588,WR,Questionable,receiving_yards,47.15,10.1,23.8,43.3,70.4,99.1,,,
 2026_06_NO_NYG,NO,NYG,Juwan Johnson,00-0036040,TE,,receiving_yards,45.19,9.7,22.8,41.5,67.5,95.0,,,
 2026_06_LAC_KC,LAC,KC,Quentin Johnston,00-0038544,WR,,receiving_yards,45.09,9.7,22.8,41.4,67.4,94.8,,,
 2026_06_TEN_IND,IND,TEN,Josh Downs,00-0038997,WR,,receiving_yards,44.37,9.5,22.4,40.8,66.3,93.3,,,
@@ -109,6 +107,7 @@ game_id,team,opp,player,player_id,position,injury_status,stat,expected,p10,p25,p
 2026_06_BUF_LV,BUF,LV,Keon Coleman,00-0039901,WR,,receiving_yards,36.13,3.7,14.2,31.6,52.2,75.4,,,
 2026_06_HOU_JAX,HOU,JAX,Dalton Schultz,00-0034383,TE,,receiving_yards,36.02,3.7,14.1,31.6,52.0,75.2,,,
 2026_06_CHI_ATL,ATL,CHI,Kyle Pitts,00-0036970,TE,,receiving_yards,35.82,3.7,14.1,31.4,51.7,74.8,,,
+2026_06_BUF_LV,BUF,LV,Dalton Kincaid,00-0038933,TE,,receiving_yards,35.43,3.7,13.9,31.0,51.1,73.9,,,
 2026_06_SEA_DEN,DEN,SEA,Courtland Sutton,00-0034348,WR,,receiving_yards,35.38,3.7,13.9,31.0,51.1,73.8,,,
 2026_06_PIT_TB,TB,PIT,Chris Godwin Jr.,00-0033921,WR,,receiving_yards,35.37,3.7,13.9,31.0,51.0,73.8,,,
 2026_06_CAR_PHI,PHI,CAR,Dallas Goedert,00-0034351,TE,,receiving_yards,35.33,3.7,13.9,30.9,51.0,73.7,,,
@@ -119,9 +118,9 @@ game_id,team,opp,player,player_id,position,injury_status,stat,expected,p10,p25,p
 2026_06_NYJ_NE,NE,NYJ,Hunter Henry,00-0033090,TE,,receiving_yards,33.89,3.5,13.3,29.7,48.9,70.7,,,
 2026_06_ARI_LA,ARI,LA,Kendrick Bourne,00-0033307,WR,,receiving_yards,33.28,3.5,13.1,29.2,48.0,69.5,,,
 2026_06_HOU_JAX,HOU,JAX,Kayshon Boutte,00-0038608,WR,,receiving_yards,33.04,3.4,13.0,28.9,47.7,68.9,,,
+2026_06_WAS_SF,SF,WAS,Christian McCaffrey,00-0033280,RB,,receiving_yards,33.02,3.4,13.0,28.9,47.7,68.9,,,
 2026_06_PIT_TB,PIT,TB,Pat Freiermuth,00-0036894,TE,Questionable,receiving_yards,33.0,3.4,13.0,28.9,47.6,68.9,,,
 2026_06_HOU_JAX,JAX,HOU,Brian Thomas Jr.,00-0039893,WR,,receiving_yards,33.0,3.4,13.0,28.9,47.6,68.9,,,
-2026_06_WAS_SF,SF,WAS,Christian McCaffrey,00-0033280,RB,,receiving_yards,32.99,3.4,12.9,28.9,47.6,68.8,,,
 2026_06_CHI_ATL,CHI,ATL,Kalif Raymond,00-0032464,WR,,receiving_yards,32.66,3.4,12.8,28.6,47.1,68.2,,,
 2026_06_CHI_ATL,ATL,CHI,Bijan Robinson,00-0038542,RB,,receiving_yards,32.59,3.4,12.8,28.5,47.0,68.0,,,
 2026_06_CAR_PHI,CAR,PHI,Darren Waller,00-0031610,TE,,receiving_yards,31.87,3.3,12.5,27.9,46.0,66.5,,,
@@ -130,7 +129,7 @@ game_id,team,opp,player,player_id,position,injury_status,stat,expected,p10,p25,p
 2026_06_BUF_LV,LV,BUF,Ashton Jeanty,00-0040122,RB,,receiving_yards,31.33,3.2,12.3,27.4,45.2,65.4,,,
 2026_06_TEN_IND,IND,TEN,Quez Watkins,00-0036271,WR,,receiving_yards,31.32,3.2,12.3,27.4,45.2,65.4,,,
 2026_06_HOU_JAX,HOU,JAX,Marvin Harrison Jr.,00-0039849,WR,,receiving_yards,31.06,3.2,12.2,27.2,44.8,64.8,,,
-2026_06_WAS_SF,WAS,SF,Chig Okonkwo,00-0037809,TE,,receiving_yards,30.6,3.2,12.0,26.8,44.2,63.9,,,
+2026_06_WAS_SF,WAS,SF,Chig Okonkwo,00-0037809,TE,,receiving_yards,30.58,3.2,12.0,26.8,44.1,63.8,,,
 2026_06_PIT_TB,TB,PIT,Ted Hurst III,00-0041048,WR,,receiving_yards,30.49,3.2,12.0,26.7,44.0,63.6,,,
 2026_06_NYJ_NE,NYJ,NE,Kenyon Sadiq,00-0041032,TE,Questionable,receiving_yards,30.1,0.0,8.5,22.4,43.9,67.3,,,
 2026_06_ARI_LA,LA,ARI,Kyren Williams,00-0037840,RB,,receiving_yards,29.5,0.0,8.3,21.9,43.1,65.9,,,
@@ -148,7 +147,7 @@ game_id,team,opp,player,player_id,position,injury_status,stat,expected,p10,p25,p
 2026_06_SEA_DEN,SEA,DEN,AJ Barner,00-0039793,TE,,receiving_yards,26.74,0.0,7.6,19.9,39.0,59.8,,,
 2026_06_DAL_GB,DAL,GB,Jake Ferguson,00-0038041,TE,,receiving_yards,26.64,0.0,7.5,19.8,38.9,59.5,,,
 2026_06_CHI_ATL,ATL,CHI,Jahan Dotson,00-0037741,WR,,receiving_yards,26.62,0.0,7.5,19.8,38.9,59.5,,,
-2026_06_WAS_SF,SF,WAS,Jordan Watkins,00-0040172,WR,,receiving_yards,26.5,0.0,7.5,19.7,38.7,59.2,,,
+2026_06_WAS_SF,SF,WAS,Jordan Watkins,00-0040172,WR,,receiving_yards,26.52,0.0,7.5,19.7,38.7,59.3,,,
 2026_06_LAC_KC,LAC,KC,Oronde Gadsden II,00-0040189,TE,,receiving_yards,26.37,0.0,7.5,19.6,38.5,58.9,,,
 2026_06_CAR_PHI,PHI,CAR,Zach Ertz,00-0030061,TE,,receiving_yards,26.31,0.0,7.4,19.5,38.4,58.8,,,
 2026_06_NYJ_NE,NYJ,NE,Mason Taylor,00-0040736,TE,,receiving_yards,25.95,0.0,7.3,19.3,37.9,58.0,,,
@@ -157,7 +156,7 @@ game_id,team,opp,player,player_id,position,injury_status,stat,expected,p10,p25,p
 2026_06_BAL_CLE,CLE,BAL,Bub Means,00-0039386,WR,,receiving_yards,25.53,0.0,7.2,19.0,37.3,57.0,,,
 2026_06_ARI_LA,LA,ARI,Konata Mumpfield,00-0040590,WR,,receiving_yards,25.28,0.0,7.2,18.8,36.9,56.5,,,
 2026_06_SEA_DEN,SEA,DEN,Cooper Kupp,00-0033908,WR,,receiving_yards,25.27,0.0,7.2,18.8,36.9,56.5,,,
-2026_06_WAS_SF,WAS,SF,Van Jefferson,00-0036415,WR,,receiving_yards,25.14,0.0,7.1,18.7,36.7,56.2,,,
+2026_06_WAS_SF,WAS,SF,Van Jefferson,00-0036415,WR,,receiving_yards,25.13,0.0,7.1,18.7,36.7,56.1,,,
 2026_06_NYJ_NE,NE,NYJ,Mike Brown,00-0029155,WR,,receiving_yards,25.08,0.0,7.1,18.6,36.6,56.0,,,
 2026_06_NO_NYG,NO,NYG,Cedric Tillman,00-0038979,WR,,receiving_yards,25.02,0.0,7.1,18.6,36.5,55.9,,,
 2026_06_HOU_JAX,JAX,HOU,Josh Cameron,00-0041100,WR,,receiving_yards,25.02,0.0,7.1,18.6,36.5,55.9,,,
@@ -171,12 +170,13 @@ game_id,team,opp,player,player_id,position,injury_status,stat,expected,p10,p25,p
 2026_06_SEA_DEN,DEN,SEA,Evan Engram,00-0033881,TE,,receiving_yards,22.97,0.0,4.8,16.0,32.7,54.3,,,
 2026_06_TEN_IND,IND,TEN,Laquon Treadwell,00-0032951,WR,,receiving_yards,22.73,0.0,4.7,15.8,32.4,53.8,,,
 2026_06_BUF_LV,BUF,LV,Ty Johnson,00-0035537,RB,,receiving_yards,22.7,0.0,4.7,15.8,32.3,53.7,,,
-2026_06_WAS_SF,WAS,SF,Treylon Burks,00-0037742,WR,,receiving_yards,22.57,0.0,4.7,15.7,32.2,53.4,,,
+2026_06_WAS_SF,WAS,SF,Treylon Burks,00-0037742,WR,,receiving_yards,22.56,0.0,4.7,15.7,32.1,53.4,,,
 2026_06_BAL_CLE,CLE,BAL,Isaiah Bond,00-0040782,WR,,receiving_yards,22.37,0.0,4.7,15.6,31.9,52.9,,,
-2026_06_WAS_SF,SF,WAS,Brandin Cooks,00-0031236,WR,,receiving_yards,22.31,0.0,4.6,15.5,31.8,52.8,,,
+2026_06_WAS_SF,SF,WAS,Brandin Cooks,00-0031236,WR,,receiving_yards,22.32,0.0,4.6,15.5,31.8,52.8,,,
 2026_06_SEA_DEN,DEN,SEA,Troy Franklin,00-0039868,WR,,receiving_yards,22.08,0.0,4.6,15.4,31.5,52.2,,,
 2026_06_SEA_DEN,SEA,DEN,Tory Horton,00-0040648,WR,,receiving_yards,21.67,0.0,4.5,15.1,30.9,51.3,,,
 2026_06_NYJ_NE,NE,NYJ,Efton Chism III,00-0040563,WR,,receiving_yards,21.48,0.0,4.5,14.9,30.6,50.8,,,
+2026_06_ARI_LA,LA,ARI,Tutu Atwell,00-0036849,WR,,receiving_yards,20.99,0.0,4.4,14.6,29.9,49.6,,,
 2026_06_NYJ_NE,NE,NYJ,Rhamondre Stevenson,00-0036875,RB,,receiving_yards,20.46,0.0,4.3,14.2,29.1,48.4,,,
 2026_06_TEN_IND,TEN,IND,Chimere Dike,00-0040705,WR,,receiving_yards,20.11,0.0,4.2,14.0,28.6,47.6,,,
 2026_06_BUF_LV,BUF,LV,Dawson Knox,00-0035689,TE,,receiving_yards,19.93,0.0,4.1,13.9,28.4,47.1,,,
@@ -186,7 +186,7 @@ game_id,team,opp,player,player_id,position,injury_status,stat,expected,p10,p25,p
 2026_06_PIT_TB,PIT,TB,Isaiah Hodgins,00-0036165,WR,,receiving_yards,19.3,0.0,4.0,13.4,27.5,45.7,,,
 2026_06_PIT_TB,TB,PIT,Kenny Gainwell,00-0036919,RB,,receiving_yards,19.25,0.0,4.0,13.4,27.4,45.5,,,
 2026_06_NO_NYG,NO,NYG,Bryce Lance,00-0041067,WR,,receiving_yards,19.03,0.0,4.0,13.2,27.1,45.0,,,
-2026_06_WAS_SF,WAS,SF,Fred Davis,00-0026188,TE,,receiving_yards,18.96,0.0,3.9,13.2,27.0,44.9,,,
+2026_06_WAS_SF,WAS,SF,Fred Davis,00-0026188,TE,,receiving_yards,18.95,0.0,3.9,13.2,27.0,44.8,,,
 2026_06_NO_NYG,NYG,NO,Cam Skattebo,00-0040715,RB,,receiving_yards,18.92,0.0,3.9,13.2,26.9,44.7,,,
 2026_06_PIT_TB,PIT,TB,Rico Dowdle,00-0036139,RB,Questionable,receiving_yards,18.74,0.0,3.9,13.0,26.7,44.3,,,
 2026_06_TEN_IND,TEN,IND,K.J. Osborn,00-0036345,WR,,receiving_yards,18.68,0.0,3.9,13.0,26.6,44.2,,,
@@ -196,7 +196,7 @@ game_id,team,opp,player,player_id,position,injury_status,stat,expected,p10,p25,p
 2026_06_TEN_IND,TEN,IND,Tyjae Spears,00-0039032,RB,Questionable,receiving_yards,18.37,0.0,0.0,11.8,27.2,43.5,,,
 2026_06_CHI_ATL,ATL,CHI,Austin Hooper,00-0032392,TE,,receiving_yards,18.18,0.0,0.0,11.6,26.9,43.0,,,
 2026_06_CHI_ATL,CHI,ATL,D'Andre Swift,00-0036275,RB,,receiving_yards,18.18,0.0,0.0,11.6,26.9,43.0,,,
-2026_06_WAS_SF,WAS,SF,Dyami Brown,00-0036626,WR,,receiving_yards,18.14,0.0,0.0,11.6,26.8,42.9,,,
+2026_06_WAS_SF,WAS,SF,Dyami Brown,00-0036626,WR,,receiving_yards,18.13,0.0,0.0,11.6,26.8,42.9,,,
 2026_06_LAC_KC,KC,LAC,Kenneth Walker III,00-0038134,RB,,receiving_yards,17.98,0.0,0.0,11.5,26.6,42.6,,,
 2026_06_TEN_IND,TEN,IND,Gunnar Helm,00-0040584,TE,,receiving_yards,17.97,0.0,0.0,11.5,26.6,42.5,,,
 2026_06_NO_NYG,NO,NYG,Stone Smartt,00-0037475,TE,,receiving_yards,17.86,0.0,0.0,11.4,26.4,42.3,,,
@@ -207,18 +207,20 @@ game_id,team,opp,player,player_id,position,injury_status,stat,expected,p10,p25,p
 2026_06_SEA_DEN,DEN,SEA,Lil'Jordan Humphrey,00-0035406,WR,,receiving_yards,17.19,0.0,0.0,11.0,25.4,40.7,,,
 2026_06_CAR_PHI,CAR,PHI,Casey Washington,00-0039394,WR,,receiving_yards,17.16,0.0,0.0,11.0,25.4,40.6,,,
 2026_06_CHI_ATL,CHI,ATL,Cole Kmet,00-0036290,TE,,receiving_yards,17.07,0.0,0.0,10.9,25.3,40.4,,,
-2026_06_WAS_SF,WAS,SF,Austin Ekeler,00-0033699,RB,,receiving_yards,17.04,0.0,0.0,10.9,25.2,40.3,,,
+2026_06_WAS_SF,WAS,SF,Austin Ekeler,00-0033699,RB,,receiving_yards,17.02,0.0,0.0,10.9,25.2,40.3,,,
+2026_06_CAR_PHI,CAR,PHI,Ja'Tavion Sanders,00-0039356,TE,,receiving_yards,16.99,0.0,0.0,10.9,25.2,40.2,,,
 2026_06_PIT_TB,TB,PIT,Bucky Irving,00-0039361,RB,,receiving_yards,16.88,0.0,0.0,10.8,25.0,39.9,,,
 2026_06_ARI_LA,LA,ARI,Davis Allen,00-0039074,TE,,receiving_yards,16.51,0.0,0.0,10.6,24.4,39.1,,,
-2026_06_WAS_SF,WAS,SF,Brandon Coleman,00-0030801,WR,,receiving_yards,16.46,0.0,0.0,10.5,24.4,38.9,,,
+2026_06_WAS_SF,WAS,SF,Brandon Coleman,00-0030801,WR,,receiving_yards,16.44,0.0,0.0,10.5,24.3,38.9,,,
 2026_06_NYJ_NE,NYJ,NE,Sterling Shepard,00-0032385,WR,,receiving_yards,16.39,0.0,0.0,10.5,24.3,38.8,,,
+2026_06_DAL_GB,GB,DAL,Josh Jacobs,00-0035700,RB,,receiving_yards,16.26,0.0,0.0,10.4,24.1,38.5,,,
 2026_06_CAR_PHI,PHI,CAR,Elijah Moore,00-0036980,WR,,receiving_yards,16.23,0.0,0.0,10.4,24.0,38.4,,,
 2026_06_DAL_GB,GB,DAL,Jonnu Smith,00-0033858,TE,,receiving_yards,16.18,0.0,0.0,10.4,24.0,38.3,,,
 2026_06_HOU_JAX,HOU,JAX,Foster Moreau,00-0034981,TE,,receiving_yards,15.8,0.0,0.0,10.1,23.4,37.4,,,
 2026_06_TEN_IND,TEN,IND,Michael Carter,00-0036924,RB,,receiving_yards,15.64,0.0,0.0,10.0,23.1,37.0,,,
 2026_06_LAC_KC,LAC,KC,Charlie Kolar,00-0038046,TE,,receiving_yards,15.62,0.0,0.0,10.0,23.1,37.0,,,
 2026_06_DAL_GB,GB,DAL,Josh Whyle,00-0038589,TE,,receiving_yards,15.48,0.0,0.0,9.9,22.9,36.6,,,
-2026_06_WAS_SF,SF,WAS,Xavier Smith,00-0038359,WR,,receiving_yards,15.37,0.0,0.0,9.8,22.7,36.4,,,
+2026_06_WAS_SF,SF,WAS,Xavier Smith,00-0038359,WR,,receiving_yards,15.38,0.0,0.0,9.8,22.8,36.4,,,
 2026_06_NYJ_NE,NYJ,NE,Tim Patrick,00-0033375,WR,,receiving_yards,15.35,0.0,0.0,9.8,22.7,36.3,,,
 2026_06_ARI_LA,ARI,LA,Shedrick Jackson,00-0038891,WR,,receiving_yards,15.34,0.0,0.0,9.8,22.7,36.3,,,
 2026_06_CHI_ATL,ATL,CHI,Zachariah Branch,00-0041044,WR,,receiving_yards,15.29,0.0,0.0,9.8,22.6,36.2,,,
@@ -238,7 +240,7 @@ game_id,team,opp,player,player_id,position,injury_status,stat,expected,p10,p25,p
 2026_06_TEN_IND,IND,TEN,Mo Alie-Cox,00-0033217,TE,,receiving_yards,13.92,0.0,0.0,8.1,19.8,35.6,,,
 2026_06_HOU_JAX,JAX,HOU,Nate Boerkircher,00-0041503,TE,,receiving_yards,13.85,0.0,0.0,8.1,19.7,35.4,,,
 2026_06_SEA_DEN,DEN,SEA,Lucas Krull,00-0037539,TE,,receiving_yards,13.66,0.0,0.0,8.0,19.4,34.9,,,
-2026_06_WAS_SF,SF,WAS,Kyle Juszczyk,00-0029892,FB,,receiving_yards,13.6,0.0,0.0,7.9,19.3,34.7,,,
+2026_06_WAS_SF,SF,WAS,Kyle Juszczyk,00-0029892,FB,,receiving_yards,13.61,0.0,0.0,7.9,19.3,34.8,,,
 2026_06_DAL_GB,GB,DAL,Bo Melton,00-0037091,WR,,receiving_yards,13.51,0.0,0.0,7.9,19.2,34.5,,,
 2026_06_CAR_PHI,CAR,PHI,Chuba Hubbard,00-0036555,RB,,receiving_yards,13.46,0.0,0.0,7.8,19.1,34.4,,,
 2026_06_TEN_IND,TEN,IND,Daniel Bellinger,00-0038115,TE,,receiving_yards,13.46,0.0,0.0,7.8,19.1,34.4,,,
@@ -254,18 +256,19 @@ game_id,team,opp,player,player_id,position,injury_status,stat,expected,p10,p25,p
 2026_06_SEA_DEN,DEN,SEA,Adam Trautman,00-0036422,TE,,receiving_yards,12.47,0.0,0.0,7.3,17.7,31.9,,,
 2026_06_WAS_SF,SF,WAS,Malik Turner,00-0034867,WR,,receiving_yards,12.19,0.0,0.0,7.1,17.3,31.1,,,
 2026_06_HOU_JAX,HOU,JAX,Woody Marks,00-0040583,RB,,receiving_yards,12.12,0.0,0.0,7.1,17.2,30.9,,,
-2026_06_WAS_SF,WAS,SF,Devin Neal,00-0040202,RB,,receiving_yards,12.06,0.0,0.0,7.0,17.1,30.8,,,
+2026_06_WAS_SF,WAS,SF,Devin Neal,00-0040202,RB,,receiving_yards,12.05,0.0,0.0,7.0,17.1,30.8,,,
 2026_06_NO_NYG,NYG,NO,Tyrone Tracy Jr.,00-0039384,RB,,receiving_yards,12.03,0.0,0.0,7.0,17.1,30.7,,,
 2026_06_ARI_LA,ARI,LA,Jalen Brooks,00-0038640,WR,,receiving_yards,12.02,0.0,0.0,7.0,17.1,30.7,,,
-2026_06_WAS_SF,WAS,SF,Luke McCaffrey,00-0039355,WR,,receiving_yards,11.97,0.0,0.0,7.0,17.0,30.6,,,
+2026_06_WAS_SF,WAS,SF,Jeremy McNichols,00-0033955,RB,Questionable,receiving_yards,12.0,0.0,0.0,7.0,17.0,30.6,,,
 2026_06_BUF_LV,BUF,LV,James Cook,00-0037248,RB,,receiving_yards,11.96,0.0,0.0,7.0,17.0,30.5,,,
-2026_06_WAS_SF,WAS,SF,Rachaad White,00-0037256,RB,,receiving_yards,11.87,0.0,0.0,6.9,16.8,30.3,,,
+2026_06_WAS_SF,WAS,SF,Luke McCaffrey,00-0039355,WR,,receiving_yards,11.96,0.0,0.0,7.0,17.0,30.6,,,
+2026_06_WAS_SF,WAS,SF,Rachaad White,00-0037256,RB,,receiving_yards,11.86,0.0,0.0,6.9,16.8,30.3,,,
 2026_06_ARI_LA,ARI,LA,Jerome Ford,00-0037267,RB,,receiving_yards,11.6,0.0,0.0,6.8,16.5,29.6,,,
 2026_06_DAL_GB,DAL,GB,Luke Schoonmaker,00-0038547,TE,,receiving_yards,11.59,0.0,0.0,6.8,16.4,29.6,,,
 2026_06_TEN_IND,IND,TEN,Will Mallory,00-0038394,TE,,receiving_yards,11.57,0.0,0.0,6.7,16.4,29.6,,,
 2026_06_HOU_JAX,HOU,JAX,Cade Stover,00-0039359,TE,,receiving_yards,11.34,0.0,0.0,6.6,16.1,29.0,,,
 2026_06_ARI_LA,ARI,LA,Teagan Quitoriano,00-0037277,TE,,receiving_yards,11.26,0.0,0.0,6.6,16.0,28.8,,,
-2026_06_WAS_SF,WAS,SF,John Bates,00-0036628,TE,,receiving_yards,11.24,0.0,0.0,4.5,16.6,31.8,,,
+2026_06_WAS_SF,WAS,SF,John Bates,00-0036628,TE,,receiving_yards,11.23,0.0,0.0,4.5,16.6,31.8,,,
 2026_06_NYJ_NE,NE,NYJ,Tanner Conner,00-0037348,TE,,receiving_yards,11.21,0.0,0.0,4.5,16.6,31.8,,,
 2026_06_BAL_CLE,BAL,CLE,Justice Hill,00-0034975,RB,,receiving_yards,11.16,0.0,0.0,4.5,16.5,31.6,,,
 2026_06_BUF_LV,BUF,LV,Jackson Hawes,00-0040194,TE,,receiving_yards,11.13,0.0,0.0,4.4,16.4,31.5,,,
@@ -274,7 +277,7 @@ game_id,team,opp,player,player_id,position,injury_status,stat,expected,p10,p25,p
 2026_06_ARI_LA,LA,ARI,Jordan Whittington,00-0039751,WR,,receiving_yards,10.96,0.0,0.0,4.4,16.2,31.1,,,
 2026_06_HOU_JAX,HOU,JAX,Bryce Oliver,00-0039650,WR,,receiving_yards,10.93,0.0,0.0,4.4,16.2,31.0,,,
 2026_06_NO_NYG,NYG,NO,Devin Singletary,00-0035250,RB,,receiving_yards,10.9,0.0,0.0,4.4,16.1,30.9,,,
-2026_06_WAS_SF,SF,WAS,Sincere McCormick,00-0037509,RB,,receiving_yards,10.89,0.0,0.0,4.3,16.1,30.8,,,
+2026_06_WAS_SF,SF,WAS,Sincere McCormick,00-0037509,RB,,receiving_yards,10.9,0.0,0.0,4.3,16.1,30.9,,,
 2026_06_CHI_ATL,ATL,CHI,Dylan Drummond,00-0038953,WR,,receiving_yards,10.88,0.0,0.0,4.3,16.1,30.8,,,
 2026_06_BAL_CLE,CLE,BAL,Audric Estimé,00-0039373,RB,,receiving_yards,10.84,0.0,0.0,4.3,16.0,30.7,,,
 2026_06_SEA_DEN,DEN,SEA,Nate Adkins,00-0038783,TE,,receiving_yards,10.74,0.0,0.0,4.3,15.9,30.4,,,
@@ -299,7 +302,8 @@ game_id,team,opp,player,player_id,position,injury_status,stat,expected,p10,p25,p
 2026_06_LAC_KC,KC,LAC,Emmett Johnson,00-0041013,RB,,receiving_yards,9.61,0.0,0.0,3.8,14.2,27.2,,,
 2026_06_HOU_JAX,JAX,HOU,Brenden Bates,00-0039458,TE,,receiving_yards,9.58,0.0,0.0,3.8,14.2,27.1,,,
 2026_06_LAC_KC,LAC,KC,Kimani Vidal,00-0039391,RB,,receiving_yards,9.53,0.0,0.0,3.8,14.1,27.0,,,
-2026_06_WAS_SF,SF,WAS,Jacob Cowing,00-0039365,WR,,receiving_yards,9.36,0.0,0.0,3.7,13.8,26.5,,,
+2026_06_WAS_SF,SF,WAS,Jacob Cowing,00-0039365,WR,,receiving_yards,9.37,0.0,0.0,3.7,13.8,26.6,,,
+2026_06_NYJ_NE,NE,NYJ,Ryan Miller,00-0038824,WR,,receiving_yards,9.34,0.0,0.0,3.7,13.8,26.5,,,
 2026_06_SEA_DEN,SEA,DEN,George Holani,00-0039299,RB,,receiving_yards,9.32,0.0,0.0,3.7,13.8,26.4,,,
 2026_06_CHI_ATL,CHI,ATL,Roschon Johnson,00-0039021,RB,,receiving_yards,9.22,0.0,0.0,3.7,13.6,26.1,,,
 2026_06_SEA_DEN,SEA,DEN,Emanuel Wilson,00-0038797,RB,,receiving_yards,9.07,0.0,0.0,3.6,13.4,25.7,,,
@@ -316,8 +320,10 @@ game_id,team,opp,player,player_id,position,injury_status,stat,expected,p10,p25,p
 2026_06_BAL_CLE,BAL,CLE,Derrick Henry,00-0032764,RB,,receiving_yards,8.36,0.0,0.0,3.3,12.4,23.7,,,
 2026_06_CAR_PHI,PHI,CAR,Johnny Mundt,00-0033246,TE,,receiving_yards,8.28,0.0,0.0,3.3,12.2,23.5,,,
 2026_06_NYJ_NE,NYJ,NE,Braelon Allen,00-0039794,RB,,receiving_yards,8.15,0.0,0.0,3.3,12.0,23.1,,,
-2026_06_WAS_SF,SF,WAS,Jack Stoll,00-0036741,TE,,receiving_yards,8.09,0.0,0.0,3.2,11.9,22.9,,,
+2026_06_WAS_SF,SF,WAS,Jack Stoll,00-0036741,TE,,receiving_yards,8.09,0.0,0.0,3.2,12.0,22.9,,,
+2026_06_DAL_GB,DAL,GB,Emari Demercado,00-0038705,RB,,receiving_yards,8.01,0.0,0.0,3.2,11.8,22.7,,,
 2026_06_BUF_LV,LV,BUF,Chris Myarick,00-0035345,TE,,receiving_yards,7.84,0.0,0.0,0.0,9.6,22.0,,,
+2026_06_TEN_IND,TEN,IND,Kylen Granson,00-0036876,TE,,receiving_yards,7.61,0.0,0.0,0.0,9.3,21.4,,,
 2026_06_DAL_GB,GB,DAL,J. Michael Sturdivant,00-0040948,WR,,receiving_yards,7.52,0.0,0.0,0.0,9.2,21.1,,,
 2026_06_BUF_LV,BUF,LV,Ray Davis,00-0039875,RB,,receiving_yards,7.38,0.0,0.0,0.0,9.0,20.8,,,
 2026_06_HOU_JAX,HOU,JAX,Dare Ogunbowale,00-0033854,RB,,receiving_yards,7.28,0.0,0.0,0.0,8.9,20.4,,,
@@ -332,8 +338,8 @@ game_id,team,opp,player,player_id,position,injury_status,stat,expected,p10,p25,p
 2026_06_BAL_CLE,CLE,BAL,Blake Whiteheart,00-0038710,TE,,receiving_yards,6.45,0.0,0.0,0.0,7.9,18.1,,,
 2026_06_HOU_JAX,JAX,HOU,Tim Jones,00-0036497,WR,,receiving_yards,6.36,0.0,0.0,0.0,7.8,17.9,,,
 2026_06_NO_NYG,NO,NYG,Zamir White,00-0038040,RB,,receiving_yards,6.33,0.0,0.0,0.0,7.7,17.8,,,
+2026_06_WAS_SF,SF,WAS,Luke Farrell,00-0036887,TE,,receiving_yards,6.17,0.0,0.0,0.0,7.5,17.3,,,
 2026_06_BAL_CLE,BAL,CLE,Gage Larvadain,00-0040259,WR,,receiving_yards,6.17,0.0,0.0,0.0,7.5,17.3,,,
-2026_06_WAS_SF,SF,WAS,Luke Farrell,00-0036887,TE,,receiving_yards,6.16,0.0,0.0,0.0,7.5,17.3,,,
 2026_06_TEN_IND,IND,TEN,Pharaoh Brown,00-0033439,TE,,receiving_yards,6.07,0.0,0.0,0.0,7.4,17.1,,,
 2026_06_HOU_JAX,JAX,HOU,Ameer Abdullah,00-0032104,RB,,receiving_yards,6.01,0.0,0.0,0.0,7.3,16.9,,,
 2026_06_TEN_IND,TEN,IND,David Martin-Robinson,00-0039648,TE,,receiving_yards,6.01,0.0,0.0,0.0,7.3,16.9,,,
@@ -341,6 +347,7 @@ game_id,team,opp,player,player_id,position,injury_status,stat,expected,p10,p25,p
 2026_06_CAR_PHI,PHI,CAR,Erik Ezukanma,00-0038092,WR,,receiving_yards,5.68,0.0,0.0,0.0,6.9,16.0,,,
 2026_06_LAC_KC,KC,LAC,Jake Briningstool,00-0040081,TE,,receiving_yards,5.66,0.0,0.0,0.0,6.9,15.9,,,
 2026_06_BUF_LV,BUF,LV,Trent Sherfield,00-0034487,WR,,receiving_yards,5.63,0.0,0.0,0.0,6.9,15.8,,,
+2026_06_LAC_KC,KC,LAC,Jared Wiley,00-0039824,TE,,receiving_yards,5.62,0.0,0.0,0.0,6.9,15.8,,,
 2026_06_CHI_ATL,CHI,ATL,Zavion Thomas,00-0041051,WR,,receiving_yards,5.54,0.0,0.0,0.0,6.8,15.6,,,
 2026_06_HOU_JAX,JAX,HOU,Quintin Morris,00-0036590,TE,,receiving_yards,5.42,0.0,0.0,0.0,6.6,15.2,,,
 2026_06_NO_NYG,NO,NYG,CJ Donaldson,00-0041326,RB,,receiving_yards,5.42,0.0,0.0,0.0,6.6,15.2,,,
@@ -350,6 +357,7 @@ game_id,team,opp,player,player_id,position,injury_status,stat,expected,p10,p25,p
 2026_06_HOU_JAX,HOU,JAX,Deuce Vaughn,00-0038622,RB,,receiving_yards,5.18,0.0,0.0,0.0,6.3,14.6,,,
 2026_06_TEN_IND,IND,TEN,Seth McGowan,00-0041125,RB,,receiving_yards,5.18,0.0,0.0,0.0,6.3,14.5,,,
 2026_06_CHI_ATL,CHI,ATL,Stephen Carlson,00-0035039,TE,,receiving_yards,5.14,0.0,0.0,0.0,6.3,14.4,,,
+2026_06_SEA_DEN,SEA,DEN,Josiah Deguara,00-0036332,TE,,receiving_yards,5.13,0.0,0.0,0.0,6.3,14.4,,,
 2026_06_BAL_CLE,CLE,BAL,Jaret Patterson,00-0036755,RB,,receiving_yards,5.09,0.0,0.0,0.0,6.2,14.3,,,
 2026_06_CHI_ATL,ATL,CHI,Khalil Herbert,00-0036906,RB,,receiving_yards,5.06,0.0,0.0,0.0,6.2,14.2,,,
 2026_06_BUF_LV,LV,BUF,Deven Thompkins,00-0037487,WR,,receiving_yards,5.03,0.0,0.0,0.0,6.1,14.1,,,
@@ -403,7 +411,7 @@ game_id,team,opp,player,player_id,position,injury_status,stat,expected,p10,p25,p
 2026_06_CAR_PHI,CAR,PHI,Trevor Etienne,00-0040644,RB,Questionable,receiving_yards,1.6,0.0,0.0,0.0,0.0,6.3,,,
 2026_06_NO_NYG,NYG,NO,Charlie Jones,00-0038576,WR,,receiving_yards,1.56,0.0,0.0,0.0,0.0,6.2,,,
 2026_06_LAC_KC,KC,LAC,Ben VanSumeren,00-0038489,RB,,receiving_yards,1.45,0.0,0.0,0.0,0.0,5.7,,,
-2026_06_WAS_SF,SF,WAS,Brayden Willis,00-0038643,TE,,receiving_yards,1.43,0.0,0.0,0.0,0.0,5.7,,,
+2026_06_WAS_SF,SF,WAS,Brayden Willis,00-0038643,TE,,receiving_yards,1.44,0.0,0.0,0.0,0.0,5.7,,,
 2026_06_NYJ_NE,NYJ,NE,Kene Nwangwu,00-0036842,RB,,receiving_yards,1.3,0.0,0.0,0.0,0.0,5.2,,,
 2026_06_PIT_TB,PIT,TB,Travis Homer,00-0035594,RB,,receiving_yards,1.22,0.0,0.0,0.0,0.0,4.8,,,
 2026_06_CHI_ATL,CHI,ATL,Kaden Davis,00-0037380,WR,,receiving_yards,1.13,0.0,0.0,0.0,0.0,4.5,,,
@@ -427,7 +435,6 @@ game_id,team,opp,player,player_id,position,injury_status,stat,expected,p10,p25,p
 2026_06_DAL_GB,DAL,GB,CeeDee Lamb,00-0036358,WR,,receptions,5.96,2.4,3.9,5.7,7.9,10.1,,,
 2026_06_NO_NYG,NYG,NO,Malik Nabers,00-0039337,WR,,receptions,5.4,2.2,3.5,5.2,7.1,9.2,,,
 2026_06_ARI_LA,ARI,LA,Michael Wilson,00-0038559,WR,,receptions,5.23,2.1,3.4,5.0,6.9,8.9,,,
-2026_06_ARI_LA,LA,ARI,Davante Adams,00-0031381,WR,,receptions,5.07,2.1,3.3,4.9,6.7,8.6,,,
 2026_06_NYJ_NE,NYJ,NE,Garrett Wilson,00-0037740,WR,,receptions,5.03,2.1,3.3,4.8,6.6,8.6,,,
 2026_06_CHI_ATL,ATL,CHI,Drake London,00-0037238,WR,,receptions,4.98,2.0,3.3,4.8,6.6,8.5,,,
 2026_06_NO_NYG,NYG,NO,Isaiah Likely,00-0037838,TE,,receptions,4.98,2.0,3.3,4.8,6.6,8.5,,,
@@ -435,7 +442,6 @@ game_id,team,opp,player,player_id,position,injury_status,stat,expected,p10,p25,p
 2026_06_WAS_SF,SF,WAS,George Kittle,00-0033288,TE,,receptions,4.95,2.0,3.2,4.7,6.5,8.4,,,
 2026_06_CAR_PHI,CAR,PHI,DeVonta Smith,00-0036912,WR,,receptions,4.9,2.0,3.2,4.7,6.5,8.3,,,
 2026_06_DAL_GB,DAL,GB,George Pickens,00-0037247,WR,,receptions,4.89,2.0,3.2,4.7,6.4,8.3,,,
-2026_06_NYJ_NE,NE,NYJ,A.J. Brown,00-0035676,WR,Questionable,receptions,4.86,2.0,3.2,4.6,6.4,8.3,,,
 2026_06_BAL_CLE,BAL,CLE,Zay Flowers,00-0039064,WR,,receptions,4.86,2.0,3.2,4.6,6.4,8.3,,,
 2026_06_CAR_PHI,CAR,PHI,Tetairoa McMillan,00-0040124,WR,,receptions,4.74,1.9,3.1,4.5,6.2,8.1,,,
 2026_06_HOU_JAX,HOU,JAX,Nico Collins,00-0036554,WR,,receptions,4.7,1.9,3.1,4.5,6.2,8.0,,,
@@ -443,9 +449,10 @@ game_id,team,opp,player,player_id,position,injury_status,stat,expected,p10,p25,p
 2026_06_TEN_IND,TEN,IND,Carnell Tate,00-0041438,WR,,receptions,4.53,1.9,3.0,4.3,6.0,7.7,,,
 2026_06_NO_NYG,NO,NYG,Juwan Johnson,00-0036040,TE,,receptions,4.36,1.2,2.4,4.2,6.1,7.9,,,
 2026_06_TEN_IND,IND,TEN,Keenan Allen,00-0030279,WR,,receptions,4.29,1.2,2.4,4.2,6.0,7.8,,,
+2026_06_WAS_SF,WAS,SF,Stefon Diggs,00-0031588,WR,Questionable,receptions,4.28,1.2,2.4,4.2,6.0,7.8,,,
 2026_06_DAL_GB,GB,DAL,Christian Watson,00-0038124,WR,,receptions,4.28,1.2,2.4,4.1,6.0,7.8,,,
 2026_06_CHI_ATL,CHI,ATL,Luther Burden III,00-0040735,WR,,receptions,4.22,1.2,2.4,4.1,5.9,7.7,,,
-2026_06_WAS_SF,SF,WAS,Christian McCaffrey,00-0033280,RB,,receptions,4.06,1.1,2.3,3.9,5.7,7.4,,,
+2026_06_WAS_SF,SF,WAS,Christian McCaffrey,00-0033280,RB,,receptions,4.07,1.1,2.3,3.9,5.7,7.4,,,
 2026_06_HOU_JAX,JAX,HOU,Parker Washington,00-0038606,WR,,receptions,3.99,1.1,2.2,3.9,5.6,7.3,,,
 2026_06_HOU_JAX,HOU,JAX,Dalton Schultz,00-0034383,TE,,receptions,3.97,1.1,2.2,3.8,5.5,7.2,,,
 2026_06_PIT_TB,PIT,TB,DK Metcalf,00-0035640,WR,,receptions,3.95,1.1,2.2,3.8,5.5,7.2,,,
@@ -455,7 +462,6 @@ game_id,team,opp,player,player_id,position,injury_status,stat,expected,p10,p25,p
 2026_06_CAR_PHI,CAR,PHI,Jalen Coker,00-0039491,WR,,receptions,3.84,1.1,2.2,3.7,5.3,7.0,,,
 2026_06_CHI_ATL,CHI,ATL,Colston Loveland,00-0040126,TE,,receptions,3.84,1.1,2.2,3.7,5.3,7.0,,,
 2026_06_ARI_LA,LA,ARI,Tyler Higbee,00-0033110,TE,,receptions,3.83,1.1,2.2,3.7,5.3,7.0,,,
-2026_06_WAS_SF,WAS,SF,Terry McLaurin,00-0035659,WR,,receptions,3.8,1.0,2.1,3.7,5.3,6.9,,,
 2026_06_ARI_LA,LA,ARI,Kyren Williams,00-0037840,RB,,receptions,3.8,1.0,2.1,3.7,5.3,6.9,,,
 2026_06_BUF_LV,LV,BUF,Ashton Jeanty,00-0040122,RB,,receptions,3.78,1.0,2.1,3.7,5.3,6.9,,,
 2026_06_CHI_ATL,ATL,CHI,Bijan Robinson,00-0038542,RB,,receptions,3.74,1.0,2.1,3.6,5.2,6.8,,,
@@ -481,7 +487,7 @@ game_id,team,opp,player,player_id,position,injury_status,stat,expected,p10,p25,p
 2026_06_SEA_DEN,DEN,SEA,RJ Harvey,00-0040730,RB,,receptions,3.18,1.0,1.9,3.0,4.4,6.1,,,
 2026_06_BAL_CLE,CLE,BAL,KC Concepcion,00-0041547,WR,,receptions,3.17,1.0,1.9,3.0,4.4,6.1,,,
 2026_06_BAL_CLE,CLE,BAL,Denzel Boston,00-0041037,WR,,receptions,3.15,1.0,1.9,3.0,4.4,6.0,,,
-2026_06_WAS_SF,WAS,SF,Chig Okonkwo,00-0037809,TE,,receptions,3.12,1.0,1.9,3.0,4.3,6.0,,,
+2026_06_WAS_SF,WAS,SF,Chig Okonkwo,00-0037809,TE,,receptions,3.11,1.0,1.9,2.9,4.3,6.0,,,
 2026_06_DAL_GB,DAL,GB,Ryan Flournoy,00-0039410,WR,,receptions,3.11,1.0,1.9,2.9,4.3,6.0,,,
 2026_06_DAL_GB,DAL,GB,Jake Ferguson,00-0038041,TE,,receptions,3.1,1.0,1.9,2.9,4.3,5.9,,,
 2026_06_TEN_IND,TEN,IND,Tyjae Spears,00-0039032,RB,Questionable,receptions,3.09,1.0,1.9,2.9,4.3,5.9,,,
@@ -500,6 +506,7 @@ game_id,team,opp,player,player_id,position,injury_status,stat,expected,p10,p25,p
 2026_06_HOU_JAX,HOU,JAX,Xavier Hutchinson,00-0038618,WR,,receptions,2.83,0.9,1.7,2.7,3.9,5.4,,,
 2026_06_ARI_LA,ARI,LA,Kendrick Bourne,00-0033307,WR,,receptions,2.78,0.0,1.1,2.3,4.1,5.5,,,
 2026_06_TEN_IND,IND,TEN,Quez Watkins,00-0036271,WR,,receptions,2.73,0.0,1.1,2.3,4.0,5.4,,,
+2026_06_BUF_LV,BUF,LV,Dalton Kincaid,00-0038933,TE,,receptions,2.71,0.0,1.1,2.2,4.0,5.3,,,
 2026_06_NYJ_NE,NYJ,NE,Kenyon Sadiq,00-0041032,TE,Questionable,receptions,2.69,0.0,1.1,2.2,3.9,5.3,,,
 2026_06_SEA_DEN,SEA,DEN,AJ Barner,00-0039793,TE,,receptions,2.64,0.0,1.1,2.2,3.9,5.2,,,
 2026_06_BAL_CLE,CLE,BAL,Jerry Jeudy,00-0036407,WR,,receptions,2.62,0.0,1.1,2.2,3.8,5.2,,,
@@ -529,6 +536,7 @@ game_id,team,opp,player,player_id,position,injury_status,stat,expected,p10,p25,p
 2026_06_SEA_DEN,SEA,DEN,Cooper Kupp,00-0033908,WR,,receptions,2.15,0.0,1.0,2.0,3.1,4.6,,,
 2026_06_CAR_PHI,CAR,PHI,Tommy Tremble,00-0037005,TE,,receptions,2.15,0.0,1.0,2.0,3.1,4.6,,,
 2026_06_NYJ_NE,NYJ,NE,Isaiah Williams,00-0039451,WR,,receptions,2.13,0.0,1.0,2.0,3.1,4.5,,,
+2026_06_DAL_GB,GB,DAL,Josh Jacobs,00-0035700,RB,,receptions,2.07,0.0,1.0,1.9,3.0,4.4,,,
 2026_06_TEN_IND,TEN,IND,Gunnar Helm,00-0040584,TE,,receptions,2.07,0.0,1.0,1.9,3.0,4.4,,,
 2026_06_TEN_IND,TEN,IND,Calvin Ridley,00-0034837,WR,,receptions,2.04,0.0,0.9,1.9,3.0,4.4,,,
 2026_06_SEA_DEN,SEA,DEN,Rashid Shaheed,00-0037545,WR,,receptions,2.02,0.0,0.9,1.9,2.9,4.3,,,
@@ -537,6 +545,7 @@ game_id,team,opp,player,player_id,position,injury_status,stat,expected,p10,p25,p
 2026_06_PIT_TB,TB,PIT,Ted Hurst III,00-0041048,WR,,receptions,2.01,0.0,0.9,1.9,2.9,4.3,,,
 2026_06_WAS_SF,WAS,SF,Van Jefferson,00-0036415,WR,,receptions,2.0,0.0,0.9,1.8,2.9,4.3,,,
 2026_06_DAL_GB,GB,DAL,MarShawn Lloyd,00-0039811,RB,,receptions,1.99,0.0,0.9,1.8,2.9,4.3,,,
+2026_06_CAR_PHI,CAR,PHI,Ja'Tavion Sanders,00-0039356,TE,,receptions,1.97,0.0,0.9,1.8,2.9,4.2,,,
 2026_06_TEN_IND,TEN,IND,Chimere Dike,00-0040705,WR,,receptions,1.97,0.0,0.9,1.8,2.9,4.2,,,
 2026_06_BUF_LV,BUF,LV,Dawson Knox,00-0035689,TE,,receptions,1.96,0.0,0.9,1.8,2.9,4.2,,,
 2026_06_WAS_SF,WAS,SF,Rachaad White,00-0037256,RB,,receptions,1.95,0.0,0.9,1.8,2.8,4.2,,,
@@ -564,6 +573,7 @@ game_id,team,opp,player,player_id,position,injury_status,stat,expected,p10,p25,p
 2026_06_NO_NYG,NO,NYG,Cedric Tillman,00-0038979,WR,,receptions,1.76,0.0,1.0,1.1,2.3,3.9,,,
 2026_06_TEN_IND,IND,TEN,Laquon Treadwell,00-0032951,WR,,receptions,1.74,0.0,1.0,1.1,2.3,3.9,,,
 2026_06_SEA_DEN,DEN,SEA,Marvin Mims Jr.,00-0038976,WR,,receptions,1.73,0.0,0.9,1.1,2.2,3.8,,,
+2026_06_WAS_SF,WAS,SF,Jeremy McNichols,00-0033955,RB,Questionable,receptions,1.72,0.0,0.9,1.1,2.2,3.8,,,
 2026_06_NYJ_NE,NYJ,NE,Sterling Shepard,00-0032385,WR,,receptions,1.71,0.0,0.9,1.1,2.2,3.8,,,
 2026_06_TEN_IND,TEN,IND,Tony Pollard,00-0035261,RB,,receptions,1.71,0.0,0.9,1.1,2.2,3.8,,,
 2026_06_HOU_JAX,JAX,HOU,Josh Cameron,00-0041100,WR,,receptions,1.71,0.0,0.9,1.1,2.2,3.8,,,
@@ -576,8 +586,8 @@ game_id,team,opp,player,player_id,position,injury_status,stat,expected,p10,p25,p
 2026_06_CHI_ATL,CHI,ATL,Cole Kmet,00-0036290,TE,,receptions,1.63,0.0,0.9,1.0,2.1,3.6,,,
 2026_06_TEN_IND,TEN,IND,K.J. Osborn,00-0036345,WR,,receptions,1.63,0.0,0.9,1.0,2.1,3.6,,,
 2026_06_CAR_PHI,PHI,CAR,Darius Cooper,00-0040024,WR,,receptions,1.63,0.0,0.9,1.0,2.1,3.6,,,
-2026_06_WAS_SF,WAS,SF,Treylon Burks,00-0037742,WR,,receptions,1.62,0.0,0.9,1.0,2.1,3.6,,,
 2026_06_PIT_TB,PIT,TB,Isaiah Hodgins,00-0036165,WR,,receptions,1.61,0.0,0.9,1.0,2.1,3.6,,,
+2026_06_WAS_SF,WAS,SF,Treylon Burks,00-0037742,WR,,receptions,1.61,0.0,0.9,1.0,2.1,3.6,,,
 2026_06_WAS_SF,WAS,SF,Fred Davis,00-0026188,TE,,receptions,1.58,0.0,0.9,1.0,2.1,3.5,,,
 2026_06_WAS_SF,WAS,SF,Dyami Brown,00-0036626,WR,,receptions,1.58,0.0,0.9,1.0,2.1,3.5,,,
 2026_06_LAC_KC,KC,LAC,Noah Gray,00-0036637,TE,,receptions,1.57,0.0,0.9,1.0,2.0,3.5,,,
@@ -605,6 +615,7 @@ game_id,team,opp,player,player_id,position,injury_status,stat,expected,p10,p25,p
 2026_06_BAL_CLE,CLE,BAL,Isaiah Bond,00-0040782,WR,,receptions,1.41,0.0,0.0,1.1,2.1,3.2,,,
 2026_06_CAR_PHI,CAR,PHI,Mitchell Evans,00-0040187,TE,,receptions,1.4,0.0,0.0,1.0,2.1,3.2,,,
 2026_06_NYJ_NE,NYJ,NE,Tim Patrick,00-0033375,WR,,receptions,1.37,0.0,0.0,1.0,2.0,3.1,,,
+2026_06_ARI_LA,LA,ARI,Tutu Atwell,00-0036849,WR,,receptions,1.37,0.0,0.0,1.0,2.0,3.1,,,
 2026_06_HOU_JAX,HOU,JAX,Jawhar Jordan,00-0039405,RB,,receptions,1.35,0.0,0.0,1.0,2.0,3.1,,,
 2026_06_TEN_IND,TEN,IND,Daniel Bellinger,00-0038115,TE,,receptions,1.34,0.0,0.0,1.0,2.0,3.1,,,
 2026_06_BUF_LV,LV,BUF,Ian Thomas,00-0034365,TE,,receptions,1.33,0.0,0.0,1.0,2.0,3.0,,,
@@ -652,6 +663,7 @@ game_id,team,opp,player,player_id,position,injury_status,stat,expected,p10,p25,p
 2026_06_WAS_SF,SF,WAS,Xavier Smith,00-0038359,WR,,receptions,1.05,0.0,0.0,0.9,1.8,2.8,,,
 2026_06_DAL_GB,DAL,GB,Jonathan Mingo,00-0039062,WR,,receptions,1.04,0.0,0.0,0.9,1.8,2.7,,,
 2026_06_DAL_GB,GB,DAL,Bo Melton,00-0037091,WR,,receptions,1.02,0.0,0.0,0.9,1.7,2.7,,,
+2026_06_DAL_GB,DAL,GB,Emari Demercado,00-0038705,RB,,receptions,1.02,0.0,0.0,0.9,1.7,2.7,,,
 2026_06_NO_NYG,NYG,NO,Najee Harris,00-0036893,RB,,receptions,1.01,0.0,0.0,0.9,1.7,2.6,,,
 2026_06_CHI_ATL,ATL,CHI,Dylan Drummond,00-0038953,WR,,receptions,1.01,0.0,0.0,0.9,1.7,2.7,,,
 2026_06_BAL_CLE,CLE,BAL,Daniel Thomas,00-0028000,RB,,receptions,1.0,0.0,0.0,0.9,1.7,2.6,,,
@@ -675,6 +687,7 @@ game_id,team,opp,player,player_id,position,injury_status,stat,expected,p10,p25,p
 2026_06_NO_NYG,NO,NYG,Zamir White,00-0038040,RB,,receptions,0.9,0.0,0.0,0.0,1.3,2.5,,,
 2026_06_BAL_CLE,BAL,CLE,Josh Cuevas,00-0040887,TE,,receptions,0.9,0.0,0.0,0.8,1.5,2.4,,,
 2026_06_CAR_PHI,PHI,CAR,Johnny Mundt,00-0033246,TE,,receptions,0.89,0.0,0.0,0.0,1.3,2.4,,,
+2026_06_TEN_IND,TEN,IND,Kylen Granson,00-0036876,TE,,receptions,0.89,0.0,0.0,0.0,1.3,2.4,,,
 2026_06_LAC_KC,KC,LAC,Jalen Royals,00-0040646,WR,,receptions,0.89,0.0,0.0,0.0,1.3,2.4,,,
 2026_06_WAS_SF,SF,WAS,Jack Stoll,00-0036741,TE,,receptions,0.88,0.0,0.0,0.0,1.3,2.4,,,
 2026_06_CHI_ATL,CHI,ATL,Zavier Scott,00-0038440,RB,,receptions,0.88,0.0,0.0,0.0,1.3,2.4,,,
@@ -709,9 +722,12 @@ game_id,team,opp,player,player_id,position,injury_status,stat,expected,p10,p25,p
 2026_06_CHI_ATL,ATL,CHI,Brian Robinson,00-0037746,RB,,receptions,0.67,0.0,0.0,0.0,1.0,1.8,,,
 2026_06_BUF_LV,LV,BUF,Mike Washington Jr.,00-0040878,RB,,receptions,0.67,0.0,0.0,0.0,1.0,1.8,,,
 2026_06_BAL_CLE,CLE,BAL,Blake Whiteheart,00-0038710,TE,,receptions,0.66,0.0,0.0,0.0,0.9,1.8,,,
+2026_06_NYJ_NE,NE,NYJ,Ryan Miller,00-0038824,WR,,receptions,0.65,0.0,0.0,0.0,0.9,1.8,,,
 2026_06_TEN_IND,TEN,IND,David Martin-Robinson,00-0039648,TE,,receptions,0.65,0.0,0.0,0.0,0.9,1.8,,,
+2026_06_SEA_DEN,SEA,DEN,Josiah Deguara,00-0036332,TE,,receptions,0.64,0.0,0.0,0.0,0.9,1.7,,,
 2026_06_BAL_CLE,CLE,BAL,Michael Burton,00-0031595,FB,,receptions,0.63,0.0,0.0,0.0,0.9,1.7,,,
 2026_06_SEA_DEN,SEA,DEN,Eric Saubert,00-0033576,TE,,receptions,0.63,0.0,0.0,0.0,0.9,1.7,,,
+2026_06_LAC_KC,KC,LAC,Jared Wiley,00-0039824,TE,,receptions,0.63,0.0,0.0,0.0,0.9,1.7,,,
 2026_06_HOU_JAX,JAX,HOU,Quintin Morris,00-0036590,TE,,receptions,0.62,0.0,0.0,0.0,0.9,1.7,,,
 2026_06_BUF_LV,BUF,LV,Austin Johnson,00-0029729,FB,,receptions,0.61,0.0,0.0,0.0,0.9,1.7,,,
 2026_06_NYJ_NE,NYJ,NE,Andrew Beck,00-0034959,FB,,receptions,0.61,0.0,0.0,0.0,0.9,1.7,,,
@@ -790,7 +806,7 @@ game_id,team,opp,player,player_id,position,injury_status,stat,expected,p10,p25,p
 2026_06_TEN_IND,IND,TEN,Jonathan Taylor,00-0036223,RB,,rushing_yards,76.04,30.5,47.4,70.3,98.1,126.0,,,
 2026_06_ARI_LA,LA,ARI,Kyren Williams,00-0037840,RB,,rushing_yards,71.79,28.8,44.8,66.4,92.6,118.9,,,
 2026_06_PIT_TB,TB,PIT,Bucky Irving,00-0039361,RB,,rushing_yards,68.16,27.4,42.5,63.0,87.9,112.9,,,
-2026_06_WAS_SF,SF,WAS,Christian McCaffrey,00-0033280,RB,,rushing_yards,65.38,21.0,37.7,61.9,87.8,111.4,,,
+2026_06_WAS_SF,SF,WAS,Christian McCaffrey,00-0033280,RB,,rushing_yards,65.31,21.0,37.7,61.9,87.7,111.3,,,
 2026_06_DAL_GB,DAL,GB,Javonte Williams,00-0036997,RB,,rushing_yards,62.08,20.0,35.8,58.8,83.4,105.8,,,
 2026_06_PIT_TB,PIT,TB,Jaylen Warren,00-0037228,RB,,rushing_yards,60.15,19.3,34.7,57.0,80.8,102.5,,,
 2026_06_CAR_PHI,CAR,PHI,Chuba Hubbard,00-0036555,RB,,rushing_yards,59.88,19.3,34.6,56.7,80.4,102.0,,,
@@ -798,11 +814,12 @@ game_id,team,opp,player,player_id,position,injury_status,stat,expected,p10,p25,p
 2026_06_NO_NYG,NYG,NO,Cam Skattebo,00-0040715,RB,,rushing_yards,57.83,18.6,33.4,54.8,77.7,98.5,,,
 2026_06_TEN_IND,TEN,IND,Tony Pollard,00-0035261,RB,,rushing_yards,57.39,18.5,33.1,54.4,77.1,97.8,,,
 2026_06_BUF_LV,LV,BUF,Ashton Jeanty,00-0040122,RB,,rushing_yards,55.23,15.2,30.7,54.1,77.7,110.2,,,
+2026_06_DAL_GB,GB,DAL,Josh Jacobs,00-0035700,RB,,rushing_yards,54.67,15.0,30.4,53.5,76.9,109.0,,,
 2026_06_SEA_DEN,DEN,SEA,J.K. Dobbins,00-0036158,RB,,rushing_yards,53.42,14.7,29.7,52.3,75.2,106.5,,,
 2026_06_NYJ_NE,NE,NYJ,TreVeyon Henderson,00-0040734,RB,Questionable,rushing_yards,52.92,14.5,29.4,51.8,74.5,105.5,,,
 2026_06_NYJ_NE,NE,NYJ,Rhamondre Stevenson,00-0036875,RB,,rushing_yards,50.4,13.8,28.0,49.3,70.9,100.5,,,
 2026_06_LAC_KC,LAC,KC,Omarion Hampton,00-0040666,RB,,rushing_yards,50.2,13.8,27.9,49.1,70.7,100.1,,,
-2026_06_WAS_SF,SF,WAS,Sincere McCormick,00-0037509,RB,,rushing_yards,48.9,13.4,27.2,47.9,68.8,97.5,,,
+2026_06_WAS_SF,SF,WAS,Sincere McCormick,00-0037509,RB,,rushing_yards,48.85,13.4,27.1,47.8,68.8,97.4,,,
 2026_06_SEA_DEN,SEA,DEN,Emanuel Wilson,00-0038797,RB,,rushing_yards,46.69,6.9,21.7,39.3,62.0,91.3,,,
 2026_06_HOU_JAX,JAX,HOU,Bhayshul Tuten,00-0040719,RB,,rushing_yards,44.15,6.6,20.5,37.2,58.6,86.3,,,
 2026_06_ARI_LA,ARI,LA,Tyler Allgeier,00-0037263,RB,,rushing_yards,41.32,6.1,19.2,34.8,54.8,80.8,,,
@@ -810,29 +827,30 @@ game_id,team,opp,player,player_id,position,injury_status,stat,expected,p10,p25,p
 2026_06_CAR_PHI,PHI,CAR,Jaydon Blue,00-0040586,RB,,rushing_yards,40.35,6.0,18.7,34.0,53.5,78.9,,,
 2026_06_HOU_JAX,HOU,JAX,Woody Marks,00-0040583,RB,,rushing_yards,38.8,5.8,18.0,32.7,51.5,75.9,,,
 2026_06_PIT_TB,PIT,TB,Rico Dowdle,00-0036139,RB,Questionable,rushing_yards,38.72,5.7,18.0,32.6,51.4,75.7,,,
-2026_06_WAS_SF,WAS,SF,Devin Neal,00-0040202,RB,,rushing_yards,38.39,5.7,17.8,32.3,50.9,75.1,,,
+2026_06_WAS_SF,WAS,SF,Devin Neal,00-0040202,RB,,rushing_yards,38.43,5.7,17.8,32.3,51.0,75.1,,,
 2026_06_ARI_LA,ARI,LA,Bam Knight,00-0037157,RB,,rushing_yards,37.15,5.5,17.2,31.3,49.3,72.6,,,
 2026_06_HOU_JAX,HOU,JAX,Jawhar Jordan,00-0039405,RB,,rushing_yards,37.04,5.5,17.2,31.2,49.1,72.4,,,
 2026_06_NYJ_NE,NYJ,NE,Braelon Allen,00-0039794,RB,,rushing_yards,36.71,2.0,10.9,26.4,46.4,73.8,,,
 2026_06_NO_NYG,NYG,NO,Najee Harris,00-0036893,RB,,rushing_yards,35.47,1.9,10.5,25.5,44.8,71.3,,,
-2026_06_WAS_SF,WAS,SF,Rachaad White,00-0037256,RB,,rushing_yards,35.41,1.9,10.5,25.5,44.8,71.2,,,
+2026_06_WAS_SF,WAS,SF,Rachaad White,00-0037256,RB,,rushing_yards,35.45,1.9,10.5,25.5,44.8,71.3,,,
 2026_06_BAL_CLE,CLE,BAL,Audric Estimé,00-0039373,RB,,rushing_yards,34.9,1.9,10.3,25.1,44.1,70.2,,,
 2026_06_NO_NYG,NO,NYG,Alvin Kamara,00-0033906,RB,Questionable,rushing_yards,34.04,1.8,10.1,24.5,43.0,68.4,,,
 2026_06_CHI_ATL,ATL,CHI,Brian Robinson,00-0037746,RB,,rushing_yards,33.24,1.8,9.8,23.9,42.0,66.8,,,
 2026_06_TEN_IND,TEN,IND,Michael Carter,00-0036924,RB,,rushing_yards,30.89,1.7,9.1,22.2,39.0,62.1,,,
-2026_06_WAS_SF,WAS,SF,Austin Ekeler,00-0033699,RB,,rushing_yards,30.77,1.7,9.1,22.2,38.9,61.9,,,
+2026_06_WAS_SF,WAS,SF,Austin Ekeler,00-0033699,RB,,rushing_yards,30.8,1.7,9.1,22.2,38.9,61.9,,,
 2026_06_NO_NYG,NYG,NO,Tyrone Tracy Jr.,00-0039384,RB,,rushing_yards,29.7,1.6,8.8,21.4,37.5,59.7,,,
 2026_06_NO_NYG,NYG,NO,Devin Singletary,00-0035250,RB,,rushing_yards,29.21,1.6,8.6,21.0,36.9,58.7,,,
 2026_06_LAC_KC,LAC,KC,Kimani Vidal,00-0039391,RB,,rushing_yards,28.68,1.5,8.5,20.7,36.3,57.7,,,
 2026_06_CAR_PHI,PHI,CAR,Dameon Pierce,00-0037258,RB,,rushing_yards,28.58,1.5,8.5,20.6,36.1,57.5,,,
 2026_06_HOU_JAX,JAX,HOU,Chris Rodriguez Jr.,00-0038611,RB,,rushing_yards,28.42,1.5,8.4,20.5,35.9,57.1,,,
 2026_06_DAL_GB,GB,DAL,MarShawn Lloyd,00-0039811,RB,,rushing_yards,28.06,1.5,8.3,20.2,35.5,56.4,,,
-2026_06_WAS_SF,SF,WAS,Kaelon Black,00-0041052,RB,,rushing_yards,27.79,1.5,8.2,20.0,35.1,55.9,,,
+2026_06_WAS_SF,SF,WAS,Kaelon Black,00-0041052,RB,,rushing_yards,27.76,1.5,8.2,20.0,35.1,55.8,,,
 2026_06_NO_NYG,NO,NYG,Kendre Miller,00-0038551,RB,,rushing_yards,27.46,0.0,6.6,19.5,39.1,66.1,,,
 2026_06_SEA_DEN,DEN,SEA,RJ Harvey,00-0040730,RB,,rushing_yards,25.65,0.0,6.1,18.2,36.6,61.8,,,
 2026_06_LAC_KC,LAC,KC,Keaton Mitchell,00-0038454,RB,,rushing_yards,24.85,0.0,5.9,17.6,35.4,59.9,,,
 2026_06_BAL_CLE,CLE,BAL,Jaret Patterson,00-0036755,RB,,rushing_yards,23.77,0.0,5.7,16.9,33.9,57.2,,,
 2026_06_CHI_ATL,ATL,CHI,Khalil Herbert,00-0036906,RB,,rushing_yards,21.82,0.0,5.2,15.5,31.1,52.6,,,
+2026_06_DAL_GB,DAL,GB,Emari Demercado,00-0038705,RB,,rushing_yards,21.47,0.0,5.1,15.2,30.6,51.7,,,
 2026_06_DAL_GB,GB,DAL,Kaleb Johnson,00-0040142,RB,,rushing_yards,21.15,0.0,5.1,15.0,30.1,50.9,,,
 2026_06_BUF_LV,LV,BUF,Mike Washington Jr.,00-0040878,RB,,rushing_yards,20.65,0.0,2.3,10.1,25.9,57.2,,,
 2026_06_NYJ_NE,NE,NYJ,Corey Kiner,00-0040556,RB,,rushing_yards,20.55,0.0,2.3,10.0,25.7,57.0,,,
@@ -852,10 +870,11 @@ game_id,team,opp,player,player_id,position,injury_status,stat,expected,p10,p25,p
 2026_06_ARI_LA,ARI,LA,Jerome Ford,00-0037267,RB,,rushing_yards,13.33,0.0,0.0,6.1,19.7,36.6,,,
 2026_06_BAL_CLE,CLE,BAL,Daniel Thomas,00-0028000,RB,,rushing_yards,12.78,0.0,0.0,5.8,18.8,35.1,,,
 2026_06_DAL_GB,GB,DAL,Pierre Strong,00-0038098,RB,,rushing_yards,12.51,0.0,0.0,5.7,18.5,34.4,,,
+2026_06_WAS_SF,WAS,SF,Jeremy McNichols,00-0033955,RB,Questionable,rushing_yards,12.42,0.0,0.0,5.6,18.3,34.1,,,
 2026_06_NO_NYG,NO,NYG,CJ Donaldson,00-0041326,RB,,rushing_yards,12.37,0.0,0.0,5.6,18.2,34.0,,,
 2026_06_CHI_ATL,CHI,ATL,Salvon Ahmed,00-0036020,RB,,rushing_yards,12.27,0.0,0.0,5.6,18.1,33.7,,,
 2026_06_BUF_LV,BUF,LV,Ty Johnson,00-0035537,RB,,rushing_yards,11.95,0.0,0.0,5.4,17.6,32.8,,,
-2026_06_WAS_SF,WAS,SF,Craig Reynolds,00-0035567,RB,,rushing_yards,10.77,0.0,0.0,4.9,15.9,29.6,,,
+2026_06_WAS_SF,WAS,SF,Craig Reynolds,00-0035567,RB,,rushing_yards,10.78,0.0,0.0,4.9,15.9,29.6,,,
 2026_06_LAC_KC,KC,LAC,Brashard Smith,00-0040078,RB,,rushing_yards,10.31,0.0,0.0,4.7,15.2,28.3,,,
 2026_06_NYJ_NE,NYJ,NE,Isaiah Davis,00-0039798,RB,,rushing_yards,9.75,0.0,0.0,4.4,14.4,26.8,,,
 2026_06_CHI_ATL,CHI,ATL,Zavier Scott,00-0038440,RB,,rushing_yards,9.2,0.0,0.0,4.2,13.6,25.3,,,
@@ -897,9 +916,9 @@ game_id,team,opp,player,player_id,position,injury_status,stat,expected,p10,p25,p
 2026_06_CHI_ATL,CHI,ATL,D'Andre Swift,00-0036275,RB,,skill_tds,0.63,,,,,,0.4662,0.1311,0.026
 2026_06_BUF_LV,LV,BUF,Ashton Jeanty,00-0040122,RB,,skill_tds,0.62,,,,,,0.4646,0.1301,0.0256
 2026_06_NYJ_NE,NE,NYJ,Rhamondre Stevenson,00-0036875,RB,,skill_tds,0.61,,,,,,0.4576,0.1258,0.0243
-2026_06_ARI_LA,LA,ARI,Davante Adams,00-0031381,WR,,skill_tds,0.6,,,,,,0.4537,0.1234,0.0236
 2026_06_DAL_GB,DAL,GB,CeeDee Lamb,00-0036358,WR,,skill_tds,0.57,,,,,,0.4367,0.1134,0.0206
 2026_06_BUF_LV,LV,BUF,Brock Bowers,00-0039338,TE,,skill_tds,0.56,,,,,,0.4263,0.1075,0.019
+2026_06_DAL_GB,GB,DAL,Josh Jacobs,00-0035700,RB,,skill_tds,0.55,,,,,,0.4216,0.1049,0.0182
 2026_06_PIT_TB,PIT,TB,Jaylen Warren,00-0037228,RB,,skill_tds,0.55,,,,,,0.4218,0.1051,0.0183
 2026_06_SEA_DEN,SEA,DEN,Jaxon Smith-Njigba,00-0038543,WR,,skill_tds,0.55,,,,,,0.4254,0.107,0.0188
 2026_06_NO_NYG,NO,NYG,Alvin Kamara,00-0033906,RB,Questionable,skill_tds,0.54,,,,,,0.4147,0.1012,0.0172
@@ -923,7 +942,6 @@ game_id,team,opp,player,player_id,position,injury_status,stat,expected,p10,p25,p
 2026_06_NO_NYG,NYG,NO,Isaiah Likely,00-0037838,TE,,skill_tds,0.38,,,,,,0.3127,0.055,0.0067
 2026_06_SEA_DEN,DEN,SEA,RJ Harvey,00-0040730,RB,,skill_tds,0.38,,,,,,0.3131,0.0551,0.0067
 2026_06_ARI_LA,LA,ARI,Tyler Higbee,00-0033110,TE,,skill_tds,0.37,,,,,,0.31,0.054,0.0065
-2026_06_NYJ_NE,NE,NYJ,A.J. Brown,00-0035676,WR,Questionable,skill_tds,0.37,,,,,,0.3074,0.053,0.0063
 2026_06_HOU_JAX,HOU,JAX,Nico Collins,00-0036554,WR,,skill_tds,0.37,,,,,,0.311,0.0543,0.0065
 2026_06_DAL_GB,GB,DAL,Matthew Golden,00-0040667,WR,,skill_tds,0.37,,,,,,0.3121,0.0547,0.0066
 2026_06_NYJ_NE,NE,NYJ,TreVeyon Henderson,00-0040734,RB,Questionable,skill_tds,0.37,,,,,,0.3105,0.0542,0.0065
@@ -952,6 +970,7 @@ game_id,team,opp,player,player_id,position,injury_status,stat,expected,p10,p25,p
 2026_06_TEN_IND,TEN,IND,Wan'Dale Robinson,00-0038117,WR,,skill_tds,0.31,,,,,,0.2679,0.0396,0.004
 2026_06_BUF_LV,BUF,LV,Keon Coleman,00-0039901,WR,,skill_tds,0.31,,,,,,0.2654,0.0388,0.0039
 2026_06_CHI_ATL,CHI,ATL,Colston Loveland,00-0040126,TE,,skill_tds,0.31,,,,,,0.2683,0.0397,0.004
+2026_06_WAS_SF,WAS,SF,Stefon Diggs,00-0031588,WR,Questionable,skill_tds,0.3,,,,,,0.26,0.0372,0.0036
 2026_06_HOU_JAX,JAX,HOU,Jakobi Meyers,00-0034960,WR,,skill_tds,0.29,,,,,,0.2517,0.0347,0.0033
 2026_06_BUF_LV,LV,BUF,Tre Tucker,00-0038563,WR,,skill_tds,0.29,,,,,,0.249,0.0339,0.0032
 2026_06_LAC_KC,KC,LAC,Xavier Worthy,00-0039894,WR,,skill_tds,0.29,,,,,,0.2495,0.0341,0.0032
@@ -968,6 +987,7 @@ game_id,team,opp,player,player_id,position,injury_status,stat,expected,p10,p25,p
 2026_06_SEA_DEN,DEN,SEA,Jaylen Waddle,00-0036613,WR,,skill_tds,0.27,,,,,,0.2373,0.0307,0.0027
 2026_06_WAS_SF,WAS,SF,Rachaad White,00-0037256,RB,,skill_tds,0.27,,,,,,0.2363,0.0304,0.0027
 2026_06_NO_NYG,NO,NYG,Kendre Miller,00-0038551,RB,,skill_tds,0.27,,,,,,0.2352,0.0301,0.0026
+2026_06_BUF_LV,BUF,LV,Dalton Kincaid,00-0038933,TE,,skill_tds,0.27,,,,,,0.2352,0.0301,0.0026
 2026_06_NO_NYG,NYG,NO,Tyrone Tracy Jr.,00-0039384,RB,,skill_tds,0.27,,,,,,0.2403,0.0315,0.0028
 2026_06_CAR_PHI,CAR,PHI,Jalen Coker,00-0039491,WR,,skill_tds,0.27,,,,,,0.2377,0.0308,0.0027
 2026_06_NYJ_NE,NYJ,NE,Braelon Allen,00-0039794,RB,,skill_tds,0.27,,,,,,0.2388,0.0311,0.0028
@@ -976,7 +996,6 @@ game_id,team,opp,player,player_id,position,injury_status,stat,expected,p10,p25,p
 2026_06_HOU_JAX,JAX,HOU,Brenton Strange,00-0038935,TE,,skill_tds,0.26,,,,,,0.2306,0.0289,0.0025
 2026_06_PIT_TB,TB,PIT,Emeka Egbuka,00-0040129,WR,,skill_tds,0.26,,,,,,0.2309,0.029,0.0025
 2026_06_CHI_ATL,CHI,ATL,Kalif Raymond,00-0032464,WR,,skill_tds,0.25,,,,,,0.2244,0.0273,0.0023
-2026_06_WAS_SF,WAS,SF,Terry McLaurin,00-0035659,WR,,skill_tds,0.25,,,,,,0.2199,0.0262,0.0021
 2026_06_LAC_KC,LAC,KC,Kimani Vidal,00-0039391,RB,,skill_tds,0.25,,,,,,0.2223,0.0268,0.0022
 2026_06_DAL_GB,DAL,GB,Ryan Flournoy,00-0039410,WR,,skill_tds,0.25,,,,,,0.2175,0.0256,0.002
 2026_06_BAL_CLE,CLE,BAL,Denzel Boston,00-0041037,WR,,skill_tds,0.25,,,,,,0.2206,0.0264,0.0021
@@ -1032,6 +1051,7 @@ game_id,team,opp,player,player_id,position,injury_status,stat,expected,p10,p25,p
 2026_06_CAR_PHI,PHI,CAR,Dontayvion Wicks,00-0038393,WR,,skill_tds,0.17,,,,,,0.1547,0.0126,0.0007
 2026_06_PIT_TB,PIT,TB,Darnell Washington,00-0038558,TE,,skill_tds,0.17,,,,,,0.1563,0.0129,0.0007
 2026_06_HOU_JAX,JAX,HOU,Chris Rodriguez Jr.,00-0038611,RB,,skill_tds,0.17,,,,,,0.1587,0.0133,0.0008
+2026_06_DAL_GB,DAL,GB,Emari Demercado,00-0038705,RB,,skill_tds,0.17,,,,,,0.157,0.013,0.0007
 2026_06_CAR_PHI,PHI,CAR,Darius Cooper,00-0040024,WR,,skill_tds,0.17,,,,,,0.1601,0.0136,0.0008
 2026_06_BUF_LV,LV,BUF,Mike Washington Jr.,00-0040878,RB,,skill_tds,0.17,,,,,,0.1583,0.0133,0.0008
 2026_06_WAS_SF,WAS,SF,Fred Davis,00-0026188,TE,,skill_tds,0.16,,,,,,0.1477,0.0115,0.0006
@@ -1039,6 +1059,7 @@ game_id,team,opp,player,player_id,position,injury_status,stat,expected,p10,p25,p
 2026_06_BUF_LV,LV,BUF,Cody White,00-0035891,WR,,skill_tds,0.16,,,,,,0.1476,0.0115,0.0006
 2026_06_CHI_ATL,CHI,ATL,Cole Kmet,00-0036290,TE,,skill_tds,0.16,,,,,,0.1513,0.0121,0.0007
 2026_06_BAL_CLE,CLE,BAL,Jerry Jeudy,00-0036407,WR,,skill_tds,0.16,,,,,,0.1446,0.011,0.0006
+2026_06_ARI_LA,LA,ARI,Tutu Atwell,00-0036849,WR,,skill_tds,0.16,,,,,,0.1484,0.0116,0.0006
 2026_06_CHI_ATL,ATL,CHI,Khalil Herbert,00-0036906,RB,,skill_tds,0.16,,,,,,0.1453,0.0111,0.0006
 2026_06_PIT_TB,PIT,TB,Brandon Johnson,00-0037382,WR,,skill_tds,0.16,,,,,,0.1442,0.0109,0.0006
 2026_06_DAL_GB,GB,DAL,Pierre Strong,00-0038098,RB,,skill_tds,0.16,,,,,,0.1514,0.0121,0.0007
@@ -1046,12 +1067,14 @@ game_id,team,opp,player,player_id,position,injury_status,stat,expected,p10,p25,p
 2026_06_DAL_GB,GB,DAL,Josh Whyle,00-0038589,TE,,skill_tds,0.16,,,,,,0.1449,0.0111,0.0006
 2026_06_HOU_JAX,HOU,JAX,Xavier Hutchinson,00-0038618,WR,,skill_tds,0.16,,,,,,0.1448,0.011,0.0006
 2026_06_SEA_DEN,SEA,DEN,George Holani,00-0039299,RB,,skill_tds,0.16,,,,,,0.1468,0.0114,0.0006
+2026_06_CAR_PHI,CAR,PHI,Ja'Tavion Sanders,00-0039356,TE,,skill_tds,0.16,,,,,,0.152,0.0122,0.0007
 2026_06_NYJ_NE,NYJ,NE,Isaiah Williams,00-0039451,WR,,skill_tds,0.16,,,,,,0.148,0.0115,0.0006
 2026_06_LAC_KC,LAC,KC,Oronde Gadsden II,00-0040189,TE,,skill_tds,0.16,,,,,,0.1519,0.0122,0.0007
 2026_06_PIT_TB,TB,PIT,Ted Hurst III,00-0041048,WR,,skill_tds,0.16,,,,,,0.1494,0.0118,0.0006
 2026_06_NYJ_NE,NE,NYJ,Mike Brown,00-0029155,WR,,skill_tds,0.15,,,,,,0.1425,0.0107,0.0005
 2026_06_CAR_PHI,PHI,CAR,Zach Ertz,00-0030061,TE,,skill_tds,0.15,,,,,,0.1378,0.01,0.0005
 2026_06_BAL_CLE,BAL,CLE,Chris Moore,00-0032398,WR,,skill_tds,0.15,,,,,,0.137,0.0098,0.0005
+2026_06_WAS_SF,WAS,SF,Jeremy McNichols,00-0033955,RB,Questionable,skill_tds,0.15,,,,,,0.1405,0.0104,0.0005
 2026_06_BAL_CLE,CLE,BAL,Jaret Patterson,00-0036755,RB,,skill_tds,0.15,,,,,,0.1391,0.0102,0.0005
 2026_06_ARI_LA,ARI,LA,Jerome Ford,00-0037267,RB,,skill_tds,0.15,,,,,,0.138,0.01,0.0005
 2026_06_SEA_DEN,DEN,SEA,Nate Adkins,00-0038783,TE,,skill_tds,0.15,,,,,,0.1384,0.01,0.0005
@@ -1131,11 +1154,13 @@ game_id,team,opp,player,player_id,position,injury_status,stat,expected,p10,p25,p
 2026_06_NO_NYG,NO,NYG,Bryce Lance,00-0041067,WR,,skill_tds,0.1,,,,,,0.0936,0.0045,0.0001
 2026_06_NO_NYG,NO,NYG,CJ Donaldson,00-0041326,RB,,skill_tds,0.1,,,,,,0.0945,0.0046,0.0002
 2026_06_WAS_SF,WAS,SF,Brandon Coleman,00-0030801,WR,,skill_tds,0.09,,,,,,0.0901,0.0042,0.0001
+2026_06_SEA_DEN,SEA,DEN,Josiah Deguara,00-0036332,TE,,skill_tds,0.09,,,,,,0.0828,0.0035,0.0001
 2026_06_ARI_LA,ARI,LA,Kenny Yeboah,00-0036510,TE,,skill_tds,0.09,,,,,,0.0823,0.0035,0.0001
 2026_06_WAS_SF,SF,WAS,Luke Farrell,00-0036887,TE,,skill_tds,0.09,,,,,,0.085,0.0037,0.0001
 2026_06_NYJ_NE,NE,NYJ,Tanner Conner,00-0037348,TE,,skill_tds,0.09,,,,,,0.0824,0.0035,0.0001
 2026_06_TEN_IND,TEN,IND,Daniel Bellinger,00-0038115,TE,,skill_tds,0.09,,,,,,0.0906,0.0042,0.0001
 2026_06_DAL_GB,DAL,GB,Luke Schoonmaker,00-0038547,TE,,skill_tds,0.09,,,,,,0.0878,0.004,0.0001
+2026_06_NYJ_NE,NE,NYJ,Ryan Miller,00-0038824,WR,,skill_tds,0.09,,,,,,0.0888,0.0041,0.0001
 2026_06_NO_NYG,NYG,NO,Jalin Hyatt,00-0038938,WR,,skill_tds,0.09,,,,,,0.0816,0.0034,0.0001
 2026_06_HOU_JAX,HOU,JAX,Cade Stover,00-0039359,TE,,skill_tds,0.09,,,,,,0.0882,0.004,0.0001
 2026_06_DAL_GB,DAL,GB,Brevyn Spann-Ford,00-0039530,TE,,skill_tds,0.09,,,,,,0.0905,0.0042,0.0001
@@ -1190,10 +1215,12 @@ game_id,team,opp,player,player_id,position,injury_status,stat,expected,p10,p25,p
 2026_06_NO_NYG,NYG,NO,Chris Manhertz,00-0031484,TE,,skill_tds,0.06,,,,,,0.0563,0.0016,0.0
 2026_06_CAR_PHI,PHI,CAR,Johnny Mundt,00-0033246,TE,,skill_tds,0.06,,,,,,0.0571,0.0017,0.0
 2026_06_CHI_ATL,CHI,ATL,Stephen Carlson,00-0035039,TE,,skill_tds,0.06,,,,,,0.0599,0.0018,0.0
+2026_06_TEN_IND,TEN,IND,Kylen Granson,00-0036876,TE,,skill_tds,0.06,,,,,,0.0554,0.0016,0.0
 2026_06_HOU_JAX,HOU,JAX,Zaire Mitchell-Paden,00-0037340,TE,,skill_tds,0.06,,,,,,0.0579,0.0017,0.0
 2026_06_CAR_PHI,CAR,PHI,Brycen Tremayne,00-0038840,WR,,skill_tds,0.06,,,,,,0.0626,0.002,0.0
 2026_06_PIT_TB,TB,PIT,Payne Durham,00-0039050,TE,,skill_tds,0.06,,,,,,0.0579,0.0017,0.0
 2026_06_HOU_JAX,JAX,HOU,Brenden Bates,00-0039458,TE,,skill_tds,0.06,,,,,,0.0608,0.0019,0.0
+2026_06_LAC_KC,KC,LAC,Jared Wiley,00-0039824,TE,,skill_tds,0.06,,,,,,0.0536,0.0015,0.0
 2026_06_LAC_KC,KC,LAC,Jake Briningstool,00-0040081,TE,,skill_tds,0.06,,,,,,0.0559,0.0016,0.0
 2026_06_BAL_CLE,BAL,CLE,Josh Cuevas,00-0040887,TE,,skill_tds,0.06,,,,,,0.0542,0.0015,0.0
 2026_06_CHI_ATL,CHI,ATL,Zavion Thomas,00-0041051,WR,,skill_tds,0.06,,,,,,0.0581,0.0017,0.0
