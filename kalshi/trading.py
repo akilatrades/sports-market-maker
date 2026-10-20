@@ -31,7 +31,7 @@ from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import ed25519, padding
 
 BASES = {
-    "prod": "https://api.elections.kalshi.com",
+    "prod": "https://external-api.kalshi.com",
     "demo": "https://demo-api.kalshi.co",
 }
 PREFIX = "/trade-api/v2"
