@@ -589,13 +589,9 @@ def room_for(attempts, active, row, cost, now, shared=None, rejected=frozenset()
         if a["game_id"] == str(row.game_id)
     )
     team_cost = sum(
-        reserve(a["cost"])
-        for a in accepted_attempts
-        if a["team"] == str(row.team)
+        reserve(a["cost"]) for a in accepted_attempts if a["team"] == str(row.team)
     )
-    game_orders = sum(
-        a["game_id"] == str(row.game_id) for a in accepted_attempts
-    )
+    game_orders = sum(a["game_id"] == str(row.game_id) for a in accepted_attempts)
     day_cost = sum(
         reserve(a["cost"])
         for a in attempts
