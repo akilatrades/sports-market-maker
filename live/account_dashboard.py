@@ -459,10 +459,16 @@ def collect(client, state=STATE):
             result["order_audit"][sport] = {"status": "unavailable", "orders": []}
             continue
         try:
-            samples = trade_through_samples(client, cohort, exchange_orders, datetime.now(UTC))
+            samples = trade_through_samples(
+                client, cohort, exchange_orders, datetime.now(UTC)
+            )
             result["order_audit"][sport] = audit_cohort(
-                cohort, exchange_orders, fills, sport=sport,
-                now=datetime.now(UTC), prints_by_order=samples,
+                cohort,
+                exchange_orders,
+                fills,
+                sport=sport,
+                now=datetime.now(UTC),
+                prints_by_order=samples,
             )
         except Exception:
             result["order_audit"][sport] = {"status": "unavailable", "orders": []}
