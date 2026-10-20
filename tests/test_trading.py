@@ -69,6 +69,17 @@ def test_dry_run_places_nothing():
     assert client.log[-1]["op"] == "place" and client.log[-1]["action"] == "buy"
 
 
+
+
+def test_prod_uses_documented_v2_trade_host():
+    """Read and writes must share the documented production trade endpoint."""
+    client = TradingClient(dry_run=True, env="prod")
+    assert client.base == "https://external-api.kalshi.com"
+    assert client.base + "/trade-api/v2/portfolio/events/orders" == (
+        "https://external-api.kalshi.com/trade-api/v2/portfolio/events/orders"
+    )
+
+
 def test_bad_env_rejected():
     with pytest.raises(TradingError):
         TradingClient(env="staging")
