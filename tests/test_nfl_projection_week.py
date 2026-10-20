@@ -12,7 +12,8 @@ def test_delayed_monday_score_does_not_publish_old_week():
         {"gameday": "2026-10-22", "gametime": "20:15", "season": 2026, "week": 7, "home_score": None, "total_line": 45},
         {"gameday": "2026-10-25", "gametime": "13:00", "season": 2026, "week": 7, "home_score": None, "total_line": 48},
     ])
-    assert next_week(games, pd.Timestamp("2026-10-19T23:00:00Z")) == (2026, 6)\n    assert next_week(games, pd.Timestamp("2026-10-20T02:15:00Z")) == (2026, 7)
+    assert next_week(games, pd.Timestamp("2026-10-19T23:00:00Z")) == (2026, 6)
+    assert next_week(games, pd.Timestamp("2026-10-20T02:15:00Z")) == (2026, 7)
     assert next_week(games, pd.Timestamp("2026-10-20T14:15:00Z")) == (2026, 7)
     assert next_week(games, pd.Timestamp("2026-10-23T14:15:00Z")) == (2026, 7)
     assert next_week(games, pd.Timestamp("2026-10-27T14:15:00Z")) is None
