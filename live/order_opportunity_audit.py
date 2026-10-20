@@ -398,6 +398,9 @@ def audit_cohort(events, exchange_orders, fills, *, sport, now, prints_by_order=
         rows.append(
             {
                 "cohort": sport,
+                # Private report only: stable exchange identity for matching
+                # each fill with its own original quote, even after a re-quote.
+                "order_id": oid,
                 "ticker": intent.get("ticker"),
                 "player": intent.get("player") or intent.get("ticker"),
                 "stat": intent.get("stat"),
