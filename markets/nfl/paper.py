@@ -5,6 +5,7 @@ ladder made before ``now``, by game day, player name, stat and line. Used by
 the "no" seller paper test with the NFL model as veto.
 """
 
+import os
 from pathlib import Path
 
 import pandas as pd
@@ -12,7 +13,7 @@ import pandas as pd
 from markets.nfl.kalshi import normalize_name, parse
 from markets.nfl.market import kickoffs
 
-LADDERS = Path("outputs/nfl/projections/ladders")
+LADDERS = Path(os.environ.get("SMM_NFL_LADDERS_DIR", "outputs/nfl/projections/ladders"))
 MODEL_SERIES = {"KXNFLANYTD", "KXNFLRECYDS"}
 MAX_MODEL_AGE_HOURS = 36
 
