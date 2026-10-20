@@ -40,8 +40,7 @@ def case_to_reconcile(events, now):
         if e.get("event") == "intent" and e.get("client_order_id") == cid
     ]
     if len(intents) != 1 or any(
-        e.get("event") == "accepted" and e.get("client_order_id") == cid
-        for e in events
+        e.get("event") == "accepted" and e.get("client_order_id") == cid for e in events
     ):
         raise TradingError("Submitted order has unknown/accepted journal identity")
     submitted = datetime.fromisoformat(intents[0]["utc"])
@@ -75,21 +74,15 @@ def verify(client, nba_events, nfl_events, now):
         for e in nfl_events + nba_events
         if e.get("event") == "intent"
     )
-    fills = client.pages(
-        "/portfolio/fills", "fills", min_ts=int(since) - 60
-    )
+    fills = client.pages("/portfolio/fills", "fills", min_ts=int(since) - 60)
     positions = client.pages("/portfolio/positions", "market_positions")
     if any(
         o.get("client_order_id") == cid or o.get("ticker") == ticker for o in orders
     ):
         raise TradingError("Matching historical exchange order exists")
-    if any(
-        (f.get("ticker") or f.get("market_ticker")) == ticker for f in fills
-    ):
+    if any((f.get("ticker") or f.get("market_ticker")) == ticker for f in fills):
         raise TradingError("Matching exchange fill exists")
-    if any(
-        (p.get("ticker") or p.get("market_ticker")) == ticker for p in positions
-    ):
+    if any((p.get("ticker") or p.get("market_ticker")) == ticker for p in positions):
         raise TradingError("Matching exchange position exists")
     return cid, {
         "market_exchange_index": index,
@@ -117,9 +110,7 @@ def reconcile(client, now=None):
 
     if BACKUP.exists():
         raise TradingError("Incident backup already exists; do not overwrite")
-    descriptor = os.open(
-        BACKUP, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600
-    )
+    descriptor = os.open(BACKUP, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
     try:
         with os.fdopen(descriptor, "wb") as out:
             out.write(NBA_JOURNAL.read_bytes())
@@ -150,7 +141,9 @@ def main():
     parser.add_argument("--confirm-shard-404", action="store_true")
     args = parser.parse_args()
     if not args.confirm_shard_404:
-        parser.error("Owner must confirm the original HTTP 404 insufficient_shard_balance")
+        parser.error(
+            "Owner must confirm the original HTTP 404 insufficient_shard_balance"
+        )
     try:
         print(json.dumps(reconcile(ReadOnlyClient()), sort_keys=True, indent=2))
     except Exception as error:
