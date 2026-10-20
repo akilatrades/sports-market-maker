@@ -23,8 +23,12 @@ def journal(count=4):
             "utc": (NOW - timedelta(hours=2)).isoformat(),
             "tip_utc": (NOW - timedelta(minutes=30)).isoformat(),
         },
-        {"event": "accepted", "client_order_id": "c1", "order_id": "o1",
-         "utc": (NOW - timedelta(hours=2)).isoformat()},
+        {
+            "event": "accepted",
+            "client_order_id": "c1",
+            "order_id": "o1",
+            "utc": (NOW - timedelta(hours=2)).isoformat(),
+        },
         {"event": "queue", "order_id": "o1", "ahead": 15},
         {"event": "queue", "order_id": "o1", "ahead": 3},
     ]
@@ -86,18 +90,30 @@ def test_fill_count_disagreement_stops_false_confirmation():
 def test_public_prints_are_only_opportunity_evidence():
     started = NOW - timedelta(hours=2)
     trades = [
-        {"created_time": (NOW - timedelta(hours=1)).isoformat(),
-         "taker_outcome_side": "yes", "yes_price_dollars": ".41", "count_fp": "3"},
-        {"created_time": (NOW - timedelta(hours=1)).isoformat(),
-         "taker_outcome_side": "no", "yes_price_dollars": ".80", "count_fp": "5"},
+        {
+            "created_time": (NOW - timedelta(hours=1)).isoformat(),
+            "taker_outcome_side": "yes",
+            "yes_price_dollars": ".41",
+            "count_fp": "3",
+        },
+        {
+            "created_time": (NOW - timedelta(hours=1)).isoformat(),
+            "taker_outcome_side": "no",
+            "yes_price_dollars": ".80",
+            "count_fp": "5",
+        },
     ]
-    assert contra_volume(trades, .60, started, NOW) == 3
-    assert contra_volume(trades, .60, started, NOW - timedelta(minutes=90)) == 0
-    assert contra_volume([{"created_time": None}], .60, started, NOW) is None
+    assert contra_volume(trades, 0.60, started, NOW) == 3
+    assert contra_volume(trades, 0.60, started, NOW - timedelta(minutes=90)) == 0
+    assert contra_volume([{"created_time": None}], 0.60, started, NOW) is None
 
 
 def test_unknown_fill_identity_refuses_incomplete_history():
     with pytest.raises(TradingError, match="fill ID"):
-        audit_cohort(journal(), [{"order_id":"o1", "status":"canceled"}],
-                     [{"order_id":"o1", "count_fp":"1"}],
-                     sport="nfl", now=NOW)
+        audit_cohort(
+            journal(),
+            [{"order_id": "o1", "status": "canceled"}],
+            [{"order_id": "o1", "count_fp": "1"}],
+            sport="nfl",
+            now=NOW,
+        )
