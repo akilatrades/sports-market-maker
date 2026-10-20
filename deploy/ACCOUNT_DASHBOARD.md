@@ -53,6 +53,40 @@ Errors log exception classes only. Never paste credentials or the environment
 file into chat. A stopped SSH tunnel disconnects the view; it does not stop the
 account collector or change trading.
 
+## NFL and NBA missed-order visibility (private)
+
+The account page now has a **Kalshi / Exchange Order History** section with
+one authenticated view of both NFL and NBA accepted orders. This reads
+`GET /portfolio/orders`, `GET /portfolio/fills` and optionally recent
+`GET /markets/trades` prints. The page distinguishes:
+
+- **Resting, zero fills:** a live Kalshi order awaiting counterparties.
+- **Confirmed zero-fill closure:** the exchange returns a closed order
+  explicitly reporting zero filled contracts.
+- **Partial / complete fills:** matched by exchange fill ID and quantity.
+- **Unconfirmed:** order history has aged out, status is missing, or Kalshi
+  fill totals do not reconcile. Unknown is never displayed as zero.
+- **Potential opposing flow:** public YES-initiated contract volume through
+  our price during a verified resting lifetime. This is *not* a proven
+  missed fill: queue priority, cancel timing and other orders matter.
+
+Market opportunities which the model declined **never became Kalshi orders**
+and cannot appear in the exchange's order history. View the private
+`last_scan.json` diagnostics separately for those candidates.
+
+The new implementation changes only GET-based analysis and private rendering,
+not the production worker's pricing, entry windows, order submission, risk
+caps, or live P&L. Public GitHub Pages never receives order IDs or the
+private audit. The private view continues to require a localhost SSH tunnel.
+
+To deploy **this read-only reporting feature** while preserving the prior
+state of both production timers, use the dedicated
+`deploy/update_order_audit.sh` on the Droplet as root after GitHub CI
+passes. It pauses both timers, waits for active scans, updates code, tests
+the dashboard/audit, restarts the read-only account service and restores only
+the timers that had been active. Do not use the older one-sport dashboard
+updater while both pilots are running.
+
 ## What the numbers mean
 
 - **Cash:** exchange-reported cash across the account.
