@@ -1,6 +1,7 @@
 """Offline regression tests: rejected orders must remain in cumulative budgets."""
 
 from datetime import UTC, datetime, timedelta
+from types import SimpleNamespace
 
 import pytest
 
@@ -99,3 +100,34 @@ def test_manual_rejection_verification_rejects_any_exchange_evidence():
         verify(raw, [], [{"ticker": TICKER}], [], NOW)
     with pytest.raises(TradingError, match="Possible open position"):
         verify(raw, [], [], [{"ticker": TICKER, "position_fp": "-1"}], NOW)
+
+
+def test_rejected_submissions_do_not_use_nba_game_slots_but_remain_charged():
+    """Two verified 404 rejects cannot consume both live-order slots."""
+    row = SimpleNamespace(game_id="g", team="NY")
+    prior = [
+        {
+            "event": "intent",
+            "utc": NOW.isoformat(),
+            "client_order_id": "reject-one",
+            "ticker": "KXNBA-REJECT-A",
+            "cost": 1.3,
+            "game_id": "g",
+            "team": "NY",
+        },
+        {
+            "event": "intent",
+            "utc": NOW.isoformat(),
+            "client_order_id": "reject-two",
+            "ticker": "KXNBA-REJECT-B",
+            "cost": 1.35,
+            "game_id": "g",
+            "team": "NY",
+        },
+    ]
+    rejected = {"reject-one", "reject-two"}
+    assert not nba.room_for(prior, [], row, 0.8, NOW)
+    assert nba.room_for(prior, [], row, 0.8, NOW, rejected=rejected)
+    assert not nba.room_for(prior, [], row, 49.0, NOW, rejected=rejected)
+    # Accepted trades still use the original game/team dollar and order caps.
+    assert not nba.room_for(prior, [], row, 0.8, NOW, rejected={"reject-one"})
