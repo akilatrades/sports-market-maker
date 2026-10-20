@@ -59,13 +59,10 @@ def test_funded_basketball_routes_to_verified_shard_three():
 def test_balance_breakdown_missing_is_unverifiable():
     with pytest.raises(TradingError, match="Missing shard"):
         shard_balance({"balance_dollars": "244.80"}, 3)
-    assert (
-        shard_balance(
-            {"balance_breakdown": [{"exchange_index": 0, "balance": "244.80"}]},
-            3,
-        )
-        == Decimal("0")
-    )
+    assert shard_balance(
+        {"balance_breakdown": [{"exchange_index": 0, "balance": "244.80"}]},
+        3,
+    ) == Decimal("0")
 
 
 def test_unknown_or_conflicting_shard_must_halt():
@@ -82,4 +79,12 @@ def test_unknown_or_conflicting_shard_must_halt():
             3,
         )
     with pytest.raises(TradingError, match="mismatch"):
-        require_funded_shard(SimpleNamespace(_request=lambda *args: {"market": {"ticker": "OTHER", "exchange_index": 3}}), "KXNBAPTS-TEST", 1)
+        require_funded_shard(
+            SimpleNamespace(
+                _request=lambda *args: {
+                    "market": {"ticker": "OTHER", "exchange_index": 3}
+                }
+            ),
+            "KXNBAPTS-TEST",
+            1,
+        )
