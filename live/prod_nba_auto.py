@@ -1,7 +1,7 @@
 """Bounded unattended NBA production experiment. SEPARATE from NFL and Demo.
 
 This worker is isolated from the Demo service and has a lifetime *gross-cost*
-budget below $50 including a fee buffer. One new post-only order max per pass,
+budget below $75 including a fee buffer. One new post-only order max per pass,
 no automatic re-arming, and durable journal before each network write. Fail
 closed on inconsistent balances, orders, positions, fills or model data.
 """
@@ -24,16 +24,19 @@ from live.nfl_policy import settlement_accounting
 from live.nba_inputs import MODEL_VERSION
 from live.reconciled_attempts import rejected_client_ids
 
-STRATEGY_VERSION = "nba-no-v3-long-resting-recheck"
+STRATEGY_VERSION = "nba-no-v3-long-resting-throughput"
 
-MAX_GROSS_COST = 50.0
-MAX_ORDER_COST = 3.0
-MAX_ACTIVE_COST = 15.0
-MAX_GAME_COST = 3.0
-MAX_TEAM_COST = 3.0
-MAX_DAILY_COST = 30.0
-MAX_GAME_ORDERS = 2
-MAX_CONTRACTS = 5
+# Larger high-throughput NBA pilot: retains the independent shared-account
+# $25 active / $40 daily / $100 cumulative caps and original safety vetoes.
+# Submitted cost is charged even when an order expires without a fill.
+MAX_GROSS_COST = 75.0
+MAX_ORDER_COST = 4.0
+MAX_ACTIVE_COST = 20.0
+MAX_GAME_COST = 12.0
+MAX_TEAM_COST = 8.0
+MAX_DAILY_COST = 35.0
+MAX_GAME_ORDERS = 4
+MAX_CONTRACTS = 8
 FEE_RESERVE = 1.10
 WINDOW = (2.0, 6.0)  # baseline NBA rule: 2–6 h before verified tip
 STATE = Path("/home/trader/prod-nba-auto")
@@ -675,13 +678,19 @@ def pre_submit_kickoff_ok(tip_utc, now):
         return False
 
 
-def room_for(attempts, active, row, cost, now, shared=None, rejected=frozenset()):
+def budget_blockers(
+    attempts, active, row, cost, now, shared=None, rejected=frozenset()
+):
+    """Explain every binding risk cap; never weaken the underlying admission.
+
+    Daily/lifetime limits count all attempts, including zero-fill expiries.
+    Game/team caps use accepted attempts, including later cancellations.
+    """
     today = now.astimezone(__import__("zoneinfo").ZoneInfo("America/New_York")).date()
     total = sum(reserve(a["cost"]) for a in attempts)
     open_now = sum(reserve(a["cost"]) for a in active)
     # An exchange-confirmed rejected submission never became a position.
-    # Preserve it in lifetime/daily spend but do not consume the exposure
-    # slots reserved for genuinely accepted orders on the same game/team.
+    # Preserve it in lifetime/daily spend but not game/team slots.
     accepted_attempts = [
         a for a in attempts if a.get("client_order_id") not in rejected
     ]
@@ -705,14 +714,27 @@ def room_for(attempts, active, row, cost, now, shared=None, rejected=frozenset()
     r = reserve(cost)
     from live.shared_account_risk import fits
 
-    return (
-        (shared is None or fits(shared, cost, now))
-        and total + r <= MAX_GROSS_COST + 1e-9
-        and open_now + r <= MAX_ACTIVE_COST + 1e-9
-        and game_cost + r <= MAX_GAME_COST + 1e-9
-        and team_cost + r <= MAX_TEAM_COST + 1e-9
-        and day_cost + r <= MAX_DAILY_COST + 1e-9
-        and game_orders < MAX_GAME_ORDERS
+    reasons = []
+    if shared is not None and not fits(shared, cost, now):
+        reasons.append("shared_account_cap")
+    if total + r > MAX_GROSS_COST + 1e-9:
+        reasons.append("nba_lifetime_submissions")
+    if open_now + r > MAX_ACTIVE_COST + 1e-9:
+        reasons.append("nba_active_exposure")
+    if game_cost + r > MAX_GAME_COST + 1e-9:
+        reasons.append("nba_per_game_submissions")
+    if team_cost + r > MAX_TEAM_COST + 1e-9:
+        reasons.append("nba_per_team_submissions")
+    if day_cost + r > MAX_DAILY_COST + 1e-9:
+        reasons.append("nba_daily_submissions")
+    if game_orders >= MAX_GAME_ORDERS:
+        reasons.append("nba_game_order_count")
+    return reasons
+
+
+def room_for(attempts, active, row, cost, now, shared=None, rejected=frozenset()):
+    return not budget_blockers(
+        attempts, active, row, cost, now, shared=shared, rejected=rejected
     )
 
 
@@ -829,13 +851,19 @@ def pass_once(client, env, frame, now, journal, *, dry=False):
         except TradingError:
             skipped["invalid_order_or_price"] += 1
             continue
-        while order.count > 0 and not room_for(
-            attempts, state["active"], row, cost, now, shared=shared, rejected=rejected
-        ):
+        blockers = []
+        while order.count > 0:
+            blockers = budget_blockers(
+                attempts, state["active"], row, cost, now,
+                shared=shared, rejected=rejected
+            )
+            if not blockers:
+                break
             order.count -= 1
             cost = round(order.count * order.price_cents / 100, 2)
         if order.count <= 0:
-            skipped["risk_budget"] += 1
+            for reason in blockers or ["unknown_risk_cap"]:
+                skipped["risk_" + reason] += 1
             continue
         if not dry and free < reserve(cost):
             skipped["cash_balance"] += 1
