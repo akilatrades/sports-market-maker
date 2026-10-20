@@ -14,8 +14,10 @@ on:
   schedule:
     # Cover the early 8 AM Central NBA entry window. GitHub may start
     # scheduled jobs late, so keep more than one pregame source checkpoint.
-    - cron: "15 8,12,14,15,18,21,23 * * *"
-    - cron: "15 1 * * *"
+    # Keep the SAME eight scheduled snapshots/day (no added Odds API
+    # spend), but move later snapshots into pre-tip NBA news windows.
+    # 22:15 UTC is 5:15 PM Central in October; 00:15 UTC is 7:15 PM.
+    - cron: "15 0,2,8,12,15,18,20,22 * * *"
   workflow_dispatch:
 permissions:
   contents: write

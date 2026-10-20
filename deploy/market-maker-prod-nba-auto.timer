@@ -2,8 +2,13 @@
 Description=Disabled-by-default NBA production validation scans (not armed)
 
 [Timer]
-# Five-minute candidate scans. NBA worker itself requires a verified 2–6h window.
-OnCalendar=*-*-* *:0/5:00 UTC
+# Near games, recheck news and resting positions every 2 minutes
+# (20:00-05:59 UTC); off-peak keep 5-minute scans. Systemd does not
+# overlap the oneshot worker when a previous scan is still running.
+# New NBA entries remain restricted to the verified 2-6h pretip window.
+OnCalendar=*-*-* 20..23:0/2:00 UTC
+OnCalendar=*-*-* 00..05:0/2:00 UTC
+OnCalendar=*-*-* 06..19:0/5:00 UTC
 AccuracySec=10s
 Persistent=false
 Unit=market-maker-prod-nba-auto.service

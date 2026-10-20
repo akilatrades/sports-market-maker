@@ -1,0 +1,32 @@
+name: NBA pregame minutes as-of validation (no trading)
+
+on:
+  pull_request:
+    paths:
+      - 'research/nba_minutes_asof_validation.py'
+      - 'live/nba_pregame_context.py'
+      - '.github/workflows/nba-minutes-asof.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  evaluate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install model dependencies
+        run: pip install -r requirements.txt
+      - name: Download current historical NBA box scores
+        run: python -m live.fetch_nba_data
+      - name: Evaluate strictly as-of pregame minutes
+        run: python -m research.nba_minutes_asof_validation
+      - uses: actions/upload-artifact@v4
+        with:
+          name: nba-minutes-asof-heldout
+          path: outputs/research/nba_minutes_asof_2025_26.json
