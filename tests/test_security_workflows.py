@@ -20,7 +20,10 @@ def test_dispatch_parameters_are_passed_as_data_not_shell_code():
     assert 'python -m research.bookline_backtest "$REQUESTED_COMMAND"' in backtest
     scan = (ROOT / ".github/workflows/scan.yml").read_text()
     assert "SELECTED_SERIES: ${{ inputs.series }}" in scan
-    assert 'python -m research.scan_markets list --skip-done --series "$SELECTED_SERIES"' in scan
+    assert (
+        'python -m research.scan_markets list --skip-done --series "$SELECTED_SERIES"'
+        in scan
+    )
 
 
 def test_sensitive_local_files_are_not_default_tracked():
