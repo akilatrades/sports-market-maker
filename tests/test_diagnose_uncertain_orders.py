@@ -36,13 +36,17 @@ class Exchange:
 
 
 def test_exact_client_order_identity_finds_expired_order_without_identifiers():
-    orders = [{
-        "client_order_id": "smm-private",
-        "order_id": "exchange-private",
-        "ticker": "KXNBA-TEST",
-        "status": "canceled",
-    }]
-    exchange = Exchange(orders, [{"ticker": "KXNBA-TEST", "order_id": "exchange-private"}])
+    orders = [
+        {
+            "client_order_id": "smm-private",
+            "order_id": "exchange-private",
+            "ticker": "KXNBA-TEST",
+            "status": "canceled",
+        }
+    ]
+    exchange = Exchange(
+        orders, [{"ticker": "KXNBA-TEST", "order_id": "exchange-private"}]
+    )
     report = collect(exchange, {"nfl": [], "nba": [intent(), unknown()]})
     assert report["ready_to_trade"] is False
     assert report["cases"][0]["classification"] == (
@@ -56,13 +60,21 @@ def test_exact_client_order_identity_finds_expired_order_without_identifiers():
         "/portfolio/fills",
         "/portfolio/positions",
     }
-    assert exchange.calls[0][2] == {}  # includes filled/expired/canceled, not resting-only
+    assert (
+        exchange.calls[0][2] == {}
+    )  # includes filled/expired/canceled, not resting-only
 
 
 def test_ticker_only_match_cannot_clear_an_ambiguous_submission():
     report = inspect(
         [intent(), unknown()],
-        [{"client_order_id": "another-user", "order_id": "other", "ticker": "KXNBA-TEST"}],
+        [
+            {
+                "client_order_id": "another-user",
+                "order_id": "other",
+                "ticker": "KXNBA-TEST",
+            }
+        ],
         [{"order_id": "other", "ticker": "KXNBA-TEST"}],
         [{"ticker": "KXNBA-TEST", "position_fp": "-2"}],
     )[0]
