@@ -94,9 +94,9 @@ def test_nba_baseline_retains_no_side_and_passive_price():
     rows = nba.select_candidates(f, [], {"active": []}, NOW)
     assert len(rows) == 1
     quote, edge, extra = nba.execution_quote(rows[0])
-    assert extra == 1  # wide spread and sufficient after-fee edge
-    assert quote == round(rows[0].price + 0.01, 2)
-    assert edge == round(rows[0].edge - 0.01, 5)
+    assert extra == 0  # historical baseline one-tick improvement, no extra tick
+    assert quote == rows[0].price
+    assert edge == rows[0].edge
     assert round(1 - quote, 2) > round(rows[0].yes_bid, 2)
     order, cost = nba.order_from_row(rows[0], NOW, no_price=quote)
     assert order.side == "no"
@@ -114,7 +114,7 @@ def test_separate_risk_caps_and_state():
     assert nba.MAX_TEAM_COST == 8
     assert nba.MAX_DAILY_COST == 35
     assert nba.MAX_GAME_ORDERS == 4
-    assert nba.MAX_CONTRACTS == 8
+    assert nba.MAX_CONTRACTS == 2
     assert nba.WINDOW == (2.0, 6.0)
 
 
@@ -641,15 +641,15 @@ def test_v3_scan_records_fills_and_waits_for_v2_expiry_without_trading(
     assert not nba.pass_once(Client(), ARMED, pd.DataFrame(), NOW, journal)
     status = json.loads((tmp_path / "last_scan.json").read_text())
     assert status["strategy_version"] == nba.STRATEGY_VERSION
-    assert status["decision"] == "waiting_for_legacy_v2_orders"
-    assert status["legacy_v2_resting_orders"] == 1
+    assert status["decision"] == "waiting_for_prior_version_orders"
+    assert status["legacy_prior_version_resting_orders"] == 1
     assert status["placed"] is False
 
 
 def test_more_competitive_maker_quote_never_spends_last_3c_edge():
     good = SimpleNamespace(price=0.51, edge=0.08, yes_bid=0.40, yes_ask=0.50)
     price, edge, extra = nba.execution_quote(good)
-    assert (price, edge, extra) == (0.52, 0.07, 1)
+    assert (price, edge, extra) == (0.51, 0.08, 0)
     narrow = SimpleNamespace(price=0.51, edge=0.08, yes_bid=0.48, yes_ask=0.50)
     assert nba.execution_quote(narrow)[2] == 0
     low_edge = SimpleNamespace(price=0.51, edge=0.035, yes_bid=0.40, yes_ask=0.50)
@@ -660,7 +660,7 @@ def test_more_competitive_maker_quote_never_spends_last_3c_edge():
 
 def test_resting_edge_rule_does_not_cancel_accepted_positive_edge():
     row = priced().iloc[0].copy()
-    row["p_book"] = 0.48  # positive 1 cent edge after a 51c NO quote
+    row["p_book"] = 0.45  # positive 4 cent edge after a 51c NO quote
     intent = {
         "ticker": row.ticker,
         "price_cents": 51,
@@ -668,7 +668,7 @@ def test_resting_edge_rule_does_not_cancel_accepted_positive_edge():
         "probability_source": "sportsbook",
     }
     market = {"status": "active", "yes_bid_dollars": 0.40, "yes_ask_dollars": 0.50}
-    assert nba.RESTING_MIN_NET_EDGE == 0.0
+    assert nba.RESTING_MIN_NET_EDGE == nba.ENTRY_MIN_NET_EDGE == 0.03
     assert nba.resting_cancel_reason(row, intent, market, 0.0) is None
 
 
@@ -829,3 +829,33 @@ def test_questionable_teammate_update_blocks_changed_team(tmp_path, monkeypatch)
     publish(priced(), tmp_path, NOW - timedelta(hours=1))
     out = nba.nba_candidates(NOW, latest=tmp_path / "latest.csv")
     assert out.injury_status.iloc[0] == "TEAM_INJURY_CHANGE"
+
+
+def test_daily_team_cap_resets_without_resetting_game_or_lifetime():
+    row = SimpleNamespace(game_id="new-game", team="LAL")
+    yesterday = NOW - timedelta(days=1)
+    past = [
+        _past_attempt(i, "old-game", "LAL", 2.7)
+        for i in range(3)
+    ]
+    for a in past:
+        a["utc"] = yesterday.isoformat()
+    assert nba.room_for(past, [], row, 1.0, NOW)
+    for a in past:
+        a["utc"] = NOW.isoformat()
+    assert "nba_per_team_submissions" in nba.budget_blockers(
+        past, [], row, 1.0, NOW
+    )
+
+
+def test_v4_handback_waits_for_v3_resting_orders():
+    v3 = {
+        "client_order_id": "cid-v3",
+        "ticker": "KXNBA-V3",
+        "strategy_version": "nba-no-v3-long-resting-throughput",
+    }
+    accepted = {"cid-v3": {"order_id": "oid-v3"}}
+    assert nba.legacy_resting_count(
+        [v3], accepted, [{"order_id": "oid-v3", "ticker": "KXNBA-V3"}]
+    ) == 1
+    assert nba.legacy_resting_count([v3], accepted, []) == 0
