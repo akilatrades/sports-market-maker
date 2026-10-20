@@ -57,6 +57,23 @@
       <section class="panel"><div class="section-title"><div><p class="eyebrow">RESTING ORDERS</p><h2>Waiting to trade</h2></div></div><div id="orders-list" class="list-empty">Connect to load resting orders.</div><p class="footnote">An accepted order is not a fill. Its price and the volume trading against it determine whether it executes.</p></section>
       <section class="panel"><div class="section-title"><div><p class="eyebrow">LAST STRATEGY SCAN</p><h2 id="scan-title">No scan loaded</h2></div></div><p id="scan-stamp" class="section-caption">A recent account snapshot does not prove the trader is running.</p><div id="scan-details" class="scan-details"></div></section>
     </div>
+    <section class="panel" id="unfilled">
+      <div class="section-title">
+        <div><p class="eyebrow">KALSHI / EXCHANGE ORDER HISTORY</p><h2>Orders that never filled</h2></div>
+        <span class="tag">NFL + NBA · private data</span>
+      </div>
+      <div class="execution-grid">
+        <div><strong id="unfilled-nfl">—</strong><span>NFL confirmed zero-fill closures</span></div>
+        <div><strong id="unfilled-nba">—</strong><span>NBA confirmed zero-fill closures</span></div>
+        <div><strong id="unfilled-unknown">—</strong><span>Unknown / awaiting reconciliation</span></div>
+      </div>
+      <p class="section-caption" id="unfilled-note">Awaiting an authenticated Kalshi order-history read.</p>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Sport / order</th><th>Kalshi status</th><th>Filled / ordered</th><th>Queue ahead</th><th>Possible opposing flow</th></tr></thead>
+        <tbody id="unfilled-body"><tr><td colspan="5" class="empty">No authenticated exchange order history yet.</td></tr></tbody>
+      </table></div>
+      <p class="footnote">Confirmed zero-fill means Kalshi reported a closed order with zero filled contracts. An unplaced model candidate will not appear in Kalshi order history. Public YES-taker trades through our price are only possible contra-side volume; queue position, timing, cancellation, and other participants mean a fill was never guaranteed. Unknown values are not zero.</p>
+    </section>
     <section class="explanation"><p class="eyebrow">UNDERSTANDING THE STRATEGY</p><h2>Buying NO is a position, not a locked-in profit.</h2><p>The bot posts passive NO orders and holds filled contracts to settlement. A winning contract normally returns $1; a losing one returns $0. Profit depends on outcomes, entry prices, and actual fees. The 3¢ filter is an estimated advantage, not a promise.</p><a href="https://akilatrades.github.io/sports-market-maker/dashboard/">View historical research separately ↗</a></section>
     <footer><span>AJ Trading desk · Production account</span><span>Private view refreshes every 60 seconds · No trading controls</span></footer>
   </main>
