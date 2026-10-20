@@ -458,9 +458,7 @@ def collect(client, state=STATE):
     )
 
     if exchange_orders is not None:
-        exchange_orders = backfill_owned_orders(
-            client, cohort_events, exchange_orders
-        )
+        exchange_orders = backfill_owned_orders(client, cohort_events, exchange_orders)
 
     result["order_audit"] = {}
     for sport, cohort in cohort_events.items():
