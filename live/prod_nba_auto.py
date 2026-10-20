@@ -1257,6 +1257,13 @@ def nba_candidates(now, latest=Path("outputs/projections/latest.csv")):
             )
             frame.loc[game_gap > 900, "p_book"] = float("nan")
             frame.loc[game_gap > 900, "book_n"] = 0
+        # Never use a solitary sportsbook as a consensus probability.
+        # Previously the entry logic could accept book_n=1, while the v3
+        # resting recheck required two books and canceled the same order
+        # on the next pass. With only one book, fall back to the historical
+        # model ONLY when this market is independently role-verified.
+        weak_books = pd.to_numeric(frame.book_n, errors="coerce").fillna(0) < 2
+        frame.loc[weak_books, "p_book"] = float("nan")
         # Opening-night, long-absence and transferred-player roles are not
         # established by last season's box scores. Require two fresh books.
         required = frame.requires_book.astype(str).str.lower().isin({"true", "1"})
