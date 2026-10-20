@@ -1,4 +1,4 @@
-# NBA v3 proposed: bounded longer resting orders and recurring edge checks
+# NBA v3 proposed: longer resting orders plus bounded higher throughput
 
 **Status:** Code pushed for review, **not** a live deployment or approval to trade.
 The existing 30-day v2 protocol and exchange ledger remain unchanged.
@@ -27,20 +27,32 @@ logic. This change is an execution hypothesis, **not** proof of profitability.
   model-only probability because book data went missing. Unverifiable identity,
   unknown original order provenance, or GET/fee errors fail closed: no new
   entries; exchange-side expirations remain as the backstop.
-- The existing $3 order/game/team, $15 active, $30 daily and **$50 cumulative
-  submission** caps remain exactly as before. No retry/repost of a previously
-  attempted ticker. An exchange-confirmed canceled/expired zero-fill may
-  release *active exposure* but does not restore the cumulative allowance.
+- **Larger, bounded NBA throughput limits:** $4 per order, $12 per game,
+  $8 per team, up to four attempted orders per game, eight contracts per order,
+  $20 active, $35 NBA submitted per day, **$75 NBA cumulative submitted**.
+  These materially increase risk versus v2 and must be approved with a clean
+  account preflight; they are not automatically activated by merging this PR.
+  The separate shared NFL+NBA caps still limit the whole account to **$25
+  active, $40 daily submitted and $100 cumulative submitted**. Those caps were
+  **not raised**. No retry/repost of a previously attempted ticker.
+  A confirmed zero-fill expiry can release *active exposure* but cannot
+  restore either cumulative or daily submission allowances.
+- The scan now records **named individual budget blockers**, instead of the
+  undifferentiated `risk_budget`, after attempting to shrink contract size.
+  This helps attribute missed orders to game, team, daily, active or shared
+  account admission limits without relaxing unrelated safeguards.
 - An order already accepted under v2 cannot have its expiration extended by
   merging this code. It is also not retroactively reentered.
 
 ## Research / validation boundary
-Log the new policy as strategy version `nba-no-v3-long-resting-recheck`. Do not
+Log the new policy as strategy version `nba-no-v3-long-resting-throughput`. Do not
 combine v2 and v3 trades into one edge estimate. Compare the two cohorts by
 independent games, quote-time edges, order lifetime, queue progress, full/partial
 fills, no-fill closings, 5/15/60-minute markouts, and reconciled settlement P&L
 after actual fees. More fills can be worse fills if they arrive after material
-new information. The initial $50 pilot is too small to establish significance.
+new information. Even the enlarged $75 cumulative submission allowance is far too small
+for proof of a durable trading edge. Extra order submissions and higher
+fill rates are not necessarily profitable.
 
 ## Manual release gate
 Before deploying or enabling v3 on the live Droplet:
@@ -53,8 +65,10 @@ Before deploying or enabling v3 on the live Droplet:
    cancellation policy never silently changes an already-posted v2 order.
 3. Verify systemd worker revision, model/books/injury source timestamps,
    account/shard funding, shared NFL account locks, and Kill switch.
-4. Require owner authorization for the new strategy cohort and approval to
-   enable live entries. No automatic journal reset, budget increase or deposit.
+4. Require explicit owner authorization for v3's **increased limits**, any
+   additional funded-account exposure and a newly labeled analysis cohort.
+   This PR is code, not an instruction to change active risk automatically.
+   No automatic journal reset, crediting of old cancellations, or deposit.
 
 This GitHub change does not touch the live Kalshi account, cancel a resting
 order, rearm a worker, or deploy the Droplet.
