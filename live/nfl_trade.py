@@ -9,6 +9,7 @@ has one, and the sportsbooks' consensus where they quote the line.
 Run through the trader: TRADE_MARKET=nfl python -m live.nba_trade
 """
 
+import os
 from datetime import UTC, datetime
 from pathlib import Path
 import json
@@ -29,7 +30,7 @@ from markets.nfl.kalshi import parse
 from markets.nfl.paper import MAX_MODEL_AGE_HOURS, MODEL_SERIES, model_estimates
 
 SERIES = sorted(MODEL_SERIES)  # KXNFLANYTD, KXNFLRECYDS
-BOOKS = Path("outputs/books/nfl_latest.csv")
+BOOKS = Path(os.environ.get("SMM_NFL_BOOKS", "outputs/books/nfl_latest.csv"))
 COLUMNS = [
     "snapshot_utc",
     "tip_utc",
@@ -50,7 +51,7 @@ COLUMNS = [
 
 
 # Retrieval stamp of the committed schedule/injury snapshot (live/fetch_nfl_data.py).
-RETRIEVAL = Path("data/nfl/retrieval.json")
+RETRIEVAL = Path(os.environ.get("SMM_NFL_RETRIEVAL", "data/nfl/retrieval.json"))
 
 
 def priced_frame(markets, p_model, now):
