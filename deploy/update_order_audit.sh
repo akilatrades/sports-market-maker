@@ -15,11 +15,29 @@ systemctl is-active --quiet market-maker-dashboard.service && dashboard_was=1
 restore() {
   status=$?
   trap - EXIT
+  restore_failed=0
   if (( dashboard_was )); then
-    systemctl restart market-maker-dashboard.service || echo "Private dashboard restart failed." >&2
+    systemctl restart market-maker-dashboard.service || {
+      echo "Private dashboard restart failed." >&2
+      restore_failed=1
+    }
   fi
-  if (( nfl_was )); then systemctl start market-maker-prod-nfl-auto.timer; fi
-  if (( nba_was )); then systemctl start market-maker-prod-nba-auto.timer; fi
+  if (( nfl_was )); then
+    systemctl start market-maker-prod-nfl-auto.timer || {
+      echo "NFL timer could not be restarted." >&2
+      restore_failed=1
+    }
+  fi
+  if (( nba_was )); then
+    systemctl start market-maker-prod-nba-auto.timer || {
+      echo "NBA timer could not be restarted." >&2
+      restore_failed=1
+    }
+  fi
+  if (( restore_failed )); then
+    echo "Inspect systemd; at least one previously active service did not restart." >&2
+    exit 3
+  fi
   exit "$status"
 }
 trap restore EXIT
