@@ -1898,9 +1898,11 @@ Not a test; recorded because it changes which v5 orders are placed and kept.
 
 ## 2026-10-21: Adverse selection on live v5 fills (plan)
 
-*Written before any live outcome was looked at. Running numbers shown in
-the owner's private nightly report before the checkpoint are monitoring
-only; nothing is decided from them.*
+*Written before any live outcome was looked at, and revised once before
+merging (still before any outcome was seen) after a simulation showed the
+first checkpoint was too small; see "Power". Running numbers shown in the
+owner's private nightly report before the checkpoint are monitoring only;
+nothing is decided from them.*
 
 ### Question
 Do the orders that get filled lose more often than the sportsbooks' price
@@ -1923,14 +1925,23 @@ informed traders are the ones filling us, the edge we estimate at entry
   reported separately (they were cancelled for a reason, such as injury
   news or a lost edge), and the main comparison uses orders that rested
   until tip-off.
-- **When:** at 500 settled filled orders and 500 settled unfilled orders,
-  or at the v5 checkpoint, whichever comes first.
+- **When:** once, at the v5 checkpoint (1,900 settled fills, the $2,000
+  allowance or 30 days, whichever comes first). No earlier look counts.
 
 ### Pass/fail bar (one test, one variant)
 Adverse selection is **found** if filled orders' surprise is below the
 unfilled orders' by at least 1¢ with t ≤ −2. Then a new plan, written
 first, tests raising the minimum edge by the measured gap. Otherwise
 nothing changes.
+
+### Power
+One contract's result has a standard deviation of about 50¢. With about
+1,900 filled and a similar number of rested, unfilled orders, the standard
+error of the difference is about 1.5–2¢ before clustering, so only a gap of
+roughly 3–4¢ or more can pass t ≤ −2. A simulation with a true 3¢ gap and
+2,000 orders gave t ≈ −0.9. A result that does not pass therefore means
+"no large adverse selection", not "none"; a 1¢ gap would need tens of
+thousands of orders.
 
 ### Caveats
 Unfilled orders were further back in the queue, so the two groups are not
