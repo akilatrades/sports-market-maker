@@ -207,6 +207,12 @@ def summarize(snapshot, events, now):
                 "exchange_expiry_matches_scheduled_tip": (
                     abs((expiry - tip).total_seconds()) <= 1 if expiry and tip else None
                 ),
+                "signed_exchange_expiry_matches_tip": row.get(
+                    "signed_exchange_expiry_matches_tip"
+                ),
+                "signed_exchange_expiry_matches_intent": row.get(
+                    "signed_exchange_expiry_matches_intent"
+                ),
                 "expiry_delta_seconds": (
                     round((expiry - tip).total_seconds(), 1)
                     if expiry is not None and tip is not None
@@ -317,6 +323,12 @@ def public_summary(report):
                 ),
                 "posting_window": bucket_hours(row.get("hours_to_tip_at_post")),
                 "expiry_matched_tip": row.get("exchange_expiry_matches_scheduled_tip"),
+                "actual_exchange_expiry_matches_tip": row.get(
+                    "signed_exchange_expiry_matches_tip"
+                ),
+                "actual_exchange_expiry_matches_intent": row.get(
+                    "signed_exchange_expiry_matches_intent"
+                ),
                 "journal_expiry_gap": expiry_gap(row.get("expiry_delta_seconds")),
                 "journal_expiry_present": row.get("journal_has_expiry"),
                 "intent_strategy_generation": row.get("intent_strategy_generation"),
