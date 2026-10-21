@@ -14,13 +14,13 @@ from urllib.request import Request, urlopen
 
 def describe_inventory(report: str) -> tuple[str, str]:
     def field(name: str) -> str:
-        match = re.search(rf"^{re.escape(name)} active=([a-z-]+)\\b", report, re.M)
+        match = re.search(rf"^{re.escape(name)} active=([a-z-]+)\b", report, re.M)
         return match.group(1) if match else "unknown"
 
     timer = field("market-maker.timer")
     nba = field("prod-nba-auto.service")
     nfl = field("prod-nfl-auto.service")
-    modules = set(re.findall(r"^runner_module=(live\\.[a-z_]+)$", report, re.M))
+    modules = set(re.findall(r"^runner_module=(live\.[a-z_]+)$", report, re.M))
     if "live.prod_nba_auto" in modules or "live.prod_nfl_auto" in modules:
         runner = "prod"
     elif "live.nba_trade" in modules:
