@@ -1,9 +1,15 @@
 name: NBA filled-order audit (read only)
 
-# Owner-started diagnostic. Never places/cancels orders or deploys trading code.
+# Can be requested by a reviewed main-branch audit-request commit.
+# Never places/cancels orders, deploys trading code or changes service state.
 # PUBLIC repository: only de-identified metrics may reach job stdout.
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - .github/requests/nba-fill-audit.txt
 
 permissions:
   contents: read

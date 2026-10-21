@@ -230,6 +230,98 @@ def summarize(snapshot, events, now):
     return result
 
 
+def public_summary(report):
+    """Prevent correlating private fills with publicly visible trade prints.
+
+    GitHub Actions logs on a public repository are PUBLIC, even when data
+    originates from a private signed exchange read. Do not publish unique
+    execution timestamps, exact prices, fill sizes, fees, or settlement P&L.
+    """
+
+    def bucket_minutes(value):
+        v = finite(value)
+        if v is None or v < 0:
+            return "unknown"
+        if v < 15:
+            return "under_15m"
+        if v < 60:
+            return "15m_to_1h"
+        if v < 180:
+            return "1h_to_3h"
+        return "over_3h"
+
+    def bucket_hours(value):
+        v = finite(value)
+        if v is None:
+            return "unknown"
+        if v < 0:
+            return "after_tip"
+        if v < 2:
+            return "under_2h"
+        if v <= 6:
+            return "2h_to_6h"
+        return "over_6h"
+
+    def sign(value):
+        v = finite(value)
+        if v is None:
+            return "unknown"
+        return (
+            "positive"
+            if v > 0
+            else "negative"
+            if v < 0
+            else "zero"
+            if v == 0
+            else "unknown"
+        )
+
+    fills = []
+    for row in report.get("latest_fills", []):
+        fills.append(
+            {
+                "execution_state": row.get("state"),
+                "maker_status": row.get("maker_classification"),
+                "resting_duration": bucket_minutes(
+                    row.get("time_to_first_fill_minutes")
+                ),
+                "posting_window": bucket_hours(row.get("hours_to_tip_at_post")),
+                "expiry_matched_tip": row.get("exchange_expiry_matches_scheduled_tip"),
+                "pretrade_edge_sign": sign(
+                    row.get("model_estimated_net_edge_cents_at_post")
+                ),
+                "sportsbook_count_at_least_two": (
+                    finite(row.get("sportsbook_count_at_post")) >= 2
+                    if finite(row.get("sportsbook_count_at_post")) is not None
+                    else None
+                ),
+                "fees_verified": row.get("fill_fees_dollars") is not None,
+                "minutes_verified_at_entry": False,
+                "lineup_verified_at_entry": False,
+                "postfill_observations": {
+                    horizon: {
+                        "mid_direction": sign(m.get("NO_mid_move_cents_before_fees")),
+                        "bid_direction": sign(
+                            m.get("NO_executable_bid_move_cents_before_fees")
+                        ),
+                        "issue": m.get("observation_issue"),
+                    }
+                    for horizon, m in row.get("markouts_observed", {}).items()
+                    if horizon in {"5m", "15m", "60m"} and isinstance(m, dict)
+                },
+            }
+        )
+    return {
+        "status": "signed_private_data_redacted_for_public_CI",
+        "exchange_nba_accepted_orders": report.get("exchange_nba_accepted_orders"),
+        "exchange_nba_filled_orders": report.get("exchange_nba_filled_orders"),
+        "unreconciled_or_unknown_orders": report.get("unreconciled_or_unknown_orders"),
+        "cohort_settlement_status": report.get("cohort_realized_pnl", {}).get("status"),
+        "individual_fills": fills,
+        "note": "No per-fill prices, exact times, sizes, fees, IDs, balances or PnL in public logs. Not proof of profitability.",
+    }
+
+
 def main():
     try:
         request = urllib.request.Request(
@@ -243,7 +335,7 @@ def main():
             raise ValueError("Dashboard read exceeded size bound")
         snapshot = json.loads(payload)
         data = summarize(snapshot, read_events(JOURNAL), datetime.now(UTC))
-        print(json.dumps(data, sort_keys=True, allow_nan=False))
+        print(json.dumps(public_summary(data), sort_keys=True, allow_nan=False))
     except Exception as error:
         # Never echo private HTTP response, exception body, or journal data.
         print(
