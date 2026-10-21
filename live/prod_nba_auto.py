@@ -904,6 +904,65 @@ def late_context_diagnostics(frame, candidates):
     return counts
 
 
+def entry_evidence(row):
+    """Point-in-time *observation* provenance for future exchange-accepted orders.
+
+    Preserve missing evidence as null, never treat historical minutes as a
+    licensed game-specific projection or an expected lineup as confirmed.
+    This data is PRIVATE (journal only) and cannot authorize extra orders.
+    """
+
+    def number(value):
+        try:
+            result = float(value)
+            return round(result, 6) if math.isfinite(result) else None
+        except (ValueError, TypeError, OverflowError):
+            return None
+
+    def stamp(name):
+        value = getattr(row, name, None)
+        if value is None or pd.isna(value):
+            return None
+        dt = pd.to_datetime(value, utc=True, errors="coerce")
+        return dt.isoformat() if pd.notna(dt) else None
+
+    source = str(getattr(row, "projected_minutes_source", "unverified"))
+    projected = number(getattr(row, "projected_minutes", None))
+    verified_projection = (
+        source == "rotowire_licensed" and projected is not None and 8 <= projected <= 48
+    )
+    lineup = str(getattr(row, "lineup_confirmation_status", "unverified"))
+    starter = getattr(row, "confirmed_starter", None)
+    starter = (
+        bool(starter)
+        if (lineup == "confirmed" and isinstance(starter, (bool, np.bool_)))
+        else None
+    )
+    return {
+        "projected_minutes_at_entry": projected if verified_projection else None,
+        "projected_minutes_source_at_entry": source
+        if verified_projection
+        else "unverified",
+        "historical_minutes_baseline_at_entry": number(
+            getattr(row, "historical_minutes_baseline", None)
+        ),
+        "internal_minutes_forecast_at_entry": number(
+            getattr(row, "minutes_forecast_internal", None)
+        ),
+        "lineup_confirmation_status_at_entry": "confirmed"
+        if lineup == "confirmed" and starter is not None
+        else "unverified",
+        "confirmed_starter_at_entry": starter,
+        "vendor_context_fetch_utc_at_entry": stamp("pregame_context_fetch_utc"),
+        "book_updated_utc_at_entry": stamp("book_updated_utc"),
+        "book_game_tip_utc_at_entry": stamp("book_commence_utc"),
+        "model_probability_yes_at_entry": number(getattr(row, "p_model", None)),
+        "sportsbook_probability_yes_at_entry": number(getattr(row, "p_book", None)),
+        "kalshi_yes_bid_at_entry": number(getattr(row, "yes_bid", None)),
+        "kalshi_yes_ask_at_entry": number(getattr(row, "yes_ask", None)),
+    }
+
+
 def pass_once(client, env, frame, now, journal, *, dry=False):
     from collections import Counter
     from live.nba_inputs import atomic_write
@@ -1168,6 +1227,9 @@ def pass_once(client, env, frame, now, journal, *, dry=False):
                 "net_edge_after_fee_bound": round(net_edge, 6),
                 "model_generated_utc": str(getattr(row, "model_generated_utc", "")),
                 "expiration_ts": order.expiration_ts,
+                "expiry_policy": "verified_scheduled_tip",
+                "quote_checked_utc": datetime.now(UTC).isoformat(),
+                **entry_evidence(row),
                 **fee_metadata,
             },
         )
