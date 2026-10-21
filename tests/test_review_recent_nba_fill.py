@@ -7,7 +7,7 @@ from tempfile import TemporaryDirectory
 
 import pytest
 
-from tools.review_recent_nba_fill import read_events, summarize
+from tools.review_recent_nba_fill import public_summary, read_events, summarize
 
 
 NOW = datetime(2026, 10, 21, 3, 35, tzinfo=UTC)
@@ -141,3 +141,29 @@ def test_missing_dashboard_audit_is_not_mistaken_for_zero_fills():
     snap["order_audit"]["nba"]["status"] = "unavailable"
     with pytest.raises(ValueError, match="unavailable"):
         summarize(snap, events, NOW)
+
+
+def test_public_ci_report_never_contains_unique_trade_details():
+    snap, events = fixture()
+    private = summarize(snap, events, NOW)
+    printed = json.dumps(public_summary(private))
+    for forbidden in (
+        OID,
+        CID,
+        TICKER,
+        "secret-game-id",
+        "2026-10",
+        "51.0",
+        "5.4",
+        "1000000",
+        "999999",
+        "fill_time_utc",
+        "actual_fill_NO_cents",
+        "no_price_dollars",
+        "fill_fees_dollars",
+        "model_generated_utc",
+        "quote",
+    ):
+        assert forbidden not in printed
+    assert public_summary(private)["individual_fills"][0]["maker_status"] == "all_maker"
+    assert public_summary(private)["individual_fills"][0]["expiry_matched_tip"] is True
