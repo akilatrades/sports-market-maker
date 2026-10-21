@@ -5,7 +5,8 @@
 [Research dashboard](https://akilatrades.github.io/sports-market-maker/dashboard/) ·
 [Source code](https://github.com/akilatrades/sports-market-maker) ·
 [Experiment log](../RESEARCH_LOG.md) ·
-[Forward-test rules](FORWARD_VALIDATION.md)
+[Forward-test rules](FORWARD_VALIDATION.md) ·
+[Deep audit matrix](DEEP_AUDIT_MATRIX.md)
 
 ## The question
 
