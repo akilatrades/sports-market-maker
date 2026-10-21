@@ -861,6 +861,50 @@ def legacy_resting_count(attempts, accepted, resting):
     return count
 
 
+def late_context_diagnostics(frame, candidates):
+    """Measure truly corroborated late signals without authorizing a POST.
+
+    An independent, licensed minutes projection and an explicitly confirmed
+    starter status are distinct inputs. A historical playing-time baseline,
+    predicted lineup, or incomplete vendor snapshot never counts as verified.
+    These counts are diagnostic; late entries remain shadow-only.
+    """
+    by_ticker = (
+        frame.set_index("ticker") if not frame.empty and "ticker" in frame else None
+    )
+    counts = {
+        "shadow_candidates": len(candidates),
+        "licensed_projected_minutes": 0,
+        "confirmed_starting_five": 0,
+        "both_verified": 0,
+        "execution_enabled": False,
+    }
+    if by_ticker is None:
+        return counts
+    for candidate in candidates:
+        ticker = str(candidate.ticker)
+        if ticker not in by_ticker.index:
+            continue
+        row = by_ticker.loc[ticker]
+        minutes = pd.to_numeric(
+            pd.Series([row.get("projected_minutes")]), errors="coerce"
+        ).iloc[0]
+        verified_minutes = (
+            row.get("projected_minutes_source") == "rotowire_licensed"
+            and pd.notna(minutes)
+            and 8 <= float(minutes) <= 48
+        )
+        confirmed = (
+            row.get("lineup_confirmation_status") == "confirmed"
+            and isinstance(row.get("confirmed_starter"), (bool, type(pd.NA)))
+            and row.get("confirmed_starter") is not pd.NA
+        )
+        counts["licensed_projected_minutes"] += int(verified_minutes)
+        counts["confirmed_starting_five"] += int(confirmed)
+        counts["both_verified"] += int(verified_minutes and confirmed)
+    return counts
+
+
 def pass_once(client, env, frame, now, journal, *, dry=False):
     from collections import Counter
     from live.nba_inputs import atomic_write
@@ -879,6 +923,7 @@ def pass_once(client, env, frame, now, journal, *, dry=False):
             "candidate_count": len(candidates),
             "selection_funnel": dict(funnel),
             "late_window_shadow": {
+                **late_context_diagnostics(frame, late_shadow_candidates),
                 "candidate_count": len(late_shadow_candidates),
                 "selection_funnel": dict(late_funnel),
                 "execution_enabled": False,
