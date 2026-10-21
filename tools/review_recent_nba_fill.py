@@ -264,7 +264,15 @@ def public_summary(report):
 
     def sign(value):
         v = finite(value)
-        return "positive" if v > 0 else "negative" if v < 0 else "zero" if v == 0 else "unknown"
+        return (
+            "positive"
+            if v > 0
+            else "negative"
+            if v < 0
+            else "zero"
+            if v == 0
+            else "unknown"
+        )
 
     fills = []
     for row in report.get("latest_fills", []):
@@ -272,10 +280,14 @@ def public_summary(report):
             {
                 "execution_state": row.get("state"),
                 "maker_status": row.get("maker_classification"),
-                "resting_duration": bucket_minutes(row.get("time_to_first_fill_minutes")),
+                "resting_duration": bucket_minutes(
+                    row.get("time_to_first_fill_minutes")
+                ),
                 "posting_window": bucket_hours(row.get("hours_to_tip_at_post")),
                 "expiry_matched_tip": row.get("exchange_expiry_matches_scheduled_tip"),
-                "pretrade_edge_sign": sign(row.get("model_estimated_net_edge_cents_at_post")),
+                "pretrade_edge_sign": sign(
+                    row.get("model_estimated_net_edge_cents_at_post")
+                ),
                 "sportsbook_count_at_least_two": (
                     finite(row.get("sportsbook_count_at_post")) >= 2
                     if finite(row.get("sportsbook_count_at_post")) is not None
