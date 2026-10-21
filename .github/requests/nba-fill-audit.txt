@@ -1,4 +1,3 @@
-Audit request: investigate the first observed production NBA fill.
-Intent: signed GET-only dashboard inspection, no writes to exchange or Droplet.
-Trigger: 2026-10-21 initial automated request.
-Do not publish order identities, prices, exact execution timestamps or balances.
+Audit request: classify the first verified NBA fill's historical journal expiration gap and signed NBA cohort settlement sign.
+Scope: signed GET-only, private dashboard; emit only coarse classification in public GitHub Actions logs.
+Trigger: 2026-10-21 follow-up review; no order placement, cancellation, risk modification or live deploy.
