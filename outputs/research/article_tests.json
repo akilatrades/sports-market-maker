@@ -1,0 +1,645 @@
+{
+ "split_date": "2026-02-09",
+ "1_decomposition": {
+  "1.0": {
+   "filled_contracts": 14478.0,
+   "unfilled_orders": 9406.0,
+   "cents_per_contract": 3.322558364414975,
+   "t": 6.102957700023901,
+   "entry_edge": 6.396650617834494,
+   "model_error_unfilled": -5.098871188509763,
+   "adverse_selection": 2.0247789350902425,
+   "t_adverse_selection": 2.9642050293578346,
+   "fill_rate_edge_0_3": 0.6095060577819198,
+   "fill_rate_edge_3_15": 0.6052162643771262,
+   "adverse_selection_improved": 2.624386297294938,
+   "t_adverse_selection_improved": 3.5551262311528693,
+   "adverse_selection_joined": -1.536350618452477,
+   "t_adverse_selection_joined": -1.0124735961457583,
+   "design_effect": 2.1789696582757645,
+   "fills_per_game_weighted": 20.97347699958558,
+   "within_game_correlation": 0.05902676125444891,
+   "nightly_variance_vs_independent": 2.2714673779410246
+  },
+  "0.25": {
+   "filled_contracts": 13725.7,
+   "unfilled_orders": 10158.3,
+   "cents_per_contract": 3.3064778281772553,
+   "t": 5.940496683545463,
+   "entry_edge": 6.415650958579926,
+   "model_error_unfilled": -4.9015371181225476,
+   "adverse_selection": 1.792363987719878,
+   "t_adverse_selection": 2.655937389617642,
+   "fill_rate_edge_0_3": 0.5769245107176142,
+   "fill_rate_edge_3_15": 0.5740320751660457,
+   "adverse_selection_improved": 2.293411838651451,
+   "t_adverse_selection_improved": 3.1584891779623296,
+   "adverse_selection_joined": -1.3263797834778082,
+   "t_adverse_selection_joined": -0.8637227609877176,
+   "design_effect": 2.1502759879407325,
+   "fills_per_game_weighted": 20.070435760895435,
+   "within_game_correlation": 0.06031737919771035,
+   "nightly_variance_vs_independent": 2.2103620634415453
+  },
+  "all_orders_uncapped": {
+   "orders": 53549,
+   "fill_rate": 0.6247175484136025,
+   "adverse_selection": 2.3487464625497076,
+   "t_adverse_selection": 4.872665091669224
+  }
+ },
+ "2_min_edge": {
+  "min edge 0c": {
+   "1.0": {
+    "orders": 23884.0,
+    "fills": 14478.0,
+    "cents_per_contract": 3.322558364414975,
+    "t": 6.102957700023901,
+    "pnl": 481.0400000000001,
+    "pnl_h1": 186.19,
+    "pnl_h2": 294.85,
+    "sharpe": 0.48364310724261,
+    "sharpe_h1": 0.4576973384514657,
+    "sharpe_h2": 0.5017070826699404,
+    "worst_night": -12.299999999999997,
+    "max_drawdown": -23.249999999999943,
+    "nights": 183.0
+   },
+   "0.25": {
+    "orders": 23884.0,
+    "fills": 13725.7,
+    "cents_per_contract": 3.3064778281772553,
+    "t": 5.940496683545463,
+    "pnl": 453.8380000000001,
+    "pnl_h1": 174.026,
+    "pnl_h2": 279.812,
+    "sharpe": 0.4740787680191283,
+    "sharpe_h1": 0.44799397748255554,
+    "sharpe_h2": 0.49250558662066324,
+    "worst_night": -12.764999999999997,
+    "max_drawdown": -24.311000000000007,
+    "nights": 183.0
+   }
+  },
+  "min edge 1c": {
+   "1.0": {
+    "orders": 22540.0,
+    "fills": 13665.0,
+    "cents_per_contract": 3.4504207830223197,
+    "t": 6.219583432208732,
+    "pnl": 471.5,
+    "pnl_h1": 178.67000000000002,
+    "pnl_h2": 292.83,
+    "sharpe": 0.48962838714135465,
+    "sharpe_h1": 0.4646658340092116,
+    "sharpe_h2": 0.5077470599761025,
+    "worst_night": -12.68,
+    "max_drawdown": -20.720000000000027,
+    "nights": 183.0
+   },
+   "0.25": {
+    "orders": 22540.0,
+    "fills": 12961.2,
+    "cents_per_contract": 3.449713471817904,
+    "t": 6.08171941238467,
+    "pnl": 447.12399999999997,
+    "pnl_h1": 167.652,
+    "pnl_h2": 279.47200000000004,
+    "sharpe": 0.4811700718463922,
+    "sharpe_h1": 0.45380427281855057,
+    "sharpe_h2": 0.5011735963483919,
+    "worst_night": -13.193000000000001,
+    "max_drawdown": -23.208999999999996,
+    "nights": 183.0
+   },
+   "passes": false
+  },
+  "min edge 2c": {
+   "1.0": {
+    "orders": 20918.0,
+    "fills": 12651.0,
+    "cents_per_contract": 3.5137933760177065,
+    "t": 6.094860275418494,
+    "pnl": 444.53000000000003,
+    "pnl_h1": 161.21,
+    "pnl_h2": 283.32000000000005,
+    "sharpe": 0.45970194983901536,
+    "sharpe_h1": 0.4189445971506543,
+    "sharpe_h2": 0.48883154931787726,
+    "worst_night": -14.720000000000002,
+    "max_drawdown": -23.650000000000034,
+    "nights": 183.0
+   },
+   "0.25": {
+    "orders": 20918.0,
+    "fills": 12003.8,
+    "cents_per_contract": 3.536244476450281,
+    "t": 6.005597405167414,
+    "pnl": 424.48300000000006,
+    "pnl_h1": 151.487,
+    "pnl_h2": 272.99600000000004,
+    "sharpe": 0.4544753002131303,
+    "sharpe_h1": 0.4096253566581506,
+    "sharpe_h2": 0.48664122344170363,
+    "worst_night": -14.690000000000003,
+    "max_drawdown": -25.831999999999994,
+    "nights": 183.0
+   },
+   "passes": false
+  },
+  "min edge 3c": {
+   "1.0": {
+    "orders": 18922.0,
+    "fills": 11435.0,
+    "cents_per_contract": 3.6084827284652383,
+    "t": 5.937423668073785,
+    "pnl": 412.63,
+    "pnl_h1": 134.83,
+    "pnl_h2": 277.8,
+    "sharpe": 0.4404071314599042,
+    "sharpe_h1": 0.3789983351496274,
+    "sharpe_h2": 0.48438210925765635,
+    "worst_night": -14.89,
+    "max_drawdown": -23.019999999999982,
+    "nights": 183.0
+   },
+   "0.25": {
+    "orders": 18922.0,
+    "fills": 10846.9,
+    "cents_per_contract": 3.6726242777555695,
+    "t": 5.913021749276619,
+    "pnl": 398.36400000000003,
+    "pnl_h1": 126.53900000000002,
+    "pnl_h2": 271.82500000000005,
+    "sharpe": 0.4373561207748084,
+    "sharpe_h1": 0.3701453437826807,
+    "sharpe_h2": 0.4854124574536279,
+    "worst_night": -14.86,
+    "max_drawdown": -24.498000000000005,
+    "nights": 183.0
+   },
+   "passes": false
+  },
+  "min edge 4c": {
+   "1.0": {
+    "orders": 16759.0,
+    "fills": 10144.0,
+    "cents_per_contract": 3.694302050473186,
+    "t": 5.760863132179973,
+    "pnl": 374.75,
+    "pnl_h1": 120.07,
+    "pnl_h2": 254.68000000000004,
+    "sharpe": 0.41539055341840925,
+    "sharpe_h1": 0.3508383883447483,
+    "sharpe_h2": 0.46095536451792785,
+    "worst_night": -14.040000000000001,
+    "max_drawdown": -26.590000000000003,
+    "nights": 183.0
+   },
+   "0.25": {
+    "orders": 16759.0,
+    "fills": 9629.3,
+    "cents_per_contract": 3.78310751317762,
+    "t": 5.767010101162088,
+    "pnl": 364.28700000000003,
+    "pnl_h1": 114.285,
+    "pnl_h2": 250.00200000000004,
+    "sharpe": 0.41441043235915237,
+    "sharpe_h1": 0.34490398926275895,
+    "sharpe_h2": 0.4633547148276073,
+    "worst_night": -14.01,
+    "max_drawdown": -27.292999999999996,
+    "nights": 183.0
+   },
+   "passes": false
+  }
+ },
+ "3_posting_time": {
+  "posted 5h, 0c (control)": {
+   "1.0": {
+    "orders": 22158.0,
+    "fills": 13682.0,
+    "cents_per_contract": 3.1531208887589535,
+    "t": 5.580808041815638,
+    "pnl": 431.4100000000001,
+    "pnl_h1": 180.55999999999997,
+    "pnl_h2": 250.85000000000005,
+    "sharpe": 0.43910462933938904,
+    "sharpe_h1": 0.46566878158328523,
+    "sharpe_h2": 0.4221734131608532,
+    "worst_night": -12.3,
+    "max_drawdown": -25.19999999999999,
+    "nights": 182.0
+   },
+   "0.25": {
+    "orders": 22158.0,
+    "fills": 12975.7,
+    "cents_per_contract": 3.177783605855229,
+    "t": 5.496185144687713,
+    "pnl": 412.33900000000006,
+    "pnl_h1": 172.581,
+    "pnl_h2": 239.75800000000004,
+    "sharpe": 0.433167780445436,
+    "sharpe_h1": 0.4665946003275864,
+    "sharpe_h2": 0.41304137107362243,
+    "worst_night": -12.764999999999997,
+    "max_drawdown": -26.073,
+    "nights": 182.0
+   }
+  },
+  "posted 2h, +0c per hour beyond 2h": {
+   "1.0": {
+    "orders": 23639.0,
+    "fills": 13165.0,
+    "cents_per_contract": 3.270186099506266,
+    "t": 5.6651271069196945,
+    "pnl": 430.5199999999999,
+    "pnl_h1": 163.24999999999997,
+    "pnl_h2": 267.2699999999999,
+    "sharpe": 0.4255848990475429,
+    "sharpe_h1": 0.3890379464715778,
+    "sharpe_h2": 0.45116962725517806,
+    "worst_night": -12.629999999999999,
+    "max_drawdown": -29.370000000000005,
+    "nights": 183.0
+   },
+   "0.25": {
+    "orders": 23639.0,
+    "fills": 12488.6,
+    "cents_per_contract": 3.269808043470629,
+    "t": 5.579054834393168,
+    "pnl": 408.34900000000005,
+    "pnl_h1": 151.408,
+    "pnl_h2": 256.941,
+    "sharpe": 0.41862246344832227,
+    "sharpe_h1": 0.3748077728738788,
+    "sharpe_h2": 0.4495763874289084,
+    "worst_night": -12.352,
+    "max_drawdown": -26.820000000000014,
+    "nights": 183.0
+   },
+   "passes": false
+  },
+  "posted 2h, +0.5c per hour beyond 2h": {
+   "same_as": "posted 2h, +0c per hour beyond 2h"
+  },
+  "posted 4h, +0c per hour beyond 2h": {
+   "1.0": {
+    "orders": 22841.0,
+    "fills": 13912.0,
+    "cents_per_contract": 3.3270557791834388,
+    "t": 5.971943999944044,
+    "pnl": 462.86,
+    "pnl_h1": 176.47000000000003,
+    "pnl_h2": 286.38999999999993,
+    "sharpe": 0.44804275457375725,
+    "sharpe_h1": 0.4214038652207461,
+    "sharpe_h2": 0.46630387163421844,
+    "worst_night": -13.06,
+    "max_drawdown": -27.94999999999999,
+    "nights": 182.0
+   },
+   "0.25": {
+    "orders": 22841.0,
+    "fills": 13194.0,
+    "cents_per_contract": 3.282715327621804,
+    "t": 5.754001634768124,
+    "pnl": 433.125,
+    "pnl_h1": 167.27100000000002,
+    "pnl_h2": 265.8539999999999,
+    "sharpe": 0.4362410400898439,
+    "sharpe_h1": 0.41873010695440466,
+    "sharpe_h2": 0.4482799748680294,
+    "worst_night": -13.225999999999999,
+    "max_drawdown": -26.77599999999999,
+    "nights": 182.0
+   },
+   "passes": false
+  },
+  "posted 4h, +0.5c per hour beyond 2h": {
+   "1.0": {
+    "orders": 21478.0,
+    "fills": 13079.0,
+    "cents_per_contract": 3.3826745164003365,
+    "t": 5.849813428760137,
+    "pnl": 442.41999999999996,
+    "pnl_h1": 162.91000000000003,
+    "pnl_h2": 279.51,
+    "sharpe": 0.4318921812196006,
+    "sharpe_h1": 0.3987655551250097,
+    "sharpe_h2": 0.4549503075617619,
+    "worst_night": -14.3,
+    "max_drawdown": -24.950000000000045,
+    "nights": 182.0
+   },
+   "0.25": {
+    "orders": 21478.0,
+    "fills": 12411.5,
+    "cents_per_contract": 3.357981517424416,
+    "t": 5.6635880748926235,
+    "pnl": 416.779,
+    "pnl_h1": 154.56,
+    "pnl_h2": 262.219,
+    "sharpe": 0.42245195042393224,
+    "sharpe_h1": 0.39760028279455245,
+    "sharpe_h2": 0.44007459728391496,
+    "worst_night": -14.354000000000003,
+    "max_drawdown": -25.057000000000034,
+    "nights": 182.0
+   },
+   "passes": false
+  },
+  "posted 6h, +0c per hour beyond 2h": {
+   "1.0": {
+    "orders": 20511.0,
+    "fills": 12887.0,
+    "cents_per_contract": 2.2881198106619074,
+    "t": 3.8847701325328097,
+    "pnl": 294.87,
+    "pnl_h1": 179.06000000000003,
+    "pnl_h2": 115.81000000000002,
+    "sharpe": 0.2924961571902724,
+    "sharpe_h1": 0.44326160055370434,
+    "sharpe_h2": 0.19311437092258418,
+    "worst_night": -16.15,
+    "max_drawdown": -48.19999999999996,
+    "nights": 181.0
+   },
+   "0.25": {
+    "orders": 20511.0,
+    "fills": 12235.7,
+    "cents_per_contract": 2.3396759703790453,
+    "t": 3.905794366142304,
+    "pnl": 286.274,
+    "pnl_h1": 174.412,
+    "pnl_h2": 111.86200000000001,
+    "sharpe": 0.2953969268319594,
+    "sharpe_h1": 0.44743792376477043,
+    "sharpe_h2": 0.1945467815610104,
+    "worst_night": -14.719,
+    "max_drawdown": -48.98599999999998,
+    "nights": 181.0
+   },
+   "passes": false
+  },
+  "posted 6h, +0.5c per hour beyond 2h": {
+   "1.0": {
+    "orders": 17883.0,
+    "fills": 11147.0,
+    "cents_per_contract": 2.3659280523907777,
+    "t": 3.788804049227077,
+    "pnl": 263.73,
+    "pnl_h1": 142.97000000000003,
+    "pnl_h2": 120.76000000000002,
+    "sharpe": 0.2773329122607931,
+    "sharpe_h1": 0.38213771183996903,
+    "sharpe_h2": 0.21005448486014722,
+    "worst_night": -14.900000000000002,
+    "max_drawdown": -44.04000000000002,
+    "nights": 181.0
+   },
+   "0.25": {
+    "orders": 17883.0,
+    "fills": 10591.5,
+    "cents_per_contract": 2.425791243584401,
+    "t": 3.823143143694929,
+    "pnl": 256.92500000000007,
+    "pnl_h1": 138.333,
+    "pnl_h2": 118.59200000000003,
+    "sharpe": 0.27932087866306926,
+    "sharpe_h1": 0.3820311311611371,
+    "sharpe_h2": 0.21329263070340634,
+    "worst_night": -13.752,
+    "max_drawdown": -45.57199999999999,
+    "nights": 181.0
+   },
+   "passes": false
+  },
+  "_hours_posted_median": {
+   "2h": 2.0,
+   "4h": 4.0,
+   "6h": 6.0,
+   "5h": 5.0
+  },
+  "_markets_with_a_quote": {
+   "2h": 52878,
+   "4h": 50568,
+   "6h": 44386,
+   "5h": 48868
+  }
+ },
+ "4_inventory": {
+  "penalty 0c per order already in the game": {
+   "1.0": {
+    "orders": 23884.0,
+    "fills": 14478.0,
+    "cents_per_contract": 3.322558364414975,
+    "t": 6.102957700023901,
+    "pnl": 481.0400000000001,
+    "pnl_h1": 186.19,
+    "pnl_h2": 294.85,
+    "sharpe": 0.48364310724261,
+    "sharpe_h1": 0.4576973384514657,
+    "sharpe_h2": 0.5017070826699404,
+    "worst_night": -12.299999999999997,
+    "max_drawdown": -23.249999999999943,
+    "nights": 183.0
+   },
+   "0.25": {
+    "orders": 23884.0,
+    "fills": 13725.7,
+    "cents_per_contract": 3.3064778281772553,
+    "t": 5.940496683545463,
+    "pnl": 453.8380000000001,
+    "pnl_h1": 174.026,
+    "pnl_h2": 279.812,
+    "sharpe": 0.4740787680191283,
+    "sharpe_h1": 0.44799397748255554,
+    "sharpe_h2": 0.49250558662066324,
+    "worst_night": -12.764999999999997,
+    "max_drawdown": -24.311000000000007,
+    "nights": 183.0
+   }
+  },
+  "penalty 0.1c per order already in the game": {
+   "1.0": {
+    "orders": 20470.0,
+    "fills": 12350.0,
+    "cents_per_contract": 3.7085020242914983,
+    "t": 6.318325720182181,
+    "pnl": 458.00000000000006,
+    "pnl_h1": 163.79000000000002,
+    "pnl_h2": 294.21000000000004,
+    "sharpe": 0.4779252794360305,
+    "sharpe_h1": 0.4260672238670539,
+    "sharpe_h2": 0.5150438837096643,
+    "worst_night": -14.18,
+    "max_drawdown": -21.319999999999993,
+    "nights": 183.0
+   },
+   "0.25": {
+    "orders": 20470.0,
+    "fills": 11706.0,
+    "cents_per_contract": 3.748121070015736,
+    "t": 6.230670166147858,
+    "pnl": 438.755,
+    "pnl_h1": 153.06900000000002,
+    "pnl_h2": 285.68600000000004,
+    "sharpe": 0.47237663615220316,
+    "sharpe_h1": 0.41701601397552385,
+    "sharpe_h2": 0.5121893866671409,
+    "worst_night": -14.15,
+    "max_drawdown": -23.076999999999988,
+    "nights": 183.0
+   },
+   "passes": false
+  },
+  "penalty 0.25c per order already in the game": {
+   "1.0": {
+    "orders": 15238.0,
+    "fills": 9159.0,
+    "cents_per_contract": 3.8772791789496672,
+    "t": 5.985732350322017,
+    "pnl": 355.12,
+    "pnl_h1": 123.55999999999999,
+    "pnl_h2": 231.56,
+    "sharpe": 0.43639856044660796,
+    "sharpe_h1": 0.3773236781723681,
+    "sharpe_h2": 0.4783701650162631,
+    "worst_night": -11.69,
+    "max_drawdown": -22.049999999999983,
+    "nights": 183.0
+   },
+   "0.25": {
+    "orders": 15238.0,
+    "fills": 8693.5,
+    "cents_per_contract": 3.973336678150506,
+    "t": 5.9867367877332525,
+    "pnl": 345.42199999999997,
+    "pnl_h1": 117.779,
+    "pnl_h2": 227.64300000000003,
+    "sharpe": 0.43203901539993633,
+    "sharpe_h1": 0.3713875793287237,
+    "sharpe_h2": 0.47509547889035364,
+    "worst_night": -11.876,
+    "max_drawdown": -21.98600000000001,
+    "nights": 183.0
+   },
+   "passes": false
+  },
+  "penalty 0.5c per order already in the game": {
+   "1.0": {
+    "orders": 10917.0,
+    "fills": 6522.0,
+    "cents_per_contract": 3.832873351732598,
+    "t": 5.195051651774043,
+    "pnl": 249.97999999999996,
+    "pnl_h1": 73.08000000000001,
+    "pnl_h2": 176.9,
+    "sharpe": 0.3749428993772014,
+    "sharpe_h1": 0.25541359292540083,
+    "sharpe_h2": 0.4675930430205816,
+    "worst_night": -6.82,
+    "max_drawdown": -14.159999999999997,
+    "nights": 183.0
+   },
+   "0.25": {
+    "orders": 10917.0,
+    "fills": 6202.2,
+    "cents_per_contract": 3.957223285817336,
+    "t": 5.235415860630873,
+    "pnl": 245.436,
+    "pnl_h1": 71.64000000000001,
+    "pnl_h2": 173.796,
+    "sharpe": 0.3782384675149486,
+    "sharpe_h1": 0.263432672220266,
+    "sharpe_h2": 0.4643833572414112,
+    "worst_night": -6.9959999999999996,
+    "max_drawdown": -13.670999999999998,
+    "nights": 183.0
+   },
+   "passes": false
+  }
+ },
+ "5_quote_choice": {
+  "1.0": {
+   "eligible_orders_second_half": 22135,
+   "choice_per_100_orders_cents": 173.86040207815677,
+   "t_choice": 5.064634388965591,
+   "control_per_100_orders_cents": 185.67427151569913,
+   "t_control": 5.309476653898929,
+   "difference_per_100_orders_cents": -11.813869437542355,
+   "t_difference": -2.681782299836704,
+   "chosen_share": {
+    "improve1": 0.669,
+    "join": 0.287,
+    "improve2": 0.043
+   },
+   "fill_rate_choice": 0.5998192907160605,
+   "fill_rate_control": 0.6287327761463746,
+   "fit_coefficients": {
+    "intercept": -1.6782,
+    "improve1": 1.4376,
+    "improve2": 1.6623,
+    "spread_c": -0.0619,
+    "price": -0.0137,
+    "hours": 0.1138,
+    "log_oi": 0.2112
+   },
+   "calibration_second_half": {
+    "improve1": {
+     "predicted": 0.636,
+     "actual": 0.67
+    },
+    "improve2": {
+     "predicted": 0.663,
+     "actual": 0.692
+    },
+    "join": {
+     "predicted": 0.353,
+     "actual": 0.34
+    }
+   }
+  },
+  "0.25": {
+   "eligible_orders_second_half": 22135,
+   "choice_per_100_orders_cents": 162.40252992997515,
+   "t_choice": 4.849561811521424,
+   "control_per_100_orders_cents": 176.9564038852496,
+   "t_control": 5.206509173324469,
+   "difference_per_100_orders_cents": -14.553873955274454,
+   "t_difference": -3.394499776930484,
+   "chosen_share": {
+    "improve1": 0.656,
+    "join": 0.287,
+    "improve2": 0.057
+   },
+   "fill_rate_choice": 0.5707025073413147,
+   "fill_rate_control": 0.597659814772984,
+   "fit_coefficients": {
+    "intercept": -1.879,
+    "improve1": 1.3923,
+    "improve2": 1.6159,
+    "spread_c": -0.0622,
+    "price": 0.2058,
+    "hours": 0.1121,
+    "log_oi": 0.2199
+   },
+   "calibration_second_half": {
+    "improve1": {
+     "predicted": 0.61,
+     "actual": 0.634
+    },
+    "improve2": {
+     "predicted": 0.637,
+     "actual": 0.652
+    },
+    "join": {
+     "predicted": 0.341,
+     "actual": 0.326
+    }
+   }
+  },
+  "passes": false
+ }
+}
