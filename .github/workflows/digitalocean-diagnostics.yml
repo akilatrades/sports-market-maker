@@ -1,6 +1,9 @@
 name: DigitalOcean approved diagnostics
 on:
   workflow_dispatch:
+  pull_request:
+    paths:
+      - 'deploy/diag_request.md'
   push:
     branches: [main]
     paths:
@@ -13,11 +16,14 @@ concurrency:
   cancel-in-progress: false
 jobs:
   diagnostics:
+    if: github.event_name != 'pull_request' || (github.event.pull_request.head.repo.full_name == github.repository && github.actor == 'akilatrades')
     runs-on: ubuntu-latest
     environment: production-diagnostics
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: main # Always execute the trusted, merged diagnostic script.
       - name: Validate SSH configuration
         env:
           SSH_HOST: ${{ secrets.DROPLET_HOST }}
