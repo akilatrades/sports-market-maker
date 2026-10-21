@@ -1482,75 +1482,136 @@ def charge_new_order(intent, acceptance, attempts, accepted, state, shared):
         shared["active_client_ids"].add(intent["client_order_id"])
 
 
-def official_injury_vetoes(frame, espn, model_utc, now):
+def official_injury_vetoes(frame, model_utc, now, cache_dir=None):
     """Add the official injury report's vetoes to ``frame`` (in place).
 
-    Returns (summary for last_scan.json, teams whose props need a fresh
-    two-book consensus). Only rows not already vetoed get a new label; nothing
-    here clears a veto. If anything goes wrong (fetching, reading, matching),
-    nothing is changed: ESPN's checks still apply and the summary reports the
-    reason. An error here must never block the scan, because a blocked scan
-    cancels resting orders.
+    Labels go only on rows not already vetoed, and the boolean column
+    ``official_two_books`` marks rows whose team needs a fresh two-book
+    consensus tonight. Nothing here clears a veto. If anything goes wrong
+    (fetching, reading, matching), nothing is changed: ESPN's checks still
+    apply and the returned summary (for last_scan.json) gives the reason. An
+    error here must never block the scan, because a blocked scan cancels
+    resting orders.
     """
+    frame["official_two_books"] = False
     try:
-        return _official_injury_vetoes(frame, espn, model_utc, now)
+        return _official_injury_vetoes(frame, model_utc, now, cache_dir)
     except Exception as error:
+        frame["official_two_books"] = False
         reason = str(error) if isinstance(error, ValueError) else type(error).__name__
         print(f"OFFICIAL INJURY REPORT UNAVAILABLE: {reason} -- ESPN checks only")
-        return {"status": "unavailable", "reason": reason}, set()
+        return {"status": "unavailable", "reason": reason}
 
 
-def _official_injury_vetoes(frame, espn, model_utc, now):
+def _fetch_official(now, model_utc, cache_dir):
+    """(latest, baseline, notes) within OFFICIAL_REPORT_SECONDS, hard limit.
+
+    The downloads run in a daemon thread, so a stalled connection or DNS
+    lookup cannot stretch the scan. When the newest report cannot be fetched,
+    the newest one already on disk is used instead (the age check still
+    applies), so vetoes do not flicker off for one bad scan.
+    """
+    import threading
+
+    from markets.nba import official_injuries as official
+
+    deadline = time.monotonic() + OFFICIAL_REPORT_SECONDS
+    box = {}
+
+    def work():
+        try:
+            box["latest"] = official.report_at(
+                now, deadline=deadline, cache_dir=cache_dir
+            )
+            box["baseline"] = official.report_at(
+                model_utc, deadline=deadline, cache_dir=cache_dir
+            )
+        except Exception as error:
+            box["error"] = error
+
+    worker = threading.Thread(target=work, daemon=True)
+    worker.start()
+    worker.join(OFFICIAL_REPORT_SECONDS)
+    got = {} if worker.is_alive() else dict(box)
+    notes = {}
+    if worker.is_alive():
+        notes["fetch_error"] = "report_fetch_deadline"
+    elif "error" in got:
+        error = got["error"]
+        notes["fetch_error"] = (
+            str(error) if isinstance(error, ValueError) else type(error).__name__
+        )
+    latest, baseline = got.get("latest"), got.get("baseline")
+    if latest is None and cache_dir is not None:
+        try:
+            latest = official.from_cache(now, cache_dir)
+            notes["latest_from_cache"] = True
+        except official.ReportError:
+            latest = None  # report the fetch error, not the empty cache
+    if latest is None:
+        raise official.ReportError(notes.get("fetch_error", "no_report_found"))
+    if baseline is None and cache_dir is not None:
+        try:
+            baseline = official.from_cache(model_utc, cache_dir)
+        except Exception as error:
+            notes["baseline_error"] = type(error).__name__
+    return latest, baseline, notes
+
+
+def _official_injury_vetoes(frame, model_utc, now, cache_dir):
     from markets.nba import official_injuries as official
     from markets.nba.kalshi import normalize_name
 
-    deadline = time.monotonic() + OFFICIAL_REPORT_SECONDS
-    issued, latest = official.report_at(now, deadline=deadline)
+    if cache_dir is not None:
+        official.prune(cache_dir, now)
+    (issued, latest), baseline, notes = _fetch_official(now, model_utc, cache_dir)
     age = (pd.Timestamp(now) - pd.Timestamp(issued)).total_seconds() / 60
     if not -5 <= age <= OFFICIAL_REPORT_MAX_AGE_MINUTES:
         raise official.ReportError("report_too_old")
-    try:
-        # The report when the projections were made: news after it is new.
-        base_issued, baseline = official.report_at(model_utc, deadline=deadline)
-    except Exception as error:
-        base_issued, baseline = None, None
-        base_error = type(error).__name__
-    else:
-        base_error = None
+    base_issued, base_rows = baseline if baseline is not None else (None, None)
     dates = frame.tip_utc.dt.tz_convert(official.ET).dt.strftime("%m/%d/%Y")
     games = set(zip(frame.team_espn, dates))
     result = official.assess(
         official.for_games(latest, games),
-        None if baseline is None else official.for_games(baseline, games),
-        espn,
+        None if base_rows is None else official.for_games(base_rows, games),
     )
     names = frame.get("player", pd.Series("", index=frame.index)).fillna("")
-    keys = zip(frame.team_espn, names.map(normalize_name))
-    player = pd.Series([result["players"].get(k, "") for k in keys], index=frame.index)
-    team = frame.team_espn.map(result["teams"]).fillna("")
+    player = pd.Series(
+        [
+            result["players"].get((t, d, normalize_name(n)), "")
+            for t, d, n in zip(frame.team_espn, dates, names)
+        ],
+        index=frame.index,
+    )
+    team = pd.Series(
+        [result["teams"].get((t, d), "") for t, d in zip(frame.team_espn, dates)],
+        index=frame.index,
+    )
     label = team.where(team.ne(""), player)
     open_rows = frame.injury_status.fillna("").eq("")
     frame.loc[open_rows & label.ne(""), "injury_status"] = label
+    frame["official_two_books"] = [
+        (t, d) in result["two_books"] for t, d in zip(frame.team_espn, dates)
+    ]
     summary = {
         "status": "ok",
         "issued_et": issued.isoformat(),
         "age_minutes": round(age, 1),
         "rows": len(latest),
         "baseline_issued_et": base_issued.isoformat() if base_issued else None,
-        "baseline_error": base_error,
+        **notes,
         "vetoed_rows": int(label.ne("").sum()),
         "newly_vetoed_rows": int((open_rows & label.ne("")).sum()),
-        "team_vetoes": dict(sorted(result["teams"].items())),
+        "team_vetoes": {f"{t} {d}": v for (t, d), v in sorted(result["teams"].items())},
+        "two_book_teams": sorted(f"{t} {d}" for t, d in result["two_books"]),
         "changed_players": result["changed_players"],
-        "uncertain_teams": sorted(result["uncertain_teams"]),
-        "ahead_of_espn_teams": result["ahead_of_espn_teams"],
     }
     print(
         f"OFFICIAL INJURY REPORT: {issued:%I:%M %p} ET, {len(latest)} rows, "
         f"vetoed {summary['vetoed_rows']} markets, team changes "
-        f"{sorted(result['teams']) or 'none'}"
+        f"{sorted(summary['team_vetoes']) or 'none'}"
     )
-    return summary, set(result["uncertain_teams"])
+    return summary
 
 
 def nba_candidates(now, latest=Path("outputs/projections/latest.csv")):
@@ -1707,11 +1768,9 @@ def nba_candidates(now, latest=Path("outputs/projections/latest.csv")):
         else:
             uncertain_teams = set()
         # Second news source: the league's own report, every 15 minutes.
-        official_summary, official_uncertain = official_injury_vetoes(
-            frame, report, ts, now
+        diagnostics["official_injury_report"] = official_injury_vetoes(
+            frame, ts, now, cache_dir=latest.parent / "official_injury_reports"
         )
-        diagnostics["official_injury_report"] = official_summary
-        uncertain_teams = set(uncertain_teams) | official_uncertain
         # Fetch ONLY an explicitly configured licensed pregame provider.
         # Do not mislabel historical minutes as independent projections.
         from live.nba_pregame_context import (
@@ -1886,8 +1945,13 @@ def nba_candidates(now, latest=Path("outputs/projections/latest.csv")):
         # Teammates of a day-to-day/questionable rotation player are not
         # modeled by a single fixed minutes scenario. Require an independent
         # two-book consensus, but never override a stronger existing veto.
+        official_two_books = (
+            frame["official_two_books"].fillna(False).astype(bool)
+            if "official_two_books" in frame
+            else False
+        )
         uncertain_no_books = (
-            frame.team_espn.isin(uncertain_teams)
+            (frame.team_espn.isin(uncertain_teams) | official_two_books)
             & (frame.p_book.isna() | (frame.book_n < 2))
             & frame.injury_status.eq("")
         )

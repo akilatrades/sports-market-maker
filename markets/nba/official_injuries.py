@@ -15,6 +15,7 @@ changes, ``parse`` raises ``ReportError`` instead of guessing.
 ``assess`` turns the report into the bot's vetoes (see ``live/prod_nba_auto``).
 """
 
+import os
 import re
 import time
 import urllib.error
@@ -31,6 +32,7 @@ from markets.nba.kalshi import normalize_name
 ET = ZoneInfo("America/New_York")
 URL = "https://ak-static.cms.nba.com/referee/injury/Injury-Report_{slot}.pdf"
 MAX_BYTES = 5_000_000
+MAX_STREAM_BYTES = 20_000_000  # decompressed, per stream
 STATUSES = ("Out", "Doubtful", "Questionable", "Probable", "Available")
 HIGH_RISK = {"Out", "Doubtful", "Questionable"}
 NOT_SUBMITTED = "NOT YET SUBMITTED"
@@ -123,12 +125,15 @@ def _objects(data):
         ):
             if entry[1] == b"n":
                 offsets[first + i] = int(entry[0])
+    # Each object runs to the next object (or the xref table): bounded slices.
+    bounds = sorted({*offsets.values(), offset})
     objects = {}
     for number, at in offsets.items():
-        head = re.match(rb"\s*(\d+)\s+\d+\s+obj", data[at:])
+        end = next((b for b in bounds if b > at), len(data))
+        head = re.match(rb"\s*(\d+)\s+\d+\s+obj", data[at:end])
         if not head or int(head.group(1)) != number:
             raise ReportError("pdf_bad_object_offset")
-        objects[number] = data[at + head.end() :]
+        objects[number] = data[at + head.end() : end]
     return objects
 
 
@@ -160,7 +165,11 @@ def _stream(objects, number):
     for name in filters:
         if name != b"FlateDecode":
             raise ReportError("pdf_unsupported_filter")
-        raw = zlib.decompress(raw)
+        inflate = zlib.decompressobj()
+        out = inflate.decompress(raw, MAX_STREAM_BYTES)
+        if inflate.unconsumed_tail:
+            raise ReportError("pdf_stream_too_large")
+        raw = out
     return raw
 
 
@@ -313,10 +322,17 @@ def parse(data):
         raise ReportError("report_columns_missing")
     placed = []
     for page, x, y, _, _, lines in cells:
-        column = columns.get(round(x, 1)) if x is not None else None
         text = " ".join(" ".join(lines).split())
-        if column is None or not text or text in HEADERS:
-            continue
+        if (
+            x is None
+            or not text
+            or text in HEADERS
+            or text.startswith("Injury Report:")
+        ):
+            continue  # unclipped page footer, column headings, page title
+        column = columns.get(round(x, 1))
+        if column is None:  # text outside the known columns: layout changed
+            raise ReportError("report_unknown_column")
         placed.append((page, y, column, text))
     # Cells of one row share a top edge (within a point or so); rows are at
     # least 20 points apart.
@@ -347,6 +363,11 @@ def parse(data):
             raise ReportError("report_unknown_status")
         if not carry.get("team"):
             raise ReportError("report_row_without_team")
+        code = TEAMS.get(carry["team"])
+        if code is None:
+            raise ReportError("report_unknown_team")
+        if code not in str(carry.get("matchup", "")).split("@"):
+            raise ReportError("report_team_not_in_matchup")
         table.append({**carry, "player": player, "status": status, "reason": reason})
     frame = pd.DataFrame(table, columns=list(HEADERS.values()))
     frame["team_espn"] = frame.team.map(ESPN_TEAMS)
@@ -369,7 +390,7 @@ def slot_url(slot):
     return URL.format(slot=slot.astimezone(ET).strftime("%Y-%m-%d_%I_%M%p"))
 
 
-def download(url, timeout=15):
+def download(url, timeout=8):
     """The PDF bytes, or None when the report for that slot does not exist."""
     request = urllib.request.Request(
         url, headers={"User-Agent": "sports-market-maker-nba-injury-report"}
@@ -386,30 +407,63 @@ def download(url, timeout=15):
     return data
 
 
-def report_at(when, back=8, fetch=None, deadline=None):
+def _save(path, data):
+    path.parent.mkdir(parents=True, exist_ok=True)
+    tmp = path.with_name(f".{path.name}.{os.getpid()}.tmp")
+    tmp.write_bytes(data)
+    os.replace(tmp, path)
+
+
+def report_at(when, back=8, fetch=None, deadline=None, cache_dir=None):
     """The newest report published at or before ``when`` (checks ``back`` slots).
 
-    ``deadline`` (a ``time.monotonic()`` value) bounds the total time spent,
-    so a slow site cannot stretch the bot's scan. Only a missing slot moves on
-    to the previous one; any other error is raised.
+    A published slot never changes, so with ``cache_dir`` each one is
+    downloaded once and read from disk afterwards. ``deadline`` (a
+    ``time.monotonic()`` value) stops the search; the caller also runs this
+    in a thread with a hard time limit. A missing slot (or a non-PDF answer)
+    moves on to the previous one; any other error is raised.
     """
     fetch = fetch or download
     slot = pd.Timestamp(when).tz_convert(ET).floor("15min").to_pydatetime()
     for _ in range(back):
-        left = 15.0 if deadline is None else deadline - time.monotonic()
+        url = slot_url(slot)
+        cached = None if cache_dir is None else cache_dir / url.rsplit("/", 1)[1]
+        if cached is not None and cached.exists():
+            return parse(cached.read_bytes())
+        left = 8.0 if deadline is None else deadline - time.monotonic()
         if left <= 1:
             raise ReportError("report_fetch_deadline")
-        data = fetch(slot_url(slot), timeout=min(15.0, left))
-        if data:
-            return parse(data)
+        data = fetch(url, timeout=min(8.0, left))
+        if data and data.startswith(b"%PDF-"):
+            result = parse(data)
+            if cached is not None:
+                _save(cached, data)
+            return result
         slot -= timedelta(minutes=15)
     raise ReportError("no_report_found")
 
 
+def from_cache(when, cache_dir, back=8):
+    """The newest already-downloaded report at or before ``when`` (no network)."""
+    return report_at(
+        when, back=back, fetch=lambda url, timeout: None, cache_dir=cache_dir
+    )
+
+
+def prune(cache_dir, now, days=2):
+    for path in cache_dir.glob("Injury-Report_*.pdf"):
+        if path.stat().st_mtime < now.timestamp() - days * 86400:
+            path.unlink(missing_ok=True)
+
+
 def for_games(rows, games):
     """Rows for the given (ESPN team, Eastern game date 'MM/DD/YYYY') pairs."""
-    keep = [(t, d) in games for t, d in zip(rows.team_espn, rows.game_date)]
-    return rows[keep]
+    keep = pd.Series(
+        [(t, d) in games for t, d in zip(rows.team_espn, rows.game_date)],
+        index=rows.index,
+        dtype=bool,
+    )
+    return rows.loc[keep]
 
 
 # --- what the bot does with it -------------------------------------------------
@@ -421,75 +475,71 @@ def _material(frame):
     return frame[frame.status.isin(HIGH_RISK) & ~reason.str.contains("gleague")]
 
 
-def assess(latest, baseline=None, espn=None):
-    """Player and team vetoes from the latest report.
+def assess(latest, baseline=None):
+    """Player and team vetoes from the latest report, per game date.
 
-    - Player listed Out or Doubtful: their props are vetoed.
-    - Player listed Questionable: their props are vetoed, and teammates need a
-      fresh two-book consensus (the bot's existing "uncertain team" rule).
-    - A team whose high-risk listings changed since ``baseline`` (the report
-      when the model's projections were made): every prop on that team is
-      vetoed until the next projection run, like the ESPN rule. A player whose
-      status changed at all since then is vetoed.
-    - A team listed "not yet submitted" while playing: every prop is vetoed.
-    - A team with a high-risk player that ESPN does not list as out, doubtful
-      or questionable (the official report is ahead of ESPN): teammates need
-      a fresh two-book consensus.
+    Every key carries the game date ("MM/DD/YYYY"), so a team's listing for
+    tomorrow never affects tonight:
 
-    G League two-way assignments never count as a team change. Nothing here
-    removes a veto the bot makes from other sources. A team missing from a
-    report has nothing listed (the report omits healthy teams). Pass rows for
-    the games being traded only (``for_games``).
+    - players: {(team, date, player_key): label}
+      - Out or Doubtful: OFFICIAL_OUT_OR_DOUBTFUL
+      - Questionable: UNCERTAIN_PLAYER_AVAILABILITY
+      - any status change since ``baseline``: NEW_INJURY_NEWS
+    - teams: {(team, date): label}
+      - "not yet submitted": OFFICIAL_REPORT_NOT_SUBMITTED
+      - an Out/Doubtful/Questionable listing that is new or changed since
+        ``baseline`` (the report when the projections were made):
+        OFFICIAL_TEAM_INJURY_CHANGE, until the next projection run
+    - two_books: {(team, date)}, whose props need a fresh two-book consensus
+      - a Questionable listing
+      - a high-risk listing from a team that had not filed at the baseline
+        (its first filing cannot be told apart from news)
+
+    G League two-way assignments never count as a team change or make
+    teammates uncertain. A team missing from a report has nothing listed (the
+    league omits healthy teams). Pass rows for the games being traded only
+    (``for_games``). Nothing here removes a veto from other sources.
     """
-    players, teams_veto, uncertain = {}, {}, set()
+    players, teams, two_books = {}, {}, set()
     for row in latest.itertuples():
-        key = (row.team_espn, row.player_key)
+        key = (row.team_espn, row.game_date, row.player_key)
         if row.status in ("Out", "Doubtful"):
             players[key] = "OFFICIAL_OUT_OR_DOUBTFUL"
         elif row.status == "Questionable":
             players[key] = "UNCERTAIN_PLAYER_AVAILABILITY"
-    for team in latest.loc[latest.status.eq(NOT_SUBMITTED), "team_espn"].dropna():
-        teams_veto[team] = "OFFICIAL_REPORT_NOT_SUBMITTED"
+        elif row.status == NOT_SUBMITTED:
+            teams[(row.team_espn, row.game_date)] = "OFFICIAL_REPORT_NOT_SUBMITTED"
     material = _material(latest)
-    uncertain |= set(
-        material.loc[material.status.eq("Questionable"), "team_espn"].dropna()
-    )
+    for row in material.itertuples():
+        if row.status == "Questionable":
+            two_books.add((row.team_espn, row.game_date))
     changed_players = 0
     if baseline is not None:
-        # No baseline for a team that had not filed yet: its whole first
-        # filing would look like news.
-        unfiled = set(baseline.loc[baseline.status.eq(NOT_SUBMITTED), "team_espn"])
+        unfiled = {
+            (r.team_espn, r.game_date)
+            for r in baseline.itertuples()
+            if r.status == NOT_SUBMITTED
+        }
         before = {
-            (r.team_espn, r.player_key): r.status
+            (r.team_espn, r.game_date, r.player_key): r.status
             for r in baseline.itertuples()
             if r.player_key
         }
         for row in latest.itertuples():
-            key = (row.team_espn, row.player_key)
-            if not row.player_key or row.team_espn in unfiled:
-                continue
-            if before.get(key) != row.status:
+            game = (row.team_espn, row.game_date)
+            key = (*game, row.player_key)
+            if row.player_key and game not in unfiled and before.get(key) != row.status:
                 changed_players += 1
                 players.setdefault(key, "NEW_INJURY_NEWS")
         for row in material.itertuples():
-            key = (row.team_espn, row.player_key)
-            if row.team_espn not in unfiled and before.get(key) != row.status:
-                teams_veto.setdefault(row.team_espn, "OFFICIAL_TEAM_INJURY_CHANGE")
-    ahead = set()
-    if espn is not None and {"team", "player", "status"}.issubset(espn.columns):
-        status = espn.status.fillna("").astype(str).str.lower()
-        listed = espn[
-            status.isin({"out", "doubtful", "questionable", "day-to-day", "suspension"})
-        ]
-        known = {(t, normalize_name(p)) for t, p in zip(listed.team, listed.player)}
-        for row in material.itertuples():
-            if (row.team_espn, row.player_key) not in known:
-                ahead.add(row.team_espn)
-    uncertain |= ahead
+            game = (row.team_espn, row.game_date)
+            if game in unfiled:
+                two_books.add(game)
+            elif before.get((*game, row.player_key)) != row.status:
+                teams.setdefault(game, "OFFICIAL_TEAM_INJURY_CHANGE")
     return {
         "players": players,
-        "teams": teams_veto,
-        "uncertain_teams": uncertain,
-        "ahead_of_espn_teams": sorted(ahead),
+        "teams": teams,
+        "two_books": two_books,
         "changed_players": changed_players,
     }

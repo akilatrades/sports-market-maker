@@ -1877,11 +1877,15 @@ any order:
 Not a test; recorded because it changes which v5 orders are placed and kept.
 - **What:** from its deploy, the NBA worker also reads the league's official
   injury report (published every 15 minutes) each scan and adds vetoes on top
-  of ESPN's: Out/Doubtful players, Questionable players (teammates then need
-  two fresh books), teams whose high-risk listings changed since the
-  projections, teams not yet submitted for tonight. It never removes a veto
-  and fails open (ESPN only) when the report is unreadable. Rules in
-  `deploy/PROD_NBA_AUTO.md`.
+  of ESPN's, per game date: Out/Doubtful players, Questionable players
+  (teammates then need two fresh books), teams whose high-risk listings
+  changed since the projections, teams not yet submitted. It never removes a
+  veto and fails open (ESPN only) when the report is unreadable. Rules in
+  `deploy/PROD_NBA_AUTO.md`. An independent review before deploy found that
+  the first draft keyed vetoes by team only (tomorrow's back-to-back listing
+  would have vetoed tonight) and had an "ahead of ESPN" rule that could flip
+  many model-priced rows on a name mismatch; both were fixed (the second
+  rule was dropped) before any live use.
 - **Effect on the v5 evaluation:** the strategy version is unchanged, so
   orders before and after the deploy are both v5. They are reported as two
   sub-groups split at the deploy time, in addition to the groups already
