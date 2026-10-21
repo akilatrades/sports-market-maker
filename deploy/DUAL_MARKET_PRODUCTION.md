@@ -1,7 +1,10 @@
 # NFL + NBA simultaneously on one funded Kalshi account
 
-**Status: code committed to main, not deployed or activated.**
-Owner activation requires the steps below and a clean signed dry run.
+**Status: active since 19–20 October 2026.** Code is released with
+*Deploy funded worker code* and the bots are switched on or off with
+*Go live / Stop funded bots* ([GO_LIVE_BUTTON.md](GO_LIVE_BUTTON.md)). The
+console steps further down are the older manual path, kept for rebuilding
+the server.
 
 ## What changed
 
@@ -17,13 +20,19 @@ against the **whole exchange account** before allowing a new order.
 The worker then checks the per-sport budget AND these combined caps, while
 the shared lock is held:
 
-| Guard | Combined NFL + NBA | Individual NFL / NBA remains |
-|---|---:|---:|
-| Nonrecyclable lifetime gross submitted allowance | **$100** | $50 per sport |
-| Daily gross submitted allowance (New York calendar day) | **$40** | $30 per sport |
-| Active reserved exposure (with 10% cushion) | **$25** | $15 per sport |
-| One order | — | $3 per order |
-| Per game / team | — | $3 each |
+| Guard | Combined NFL + NBA | NFL | NBA |
+|---|---:|---:|---:|
+| Lifetime total of orders placed (never recycled) | **$1,050** | $50 | $1,000 |
+| Orders placed per New York day | **$105** | $30 | $75 |
+| Open orders at once (with 10% cushion) | **$90** | $15 | $75 |
+| One order | — | $3 | $4 |
+| Per game | — | $3 | $15 |
+| Per team | — | $3 (lifetime) | $10 per day |
+| Settled-loss stop | **$20 per day, $60 total** | (account-wide) | $20 / $60, plus account-wide |
+
+Values come from `live/shared_account_risk.py`, `live/nfl_policy.py` and
+`live/prod_nba_auto.py`; if this table and the code disagree, the code is
+right.
 
 Accepted, canceled, expired and settled submissions *all remain charged*
 to lifetime and daily budgets. Active capacity is freed only on a
@@ -47,22 +56,23 @@ requiring NFL stopped; NFL also now checks whether NBA is stopped.
 The old `deploy/activate_nba_auto.sh` is a single-sport handoff
 and **must not be used for dual activation**.
 
-## Automated owner activation after the lock fix
+## Switching on (current path)
 
-The preferred deployment path is now `deploy/activate_dual_market.sh` in the
-production checkout. It stops both timers, waits for active workers, updates
-code, runs the shared-account and both-worker regression tests, confirms the
-signed exchange reconciliation, then sets only the two-sport opt-in flags and
-NBA live arm flag. The root-owned marker is created only after the checks.
-It repeats signed account reconciliation plus an NBA inputs preflight before
-enabling timers and running one scan of each worker. Failure rolls back the
-authorization files and disables both timers; any orders already accepted
-before a subsequent failure remain live and must be inspected in Kalshi.
+Run **Go live / Stop funded bots → GO_LIVE** in GitHub. It stops both
+timers, runs a signed account check, backs up the settings files, sets only
+the two-sport opt-in flags and the NBA arm flag plus the root-owned marker,
+repeats the account check and an NBA readiness check, then enables both
+timers. A failure restores the files and leaves both timers off; any orders
+already accepted before a failure stay live and must be checked in Kalshi.
+Details: [GO_LIVE_BUTTON.md](GO_LIVE_BUTTON.md).
 
-This script **runs only on the owner's DigitalOcean host with root access**.
-A GitHub commit is **not** a remote deployment. Do not use the old
-single-market `activate_nba_auto.sh` for this operation. No credentials,
-private journals or P&L dashboard settings are modified by this script.
+`deploy/activate_dual_market.sh` is the older console version of the same
+steps. Do not use the single-market `activate_nba_auto.sh` for this.
+
+## Manual console procedure (older path, for rebuilds)
+
+Code releases now go through *Deploy funded worker code*; do not
+`git pull` in the funded checkout while the bots are on.
 
 ## Step 1. Wait for green CI and schedule availability
 
@@ -173,7 +183,7 @@ KILL file to force more activity.
   bot-owned contracts in the same series. Manual open positions and
   resting orders intentionally halt new entries rather than being
   silently incorporated into the risk model.
-- **Do not clear historical attempts** to recycle the $100 allowance.
+- **Do not clear historical attempts** to recycle the $1,050 lifetime allowance.
   There is no automatic monthly reset. This is still a bounded test.
 - **No guarantee of profit.** An NBA in-sample backtest and one small
   losing NFL production cohort do not establish stable positive

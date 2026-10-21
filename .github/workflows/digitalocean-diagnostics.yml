@@ -1,14 +1,7 @@
 name: DigitalOcean approved diagnostics
+# Manual, owner-only, read-only inventory of the server.
 on:
   workflow_dispatch:
-  pull_request:
-    paths:
-      - 'deploy/diag_request.md'
-  push:
-    branches: [main]
-    paths:
-      - '.github/workflows/digitalocean-diagnostics.yml'
-      - 'deploy/droplet_inventory.sh'
 permissions:
   contents: read
 concurrency:
@@ -16,9 +9,12 @@ concurrency:
   cancel-in-progress: false
 jobs:
   diagnostics:
-    if: github.event_name != 'pull_request' || (github.event.pull_request.head.repo.full_name == github.repository && github.actor == 'akilatrades')
+    if: >-
+      github.ref == 'refs/heads/main' && github.actor == 'akilatrades' &&
+      github.triggering_actor == 'akilatrades'
     runs-on: ubuntu-latest
     timeout-minutes: 5
+    environment: funded-droplet
     steps:
       - uses: actions/checkout@v4
         with:

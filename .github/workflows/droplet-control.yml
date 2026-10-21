@@ -60,6 +60,9 @@ jobs:
        (needs.tests.result == 'skipped' && inputs.action != 'GO_LIVE'))
     runs-on: ubuntu-24.04
     timeout-minutes: 20
+    # Server secrets live in this environment, which only main can use
+    # (see deploy/GITHUB_ACCESS.md).
+    environment: funded-droplet
     # Only the Droplet step shares the release lock group, so a GO_LIVE
     # test run never delays a STOP; the helper itself also waits on a lock.
     concurrency:

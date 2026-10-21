@@ -1,6 +1,6 @@
 # One-click, code-only GitHub → DigitalOcean funded-worker releases
 
-**State: workflow source only until installed and tested.**
+**State: installed and in use** (the *Deploy funded worker code* workflow).
 This is a narrow release lane for
 `/home/trader/sports-market-maker-prod-auto`, the separate funded-account
 NBA/NFL checkout. It does **not** manage the legacy
@@ -8,11 +8,11 @@ NBA/NFL checkout. It does **not** manage the legacy
 
 ## Verified connection
 
-The read-only GitHub Actions SSH preflight succeeded on 2026-10-21 UTC.
-Its recorded output shows the funded NBA/NFL timers **inactive**, the
-read-only dashboards **active**, and the older `/home/trader/run.sh` still
-automatically runs `git pull`. A successful SSH connection is NOT a
-production deployment, signed Kalshi readiness check, or trading activation.
+The read-only GitHub Actions SSH preflight first succeeded on 2026-10-21 UTC.
+Since then the funded bots have been switched on with the Go live button,
+and the older `market-maker.timer` (whose `run.sh` used to `git pull`) has
+been disabled. A successful SSH connection is NOT a production deployment,
+signed Kalshi readiness check, or trading activation.
 
 ## Initial privileged setup — performed once by the owner
 
@@ -38,7 +38,8 @@ account sudo permission to invoke **only that fixed helper path**.
 It does **not** install production keys, enable timers, or submit orders.
 
 The GitHub secrets `DROPLET_HOST`, `DROPLET_USER`,
-`DROPLET_SSH_KEY` and `DROPLET_KNOWN_HOSTS` remain private. Do not send
+`DROPLET_SSH_KEY` and `DROPLET_KNOWN_HOSTS` remain private, in the
+`funded-droplet` environment ([GITHUB_ACCESS.md](GITHUB_ACCESS.md)). Do not send
 private SSH keys or Kalshi credentials through chat, GitHub commits,
 workflow inputs or issue screenshots.
 
@@ -50,8 +51,8 @@ on **main**, select:
 - `DEPLOY_CODE`: full CI on Python 3.11 and 3.12, JS and shell tests,
   then connect through pinned SSH host identity and invoke the fixed helper.
 
-The helper insists on the *exact current main commit* and a clean tracked
-production checkout. It records the originally active funded timers,
+The helper deploys exactly the commit the workflow ran from, which must be
+on `main`, and requires a clean tracked production checkout. It records the originally active funded timers,
 stops **both funded timers**, waits for executing workers to finish,
 fast-forwards the separate funded checkout, validates low-memory syntax,
 and (when originally live) runs signed GET-only account preflights. It
@@ -71,10 +72,8 @@ GitHub Actions logs. On success GitHub verifies the resulting SHA.
 - **No automatic production deployment on push.** Each code release is
   deliberately requested by the owner via the GitHub Actions button.
   This prevents unreviewed changes to a real-money system.
-- The older general `market-maker.timer` and `run.sh` remain a separate
-  operational concern. Its per-minute `git pull` was confirmed by the
-  read-only check and must be retired or isolated in a *separate* controlled
-  migration; this workflow does not silently interfere with it.
+- The older general `market-maker.timer` and `run.sh` are disabled on the
+  server; this workflow never touches them.
 - A workflow success does not prove strategy profitability, exchange fills,
   ongoing bot uptime, or fresh odds. A failed preflight means no release.
 - Model input synchronization and GitHub Pages publishing are distinct from

@@ -11,9 +11,9 @@ markets** while other owned NFL orders were still awaiting settlement.
 It was a valid **as-of snapshot**, but after a later Matthew Golden loss
 it was wrong to make it look like *current* positive trading P&L.
 
-The public page now refreshes its JSON **every 60 seconds** and shows
-**an em dash, not a stale green profit**, whenever the authenticated
-report is older than **15 minutes**. A failure does not silently
+The public page now polls the live server feed **every 15 seconds** and shows
+**an em dash, not a stale green profit**, whenever the report is older than
+**90 seconds** (live feed) or **15 minutes** (committed snapshot). A failure does not silently
 substitute simulation or infer a zero-dollar balance.
 
 The private `http://127.0.0.1:8765/` account dashboard already
@@ -24,6 +24,10 @@ source of truth. No production Kalshi key should ever be embedded in
 GitHub Pages JavaScript or committed to the repository.
 
 ## Getting the Matthew Golden loss into the verified total
+
+*Historical (19 October): at the time NFL was stopped and NBA not yet live.
+Today the bots run together and code reaches the server only through
+*Deploy funded worker code*; do not `git pull` in the funded checkout.*
 
 Use the same droplet **with NFL currently stopped and NBA still
 inactive**. Update the checkout only when no live service is executing

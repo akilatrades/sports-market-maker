@@ -1,20 +1,27 @@
 # NBA forward validation: 30-day private evidence study
 
-**Start:** first exchange-accepted live NBA order, observed October 20, 2026.
-The start timestamp comes from the signed-order-linked append-only production journal, not
-the GitHub README or a manual clock. The private account panel shows the exact review date.
+**Start:** the first exchange-accepted live NBA order, observed October 20,
+2026. The start time comes from the append-only production journal, not the
+README or a manual clock, and the private account panel counts the 30 days
+from it, across rule versions. Under
+[FORWARD_VALIDATION.md](FORWARD_VALIDATION.md) each rule version is also
+judged as its own group, so the current rules
+(`nba-no-v4-smaller-orders-edge3-baseline`) get their own 30 days from their
+first accepted order.
 
 **Purpose:** determine whether the historically simulated NBA NO-bookline return
 survives real maker queue priority, current player roles, actual fees and settlement.
 
-## Live policy (unchanged)
+## Live policy
 
-- NBA only: post-only passive NO orders, 2–6 hours before verified tip.
-- Maximum reserved cost: $3 per order/game/team, $15 active, $30 daily,
-  $50 **lifetime submitted-cost allowance**, 5 contracts per order.
-- The $50 allowance counts even audited exchange-rejected attempts and does
-  **not automatically reset** or imply $50 available to lose tonight.
-- The shared-account limits and kill switch still apply independently.
+- NBA: post-only passive NO orders, started 2–6 hours before verified tip
+  and resting until tip.
+- Current limits are listed in
+  [PROD_NBA_AUTO.md](../deploy/PROD_NBA_AUTO.md#execution-policy) and come
+  from `live/prod_nba_auto.py`. The lifetime allowance counts even
+  exchange-rejected attempts and does **not reset automatically**.
+- The shared-account limits, account-wide loss stops and kill switch still
+  apply independently.
 - No auto increase to per-game size, no retry of rejected tickers,
   no changes to maker quote prices or entry filters.
 - Nothing here authorizes recurring deposits, extra budget, timer starts,
@@ -52,9 +59,9 @@ unfilled orders that consume submission budget. Inspect quote-time estimated
 edge, fees, 5/15/60-minute markouts, queue movement, maker share and price
 changes. Do not infer missing maker flags or public prints as fills.
 
-The project has a 30-day review checkpoint, and its older forward-validation
-protocol targets hundreds of settled fills before strong inference. The
-initial $50 total submission allowance is unlikely to reach that target.
+The project has a 30-day review checkpoint, and its forward-validation
+protocol targets hundreds of settled fills before strong inference. At the
+current small limits, 30 days may not reach that target.
 **Time passing is not a statistical significance test.** If the account
 reaches its lifetime allowance sooner, stop new submissions automatically as
 the current worker already does; evaluate existing orders without rewriting

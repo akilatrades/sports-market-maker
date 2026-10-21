@@ -22,7 +22,9 @@ concurrency:
 
 jobs:
   tests:
-    if: github.ref == 'refs/heads/main'
+    if: >-
+      github.ref == 'refs/heads/main' && github.actor == 'akilatrades' &&
+      github.triggering_actor == 'akilatrades'
     runs-on: ubuntu-24.04
     strategy:
       fail-fast: true
@@ -47,9 +49,12 @@ jobs:
 
   droplet:
     needs: tests
-    if: github.ref == 'refs/heads/main'
+    if: >-
+      github.ref == 'refs/heads/main' && github.actor == 'akilatrades' &&
+      github.triggering_actor == 'akilatrades'
     runs-on: ubuntu-24.04
     timeout-minutes: 15
+    environment: funded-droplet
     env:
       DROPLET_HOST: ${{ secrets.DROPLET_HOST }}
       DROPLET_USER: ${{ secrets.DROPLET_USER }}

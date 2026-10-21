@@ -1,5 +1,9 @@
 # Kalshi V2 demo rollout — operator checklist
 
+> **Archived.** This covers the retired demo runner (`market-maker.timer`),
+> which is now disabled on the server. Do not restart it. The funded bots are
+> documented in the [operations guide](../deploy/README.md).
+
 The bot remains **dry-run by default**. Updating GitHub does not deploy to the
 DigitalOcean VPS or authorize live production-money trades.
 

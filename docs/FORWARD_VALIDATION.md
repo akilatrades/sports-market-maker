@@ -18,7 +18,8 @@ measured live fill rate.
 ## When the clock starts
 
 Maintain a **separate forward cohort for each market (NBA and NFL)** and for
-each material execution-rule version. Each cohort starts at its own first
+each material execution-rule version (a *cohort* here means one market under
+one rule version). Each cohort starts at its own first
 exchange-accepted *real* strategy order in that market, with 30 calendar days
 counted from that timestamp. An NFL production pilot order **does not start the
 NBA evaluation window**. Do not treat scheduled jobs, dry runs, or days with
@@ -37,7 +38,8 @@ review, not automatic scaling. Fewer observations = inconclusive, not failed.
 
 Report all of the following on the same cohort:
 
-- **Volume-weighted capture** = total actual filled NO contracts divided by
+- **Volume-weighted capture** (the share of the trading at our price that we
+  actually got) = total actual filled NO contracts divided by
   total qualifying printed contracts for mature, completely observed,
   comparable resting-order windows; also show missing/impossible denominator
   rates. Retain fill share of an individual order as a separate metric.
@@ -75,13 +77,14 @@ losses, zero qualifying volume, or successful capture.
 
 ## Operations
 
-The existing DigitalOcean process keeps trading exactly as configured.
-The trader writes:
-`outputs/live/{orders.csv,fills.csv,queue.csv,execution.csv,
-execution.md,forward_validation.json,forward_validation.md}`
-(and corresponding files under `outputs/live/nfl/`).
+The funded bots keep their evidence on the server, in private append-only
+journals (`/home/trader/prod-nba-auto/journal.jsonl` and
+`/home/trader/prod-nfl-auto/journal.jsonl`). Exchange-verified summaries reach
+the public dashboard only through the sanitized P&L feed. In this
+repository, `outputs/live/` (and `outputs/live/nfl/`) holds the GitHub
+dry-run order logs, which contain no real orders.
 
-Read-only manual report regeneration:
+Read-only report regeneration for a folder of order logs:
 
 ```sh
 python -m live.forward_validation --folder outputs/live

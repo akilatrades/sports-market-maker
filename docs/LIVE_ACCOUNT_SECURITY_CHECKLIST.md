@@ -28,14 +28,22 @@ settings that must be verified on the owner's actual account and server.
 
 1. **GitHub account and permissions:** enable phishing-resistant 2FA
    (passkey/security key), review active sessions, repository collaborators,
-   installed apps and fine-grained personal access tokens. Avoid
-   unauthorized write access to this repository: a modified executable
-   fetched during a later server release could access runtime credentials.
-   Protect executable-code changes with reviews/approval. Coordinate this
-   with scheduled data-only GitHub Actions that currently write to main.
-2. **GitHub Actions secrets:** open repository Settings > Secrets and
-   variables > Actions; inspect/remove obsolete
-   `KALSHI_PRIVATE_KEY` and `KALSHI_KEY_ID` secrets.
+   installed apps and fine-grained personal access tokens. Give nobody
+   else write access to this repository: a modified executable fetched
+   during a later server release could access runtime credentials.
+   Collaborators work through forks and pull requests
+   ([GITHUB_ACCESS.md](../deploy/GITHUB_ACCESS.md)). Scheduled data-only
+   GitHub Actions still write to main.
+2. **GitHub Actions secrets:** the four `DROPLET_*` secrets reach the
+   server's `trader` account, which runs the funded bots and can switch
+   them on or off through the sudo helpers, so treat them like the Kalshi
+   key: keep them in the `funded-droplet` environment limited to `main`
+   ([GITHUB_ACCESS.md](../deploy/GITHUB_ACCESS.md)). `ODDS_API_KEY` can stay
+   a repository secret. Inspect/remove obsolete `KALSHI_PRIVATE_KEY` and
+   `KALSHI_KEY_ID` secrets if they still exist.
+   If the server's P&L publisher is set up, its `GITHUB_PNL_PUBLISH_TOKEN`
+   (in `/etc/market-maker-pnl-publisher.env`) can write to this repository:
+   keep it fine-grained, limited to this repository, with a short expiry.
    The hosted credential-check workflow no longer needs them. Ensure no
    other Actions workflow has been added that loads trading credentials.
    Review repository Security > Secret scanning alerts, including old

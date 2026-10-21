@@ -69,6 +69,7 @@ a journal before it is sent.
 | [ACCOUNT_DASHBOARD.md](ACCOUNT_DASHBOARD.md) | Private read-only account view |
 | [PUBLIC_PNL_REFRESH.md](PUBLIC_PNL_REFRESH.md) | Publishing verified P&L to the public dashboard |
 | [LIVE_ACCOUNT_PNL.md](LIVE_ACCOUNT_PNL.md) | Near-live settled P&L feed for the dashboard |
+| [GITHUB_ACCESS.md](GITHUB_ACCESS.md) | What is public, who can run what, adding a collaborator, moving server secrets into the `funded-droplet` environment |
 | [AUTOMATION_SETUP.md](AUTOMATION_SETUP.md) | One-time GitHub-to-server SSH setup |
 | [PROD_NFL_PILOT.md](PROD_NFL_PILOT.md) | The first supervised NFL order (historical) |
 | [NFL_WORKER_MEMORY.md](NFL_WORKER_MEMORY.md) | Incident note |
@@ -76,8 +77,7 @@ a journal before it is sent.
 ## Legacy research runner
 
 An older general trader (`live/nba_trade.py`, installed by `install.sh`)
-can also run on the server, separately from the funded workers. Its mode is
-set in its own settings file: `TRADE_MODE=dry` logs orders without sending
-them; `live` sends them to the exchange named by `KALSHI_ENV`. To stop it: `systemctl disable --now market-maker.timer`, or
-create `outputs/live/KILL`, which also cancels its resting orders. It is
-separate from the funded workers above.
+is **retired on the server**: its `market-maker.timer` is disabled, and the
+trader refuses to send live orders to the production exchange. GitHub's
+*nba trade (dry run)* and *nfl trade (dry run)* workflows still run it in dry mode to publish the
+order logs in `outputs/live/`. It is separate from the funded workers above.
