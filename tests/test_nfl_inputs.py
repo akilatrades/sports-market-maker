@@ -122,3 +122,20 @@ def test_incomplete_tree_and_source_date_fail_closed():
     ).encode()
     with pytest.raises(ValueError, match="stale"):
         nfl_inputs.verify_bundle(data, LADDER, NOW)
+
+
+def test_book_file_with_game_columns_first_is_accepted():
+    data, _ = sources()
+    data[nfl_inputs.BOOK] = (
+        b"event_id,commence_utc,player_key,stat,line,p_book,book_n,"
+        b"updated_utc,snapshot_utc,home,away\n"
+    )
+    nfl_inputs.verify_bundle(data, LADDER, NOW)  # the current logger format
+    data[nfl_inputs.BOOK] = b"player_key,stat,line,p_book,book_n,snapshot_utc\n"
+    nfl_inputs.verify_bundle(data, LADDER, NOW)  # the earlier format
+    data[nfl_inputs.BOOK] = b"<html>not a book file</html>\n"
+    with pytest.raises(ValueError, match="sportsbook file schema"):
+        nfl_inputs.verify_bundle(data, LADDER, NOW)
+    data[nfl_inputs.BOOK] = b"event_id,player_key,stat,line\n"  # missing columns
+    with pytest.raises(ValueError, match="sportsbook file schema"):
+        nfl_inputs.verify_bundle(data, LADDER, NOW)
