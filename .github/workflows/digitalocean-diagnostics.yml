@@ -14,10 +14,10 @@ jobs:
     steps:
       - name: Validate SSH configuration
         env:
-          SSH_HOST: ${{ secrets.DO_HOST }}
-          SSH_USER: ${{ secrets.DO_USER }}
-          SSH_KEY: ${{ secrets.DO_SSH_KEY }}
-          SSH_HOST_KEY: ${{ secrets.DO_SSH_HOST_KEY }}
+          SSH_HOST: ${{ secrets.DROPLET_HOST }}
+          SSH_USER: ${{ secrets.DROPLET_USER }}
+          SSH_KEY: ${{ secrets.DROPLET_SSH_KEY }}
+          SSH_HOST_KEY: ${{ secrets.DROPLET_KNOWN_HOSTS }}
         run: |
           test -n "$SSH_HOST" && test -n "$SSH_USER" && test -n "$SSH_KEY" && test -n "$SSH_HOST_KEY"
           mkdir -p ~/.ssh && chmod 700 ~/.ssh
@@ -28,8 +28,8 @@ jobs:
           echo "SSH prerequisites supplied; no credentials printed"
       - name: Read service health without exposing credentials or account data
         env:
-          SSH_HOST: ${{ secrets.DO_HOST }}
-          SSH_USER: ${{ secrets.DO_USER }}
+          SSH_HOST: ${{ secrets.DROPLET_HOST }}
+          SSH_USER: ${{ secrets.DROPLET_USER }}
         run: |
           ssh -o BatchMode=yes -o StrictHostKeyChecking=yes -o ConnectTimeout=10 \
             "$SSH_USER@$SSH_HOST" 'set -eu
