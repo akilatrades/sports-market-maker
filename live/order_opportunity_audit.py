@@ -36,7 +36,6 @@ def instant(value):
     return ts.astimezone(UTC) if ts.tzinfo is not None else None
 
 
-
 def exchange_expiration(order):
     """Parse signed exchange order expiration, never infer it from our intent.
 
@@ -55,7 +54,10 @@ def exchange_expiration(order):
     ):
         try:
             seconds = float(value)
-            if not math.isfinite(seconds) or not 1_500_000_000 < seconds < 4_000_000_000:
+            if (
+                not math.isfinite(seconds)
+                or not 1_500_000_000 < seconds < 4_000_000_000
+            ):
                 return None
             return datetime.fromtimestamp(seconds, UTC)
         except (OverflowError, ValueError, OSError):
@@ -448,7 +450,8 @@ def audit_cohort(events, exchange_orders, fills, *, sport, now, prints_by_order=
                     else None
                 ),
                 "signed_exchange_expiry_matches_tip": (
-                    abs((verified_exchange_expiry - tip_from_intent).total_seconds()) <= 1
+                    abs((verified_exchange_expiry - tip_from_intent).total_seconds())
+                    <= 1
                     if verified_exchange_expiry is not None
                     and tip_from_intent is not None
                     else None
