@@ -302,8 +302,8 @@ def nba_realized_pnl(settlements, owned_tickers, now):
         "cumulative_realized_pnl_dollars": round(cumulative, 4),
         "settlement_records": len(seen),
         "loss_stop": (
-            daily <= -MAX_REALIZED_DAILY_LOSS
-            or cumulative <= -MAX_REALIZED_CUMULATIVE_LOSS
+            daily <= -MAX_REALIZED_DAILY_LOSS + 1e-9
+            or cumulative <= -MAX_REALIZED_CUMULATIVE_LOSS + 1e-9
         ),
     }
 
@@ -376,6 +376,61 @@ def resting_cancel_reason(row, intent, market, fee_bound):
     except (KeyError, ValueError, TypeError, OverflowError):
         return "unverifiable_resting_order_or_market_data"
     return None
+
+
+# A failed input pipeline (projections, injuries, rosters or quotes) yields an
+# empty, "blocked" frame. Resting orders are held through a short outage
+# instead of being cancelled en masse (a cancelled ticker can never be
+# re-ordered); new orders stay blocked. If good inputs have not been seen for
+# longer than this, the resting orders are cancelled as before (fail closed).
+INPUT_OUTAGE_HOLD_MINUTES = 15
+
+
+# Network/transport failures only. Data-integrity failures (malformed,
+# undated or future injury records, duplicate tickers, row-count or hash
+# mismatches, no priced markets) still cancel resting orders immediately.
+TRANSIENT_INPUT_ERRORS = frozenset(
+    {
+        "URLError",
+        "HTTPError",
+        "TimeoutError",
+        "timeout",
+        "ConnectionError",
+        "ConnectionResetError",
+        "ConnectionRefusedError",
+        "ConnectionAbortedError",
+        "RemoteDisconnected",
+        "IncompleteRead",
+        "SSLError",
+        "gaierror",
+    }
+)
+
+
+def inputs_unavailable(frame):
+    """True only when an input feed failed in transit (a connection hiccup)."""
+    blocked = frame.attrs.get("diagnostics", {}).get("blocked")
+    return frame.empty and blocked in TRANSIENT_INPUT_ERRORS
+
+
+def note_good_inputs(directory, now):
+    from live.nba_inputs import atomic_write
+
+    atomic_write(
+        directory / "last_good_inputs.json",
+        (json.dumps({"utc": now.isoformat()}) + "\n").encode(),
+    )
+
+
+def minutes_since_good_inputs(directory, now):
+    try:
+        stamp = pd.Timestamp(
+            json.loads((directory / "last_good_inputs.json").read_text())["utc"]
+        )
+        minutes = (pd.Timestamp(now) - stamp).total_seconds() / 60
+    except (OSError, ValueError, KeyError, TypeError):
+        return math.inf
+    return minutes if math.isfinite(minutes) and minutes >= 0 else math.inf
 
 
 def cancel_invalid_resting(client, journal, state, frame, now, events):
@@ -1105,6 +1160,20 @@ def pass_once(client, env, frame, now, journal, *, dry=False):
                 "resting NBA order(s) to close; no new orders"
             )
             return finish("waiting_for_prior_version_orders")
+        if inputs_unavailable(frame):
+            outage = minutes_since_good_inputs(journal.parent, now)
+            if outage <= INPUT_OUTAGE_HOLD_MINUTES:
+                print(
+                    f"NBA INPUTS UNAVAILABLE for {outage:.1f} min: holding "
+                    f"{len(state['resting'])} resting order(s); no new orders"
+                )
+                return finish("inputs_unavailable_holding_resting")
+            print(
+                "NBA INPUTS UNAVAILABLE beyond the hold window: "
+                "cancelling resting orders (fail closed)"
+            )
+        elif not frame.empty:
+            note_good_inputs(journal.parent, now)
         canceled = cancel_invalid_resting(
             client, journal, state, frame, now, load_journal(journal)
         )
@@ -1118,6 +1187,11 @@ def pass_once(client, env, frame, now, journal, *, dry=False):
         if realized_pnl["loss_stop"]:
             print("NBA REALIZED LOSS STOP: no additional orders")
             return finish("realized_loss_stop")
+        from live.shared_account_risk import account_loss_stop
+
+        if account_loss_stop(shared):
+            print("ACCOUNT REALIZED LOSS STOP (NBA + NFL): no additional orders")
+            return finish("account_loss_stop")
         print(
             f"PROD AUTO: attempts={len(attempts)}, resting={len(state['resting'])}, "
             f"held={len(state['held'])}, settled_tickers={len(state['settled'])}, "

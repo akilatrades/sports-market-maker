@@ -540,3 +540,21 @@ def test_second_tick_falls_back_when_full_reserve_consumes_edge(quotes, tmp_path
     assert intent["edge_after_fee_buffer"] >= 0.03
     assert intent["probability_source"] == "sportsbook"
     assert client.placed[0].post_only is True
+
+
+def test_account_loss_stop_blocks_new_nfl_orders(quotes, tmp_path, monkeypatch):
+    import live.shared_account_risk as shared_risk
+
+    state = {
+        "resting": [],
+        "held": [],
+        "settled": set(),
+        "settlements": [],
+        "active": [],
+    }
+    shared = {"account_pnl": {"loss_stop": True}, "ownership": {}}
+    monkeypatch.setattr(shared_risk, "dual_mode", lambda env: True)
+    monkeypatch.setattr(shared_risk, "state_for", lambda *a: (state, shared))
+    client = Client()
+    assert not auto.pass_once(client, ARMED, frame(), NOW, tmp_path / "ledger.jsonl")
+    assert client.placed == []

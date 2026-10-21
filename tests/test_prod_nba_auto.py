@@ -1005,3 +1005,126 @@ def test_old_sportsbook_consensus_is_not_used_to_retain_nba_orders(
     fresh = nba.nba_candidates(NOW, latest=tmp_path / "latest.csv")
     assert fresh.book_n.iloc[0] == 2
     assert fresh.p_book.iloc[0] == 0.4
+
+
+def _one_resting_order_world(monkeypatch, tmp_path, *, dual=False, shared=None):
+    import live.shared_account_risk as shared_risk
+
+    attempt = {
+        "client_order_id": "cid-now",
+        "ticker": "KXNBAPTS-NOW",
+        "cost": 1.0,
+        "utc": NOW.isoformat(),
+        "strategy_version": nba.STRATEGY_VERSION,
+        "game_id": "g",
+        "team": "LAL",
+    }
+    accepted = {"cid-now": {"order_id": "order-now"}}
+    state = {
+        "resting": [{"order_id": "order-now", "ticker": "KXNBAPTS-NOW"}],
+        "settled": set(),
+        "settlements": [],
+        "held": [],
+        "active": [attempt],
+    }
+
+    class Client:
+        env, dry_run, can_sign = "prod", False, True
+
+        def fills(self, **kwargs):
+            return []
+
+        def balance(self):
+            return {"balance": 250}
+
+        def place(self, order):
+            raise AssertionError("no new orders in these scenarios")
+
+    calls = []
+    monkeypatch.setattr(nba, "guard", lambda *args: None)
+    monkeypatch.setattr(shared_risk, "dual_mode", lambda env: dual)
+    if dual:
+        monkeypatch.setattr(shared_risk, "state_for", lambda *a: (state, shared))
+    monkeypatch.setattr(nba, "load_journal", lambda journal: [])
+    monkeypatch.setattr(nba, "records", lambda events: ([attempt], accepted))
+    monkeypatch.setattr(nba, "current_production_state", lambda *args: state)
+    monkeypatch.setattr(
+        nba, "reconcile_expired_unfilled", lambda *args, **kwargs: ([attempt], 0)
+    )
+    monkeypatch.setattr(nba, "record_execution", lambda *args: None)
+    monkeypatch.setattr(nba, "record_queue_observation", lambda *args: None)
+    monkeypatch.setattr(nba, "record_markouts", lambda *args: None)
+    monkeypatch.setattr(
+        nba, "cancel_invalid_resting", lambda *args: calls.append(args) or 1
+    )
+    return Client(), calls, tmp_path / "journal.jsonl"
+
+
+def _blocked_frame(reason="URLError"):
+    frame = pd.DataFrame()
+    frame.attrs["diagnostics"] = {"blocked": reason}
+    return frame
+
+
+def test_short_input_outage_holds_resting_orders(monkeypatch, tmp_path):
+    client, calls, journal = _one_resting_order_world(monkeypatch, tmp_path)
+    nba.note_good_inputs(tmp_path, NOW - timedelta(minutes=5))
+    assert not nba.pass_once(client, ARMED, _blocked_frame(), NOW, journal)
+    assert calls == []  # nothing cancelled during a short outage
+    status = json.loads((tmp_path / "last_scan.json").read_text())
+    assert status["decision"] == "inputs_unavailable_holding_resting"
+
+
+def test_long_or_unknown_outage_still_cancels(monkeypatch, tmp_path):
+    client, calls, journal = _one_resting_order_world(monkeypatch, tmp_path)
+    assert nba.minutes_since_good_inputs(tmp_path, NOW) == float("inf")
+    nba.pass_once(client, ARMED, _blocked_frame(), NOW, journal)
+    assert len(calls) == 1  # no record of good inputs: fail closed
+    calls.clear()
+    nba.note_good_inputs(tmp_path, NOW - timedelta(minutes=40))
+    nba.pass_once(client, ARMED, _blocked_frame(), NOW, journal)
+    assert len(calls) == 1  # outage longer than the hold window
+
+
+def test_good_inputs_are_recorded_and_rechecked_normally(monkeypatch, tmp_path):
+    client, calls, journal = _one_resting_order_world(monkeypatch, tmp_path)
+    nba.pass_once(client, ARMED, priced(), NOW, journal)
+    assert nba.minutes_since_good_inputs(tmp_path, NOW) < 1
+    assert len(calls) == 1  # per-order recheck still runs on good inputs
+
+
+def test_account_loss_stop_blocks_new_nba_orders(monkeypatch, tmp_path):
+    shared = {"account_pnl": {"loss_stop": True}, "ownership": {}}
+    client, calls, journal = _one_resting_order_world(
+        monkeypatch, tmp_path, dual=True, shared=shared
+    )
+    monkeypatch.setattr(nba, "cancel_invalid_resting", lambda *args: 0)
+    assert not nba.pass_once(client, ARMED, priced(), NOW, journal)
+    status = json.loads((tmp_path / "last_scan.json").read_text())
+    assert status["decision"] == "account_loss_stop"
+
+
+def test_data_integrity_failures_still_cancel_immediately(monkeypatch, tmp_path):
+    client, calls, journal = _one_resting_order_world(monkeypatch, tmp_path)
+    nba.note_good_inputs(tmp_path, NOW - timedelta(minutes=2))
+    for reason in (
+        "unidentifiable_or_undated_injury",
+        "future_injury_timestamp",
+        "duplicate_projection_ticker",
+        "no_priced_markets",
+    ):
+        calls.clear()
+        nba.pass_once(client, ARMED, _blocked_frame(reason), NOW, journal)
+        assert len(calls) == 1, reason
+
+
+def test_unverifiable_account_pnl_still_lets_cancels_run(monkeypatch, tmp_path):
+    shared = {"account_pnl": {"unavailable": "Incomplete settlement"}, "ownership": {}}
+    client, calls, journal = _one_resting_order_world(
+        monkeypatch, tmp_path, dual=True, shared=shared
+    )
+    nba.pass_once(client, ARMED, priced(), NOW, journal)
+    assert len(calls) == 1  # the unsafe-order cancel ran first
+    monkeypatch.setattr(nba, "cancel_invalid_resting", lambda *args: 0)
+    with pytest.raises(TradingError, match="unverifiable"):
+        nba.pass_once(client, ARMED, priced(), NOW, journal)  # then: no new orders

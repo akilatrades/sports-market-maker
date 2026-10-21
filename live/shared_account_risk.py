@@ -18,6 +18,9 @@ ROOT = Path("/home/trader")
 # unchanged limits ($50 lifetime, $30 daily, $15 active).
 LIMITS = {"lifetime": 1050.0, "daily": 105.0, "active": 90.0}
 LOCAL_DAY = ZoneInfo("America/New_York")
+# Realized-loss stops for the WHOLE account (NBA + NFL settled markets
+# together). Each bot's own limits still apply on top of these.
+ACCOUNT_LOSS_STOPS = {"daily": 20.0, "cumulative": 60.0}
 
 
 def journal_events(sport):
@@ -161,6 +164,90 @@ def room(owner, active_client_ids, cost, now):
     }
 
 
+def account_realized_pnl(settlements, owned_tickers, now):
+    """Settled P&L across both bots' markets. Fails closed on bad records.
+
+    Only exchange settlements of markets in either bot's journal count; a
+    duplicate page cannot double a loss, and an incomplete, undated or
+    future-dated record halts new orders instead of being skipped.
+    """
+    from live.nfl_policy import settlement_accounting
+
+    if not isinstance(settlements, list):
+        raise TradingError("Unverified settlement ledger: HALT")
+    today = now.astimezone(LOCAL_DAY).date()
+    seen = {}
+    daily = cumulative = 0.0
+    for item in settlements:
+        if not isinstance(item, dict):
+            raise TradingError("Malformed settlement: HALT")
+        ticker = item.get("market_ticker") or item.get("ticker")
+        if ticker not in owned_tickers:
+            continue
+        accounted = settlement_accounting(item)
+        amount = accounted.get("net_profit_dollars")
+        try:
+            when = datetime.fromisoformat(
+                str(item["settled_time"]).replace("Z", "+00:00")
+            )
+        except (ValueError, TypeError, KeyError) as error:
+            raise TradingError("Undated settlement: HALT") from error
+        if (
+            not accounted["accounting_complete"]
+            or amount is None
+            or not math.isfinite(float(amount))
+            or when.tzinfo is None
+            or (when - now).total_seconds() > 300
+        ):
+            raise TradingError("Incomplete or future settlement: HALT")
+        key = (str(ticker), when.isoformat())
+        if key in seen:
+            if seen[key] != accounted:
+                raise TradingError("Conflicting settlement copies: HALT")
+            continue
+        seen[key] = accounted
+        cumulative += float(amount)
+        if when.astimezone(LOCAL_DAY).date() == today:
+            daily += float(amount)
+    return {
+        "daily_realized_pnl_dollars": round(daily, 4),
+        "cumulative_realized_pnl_dollars": round(cumulative, 4),
+        "settlement_records": len(seen),
+        "loss_stop": (
+            daily <= -ACCOUNT_LOSS_STOPS["daily"] + 1e-9
+            or cumulative <= -ACCOUNT_LOSS_STOPS["cumulative"] + 1e-9
+        ),
+    }
+
+
+def _account_pnl_or_unavailable(settlements, owned_tickers, now):
+    """Never let a bad settlement record block the bots' safety cancels.
+
+    The workers read shared state at the start of a pass, before they
+    cancel unsafe resting orders. A malformed record is kept as a marker
+    here and halts new orders only at the loss-stop check, after cancels.
+    """
+    try:
+        return account_realized_pnl(settlements, owned_tickers, now)
+    except TradingError as error:
+        return {"unavailable": str(error)}
+
+
+def account_loss_stop(context):
+    """True when the whole-account realized-loss stop blocks new orders.
+
+    Raises (no new orders) when the account P&L could not be verified.
+    """
+    if context is None:
+        return False
+    pnl = context.get("account_pnl")
+    if isinstance(pnl, dict) and pnl.get("unavailable"):
+        raise TradingError(f"Shared account P&L unverifiable ({pnl['unavailable']})")
+    if not isinstance(pnl, dict) or "loss_stop" not in pnl:
+        raise TradingError("Shared account P&L unavailable: HALT")
+    return bool(pnl["loss_stop"])
+
+
 def dual_mode(env):
     """Opt-in requires both an env setting and an owner-created root marker."""
     requested = env.get("SMM_DUAL_MARKET", "") == "YES"
@@ -251,6 +338,9 @@ def state_for(client, sport, now):
     return snapshots[sport], {
         "ownership": owner,
         "active_client_ids": active_ids,
+        "account_pnl": _account_pnl_or_unavailable(
+            settlements, set(owner["tickers"]), now
+        ),
     }
 
 

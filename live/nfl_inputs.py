@@ -100,8 +100,19 @@ def verify_bundle(files, ladder, now):
         if name.startswith("outputs/nfl/projections/ladders/"):
             if not data.startswith(b"\x1f\x8b"):
                 raise ValueError("Invalid compressed NFL model ladder")
-    if BOOK in files and not files[BOOK].startswith(b"player_key,"):
+    if BOOK in files and not book_schema_ok(files[BOOK]):
         raise ValueError("Unrecognized NFL sportsbook file schema")
+
+
+# Columns the book consumer needs. The logger may add others (event_id and
+# commence_utc tie each line to its game; updated_utc is each book's own
+# quote time) and may put them first, so check names, not the first column.
+BOOK_COLUMNS = {"player_key", "stat", "line", "p_book", "book_n"}
+
+
+def book_schema_ok(data):
+    header = data.split(b"\n", 1)[0].decode("utf-8", "replace").strip()
+    return BOOK_COLUMNS.issubset(name.strip() for name in header.split(","))
 
 
 def use_bundle(bundle):
