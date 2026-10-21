@@ -12,7 +12,7 @@ on:
 permissions:
   contents: read
 concurrency:
-  group: digitalocean-diagnostics
+  group: digitalocean-diagnostics-unattended
   cancel-in-progress: false
 jobs:
   diagnostics:
