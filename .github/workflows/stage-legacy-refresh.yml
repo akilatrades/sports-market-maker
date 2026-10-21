@@ -65,8 +65,8 @@ jobs:
           scp -q "${args[@]}" \
             live/nba_inputs.py live/legacy_input_sync.py deploy/freeze_legacy_runner.py \
             "$target:$stage/"
-          local_checks="$(sha256sum live/nba_inputs.py live/legacy_input_sync.py deploy/freeze_legacy_runner.py | awk '{print $1}' | tr '\n' ' ')"
-          remote_checks="$(ssh -T "${args[@]}" "$target" "cd '$stage' && sha256sum nba_inputs.py legacy_input_sync.py freeze_legacy_runner.py | awk '{print \\$1}' | tr '\\n' ' '")"
+          local_checks="$(sha256sum live/nba_inputs.py live/legacy_input_sync.py deploy/freeze_legacy_runner.py | cut -d ' ' -f1 | paste -sd: -)"
+          remote_checks="$(ssh -T "${args[@]}" "$target" "cd '$stage' && sha256sum nba_inputs.py legacy_input_sync.py freeze_legacy_runner.py | cut -d ' ' -f1 | paste -sd: -")"
           # Compare digests by name, not default directory sort.
           if [[ "$local_checks" != "$remote_checks" ]]; then
             echo "::error::Staged file hash mismatch"
