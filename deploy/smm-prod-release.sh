@@ -79,8 +79,8 @@ on_exit() {
 trap on_exit EXIT
 
 # Avoid mutating the working tree while a funded order pass is executing.
-systemctl stop "$NFL_TIMER" "$NBA_TIMER"
 stopped=1
+systemctl stop "$NFL_TIMER" "$NBA_TIMER"
 deadline=$((SECONDS + 260))
 for unit in "$NFL_SVC" "$NBA_SVC"; do
   while :; do
