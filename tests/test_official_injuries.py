@@ -657,3 +657,24 @@ def test_cancel_record_names_the_veto(tmp_path):
     saved = [json.loads(line) for line in journal.read_text().splitlines()]
     assert saved[0]["reason"] == "unverified_roster_injury_or_model"
     assert saved[0]["veto"] == "OFFICIAL_TEAM_INJURY_CHANGE"
+
+
+def test_truncated_streams_and_unwritable_cache(tmp_path, monkeypatch):
+    pdf = report_pdf(TONIGHT)
+    cut = zlib.compress(b"q 1 0 0 1 0 0 cm Q" * 50)[:-8]  # stream ends early
+    objects = official._objects(pdf)
+    number = next(n for n, o in objects.items() if b"/FlateDecode" in official._dict(o))
+    monkeypatch.setitem(
+        objects,
+        number,
+        b" << /Length %d /Filter/FlateDecode >>\nstream\n%s" % (len(cut), cut),
+    )
+    with pytest.raises(official.ReportError, match="truncated"):
+        official._stream(objects, number)
+
+    def readonly(path, data):
+        raise PermissionError("read-only")
+
+    monkeypatch.setattr(official, "_save", readonly)
+    fetch = lambda url, timeout: pdf  # noqa: E731
+    assert len(official.report_at(WHEN, fetch=fetch, cache_dir=tmp_path)[1]) == 8

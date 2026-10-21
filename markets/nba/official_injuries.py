@@ -169,6 +169,8 @@ def _stream(objects, number):
         out = inflate.decompress(raw, MAX_STREAM_BYTES)
         if inflate.unconsumed_tail:
             raise ReportError("pdf_stream_too_large")
+        if not inflate.eof:
+            raise ReportError("pdf_stream_truncated")
         raw = out
     return raw
 
@@ -437,7 +439,10 @@ def report_at(when, back=8, fetch=None, deadline=None, cache_dir=None):
         if data and data.startswith(b"%PDF-"):
             result = parse(data)
             if cached is not None:
-                _save(cached, data)
+                try:
+                    _save(cached, data)
+                except OSError:  # a read-only folder must not waste a good report
+                    pass
             return result
         slot -= timedelta(minutes=15)
     raise ReportError("no_report_found")
@@ -451,9 +456,10 @@ def from_cache(when, cache_dir, back=8):
 
 
 def prune(cache_dir, now, days=2):
-    for path in cache_dir.glob("Injury-Report_*.pdf"):
-        if path.stat().st_mtime < now.timestamp() - days * 86400:
-            path.unlink(missing_ok=True)
+    for pattern in ("Injury-Report_*.pdf", ".Injury-Report_*.tmp"):
+        for path in cache_dir.glob(pattern):
+            if path.stat().st_mtime < now.timestamp() - days * 86400:
+                path.unlink(missing_ok=True)
 
 
 def for_games(rows, games):

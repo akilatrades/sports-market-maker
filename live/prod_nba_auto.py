@@ -1523,11 +1523,15 @@ def _fetch_official(now, model_utc, cache_dir):
             box["latest"] = official.report_at(
                 now, deadline=deadline, cache_dir=cache_dir
             )
+        except Exception as error:
+            box["error"] = error
+            return
+        try:
             box["baseline"] = official.report_at(
                 model_utc, deadline=deadline, cache_dir=cache_dir
             )
         except Exception as error:
-            box["error"] = error
+            box["baseline_error"] = type(error).__name__
 
     worker = threading.Thread(target=work, daemon=True)
     worker.start()
@@ -1541,6 +1545,8 @@ def _fetch_official(now, model_utc, cache_dir):
         notes["fetch_error"] = (
             str(error) if isinstance(error, ValueError) else type(error).__name__
         )
+    if "baseline_error" in got:
+        notes["baseline_error"] = got["baseline_error"]
     latest, baseline = got.get("latest"), got.get("baseline")
     if latest is None and cache_dir is not None:
         try:
