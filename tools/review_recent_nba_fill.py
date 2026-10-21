@@ -264,6 +264,8 @@ def public_summary(report):
 
     def sign(value):
         v = finite(value)
+        if v is None:
+            return "unknown"
         return (
             "positive"
             if v > 0
