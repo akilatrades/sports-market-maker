@@ -62,6 +62,11 @@ NEW_ORDER_DEADLINE_SECONDS = 150
 PROCESS_START = None
 # Queue position is telemetry: observe each resting order at most this often.
 QUEUE_OBSERVATION_MINUTES = 10
+# The NBA's official injury report (published every 15 minutes) adds vetoes
+# on top of ESPN's feed. It is ignored, and the scan says so, when it cannot
+# be read in OFFICIAL_REPORT_SECONDS or is older than the limit below.
+OFFICIAL_REPORT_SECONDS = 20
+OFFICIAL_REPORT_MAX_AGE_MINUTES = 60
 # P&L circuit breakers: no new orders after these realized losses.
 MAX_REALIZED_DAILY_LOSS = 20.0
 MAX_REALIZED_CUMULATIVE_LOSS = 60.0
@@ -546,6 +551,8 @@ def cancel_invalid_resting(client, journal, state, frame, now, events):
                 "order_id": order_id,
                 "ticker": ticker,
                 "reason": reason,
+                # Which check vetoed the market (ESPN, official report, ...).
+                "veto": str(row.get("injury_status") or "") if row is not None else "",
                 "strategy_version": STRATEGY_VERSION,
             },
         )
@@ -1475,6 +1482,144 @@ def charge_new_order(intent, acceptance, attempts, accepted, state, shared):
         shared["active_client_ids"].add(intent["client_order_id"])
 
 
+def official_injury_vetoes(frame, model_utc, now, cache_dir=None):
+    """Add the official injury report's vetoes to ``frame`` (in place).
+
+    Labels go only on rows not already vetoed, and the boolean column
+    ``official_two_books`` marks rows whose team needs a fresh two-book
+    consensus tonight. Nothing here clears a veto. If anything goes wrong
+    (fetching, reading, matching), nothing is changed: ESPN's checks still
+    apply and the returned summary (for last_scan.json) gives the reason. An
+    error here must never block the scan, because a blocked scan cancels
+    resting orders.
+    """
+    frame["official_two_books"] = False
+    try:
+        return _official_injury_vetoes(frame, model_utc, now, cache_dir)
+    except Exception as error:
+        frame["official_two_books"] = False
+        reason = str(error) if isinstance(error, ValueError) else type(error).__name__
+        print(f"OFFICIAL INJURY REPORT UNAVAILABLE: {reason} -- ESPN checks only")
+        return {"status": "unavailable", "reason": reason}
+
+
+def _fetch_official(now, model_utc, cache_dir):
+    """(latest, baseline, notes) within OFFICIAL_REPORT_SECONDS, hard limit.
+
+    The downloads run in a daemon thread, so a stalled connection or DNS
+    lookup cannot stretch the scan. When the newest report cannot be fetched,
+    the newest one already on disk is used instead (the age check still
+    applies), so vetoes do not flicker off for one bad scan.
+    """
+    import threading
+
+    from markets.nba import official_injuries as official
+
+    deadline = time.monotonic() + OFFICIAL_REPORT_SECONDS
+    box = {}
+
+    def work():
+        try:
+            box["latest"] = official.report_at(
+                now, deadline=deadline, cache_dir=cache_dir
+            )
+        except Exception as error:
+            box["error"] = error
+            return
+        try:
+            box["baseline"] = official.report_at(
+                model_utc, deadline=deadline, cache_dir=cache_dir
+            )
+        except Exception as error:
+            box["baseline_error"] = type(error).__name__
+
+    worker = threading.Thread(target=work, daemon=True)
+    worker.start()
+    worker.join(OFFICIAL_REPORT_SECONDS)
+    got = {} if worker.is_alive() else dict(box)
+    notes = {}
+    if worker.is_alive():
+        notes["fetch_error"] = "report_fetch_deadline"
+    elif "error" in got:
+        error = got["error"]
+        notes["fetch_error"] = (
+            str(error) if isinstance(error, ValueError) else type(error).__name__
+        )
+    if "baseline_error" in got:
+        notes["baseline_error"] = got["baseline_error"]
+    latest, baseline = got.get("latest"), got.get("baseline")
+    if latest is None and cache_dir is not None:
+        try:
+            latest = official.from_cache(now, cache_dir)
+            notes["latest_from_cache"] = True
+        except official.ReportError:
+            latest = None  # report the fetch error, not the empty cache
+    if latest is None:
+        raise official.ReportError(notes.get("fetch_error", "no_report_found"))
+    if baseline is None and cache_dir is not None:
+        try:
+            baseline = official.from_cache(model_utc, cache_dir)
+        except Exception as error:
+            notes["baseline_error"] = type(error).__name__
+    return latest, baseline, notes
+
+
+def _official_injury_vetoes(frame, model_utc, now, cache_dir):
+    from markets.nba import official_injuries as official
+    from markets.nba.kalshi import normalize_name
+
+    if cache_dir is not None:
+        official.prune(cache_dir, now)
+    (issued, latest), baseline, notes = _fetch_official(now, model_utc, cache_dir)
+    age = (pd.Timestamp(now) - pd.Timestamp(issued)).total_seconds() / 60
+    if not -5 <= age <= OFFICIAL_REPORT_MAX_AGE_MINUTES:
+        raise official.ReportError("report_too_old")
+    base_issued, base_rows = baseline if baseline is not None else (None, None)
+    dates = frame.tip_utc.dt.tz_convert(official.ET).dt.strftime("%m/%d/%Y")
+    games = set(zip(frame.team_espn, dates))
+    result = official.assess(
+        official.for_games(latest, games),
+        None if base_rows is None else official.for_games(base_rows, games),
+    )
+    names = frame.get("player", pd.Series("", index=frame.index)).fillna("")
+    player = pd.Series(
+        [
+            result["players"].get((t, d, normalize_name(n)), "")
+            for t, d, n in zip(frame.team_espn, dates, names)
+        ],
+        index=frame.index,
+    )
+    team = pd.Series(
+        [result["teams"].get((t, d), "") for t, d in zip(frame.team_espn, dates)],
+        index=frame.index,
+    )
+    label = team.where(team.ne(""), player)
+    open_rows = frame.injury_status.fillna("").eq("")
+    frame.loc[open_rows & label.ne(""), "injury_status"] = label
+    frame["official_two_books"] = [
+        (t, d) in result["two_books"] for t, d in zip(frame.team_espn, dates)
+    ]
+    summary = {
+        "status": "ok",
+        "issued_et": issued.isoformat(),
+        "age_minutes": round(age, 1),
+        "rows": len(latest),
+        "baseline_issued_et": base_issued.isoformat() if base_issued else None,
+        **notes,
+        "vetoed_rows": int(label.ne("").sum()),
+        "newly_vetoed_rows": int((open_rows & label.ne("")).sum()),
+        "team_vetoes": {f"{t} {d}": v for (t, d), v in sorted(result["teams"].items())},
+        "two_book_teams": sorted(f"{t} {d}" for t, d in result["two_books"]),
+        "changed_players": result["changed_players"],
+    }
+    print(
+        f"OFFICIAL INJURY REPORT: {issued:%I:%M %p} ET, {len(latest)} rows, "
+        f"vetoed {summary['vetoed_rows']} markets, team changes "
+        f"{sorted(summary['team_vetoes']) or 'none'}"
+    )
+    return summary
+
+
 def nba_candidates(now, latest=Path("outputs/projections/latest.csv")):
     """Fail closed unless the dated NBA model, live quotes, and injury feed work.
 
@@ -1628,6 +1773,10 @@ def nba_candidates(now, latest=Path("outputs/projections/latest.csv")):
             )
         else:
             uncertain_teams = set()
+        # Second news source: the league's own report, every 15 minutes.
+        diagnostics["official_injury_report"] = official_injury_vetoes(
+            frame, ts, now, cache_dir=latest.parent / "official_injury_reports"
+        )
         # Fetch ONLY an explicitly configured licensed pregame provider.
         # Do not mislabel historical minutes as independent projections.
         from live.nba_pregame_context import (
@@ -1802,8 +1951,13 @@ def nba_candidates(now, latest=Path("outputs/projections/latest.csv")):
         # Teammates of a day-to-day/questionable rotation player are not
         # modeled by a single fixed minutes scenario. Require an independent
         # two-book consensus, but never override a stronger existing veto.
+        official_two_books = (
+            frame["official_two_books"].fillna(False).astype(bool)
+            if "official_two_books" in frame
+            else False
+        )
         uncertain_no_books = (
-            frame.team_espn.isin(uncertain_teams)
+            (frame.team_espn.isin(uncertain_teams) | official_two_books)
             & (frame.p_book.isna() | (frame.book_n < 2))
             & frame.injury_status.eq("")
         )

@@ -58,7 +58,8 @@ Read them for history, not for how things work now.
    better than the best current bid. New orders start two to six hours
    before tip-off.
 3. **Until tip-off.** Orders rest. The worker cancels an order if the edge
-   disappears, if its inputs fail checks, or if a stop is hit.
+   disappears, if its inputs fail checks (including injury news from ESPN or
+   the NBA's official injury report, read every scan), or if a stop is hit.
 4. **At tip-off.** Unfilled orders expire. They cost nothing; the cash
    comes back.
 5. **After the game.** Kalshi settles each contract at $1 or $0, and the
