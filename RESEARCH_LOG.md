@@ -1855,3 +1855,49 @@ drawdown?
   by at least 1¢ with t ≤ −2 under the same conditions.
 - Otherwise: keep equal weighting. No live rule changes either way without
   the owner's approval.
+
+### Results (run after the plan above was committed)
+
+`python -m research.star_weighting`; numbers also in
+`outputs/research/star_weighting.json`. 2025–26, in-sample, simulated fills.
+
+**Stars versus everyone else, 1 contract per order, flow share 1:**
+
+| Definition | Sample | Star ¢/contract | Other ¢/contract | Difference | t |
+|---|---|---:|---:|---:|---:|
+| S1 projected points ≥ 20 | Full season | 4.58 | 3.18 | +1.41 | 1.08 |
+| | Regular season | 3.86 | 3.31 | +0.55 | 0.39 |
+| | First half | 4.58 | 2.99 | +1.59 | 0.85 |
+| | Second half | 4.59 | 3.29 | +1.30 | 0.71 |
+| S2 most-traded players | Full season | 2.96 | 4.05 | −1.09 | −0.81 |
+| | Regular season | 1.82 | 4.09 | −2.27 | −1.42 |
+| | First half | 3.02 | 3.85 | −0.84 | −0.25 |
+| | Second half | 2.95 | 4.31 | −1.37 | −0.86 |
+
+S1 stars were 35% of orders and filled more often (66% against 59%), with
+far more trading at our price (median 36 contracts against 11).
+
+**Weighting stars, flow share 0.25 (average of 5 draws):**
+
+| Star contracts per order | S1 P&L | S1 max drawdown | S1 P&L per $ of drawdown | S2 P&L per $ of drawdown |
+|---:|---:|---:|---:|---:|
+| 1 (equal weighting) | $398 | −$20 | 19.6 | 19.6 |
+| 2 | $566 | −$30 | 19.0 | 18.3 |
+| 3 | $727 | −$47 | 15.4 | 15.1 |
+| 5 | $1,035 | −$81 | 12.8 | 10.4 |
+
+### Verdict: fail; keep equal weighting
+- S1 stars earned about 1.4¢ more per contract, but t = 1.1 (below 2), and
+  only 0.55¢ more in the regular season. The gap is within noise.
+- The most-traded players (S2) earned *less* in every sample, though not
+  significantly. Popular players' props seem to draw sharper traders, not
+  just fans.
+- Doubling star orders adds profit roughly in line with the extra drawdown,
+  so profit per dollar of drawdown does not improve (19.0 against 19.6 at
+  flow share 0.25). Bigger multiples make it worse.
+- The scenario table's assumption that extra star contracts fill as easily
+  roughly held: star props have much more trading at our price, so they can
+  absorb more size. That matters for scaling up later, not for edge.
+- 16 replays and 8 group comparisons were run, all reported above.
+- Not tested, for a future pre-registered test on 2026–27 data: high-scoring
+  players who are *not* among the most traded (S1 and not S2).
