@@ -108,8 +108,7 @@ def summarize(snapshot, events, now):
     filled = [
         row
         for row in rows
-        if isinstance(row, dict)
-        and (finite(row.get("filled_contracts")) or 0) > 0
+        if isinstance(row, dict) and (finite(row.get("filled_contracts")) or 0) > 0
     ]
     filled.sort(key=lambda row: row.get("first_fill_utc") or "", reverse=True)
     result = {
@@ -172,7 +171,9 @@ def summarize(snapshot, events, now):
                 if key in by_horizon:
                     continue
                 by_horizon[key] = {
-                    "NO_mid_move_cents_before_fees": cents(mark.get("mid_move_dollars")),
+                    "NO_mid_move_cents_before_fees": cents(
+                        mark.get("mid_move_dollars")
+                    ),
                     "NO_executable_bid_move_cents_before_fees": cents(
                         mark.get("bid_move_dollars")
                     ),
@@ -200,15 +201,11 @@ def summarize(snapshot, events, now):
                 )
                 if placed and filled_at and filled_at >= placed
                 else None,
-                "hours_to_tip_at_post": round(
-                    (tip - placed).total_seconds() / 3600, 3
-                )
+                "hours_to_tip_at_post": round((tip - placed).total_seconds() / 3600, 3)
                 if placed and tip
                 else None,
                 "exchange_expiry_matches_scheduled_tip": (
-                    abs((expiry - tip).total_seconds()) <= 1
-                    if expiry and tip
-                    else None
+                    abs((expiry - tip).total_seconds()) <= 1 if expiry and tip else None
                 ),
                 "quoted_NO_cents": rounded(intent.get("price_cents"), 2),
                 "actual_fill_NO_cents": cents(row.get("vwap_no_price_dollars")),
