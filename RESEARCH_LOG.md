@@ -2007,4 +2007,20 @@ to settlement. `research/article_tests.py`.
    control with the paired difference's game-clustered t ≥ 2 at flow share
    1.0, and above control at 0.25.
 
+**Related earlier tests on the same season** (added before running, so the
+multiplicity is visible): a 2¢ minimum edge (`edge2` in the placement study
+and the `no_seller_veto2` paper ledger, both fewer orders and less profit
+per 100 eligible orders); a second cent of price improvement
+(`quote_placement.py`, less profit); posting 2 hours instead of 5 before tip
+(+4.5¢ against +1.4¢ per fill in the decomposition, the `no_seller_late`
+ledger); and cancelling unfilled orders after 30-180 minutes (less profit).
+Tests 2, 3 and 5 overlap with these, so their bars are read as confirmation
+of earlier exploratory results, not as new discoveries. Counting those four,
+this season has now been used for at least 18 variants of these ideas.
+
+Two details settled before running: in test 3, at 2 hours the 0 and 0.5¢
+per hour rules are the same rule, so 5 of the 6 variants are distinct; and
+the trade prints on file start 6 hours before tip, so an order posted 6 or
+more hours before can only fill from then on.
+
 Results will be appended below this plan without editing it.
