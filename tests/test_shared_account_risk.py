@@ -79,7 +79,7 @@ def test_sports_share_one_combined_lifetime_daily_and_active_budget():
     active = {"client-nfl-a", "client-nba-b"}
     baseline = shared.room(owner, active, 3, NOW)
     assert all(baseline.values())
-    assert shared.LIMITS == {"lifetime": 1250.0, "daily": 120.0, "active": 105.0}
+    assert shared.LIMITS == {"lifetime": 1050.0, "daily": 105.0, "active": 90.0}
     expensive = {"nfl": [*pair("nfl", "a", 60.0)], "nba": pair("nba", "b", 45.0)}
     owner = shared.ownership(expensive)
     checks = shared.room(owner, active, 2, NOW)
