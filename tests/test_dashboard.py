@@ -107,7 +107,7 @@ overview({
   limits: {max_open: 150, max_order: 5, max_per_game: 25}
 });
 if (!nodes["hero-metrics"].innerHTML.includes("32%") ||
-    !nodes["forward-view"].innerHTML.includes("2 / 500")) {
+    !nodes["forward-view"].innerHTML.includes("2 / 1,900")) {
   throw new Error("Forward evidence not displayed correctly");
 }
 `;

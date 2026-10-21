@@ -217,6 +217,36 @@ def live_status(folder):
     return live
 
 
+def running_now():
+    """What the funded bots run, read from the code itself, plus public data
+    freshness. No account data."""
+    from live import prod_nba_auto as nba
+    from live.shared_account_risk import LIMITS
+
+    odds = None
+    books = Path("outputs/books/nba_latest.csv")
+    if books.exists():
+        stamps = pd.read_csv(books, usecols=["snapshot_utc"]).snapshot_utc
+        odds = str(stamps.max()) if len(stamps) else None
+    prints = sorted(Path("data/kalshi").glob("*/trades/*.csv.gz"))
+    return {
+        "nba_rules": nba.STRATEGY_VERSION,
+        "contracts_per_order": nba.MAX_CONTRACTS,
+        "entry_edge_cents": [round(100 * nba.ENTRY_MIN_NET_EDGE), 15],
+        "entry_hours_before_tip": list(nba.WINDOW),
+        "price_band_cents": list(nba.PRICE_BAND_CENTS),
+        "nba_max_open": nba.MAX_ACTIVE_COST,
+        "nba_max_daily": nba.MAX_DAILY_COST,
+        "nba_max_game": nba.MAX_GAME_COST,
+        "nba_max_lifetime": nba.MAX_GROSS_COST,
+        "account_max_open": LIMITS["active"],
+        "daily_loss_stop": nba.MAX_REALIZED_DAILY_LOSS,
+        "total_loss_stop": nba.MAX_REALIZED_CUMULATIVE_LOSS,
+        "odds_snapshot_utc": odds,
+        "trade_prints_through": prints[-1].name[:10] if prints else None,
+    }
+
+
 def main():
     now = datetime.now(UTC)
     ledgers, daily = [], []
@@ -342,6 +372,7 @@ def main():
         "live": live,
         "live_nfl": live_nfl,
         "limits": limits,
+        "running_now": running_now(),
         "research": research,
         "scan_top": scan,
     }
