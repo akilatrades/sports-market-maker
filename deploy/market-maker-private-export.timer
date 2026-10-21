@@ -1,0 +1,11 @@
+[Unit]
+Description=Export bot orders, fills and settlements to the private repo every hour
+
+[Timer]
+OnCalendar=*-*-* *:52:00
+RandomizedDelaySec=120
+Persistent=true
+Unit=market-maker-private-export.service
+
+[Install]
+WantedBy=timers.target

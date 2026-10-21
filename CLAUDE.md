@@ -16,7 +16,11 @@ file is the short version for an AI helping them.
 - Two bots (NBA and NFL) trade a small real-money account from a private
   server, live since 19–20 October 2026. **You cannot see the server, the
   account or its private journals**; only the public files here. Questions
-  about live results go to the owner.
+  about live results go to the owner. If the owner has added the private
+  repo `akilatrades/smm-private-data` to the session, it holds an hourly
+  export of live orders, fills and settlements
+  (`deploy/PRIVATE_FILL_EXPORT.md`); that data is live, so never mix it with
+  replay results, and never copy it into this public repository.
 - Read first: `docs/START_HERE.md`, `README.md`, `docs/PROJECT_BRIEF.md`,
   `RESEARCH_LOG.md`, `docs/FORWARD_VALIDATION.md`.
 
