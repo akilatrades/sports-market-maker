@@ -1,6 +1,11 @@
 name: DigitalOcean approved diagnostics
 on:
   workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/digitalocean-diagnostics.yml'
+      - 'deploy/droplet_inventory.sh'
 permissions:
   contents: read
 concurrency:
@@ -12,6 +17,7 @@ jobs:
     environment: production-diagnostics
     timeout-minutes: 5
     steps:
+      - uses: actions/checkout@v4
       - name: Validate SSH configuration
         env:
           SSH_HOST: ${{ secrets.DROPLET_HOST }}
@@ -26,21 +32,10 @@ jobs:
           printf '%s\n' "$SSH_HOST_KEY" > ~/.ssh/known_hosts
           chmod 600 ~/.ssh/known_hosts
           echo "SSH prerequisites supplied; no credentials printed"
-      - name: Read service health without exposing credentials or account data
+      - name: Read full redacted droplet inventory
         env:
           SSH_HOST: ${{ secrets.DROPLET_HOST }}
           SSH_USER: ${{ secrets.DROPLET_USER }}
         run: |
           ssh -o BatchMode=yes -o StrictHostKeyChecking=yes -o ConnectTimeout=10 \
-            "$SSH_USER@$SSH_HOST" 'set -eu
-              printf "UTC: "; date -u +%FT%TZ
-              for unit in market-maker.timer market-maker.service prod-nba-auto.service prod-nfl-auto.service; do
-                printf "%s active=" "$unit"
-                systemctl is-active "$unit" || true
-                printf "%s enabled=" "$unit"
-                systemctl is-enabled "$unit" || true
-              done
-              if [ -d /home/trader/sports-market-maker/.git ]; then
-                printf "deployed_commit="
-                git -C /home/trader/sports-market-maker rev-parse HEAD
-              fi'
+            "$SSH_USER@$SSH_HOST" 'bash -s' < deploy/droplet_inventory.sh
