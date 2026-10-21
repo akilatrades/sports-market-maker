@@ -366,6 +366,9 @@ def test_control_workflow_is_owner_only_confirmed_and_manual():
     assert "always() && github.ref" not in text
     assert '[[ "$CONFIRM" == "$ACTION" ]]' in text
     assert "sudo -n /usr/local/sbin/smm-prod-control" in text
+    # Status is mirrored as one annotation; stderr is never captured into it.
+    assert "::notice title=Droplet ${ACTION}" in text
+    assert '${verb[*]}")" || rc=$?' in text
     assert "secrets.KALSHI" not in text
     # GO_LIVE must wait for the full test suite.
     assert "needs.tests.result == 'success'" in text

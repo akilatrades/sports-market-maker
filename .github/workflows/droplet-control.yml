@@ -114,8 +114,18 @@ jobs:
             echo "::error::Go live / Stop helper is not installed on the Droplet yet (see deploy/GO_LIVE_BUTTON.md)"
             exit 1
           fi
-          ssh "${ssh_args[@]}" "$DROPLET_USER@$DROPLET_HOST" \
-            "sudo -n /usr/local/sbin/smm-prod-control ${verb[*]}"
+          # The helper prints only safe lines (PASS/FAIL, on/off, commit).
+          # Repeat them as one run annotation so status is readable through
+          # the GitHub API as well as the log. stderr is not captured.
+          rc=0
+          out="$(ssh "${ssh_args[@]}" "$DROPLET_USER@$DROPLET_HOST" \
+            "sudo -n /usr/local/sbin/smm-prod-control ${verb[*]}")" || rc=$?
+          printf '%s\n' "$out"
+          summary="${out//'%'/'%25'}"
+          summary="${summary//$'\r'/'%0D'}"
+          summary="${summary//$'\n'/'%0A'}"
+          echo "::notice title=Droplet ${ACTION} (exit ${rc})::${summary}"
+          exit "$rc"
       - name: Remove SSH key
         if: always()
         run: rm -f ~/.ssh/smm_control
