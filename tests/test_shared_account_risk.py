@@ -259,3 +259,20 @@ def test_account_pnl_fails_closed_on_incomplete_settlement():
         shared.account_loss_stop({"ownership": {}})
     assert shared.account_loss_stop(None) is False
     assert shared.account_loss_stop({"account_pnl": {"loss_stop": True}}) is True
+
+
+def test_bad_settlement_record_never_blocks_cancels_only_new_orders():
+    bad = _settled("KXNFL-B", -1)
+    bad["fee_cost"] = None
+    marker = shared._account_pnl_or_unavailable([bad], {"KXNFL-B"}, NOW)
+    assert "unavailable" in marker  # state_for keeps going so cancels can run
+    with pytest.raises(TradingError, match="unverifiable"):
+        shared.account_loss_stop({"account_pnl": marker})
+
+
+def test_loss_stop_boundary_is_not_lost_to_rounding():
+    owned = {f"KXNBA-{i}" for i in range(21)}
+    rows = [_settled(f"KXNBA-{i}", -0.7) for i in range(20)]
+    rows.append(_settled("KXNBA-20", -6.0))
+    report = shared.account_realized_pnl(rows, owned, NOW)
+    assert report["loss_stop"] is True

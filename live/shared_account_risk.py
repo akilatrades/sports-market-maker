@@ -214,17 +214,35 @@ def account_realized_pnl(settlements, owned_tickers, now):
         "cumulative_realized_pnl_dollars": round(cumulative, 4),
         "settlement_records": len(seen),
         "loss_stop": (
-            daily <= -ACCOUNT_LOSS_STOPS["daily"]
-            or cumulative <= -ACCOUNT_LOSS_STOPS["cumulative"]
+            daily <= -ACCOUNT_LOSS_STOPS["daily"] + 1e-9
+            or cumulative <= -ACCOUNT_LOSS_STOPS["cumulative"] + 1e-9
         ),
     }
 
 
+def _account_pnl_or_unavailable(settlements, owned_tickers, now):
+    """Never let a bad settlement record block the bots' safety cancels.
+
+    The workers read shared state at the start of a pass, before they
+    cancel unsafe resting orders. A malformed record is kept as a marker
+    here and halts new orders only at the loss-stop check, after cancels.
+    """
+    try:
+        return account_realized_pnl(settlements, owned_tickers, now)
+    except TradingError as error:
+        return {"unavailable": str(error)}
+
+
 def account_loss_stop(context):
-    """True when the whole-account realized-loss stop blocks new orders."""
+    """True when the whole-account realized-loss stop blocks new orders.
+
+    Raises (no new orders) when the account P&L could not be verified.
+    """
     if context is None:
         return False
     pnl = context.get("account_pnl")
+    if isinstance(pnl, dict) and pnl.get("unavailable"):
+        raise TradingError(f"Shared account P&L unverifiable ({pnl['unavailable']})")
     if not isinstance(pnl, dict) or "loss_stop" not in pnl:
         raise TradingError("Shared account P&L unavailable: HALT")
     return bool(pnl["loss_stop"])
@@ -320,7 +338,9 @@ def state_for(client, sport, now):
     return snapshots[sport], {
         "ownership": owner,
         "active_client_ids": active_ids,
-        "account_pnl": account_realized_pnl(settlements, set(owner["tickers"]), now),
+        "account_pnl": _account_pnl_or_unavailable(
+            settlements, set(owner["tickers"]), now
+        ),
     }
 
 

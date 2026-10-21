@@ -643,13 +643,13 @@ def pass_once(client, env, frame, now, journal, *, dry=False):
             print(f"PROD AUTO: canceled {canceled} unsafe resting orders")
             # Require another reconciliation pass after cancellation.
             return finish("availability_cancellation", canceled=canceled)
+        for resting in state["resting"]:
+            record_queue_observation(client, journal, resting["order_id"], now)
         from live.shared_account_risk import account_loss_stop
 
         if account_loss_stop(shared):
             print("ACCOUNT REALIZED LOSS STOP (NBA + NFL): no additional orders")
             return finish("account_loss_stop", account_pnl=shared["account_pnl"])
-        for resting in state["resting"]:
-            record_queue_observation(client, journal, resting["order_id"], now)
         print(
             f"PROD AUTO: attempts={len(attempts)}, resting={len(state['resting'])}, "
             f"held={len(state['held'])}, settled_tickers={len(state['settled'])}, "

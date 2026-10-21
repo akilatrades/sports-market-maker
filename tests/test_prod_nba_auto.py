@@ -1060,9 +1060,9 @@ def _one_resting_order_world(monkeypatch, tmp_path, *, dual=False, shared=None):
     return Client(), calls, tmp_path / "journal.jsonl"
 
 
-def _blocked_frame():
+def _blocked_frame(reason="URLError"):
     frame = pd.DataFrame()
-    frame.attrs["diagnostics"] = {"blocked": "ValueError"}
+    frame.attrs["diagnostics"] = {"blocked": reason}
     return frame
 
 
@@ -1102,3 +1102,29 @@ def test_account_loss_stop_blocks_new_nba_orders(monkeypatch, tmp_path):
     assert not nba.pass_once(client, ARMED, priced(), NOW, journal)
     status = json.loads((tmp_path / "last_scan.json").read_text())
     assert status["decision"] == "account_loss_stop"
+
+
+def test_data_integrity_failures_still_cancel_immediately(monkeypatch, tmp_path):
+    client, calls, journal = _one_resting_order_world(monkeypatch, tmp_path)
+    nba.note_good_inputs(tmp_path, NOW - timedelta(minutes=2))
+    for reason in (
+        "unidentifiable_or_undated_injury",
+        "future_injury_timestamp",
+        "duplicate_projection_ticker",
+        "no_priced_markets",
+    ):
+        calls.clear()
+        nba.pass_once(client, ARMED, _blocked_frame(reason), NOW, journal)
+        assert len(calls) == 1, reason
+
+
+def test_unverifiable_account_pnl_still_lets_cancels_run(monkeypatch, tmp_path):
+    shared = {"account_pnl": {"unavailable": "Incomplete settlement"}, "ownership": {}}
+    client, calls, journal = _one_resting_order_world(
+        monkeypatch, tmp_path, dual=True, shared=shared
+    )
+    nba.pass_once(client, ARMED, priced(), NOW, journal)
+    assert len(calls) == 1  # the unsafe-order cancel ran first
+    monkeypatch.setattr(nba, "cancel_invalid_resting", lambda *args: 0)
+    with pytest.raises(TradingError, match="unverifiable"):
+        nba.pass_once(client, ARMED, priced(), NOW, journal)  # then: no new orders

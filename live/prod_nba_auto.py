@@ -302,8 +302,8 @@ def nba_realized_pnl(settlements, owned_tickers, now):
         "cumulative_realized_pnl_dollars": round(cumulative, 4),
         "settlement_records": len(seen),
         "loss_stop": (
-            daily <= -MAX_REALIZED_DAILY_LOSS
-            or cumulative <= -MAX_REALIZED_CUMULATIVE_LOSS
+            daily <= -MAX_REALIZED_DAILY_LOSS + 1e-9
+            or cumulative <= -MAX_REALIZED_CUMULATIVE_LOSS + 1e-9
         ),
     }
 
@@ -386,9 +386,31 @@ def resting_cancel_reason(row, intent, market, fee_bound):
 INPUT_OUTAGE_HOLD_MINUTES = 15
 
 
+# Network/transport failures only. Data-integrity failures (malformed,
+# undated or future injury records, duplicate tickers, row-count or hash
+# mismatches, no priced markets) still cancel resting orders immediately.
+TRANSIENT_INPUT_ERRORS = frozenset(
+    {
+        "URLError",
+        "HTTPError",
+        "TimeoutError",
+        "timeout",
+        "ConnectionError",
+        "ConnectionResetError",
+        "ConnectionRefusedError",
+        "ConnectionAbortedError",
+        "RemoteDisconnected",
+        "IncompleteRead",
+        "SSLError",
+        "gaierror",
+    }
+)
+
+
 def inputs_unavailable(frame):
-    """True when the input pipeline failed, not when one market is unpriced."""
-    return frame.empty and bool(frame.attrs.get("diagnostics", {}).get("blocked"))
+    """True only when an input feed failed in transit (a connection hiccup)."""
+    blocked = frame.attrs.get("diagnostics", {}).get("blocked")
+    return frame.empty and blocked in TRANSIENT_INPUT_ERRORS
 
 
 def note_good_inputs(directory, now):
