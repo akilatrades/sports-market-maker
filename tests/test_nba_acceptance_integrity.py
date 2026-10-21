@@ -1,4 +1,5 @@
 """Regression tests for fail-closed production journal acceptance indexing."""
+
 import pytest
 from live.prod_nba_auto import TradingError, records
 
@@ -33,9 +34,11 @@ def test_records_reject_malformed_acceptance(missing):
 
 
 def test_records_preserve_valid_acceptance():
-    attempts, accepted = records([
-        {"event": "intent", "client_order_id": "a"},
-        {"event": "accepted", "client_order_id": "a", "order_id": "one"},
-    ])
+    attempts, accepted = records(
+        [
+            {"event": "intent", "client_order_id": "a"},
+            {"event": "accepted", "client_order_id": "a", "order_id": "one"},
+        ]
+    )
     assert len(attempts) == 1
     assert accepted["a"]["order_id"] == "one"
