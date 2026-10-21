@@ -108,14 +108,17 @@ def test_nba_baseline_retains_no_side_and_passive_price():
 
 def test_separate_risk_caps_and_state():
     assert str(nba.STATE).endswith("prod-nba-auto")
-    assert nba.MAX_GROSS_COST == 1000
-    assert nba.MAX_ACTIVE_COST == 75
+    assert nba.STRATEGY_VERSION == "nba-no-v5-one-contract-breadth"
+    assert nba.MAX_GROSS_COST == 2000
+    assert nba.MAX_ACTIVE_COST == 150
     assert nba.MAX_ORDER_COST == 4
-    assert nba.MAX_GAME_COST == 15
-    assert nba.MAX_TEAM_COST == 10
-    assert nba.MAX_DAILY_COST == 75
-    assert nba.MAX_GAME_ORDERS == 10
-    assert nba.MAX_CONTRACTS == 2
+    assert nba.MAX_GAME_COST == 25
+    assert nba.MAX_TEAM_COST == 25
+    assert nba.MAX_DAILY_COST == 150
+    assert nba.MAX_GAME_ORDERS == 40
+    assert nba.MAX_CONTRACTS == 1
+    assert nba.MAX_NEW_ORDERS_PER_PASS == 3
+    assert nba.PRICE_BAND_CENTS == (5, 95)
     assert nba.MAX_REALIZED_DAILY_LOSS == 20
     assert nba.MAX_REALIZED_CUMULATIVE_LOSS == 60
     assert nba.WINDOW == (2.0, 6.0)
@@ -307,7 +310,7 @@ def test_resting_quote_retains_order_while_edge_remains_valid():
     intent = {
         "ticker": row.ticker,
         "price_cents": 51,
-        "count": 2,
+        "count": 1,
         "probability_source": "sportsbook",
     }
     market = {"status": "active", "yes_bid_dollars": 0.40, "yes_ask_dollars": 0.50}
@@ -332,7 +335,7 @@ def test_resting_order_is_canceled_when_signal_decays(change, expected):
     intent = {
         "ticker": row.ticker,
         "price_cents": 51,
-        "count": 2,
+        "count": 1,
         "probability_source": "sportsbook",
     }
     market = {"status": "active", "yes_bid_dollars": 0.40, "yes_ask_dollars": 0.50}
@@ -344,7 +347,7 @@ def test_resting_market_or_fee_change_forces_cancel():
     intent = {
         "ticker": row.ticker,
         "price_cents": 51,
-        "count": 2,
+        "count": 1,
         "probability_source": "sportsbook",
     }
     market = {"status": "active", "yes_bid_dollars": 0.40, "yes_ask_dollars": 0.50}
@@ -379,7 +382,7 @@ def test_resting_recheck_cancels_only_bad_order_and_journals_reason(
             "client_order_id": "cid",
             "ticker": ticker,
             "price_cents": 51,
-            "count": 2,
+            "count": 1,
             "probability_source": "sportsbook",
         },
         {"event": "accepted", "client_order_id": "cid", "order_id": "oid"},
@@ -457,7 +460,7 @@ def test_unavailable_live_resting_quote_halts_until_exchange_expiry(
             "client_order_id": "cid",
             "ticker": ticker,
             "price_cents": 51,
-            "count": 2,
+            "count": 1,
             "probability_source": "sportsbook",
         },
         {"event": "accepted", "client_order_id": "cid", "order_id": "oid"},
@@ -510,13 +513,14 @@ def test_more_distinct_orders_can_fit_without_bypassing_order_limits():
 
 def test_game_and_team_budget_reasons_are_distinct():
     row = SimpleNamespace(game_id=20261020, team="LAL")
-    team_filled = [_past_attempt(i, 20261020, "LAL", 2.5) for i in range(4)]
+    # Same team, other games today: only the per-team cap binds.
+    team_filled = [_past_attempt(i, 20261021 + i, "LAL", 6.0) for i in range(4)]
     reasons = nba.budget_blockers(team_filled, [], row, 1.0, NOW)
     assert "nba_per_team_submissions" in reasons
     assert "nba_per_game_submissions" not in reasons
     assert "nba_game_order_count" not in reasons
 
-    game_filled = [_past_attempt(i, 20261020, "OTHER" + str(i), 3.0) for i in range(4)]
+    game_filled = [_past_attempt(i, 20261020, "OTHER" + str(i), 5.5) for i in range(4)]
     reasons = nba.budget_blockers(game_filled, [], row, 2.0, NOW)
     assert "nba_per_game_submissions" in reasons
     assert "nba_per_team_submissions" not in reasons
@@ -525,14 +529,14 @@ def test_game_and_team_budget_reasons_are_distinct():
 def test_order_count_and_remaining_submission_allowance_still_bind():
     row = SimpleNamespace(game_id=20261020, team="LAL")
     past = [
-        _past_attempt(i, 20261020, "OTHER" + str(i), 1.0)
+        _past_attempt(i, 20261020, "OTHER" + str(i), 0.5)
         for i in range(nba.MAX_GAME_ORDERS)
     ]
     reasons = nba.budget_blockers(past, [], row, 0.5, NOW)
     assert "nba_game_order_count" in reasons
     assert "nba_per_game_submissions" not in reasons
 
-    many_games = [_past_attempt(i, i + 100, "OTHER" + str(i), 4.0) for i in range(300)]
+    many_games = [_past_attempt(i, i + 100, "OTHER" + str(i), 4.0) for i in range(500)]
     for a in many_games:
         a["utc"] = (NOW - timedelta(days=7)).isoformat()
     reasons = nba.budget_blockers(many_games, [], row, 0.5, NOW)
@@ -542,14 +546,14 @@ def test_order_count_and_remaining_submission_allowance_still_bind():
 
 def test_active_and_shared_risk_limits_cannot_be_overridden():
     row = SimpleNamespace(game_id=20261020, team="LAL")
-    active = [_past_attempt(i, i + 100, "OTHER" + str(i), 3.5) for i in range(25)]
+    active = [_past_attempt(i, i + 100, "OTHER" + str(i), 3.5) for i in range(40)]
     reasons = nba.budget_blockers(active, active, row, 2.0, NOW)
     assert "nba_active_exposure" in reasons
 
     import live.shared_account_risk as shared_risk
 
     # These caps remain independent, even when the NBA cohort enlarges.
-    assert shared_risk.LIMITS == {"lifetime": 1050, "daily": 105, "active": 90}
+    assert shared_risk.LIMITS == {"lifetime": 2050, "daily": 180, "active": 165}
 
 
 def test_v3_guard_drains_known_v2_and_rejects_unowned_resting_orders():
@@ -674,11 +678,11 @@ def test_resting_edge_rule_does_not_cancel_accepted_positive_edge():
     intent = {
         "ticker": row.ticker,
         "price_cents": 51,
-        "count": 2,
+        "count": 1,
         "probability_source": "sportsbook",
     }
     market = {"status": "active", "yes_bid_dollars": 0.40, "yes_ask_dollars": 0.50}
-    assert nba.RESTING_MIN_NET_EDGE == nba.ENTRY_MIN_NET_EDGE == 0.03
+    assert nba.RESTING_MIN_NET_EDGE == nba.ENTRY_MIN_NET_EDGE == 0.0
     assert nba.resting_cancel_reason(row, intent, market, 0.0) is None
 
 
@@ -844,7 +848,7 @@ def test_questionable_teammate_update_blocks_changed_team(tmp_path, monkeypatch)
 def test_daily_team_cap_resets_without_resetting_game_or_lifetime():
     row = SimpleNamespace(game_id="new-game", team="LAL")
     yesterday = NOW - timedelta(days=1)
-    past = [_past_attempt(i, "old-game", "LAL", 2.7) for i in range(3)]
+    past = [_past_attempt(i, "old-game", "LAL", 7.3) for i in range(3)]
     for a in past:
         a["utc"] = yesterday.isoformat()
     assert nba.room_for(past, [], row, 1.0, NOW)
@@ -879,7 +883,7 @@ def test_accepted_nba_order_may_stay_resting_near_tip(hours_to_tip):
     intent = {
         "ticker": row.ticker,
         "price_cents": 51,
-        "count": 2,
+        "count": 1,
         "probability_source": "sportsbook",
     }
     market = {
@@ -899,7 +903,7 @@ def test_expired_nba_order_no_longer_valid_at_or_after_tip(hours_to_tip):
     intent = {
         "ticker": row.ticker,
         "price_cents": 51,
-        "count": 2,
+        "count": 1,
         "probability_source": "sportsbook",
     }
     market = {

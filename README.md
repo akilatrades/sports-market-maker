@@ -106,8 +106,9 @@ Kalshi quotes ─► edge after fees ─► filters ─► risk checks ─► po
   game, player, stat and line exactly, and it is fresh.
 - **Orders.** Post-only NO limit orders (they only rest on the book, never
   trade immediately) one cent inside the spread, placed 2–6 hours before
-  tip-off and resting until tip (NFL: 10 minutes to 2 hours before kickoff). An order needs at least
-  3¢ of estimated edge after fees to be placed and to stay. Each run
+  tip-off and resting until tip (NFL: 10 minutes to 2 hours before kickoff). Since NBA rules v5
+  (21 October), an NBA order is one contract and needs zero to 15¢ of
+  estimated edge after fees to be placed and to stay (NFL keeps 3¢). Each run
   reconciles resting orders, positions and fills with the exchange first,
   and stops if anything is unexplained.
 - **Risk.** Limits per order, game, team, day and lifetime; daily and

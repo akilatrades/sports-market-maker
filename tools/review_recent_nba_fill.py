@@ -25,6 +25,13 @@ FILLED_STATES = {
 }
 
 
+# Public, coarse labels for the strategy version that placed an order.
+GENERATIONS = {
+    "nba-no-v4-smaller-orders-edge3-baseline": "baseline_v4",
+    "nba-no-v5-one-contract-breadth": "breadth_v5",
+}
+
+
 def parse_time(value):
     try:
         ts = datetime.fromisoformat(str(value).replace("Z", "+00:00"))
@@ -219,11 +226,8 @@ def summarize(snapshot, events, now):
                     else None
                 ),
                 "journal_has_expiry": expiry is not None,
-                "intent_strategy_generation": (
-                    "baseline_v4"
-                    if intent.get("strategy_version")
-                    == "nba-no-v4-smaller-orders-edge3-baseline"
-                    else "earlier_or_unknown"
+                "intent_strategy_generation": GENERATIONS.get(
+                    intent.get("strategy_version"), "earlier_or_unknown"
                 ),
                 "quoted_NO_cents": rounded(intent.get("price_cents"), 2),
                 "actual_fill_NO_cents": cents(row.get("vwap_no_price_dollars")),

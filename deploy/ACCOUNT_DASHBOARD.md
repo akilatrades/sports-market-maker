@@ -99,9 +99,9 @@ updater while both pilots are running.
 - **Submission allowance:** each bot's lifetime cap counts every attempted
   order's cost plus reserve, including canceled attempts. This is not cash spent
   or current open exposure. NFL: $50 lifetime, $3/order, $3/game, $3/team,
-  $15 active, $30 daily, five contracts/order, two orders/game. NBA: $1,000
-  lifetime, $4/order, $15/game, $10/team per day, $75 active, $75 daily, two
-  contracts/order, ten orders/game. Shared: $1,050 lifetime, $105 daily, $90 active.
+  $15 active, $30 daily, five contracts/order, two orders/game. NBA (v5): $2,000
+  lifetime, $4/order, $25/game, $25/team per day, $150 active, $150 daily, one
+  contract/order, 40 orders/game. Shared: $2,050 lifetime, $180 daily, $165 active.
 - **Last scan:** actual `last_scan.json` with named skips. A fresh account read
   does not imply the trader is active. A scan older than five minutes is flagged.
 

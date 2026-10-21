@@ -62,7 +62,7 @@ def test_append_only_reconciliation_is_accepted_but_its_cost_is_not_recycled():
     assert len(owner["attempts"]) == 1
     assert owner["rejected_by_sport"]["nba"] == {CID}
     assert shared.room(owner, set(), 2.0, NOW)["shared_lifetime"]
-    assert shared.room(owner, set(), 1250.0, NOW)["shared_lifetime"] is False
+    assert shared.room(owner, set(), 1900.0, NOW)["shared_lifetime"] is False
     state = {
         "resting": [],
         "held": [],
@@ -134,7 +134,7 @@ def test_rejected_submissions_do_not_use_nba_game_slots_but_remain_charged():
     assert nba.room_for(prior, [], row, 0.8, NOW, rejected={"reject-one"})
     still_accepted = [
         prior[0],
-        {**prior[1], "cost": 4.0},
-        {**prior[1], "client_order_id": "accepted-third", "cost": 6.0},
+        {**prior[1], "cost": 10.0},
+        {**prior[1], "client_order_id": "accepted-third", "cost": 12.0},
     ]
     assert not nba.room_for(still_accepted, [], row, 0.8, NOW, rejected={"reject-one"})

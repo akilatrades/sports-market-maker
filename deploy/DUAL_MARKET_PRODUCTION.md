@@ -22,12 +22,12 @@ the shared lock is held:
 
 | Guard | Combined NFL + NBA | NFL | NBA |
 |---|---:|---:|---:|
-| Lifetime total of orders placed (never recycled) | **$1,050** | $50 | $1,000 |
-| Orders placed per New York day | **$105** | $30 | $75 |
-| Open orders at once (with 10% cushion) | **$90** | $15 | $75 |
+| Lifetime total of orders placed (never recycled) | **$2,050** | $50 | $2,000 |
+| Orders placed per New York day | **$180** | $30 | $150 |
+| Open orders at once (with 10% cushion) | **$165** | $15 | $150 |
 | One order | — | $3 | $4 |
-| Per game | — | $3 | $15 |
-| Per team | — | $3 (lifetime) | $10 per day |
+| Per game | — | $3 | $25 |
+| Per team | — | $3 (lifetime) | $25 per day |
 | Settled-loss stop | **$20 per day, $60 total** | (account-wide) | $20 / $60, plus account-wide |
 
 Values come from `live/shared_account_risk.py`, `live/nfl_policy.py` and
@@ -183,7 +183,7 @@ KILL file to force more activity.
   bot-owned contracts in the same series. Manual open positions and
   resting orders intentionally halt new entries rather than being
   silently incorporated into the risk model.
-- **Do not clear historical attempts** to recycle the $1,050 lifetime allowance.
+- **Do not clear historical attempts** to recycle the $2,050 lifetime allowance.
   There is no automatic monthly reset. This is still a bounded test.
 - **No guarantee of profit.** An NBA in-sample backtest and one small
   losing NFL production cohort do not establish stable positive
