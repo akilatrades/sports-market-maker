@@ -20,9 +20,12 @@ concurrency:
 
 jobs:
   audit:
-    if: github.ref == 'refs/heads/main'
+    if: >-
+      github.ref == 'refs/heads/main' && github.actor == 'akilatrades' &&
+      github.triggering_actor == 'akilatrades'
     runs-on: ubuntu-24.04
     timeout-minutes: 6
+    environment: funded-droplet
     steps:
       - uses: actions/checkout@v4
         with:

@@ -8,8 +8,10 @@ day and are kept unchanged as part of the record.
 
 | Document | What it covers |
 |---|---|
+| [Start here](START_HERE.md) | For new collaborators: the project in a minute, reading order, how a night works, first projects |
 | [Project README](../README.md) | What the project does, results, how it works, limitations |
 | [Project brief](PROJECT_BRIEF.md) | Two-minute case study: approach, evidence, what is still unproven |
+| [Current project state](CURRENT_PROJECT_STATE.md) | What is live, what the evidence shows so far, what is still unknown |
 | [Research log](../RESEARCH_LOG.md) | Every hypothesis, written down before it was tested, with its result |
 | [Forward-validation rules](FORWARD_VALIDATION.md) | How live results are judged: 30 days and 500 settled fills |
 | [Audit matrix](DEEP_AUDIT_MATRIX.md) | Checks across model, trading, data, risk and security |
@@ -47,6 +49,8 @@ day and are kept unchanged as part of the record.
 | [Production execution audit, Oct 20](PRODUCTION_EXECUTION_AUDIT_2026-10-20.md) | Order lifecycle checks before the NBA launch |
 | [Project map and production audit, Oct 18](PROJECT_MAP_AND_PRODUCTION_AUDIT_2026-10-18.md) | Architecture walkthrough and live-fill reconciliation |
 | [Account security checklist](LIVE_ACCOUNT_SECURITY_CHECKLIST.md) | Key handling and account safety |
+| [GitHub access and secrets](../deploy/GITHUB_ACCESS.md) | What is public, who can run what, adding a collaborator safely |
+| [Contributing](../CONTRIBUTING.md) · [Security](../SECURITY.md) | How changes get in; how the account and server are protected |
 
 ## Archive
 
@@ -54,7 +58,7 @@ Earlier working notes, kept for the record.
 
 | Document | What it covers |
 |---|---|
-| [Current project state](CURRENT_PROJECT_STATE.md) | Running status notes |
+| [Project state notes, to Oct 19](PROJECT_STATE_NOTES_2026-10-19.md) | Running status notes from the build-up to launch |
 | [NBA v3 long-resting proposal, Oct 20](NBA_LONG_RESTING_V3_2026-10-20.md) | Superseded by the current NBA rules |
 | [Execution improvements v2](EXECUTION_IMPROVEMENTS_V2_2026-10.md) | Earlier execution research |
 | [NBA go/no-go, Oct 20](TUESDAY_NBA_GO_NO_GO_2026-10-20.md) | Launch conditions for the first NBA night |

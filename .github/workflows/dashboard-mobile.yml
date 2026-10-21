@@ -9,6 +9,9 @@ on:
       - ".github/workflows/dashboard-mobile.yml"
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
   phone-viewport:
     runs-on: ubuntu-latest

@@ -21,6 +21,8 @@ concurrency:
   cancel-in-progress: false
 jobs:
   backtest:
+    # Spends Odds API credits: owner only.
+    if: github.actor == 'akilatrades' && github.triggering_actor == 'akilatrades'
     runs-on: ubuntu-latest
     timeout-minutes: 60
     env:

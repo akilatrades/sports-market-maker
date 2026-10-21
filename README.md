@@ -12,7 +12,8 @@ orders under strict limits.
 **[Project brief](docs/PROJECT_BRIEF.md)** ·
 **[Dashboard](https://akilatrades.github.io/sports-market-maker/dashboard/)** ·
 **[Research log](RESEARCH_LOG.md)** ·
-**[Documentation](docs/README.md)**
+**[Documentation](docs/README.md)** ·
+**[Start here (collaborators)](docs/START_HERE.md)**
 
 ---
 

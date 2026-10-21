@@ -70,10 +70,11 @@ Repository code (checks, workers) only ever runs as `trader`. The KILL file
 for a cancel pass is written by `trader`, never by root, and a KILL file that
 is a link is refused.
 
-**Optional hardening:** move the four `DROPLET_*` secrets from repository
-secrets into a GitHub *Environment* limited to `main`, with yourself as a
-required reviewer, and add `environment: <name>` to the `control` job. Each
-Go live / Stop would then also need your approval click in GitHub.
+**Secrets:** the `control` job uses the `funded-droplet` GitHub environment.
+Once the four `DROPLET_*` secrets are moved into it and limited to `main`
+(steps in [GITHUB_ACCESS.md](GITHUB_ACCESS.md)), no branch other than `main`
+can reach the server. Adding yourself as a required reviewer is optional; each
+Go live / Stop would then also need an approval click in GitHub.
 
 ## Stopping
 
