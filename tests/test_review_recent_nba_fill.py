@@ -167,3 +167,20 @@ def test_public_ci_report_never_contains_unique_trade_details():
         assert forbidden not in printed
     assert public_summary(private)["individual_fills"][0]["maker_status"] == "all_maker"
     assert public_summary(private)["individual_fills"][0]["expiry_matched_tip"] is True
+
+
+def test_absent_markouts_never_appear_as_profitable():
+    snap, events = fixture()
+    result = summarize(snap, events, NOW)
+    result["latest_fills"][0]["model_estimated_net_edge_cents_at_post"] = None
+    result["latest_fills"][0]["markouts_observed"] = {
+        "5m": {
+            "NO_mid_move_cents_before_fees": None,
+            "NO_executable_bid_move_cents_before_fees": None,
+            "observation_issue": "quote_unavailable",
+        }
+    }
+    public = public_summary(result)
+    row = public["individual_fills"][0]
+    assert row["pretrade_edge_sign"] == "unknown"
+    assert row["postfill_observations"]["5m"]["mid_direction"] == "unknown"
