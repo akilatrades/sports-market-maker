@@ -70,12 +70,20 @@ def main():
                     )
                     if width <= 700:
                         assert metrics["navOverflow"] == "auto"
-                        action = page.locator("#heat").evaluate(
-                            "(el) => getComputedStyle(el).touchAction"
-                        )
-                        assert action == "auto", (
-                            f"{width}px: side-scrolling table traps touch gestures: {action}"
-                        )
+                        # The old #heat element was removed from the
+                        # dashboard; validate the *actual* horizontal
+                        # scroll regions, including the navigation.
+                        for selector in (".toplinks", ".scroll"):
+                            for region in page.locator(selector).all():
+                                if not region.is_visible():
+                                    continue
+                                action = region.evaluate(
+                                    "(el) => getComputedStyle(el).touchAction"
+                                )
+                                assert action == "auto", (
+                                    f"{width}px: {selector} traps vertical swipes: "
+                                    f"{action}"
+                                )
                     assert metrics["height"] > 1200, (
                         f"{width}px: unexpectedly short page; data failed to render"
                     )
