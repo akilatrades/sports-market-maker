@@ -11,4 +11,4 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: pip install ruff==0.11.13
-      - run: ruff format --diff live/prod_nba_auto.py live/legacy_input_sync.py tests/test_nba_late_context_diagnostics.py tests/test_legacy_input_sync.py || true
+      - run: ruff format --diff live/prod_nba_auto.py live/legacy_input_sync.py tests/test_nba_late_context_diagnostics.py tests/test_legacy_input_sync.py deploy/freeze_legacy_runner.py tests/test_freeze_legacy_runner.py || true
