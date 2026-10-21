@@ -1,5 +1,9 @@
 # CURRENT PROJECT STATE — Sports Market Maker
 
+> **Archived (notes up to 19 October 2026).** Superseded by
+> [CURRENT_PROJECT_STATE.md](CURRENT_PROJECT_STATE.md). Kept as written,
+> except that the server address is redacted. Do not follow its launch steps.
+
 > **Tuesday launch operations:** Follow
 > [TUESDAY_NBA_GO_NO_GO_2026-10-20.md](TUESDAY_NBA_GO_NO_GO_2026-10-20.md).
 > This is an owner-operated bounded real-money launch with explicit

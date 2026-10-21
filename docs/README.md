@@ -8,7 +8,8 @@ day and are kept unchanged as part of the record.
 
 | Document | What it covers |
 |---|---|
-| [Start here](START_HERE.md) | For new collaborators: the project in a minute, reading order, how a night works, first projects |
+| [Start here](START_HERE.md) | For new collaborators: the project in a minute, reading order, how a night works, using AI to get up to speed, first projects |
+| [Notes for AI assistants](../CLAUDE.md) | The project's rules and map, read automatically by Claude Code |
 | [Project README](../README.md) | What the project does, results, how it works, limitations |
 | [Project brief](PROJECT_BRIEF.md) | Two-minute case study: approach, evidence, what is still unproven |
 | [Current project state](CURRENT_PROJECT_STATE.md) | What is live, what the evidence shows so far, what is still unknown |

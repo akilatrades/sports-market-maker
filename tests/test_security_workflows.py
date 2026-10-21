@@ -9,6 +9,20 @@ OWNER_ONLY = (
     "github.actor == 'akilatrades'",
     "github.triggering_actor == 'akilatrades'",
 )
+SERVER_JOB_CONDITIONS = ("github.ref == 'refs/heads/main'", *OWNER_ONLY)
+# Triggers that could start a server job without the owner pressing the
+# button: a merge (push), a schedule, a pull request or another workflow.
+UNSAFE_SERVER_TRIGGERS = (
+    "push",
+    "pull_request",
+    "pull_request_target",
+    "schedule",
+    "workflow_run",
+    "workflow_call",
+    "repository_dispatch",
+)
+JOB_HEADER = re.compile(r"^  ([A-Za-z0-9_-]+):[ \t]*(?:#.*)?$", re.M)
+DYNAMIC_SECRETS = re.compile(r"secrets\s*\[|toJSON\(\s*secrets|secrets:\s*inherit")
 
 
 def _triggers(text):
@@ -18,31 +32,93 @@ def _triggers(text):
     return match.group(1)
 
 
+def _split_jobs(text):
+    """(text before ``jobs:``, {job name: that job's text})."""
+    head, sep, body = text.partition("\njobs:\n")
+    assert sep, "workflow has no jobs: block"
+    headers = list(JOB_HEADER.finditer(body))
+    assert headers, "no jobs found"
+    before = [ln for ln in body[: headers[0].start()].splitlines() if ln.strip()]
+    assert all(ln.lstrip().startswith("#") for ln in before), "unparsed job text"
+    jobs = {}
+    for i, match in enumerate(headers):
+        stop = headers[i + 1].start() if i + 1 < len(headers) else len(body)
+        jobs[match.group(1)] = body[match.end() : stop]
+    return head, jobs
+
+
 def _jobs(text):
-    """Map job name -> that job's text (two-space-indented keys under jobs:)."""
-    body = text.split("\njobs:\n", 1)[1]
-    parts = re.split(r"^  ([A-Za-z0-9_-]+):\s*$", body, flags=re.M)
-    return dict(zip(parts[1::2], parts[2::2]))
+    return _split_jobs(text)[1]
+
+
+def _job_condition(job):
+    """The job-level ``if:`` expression (four-space indent), folded to one line."""
+    lines = job.splitlines()
+    for i, line in enumerate(lines):
+        match = re.match(r"^    if:\s*(.*)$", line)
+        if not match:
+            continue
+        value = match.group(1).strip()
+        if value in (">", ">-", ">+", "|", "|-", "|+"):
+            block = []
+            for following in lines[i + 1 :]:
+                if following.strip() and not following.startswith("      "):
+                    break
+                block.append(following.strip())
+            value = " ".join(block)
+        return value.replace("${{", "").replace("}}", "").strip()
+    return ""
+
+
+def _required_conjuncts(expression):
+    """Split on top-level ``&&``; a top-level ``||`` could bypass every check."""
+    parts, depth, current, i = [], 0, "", 0
+    while i < len(expression):
+        char = expression[i]
+        depth += char == "("
+        depth -= char == ")"
+        if depth == 0 and expression.startswith("||", i):
+            raise AssertionError(f"top-level || in job condition: {expression}")
+        if depth == 0 and expression.startswith("&&", i):
+            parts.append(current.strip())
+            current, i = "", i + 2
+            continue
+        current += char
+        i += 1
+    parts.append(current.strip())
+    return parts
+
+
+def test_secrets_are_always_named_explicitly():
+    # secrets['X'], toJSON(secrets) and secrets: inherit would hide which
+    # secrets a job reads from the checks below.
+    for workflow in WORKFLOWS:
+        text = workflow.read_text(encoding="utf-8")
+        assert not DYNAMIC_SECRETS.search(text), workflow.name
 
 
 def test_server_secrets_only_reach_owner_run_main_branch_jobs():
     seen = 0
     for workflow in WORKFLOWS:
         text = workflow.read_text(encoding="utf-8")
-        for name, job in _jobs(text).items():
+        head, jobs = _split_jobs(text)
+        assert "secrets.DROPLET_" not in head, f"{workflow.name}: workflow-level env"
+        for name, job in jobs.items():
             if "secrets.DROPLET_" not in job:
                 continue
             seen += 1
             where = f"{workflow.name}:{name}"
             # The environment only releases its secrets to main (see
             # deploy/GITHUB_ACCESS.md); the job also refuses anyone else.
-            assert "environment: funded-droplet" in job, where
-            assert "github.ref == 'refs/heads/main'" in job, where
-            for check in OWNER_ONLY:
-                assert check in job, where
+            assert re.search(r"^    environment: funded-droplet[ \t]*$", job, re.M), (
+                where
+            )
+            conjuncts = _required_conjuncts(_job_condition(job))
+            for check in SERVER_JOB_CONDITIONS:
+                assert check in conjuncts, where
             triggers = _triggers(text)
-            for unsafe in ("pull_request", "schedule:", "workflow_run"):
-                assert unsafe not in triggers, where
+            for unsafe in UNSAFE_SERVER_TRIGGERS:
+                assert not re.search(rf"^\s+{unsafe}\b", triggers, re.M), where
     assert seen >= 5
 
 

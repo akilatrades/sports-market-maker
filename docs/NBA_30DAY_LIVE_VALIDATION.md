@@ -1,12 +1,13 @@
 # NBA forward validation: 30-day private evidence study
 
-**Start:** the first exchange-accepted order under the current rules
-(`nba-no-v4-smaller-orders-edge3-baseline`). The first NBA order of all was
-accepted on October 20, 2026, under an earlier version; each rule version is a
-separate group under [FORWARD_VALIDATION.md](FORWARD_VALIDATION.md), so the
-30 days restart with the first v4 order. The start time comes from the
-append-only production journal, not the README or a manual clock. The private
-account panel shows the exact review date.
+**Start:** the first exchange-accepted live NBA order, observed October 20,
+2026. The start time comes from the append-only production journal, not the
+README or a manual clock, and the private account panel counts the 30 days
+from it, across rule versions. Under
+[FORWARD_VALIDATION.md](FORWARD_VALIDATION.md) each rule version is also
+judged as its own group, so the current rules
+(`nba-no-v4-smaller-orders-edge3-baseline`) get their own 30 days from their
+first accepted order.
 
 **Purpose:** determine whether the historically simulated NBA NO-bookline return
 survives real maker queue priority, current player roles, actual fees and settlement.

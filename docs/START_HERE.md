@@ -74,9 +74,10 @@ smaller limits; its orders start 10 minutes to 2 hours before kickoff.
 | DigitalOcean server (private) | The two funded workers (NBA and NFL) on timers, the Kalshi key, the live P&L feed | Owner only, through the Go live / Stop and Deploy buttons |
 | Kalshi | The account, orders and settlement | Owner only |
 
-Merging code does **not** change the live bots. The owner deploys a
-reviewed commit to the server with a separate button
-([how](../deploy/README.md)).
+Merging code does **not** change the live bots by itself. The owner
+deploys a reviewed commit to the server with a separate button
+([how](../deploy/README.md)), which is why every change is reviewed as if it
+will run there.
 
 ## Current live limits
 
@@ -143,6 +144,42 @@ None of these place orders, and none need any keys.
 
 Start any of these as an entry in the research log: write the question,
 the method and the pass/fail bar *before* looking at results.
+
+## Using AI (Claude) to get up to speed
+
+You can learn the project, and test ideas, with your own Claude account. It
+only ever sees the public files here, never the trading account or server.
+
+**Option 1: ask questions, no code.** In Claude, create a Project, then in
+its knowledge panel choose **+ → GitHub**, paste
+`https://github.com/akilatrades/sports-market-maker` and select a handful of
+files rather than the whole repository (it is too large):
+`CLAUDE.md`, `README.md`, `docs/START_HERE.md`, `docs/PROJECT_BRIEF.md`,
+`RESEARCH_LOG.md`, `docs/nba-model.md` and `docs/FORWARD_VALIDATION.md`.
+Press **Sync now** later to pick up changes.
+
+**Option 2: run and change things.** Fork the repository, then open your fork
+in Claude Code on the web (claude.ai/code; check that your Claude plan
+includes it). Claude reads [CLAUDE.md](../CLAUDE.md) automatically, so it
+starts with the project's rules. Ask it to run the tests and replays, try an
+idea, and push a branch to your fork; then open a pull request here.
+
+**Good first questions:**
+
+- "Explain this strategy to someone new to trading. What is a resting NO
+  order, and why might it make money?"
+- "Walk me through RESEARCH_LOG.md: what was tested, what failed, and why the
+  passive-NO rule survived."
+- "Run `python -m research.fill_sizing_replay` and explain every column.
+  Which assumptions make it optimistic?"
+- "How is the fair probability computed, sportsbook consensus versus the
+  model? Where could it be wrong?"
+- "Suggest three ways to improve the model. For each, draft the research-log
+  entry (question, method, pass/fail bar) before running anything."
+
+**Ground rules:** never paste keys, account screenshots or the server's
+address into an AI chat. Ask the owner about live results. Every idea starts
+as a research-log entry, and every change arrives as a pull request.
 
 ## Words you will see
 

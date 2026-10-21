@@ -56,9 +56,10 @@ days and 500 settled fills.
   account; account-wide loss stops; the connection-only input hold; the
   NFL sportsbook file fix.
 - **21 October:** repository access hardening (server workflows are
-  owner-only and run only from `main`, with secrets in a GitHub
-  environment), a full-history secret scan (clean), retired legacy server
-  workflows removed, and new [start-here](START_HERE.md),
+  owner-only, manual and run only from `main`; their jobs name the
+  `funded-droplet` environment that the server secrets move into), a
+  full-history secret scan (clean), retired legacy server workflows
+  removed, and new [start-here](START_HERE.md),
   [contributing](../CONTRIBUTING.md) and [security](../SECURITY.md) guides.
 
 ## Where to look

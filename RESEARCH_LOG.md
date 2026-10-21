@@ -1748,3 +1748,51 @@ of them is evidence of profit.
 - Live results are judged only under the
   [forward-validation protocol](docs/FORWARD_VALIDATION.md), with each rule
   version counted as its own group.
+
+## 2026-10-21: Fill and sizing replay (exploratory)
+
+**Exploratory, in-sample.** No plan was written before these runs, and no live
+rule was changed because of them.
+
+### Question
+With a $250 account, which settings collect the most separate fills per
+night, and how do profit and drawdown change as orders get bigger?
+
+### Method
+`python -m research.fill_sizing_replay` replays every 2025–26 NBA market's
+hypothetical resting NO order against Kalshi's public trade prints. An order
+fills up to the contracts that traded at or through its price before tip-off,
+as if first in line; `flow_share` 0.25 gives each traded contract a one-in-four
+chance of reaching us. Caps are charged in the live bot's order (day, tip
+time, best edge first). Statistics are game-clustered.
+
+### Results (183 nights)
+
+| Rules | Filled orders a night | ¢ per contract | t | Season P&L | Max drawdown |
+|---|---:|---:|---:|---:|---:|
+| Live now: 2 contracts, 3¢ edge, 10/game, $75 a night | 25.7 | 3.97 | 4.6 | $368 | −$27 |
+| 2 contracts, 0¢ edge, 25/game, $150 a night | 54.0 | 3.82 | 5.8 | $744 | −$56 |
+| 1 contract, 0¢ edge, 5–95¢, 40/game, $150 a night | 79.1 | 3.32 | 6.1 | $481 | −$23 |
+
+Capacity, 25 orders a game and no cash limits, first in line vs a quarter
+of the flow:
+
+| Contracts per order | P&L, flow 1 | P&L, flow 0.25 | ¢ per contract (0.25) | Max drawdown (0.25) |
+|---:|---:|---:|---:|---:|
+| 1 | $416 | $410 | 3.84 | −$20 |
+| 10 | $3,906 | $3,410 | 3.76 | −$208 |
+| 100 | $28,235 | $17,701 | 3.36 | −$1,888 |
+| 1,000 | $113,930 | $44,309 | 2.87 | −$18,761 |
+
+### Findings
+- One contract per order and looser per-game limits roughly triple the
+  number of separate fills compared with the live rules, at lower profit per
+  contract. Separate fills are what the live evaluation needs.
+- Profit grows much more slowly than order size: big orders fill only
+  partly, and the props that fill them trade on more informed flow.
+  Drawdown grows about $20 per contract of order size.
+- Ad hoc check on the same data: orders with 15–25¢ of model edge lost
+  0.3¢ per contract in the regular season (932 filled orders), so the 15¢
+  edge cap stays. A second cent of price improvement added about two fills a
+  night but cut profit per contract by about 0.5¢.
+- All of this is in-sample with optimistic fills; live results will be lower.

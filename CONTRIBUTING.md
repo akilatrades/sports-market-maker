@@ -1,15 +1,19 @@
 # Contributing
 
 Thanks for helping. New here? Read [docs/START_HERE.md](docs/START_HERE.md)
-first: it covers what the project does and how it is laid out.
+first: it covers what the project does and how it is laid out. Using an AI
+assistant? [CLAUDE.md](CLAUDE.md) gives it the same rules; they apply to its
+work as much as yours.
 
 ## How changes get in
 
 1. Fork the repository, clone your fork and make a branch.
 2. Make the change and run the checks below.
 3. Open a pull request into `main` and say what changed and why.
-4. The owner reviews every pull request (`.github/CODEOWNERS`). Merging does
-   not change the live bots: the owner deploys to the server separately.
+4. The owner reviews every pull request (`.github/CODEOWNERS`). A merge does
+   not change the live bots by itself; the owner deploys to the server
+   separately, so changes under `live/`, `kalshi/`, `markets/`, `tools/`,
+   `deploy/` and `.github/` get the closest review.
 
 Write access is not given out, because write access to this repository
 amounts to access to the server and the funded account

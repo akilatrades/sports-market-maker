@@ -3,9 +3,10 @@
 The public dashboard at `/dashboard/` presents research, models and **only
 exchange-verified NFL/NBA settled P&L** for portfolio visitors. The public P&L
 comes from a sanitized, read-only settled-P&L feed on the server, polled every
-15 seconds ([LIVE_ACCOUNT_PNL.md](LIVE_ACCOUNT_PNL.md)), with the committed
-`outputs/dashboard/production_pnl.json` snapshot as a fallback. No independent
-paper-ledger profits are displayed. The separate account view is served by the read-only service
+15 seconds ([LIVE_ACCOUNT_PNL.md](LIVE_ACCOUNT_PNL.md)). The committed
+`outputs/dashboard/production_pnl.json` snapshot is used only when no live feed
+is configured; if the configured feed fails, the page shows "unavailable"
+rather than older numbers. No independent paper-ledger profits are displayed. The separate account view is served by the read-only service
 on the existing trading Droplet at `http://127.0.0.1:8765`. Publishing the public
 research page requires no terminal or SSH setup.
 No balances, keys, raw journals or order IDs are uploaded to GitHub. The account
@@ -14,10 +15,13 @@ allows only production GET requests. It cannot submit or cancel orders.
 
 ## Owner access
 
-The account service is already installed on the server. To update its code
-while both bots run, use `deploy/update_order_audit.sh` (see below); the older
-one-sport `deploy/update_nfl_dashboard.sh` must not be used while NBA and NFL
-share the account.
+The account service is already installed on the server and runs from the
+funded checkout, so *Deploy funded worker code* updates its code; then
+restart it from the DigitalOcean console with
+`sudo systemctl restart market-maker-dashboard.service`. The older console
+updaters (`deploy/update_order_audit.sh`, `deploy/update_nfl_dashboard.sh`)
+run `git pull` in the funded checkout and bypass the release workflow; do not
+use them while the bots are live.
 
 On your own computer, keep this terminal command running, using your existing
 Droplet SSH login in place of `YOUR_SSH_LOGIN`:
@@ -71,10 +75,10 @@ not the production worker's pricing, entry windows, order submission, risk
 caps, or live P&L. Public GitHub Pages never receives order IDs or the
 private audit. The private view continues to require a localhost SSH tunnel.
 
-To deploy **this read-only reporting feature** while preserving the prior
-state of both production timers, use the dedicated
-`deploy/update_order_audit.sh` on the Droplet as root after GitHub CI
-passes. It pauses both timers, waits for active scans, updates code, tests
+*Historical (before the release workflow existed):* to deploy **this
+read-only reporting feature** while preserving the prior state of both
+production timers, the owner used `deploy/update_order_audit.sh` on the
+Droplet as root after GitHub CI passed. It pauses both timers, waits for active scans, updates code, tests
 the dashboard/audit, restarts the read-only account service and restores only
 the timers that had been active. Do not use the older one-sport dashboard
 updater while both pilots are running.
@@ -125,8 +129,8 @@ cent of improvement is off. An existing fill is not re-priced or liquidated.
 
 The recruiter-facing dashboard shows **no simulated ledger P&L, strategy-paper
 equity curve or hypothetical profit scenarios**. Public NFL and NBA settled P&L
-comes only from the sanitized, read-only server feed or the committed snapshot.
-Neither contains an account balance, API credential, private order ID or
-account journal. A value older than 90 seconds (feed) or 15 minutes (snapshot)
+comes only from the sanitized, read-only server feed or, when no feed is
+configured, the committed snapshot. Neither contains an account balance, API
+credential, private order ID or account journal. A value older than 90 seconds (feed) or 15 minutes (snapshot)
 is labelled as a past result, never as current profit. The private dashboard
 shows the full authenticated detail without exposing it through GitHub Pages.
