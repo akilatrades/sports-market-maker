@@ -23,8 +23,12 @@ def refresh(now=None, root=Path("."), stamp=STAMP):
     stamp = Path(stamp)
     root = Path(root)
     if stamp.exists():
-        age = now.timestamp() - stamp.stat().st_mtime
-        # A clock jump is not proof of fresh data.
+        try:
+            recorded = datetime.fromisoformat(stamp.read_text())
+            age = (now - recorded).total_seconds()
+        except (OSError, ValueError, TypeError):
+            age = float("inf")
+        # A clock jump or malformed stamp is not proof of fresh data.
         if 0 <= age < INTERVAL_SECONDS:
             return False
 
@@ -51,7 +55,6 @@ def refresh(now=None, root=Path("."), stamp=STAMP):
             dest.unlink(missing_ok=True)
     stamp.parent.mkdir(parents=True, exist_ok=True)
     atomic_write(stamp, now.isoformat().encode())
-    # Preserve a timestamp suitable for mtime cadence checks.
     return True
 
 
