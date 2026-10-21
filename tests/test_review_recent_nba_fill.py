@@ -207,3 +207,15 @@ def test_only_verified_cohort_pnl_sign_is_public():
     snap["live_pnl"]["nba"]["status"] = "cost_or_ownership_mismatch"
     outcome = public_summary(summarize(snap, events, NOW))
     assert outcome["cohort_realized_pnl_sign"] == "unknown"
+
+
+def test_exchange_expiration_is_distinct_from_journal_intent_in_public_summary():
+    snap, events = fixture()
+    order = snap["order_audit"]["nba"]["orders"][0]
+    order["signed_exchange_expiry_matches_tip"] = True
+    order["signed_exchange_expiry_matches_intent"] = False
+    result = public_summary(summarize(snap, events, NOW))
+    row = result["individual_fills"][0]
+    assert row["actual_exchange_expiry_matches_tip"] is True
+    assert row["actual_exchange_expiry_matches_intent"] is False
+    assert "signed_exchange_expiration_utc" not in json.dumps(result)
