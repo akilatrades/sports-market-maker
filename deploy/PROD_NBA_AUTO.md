@@ -88,8 +88,8 @@ Each scan must finish inside the server's 4-minute limit (`TimeoutStartSec=240`)
 
 ## Deploying v5, and rolling back
 
-- **Deploy when no NBA order is resting:** after the night's last tip-off and before new entries open (about noon Eastern on most game days). If prior-version orders are resting, v5 leaves them untouched until they expire and places nothing until then, and those orders get no injury or edge cancels in the meantime.
-- **Rolling back to v4** with v5 orders resting would halt the v4 code (it does not recognise v5). Run **Go live / Stop → STOP_AND_CANCEL** first, then deploy the older commit, then **GO_LIVE**.
+- **Deploy when no NBA order is resting.** Check that Kalshi's Orders tab shows no open NBA orders (or that the readiness preflight reports `legacy_prior_version_resting_orders: 0`). That is usually true after the night's last tip-off and until new entries open six hours before the next day's first tip-off, which is earlier on weekends. If prior-version orders are resting, v5 leaves them untouched until they expire and places nothing until then, and those orders get no injury or edge cancels in the meantime.
+- **Rolling back to v4** with v5 orders resting would halt the v4 code (it does not recognise v5). Run **Go live / Stop → STOP_AND_CANCEL** first (this stops both bots and cancels both bots' resting orders), then deploy the older commit, then **GO_LIVE**.
 
 ## Data and memory
 

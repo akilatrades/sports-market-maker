@@ -41,17 +41,17 @@ def live_maker_fee_bound(ticker, price, count, cache=None):
     event_ticker = series_ticker + "-" + event_suffix
     key = (series_ticker, event_ticker)
     if cache is not None and key in cache:
-        series, event = cache[key]
+        s, e = cache[key]
     else:
         series = get_json(f"/series/{series_ticker}", {}, retries=1)
         event = get_json(f"/events/{event_ticker}", {}, retries=1)
-        if cache is not None and isinstance(series, dict) and isinstance(event, dict):
-            cache[key] = (series, event)
-    if not isinstance(series, dict) or not isinstance(event, dict):
-        raise TradingError("fee_metadata_unavailable")
-    s, e = series.get("series", {}), event.get("event", {})
-    if s.get("ticker") != series_ticker or e.get("event_ticker") != event_ticker:
-        raise TradingError("fee_metadata_identity")
+        if not isinstance(series, dict) or not isinstance(event, dict):
+            raise TradingError("fee_metadata_unavailable")
+        s, e = series.get("series", {}), event.get("event", {})
+        if s.get("ticker") != series_ticker or e.get("event_ticker") != event_ticker:
+            raise TradingError("fee_metadata_identity")
+        if cache is not None:  # only metadata that passed every check
+            cache[key] = (s, e)
     return maker_fee_bound(price, count, s, e), {
         "fee_type": e.get("fee_type_override") or s.get("fee_type"),
         "fee_multiplier": e.get("fee_multiplier_override")

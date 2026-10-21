@@ -365,20 +365,27 @@ def test_no_new_order_starts_after_the_time_budget(tmp_path, no_fees, monkeypatc
 def test_time_budget_is_checked_again_just_before_each_order(
     tmp_path, no_fees, monkeypatch
 ):
-    # Within budget at the top of the loop, over it by the final check.
-    clock = iter([10.0, 10.0, 160.0] + [160.0] * 20)
+    # Within budget at the top of the loop, over it by the check made just
+    # before the journal intent: nothing is journaled or sent.
+    clock = iter([10.0, 160.0] + [160.0] * 20)
     monkeypatch.setattr(nba, "elapsed_seconds", lambda: next(clock))
     client = Client()
-    assert nba.pass_once(client, ARMED, several(5), NOW, tmp_path / "j.jsonl")
-    assert len(client.posts) == 1
+    journal = tmp_path / "j.jsonl"
+    assert not nba.pass_once(client, ARMED, several(5), NOW, journal)
+    assert client.posts == []
+    assert not journal.exists() or not [
+        e for e in nba.load_journal(journal) if e["event"] == "intent"
+    ]
+    report = json.loads((tmp_path / "last_scan.json").read_text())
+    assert report["skipped"]["pass_time_budget"] == 1
 
 
 def test_queue_position_is_observed_at_most_every_ten_minutes():
     def observed(minutes_ago):
         utc = (NOW - timedelta(minutes=minutes_ago)).isoformat()
-        return [{"event": "queue", "order_id": "o1", "utc": utc}]
+        return nba.last_queue_times([{"event": "queue", "order_id": "o1", "utc": utc}])
 
-    assert nba.queue_observation_due([], "o1", NOW)
+    assert nba.queue_observation_due({}, "o1", NOW)
     assert not nba.queue_observation_due(observed(3), "o1", NOW)
     assert nba.queue_observation_due(observed(11), "o1", NOW)
     assert nba.queue_observation_due(observed(3), "other", NOW)
@@ -410,3 +417,66 @@ def test_fee_metadata_is_fetched_once_per_series_and_event(monkeypatch):
     assert len(calls) == 2  # one series and one event request, then reused
     fees.live_maker_fee_bound("KXNBAPTS-26OCT21ATLORL-ORLX-35", 0.5, 1)
     assert len(calls) == 4  # without a cache, fetched fresh as before
+
+
+def test_failed_fee_metadata_is_never_cached(monkeypatch):
+    import kalshi.fees as fees
+
+    responses = iter([None, {"event": {"event_ticker": "KXNBAPTS-26OCT21ATLORL"}}])
+    monkeypatch.setattr(fees, "get_json", lambda *args, **kwargs: next(responses))
+    cache = {}
+    with pytest.raises(TradingError, match="fee_metadata_unavailable"):
+        fees.live_maker_fee_bound("KXNBAPTS-26OCT21ATLORL-ORLX-20", 0.5, 1, cache)
+    assert cache == {}
+
+
+def v5_resting_journal(journal, ticker, queue_minutes_ago):
+    rows = [
+        {
+            "event": "intent",
+            "utc": (NOW - timedelta(hours=1)).isoformat(),
+            "client_order_id": "cid-v5",
+            "ticker": ticker,
+            "cost": 0.51,
+            "count": 1,
+            "price_cents": 51,
+            "game_id": "20261020",
+            "team": "LAL",
+            "tip_utc": (NOW + timedelta(hours=4)).isoformat(),
+            "strategy_version": nba.STRATEGY_VERSION,
+            "probability_source": "sportsbook",
+        },
+        {"event": "accepted", "client_order_id": "cid-v5", "order_id": "oid-v5"},
+        {
+            "event": "queue",
+            "utc": (NOW - timedelta(minutes=queue_minutes_ago)).isoformat(),
+            "order_id": "oid-v5",
+            "ahead": 3,
+            "issue": None,
+        },
+    ]
+    journal.write_text("".join(json.dumps(r) + "\n" for r in rows))
+
+
+@pytest.mark.parametrize("minutes_ago, resting_reads", [(3, 0), (11, 1)])
+def test_scan_skips_recently_observed_resting_queue(
+    tmp_path, exchange_offline, minutes_ago, resting_reads
+):
+    frame = several(5)
+    ticker = str(frame.ticker.iloc[0])
+    journal = tmp_path / "journal.jsonl"
+    v5_resting_journal(journal, ticker, minutes_ago)
+
+    class Counting(Exchange):
+        def __init__(self, **kw):
+            super().__init__(**kw)
+            self.queue_reads = []
+
+        def queue_position(self, oid):
+            self.queue_reads.append(str(oid))
+            return 5.0
+
+    client = Counting(resting=[{"order_id": "oid-v5", "ticker": ticker}])
+    assert nba.pass_once(client, ARMED, frame, NOW, journal)
+    assert client.cancels == [] and len(client.posts) == 3
+    assert client.queue_reads.count("oid-v5") == resting_reads

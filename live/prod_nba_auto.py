@@ -120,12 +120,18 @@ def elapsed_seconds():
     return 0.0 if PROCESS_START is None else time.monotonic() - PROCESS_START
 
 
-def queue_observation_due(events, order_id, now):
+def last_queue_times(events):
+    """Latest queue-observation time per order id, from one journal scan."""
+    return {
+        str(event.get("order_id")): event.get("utc")
+        for event in events
+        if event.get("event") == "queue"
+    }
+
+
+def queue_observation_due(last_times, order_id, now):
     """True unless this order's queue was observed within the last few minutes."""
-    last = None
-    for event in events:
-        if event.get("event") == "queue" and str(event.get("order_id")) == order_id:
-            last = event.get("utc")
+    last = last_times.get(order_id)
     if last is None:
         return True
     try:
@@ -1197,8 +1203,9 @@ def pass_once(client, env, frame, now, journal, *, dry=False):
             fills,
             state["settlements"],
         )
+        last_queue = last_queue_times(events)
         for resting in state["resting"]:
-            if queue_observation_due(events, str(resting["order_id"]), now):
+            if queue_observation_due(last_queue, str(resting["order_id"]), now):
                 record_queue_observation(client, journal, resting["order_id"], now)
         record_markouts(journal, frame, now)
         if legacy_resting:
