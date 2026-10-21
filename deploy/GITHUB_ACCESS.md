@@ -54,7 +54,9 @@ live trading code in a separate private repository.
    you press a server button: *Deploy* installs `live/`, `kalshi/`,
    `markets/` and `tools/`; the fill audit and diagnostics run scripts from
    `tools/` and `deploy/`. So review a change to any of those folders, or to
-   `.github/`, as if it will run next to the trading account.
+   `.github/`, as if it will run next to the trading account. Review changes
+   to `CLAUDE.md` just as closely: Claude reads it automatically, including
+   in your own sessions that can push code and run workflows.
 
 See [CONTRIBUTING.md](../CONTRIBUTING.md) for the contributor side.
 

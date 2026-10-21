@@ -13,7 +13,8 @@ work as much as yours.
 4. The owner reviews every pull request (`.github/CODEOWNERS`). A merge does
    not change the live bots by itself; the owner deploys to the server
    separately, so changes under `live/`, `kalshi/`, `markets/`, `tools/`,
-   `deploy/` and `.github/` get the closest review.
+   `deploy/` and `.github/`, and to `CLAUDE.md` (which AI assistants follow
+   automatically), get the closest review.
 
 Write access is not given out, because write access to this repository
 amounts to access to the server and the funded account

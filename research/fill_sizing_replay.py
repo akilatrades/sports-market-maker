@@ -7,11 +7,18 @@ rule would have posted last season against Kalshi's public trade prints.
 Assumptions, all of which make the numbers optimistic:
 
 - In-sample: the rules were chosen on this same season.
-- Fills: an order fills up to the contracts that traded at or through its
-  price before tip-off, as if it were first in line. ``flow_share`` < 1
-  gives each traded contract only that chance of reaching us.
+- Fills: an order fills up to the contracts a YES taker bought at a better
+  price than ours (or at our price, when our quote improved the market and
+  we were alone there) before tip-off, as if first in line. ``flow_share``
+  below 1 gives each such contract only that chance of reaching us.
+- No maker fee: NBA prop series reported no maker fee in October 2026
+  metadata. Earlier research-log entries charged a quarter of the taker fee.
 - One snapshot per market (mostly five hours before tip), resting to tip.
 - Other traders do not react to our orders, however large.
+
+Loss stops are approximated per night: settlements land after the games, so
+a night that loses ``day_stop`` or more blocks the next night, and a
+cumulative loss of ``cum_stop`` ends the season.
 
 Results are a planning aid, not a forecast. See RESEARCH_LOG.md
 (2026-10-21: fill and sizing replay).
@@ -47,20 +54,35 @@ class Rules:
     game_usd: float | None = None  # reserved dollars per game
     team_usd: float | None = None  # reserved dollars per team per day
     day_usd: float | None = None  # reserved dollars placed per day
-    cum_stop: float | None = None  # stop for the season after this loss
+    life_usd: float | None = None  # reserved dollars placed, ever (never resets)
+    day_stop: float | None = None  # a night losing this much blocks the next night
+    cum_stop: float | None = None  # stop for the season after this total loss
     flow_share: float = 1.0
     edge_shave: float = 0.0  # subtract from every contract's result
 
 
 RULE_SETS = (
     Rules(
-        "Live now: 2 contracts, 3c edge, 10/game, $75 a night",
+        "Live now: 2 contracts, 3c edge, 10/game, $75 a night, $1,000 lifetime",
         contracts=2,
         min_edge=0.03,
         per_game=10,
         game_usd=15,
         team_usd=10,
         day_usd=75,
+        life_usd=1000,
+        day_stop=20,
+        cum_stop=60,
+    ),
+    Rules(
+        "Live now without the $1,000 lifetime allowance",
+        contracts=2,
+        min_edge=0.03,
+        per_game=10,
+        game_usd=15,
+        team_usd=10,
+        day_usd=75,
+        day_stop=20,
         cum_stop=60,
     ),
     Rules(
@@ -70,6 +92,7 @@ RULE_SETS = (
         game_usd=30,
         team_usd=30,
         day_usd=150,
+        day_stop=25,
         cum_stop=75,
     ),
     Rules(
@@ -79,6 +102,7 @@ RULE_SETS = (
         game_usd=25,
         team_usd=25,
         day_usd=150,
+        day_stop=25,
         cum_stop=75,
     ),
 )
@@ -92,7 +116,7 @@ def load_orders(orders_path=ORDERS, trade_paths=TRADES):
         o[col] = o[col].astype(float)
     o["improved"] = o.improved.astype(str).str.lower().eq("true")
     o = o.drop_duplicates("ticker").copy()
-    o["edge"] = (1 - o.p_model) - o.price  # NBA props charge no maker fee
+    o["edge"] = (1 - o.p_model) - o.price  # NBA props: no maker fee assumed
     o["day"] = (
         pd.to_datetime(o.tip_ts, unit="s", utc=True)
         .dt.tz_convert("America/New_York")
@@ -105,7 +129,7 @@ def load_orders(orders_path=ORDERS, trade_paths=TRADES):
 
 
 def through_volume(orders, trades):
-    """Contracts a YES taker bought at or through each order's price, pre-tip."""
+    """Contracts a YES taker bought through each order's price, pre-tip."""
     t = trades.copy()
     created = pd.to_datetime(t.created_time, utc=True, format="ISO8601")
     # Unix seconds, whatever resolution pandas chose for the parsed times.
@@ -125,33 +149,53 @@ def through_volume(orders, trades):
     return orders.ticker.map(by_ticker).fillna(0.0).to_numpy()
 
 
-def select(orders, rules):
-    """Orders the rules would place, charging caps in the live bot's order."""
+def _candidates(orders, rules):
+    """Orders passing the filters, in the live bot's placement order."""
     q = orders[orders.edge >= rules.min_edge - 1e-9]
     if rules.edge_cap is not None:
         q = q[q.edge <= rules.edge_cap + 1e-9]
     q = q[q.price.between(*rules.band)]
-    q = q.sort_values(["day", "tip_ts", "edge"], ascending=[True, True, False])
-    cost = np.round(rules.contracts * q.price.to_numpy() * RESERVE, 2)
-    per_game, game_usd, team_usd, day_usd = {}, {}, {}, {}
-    keep = np.zeros(len(q), dtype=bool)
-    rows = zip(q.game_id.to_numpy(), q.team.to_numpy(), q.day.to_numpy(), cost)
-    for i, (game, team, day, c) in enumerate(rows):
-        if rules.per_game and per_game.get(game, 0) >= rules.per_game:
-            continue
-        if rules.game_usd and game_usd.get(game, 0) + c > rules.game_usd + 1e-9:
-            continue
-        key = (team, day)
-        if rules.team_usd and team_usd.get(key, 0) + c > rules.team_usd + 1e-9:
-            continue
-        if rules.day_usd and day_usd.get(day, 0) + c > rules.day_usd + 1e-9:
-            continue
-        per_game[game] = per_game.get(game, 0) + 1
-        game_usd[game] = game_usd.get(game, 0) + c
-        team_usd[key] = team_usd.get(key, 0) + c
-        day_usd[day] = day_usd.get(day, 0) + c
-        keep[i] = True
-    return q[keep]
+    return q.sort_values(["day", "tip_ts", "edge"], ascending=[True, True, False])
+
+
+class _Caps:
+    """Running cap usage; an order that does not fit is skipped, not resized."""
+
+    def __init__(self, rules):
+        self.rules = rules
+        self.per_game, self.game_usd, self.team_usd, self.day_usd = {}, {}, {}, {}
+        self.lifetime = 0.0
+
+    def admit(self, game, team, day, cost):
+        r, key = self.rules, (team, day)
+        checks = (
+            r.per_game and self.per_game.get(game, 0) >= r.per_game,
+            r.game_usd and self.game_usd.get(game, 0) + cost > r.game_usd + 1e-9,
+            r.team_usd and self.team_usd.get(key, 0) + cost > r.team_usd + 1e-9,
+            r.day_usd and self.day_usd.get(day, 0) + cost > r.day_usd + 1e-9,
+            r.life_usd and self.lifetime + cost > r.life_usd + 1e-9,
+        )
+        if any(checks):
+            return False
+        self.per_game[game] = self.per_game.get(game, 0) + 1
+        self.game_usd[game] = self.game_usd.get(game, 0) + cost
+        self.team_usd[key] = self.team_usd.get(key, 0) + cost
+        self.day_usd[day] = self.day_usd.get(day, 0) + cost
+        self.lifetime += cost
+        return True
+
+
+def _costs(q, rules):
+    return np.round(rules.contracts * q.price.to_numpy() * RESERVE, 2)
+
+
+def select(orders, rules):
+    """Orders the rules would place over the season, ignoring loss stops."""
+    q = _candidates(orders, rules)
+    caps = _Caps(rules)
+    rows = zip(q.game_id.to_numpy(), q.team.to_numpy(), q.day.to_numpy())
+    keep = [caps.admit(g, t, d, c) for (g, t, d), c in zip(rows, _costs(q, rules))]
+    return q[np.asarray(keep, dtype=bool)]
 
 
 def clustered_mean_t(values, weights, clusters):
@@ -169,35 +213,49 @@ def clustered_mean_t(values, weights, clusters):
 
 def simulate(orders, rules, seed=0):
     """Season result for one rule set (one random draw if flow_share < 1)."""
-    q = select(orders, rules)
-    nights = q.day.nunique()
+    q = _candidates(orders, rules)
     traded = np.floor(q.through.to_numpy()).astype(np.int64)
     if rules.flow_share < 1:
         traded = np.random.default_rng(seed).binomial(traded, rules.flow_share)
     filled = np.minimum(traded, rules.contracts).astype(float)
     per_contract = q.pnl_c.to_numpy() - rules.edge_shave
-    pnl = pd.Series(filled * per_contract).groupby(q.day.to_numpy()).sum()
-    stopped = False
-    if rules.cum_stop is not None:
-        hit = pnl.cumsum() <= -rules.cum_stop
-        if hit.any():
-            stopped = True
-            pnl = pnl[pnl.index <= hit.idxmax()]
-    played = q.day.isin(pnl.index).to_numpy()
-    mean, t = clustered_mean_t(
-        per_contract[played], filled[played], q.game_id.to_numpy()[played]
-    )
-    curve = pnl.cumsum()
+    games, teams, days = q.game_id.to_numpy(), q.team.to_numpy(), q.day.to_numpy()
+    cost = _costs(q, rules)
+    caps, placed = _Caps(rules), np.zeros(len(q), dtype=bool)
+    nightly, blocked, stopped, total = {}, False, False, 0.0
+    for day in sorted(set(days)):
+        if stopped:
+            break
+        if blocked:  # yesterday's settled losses hit the daily stop
+            blocked = False
+            continue
+        rows = np.flatnonzero(days == day)
+        for i in rows:
+            placed[i] = caps.admit(games[i], teams[i], day, cost[i])
+        night = float((filled[rows] * per_contract[rows] * placed[rows]).sum())
+        if placed[rows].any():
+            nightly[day] = night
+        total += night
+        blocked = rules.day_stop is not None and night <= -rules.day_stop
+        stopped = rules.cum_stop is not None and total <= -rules.cum_stop
+    pnl = pd.Series(nightly, dtype=float)
+    nights = max(len(pnl), 1)
+    got = filled * placed
+    mean, t = clustered_mean_t(per_contract[placed], got[placed], games[placed])
+    curve = pnl.cumsum().to_numpy()
+    peak = np.maximum.accumulate(np.r_[0.0, curve])[1:]  # drawdown from $0
     return {
         "rules": rules.name,
-        "orders a night": round(len(q) / nights, 1),
-        "filled orders a night": round((filled > 0).sum() / nights, 1),
-        "contracts filled": int(filled[played].sum()),
+        "nights with orders": len(pnl),
+        "orders a night": round(placed.sum() / nights, 1),
+        "filled orders a night": round((got > 0).sum() / nights, 1),
+        "contracts filled": int(got.sum()),
         "cents per contract": round(100 * mean, 2),
         "t (game-clustered)": round(t, 2),
         "season P&L $": round(float(pnl.sum()), 2),
-        "worst night $": round(float(pnl.min()), 2),
-        "max drawdown $": round(float((curve - curve.cummax()).min()), 2),
+        "worst night $": round(float(pnl.min()), 2) if len(pnl) else 0.0,
+        "max drawdown $": round(float((curve - peak).min()), 2) if len(pnl) else 0.0,
+        "placed, lifetime $": round(caps.lifetime, 2),
         "loss stop hit": stopped,
     }
 

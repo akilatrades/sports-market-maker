@@ -48,8 +48,9 @@ file is the short version for an AI helping them.
   in-sample (the rules were chosen on it); 2026–27 is the real test.
 - **Use game-clustered statistics** (`kalshi.stats.clustered_mean_t`): props
   in the same game move together. One contract's result has a standard
-  deviation of about 43¢, so a 3¢ edge needs roughly 1,300 fills before
-  t ≈ 2.
+  deviation of about 44¢, so a 3¢ edge needs about 900 fills for t ≈ 2 if
+  fills were independent, and about 1,900 once same-game correlation is
+  counted (from the 2025–26 replay).
 - **Fills are optimistic.** Historical fills come from public trade prints and
   assume the order was first in line. Use `flow_share` below 1 (for example
   0.25) to see a more realistic case, and say which you used.

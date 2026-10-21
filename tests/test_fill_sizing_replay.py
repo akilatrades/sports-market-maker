@@ -55,3 +55,18 @@ def test_simulate_fills_up_to_traded_volume_and_honours_the_loss_stop():
     stopped = simulate(_orders(), Rules("t", contracts=2, edge_cap=None, cum_stop=0.1))
     assert stopped["loss stop hit"]
     assert stopped["season P&L $"] == pytest.approx(-0.2)
+
+
+def test_lifetime_allowance_skips_orders_that_no_longer_fit():
+    rules = Rules("t", contracts=2, edge_cap=None, life_usd=1.2)
+    result = simulate(_orders(), rules)
+    # Only the 50c order (reserve $1.10) fits; every later one would pass $1.20.
+    assert result["placed, lifetime $"] == pytest.approx(1.1)
+    assert result["season P&L $"] == pytest.approx(1.0)
+
+
+def test_a_losing_night_over_the_daily_stop_blocks_the_next_night():
+    rules = Rules("t", contracts=2, edge_cap=None, day_stop=0.1)
+    result = simulate(_orders(), rules)
+    assert result["nights with orders"] == 1
+    assert result["season P&L $"] == pytest.approx(-0.2)

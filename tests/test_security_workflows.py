@@ -21,8 +21,14 @@ UNSAFE_SERVER_TRIGGERS = (
     "workflow_call",
     "repository_dispatch",
 )
-JOB_HEADER = re.compile(r"^  ([A-Za-z0-9_-]+):[ \t]*(?:#.*)?$", re.M)
-DYNAMIC_SECRETS = re.compile(r"secrets\s*\[|toJSON\(\s*secrets|secrets:\s*inherit")
+# A job name, optionally quoted, optionally with a YAML anchor or comment.
+JOB_HEADER = re.compile(
+    r"^  ([\"']?)([A-Za-z0-9_-]+)\1:[ \t]*(?:&\S+)?[ \t]*(?:#.*)?$", re.M
+)
+SERVER_SECRET = re.compile(r"secrets\.droplet_", re.I)
+DYNAMIC_SECRETS = re.compile(
+    r"secrets\s*\[|tojson\(\s*secrets|secrets:\s*inherit", re.I
+)
 
 
 def _triggers(text):
@@ -38,12 +44,17 @@ def _split_jobs(text):
     assert sep, "workflow has no jobs: block"
     headers = list(JOB_HEADER.finditer(body))
     assert headers, "no jobs found"
+    # Every two-space-indented line under jobs: must be a job name we
+    # recognise; anything else could hide a job inside the one above it.
+    for line in body.splitlines():
+        if re.match(r"^  \S", line) and not line.lstrip().startswith("#"):
+            assert JOB_HEADER.match(line), f"unrecognised job header: {line!r}"
     before = [ln for ln in body[: headers[0].start()].splitlines() if ln.strip()]
     assert all(ln.lstrip().startswith("#") for ln in before), "unparsed job text"
     jobs = {}
     for i, match in enumerate(headers):
         stop = headers[i + 1].start() if i + 1 < len(headers) else len(body)
-        jobs[match.group(1)] = body[match.end() : stop]
+        jobs[match.group(2)] = body[match.end() : stop]
     return head, jobs
 
 
@@ -102,9 +113,9 @@ def test_server_secrets_only_reach_owner_run_main_branch_jobs():
     for workflow in WORKFLOWS:
         text = workflow.read_text(encoding="utf-8")
         head, jobs = _split_jobs(text)
-        assert "secrets.DROPLET_" not in head, f"{workflow.name}: workflow-level env"
+        assert not SERVER_SECRET.search(head), f"{workflow.name}: workflow-level env"
         for name, job in jobs.items():
-            if "secrets.DROPLET_" not in job:
+            if not SERVER_SECRET.search(job):
                 continue
             seen += 1
             where = f"{workflow.name}:{name}"
@@ -128,7 +139,8 @@ def test_pull_request_workflows_get_no_secrets():
         assert "pull_request_target" not in text, workflow.name
         if "pull_request" not in _triggers(text):
             continue
-        used = set(re.findall(r"secrets\.([A-Z0-9_]+)", text)) - {"GITHUB_TOKEN"}
+        found = re.findall(r"secrets\.([A-Za-z0-9_]+)", text, re.I)
+        used = {name.upper() for name in found} - {"GITHUB_TOKEN"}
         assert not used, f"{workflow.name} exposes {sorted(used)} to pull requests"
 
 

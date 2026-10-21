@@ -1752,7 +1752,10 @@ of them is evidence of profit.
 ## 2026-10-21: Fill and sizing replay (exploratory)
 
 **Exploratory, in-sample.** No plan was written before these runs, and no live
-rule was changed because of them.
+rule was changed because of them. About 20 rule variants and two capacity
+sweeps were tried; the rows below are the live rules, the two strongest
+alternatives and the capacity sweep. Treat every comparison as unadjusted
+for that search.
 
 ### Question
 With a $250 account, which settings collect the most separate fills per
@@ -1763,26 +1766,37 @@ night, and how do profit and drawdown change as orders get bigger?
 hypothetical resting NO order against Kalshi's public trade prints. An order
 fills up to the contracts that traded at or through its price before tip-off,
 as if first in line; `flow_share` 0.25 gives each traded contract a one-in-four
-chance of reaching us. Caps are charged in the live bot's order (day, tip
-time, best edge first). Statistics are game-clustered.
+chance of reaching us. Caps, including the lifetime allowance, are charged in
+the live bot's order (day, tip time, best edge first); a night that loses the
+daily stop blocks the next night. No maker fee is charged (NBA prop series
+reported none in October 2026; earlier entries charged a quarter of the
+taker fee). Statistics are game-clustered.
 
 ### Results (183 nights)
 
-| Rules | Filled orders a night | ¢ per contract | t | Season P&L | Max drawdown |
-|---|---:|---:|---:|---:|---:|
-| Live now: 2 contracts, 3¢ edge, 10/game, $75 a night | 25.7 | 3.97 | 4.6 | $368 | −$27 |
-| 2 contracts, 0¢ edge, 25/game, $150 a night | 54.0 | 3.82 | 5.8 | $744 | −$56 |
-| 1 contract, 0¢ edge, 5–95¢, 40/game, $150 a night | 79.1 | 3.32 | 6.1 | $481 | −$23 |
+| Rules | Nights with orders | Filled orders a night | ¢ per contract | t | Season P&L | Max drawdown |
+|---|---:|---:|---:|---:|---:|---:|
+| Live now: 2 contracts, 3¢ edge, 10/game, $75 a night, $1,000 lifetime | 37 | 13.2 | 0.81 | 0.3 | $8 | −$15 |
+| Live now without the lifetime allowance | 183 | 25.7 | 3.97 | 4.6 | $368 | −$27 |
+| 2 contracts, 0¢ edge, 25/game, $150 a night | 182 | 53.8 | 3.77 | 5.8 | $729 | −$56 |
+| 1 contract, 0¢ edge, 5–95¢, 40/game, $150 a night | 183 | 79.1 | 3.32 | 6.1 | $481 | −$23 |
+
+The $1,000 lifetime allowance counts every order placed, filled or not. At
+the live rules the replay places about $43 of orders a night, so the
+allowance runs out after 37 nights (about 480 filled orders); the bot then
+stops placing new orders until the owner raises it. Those first 37 nights
+happened to be weak (0.8¢ per contract). The other rows place $43–$95 a
+night and would need a larger allowance.
 
 Capacity, 25 orders a game and no cash limits, first in line vs a quarter
 of the flow:
 
 | Contracts per order | P&L, flow 1 | P&L, flow 0.25 | ¢ per contract (0.25) | Max drawdown (0.25) |
 |---:|---:|---:|---:|---:|
-| 1 | $416 | $410 | 3.84 | −$20 |
-| 10 | $3,906 | $3,410 | 3.76 | −$208 |
-| 100 | $28,235 | $17,701 | 3.36 | −$1,888 |
-| 1,000 | $113,930 | $44,309 | 2.87 | −$18,761 |
+| 1 | $416 | $385 | 3.61 | −$21 |
+| 10 | $3,906 | $3,301 | 3.64 | −$225 |
+| 100 | $28,235 | $17,460 | 3.32 | −$1,847 |
+| 1,000 | $113,930 | $42,679 | 2.76 | −$18,955 |
 
 ### Findings
 - One contract per order and looser per-game limits roughly triple the
