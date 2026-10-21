@@ -875,3 +875,15 @@ def test_execution_history_preserves_completed_volume_after_three_days():
     assert report.qualifying_complete.tolist() == [True]
     assert report.qualifying_volume.tolist() == [12.0]
     assert report.game_id.tolist() == [2]
+
+
+def test_general_trader_refuses_live_production(monkeypatch):
+    import pytest
+
+    fake = FakeClient()
+    fake.env = "prod"
+    monkeypatch.setattr(nba_trade, "TradingClient", lambda dry_run: fake)
+    monkeypatch.setenv("TRADE_MODE", "live")
+    with pytest.raises(nba_trade.TradingError, match="funded workers own"):
+        nba_trade.main()
+    assert fake.placed == []

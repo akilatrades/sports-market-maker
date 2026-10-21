@@ -212,3 +212,50 @@ def test_inconsistent_foreign_fill_on_our_market_halts(monkeypatch, tmp_path):
 
     with pytest.raises(TradingError, match="Unowned fill"):
         shared.state_for(Exchange(), "nba", NOW)
+
+
+def _settled(ticker, pnl, when=None):
+    return {
+        "market_ticker": ticker,
+        "settled_time": (when or NOW).isoformat(),
+        "revenue_dollars": "0.00" if pnl < 0 else str(pnl),
+        "yes_total_cost_dollars": "0.00",
+        "no_total_cost_dollars": str(abs(pnl)) if pnl < 0 else "0.00",
+        "fee_cost": "0.00",
+    }
+
+
+def test_account_loss_stop_counts_nba_and_nfl_together():
+    owned = {"KXNBA-A", "KXNFL-B"}
+    # Neither bot alone reaches -$20 today, but together they do.
+    half = [_settled("KXNBA-A", -10), _settled("KXNFL-B", -9)]
+    assert shared.account_realized_pnl(half, owned, NOW)["loss_stop"] is False
+    both = [_settled("KXNBA-A", -10), _settled("KXNFL-B", -10)]
+    report = shared.account_realized_pnl(both, owned, NOW)
+    assert report["daily_realized_pnl_dollars"] == -20
+    assert report["loss_stop"] is True
+    # Unowned markets never count; duplicate pages cannot double a loss.
+    noisy = both + both + [_settled("KXMANUAL-X", -500)]
+    assert shared.account_realized_pnl(noisy, owned, NOW) == report
+
+
+def test_account_cumulative_stop_spans_days():
+    owned = {f"KXNBA-{i}" for i in range(10)}
+    earlier = NOW - timedelta(days=2)
+    rows = [_settled(f"KXNBA-{i}", -6, earlier) for i in range(10)]
+    report = shared.account_realized_pnl(rows, owned, NOW)
+    assert report["daily_realized_pnl_dollars"] == 0
+    assert report["cumulative_realized_pnl_dollars"] == -60
+    assert report["loss_stop"] is True
+    assert shared.account_realized_pnl(rows[:9], owned, NOW)["loss_stop"] is False
+
+
+def test_account_pnl_fails_closed_on_incomplete_settlement():
+    bad = _settled("KXNFL-B", -1)
+    bad["fee_cost"] = None
+    with pytest.raises(TradingError, match="Incomplete"):
+        shared.account_realized_pnl([bad], {"KXNFL-B"}, NOW)
+    with pytest.raises(TradingError, match="HALT"):
+        shared.account_loss_stop({"ownership": {}})
+    assert shared.account_loss_stop(None) is False
+    assert shared.account_loss_stop({"account_pnl": {"loss_stop": True}}) is True

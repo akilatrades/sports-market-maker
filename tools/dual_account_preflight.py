@@ -35,6 +35,7 @@ def report(client, now):
         "status": "SHARED_ACCOUNT_RECONCILED",
         "strategy_rows": results,
         "combined_caps_dollars": LIMITS,
+        "account_realized_pnl": context["account_pnl"],
         "hypothetical_one_cent_budget_checks": checks,
         "note": "No orders, credentials, balances or market IDs exposed.",
     }

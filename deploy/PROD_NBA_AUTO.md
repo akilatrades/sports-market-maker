@@ -62,8 +62,12 @@ Preflight while NFL is running should report its isolation blocker. A successful
   | Open (active) orders and positions | $75 | $90 |
   | Submitted per New York day | $75 | $105 |
   | Submitted, lifetime | $1,000 | $1,050 |
-  | Realized-loss stop, per day | −$20 | — |
-  | Realized-loss stop, cumulative | −$60 | — |
+  | Realized-loss stop, per day | −$20 | −$20 |
+  | Realized-loss stop, cumulative | −$60 | −$60 |
+
+  The shared stops count settled NBA and NFL markets together, so losses from either bot stop both. Settlements arrive after games end, so a day's losses mostly block the next day's orders.
+
+  If the inputs (projections, injuries, rosters or quotes) fail, the bot places nothing and holds its resting orders for up to 15 minutes; if good inputs have not returned by then, it cancels them.
 
   Canceled and unfilled submissions still count toward the daily and lifetime submitted limits. The realized-loss stops are the binding money limit; on a $250 account the cumulative stop is 24% of the balance. In the extreme case that every open order also loses when the stop is reached, the loss could reach about the stop plus the active cap. NFL keeps its own limits ($15 active, $30 daily, $50 lifetime).
 - Contract count shrinks until price plus the 10% reserve fits. Reserve is a risk allowance, not an actual expense. Actual reported fees determine P&L.

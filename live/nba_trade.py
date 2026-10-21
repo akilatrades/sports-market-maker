@@ -10,7 +10,8 @@ the account's fills and settlements in outputs/live/.
 Modes, from the environment:
 
     TRADE_MODE=dry   (default) build and log orders; place nothing
-    TRADE_MODE=live  place orders; KALSHI_ENV picks demo or prod
+    TRADE_MODE=live  place orders on KALSHI_ENV=demo only; the production
+                     account belongs to the funded workers
     TRADE_RULE       which "no" seller variant to trade (default no_seller;
                      no_seller_bookline once its historical test passes)
     TRADE_MARKET     nba (default) or nfl (live/nfl_trade.py builds the
@@ -636,6 +637,14 @@ def main():
         configure(market)
     summary_extra = {}
     client = TradingClient(dry_run=(mode != "live"))
+    if getattr(client, "env", None) == "prod" and not getattr(client, "dry_run", True):
+        # The funded NBA and NFL workers own the production account. This
+        # general trader's kill switch and early exits would otherwise act on
+        # their orders and positions.
+        raise TradingError(
+            "The general trader may not send or cancel production orders; "
+            "the funded workers own that account. Use TRADE_MODE=dry."
+        )
     if getattr(client, "base", None):
         verify_execution_venue(client)
     OUT.mkdir(parents=True, exist_ok=True)
