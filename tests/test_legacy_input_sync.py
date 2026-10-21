@@ -1,4 +1,5 @@
 """The legacy minute timer must refresh only data, not executable source."""
+
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
@@ -27,8 +28,9 @@ def test_legacy_refresh_pins_books_to_one_verified_commit(tmp_path, monkeypatch)
     assert (root / "outputs/books/nba_latest.csv").read_bytes() == b"nba-book"
     assert (root / "outputs/books/nfl_latest.csv").read_bytes() == b"nfl-book"
     assert len(calls) == 2
-    assert "/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/outputs/books/nfl_latest.csv" in (
-        calls[1][1]
+    assert (
+        "/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/outputs/books/nfl_latest.csv"
+        in (calls[1][1])
     )
 
     assert not loader.refresh(now + timedelta(minutes=5), root, stamp)
@@ -61,9 +63,7 @@ def test_legacy_refresh_clears_missing_books_instead_of_reusing_them(
     assert not (book_dir / "nfl_latest.csv").exists()
 
 
-def test_failed_projection_sync_does_not_mark_refresh_as_success(
-    tmp_path, monkeypatch
-):
+def test_failed_projection_sync_does_not_mark_refresh_as_success(tmp_path, monkeypatch):
     import pytest
 
     stamp = tmp_path / "cache" / "last"
@@ -82,5 +82,7 @@ def test_fresh_install_runner_does_not_git_pull_before_each_trade():
     runner = source.split("cat > /home/trader/run.sh <<'RUN'", 1)[1].split(
         "\nRUN\n", 1
     )[0]
-    assert not any(line.lstrip().startswith("git pull ") for line in runner.splitlines())
+    assert not any(
+        line.lstrip().startswith("git pull ") for line in runner.splitlines()
+    )
     assert ".venv/bin/python -m live.legacy_input_sync" in runner
