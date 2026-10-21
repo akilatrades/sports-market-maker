@@ -93,7 +93,19 @@ def reserve(cost):
 
 def records(events):
     attempts = [e for e in events if e.get("event") == "intent"]
-    accepted = {e["client_order_id"]: e for e in events if e.get("event") == "accepted"}
+    accepted = {}
+    accepted_order_ids = set()
+    for event in events:
+        if event.get("event") != "accepted":
+            continue
+        client_id = event.get("client_order_id")
+        order_id = event.get("order_id")
+        if not client_id or not order_id:
+            raise TradingError("Malformed exchange acceptance in production journal: HALT")
+        if client_id in accepted or order_id in accepted_order_ids:
+            raise TradingError("Duplicate exchange acceptance in production journal: HALT")
+        accepted[client_id] = event
+        accepted_order_ids.add(order_id)
     if len({e["client_order_id"] for e in attempts}) != len(attempts):
         raise TradingError("Duplicate client order ID in production journal")
     rejected = rejected_client_ids(events)
