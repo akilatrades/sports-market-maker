@@ -12,10 +12,11 @@ unchanged in [PROJECT_STATE_NOTES_2026-10-19.md](PROJECT_STATE_NOTES_2026-10-19.
 - **Deployed code:** the commit from pull request #63 (21 October). It
   added account-wide loss stops, a 15-minute hold when input downloads fail
   for connection reasons, and a fix for the NFL sportsbook file format.
-- **NBA rules** (`nba-no-v4-smaller-orders-edge3-baseline`): post-only NO
-  orders one cent inside the spread, started 2–6 hours before tip-off and
-  resting until tip-off, with at least 3¢ of estimated edge to be placed
-  and to stay. [Details and limits](../deploy/PROD_NBA_AUTO.md).
+- **NBA rules** (`nba-no-v5-one-contract-breadth` in the code since 21
+  October; live once deployed): post-only NO orders of one contract, one
+  cent inside the spread, started 2–6 hours before tip-off and resting until
+  tip-off, with zero to 15¢ of estimated edge. v4 (2 contracts, 3¢ minimum)
+  ran before it. [Details and limits](../deploy/PROD_NBA_AUTO.md).
 - **NFL rules** (`nfl-no-v3-baseline-quote`): the same idea with smaller
   limits. [Details](../deploy/PROD_NFL_AUTO.md).
 - **Risk limits** are in the code and summarized in
