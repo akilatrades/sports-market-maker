@@ -192,3 +192,41 @@ def test_individual_order_signed_backfill_recovers_old_closed_order(monkeypatch)
     assert len(result) == 1
     assert len(client.calls) == 1
     module._CLOSED_ORDER_CACHE.clear()
+
+
+def test_signed_exchange_expiry_can_confirm_tip_independently_of_journal():
+    events = journal()
+    tip = NOW - timedelta(minutes=30)
+    events[0]["expiration_ts"] = int((tip - timedelta(hours=2)).timestamp())
+    signed_order = {
+        "order_id": "o1",
+        "status": "executed",
+        "fill_count_fp": "4",
+        "expiration_time": tip.isoformat(),
+    }
+    signed_fills = [{"order_id": "o1", "fill_id": "f1", "count_fp": "4"}]
+    row = audit_cohort(events, [signed_order], signed_fills, sport="nba", now=NOW)[
+        "orders"
+    ][0]
+    assert row["signed_exchange_expiry_matches_tip"] is True
+    assert row["signed_exchange_expiry_matches_intent"] is False
+    assert row["expiration_utc"] != row["signed_exchange_expiration_utc"]
+
+
+def test_exchange_expiry_absence_cannot_prove_tipoff():
+    signed = {"order_id": "o1", "status": "canceled", "fill_count_fp": "0"}
+    row = audit_cohort(journal(), [signed], [], sport="nba", now=NOW)["orders"][0]
+    assert row["signed_exchange_expiration_utc"] is None
+    assert row["signed_exchange_expiry_matches_tip"] is None
+    assert row["signed_exchange_expiry_matches_intent"] is None
+
+
+def test_signed_exchange_unix_expiry_and_corrupt_time():
+    from live.order_opportunity_audit import exchange_expiration
+
+    tip = NOW - timedelta(minutes=30)
+    assert exchange_expiration({"expiration_time": int(tip.timestamp())}) == tip
+    assert exchange_expiration({"expiration_ts": str(int(tip.timestamp()))}) == tip
+    assert exchange_expiration({"expiration_time": "malformed"}) is None
+    assert exchange_expiration({"expiration_time": 999999999999999}) is None
+    assert exchange_expiration({"expiration_time": True}) is None
