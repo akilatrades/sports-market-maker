@@ -9,6 +9,8 @@ are kept unchanged as part of the record.
 | Document | What it covers |
 |---|---|
 | [Project README](../README.md) | Summary, results, architecture and limitations |
+| [Project brief for hiring teams](PROJECT_BRIEF.md) | Two-minute case study, engineering contributions, live evidence versus simulations, what remains unproven |
+| [Deep audit matrix](DEEP_AUDIT_MATRIX.md) | Model, trading, data, risk, security, profitability and hiring-quality evidence gates |
 | [Research log](../RESEARCH_LOG.md) | Every hypothesis, written before it was tested, with its result |
 | [NBA and cross-market audit](NBA_AND_MARKET_AUDIT_2026-10-18.md) | Recomputed historical evidence with game-clustered intervals, multiple-comparison check, market census |
 | [Forward-validation protocol](FORWARD_VALIDATION.md) | Pre-registered rules for judging live results: 30 days and 500 settled fills |
@@ -30,6 +32,7 @@ are kept unchanged as part of the record.
 | Document | What it covers |
 |---|---|
 | [Project map and production audit](PROJECT_MAP_AND_PRODUCTION_AUDIT_2026-10-18.md) | Architecture walkthrough, live-fill reconciliation, open risks |
+| [NBA evidence and overnight audit, October 21](NBA_OVERNIGHT_AUDIT_2026-10-21.md) | Verified first maker fill, early-expiration discrepancy, projected-minutes/lineup evidence gaps, and forward-validation priorities |
 | [NFL roster guard](NFL_ROSTER_GUARD_2026-10-18.md) | Roster and identity safeguards added after the first live week |
 | [Execution readiness, October 17](EXECUTION_READINESS_2026-10-17.md) | Evidence checklist before any real-money order |
 | [Kalshi V2 demo rollout](KALSHI_DEMO_V2_ROLLOUT.md) | Demo-environment order and cancel verification |

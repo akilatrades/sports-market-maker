@@ -9,7 +9,8 @@ the spread on player props because the traders who cross the spread to buy
 are not. The question is examined first in historical data and then with
 real exchange orders.
 
-**[Live research dashboard](https://akilatrades.github.io/sports-market-maker/dashboard/)** ·
+**[Recruiter project brief](docs/PROJECT_BRIEF.md)** ·
+**[Research dashboard](https://akilatrades.github.io/sports-market-maker/dashboard/)** ·
 **[Research log](RESEARCH_LOG.md)** ·
 **[NBA statistical audit](docs/NBA_AND_MARKET_AUDIT_2026-10-18.md)** ·
 **[Documentation index](docs/README.md)**
@@ -41,10 +42,12 @@ real exchange orders.
   production order workers with exchange reconciliation, an
   execution-quality monitor, a public dashboard, 300+ tests and a research log
   that keeps pre-registered tests and exploratory analysis clearly apart.
-- **Where it stands.** A capped real-money pilot on NFL props has placed and
-  filled real orders. The NBA pilot, the market the research is about, is
-  staged for the 2026–27 season behind go/no-go checks and a forward
-  evaluation protocol.
+- **Where it stands (21 October 2026 UTC).** NFL and NBA production
+  cohorts have submitted real orders. A signed NBA account audit recorded
+  nine accepted orders, one fully filled maker order and one positively
+  settled NBA market. This is operational evidence, **not a statistically
+  established trading edge**. The current status of production timers
+  cannot be inferred from a GitHub commit or a historical dashboard snapshot.
 
 ## Results
 
@@ -77,7 +80,7 @@ fills together average +2.04¢ with an interval of −0.20 to +4.27.
 | Market | Accepted orders | Filled orders | Contracts filled | Settled markets | Realized P&L | As of |
 |---|---:|---:|---:|---:|---:|---|
 | NFL receiving yards | 10 | 4† | 13† | 4 | **−$0.69** | 2026-10-19 14:40 UTC |
-| NBA player props | Not started | | | | | |
+| NBA player props | 9 | 1 | Not published | 1 | Positive (amount private) | 2026-10-21 04:05 UTC |
 
 The **−$0.69** figure is from an owner-run signed, GET-only production
 reconciliation at **14:40 UTC on October 19**: ten accepted NFL orders,
@@ -88,7 +91,15 @@ The owner reports a Matthew Golden loss, but this public aggregate cannot
 attribute the whole decrease to that trade. **†Filled-order (4) and
 contract (13) counts were last independently reported by the earlier
 exchange reconciliation and are not newly established by the 14:40 report.**
-NBA has zero accepted orders as of this snapshot.
+The NBA row comes from a **separate signed, private read-only Kalshi
+audit on October 21**, which matched one maker fill and one positive
+settlement to the strategy's private journal. Exact account amounts and
+order-level identifiers are deliberately not published. Nine accepted
+orders does **not** imply that eight orders were confirmed unfilled.
+[Signed audit evidence](https://github.com/akilatrades/sports-market-maker/actions/runs/39542054076)
+and [research interpretation](docs/NBA_OVERNIGHT_AUDIT_2026-10-21.md).
+The table mixes **dated, independent snapshots**; it is not a single
+live account state or a verified combined portfolio return.
 
 The public [dashboard](https://akilatrades.github.io/sports-market-maker/dashboard/)
 checks for a refreshed verified aggregate each minute. It treats reports
@@ -141,9 +152,13 @@ Kalshi quotes ─► edge after fees ─► veto / filters ─► risk checks �
   50%), order-level realized P&L, and a [forward-validation protocol](docs/FORWARD_VALIDATION.md)
   with a 30-day, 500-settled-fill checkpoint before any sizing decision.
 
-**Live policy differs from the historical simulation.** New NBA orders
-currently enter 2–6 hours before the verified tip; accepted orders have an
-exchange expiration at scheduled tipoff, not one hour after posting.
+**Current reviewed code policy differs from the historical simulation.**
+New NBA orders enter 2–6 hours before verified tip; the current code
+**requests** an exchange expiration at scheduled tipoff. The first
+verified NBA fill was from an older/unknown strategy generation whose
+journal expiration was more than two hours before tip. The new policy
+is **not yet independently verified on a newly accepted v4 exchange
+order**.
 Each resting quote is rechecked against current fees, probabilities,
 availability, and the Kalshi book, and can be canceled earlier if invalid.
 Late entries 30 minutes–2 hours before tip remain **research only**.
@@ -184,6 +199,14 @@ The [research log](RESEARCH_LOG.md) is the core of the project.
 | Cancelling unfilled orders after 30–120 minutes | Gave up 40–75% of the profit per order placed |
 | Ranking orders by fill probability, or by edge per unit of risk | Not robust across halves of the season |
 | Repeating the study on Polymarket | Not yet possible: almost no player-prop volume |
+
+## For hiring teams
+
+Start with the [two-minute project case study](docs/PROJECT_BRIEF.md). It
+links each methodological claim to research, execution source code, or
+signed exchange evidence, and separates operational successes from
+untested profitability claims. This system posts **directional passive-NO
+liquidity**; it is not a neutral two-sided market maker.
 
 ## Repository
 
