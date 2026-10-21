@@ -62,10 +62,26 @@ It sets only `SMM_DUAL_MARKET=YES` (both bots) and `PROD_NBA_AUTO_ARM=YES`
 are untouched. The NBA readiness check needs verified projection rows, so on
 a day with no NBA games `GO_LIVE` fails safely; run it again on a game day.
 
+## Root safety
+
+The helper runs from `/` with a fixed `PATH` and isolated Python (`-I`), so
+nothing the `trader` account controls is imported or executed as root.
+Repository code (checks, workers) only ever runs as `trader`. The KILL file
+for a cancel pass is written by `trader`, never by root, and a KILL file that
+is a link is refused.
+
+**Optional hardening:** move the four `DROPLET_*` secrets from repository
+secrets into a GitHub *Environment* limited to `main`, with yourself as a
+required reviewer, and add `environment: <name>` to the `control` job. Each
+Go live / Stop would then also need your approval click in GitHub.
+
 ## Stopping
 
-`STOP` disables both timers (they stay off after a reboot). `STOP_AND_CANCEL`
-also places a KILL switch, runs each worker once so it cancels its own
-resting orders, then removes only the KILL switches it created. If a cancel
-pass fails, the switches stay and the log says to check Kalshi directly.
-Stopping never cancels orders placed by hand or by anything else.
+`STOP` disables both timers (they stay off after a reboot) and then
+confirms both are off; if either is still on it reports a failure rather
+than success. It waits up to five minutes for a running deploy to finish,
+and a Go live test run never holds it up. `STOP_AND_CANCEL` also places a
+KILL switch, runs each worker once so it cancels its own resting orders,
+then removes only the KILL switches it created. If a cancel pass fails, the
+switches stay and the log says to check Kalshi directly. Stopping never
+cancels orders placed by hand or by anything else.

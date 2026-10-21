@@ -8,7 +8,7 @@
 set -Eeuo pipefail
 umask 077
 [[ "$EUID" -eq 0 ]] || { echo "Run this installer from the root Droplet console" >&2; exit 2; }
-[[ "$#" -ge 1 && "$1" =~ ^[0-9a-f]{40}$ ]] || { echo "Pass one reviewed 40-character commit SHA" >&2; exit 2; }
+[[ "$#" -ge 1 && "$#" -le 2 && "$1" =~ ^[0-9a-f]{40}$ ]] || { echo "Pass one reviewed 40-character commit SHA" >&2; exit 2; }
 SHA="$1"
 REPLACE="${2:-}"
 [[ -z "$REPLACE" || "$REPLACE" == --replace ]] || { echo "Unknown option" >&2; exit 2; }

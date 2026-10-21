@@ -32,6 +32,9 @@ case "$cmd" in
   enable|disable|stop|start)
     now=0; if [[ "${1:-}" == --now ]]; then now=1; shift; fi
     for u in "$@"; do
+      if [[ -n "${SHIM_STUCK:-}" && "$u" == *"$SHIM_STUCK"* && "$cmd" != start && "$cmd" != enable ]]; then
+        exit 1
+      fi
       case "$cmd" in
         enable) touch "$S/$u.enabled"; if (( now )); then touch "$S/$u.active"; fi ;;
         disable) rm -f "$S/$u.enabled"; if (( now )); then rm -f "$S/$u.active"; fi ;;
@@ -53,8 +56,9 @@ case "$cmd" in
     if [[ -e "$S/$1.active" ]]; then (( q )) || echo active; exit 0; fi
     (( q )) || echo inactive; exit 3 ;;
   is-enabled)
-    if [[ -e "$S/$1.enabled" ]]; then echo enabled; exit 0; fi
-    echo disabled; exit 1 ;;
+    q=0; if [[ "$1" == --quiet ]]; then q=1; shift; fi
+    if [[ -e "$S/$1.enabled" ]]; then (( q )) || echo enabled; exit 0; fi
+    (( q )) || echo disabled; exit 1 ;;
   show)
     u="$1"; shift; prop=""
     while [[ $# -gt 0 ]]; do
@@ -176,6 +180,9 @@ def box(tmp_path):
     text = HELPER.read_text()
     replacements = {
         '[[ "$EUID" == 0 ]] || { echo "ERROR: root required" >&2; exit 2; }': "",
+        "export PATH=/usr/sbin:/usr/bin:/sbin:/bin": (
+            f"export PATH={shims}:{os.environ['PATH']}"
+        ),
         "/home/trader/sports-market-maker-prod-auto": str(prod),
         "/etc/market-maker-prod-auto.env": str(etc / "nfl.env"),
         "/etc/market-maker-prod-nba-auto.env": str(etc / "nba.env"),
@@ -193,7 +200,7 @@ def box(tmp_path):
     script.write_text(text)
     script.chmod(0o755)
 
-    def run(*args, **extra_env):
+    def run(*args, cwd=None, **extra_env):
         env = {
             **os.environ,
             "PATH": f"{shims}:{os.environ['PATH']}",
@@ -201,7 +208,11 @@ def box(tmp_path):
             **extra_env,
         }
         result = subprocess.run(
-            ["bash", str(script), *args], capture_output=True, text=True, env=env
+            ["bash", str(script), *args],
+            capture_output=True,
+            text=True,
+            env=env,
+            cwd=cwd,
         )
         output = result.stdout + result.stderr
         # Public-log rule: nothing from settings files or account checks.
@@ -349,6 +360,10 @@ def test_control_workflow_is_owner_only_confirmed_and_manual():
     for trigger in ("\n  push:", "\n  pull_request", "\n  schedule:"):
         assert trigger not in text
     assert text.count("github.actor == 'akilatrades'") == 2
+    assert text.count("github.triggering_actor == 'akilatrades'") == 2
+    # Cancelling the run must stop GO_LIVE (only SSH-key cleanup uses always()).
+    assert "!cancelled() && github.ref" in text
+    assert "always() && github.ref" not in text
     assert '[[ "$CONFIRM" == "$ACTION" ]]' in text
     assert "sudo -n /usr/local/sbin/smm-prod-control" in text
     assert "secrets.KALSHI" not in text
@@ -364,9 +379,32 @@ def test_helper_keeps_check_output_off_the_public_log():
     assert "systemctl disable --now" in text  # stopped bots stay off after reboot
 
 
-def test_cancel_never_writes_through_a_planted_link(box):
+def test_cancel_refuses_a_linked_kill_switch_and_runs_no_pass(box):
     target = box["t"] / "outside.txt"
     (box["t"] / "nba" / "KILL").symlink_to(target)  # dangling link
     code, out = box["run"]("stop-and-cancel")
+    assert code != 0 and "is a link" in out
     assert not target.exists()
-    assert (box["t"] / "nba" / "KILL").is_symlink()  # left for the owner
+    assert not (box["state"] / "started").exists()  # no worker pass at all
+    code, out = box["run"]("status")
+    assert "NBA_KILL_SWITCH=present" in out
+
+
+def test_helper_ignores_python_modules_in_the_callers_directory(box, tmp_path):
+    planted = tmp_path / "caller"
+    planted.mkdir()
+    hit = tmp_path / "ESCALATED"
+    for module in ("pathlib.py", "os.py", "sys.py"):
+        (planted / module).write_text(f"open({str(hit)!r}, 'w').write('x')\n")
+    code, out = box["run"]("go-live", box["sha"], cwd=planted)
+    assert code == 0, out
+    assert not hit.exists()
+
+
+def test_stop_reports_failure_when_a_timer_stays_on(box):
+    assert box["run"]("go-live", box["sha"])[0] == 0
+    code, out = box["run"]("stop", SHIM_STUCK="nba")
+    assert code != 0
+    assert "still on after stopping" in out
+    assert "STOPPED:" not in out
+    assert not active(box, NFL_TIMER)  # the other bot is still stopped

@@ -23,22 +23,23 @@ on:
 permissions:
   contents: read
 
-# Shares the release lock group: a deploy and a control action never overlap.
-concurrency:
-  group: funded-droplet-code-release
-  cancel-in-progress: false
-
 jobs:
   tests:
     # Full test suite before arming; STOP paths skip it so they stay fast.
-    if: github.ref == 'refs/heads/main' && github.actor == 'akilatrades' && inputs.action == 'GO_LIVE'
+    if: >-
+      github.ref == 'refs/heads/main' && github.actor == 'akilatrades' &&
+      github.triggering_actor == 'akilatrades' && inputs.action == 'GO_LIVE'
     runs-on: ubuntu-24.04
     timeout-minutes: 25
+    strategy:
+      fail-fast: true
+      matrix:
+        python-version: ['3.11', '3.12']
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: '3.12'
+          python-version: ${{ matrix.python-version }}
       - name: Install Python test requirements
         run: pip install -r requirements.txt ruff==0.11.13
       - name: Style, shell and Python regression suite
@@ -53,11 +54,17 @@ jobs:
   control:
     needs: tests
     if: >-
-      always() && github.ref == 'refs/heads/main' && github.actor == 'akilatrades' &&
+      !cancelled() && github.ref == 'refs/heads/main' && github.actor == 'akilatrades' &&
+      github.triggering_actor == 'akilatrades' &&
       (needs.tests.result == 'success' ||
        (needs.tests.result == 'skipped' && inputs.action != 'GO_LIVE'))
     runs-on: ubuntu-24.04
     timeout-minutes: 20
+    # Only the Droplet step shares the release lock group, so a GO_LIVE
+    # test run never delays a STOP; the helper itself also waits on a lock.
+    concurrency:
+      group: funded-droplet-code-release
+      cancel-in-progress: false
     env:
       DROPLET_HOST: ${{ secrets.DROPLET_HOST }}
       DROPLET_USER: ${{ secrets.DROPLET_USER }}
