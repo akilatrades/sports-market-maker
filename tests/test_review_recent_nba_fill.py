@@ -1,4 +1,5 @@
 """The NBA first-fill audit must not expose trading identities in CI logs."""
+
 import json
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
@@ -65,9 +66,7 @@ def fixture(first_filled=True, fresh=True):
     return (
         {
             "status": "ok",
-            "updated_utc": (
-                NOW - timedelta(minutes=1 if fresh else 12)
-            ).isoformat(),
+            "updated_utc": (NOW - timedelta(minutes=1 if fresh else 12)).isoformat(),
             "account": {"cash_dollars": 1000000, "equity_dollars": 999999},
             "order_audit": {
                 "nba": {
