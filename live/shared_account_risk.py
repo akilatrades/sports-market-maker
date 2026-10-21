@@ -14,7 +14,9 @@ from kalshi.trading import TradingError
 from live.reconciled_attempts import rejected_client_ids
 
 ROOT = Path("/home/trader")
-LIMITS = {"lifetime": 100.0, "daily": 40.0, "active": 25.0}
+# Cross-sport caps: NBA (larger fill-measurement sizing) plus NFL's own
+# unchanged limits ($50 lifetime, $30 daily, $15 active).
+LIMITS = {"lifetime": 1250.0, "daily": 120.0, "active": 105.0}
 LOCAL_DAY = ZoneInfo("America/New_York")
 
 

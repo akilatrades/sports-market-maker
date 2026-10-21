@@ -27,20 +27,23 @@ from live.reconciled_attempts import rejected_client_ids
 
 STRATEGY_VERSION = "nba-no-v4-smaller-orders-edge3-baseline"
 
-# Larger high-throughput NBA pilot: retains the independent shared-account
-# $25 active / $40 daily / $100 cumulative caps and original safety vetoes.
-# Submitted cost is charged even when an order expires without a fill.
-MAX_GROSS_COST = 75.0
+# Owner-approved larger fill-measurement sizing (2026-10-21): enough orders
+# to reach about 500 fills in two to three weeks. Order size stays at two
+# contracts so the sample spreads across many markets. Submitted cost is
+# charged to the daily and lifetime allowances even when an order expires
+# unfilled; the realized-loss stops below are the binding money limit.
+# Worst case is about the cumulative loss stop plus the active cap.
+MAX_GROSS_COST = 1200.0  # lifetime submitted allowance
 MAX_ORDER_COST = 4.0
-MAX_ACTIVE_COST = 20.0
-MAX_GAME_COST = 12.0
-MAX_TEAM_COST = 8.0
-MAX_DAILY_COST = 35.0
-MAX_GAME_ORDERS = 4
+MAX_ACTIVE_COST = 90.0  # orders rest until their games end, so ~ one day
+MAX_GAME_COST = 15.0
+MAX_TEAM_COST = 10.0  # per team per New York day
+MAX_DAILY_COST = 90.0
+MAX_GAME_ORDERS = 10
 MAX_CONTRACTS = 2  # smaller live validation fills; sample more markets
-# Additional P&L circuit breakers: do not weaken existing spend/activity limits.
-MAX_REALIZED_DAILY_LOSS = 12.0
-MAX_REALIZED_CUMULATIVE_LOSS = 25.0
+# P&L circuit breakers: no new orders after these realized losses.
+MAX_REALIZED_DAILY_LOSS = 25.0
+MAX_REALIZED_CUMULATIVE_LOSS = 90.0
 FEE_RESERVE = 1.10
 WINDOW = (2.0, 6.0)  # NEW orders still start 2–6 hours before tip
 # ALREADY-ACCEPTED orders may rest until the verified scheduled tip.

@@ -50,7 +50,22 @@ Preflight while NFL is running should report its isolation blocker. A successful
 ## Execution policy
 
 - Points, rebounds, assists and threes; passive NO entries only. At most one new order per scan and one lifetime submission per ticker. No market orders or automatic exits.
-- Existing limits: $3 reserved per order, $15 active, $30 daily, $50 lifetime submitted allowance; $3 per game and team, at most five contracts. Game/team allowances accumulate over the pilot. Canceled submissions still consume daily/lifetime allowance.
+- Current limits (owner-approved fill-measurement sizing, October 21, 2026). Amounts include the 10% reserve:
+
+  | Limit | NBA | Shared with NFL |
+  |---|---:|---:|
+  | Contracts per order | 2 | — |
+  | Cost per order | $4 | — |
+  | Orders per game | 10 | — |
+  | Per game | $15 | — |
+  | Per team, per New York day | $10 | — |
+  | Open (active) orders and positions | $90 | $105 |
+  | Submitted per New York day | $90 | $120 |
+  | Submitted, lifetime | $1,200 | $1,250 |
+  | Realized-loss stop, per day | −$25 | — |
+  | Realized-loss stop, cumulative | −$90 | — |
+
+  Canceled and unfilled submissions still count toward the daily and lifetime submitted limits. The realized-loss stops are the binding money limit; the worst case is about the cumulative stop plus the active cap (about $180). NFL keeps its own limits ($15 active, $30 daily, $50 lifetime).
 - Contract count shrinks until price plus the 10% reserve fits. Reserve is a risk allowance, not an actual expense. Actual reported fees determine P&L.
 - Current series/event fees must be understood, estimated net edge must remain positive after the fee bound, and the verified price must stay passive. Unknown fee types block entry.
 - Current roster, exact fixture, projection timestamp/checksum and injury news must agree. New team injury news requires refreshed projections; book probabilities predating team news are discarded.
@@ -81,4 +96,4 @@ The private dashboard keeps its layout and exchange balances. Handoff selects NB
 
 Actual fills are identified by exchange ID and record cost, fees and maker/taker status. Resting orders have repeated queue observations. Actual fills have observed 5/15/60-minute midpoint and executable-bid movements; missing windows are marked missing. Markouts are not realized profit. Settlements normalize dollar costs/fees and cent revenue, using append-only corrections.
 
-The NBA review checkpoint remains 30 days **and** 500 distinct settled buy-fill records with the existing coverage gates. This small initial lifetime allowance is unlikely to reach that research checkpoint. No automatic reset or capital increase is implemented. Count independent games as well as fill records.
+The NBA review checkpoint remains 30 days **and** 500 distinct settled buy-fill records with the existing coverage gates. The October 21 limits are sized to reach about 500 fills in two to three weeks of games. No automatic reset or capital increase is implemented. Count independent games as well as fill records.

@@ -98,13 +98,16 @@ def settled(ticker=TICKER, pnl=-2.0, when=NOW):
 
 
 def test_realized_loss_daily_stop_and_deduplicated_snapshot():
-    settlements = [
-        settled("KXNBA-ONE", -7),
-        settled("KXNBA-TWO", -6),
-    ]
     owned = {"KXNBA-ONE", "KXNBA-TWO"}
+    just_inside = [settled("KXNBA-ONE", -12), settled("KXNBA-TWO", -12)]
+    assert nba.MAX_REALIZED_DAILY_LOSS == 25
+    assert nba.nba_realized_pnl(just_inside, owned, NOW)["loss_stop"] is False
+    settlements = [
+        settled("KXNBA-ONE", -13),
+        settled("KXNBA-TWO", -12),
+    ]
     report = nba.nba_realized_pnl(settlements, owned, NOW)
-    assert report["daily_realized_pnl_dollars"] == -13
+    assert report["daily_realized_pnl_dollars"] == -25
     assert report["loss_stop"] is True
     assert report["settlement_records"] == 2
     duplicated = nba.nba_realized_pnl(settlements * 2, owned, NOW)
@@ -113,14 +116,19 @@ def test_realized_loss_daily_stop_and_deduplicated_snapshot():
 
 def test_realized_loss_cumulative_stop_and_ignore_nfl():
     yesterday = NOW - timedelta(days=1)
-    settlements = [settled(f"KXNBA-{i}", -6, yesterday) for i in range(5)]
+    assert nba.MAX_REALIZED_CUMULATIVE_LOSS == 90
+    settlements = [settled(f"KXNBA-{i}", -6, yesterday) for i in range(15)]
     settlements.append(settled("KXNFL-UNRELATED", -500))
     report = nba.nba_realized_pnl(
         settlements, {s["market_ticker"] for s in settlements[:-1]}, NOW
     )
     assert report["daily_realized_pnl_dollars"] == 0
-    assert report["cumulative_realized_pnl_dollars"] == -30
+    assert report["cumulative_realized_pnl_dollars"] == -90
     assert report["loss_stop"] is True
+    fewer = settlements[:14] + settlements[-1:]
+    report = nba.nba_realized_pnl(fewer, {s["market_ticker"] for s in fewer[:-1]}, NOW)
+    assert report["cumulative_realized_pnl_dollars"] == -84
+    assert report["loss_stop"] is False
 
 
 @pytest.mark.parametrize(
