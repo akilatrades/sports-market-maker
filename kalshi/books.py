@@ -361,17 +361,21 @@ def attach_latest(priced, path=LATEST, max_age_hours=4):
 # --- convenience ------------------------------------------------------------------
 
 
-def props(key, sport="nba", max_events=None, hours_ahead=36):
-    """Current lines for upcoming games of one sport (1 credit per market per game)."""
+def props(key, sport="nba", max_events=None, hours_ahead=36, started_hours=1):
+    """Current lines for upcoming games of one sport (1 credit per market per game).
+
+    Games starting within ``hours_ahead`` are fetched, plus games that started
+    less than ``started_hours`` ago (0 skips games already under way).
+    """
     sport_key, markets, _ = SPORTS[sport]
     listed, usage = events(key, sport=sport_key)
     now = pd.Timestamp.now(tz="UTC")
     frames = []
     for event in listed:
         start = pd.Timestamp(event["commence_time"])
-        if start < now - pd.Timedelta(hours=1) or start > now + pd.Timedelta(
-            hours=hours_ahead
-        ):
+        if start < now - pd.Timedelta(
+            hours=started_hours
+        ) or start > now + pd.Timedelta(hours=hours_ahead):
             continue
         odds, usage = event_odds(key, event["id"], sport=sport_key, markets=markets)
         frames.append(parse_event(odds, markets=markets))

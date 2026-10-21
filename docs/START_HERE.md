@@ -48,7 +48,8 @@ Read them for history, not for how things work now.
 
 1. **Morning and afternoon, on GitHub Actions.** Scheduled jobs refresh
    stats and injury news, build player projections, collect sportsbook
-   lines (eight snapshots a day) and publish a checked input file to the
+   lines (four full snapshots a day, plus every 20 minutes for games
+   starting within 6½ hours) and publish a checked input file to the
    repository.
 2. **From six hours before tip-off, on the server.** Every few minutes the
    NBA worker downloads that input file, reads Kalshi's order books and,
