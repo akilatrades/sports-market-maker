@@ -39,6 +39,18 @@ for directory in \
   fi
 done
 
+echo "runner_classification:"
+for script in /home/trader/run.sh /opt/market-maker/run.sh /srv/market-maker/run.sh; do
+  if [ -f "$script" ]; then
+    printf '%s present=yes\n' "$script"
+    for module in live.nba_trade live.prod_nba_auto live.prod_nfl_auto; do
+      if grep -Fq "$module" "$script"; then
+        printf 'runner_module=%s\n' "$module"
+      fi
+    done
+  fi
+done
+
 echo "candidate_state_locations:"
 for directory in /home/trader/prod-nba-auto /home/trader/prod-nfl-auto /home/trader/sports-market-maker /opt/market-maker; do
   if [ -d "$directory" ]; then
