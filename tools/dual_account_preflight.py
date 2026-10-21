@@ -5,6 +5,7 @@ Requires production Kalshi reads and the two private journals.
 """
 
 import json
+import traceback
 from datetime import UTC, datetime
 
 from kalshi.trading import TradingError
@@ -51,6 +52,11 @@ def main():
                 {
                     "status": "RECONCILIATION_UNAVAILABLE_DO_NOT_ACTIVATE",
                     "reason_type": type(error).__name__,
+                    "safe_trace": [
+                        f"{frame.name}:{frame.lineno}"
+                        for frame in traceback.extract_tb(error.__traceback__)
+                        if "/sports-market-maker-prod-auto/" in frame.filename
+                    ][-6:],
                 }
             )
         )
