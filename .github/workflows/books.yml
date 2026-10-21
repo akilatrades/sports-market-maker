@@ -1,28 +1,46 @@
 name: book lines
 # Logs the sportsbooks' NBA and NFL prop lines (de-vigged consensus only) to
-# outputs/books/ six times a day in NBA hours, 15 minutes before each
-# projection run so the paper ledgers and the trader see fresh lines.
-# About 8 Odds API credits per game, roughly 15,000 a month.
+# outputs/books/. The live NBA bot only trusts odds under 2 hours old (under
+# 75 minutes within 2.5 hours of tip-off); stale odds block new orders and
+# cancel resting ones. So, besides four full 36-hour snapshots a day (15
+# minutes before each projection run, which also reads these lines), it
+# refreshes every 20 minutes the games tipping within the next 6.5 hours.
+# A refresh with no game that close costs nothing.
+# About 8 Odds API credits per NBA game per refresh: about 2,100 on an
+# 11-game night (roughly 1,700 of it near-term), within the plan's 100,000
+# a month.
 on:
-  # Workflow-file updates trigger one immediate data-only refresh, instead
-  # of waiting for the next best-effort scheduled slot. Generated book output
+  # Workflow-file updates trigger one immediate full refresh, instead of
+  # waiting for the next best-effort scheduled slot. Generated book output
   # commits do not retrigger this workflow.
   push:
     branches: [main]
     paths:
       - ".github/workflows/books.yml"
   schedule:
-    # Cover the early 8 AM Central NBA entry window. GitHub may start
-    # scheduled jobs late, so keep more than one pregame source checkpoint.
-    # Keep the SAME eight scheduled snapshots/day (no added Odds API
-    # spend), but move later snapshots into pre-tip NBA news windows.
-    # 22:15 UTC is 5:15 PM Central in October; 00:15 UTC is 7:15 PM.
-    - cron: "15 0,2,8,12,15,18,20,22 * * *"
+    # Full 36-hour snapshots, 15 minutes before the 12:30, 15:30 and 18:30
+    # UTC projection runs, plus 08:15 for early entry windows.
+    - cron: "15 8,12,15,18 * * *"
+    # Near-term refresh every 20 minutes, 10:05-03:45 UTC (about 6 AM to
+    # midnight Eastern), so odds stay fresh even when GitHub starts a run
+    # late. Minutes avoid the top of the hour, when GitHub is busiest.
+    - cron: "5,25,45 10-23 * * *"
+    - cron: "5,25,45 0-3 * * *"
   workflow_dispatch:
+    inputs:
+      scope:
+        description: "near = games tipping within 6.5 hours (cheap); full = next 36 hours"
+        type: choice
+        default: near
+        options:
+          - near
+          - full
 permissions:
   contents: write
 concurrency:
-  group: repo-writes
+  # Its own group: a shared group can drop a pending refresh when other
+  # bots queue runs. Pushes are retried below instead.
+  group: book-lines
   cancel-in-progress: false
 jobs:
   log:
@@ -36,8 +54,24 @@ jobs:
         with:
           python-version: "3.12"
       - run: pip install -r requirements.txt
-      - run: python -m live.log_books nba
-      - run: python -m live.log_books nfl
+      - name: Choose scope
+        env:
+          EVENT: ${{ github.event_name }}
+          SCHEDULE: ${{ github.event.schedule }}
+          REQUESTED: ${{ inputs.scope }}
+        run: |
+          set -euo pipefail
+          scope=near
+          if [[ "$EVENT" == push || "$SCHEDULE" == "15 8,12,15,18 * * *" ]]; then scope=full; fi
+          if [[ "$EVENT" == workflow_dispatch ]]; then scope="${REQUESTED:-near}"; fi
+          [[ "$scope" == near || "$scope" == full ]]
+          echo "SCOPE=$scope" >> "$GITHUB_ENV"
+      - name: NBA lines
+        run: |
+          if [[ "$SCOPE" == near ]]; then python -m live.log_books nba --near; else python -m live.log_books nba; fi
+      - name: NFL lines
+        run: |
+          if [[ "$SCOPE" == near ]]; then python -m live.log_books nfl --near; else python -m live.log_books nfl; fi
       - name: Commit
         run: |
           git config user.name "github-actions[bot]"
@@ -45,5 +79,9 @@ jobs:
           git add -A outputs/books
           if git diff --cached --quiet; then exit 0; fi
           git commit -m "Book lines $(date -u +%Y-%m-%dT%H:%MZ)"
-          git pull --rebase -X theirs
-          git push
+          # Other bots push to main too; retry instead of sharing their lock.
+          for attempt in 1 2 3 4 5; do
+            if git pull --rebase -X theirs && git push; then exit 0; fi
+            sleep $((attempt * 5))
+          done
+          exit 1

@@ -97,7 +97,7 @@ GitHub Actions downloads history and fits the existing four models. Projections 
 
 The Droplet downloads only model inputs and the derived book file, pinned to one commit. It does not automatically update executable code, train locally or call the paid book API. Inputs older than nine hours, future-dated inputs or mismatched hashes are rejected. Missing book data clears the cached book file instead of retaining old odds.
 
-Verified inputs are published at 11:30, 12:30, 15:30, 18:30 and 21:30 UTC (*Publish NBA production inputs*); GitHub can start scheduled jobs late, so freshness is checked from the files, not the schedule. Sportsbook lines are collected eight times a day. Public-source checks never place orders.
+Verified inputs are published at 11:30, 12:30, 15:30, 18:30 and 21:30 UTC (*Publish NBA production inputs*); GitHub can start scheduled jobs late, so freshness is checked from the files, not the schedule. Sportsbook lines (*book lines*) are collected for the next 36 hours at 08:15, 12:15, 15:15 and 18:15 UTC, and every 20 minutes from 10:05 to 03:45 UTC for games starting within the next 6.5 hours; a 20-minute run with no game that close spends no Odds API credits. Every pass downloads the newest lines from `main`, so a refresh reaches the bot within one pass. Odds older than 2 hours (75 minutes within 2.5 hours of tip-off) block new orders and cancel resting ones, which is why the near-term refresh runs this often. Public-source checks never place orders.
 
 Book collection looks 36 hours ahead, and a candidate needs at least two fresh books on the exact line. If none qualify, preflight reports `no_verified_projection_rows`; that is a missing input, not a sign that the strategy needs more aggressive prices.
 
