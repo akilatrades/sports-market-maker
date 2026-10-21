@@ -1727,3 +1727,24 @@ goal-threshold markets (a game market). Polymarket US lists "Player Prop"
 as a contract type, so volume may arrive this season. Decision pending:
 either run the small scan on the 743 markets now, or snapshot the
 inventory weekly and scan when NBA prop volume exists.
+
+## 2026-10-21: Live rule changes since launch (operational record)
+
+Not a test: this entry records the rule changes made for live trading so the
+log stays complete. Each one is described in the linked documents, and none
+of them is evidence of profit.
+
+- **19–20 October:** the NFL and NBA bots were switched on together on one
+  funded account ([DUAL_MARKET_PRODUCTION.md](deploy/DUAL_MARKET_PRODUCTION.md)).
+- **20–21 October:** NBA rules v4 (`nba-no-v4-smaller-orders-edge3-baseline`).
+  New orders start 2–6 hours before tip-off and rest until tip-off; the second
+  cent of price improvement is off (it lost in the replay, see *What did not
+  work* in the README); an order needs 3¢ of estimated edge after fees both to
+  be placed and to stay.
+- **21 October:** limits sized for the $250 account, account-wide loss stops
+  (−$20 a day, −$60 total, NBA and NFL settled markets together) and a
+  15-minute hold when inputs fail for connection reasons only. Current values:
+  [PROD_NBA_AUTO.md](deploy/PROD_NBA_AUTO.md#execution-policy).
+- Live results are judged only under the
+  [forward-validation protocol](docs/FORWARD_VALIDATION.md), with each rule
+  version counted as its own group.

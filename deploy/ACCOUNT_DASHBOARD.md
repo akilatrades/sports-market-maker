@@ -2,8 +2,9 @@
 
 The public dashboard at `/dashboard/` presents research, models and **only
 exchange-verified NFL/NBA settled P&L** for portfolio visitors. The public P&L
-comes from an owner-approved timestamped `outputs/dashboard/production_pnl.json`
-snapshot, **not** a continuously authenticated Kalshi feed. No independent
+comes from a sanitized, read-only settled-P&L feed on the server, polled every
+15 seconds ([LIVE_ACCOUNT_PNL.md](LIVE_ACCOUNT_PNL.md)), with the committed
+`outputs/dashboard/production_pnl.json` snapshot as a fallback. No independent
 paper-ledger profits are displayed. The separate account view is served by the read-only service
 on the existing trading Droplet at `http://127.0.0.1:8765`. Publishing the public
 research page requires no terminal or SSH setup.
@@ -11,21 +12,12 @@ No balances, keys, raw journals or order IDs are uploaded to GitHub. The account
 service binds to **127.0.0.1 only**, rejects foreign browser origins/hosts, and
 allows only production GET requests. It cannot submit or cancel orders.
 
-## Owner deployment
+## Owner access
 
-After this change is merged, run on the Droplet as root:
-
-```bash
-curl -fsS https://raw.githubusercontent.com/akilatrades/sports-market-maker/main/deploy/update_nfl_dashboard.sh -o /tmp/update_nfl_dashboard.sh
-bash /tmp/update_nfl_dashboard.sh
-```
-
-The update script pauses the NFL timer, waits for an in-flight worker to finish,
-pulls main with `--ff-only`, installs/restarts the read-only account service, and
-restores the timer only if it was already active. It preserves the private
-journal, KILL switch, credentials and all dollar limits. It does not enable an
-inactive trader or run a demo. A failed pull stops the update; resolve the Git
-problem without resetting the production journal.
+The account service is already installed on the server. To update its code
+while both bots run, use `deploy/update_order_audit.sh` (see below); the older
+one-sport `deploy/update_nfl_dashboard.sh` must not be used while NBA and NFL
+share the account.
 
 On your own computer, keep this terminal command running, using your existing
 Droplet SSH login in place of `YOUR_SSH_LOGIN`:
@@ -100,10 +92,12 @@ updater while both pilots are running.
   independent of which market controls the execution/positions panel.
 - **Filled orders / contracts:** one partially executed order can generate
   several fill records. Fills are deduplicated by exchange identity.
-- **Submission allowance:** the existing lifetime $50 cap counts every attempted
+- **Submission allowance:** each bot's lifetime cap counts every attempted
   order's cost plus reserve, including canceled attempts. This is not cash spent
-  or current open exposure. Other caps remain $3/order, $3/game, $3/team,
-  $15 active, $30 daily, five contracts/order, two attempted orders/game.
+  or current open exposure. NFL: $50 lifetime, $3/order, $3/game, $3/team,
+  $15 active, $30 daily, five contracts/order, two orders/game. NBA: $1,000
+  lifetime, $4/order, $15/game, $10/team per day, $75 active, $75 daily, two
+  contracts/order, ten orders/game. Shared: $1,050 lifetime, $105 daily, $90 active.
 - **Last scan:** actual `last_scan.json` with named skips. A fresh account read
   does not imply the trader is active. A scan older than five minutes is flagged.
 
@@ -124,20 +118,15 @@ blocks entries. Current resting orders are also withdrawn if model/availability
 verification fails. Filled positions retain their original settlement exposure.
 
 This remains a passive directional NO strategy holding to settlement. Improving
-the price can improve execution but also reduce expected return. The optional
-second tick falls back to the baseline maker quote when it would consume the
-new minimum edge. An existing fill is not re-priced or liquidated by this update.
+the price can improve execution but also reduce expected return, so the second
+cent of improvement is off. An existing fill is not re-priced or liquidated.
 
-## Public P&L snapshot policy
+## Public P&L policy
 
 The recruiter-facing dashboard shows **no simulated ledger P&L, strategy-paper
 equity curve or hypothetical profit scenarios**. Public NFL and NBA settled P&L
-is sourced only from manually approved, sanitized exchange verification. The
-JSON contains no account balance, API credential, private order ID or account
-journal. A timestamp and stale notice make clear that it is not streaming.
-
-To show newly settled P&L publicly, the account owner must approve/publish a
-fresh sanitized snapshot; no scheduled job automatically publishes private
-account results. NBA stays unknown until its first verified report. The private
-dashboard, after deployment, provides continuously refreshed authenticated
-NFL and NBA P&L without exposing those values through GitHub Pages.
+comes only from the sanitized, read-only server feed or the committed snapshot.
+Neither contains an account balance, API credential, private order ID or
+account journal. A value older than 90 seconds (feed) or 15 minutes (snapshot)
+is labelled as a past result, never as current profit. The private dashboard
+shows the full authenticated detail without exposing it through GitHub Pages.

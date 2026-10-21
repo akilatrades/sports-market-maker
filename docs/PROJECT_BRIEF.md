@@ -28,7 +28,8 @@ market maker.
    the model's preferred outcome as a taker—lost money after execution
    costs. I then tested passive NO limit orders and sportsbook-price vetoes.
 3. **Make the execution assumptions explicit.** Historical fills are inferred
-   from public trade prints. Queue priority, trade-through capture, quote
+   from public trade prints. Queue priority (other orders ahead at the same
+   price), how much of the passing trading an order really captures, quote
    changes, selection bias, and some late-arriving model inputs can make
    the historical figures optimistic.
 4. **Build bounded live infrastructure.** Signed Kalshi exchange access,
@@ -36,8 +37,9 @@ market maker.
    reconciliation, per-order and aggregate risk caps, isolated cohorts,
    kill switches, and a private read-only account view.
 5. **Measure forward results separately.** Signed exchange fills,
-   actual fees, settlement reconciliation, queue observations, and 5/15/60
-   minute post-fill markouts are recorded separately from simulated P&L.
+   actual fees, settlement reconciliation, queue observations, and price
+   moves 5, 15 and 60 minutes after each fill ("markouts") are recorded
+   separately from simulated P&L.
 
 ## Results — evidence tiers, not one blended equity curve
 

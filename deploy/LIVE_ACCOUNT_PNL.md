@@ -55,6 +55,10 @@ fill details, private journal data or keys.
   or a secret in `dashboard/live-pnl-source.json`.
 - No trades are placed, canceled or changed by the new service.
 
+*Phases A–C were completed on 19 October 2026 and the feed is live; they are
+kept for rebuilding the server. Release code with *Deploy funded worker code*
+instead of `git pull`.*
+
 ## Phase A: owner validation on DigitalOcean (read-only, no public exposure)
 
 Run only when it is safe to update the code checkout and no active
@@ -73,8 +77,8 @@ sudo systemd-run --wait --pipe --collect \
 
 This command displays sanitized JSON for owner review and does **not**
 launch a service, change orders or publish anything. Confirm that the
-FUNDED ACCOUNT and NFL settlement totals both match the previously
-signed **−$0.69** when no additional manual trades occurred. If
+FUNDED ACCOUNT and per-market settlement totals match the latest signed
+reconciliation when no manual trades occurred. If
 they differ, inspect the source privately. **Do not** activate the
 public endpoint until reconciliation succeeds.
 

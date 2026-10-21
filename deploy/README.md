@@ -77,8 +77,7 @@ a journal before it is sent.
 ## Legacy research runner
 
 An older general trader (`live/nba_trade.py`, installed by `install.sh`)
-can also run on the server, separately from the funded workers. Its mode is
-set in its own settings file: `TRADE_MODE=dry` logs orders without sending
-them; `live` sends them to the exchange named by `KALSHI_ENV`. To stop it: `systemctl disable --now market-maker.timer`, or
-create `outputs/live/KILL`, which also cancels its resting orders. It is
-separate from the funded workers above.
+is **retired on the server**: its `market-maker.timer` is disabled, and the
+trader refuses to send live orders to the production exchange. GitHub's
+*nba trade (dry run)* and *nfl trade (dry run)* workflows still run it in dry mode to publish the
+order logs in `outputs/live/`. It is separate from the funded workers above.

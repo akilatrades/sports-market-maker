@@ -33,7 +33,7 @@ orders under strict limits.
   This is operational evidence, **not a statistically established edge**.
 - **What is built.** Stat models, a sportsbook consensus feed, production
   order workers with exchange reconciliation, a fill-quality monitor, a
-  public dashboard, 300+ tests and a research log that keeps planned tests
+  public dashboard, 500+ tests and a research log that keeps planned tests
   and exploratory work apart.
 - **What is unproven.** Whether live fills earn what the backtest says. The
   current phase exists to measure that.
@@ -100,11 +100,13 @@ Kalshi quotes ─► edge after fees ─► filters ─► risk checks ─► po
   matchup, betting lines and teammate absences, with an empirical outcome
   distribution around the mean. Validated month by month on 2021–2026 data.
   [Model notes](docs/nba-model.md)
-- **Sportsbook check.** Each book's odds are de-vigged, then averaged.
+- **Sportsbook check.** Each book's odds are de-vigged (the bookmaker's
+  built-in margin removed), then averaged.
   A line counts only when two or more books quote it, it matches Kalshi's
   game, player, stat and line exactly, and it is fresh.
-- **Orders.** Post-only NO limit orders one cent inside the spread, placed
-  2–6 hours before tip-off and resting until tip. An order needs at least
+- **Orders.** Post-only NO limit orders (they only rest on the book, never
+  trade immediately) one cent inside the spread, placed 2–6 hours before
+  tip-off and resting until tip (NFL: 10 minutes to 2 hours before kickoff). An order needs at least
   3¢ of estimated edge after fees to be placed and to stay. Each run
   reconciles resting orders, positions and fills with the exchange first,
   and stops if anything is unexplained.

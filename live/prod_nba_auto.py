@@ -1,9 +1,10 @@
-"""Bounded unattended NBA production experiment. SEPARATE from NFL and Demo.
+"""Bounded unattended NBA production worker (shares one account with NFL).
 
-This worker is isolated from the Demo service and has a lifetime *gross-cost*
-budget below $75 including a fee buffer. One new post-only order max per pass,
-no automatic re-arming, and durable journal before each network write. Fail
-closed on inconsistent balances, orders, positions, fills or model data.
+Limits are the MAX_* constants below (lifetime gross-cost budget MAX_GROSS_COST,
+including a fee buffer) plus the account-wide caps in shared_account_risk. One
+new post-only order max per pass, no automatic re-arming, and durable journal
+before each network write. Fail closed on inconsistent balances, orders,
+positions, fills or model data.
 """
 
 import argparse
@@ -671,13 +672,12 @@ def record_markouts(journal, frame, now):
 
 
 # Guardrail for the small pilot. No change to maker/taker status or risk caps.
-# Add at most one cent to a NO maker quote in >=3c spreads, only if
-# after-fee edge remains >=3c and the new quote stays strictly post-only.
+# Optional second cent of improvement in >=3c spreads (only if after-fee edge
+# stays >=3c and the quote stays post-only). Off: it lost money in replay.
 EXTRA_MAKER_TICK = 0.0  # historical baseline already improves one tick
 MIN_EDGE_AFTER_IMPROVEMENT = 0.03
-# New entries accept any positive verified after-fee edge. Requiring 3c on
-# later resting scans prematurely canceled otherwise-valid 0-3c orders and
-# was never tested as a distinct entry policy. Keep the SAME sign test.
+# New entries and resting orders use the SAME after-fee edge floor (3c), so an
+# order is never placed on terms that the next scan would cancel it for.
 ENTRY_MIN_NET_EDGE = 0.03  # conservative versioned validation cohort
 RESTING_MIN_NET_EDGE = ENTRY_MIN_NET_EDGE
 

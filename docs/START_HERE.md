@@ -64,7 +64,7 @@ Read them for history, not for how things work now.
    settled profit and loss appears on the dashboard.
 
 The NFL worker follows the same pattern on game days, with its own,
-smaller limits.
+smaller limits; its orders start 10 minutes to 2 hours before kickoff.
 
 ## Where things run
 
@@ -89,15 +89,18 @@ code is right.
 | Cost per order | $4 | $3 |
 | Orders per game | 10 | 2 |
 | Cost per game | $15 | $3 |
-| Cost per team per day | $10 | $3 |
+| Cost per team | $10 per day | $3 (lifetime) |
 | Open orders at once | $75 | $15 |
 | New orders per day | $75 | $30 |
-| Minimum edge to post | 3¢ | 3¢ |
+| Edge needed to post | 3¢ to 15¢ | 3¢ to 15¢ |
+| Price range | 10–90¢ | 10–90¢ |
 | Lifetime orders placed | $1,000 | $50 |
 
 Across both bots ([`shared_account_risk.py`](../live/shared_account_risk.py)):
-at most $90 open and $105 placed per day, and the bots stop for the day
-after $20 of settled losses and for good after $60.
+at most $90 open, $105 placed per day and $1,050 placed in total. Both bots
+stop for the day after $20 of settled losses and for good after $60. Dollar
+limits include a 10% cushion for fees. An edge above 15¢ is treated as a
+likely data error, not a bargain.
 
 ## Repository map
 
@@ -110,7 +113,7 @@ after $20 of settled losses and for good after $60.
 | `deploy/` | Server setup, the Go live / Stop and Deploy helpers, runbooks | `README.md` |
 | `.github/workflows/` | Scheduled data jobs, tests and the owner-only buttons | `droplet-control.yml` |
 | `dashboard/` | The public dashboard | `index.html` |
-| `tests/` | 400+ tests, including failure cases for the live workers | |
+| `tests/` | 500+ tests, including failure cases for the live workers | |
 | `outputs/` | Research outputs and published snapshots | |
 
 ## Set up and try it

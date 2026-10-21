@@ -1,5 +1,11 @@
 # GitHub Actions → DigitalOcean: staged connection
 
+*This connection is set up and in use. Code releases now go through
+*Deploy funded worker code* ([GITHUB_PRODUCTION_RELEASE.md](GITHUB_PRODUCTION_RELEASE.md)),
+and the server secrets belong in the `funded-droplet` environment
+([GITHUB_ACCESS.md](GITHUB_ACCESS.md)). This page is kept for rebuilding the
+connection.*
+
 This is the **first, read-only stage** of deployment automation for the existing
 Ubuntu Droplet. The workflow `.github/workflows/droplet-preflight.yml` is
 manual (`workflow_dispatch`). It does **not** install code, stop/start services,
@@ -7,8 +13,9 @@ read Kalshi credentials, change risk, or place/cancel any orders. It reports
 the deployed SHA, systemd states and whether the installed `run.sh` still
 auto-pulls GitHub code.
 
-## Important existing behavior
+## Important existing behavior (historical)
 
+The legacy `market-maker.timer` that ran this is now disabled.
 `deploy/install.sh` writes `/home/trader/run.sh`, which currently invokes
 `git pull -q --rebase origin main || true` before trading every minute. If
 that installed file still has this logic, production can change after any
@@ -34,13 +41,15 @@ The goal is to do this once, not on each code change.
    `known_hosts` line:
    `<Droplet-hostname-or-IP> ssh-ed25519 <public-host-key-base64>`.
    Never use an unverified `ssh-keyscan` result as the sole host validation.
-4. In repository **Settings → Secrets and variables → Actions**, add secrets:
+4. In **Settings → Environments → `funded-droplet`**, add environment
+   secrets ([GITHUB_ACCESS.md](GITHUB_ACCESS.md) explains why not
+   repository secrets):
    - `DROPLET_HOST`: Droplet IP/hostname (no scheme).
    - `DROPLET_USER`: `trader`, not `root`.
    - `DROPLET_SSH_KEY`: contents of the dedicated **private** Ed25519 key.
    - `DROPLET_KNOWN_HOSTS`: verified complete `known_hosts` line.
-5. In GitHub **Actions → Droplet read-only preflight → Run workflow**, choose
-   the audited branch (until merged) and run. The job must only report service
+5. In GitHub **Actions → Droplet read-only preflight → Run workflow**, run it
+   from `main` (it refuses other branches and anyone but the owner). The job must only report service
    states and commit ID; it should not modify the Droplet.
 
 If port 22 is firewalled to exclude GitHub Actions, this job will fail. Do
@@ -48,20 +57,12 @@ not broadly expose SSH to the Internet without considering a more restricted
 transport; a self-hosted runner, VPN or pull-based approved-release agent may
 be preferable.
 
-## Phase two — NOT implemented or activated here
+## Phase two — implemented
 
-After a successful read-only preflight, implement a separately reviewed,
-approval-gated release workflow that:
-- runs the full test matrix (Python, shell, dashboard),
-- selects an immutable commit SHA,
-- uses a least-privilege deployment identity,
-- coordinates a deployment lock and timer handoff,
-- never overwrites `/etc/market-maker.env` or owned trading journals,
-- preflights the environment, proves which SHA is deployed, and
-- stops and reports failures without silently treating them as success.
-
-Deployment must not re-arm an inactive production trader, change order/stop
-settings, or expand risk limits. Existing resting positions and cancellation
-policies need explicit consideration before maintenance windows.
-
-**As of this file, no automated production deployment is installed.**
+The approval-gated release lane is now *Deploy funded worker code*
+([GITHUB_PRODUCTION_RELEASE.md](GITHUB_PRODUCTION_RELEASE.md)): full test
+matrix, an immutable commit, a least-privilege helper, a deployment lock and
+timer handoff, preserved settings files and journals, signed preflights and
+verified SHA. It never re-arms an inactive bot or changes risk limits.
+Switching the bots on or off is a separate button
+([GO_LIVE_BUTTON.md](GO_LIVE_BUTTON.md)).

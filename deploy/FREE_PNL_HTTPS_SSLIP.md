@@ -2,13 +2,16 @@
 
 No paid domain name, DNS account, hosting plan or certificate purchase
 needed. This uses the existing **DigitalOcean Droplet** (whose current
-cost remains unchanged), **free [sslip.io DNS](https://nip.io/)** and
+cost remains unchanged), **free [sslip.io DNS](https://sslip.io/)** and
 free Caddy-managed public TLS certificates.
 
 **CAUTION:** This makes **aggregate funded-account settlement gains/losses
 public**. Only continue if you approve that visibility. It does NOT
 publicize balances, order IDs, player names, cash deposits or credentials.
 The private account view remains on **127.0.0.1:8765**.
+
+*Set up on 19 October 2026 and live; kept for rebuilding the server.
+Release code with *Deploy funded worker code* instead of `git pull`.*
 
 ## Step 1 — read-only host check, no changes
 

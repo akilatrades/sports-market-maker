@@ -85,7 +85,7 @@ Owner-provided DigitalOcean terminal screenshot verifies the **HTTPS
 end-to-end GET** to the sanitized account feed:
 
 - `curl -i -H "Origin: https://akilatrades.github.io"
-  https://157-230-146-86.sslip.io/v1/pnl` returned **HTTP/2 200**.
+  https://<server address>/v1/pnl` returned **HTTP/2 200**.
 - The response includes
   `Access-Control-Allow-Origin: https://akilatrades.github.io`,
   `Cache-Control: no-store, max-age=0`, JSON content type and a
@@ -94,7 +94,7 @@ end-to-end GET** to the sanitized account feed:
   settled markets, NBA awaiting first order; no secrets or account
   identifiers were included in the visible JSON.
 - The nonsecret dashboard config points to the HTTPS endpoint
-  `https://157-230-146-86.sslip.io/v1/pnl`. GitHub Pages deployment
+  `https://<server address>/v1/pnl`. GitHub Pages deployment
   for commit `882a195a` completed **successfully** (run
   `39328222758`); its test workflow also passed.
 - **Next user-visible validation:** open the public GitHub Pages
@@ -111,7 +111,7 @@ end-to-end GET** to the sanitized account feed:
 ## Monday October 19 — free TLS certificate issued; public feed test outstanding
 
 Owner-provided Caddy journal screenshot confirms that Let's Encrypt
-**validated** `157-230-146-86.sslip.io` via HTTP-01 and Caddy logged
+**validated** `<server address>` via HTTP-01 and Caddy logged
 `certificate obtained successfully` for that hostname.
 Caddy listened on both **:80** and **:443** and the sslip.io A record
 resolved to the Droplet's public IPv4. The signed `127.0.0.1:8766/v1/pnl`
@@ -125,7 +125,7 @@ with NBA awaiting first order.
   able to reach the hostname for independent verification.
 - GitHub Pages config `dashboard/live-pnl-source.json` was
   subsequently updated on October 19 (commit `d0066e1`) to reference
-  the owner-configured HTTPS endpoint `https://157-230-146-86.sslip.io/v1/pnl`.
+  the owner-configured HTTPS endpoint `https://<server address>/v1/pnl`.
   **External end-to-end browser confirmation is still outstanding**;
   neither DNS nor outbound HTTPS to this host can be tested in the
   current assistant execution sandbox. On network/CORS failure the

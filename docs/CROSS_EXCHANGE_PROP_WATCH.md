@@ -1,6 +1,6 @@
 # Cross-exchange prop watch: Kalshi vs Polymarket US
 
-This **research-only** job compares public NBA and NFL player-prop listings. It never authenticates with Polymarket, requires no deposit, and cannot submit or cancel orders. The DigitalOcean Kalshi Demo bot and its limits are unchanged.
+This **research-only** job compares public NBA and NFL player-prop listings. It never authenticates with Polymarket, requires no deposit, and cannot submit or cancel orders. It never touches the production trading bots.
 
 ## Data sources
 
