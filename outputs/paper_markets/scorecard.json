@@ -1,14 +1,14 @@
 {
   "KXITFMATCH": {
-    "orders": 500,
+    "orders": 513,
     "vetoed": 0,
-    "open": 34,
-    "fill_rate": 0.7274678111587983,
-    "fills_settled": 339,
-    "bankroll": 389.44,
-    "cents_per_contract": 0.1,
-    "t": 0.09,
-    "profit_dollars": -110.56
+    "open": 36,
+    "fill_rate": 0.7337526205450734,
+    "fills_settled": 350,
+    "bankroll": 381.2,
+    "cents_per_contract": 0.19,
+    "t": 0.19,
+    "profit_dollars": -118.8
   },
   "KXNASCARRACE": {
     "orders": 77,
@@ -24,13 +24,13 @@
   "KXLIGAMXSPREAD": {
     "orders": 93,
     "vetoed": 0,
-    "open": 17,
-    "fill_rate": 0.5394736842105263,
-    "fills_settled": 41,
-    "bankroll": 473.5,
-    "cents_per_contract": -7.22,
-    "t": -0.69,
-    "profit_dollars": -26.5
+    "open": 5,
+    "fill_rate": 0.5681818181818182,
+    "fills_settled": 50,
+    "bankroll": 480.24,
+    "cents_per_contract": -3.39,
+    "t": -0.38,
+    "profit_dollars": -19.76
   },
   "KXLALIGASPREAD": {
     "orders": 59,
@@ -119,13 +119,13 @@
   "KXNBA3D": {
     "orders": 7,
     "vetoed": 0,
-    "open": 4,
-    "fill_rate": 0.6666666666666666,
-    "fills_settled": 2,
-    "bankroll": 500.68,
-    "cents_per_contract": 6.8,
-    "t": 0.0,
-    "profit_dollars": 0.68
+    "open": 2,
+    "fill_rate": 0.8,
+    "fills_settled": 4,
+    "bankroll": 501.21,
+    "cents_per_contract": 6.05,
+    "t": 8.07,
+    "profit_dollars": 1.21
   },
   "KXNASCARTOP10": {
     "orders": 77,
@@ -160,15 +160,15 @@
     "vetoed_settled": 402
   },
   "KXITFMATCH+no30": {
-    "orders": 325,
+    "orders": 333,
     "vetoed": 0,
-    "open": 38,
-    "fill_rate": 0.7839721254355401,
-    "fills_settled": 225,
-    "bankroll": 559.51,
-    "cents_per_contract": 2.55,
-    "t": 1.5,
-    "profit_dollars": 59.51
+    "open": 39,
+    "fill_rate": 0.7891156462585034,
+    "fills_settled": 232,
+    "bankroll": 563.31,
+    "cents_per_contract": 2.82,
+    "t": 1.71,
+    "profit_dollars": 63.31
   },
-  "updated_utc": "2026-10-21T00:35+00:00"
+  "updated_utc": "2026-10-21T03:29+00:00"
 }
