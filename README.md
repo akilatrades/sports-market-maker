@@ -141,13 +141,17 @@ Kalshi quotes ─► edge after fees ─► veto / filters ─► risk checks �
   50%), order-level realized P&L, and a [forward-validation protocol](docs/FORWARD_VALIDATION.md)
   with a 30-day, 500-settled-fill checkpoint before any sizing decision.
 
-**Live rules differ from the backtest in two ways, both deliberate.** The
-NBA pilot's orders expire after one hour and stop two hours before tip-off,
-whereas the backtest held orders until tip (historically about 60% of the
-profit came from fills after the first hour). The pilot's $50 lifetime budget
-allows roughly 70 filled contracts, far short of the 500-fill checkpoint.
-The pilot therefore tests execution and risk controls, not the size of the
-edge; a larger forward test is a separate decision.
+**Live policy differs from the historical simulation.** New NBA orders
+currently enter 2–6 hours before the verified tip; accepted orders have an
+exchange expiration at scheduled tipoff, not one hour after posting.
+Each resting quote is rechecked against current fees, probabilities,
+availability, and the Kalshi book, and can be canceled earlier if invalid.
+Late entries 30 minutes–2 hours before tip remain **research only**.
+The current small pilot has a $75 lifetime submitted-cost ceiling and a
+two-contract-per-order cap, so it cannot by itself satisfy the 500-settled-fill
+checkpoint. These controls test execution and reconciliation, not a
+demonstrated live trading edge. The earlier one-hour policy remains
+historical documentation, not the current source rule.
 
 ## Research process
 
