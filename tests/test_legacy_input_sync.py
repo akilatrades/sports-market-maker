@@ -82,5 +82,5 @@ def test_fresh_install_runner_does_not_git_pull_before_each_trade():
     runner = source.split("cat > /home/trader/run.sh <<'RUN'", 1)[1].split(
         "\nRUN\n", 1
     )[0]
-    assert "git pull" not in runner.splitlines()[-13:]
+    assert not any(line.lstrip().startswith("git pull ") for line in runner.splitlines())
     assert ".venv/bin/python -m live.legacy_input_sync" in runner
