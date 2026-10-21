@@ -350,6 +350,14 @@ def public_summary(report):
         "exchange_nba_filled_orders": report.get("exchange_nba_filled_orders"),
         "unreconciled_or_unknown_orders": report.get("unreconciled_or_unknown_orders"),
         "cohort_settlement_status": report.get("cohort_realized_pnl", {}).get("status"),
+        "cohort_settled_markets": report.get("cohort_realized_pnl", {}).get(
+            "settled_markets"
+        ),
+        "cohort_realized_pnl_sign": (
+            sign(report.get("cohort_realized_pnl", {}).get("total_net_dollars"))
+            if report.get("cohort_realized_pnl", {}).get("status") == "verified"
+            else "unknown"
+        ),
         "individual_fills": fills,
         "note": "No per-fill prices, exact times, sizes, fees, IDs, balances or PnL in public logs. Not proof of profitability.",
     }
