@@ -1,0 +1,96 @@
+name: Deploy funded worker code
+
+# Never deploy on push. Owner must deliberately choose DEPLOY_CODE.
+on:
+  workflow_dispatch:
+    inputs:
+      operation:
+        description: "CHECK_ONLY does not change anything; DEPLOY_CODE updates the funded checkout"
+        required: true
+        type: choice
+        default: CHECK_ONLY
+        options:
+          - CHECK_ONLY
+          - DEPLOY_CODE
+
+permissions:
+  contents: read
+
+concurrency:
+  group: funded-droplet-code-release
+  cancel-in-progress: false
+
+jobs:
+  tests:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: true
+      matrix:
+        python-version: ['3.11', '3.12']
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install Python test requirements
+        run: pip install -r requirements.txt ruff==0.11.13
+      - name: Style, shell, JS and Python regression suite
+        run: |
+          set -euo pipefail
+          ruff check .
+          ruff format --check --diff .
+          bash -n deploy/*.sh
+          node tests/account_dashboard.cjs
+          pytest
+
+  droplet:
+    needs: tests
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    env:
+      DROPLET_HOST: ${{ secrets.DROPLET_HOST }}
+      DROPLET_USER: ${{ secrets.DROPLET_USER }}
+      DROPLET_SSH_KEY: ${{ secrets.DROPLET_SSH_KEY }}
+      DROPLET_KNOWN_HOSTS: ${{ secrets.DROPLET_KNOWN_HOSTS }}
+      OPERATION: ${{ inputs.operation }}
+      RELEASE_SHA: ${{ github.sha }}
+    steps:
+      - name: Validate connection and approved operation
+        run: |
+          set -euo pipefail
+          [[ "$OPERATION" == CHECK_ONLY || "$OPERATION" == DEPLOY_CODE ]]
+          [[ "$RELEASE_SHA" =~ ^[0-9a-f]{40}$ ]]
+          [[ "$DROPLET_USER" == trader ]] || { echo 'Use the unprivileged trader account'; exit 1; }
+          for name in DROPLET_HOST DROPLET_SSH_KEY DROPLET_KNOWN_HOSTS; do
+            if [[ -z "${!name}" ]]; then
+              echo "::error::Missing $name"
+              exit 1
+            fi
+          done
+          [[ "$DROPLET_KNOWN_HOSTS" == *ssh-ed25519* ]] || exit 1
+      - name: Configure verified SSH identity
+        run: |
+          set -euo pipefail
+          umask 077
+          mkdir -p ~/.ssh
+          printf '%s\n' "$DROPLET_SSH_KEY" > ~/.ssh/smm_release
+          printf '%s\n' "$DROPLET_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/smm_release ~/.ssh/known_hosts
+          ssh-keygen -y -f ~/.ssh/smm_release > /dev/null
+      - name: Check installed production state or execute approved code-only release
+        run: |
+          set -euo pipefail
+          ssh_args=(-T -o BatchMode=yes -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes -o ConnectTimeout=12 -i "$HOME/.ssh/smm_release")
+          if [[ "$OPERATION" == CHECK_ONLY ]]; then
+            ssh "${ssh_args[@]}" "$DROPLET_USER@$DROPLET_HOST" \
+              'echo "Funded production SHA:"; git -C /home/trader/sports-market-maker-prod-auto rev-parse HEAD; echo "Funded timer states:"; systemctl show market-maker-prod-nfl-auto.timer market-maker-prod-nba-auto.timer -p Id -p ActiveState --no-pager; echo "Deployment helper installed:"; if sudo -n -l /usr/local/sbin/smm-prod-release >/dev/null 2>&1; then echo YES; else echo NO; fi'
+          else
+            echo "Owner-requested, CI-validated funded code release of $RELEASE_SHA"
+            ssh "${ssh_args[@]}" "$DROPLET_USER@$DROPLET_HOST" \
+              "sudo -n /usr/local/sbin/smm-prod-release '$RELEASE_SHA'"
+            ssh "${ssh_args[@]}" "$DROPLET_USER@$DROPLET_HOST" \
+              "test \"\$(git -C /home/trader/sports-market-maker-prod-auto rev-parse HEAD)\" = '$RELEASE_SHA' && echo VERIFIED_RELEASE_SHA=$RELEASE_SHA"
+          fi
