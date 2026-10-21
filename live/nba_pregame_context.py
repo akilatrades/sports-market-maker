@@ -187,6 +187,9 @@ def enrich(frame, context, now):
     out["projected_minutes_source"] = "unverified"
     out["lineup_confirmation_status"] = "unverified"
     out["confirmed_starter"] = None
+    # This is the time WE fetched the provider response, not an assertion
+    # that the underlying lineup/projection was published at this instant.
+    out["pregame_context_fetch_utc"] = None
     if not context.get("configured"):
         return out
     stamp = pd.Timestamp(context["fetched_utc"])
@@ -208,6 +211,7 @@ def enrich(frame, context, now):
     minutes = context.get("minutes", {})
     starters = context.get("confirmed_starters", {})
     lineup_statuses = context.get("lineup_statuses", {})
+    out["pregame_context_fetch_utc"] = str(context["fetched_utc"])
     out["projected_minutes"] = [minutes.get(k, float("nan")) for k in keys]
     out["projected_minutes_source"] = [
         "rotowire_licensed" if k in minutes else "unverified" for k in keys
