@@ -12,7 +12,8 @@ if [ ! -d sports-market-maker ]; then
   sudo -u trader git clone -q https://github.com/akilatrades/sports-market-maker.git
 fi
 cd sports-market-maker
-sudo -u trader git pull -q || true
+# Installer-only, explicit and fail-closed update (never inside the timer).
+sudo -u trader git pull --ff-only -q origin main
 sudo -u trader python3 -m venv .venv
 sudo -u trader .venv/bin/pip install -q -r requirements.txt
 
@@ -36,13 +37,14 @@ ENV
   echo ">> Edit /etc/market-maker.env with your keys:  nano /etc/market-maker.env"
 fi
 
-# The runner: pull the latest code and outputs, run the trader, push its log.
+# The runner: synchronize validated DATA only, run frozen code, log results.
 cat > /home/trader/run.sh <<'RUN'
 #!/usr/bin/env bash
 set -euo pipefail
 cd /home/trader/sports-market-maker
 # Credentials arrive from systemd's EnvironmentFile; nothing is read here.
-git pull -q --rebase origin main || true
+# No git pull here: a log push must NOT upgrade live Python source silently.
+.venv/bin/python -m live.legacy_input_sync
 mkdir -p outputs/live
 .venv/bin/python -m live.nba_trade >> /home/trader/trader.log 2>&1
 TRADE_MARKET=nfl .venv/bin/python -m live.nba_trade >> /home/trader/trader-nfl.log 2>&1
