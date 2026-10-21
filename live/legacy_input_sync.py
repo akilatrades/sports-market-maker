@@ -8,6 +8,7 @@ already use the separate live.nba_inputs pipeline and are not affected.
 
 This module does not place, cancel, or read private Kalshi account orders.
 """
+
 from datetime import UTC, datetime
 from pathlib import Path
 
