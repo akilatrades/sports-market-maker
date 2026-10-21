@@ -36,6 +36,33 @@ def instant(value):
     return ts.astimezone(UTC) if ts.tzinfo is not None else None
 
 
+
+def exchange_expiration(order):
+    """Parse signed exchange order expiration, never infer it from our intent.
+
+    Kalshi order GETs can contain ISO-8601 expiration_time, or legacy
+    epoch-seconds expiration_ts. Missing/invalid is unknown, not tipoff.
+    """
+    if not isinstance(order, dict):
+        return None
+    value = order.get("expiration_time")
+    if value is None:
+        value = order.get("expiration_ts")
+    if value is None or isinstance(value, bool):
+        return None
+    if isinstance(value, (int, float)) or (
+        isinstance(value, str) and value.isdecimal()
+    ):
+        try:
+            seconds = float(value)
+            if not math.isfinite(seconds) or not 1_500_000_000 < seconds < 4_000_000_000:
+                return None
+            return datetime.fromtimestamp(seconds, UTC)
+        except (OverflowError, ValueError, OSError):
+            return None
+    return instant(value)
+
+
 def filled_count(order):
     """Kalshi has used several quantity field names. Missing is unknown."""
     for key in ("fill_count_fp", "filled_count_fp", "fill_count", "filled_count"):
@@ -312,6 +339,10 @@ def audit_cohort(events, exchange_orders, fills, *, sport, now, prints_by_order=
                 pass
         if expiry is None:
             expiry = instant(intent.get("tip_utc"))
+        # A journal intent is a request, not exchange proof. Keep separate
+        # what the signed exchange GET reports for the executed order.
+        verified_exchange_expiry = exchange_expiration(exchange)
+        tip_from_intent = instant(intent.get("tip_utc"))
         chunks = list(found.get(oid, {}).values())
         measured = [amount(f.get("count_fp", f.get("count"))) for f in chunks]
         actual = (
@@ -406,6 +437,22 @@ def audit_cohort(events, exchange_orders, fills, *, sport, now, prints_by_order=
                 "stat": intent.get("stat"),
                 "submitted_utc": opened.isoformat() if opened else None,
                 "expiration_utc": expiry.isoformat() if expiry else None,
+                "signed_exchange_expiration_utc": (
+                    verified_exchange_expiry.isoformat()
+                    if verified_exchange_expiry is not None
+                    else None
+                ),
+                "signed_exchange_expiry_matches_intent": (
+                    abs((verified_exchange_expiry - expiry).total_seconds()) <= 1
+                    if verified_exchange_expiry is not None and expiry is not None
+                    else None
+                ),
+                "signed_exchange_expiry_matches_tip": (
+                    abs((verified_exchange_expiry - tip_from_intent).total_seconds()) <= 1
+                    if verified_exchange_expiry is not None
+                    and tip_from_intent is not None
+                    else None
+                ),
                 "exchange_status": status,
                 "state": state,
                 "ordered_contracts": qty,
