@@ -1,0 +1,14 @@
+name: Temporary formatting review
+on:
+  push:
+    branches:
+      - fix/late-nba-context-and-legacy-autopull-20261020
+permissions:
+  contents: read
+jobs:
+  show-diff:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - run: pip install ruff==0.11.13
+      - run: ruff format --diff live/prod_nba_auto.py live/legacy_input_sync.py tests/test_nba_late_context_diagnostics.py tests/test_legacy_input_sync.py || true
