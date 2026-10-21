@@ -105,6 +105,17 @@ FETCHED="$(runuser -u trader -- git -C "$ROOT" rev-parse refs/remotes/origin/mai
 [[ "$FETCHED" == "$TARGET" ]] || {
   echo "Main changed during deployment; refusing unverified SHA" >&2; exit 1;
 }
+# This is a CODE-ONLY workflow: dependency or systemd unit upgrades require
+# a distinct owner-supervised maintenance procedure.
+blocked="$(runuser -u trader -- git -C "$ROOT" diff --name-only "$OLD" "$TARGET" -- \
+  requirements.txt deploy/market-maker-prod-nba-auto.service \
+  deploy/market-maker-prod-nba-auto.timer \
+  deploy/market-maker-prod-nfl-auto.service \
+  deploy/market-maker-prod-nfl-auto.timer)"
+[[ -z "$blocked" ]] || {
+  echo "Release changes dependencies or funded systemd units: use manual maintenance." >&2
+  exit 1
+}
 runuser -u trader -- git -C "$ROOT" merge --ff-only "$TARGET"
 changed=1
 
