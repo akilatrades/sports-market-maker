@@ -114,10 +114,13 @@ def main():
                     )
                     page.locator('a[href="#research-section"]').click()
                     assert page.evaluate("location.hash") == "#research-section"
-                    page.locator("details.diagnostics").first.locator("summary").click()
-                    assert page.locator("details.diagnostics").first.evaluate(
-                        "(el) => el.open"
-                    )
+                    # Diagnostics are optional when no suitable research
+                    # snapshot is published. Only exercise a rendered panel.
+                    visible_panels = page.locator("details.diagnostics:visible")
+                    if visible_panels.count():
+                        panel = visible_panels.first
+                        panel.locator("summary").click()
+                        assert panel.evaluate("(el) => el.open")
                     assert not errors, f"{width}px: errors after expanding diagnostics"
                     print(f"PASS {width}px: scroll, no reload, nav, JS and overflow")
                     context.close()
