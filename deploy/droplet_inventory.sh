@@ -99,6 +99,30 @@ else
   echo "systemd_directory_writable=no"
 fi
 
+echo "production_unit_principals:"
+for unit in market-maker-prod-nba-auto.service market-maker-prod-nfl-auto.service; do
+  printf 'unit=%s\n' "$unit"
+  principal=$(systemctl show "$unit" --value --property=User 2>/dev/null || true)
+  if [ -z "$principal" ]; then
+    echo "service_user=root_or_unspecified"
+  elif [ "$principal" = "trader" ]; then
+    echo "service_user=trader"
+  else
+    echo "service_user=other_nonempty"
+  fi
+  cwd=$(systemctl show "$unit" --value --property=WorkingDirectory 2>/dev/null || true)
+  case "$cwd" in
+    /home/trader/sports-market-maker*) echo "workdir=expected_repo" ;;
+    "") echo "workdir=unspecified" ;;
+    *) echo "workdir=other" ;;
+  esac
+done
+echo "repository_cleanliness:"
+if [ -d /home/trader/sports-market-maker/.git ]; then
+  count=$(git -C /home/trader/sports-market-maker status --porcelain --untracked-files=no 2>/dev/null | wc -l)
+  printf 'tracked_modified_count=%s\n' "$count"
+fi
+
 echo "remote_access_scope:"
 if command -v sudo >/dev/null 2>&1 && sudo -n true >/dev/null 2>&1; then
   echo "passwordless_sudo=yes"
