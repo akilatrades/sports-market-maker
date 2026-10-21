@@ -50,7 +50,7 @@ Preflight while NFL is running should report its isolation blocker. A successful
 ## Execution policy
 
 - Points, rebounds, assists and threes; passive NO entries only. At most one new order per scan and one lifetime submission per ticker. No market orders or automatic exits.
-- Current limits (owner-approved fill-measurement sizing, October 21, 2026). Amounts include the 10% reserve:
+- Current limits (owner-approved fill-measurement sizing for a $250 account, October 21, 2026). Amounts include the 10% reserve:
 
   | Limit | NBA | Shared with NFL |
   |---|---:|---:|
@@ -59,13 +59,13 @@ Preflight while NFL is running should report its isolation blocker. A successful
   | Orders per game | 10 | — |
   | Per game | $15 | — |
   | Per team, per New York day | $10 | — |
-  | Open (active) orders and positions | $90 | $105 |
-  | Submitted per New York day | $90 | $120 |
-  | Submitted, lifetime | $1,200 | $1,250 |
-  | Realized-loss stop, per day | −$25 | — |
-  | Realized-loss stop, cumulative | −$90 | — |
+  | Open (active) orders and positions | $75 | $90 |
+  | Submitted per New York day | $75 | $105 |
+  | Submitted, lifetime | $1,000 | $1,050 |
+  | Realized-loss stop, per day | −$20 | — |
+  | Realized-loss stop, cumulative | −$60 | — |
 
-  Canceled and unfilled submissions still count toward the daily and lifetime submitted limits. The realized-loss stops are the binding money limit; the worst case is about the cumulative stop plus the active cap (about $180). NFL keeps its own limits ($15 active, $30 daily, $50 lifetime).
+  Canceled and unfilled submissions still count toward the daily and lifetime submitted limits. The realized-loss stops are the binding money limit; on a $250 account the cumulative stop is 24% of the balance. In the extreme case that every open order also loses when the stop is reached, the loss could reach about the stop plus the active cap. NFL keeps its own limits ($15 active, $30 daily, $50 lifetime).
 - Contract count shrinks until price plus the 10% reserve fits. Reserve is a risk allowance, not an actual expense. Actual reported fees determine P&L.
 - Current series/event fees must be understood, estimated net edge must remain positive after the fee bound, and the verified price must stay passive. Unknown fee types block entry.
 - Current roster, exact fixture, projection timestamp/checksum and injury news must agree. New team injury news requires refreshed projections; book probabilities predating team news are discarded.

@@ -99,15 +99,15 @@ def settled(ticker=TICKER, pnl=-2.0, when=NOW):
 
 def test_realized_loss_daily_stop_and_deduplicated_snapshot():
     owned = {"KXNBA-ONE", "KXNBA-TWO"}
-    just_inside = [settled("KXNBA-ONE", -12), settled("KXNBA-TWO", -12)]
-    assert nba.MAX_REALIZED_DAILY_LOSS == 25
+    just_inside = [settled("KXNBA-ONE", -10), settled("KXNBA-TWO", -9)]
+    assert nba.MAX_REALIZED_DAILY_LOSS == 20
     assert nba.nba_realized_pnl(just_inside, owned, NOW)["loss_stop"] is False
     settlements = [
-        settled("KXNBA-ONE", -13),
-        settled("KXNBA-TWO", -12),
+        settled("KXNBA-ONE", -10),
+        settled("KXNBA-TWO", -10),
     ]
     report = nba.nba_realized_pnl(settlements, owned, NOW)
-    assert report["daily_realized_pnl_dollars"] == -25
+    assert report["daily_realized_pnl_dollars"] == -20
     assert report["loss_stop"] is True
     assert report["settlement_records"] == 2
     duplicated = nba.nba_realized_pnl(settlements * 2, owned, NOW)
@@ -116,18 +116,18 @@ def test_realized_loss_daily_stop_and_deduplicated_snapshot():
 
 def test_realized_loss_cumulative_stop_and_ignore_nfl():
     yesterday = NOW - timedelta(days=1)
-    assert nba.MAX_REALIZED_CUMULATIVE_LOSS == 90
-    settlements = [settled(f"KXNBA-{i}", -6, yesterday) for i in range(15)]
+    assert nba.MAX_REALIZED_CUMULATIVE_LOSS == 60
+    settlements = [settled(f"KXNBA-{i}", -6, yesterday) for i in range(10)]
     settlements.append(settled("KXNFL-UNRELATED", -500))
     report = nba.nba_realized_pnl(
         settlements, {s["market_ticker"] for s in settlements[:-1]}, NOW
     )
     assert report["daily_realized_pnl_dollars"] == 0
-    assert report["cumulative_realized_pnl_dollars"] == -90
+    assert report["cumulative_realized_pnl_dollars"] == -60
     assert report["loss_stop"] is True
-    fewer = settlements[:14] + settlements[-1:]
+    fewer = settlements[:9] + settlements[-1:]
     report = nba.nba_realized_pnl(fewer, {s["market_ticker"] for s in fewer[:-1]}, NOW)
-    assert report["cumulative_realized_pnl_dollars"] == -84
+    assert report["cumulative_realized_pnl_dollars"] == -54
     assert report["loss_stop"] is False
 
 

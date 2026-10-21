@@ -108,16 +108,16 @@ def test_nba_baseline_retains_no_side_and_passive_price():
 
 def test_separate_risk_caps_and_state():
     assert str(nba.STATE).endswith("prod-nba-auto")
-    assert nba.MAX_GROSS_COST == 1200
-    assert nba.MAX_ACTIVE_COST == 90
+    assert nba.MAX_GROSS_COST == 1000
+    assert nba.MAX_ACTIVE_COST == 75
     assert nba.MAX_ORDER_COST == 4
     assert nba.MAX_GAME_COST == 15
     assert nba.MAX_TEAM_COST == 10
-    assert nba.MAX_DAILY_COST == 90
+    assert nba.MAX_DAILY_COST == 75
     assert nba.MAX_GAME_ORDERS == 10
     assert nba.MAX_CONTRACTS == 2
-    assert nba.MAX_REALIZED_DAILY_LOSS == 25
-    assert nba.MAX_REALIZED_CUMULATIVE_LOSS == 90
+    assert nba.MAX_REALIZED_DAILY_LOSS == 20
+    assert nba.MAX_REALIZED_CUMULATIVE_LOSS == 60
     assert nba.WINDOW == (2.0, 6.0)
 
 
@@ -549,7 +549,7 @@ def test_active_and_shared_risk_limits_cannot_be_overridden():
     import live.shared_account_risk as shared_risk
 
     # These caps remain independent, even when the NBA cohort enlarges.
-    assert shared_risk.LIMITS == {"lifetime": 1250, "daily": 120, "active": 105}
+    assert shared_risk.LIMITS == {"lifetime": 1050, "daily": 105, "active": 90}
 
 
 def test_v3_guard_drains_known_v2_and_rejects_unowned_resting_orders():
