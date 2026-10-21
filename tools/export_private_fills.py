@@ -26,6 +26,7 @@ Run: python -m tools.export_private_fills            (counts only, no push)
 """
 
 import argparse
+import base64
 import csv
 import hashlib
 import io
@@ -171,6 +172,8 @@ KEEP = {
 # Never delete more than this share of a market's files in one run (a bad
 # read must not wipe the archive; git history keeps everything anyway).
 MAX_DELETE_SHARE = 0.25
+# Split very large uploads into commits of about this size.
+BATCH_BYTES = 4_000_000
 
 
 class ExportError(RuntimeError):
@@ -187,7 +190,7 @@ def events(path):
     skipped = {"lines": 0}
 
     def generate():
-        with path.open("r", encoding="utf-8", errors="replace", newline="") as f:
+        with path.open("r", encoding="utf-8", errors="replace", newline="\n") as f:
             for line in f:
                 if not line.endswith("\n"):
                     break  # the writer is mid-line; the next export reads it
@@ -201,7 +204,7 @@ def events(path):
                     skipped["lines"] += 1
                     continue
                 kind = record.get("event")
-                if kind in KEEP:
+                if isinstance(kind, str) and kind in KEEP:
                     yield kind, {k: record[k] for k in KEEP[kind] if k in record}
 
     return generate(), skipped
@@ -524,12 +527,42 @@ def check_private(info, repo):
         raise ExportError("refuse_repository_archived")
 
 
-def push(files, repo, token, complete=(), call=None):
-    """Upload changed files as one commit; returns (changed, deleted).
+def _remote_summary(call, repo, token, sha):
+    blob = call("GET", f"/repos/{repo}/git/blobs/{sha}", token)
+    try:
+        return json.loads(base64.b64decode(blob.get("content", "")))
+    except ValueError:
+        return {}
 
-    Files under data/<market>/ that this export no longer produces are
-    deleted, but only for markets read completely this run, and never more
-    than MAX_DELETE_SHARE of a market's files at once.
+
+def _went_backwards(new, old, markets):
+    """Markets whose journal now shows fewer orders or older data than the
+    export already in the repo (a replaced, truncated or restored journal)."""
+    backwards = []
+    for market in sorted(markets):
+        a = new.get("markets", {}).get(market, {})
+        b = old.get("markets", {}).get(market, {})
+        if b.get("status") != "ok" or a.get("status") != "ok":
+            continue
+        fewer = (a.get("orders") or 0) < (b.get("orders") or 0)
+        older = str(a.get("data_through_utc") or "") < str(
+            b.get("data_through_utc") or ""
+        )
+        if fewer or older:
+            backwards.append(market)
+    return backwards
+
+
+def push(files, repo, token, complete=(), call=None):
+    """Upload changed files; returns (changed, deleted).
+
+    Changes go up in as few commits as possible (one unless they exceed
+    BATCH_BYTES), each saved before the next, so a huge rewrite finishes over
+    several runs instead of failing every hour. Files under data/<market>/
+    that this export no longer produces are deleted, but only for markets
+    read completely this run, and never more than MAX_DELETE_SHARE of a
+    market's files at once. If a journal shows fewer orders or older data
+    than what is already exported, nothing is pushed at all.
     """
     call = call or github  # looked up at call time (tests replace it)
     if not token:
@@ -542,13 +575,19 @@ def push(files, repo, token, complete=(), call=None):
     check_private(info, repo)
     branch = info.get("default_branch") or "main"
     head = call("GET", f"/repos/{repo}/git/ref/heads/{branch}", token)["object"]["sha"]
-    base_tree = call("GET", f"/repos/{repo}/git/commits/{head}", token)["tree"]["sha"]
-    listing = call("GET", f"/repos/{repo}/git/trees/{base_tree}?recursive=1", token)
+    tree_sha = call("GET", f"/repos/{repo}/git/commits/{head}", token)["tree"]["sha"]
+    listing = call("GET", f"/repos/{repo}/git/trees/{tree_sha}?recursive=1", token)
     if listing.get("truncated"):
         raise ExportError("tree_listing_truncated")
     remote = {
         t["path"]: t["sha"] for t in listing.get("tree", []) if t.get("type") == "blob"
     }
+    summary = "data/summary.json"
+    if summary in remote and summary in files:
+        old = _remote_summary(call, repo, token, remote[summary])
+        backwards = _went_backwards(json.loads(files[summary]), old, complete)
+        if backwards:
+            raise ExportError(f"journal_went_backwards_{'_'.join(backwards)}")
     changed = [
         p for p, text in sorted(files.items()) if remote.get(p) != blob_sha(text)
     ]
@@ -561,35 +600,48 @@ def push(files, repo, token, complete=(), call=None):
             deleted += stale
     if not changed and not deleted:
         return 0, 0
-    entries = [
-        {"path": p, "mode": "100644", "type": "blob", "content": files[p]}
-        for p in changed
-    ]
-    entries += [
-        {"path": p, "mode": "100644", "type": "blob", "sha": None} for p in deleted
-    ]
-    tree = call(
-        "POST",
-        f"/repos/{repo}/git/trees",
-        token,
-        {"base_tree": base_tree, "tree": entries},
-    )
-    commit = call(
-        "POST",
-        f"/repos/{repo}/git/commits",
-        token,
-        {
-            "message": f"Export: {len(changed)} changed, {len(deleted)} removed",
-            "tree": tree["sha"],
-            "parents": [head],
-        },
-    )
-    call(
-        "PATCH",
-        f"/repos/{repo}/git/refs/heads/{branch}",
-        token,
-        {"sha": commit["sha"], "force": False},
-    )
+    batches, size = [[]], 0
+    for path in changed:
+        n = len(files[path].encode())
+        if batches[-1] and size + n > BATCH_BYTES:
+            batches.append([])
+            size = 0
+        batches[-1].append(path)
+        size += n
+    for number, batch in enumerate(batches, start=1):
+        entries = [
+            {"path": p, "mode": "100644", "type": "blob", "content": files[p]}
+            for p in batch
+        ]
+        if number == len(batches):
+            entries += [
+                {"path": p, "mode": "100644", "type": "blob", "sha": None}
+                for p in deleted
+            ]
+        tree_sha = call(
+            "POST",
+            f"/repos/{repo}/git/trees",
+            token,
+            {"base_tree": tree_sha, "tree": entries},
+        )["sha"]
+        head = call(
+            "POST",
+            f"/repos/{repo}/git/commits",
+            token,
+            {
+                "message": f"Export part {number}/{len(batches)}: "
+                f"{len(batch)} changed"
+                + (f", {len(deleted)} removed" if number == len(batches) else ""),
+                "tree": tree_sha,
+                "parents": [head],
+            },
+        )["sha"]
+        call(
+            "PATCH",
+            f"/repos/{repo}/git/refs/heads/{branch}",
+            token,
+            {"sha": head, "force": False},
+        )
     return len(changed), len(deleted)
 
 
@@ -610,6 +662,11 @@ def main(argv=None):
     parser.add_argument("--nfl-journal", type=Path, default=JOURNALS["nfl"])
     args = parser.parse_args(argv)
     try:
+        if args.push and (
+            args.nba_journal != JOURNALS["nba"] or args.nfl_journal != JOURNALS["nfl"]
+        ):
+            # Pushing from another journal could overwrite the real export.
+            raise ExportError("refuse_push_with_other_journals")
         if args.out and _inside_git_checkout(args.out):
             # A checkout might be committed and pushed somewhere public.
             raise ExportError("refuse_out_inside_git_checkout")

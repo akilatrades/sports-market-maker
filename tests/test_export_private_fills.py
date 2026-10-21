@@ -283,7 +283,7 @@ def test_one_unreadable_journal_does_not_stop_the_other(tmp_path, monkeypatch):
 
 
 class FakeGitHub:
-    """Enough of GitHub's Git Data API, with state, to commit twice."""
+    """Enough of GitHub's Git Data API, with state, to commit repeatedly."""
 
     def __init__(self, info=None, remote=None, branch="main", truncated=False):
         self.info = {
@@ -293,40 +293,59 @@ class FakeGitHub:
             "default_branch": branch,
             **(info or {}),
         }
-        self.remote, self.branch, self.truncated = dict(remote or {}), branch, truncated
-        self.calls, self.pending = [], None
+        self.text = dict(remote or {})  # path -> content
+        self.branch, self.truncated = branch, truncated
+        self.calls, self.head, self.trees, self.n = [], "c0", {}, 0
+
+    @property
+    def remote(self):
+        return self.text
 
     def writes(self):
         return [c for c in self.calls if c[0] in ("POST", "PATCH")]
 
+    def commits(self):
+        return [c for c in self.calls if c[1].endswith("/git/commits")]
+
     def __call__(self, method, path, token, payload=None):
+        import base64
+
         self.calls.append((method, path, payload))
         if path == f"/repos/{REPO}":
             return self.info
         if path.endswith(f"/git/ref/heads/{self.branch}"):
-            return {"object": {"sha": "head"}}
+            return {"object": {"sha": self.head}}
         if "/git/commits/" in path:
-            return {"tree": {"sha": "tree0"}}
+            return {"tree": {"sha": "t-" + self.head}}
         if "/git/trees/" in path:
             tree = [
-                {"path": p, "type": "blob", "sha": s} for p, s in self.remote.items()
+                {"path": p, "type": "blob", "sha": export.blob_sha(s)}
+                for p, s in self.text.items()
             ]
             return {"tree": tree, "truncated": self.truncated}
+        if "/git/blobs/" in path:
+            sha = path.rsplit("/", 1)[1]
+            text = next(s for s in self.text.values() if export.blob_sha(s) == sha)
+            return {"content": base64.b64encode(text.encode()).decode()}
+        self.n += 1
         if path.endswith("/git/trees"):
-            new = dict(self.remote)
+            new = dict(self.trees.get(payload["base_tree"], self.text))
             for entry in payload["tree"]:
                 if entry.get("sha", "x") is None:
                     new.pop(entry["path"], None)
                 else:
-                    new[entry["path"]] = export.blob_sha(entry["content"])
-            self.pending = new
-            return {"sha": "tree1"}
+                    new[entry["path"]] = entry["content"]
+            self.trees[f"tree{self.n}"] = new
+            return {"sha": f"tree{self.n}"}
         if path.endswith("/git/commits"):
-            return {"sha": "commit1"}
+            assert payload["parents"] == [self.head]
+            self.trees[f"commit{self.n}"] = self.trees[payload["tree"]]
+            return {"sha": f"commit{self.n}"}
         if method == "PATCH":
             assert path.endswith(f"/git/refs/heads/{self.branch}")
-            assert payload == {"sha": "commit1", "force": False}
-            self.remote = self.pending
+            assert payload["force"] is False
+            self.head, self.text = payload["sha"], self.trees[payload["sha"]]
+            self.trees["t-" + self.head] = self.text
             return {}
         raise AssertionError(path)
 
@@ -347,7 +366,7 @@ def test_build_then_push_twice_commits_once(tmp_path):
 
 def test_files_no_longer_produced_are_removed_carefully(tmp_path):
     files, _, complete = files_for(tmp_path)
-    known = {p: export.blob_sha(t) for p, t in files.items()}
+    known = dict(files)
     stale = {
         "data/nba/settlements/undated.csv": "x",
         "data/nfl/orders/2026-01-01.csv": "y",
@@ -408,13 +427,10 @@ def test_failures_print_a_reason_never_the_token(tmp_path, monkeypatch, capsys):
     secret = "ghp_" + "s" * 36
     monkeypatch.setenv("PRIVATE_EXPORT_REPO", REPO)
     monkeypatch.setenv("PRIVATE_EXPORT_TOKEN", secret)
-    args = [
-        "--push",
-        "--nba-journal",
-        str(tmp_path / "nba.jsonl"),
-        "--nfl-journal",
-        "x",
-    ]
+    monkeypatch.setattr(
+        export, "JOURNALS", {"nba": tmp_path / "nba.jsonl", "nfl": tmp_path / "x"}
+    )
+    args = ["--push"]
 
     def unreachable(*a, **k):
         raise export.ExportError("github_get_unreachable")
@@ -472,3 +488,89 @@ def test_service_is_isolated_from_trading_and_kalshi():
         "prod-nba-auto.service",
     ):
         assert funded not in setup
+
+
+def test_a_journal_that_went_backwards_pushes_nothing(tmp_path):
+    files, _, complete = files_for(tmp_path)
+    fake = FakeGitHub()
+    export.push(files, REPO, TOKEN, complete, call=fake)
+    shorter = write(tmp_path / "nba.jsonl", NBA_EVENTS[:2])  # a restored journal
+    files, _, complete = export.build_files(
+        {"nba": shorter, "nfl": tmp_path / "nfl.jsonl"}
+    )
+    fake.calls.clear()
+    with pytest.raises(export.ExportError, match="went_backwards_nba"):
+        export.push(files, REPO, TOKEN, complete, call=fake)
+    assert fake.writes() == []
+
+
+def test_a_huge_upload_is_split_into_saved_commits(tmp_path, monkeypatch):
+    monkeypatch.setattr(export, "BATCH_BYTES", 600)
+    files = {f"data/nba/orders/2026-10-{d:02d}.csv": "x" * 400 for d in range(1, 6)}
+    fake = FakeGitHub()
+    assert export.push(files, REPO, TOKEN, {"nba"}, call=fake) == (5, 0)
+    assert len(fake.commits()) == 5  # each saved before the next
+    assert fake.remote == files
+
+
+def test_small_markets_can_lose_up_to_two_stale_files():
+    fake = FakeGitHub(remote={"data/nba/a.csv": "1", "data/nba/b.csv": "2"})
+    assert export.push({"data/nba/c.csv": "3"}, REPO, TOKEN, {"nba"}, call=fake) == (
+        1,
+        2,
+    )
+    assert sorted(fake.remote) == ["data/nba/c.csv"]
+
+
+def test_a_stray_carriage_return_does_not_hide_the_rest(tmp_path):
+    nba = tmp_path / "nba.jsonl"
+    nba.write_text(
+        json.dumps(NBA_EVENTS[0])
+        + "\n"
+        + '{"event": "queue", "x": "a\rb"}\n'
+        + "".join(json.dumps(e) + "\n" for e in NBA_EVENTS[1:])
+    )
+    _, summary, _ = export.build_files({"nba": nba})
+    assert summary["markets"]["nba"]["orders"] == 3
+
+
+def test_odd_event_values_are_skipped_not_fatal(tmp_path):
+    nba = write(tmp_path / "nba.jsonl", [{"event": ["intent"]}, *NBA_EVENTS])
+    _, summary, complete = export.build_files({"nba": nba})
+    assert complete == {"nba"} and summary["markets"]["nba"]["orders"] == 3
+
+
+def test_push_refuses_other_journals(tmp_path, capsys):
+    write(tmp_path / "nba.jsonl", NBA_EVENTS)
+    with pytest.raises(SystemExit):
+        export.main(["--push", "--nba-journal", str(tmp_path / "nba.jsonl")])
+    assert "refuse_push_with_other_journals" in capsys.readouterr().err
+
+
+def test_the_real_opener_refuses_a_redirect():
+    """A local HTTP server answers 301 to another host; nothing follows it."""
+    import threading
+    from http.server import BaseHTTPRequestHandler, HTTPServer
+
+    seen = []
+
+    class Redirect(BaseHTTPRequestHandler):
+        def do_GET(self):
+            seen.append(self.headers.get("Authorization"))
+            self.send_response(301)
+            self.send_header("Location", "http://127.0.0.1:9/steal")
+            self.end_headers()
+
+        def log_message(self, *args):
+            pass
+
+    server = HTTPServer(("127.0.0.1", 0), Redirect)
+    threading.Thread(target=server.handle_request, daemon=True).start()
+    request = export.Request(
+        f"http://127.0.0.1:{server.server_port}/repo",
+        headers={"Authorization": "Bearer t"},
+    )
+    with pytest.raises(export.ExportError, match="redirect_refused_301"):
+        export._OPENER.open(request, timeout=5)
+    server.server_close()
+    assert seen == ["Bearer t"]  # one request, to the original host only

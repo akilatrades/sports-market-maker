@@ -20,12 +20,17 @@ leaving the server.
   (`market-maker-private-export`), and it never starts, stops or changes them.
   It cannot crowd them out either: memory is capped at 192 MB, it is the
   first process killed if the server runs short, and it gets the lowest CPU
-  and disk priority. (A 79 MB journal, several seasons of orders, peaks at
-  about 120 MB and takes about 6 seconds.)
+  and disk priority. Memory grows with the number of orders: about 70 MB
+  for 8,000 orders and close to the cap at about 25,000 (the NBA bot's
+  lifetime cap allows about 4,000 one-contract orders). If the bots ever
+  get near that, raise `MemoryMax` before the export starts failing.
 - It also refuses a repository that is internal, archived, renamed or has
   GitHub Pages turned on, and never follows a redirect (which could carry the
-  token elsewhere). The setup script installs the timer files exactly as they
-  are on GitHub `main`, not from copies on the server.
+  token elsewhere). If a journal ever shows fewer orders or older data than
+  what is already exported (a replaced or restored journal), it pushes
+  nothing and reports why. The setup script installs the timer files from
+  GitHub `main` (a guard against accidental edits to the server's copies,
+  not against someone who already controls the server's `trader` account).
 
 ## 1. Create the private repository (GitHub website)
 

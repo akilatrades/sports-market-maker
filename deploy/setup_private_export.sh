@@ -22,8 +22,16 @@ if [[ "${1:-}" == "--off" ]]; then
   exit 0
 fi
 
-# Install the units exactly as reviewed on GitHub main, never from files
-# that could have been edited on this server.
+# Never run while a code release is changing the checkout.
+exec 9>/run/lock/smm-production-release.lock
+flock -n 9 || { echo "A code release is running; try again in a few minutes." >&2; exit 1; }
+
+# Install the units from GitHub main (guards against accidental edits to the
+# copies on this server).
+case "$(tgit remote get-url origin)" in
+  https://github.com/akilatrades/sports-market-maker|https://github.com/akilatrades/sports-market-maker.git) ;;
+  *) echo "The checkout's origin is not the project repository; refusing." >&2; exit 1 ;;
+esac
 [[ -z "$(tgit status --porcelain --untracked-files=no)" ]] || {
   echo "The server checkout has local changes; refusing. Deploy cleanly first." >&2; exit 1; }
 tgit fetch --quiet origin main
