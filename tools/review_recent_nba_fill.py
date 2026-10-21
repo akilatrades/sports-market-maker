@@ -207,6 +207,18 @@ def summarize(snapshot, events, now):
                 "exchange_expiry_matches_scheduled_tip": (
                     abs((expiry - tip).total_seconds()) <= 1 if expiry and tip else None
                 ),
+                "expiry_delta_seconds": (
+                    round((expiry - tip).total_seconds(), 1)
+                    if expiry is not None and tip is not None
+                    else None
+                ),
+                "journal_has_expiry": expiry is not None,
+                "intent_strategy_generation": (
+                    "baseline_v4"
+                    if intent.get("strategy_version")
+                    == "nba-no-v4-smaller-orders-edge3-baseline"
+                    else "earlier_or_unknown"
+                ),
                 "quoted_NO_cents": rounded(intent.get("price_cents"), 2),
                 "actual_fill_NO_cents": cents(row.get("vwap_no_price_dollars")),
                 "fill_fees_dollars": rounded(row.get("fill_fees_dollars"), 4),
@@ -262,6 +274,24 @@ def public_summary(report):
             return "2h_to_6h"
         return "over_6h"
 
+    def expiry_gap(value):
+        seconds = finite(value)
+        if seconds is None:
+            return "unknown"
+        magnitude = abs(seconds)
+        if magnitude <= 1:
+            return "matches_tip"
+        direction = "before_tip" if seconds < 0 else "after_tip"
+        if magnitude < 60:
+            band = "under_1m"
+        elif magnitude < 3600:
+            band = "1m_to_1h"
+        elif magnitude < 7200:
+            band = "1h_to_2h"
+        else:
+            band = "over_2h"
+        return direction + "_" + band
+
     def sign(value):
         v = finite(value)
         if v is None:
@@ -287,6 +317,9 @@ def public_summary(report):
                 ),
                 "posting_window": bucket_hours(row.get("hours_to_tip_at_post")),
                 "expiry_matched_tip": row.get("exchange_expiry_matches_scheduled_tip"),
+                "journal_expiry_gap": expiry_gap(row.get("expiry_delta_seconds")),
+                "journal_expiry_present": row.get("journal_has_expiry"),
+                "intent_strategy_generation": row.get("intent_strategy_generation"),
                 "pretrade_edge_sign": sign(
                     row.get("model_estimated_net_edge_cents_at_post")
                 ),
