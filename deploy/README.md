@@ -10,6 +10,7 @@ repository changes the server on its own.
 | GitHub Actions | Tests, data refreshes, model projections, sportsbook lines, research jobs, the public dashboard |
 | DigitalOcean server (Ubuntu) | The funded NBA and NFL order workers (`live/prod_nba_auto.py`, `live/prod_nfl_auto.py`), each run by a systemd timer |
 | Kalshi | The exchange; the workers use a signed API key stored only on the server |
+| Private GitHub repo (`smm-private-data`, optional) | Hourly copy of the bots' live orders, fills and settlements from their journals, so they can be studied without the Kalshi key leaving the server. Setup: [PRIVATE_FILL_EXPORT.md](PRIVATE_FILL_EXPORT.md) |
 
 Credentials live only in root-owned files on the server (`/etc/market-maker-*.env`)
 and are never committed, printed or sent to GitHub.

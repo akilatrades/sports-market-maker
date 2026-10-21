@@ -1,0 +1,34 @@
+[Unit]
+Description=Export the bots' orders, fills and settlements to the owner's PRIVATE GitHub repo
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=oneshot
+User=trader
+Group=trader
+WorkingDirectory=/home/trader/sports-market-maker-prod-auto
+# Only the owner's fine-grained GitHub token for the private data repo.
+# No Kalshi credentials: the export reads the bots' journals only.
+EnvironmentFile=/etc/market-maker-private-export.env
+Environment=PYTHONUNBUFFERED=1
+Environment=PYTHONDONTWRITEBYTECODE=1
+ExecStart=/home/trader/sports-market-maker-prod-auto/.venv/bin/python -m tools.export_private_fills --push
+# Never compete with the trading bots on the small server: capped memory,
+# first to be killed if memory runs out, lowest CPU and disk priority.
+Nice=15
+CPUWeight=10
+IOSchedulingClass=idle
+MemoryHigh=160M
+MemoryMax=192M
+OOMScoreAdjust=1000
+TimeoutStartSec=180
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+# Reads journals; can never change them or anything else under /home.
+ProtectHome=read-only
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
