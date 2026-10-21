@@ -69,6 +69,7 @@ a journal before it is sent.
 | [ACCOUNT_DASHBOARD.md](ACCOUNT_DASHBOARD.md) | Private read-only account view |
 | [PUBLIC_PNL_REFRESH.md](PUBLIC_PNL_REFRESH.md) | Publishing verified P&L to the public dashboard |
 | [LIVE_ACCOUNT_PNL.md](LIVE_ACCOUNT_PNL.md) | Near-live settled P&L feed for the dashboard |
+| [GITHUB_ACCESS.md](GITHUB_ACCESS.md) | What is public, who can run what, adding a collaborator, moving server secrets into the `funded-droplet` environment |
 | [AUTOMATION_SETUP.md](AUTOMATION_SETUP.md) | One-time GitHub-to-server SSH setup |
 | [PROD_NFL_PILOT.md](PROD_NFL_PILOT.md) | The first supervised NFL order (historical) |
 | [NFL_WORKER_MEMORY.md](NFL_WORKER_MEMORY.md) | Incident note |
