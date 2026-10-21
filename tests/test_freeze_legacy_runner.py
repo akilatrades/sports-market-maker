@@ -1,4 +1,5 @@
 """One-time migration never silently changes an unknown live runner."""
+
 import os
 
 import pytest
