@@ -30,11 +30,6 @@ flock -n 9 || { echo "Another deployment is in progress" >&2; exit 1; }
 }
 
 OLD="$(runuser -u trader -- git -C "$ROOT" rev-parse HEAD)"
-REMOTE="$(runuser -u trader -- git -C "$ROOT" ls-remote origin refs/heads/main | cut -f1)"
-[[ "$REMOTE" == "$TARGET" ]] || {
-  echo "Requested release is not the current main head. Retry after CI on latest main." >&2
-  exit 1
-}
 if [[ "$OLD" == "$TARGET" ]]; then
   echo "PRODUCTION CODE ALREADY AT REQUESTED SHA: $TARGET"
   exit 0
@@ -101,9 +96,14 @@ for unit in "$NFL_SVC" "$NBA_SVC"; do
 done
 
 runuser -u trader -- git -C "$ROOT" fetch --quiet origin main
-FETCHED="$(runuser -u trader -- git -C "$ROOT" rev-parse refs/remotes/origin/main)"
-[[ "$FETCHED" == "$TARGET" ]] || {
-  echo "Main changed during deployment; refusing unverified SHA" >&2; exit 1;
+# Background dry-run logs may append commits to main while CI runs.
+# Deploy exactly the tested SHA, not the moving branch head.
+if ! runuser -u trader -- git -C "$ROOT" cat-file -e "$TARGET^{commit}" 2>/dev/null; then
+  runuser -u trader -- git -C "$ROOT" fetch --quiet origin "$TARGET"
+fi
+runuser -u trader -- git -C "$ROOT" merge-base --is-ancestor "$TARGET" refs/remotes/origin/main || {
+  echo "Requested SHA is not reachable from current main; refusing release" >&2
+  exit 1
 }
 # This is a CODE-ONLY workflow: dependency or systemd unit upgrades require
 # a distinct owner-supervised maintenance procedure.
