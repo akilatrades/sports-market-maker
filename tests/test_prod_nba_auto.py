@@ -241,6 +241,7 @@ def test_selection_funnel_counts_each_gate_without_loosening_it():
         "verified_availability_and_tip": 1,
         "in_entry_window": 1,
         "supported_prop_series": 1,
+        "single_book_lines_priced_by_model": 0,
         "passed_book_model_and_spread": 1,
         "no_side_candidates": 1,
         "passed_edge_sanity": 1,
@@ -998,3 +999,25 @@ def test_old_sportsbook_consensus_is_not_used_to_retain_nba_orders(
     fresh = nba.nba_candidates(NOW, latest=tmp_path / "latest.csv")
     assert fresh.book_n.iloc[0] == 2
     assert fresh.p_book.iloc[0] == 0.4
+
+
+def test_single_book_line_is_priced_by_model_not_cancelled_next_pass():
+    """One sportsbook is not a consensus: entry must match the resting recheck."""
+    import math
+
+    from kalshi.maker import maker_fee
+    from kalshi.paper_props import FEE_SHARE
+
+    one = priced()
+    one["book_n"] = 1
+    one["p_book"] = 0.10  # a lone book that would flatter the NO side
+    rows = nba.select_candidates(one, [], {"active": []}, NOW)
+    assert len(rows) == 1
+    row = rows[0]
+    assert not math.isfinite(float(row.p_book))
+    expected = (1 - row.p_model) - row.price - maker_fee(row.price, FEE_SHARE)
+    assert abs(row.edge - expected) < 1e-9
+
+    two = priced()  # two books: the consensus still decides
+    rows = nba.select_candidates(two, [], {"active": []}, NOW)
+    assert len(rows) == 1 and float(rows[0].p_book) == 0.40

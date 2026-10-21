@@ -1,0 +1,114 @@
+name: Go live / Stop funded bots
+
+# Owner-only, manual. Logs are public: the Droplet helper prints only
+# PASS/FAIL, timer on/off states and the deployed commit.
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: "STATUS changes nothing. GO_LIVE arms NBA + NFL. STOP blocks new orders. STOP_AND_CANCEL also cancels the bots' resting orders."
+        required: true
+        type: choice
+        default: STATUS
+        options:
+          - STATUS
+          - GO_LIVE
+          - STOP
+          - STOP_AND_CANCEL
+      confirm:
+        description: "For anything except STATUS, type the action again exactly (for example GO_LIVE)"
+        required: false
+        default: ""
+
+permissions:
+  contents: read
+
+# Shares the release lock group: a deploy and a control action never overlap.
+concurrency:
+  group: funded-droplet-code-release
+  cancel-in-progress: false
+
+jobs:
+  tests:
+    # Full test suite before arming; STOP paths skip it so they stay fast.
+    if: github.ref == 'refs/heads/main' && github.actor == 'akilatrades' && inputs.action == 'GO_LIVE'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install Python test requirements
+        run: pip install -r requirements.txt ruff==0.11.13
+      - name: Style, shell and Python regression suite
+        run: |
+          set -euo pipefail
+          ruff check .
+          ruff format --check --diff .
+          bash -n deploy/*.sh
+          node tests/account_dashboard.cjs
+          pytest -q
+
+  control:
+    needs: tests
+    if: >-
+      always() && github.ref == 'refs/heads/main' && github.actor == 'akilatrades' &&
+      (needs.tests.result == 'success' ||
+       (needs.tests.result == 'skipped' && inputs.action != 'GO_LIVE'))
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    env:
+      DROPLET_HOST: ${{ secrets.DROPLET_HOST }}
+      DROPLET_USER: ${{ secrets.DROPLET_USER }}
+      DROPLET_SSH_KEY: ${{ secrets.DROPLET_SSH_KEY }}
+      DROPLET_KNOWN_HOSTS: ${{ secrets.DROPLET_KNOWN_HOSTS }}
+      ACTION: ${{ inputs.action }}
+      CONFIRM: ${{ inputs.confirm }}
+      RELEASE_SHA: ${{ github.sha }}
+    steps:
+      - name: Validate request
+        run: |
+          set -euo pipefail
+          case "$ACTION" in
+            STATUS) ;;
+            GO_LIVE|STOP|STOP_AND_CANCEL)
+              [[ "$CONFIRM" == "$ACTION" ]] || { echo "::error::Type $ACTION in the confirm box to run it"; exit 1; } ;;
+            *) echo "::error::Unknown action"; exit 1 ;;
+          esac
+          [[ "$RELEASE_SHA" =~ ^[0-9a-f]{40}$ ]]
+          [[ "$DROPLET_USER" == trader ]] || { echo "::error::Use the unprivileged trader account"; exit 1; }
+          for name in DROPLET_HOST DROPLET_SSH_KEY DROPLET_KNOWN_HOSTS; do
+            [[ -n "${!name}" ]] || { echo "::error::Missing $name"; exit 1; }
+          done
+          [[ "$DROPLET_KNOWN_HOSTS" == *ssh-ed25519* ]]
+      - name: Configure verified SSH identity
+        run: |
+          set -euo pipefail
+          umask 077
+          mkdir -p ~/.ssh
+          printf '%s\n' "$DROPLET_SSH_KEY" > ~/.ssh/smm_control
+          printf '%s\n' "$DROPLET_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/smm_control ~/.ssh/known_hosts
+          ssh-keygen -y -f ~/.ssh/smm_control > /dev/null
+      - name: Run on the Droplet
+        run: |
+          set -euo pipefail
+          ssh_args=(-T -q -o LogLevel=ERROR -o BatchMode=yes -o IdentitiesOnly=yes \
+            -o StrictHostKeyChecking=yes -o ConnectTimeout=12 -i "$HOME/.ssh/smm_control")
+          case "$ACTION" in
+            STATUS) verb=(status) ;;
+            GO_LIVE) verb=(go-live "$RELEASE_SHA") ;;
+            STOP) verb=(stop) ;;
+            STOP_AND_CANCEL) verb=(stop-and-cancel) ;;
+          esac
+          if ! ssh "${ssh_args[@]}" "$DROPLET_USER@$DROPLET_HOST" \
+              "sudo -n -l /usr/local/sbin/smm-prod-control >/dev/null 2>&1"; then
+            echo "::error::Go live / Stop helper is not installed on the Droplet yet (see deploy/GO_LIVE_BUTTON.md)"
+            exit 1
+          fi
+          ssh "${ssh_args[@]}" "$DROPLET_USER@$DROPLET_HOST" \
+            "sudo -n /usr/local/sbin/smm-prod-control ${verb[*]}"
+      - name: Remove SSH key
+        if: always()
+        run: rm -f ~/.ssh/smm_control

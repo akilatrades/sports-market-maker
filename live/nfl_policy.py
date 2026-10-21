@@ -14,7 +14,7 @@ MAX_DAILY_COST = 30.0
 MAX_GAME_ORDERS = 2
 MAX_CONTRACTS = 5
 FEE_RESERVE = 1.10
-STRATEGY_VERSION = "nfl-no-v2-reserved-edge"
+STRATEGY_VERSION = "nfl-no-v3-baseline-quote"
 MIN_RESERVED_EDGE = 0.03
 STATE = Path("/home/trader/prod-nfl-auto")
 

@@ -713,6 +713,22 @@ def select_candidates(frame, events, state, now, diagnostics=None, window=WINDOW
     counts["supported_prop_series"] = len(eligible)
     if eligible.empty:
         return []
+    # One sportsbook is not a consensus. The resting recheck treats fewer than
+    # two books as "no book" and cancels a sportsbook-sourced order on its
+    # next pass, so price single-book lines the way that recheck will: from
+    # the model. Two-book requirements elsewhere are unchanged.
+    eligible = eligible.copy()
+    if "p_book" in eligible:
+        books = (
+            pd.to_numeric(eligible["book_n"], errors="coerce").fillna(0)
+            if "book_n" in eligible
+            else pd.Series(0, index=eligible.index)
+        )
+        single = books < 2
+        counts["single_book_lines_priced_by_model"] = int(
+            (single & eligible.p_book.notna()).sum()
+        )
+        eligible.loc[single, "p_book"] = np.nan
     found = candidate_orders(eligible, "no_seller_bookline", window=window)
     counts["passed_book_model_and_spread"] = len(found)
     if found.empty:

@@ -451,7 +451,15 @@ def test_queue_success_has_no_issue(quotes, tmp_path):
     assert q["issue"] is None
 
 
-def test_two_tick_maker_quote_is_more_competitive_without_crossing(quotes):
+def test_default_quote_has_no_second_tick(quotes):
+    row = auto.select_candidates(frame(), [], {"active": []}, NOW)[0]
+    price, net_edge, ticks = auto.execution_quote(row)
+    assert auto.EXTRA_MAKER_TICK == 0
+    assert (price, net_edge, ticks) == (row.price, row.edge, 0)
+
+
+def test_two_tick_maker_quote_is_more_competitive_without_crossing(quotes, monkeypatch):
+    monkeypatch.setattr(auto, "EXTRA_MAKER_TICK", 0.01)
     row = auto.select_candidates(frame(), [], {"active": []}, NOW)[0]
     price, net_edge, ticks = auto.execution_quote(row)
     assert price == 0.52 and ticks == 1
@@ -491,6 +499,7 @@ def test_three_cent_spread_improves_only_if_net_edge_retained():
 
 
 def test_fresh_quote_recheck_rejects_crossed_or_moved_prices(monkeypatch):
+    monkeypatch.setattr(auto, "EXTRA_MAKER_TICK", 0.01)
     row = auto.select_candidates(frame(), [], {"active": []}, NOW)[0]
     price, _, ticks = auto.execution_quote(row)
     assert ticks == 1
@@ -507,7 +516,8 @@ def test_fresh_quote_recheck_rejects_crossed_or_moved_prices(monkeypatch):
         auto.verify_quote(row, price)
 
 
-def test_improved_pilot_journals_effective_edge(quotes, tmp_path):
+def test_improved_pilot_journals_effective_edge(quotes, tmp_path, monkeypatch):
+    monkeypatch.setattr(auto, "EXTRA_MAKER_TICK", 0.01)
     client = Client()
     journal = tmp_path / "ledger.jsonl"
     priced = frame()
