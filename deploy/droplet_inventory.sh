@@ -23,14 +23,14 @@ echo "installed_unit_worker_modules:"
 for unit in market-maker-prod-nba-auto.service market-maker-prod-nfl-auto.service market-maker.service; do
   path=$(systemctl show "$unit" --value --property=FragmentPath 2>/dev/null || true)
   if [ -n "$path" ] && [ -r "$path" ]; then
-    printf '%s unit_file_readable=yes\\n' "$unit"
+    printf '%s unit_file_readable=yes\n' "$unit"
     for module in live.prod_nba_auto live.prod_nfl_auto live.nba_trade; do
       if grep -Fq "$module" "$path"; then
-        printf '%s points_to=%s\\n' "$unit" "$module"
+        printf '%s points_to=%s\n' "$unit" "$module"
       fi
     done
   else
-    printf '%s unit_file_readable=no\\n' "$unit"
+    printf '%s unit_file_readable=no\n' "$unit"
   fi
 done
 
@@ -80,6 +80,24 @@ done
 
 echo "unit_timing:"
 systemctl show market-maker.timer --property=LastTriggerUSec --property=NextElapseUSecRealtime --no-pager 2>/dev/null || true
+
+echo "production_timers:"
+for unit in market-maker-prod-nba-auto.timer market-maker-prod-nfl-auto.timer; do
+  printf 'timer=%s\n' "$unit"
+  systemctl show "$unit" --property=LastTriggerUSec --property=NextElapseUSecRealtime --no-pager 2>/dev/null || true
+done
+echo "deployment_permissions:"
+printf 'ssh_uid=%s\n' "$(id -u)"
+if [ -w /home/trader/sports-market-maker ]; then
+  echo "repo_directory_writable=yes"
+else
+  echo "repo_directory_writable=no"
+fi
+if [ -w /etc/systemd/system ]; then
+  echo "systemd_directory_writable=yes"
+else
+  echo "systemd_directory_writable=no"
+fi
 
 echo "remote_access_scope:"
 if command -v sudo >/dev/null 2>&1 && sudo -n true >/dev/null 2>&1; then
