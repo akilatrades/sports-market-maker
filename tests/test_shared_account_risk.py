@@ -79,8 +79,8 @@ def test_sports_share_one_combined_lifetime_daily_and_active_budget():
     active = {"client-nfl-a", "client-nba-b"}
     baseline = shared.room(owner, active, 3, NOW)
     assert all(baseline.values())
-    assert shared.LIMITS == {"lifetime": 100.0, "daily": 40.0, "active": 25.0}
-    expensive = {"nfl": [*pair("nfl", "a", 15.0)], "nba": pair("nba", "b", 11.0)}
+    assert shared.LIMITS == {"lifetime": 1250.0, "daily": 120.0, "active": 105.0}
+    expensive = {"nfl": [*pair("nfl", "a", 60.0)], "nba": pair("nba", "b", 45.0)}
     owner = shared.ownership(expensive)
     checks = shared.room(owner, active, 2, NOW)
     assert not checks["shared_active"]
@@ -96,7 +96,7 @@ def test_cumulative_spend_never_resets_when_an_order_settles():
     from live.nfl_policy import reserve
 
     assert sum(reserve(x["cost"]) for x in owner["attempts"]) == 4.4
-    assert not shared.room(owner, none_active, 100, NOW)["shared_lifetime"]
+    assert not shared.room(owner, none_active, 1250, NOW)["shared_lifetime"]
 
 
 def test_daily_risk_uses_new_york_rollover():
@@ -109,7 +109,7 @@ def test_daily_risk_uses_new_york_rollover():
     )
     # The older trade remains in lifetime exposure even on a new date.
     assert shared.room(owner, set(), 10, NOW)["shared_daily"]
-    assert not shared.room(owner, set(), 90, NOW)["shared_lifetime"]
+    assert not shared.room(owner, set(), 1250, NOW)["shared_lifetime"]
 
 
 def test_missing_private_journal_is_not_an_empty_cohort(monkeypatch, tmp_path):
