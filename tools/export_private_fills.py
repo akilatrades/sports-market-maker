@@ -3,19 +3,22 @@
 Runs on the trading server from its own timer. It reads only the two bot
 journals (the bots already record every order, fill, queue reading, price
 move after a fill, cancel and settlement there); it makes no Kalshi request
-and needs no Kalshi credentials. It writes nothing on the server.
+and needs no Kalshi credentials. It writes nothing on the server. Journals
+are read line by line, keeping only the fields exported, so memory stays
+small even after a long season.
 
 Output: daily CSV files per market and a summary, one row per order, fill and
-settled market, using an explicit list of columns. Exchange order, client
-order and fill identifiers are replaced by short one-way hashes (enough to
-join the files); keys, balances and account details are never in the
-journals' exported columns.
+settled market, using explicit column lists. Exchange order, client order and
+fill identifiers are replaced by short one-way hashes (enough to join the
+files); keys, balances and account details are never exported.
 
 Pushing is opt-in (``--push``) and goes only to the repository named in
 PRIVATE_EXPORT_REPO with the token in PRIVATE_EXPORT_TOKEN (a fine-grained
-token limited to that repository's contents). It refuses unless GitHub says
-the repository is private, and never to the public project repository. All
-files go up as one commit, and only when something changed.
+token limited to that repository's contents). It refuses unless GitHub
+reports exactly that repository as private (not internal, not archived, no
+GitHub Pages), never pushes to the public project repository, and never
+follows redirects. All files go up as one commit, only when something
+changed.
 
 Run: python -m tools.export_private_fills            (counts only, no push)
      python -m tools.export_private_fills --out DIR  (write the files locally)
@@ -23,7 +26,6 @@ Run: python -m tools.export_private_fills            (counts only, no push)
 """
 
 import argparse
-import base64
 import csv
 import hashlib
 import io
@@ -31,10 +33,11 @@ import json
 import os
 import re
 import sys
+import urllib.request
 from datetime import UTC, datetime
 from pathlib import Path
 from urllib.error import HTTPError, URLError
-from urllib.request import Request, urlopen
+from urllib.request import Request
 from zoneinfo import ZoneInfo
 
 ET = ZoneInfo("America/New_York")
@@ -44,6 +47,7 @@ JOURNALS = {
     "nfl": Path("/home/trader/prod-nfl-auto/journal.jsonl"),
 }
 # Copied from each order's intent record, when present. Nothing else is.
+# NBA and NFL name some fields differently; both are kept.
 INTENT_FIELDS = [
     "ticker",
     "player",
@@ -56,19 +60,24 @@ INTENT_FIELDS = [
     "strategy_version",
     "model_version",
     "probability_source",
-    "p_yes",
+    "p_yes",  # NBA: probability used
+    "p_yes_used",  # NFL: probability used
+    "p_model_yes",  # NFL: model probability
     "book_n",
     "edge",
     "baseline_edge",
     "extra_maker_ticks",
-    "net_edge_after_fee_bound",
-    "fee_bound_dollars",
+    "net_edge_after_fee_bound",  # NBA
+    "edge_after_fee_buffer",  # NFL
+    "fee_bound_dollars",  # NBA
+    "fee_buffer_dollars",  # NFL
     "model_probability_yes_at_entry",
     "sportsbook_probability_yes_at_entry",
     "kalshi_yes_bid_at_entry",
     "kalshi_yes_ask_at_entry",
     "book_updated_utc_at_entry",
-    "model_generated_utc",
+    "model_generated_utc",  # NBA
+    "model_made_utc",  # NFL
     "projected_minutes_at_entry",
     "projected_minutes_source_at_entry",
     "historical_minutes_baseline_at_entry",
@@ -87,15 +96,17 @@ ORDER_COLUMNS = [
     "accepted_utc",
     "first_queue_ahead",
     "last_queue_ahead",
-    "cancel_utc",
+    "cancel_requested_utc",
+    "cancel_confirmed_utc",
     "cancel_reason",
     "cancel_veto",
+    "emergency_cancel_utc",
     "filled_contracts",
     "first_fill_utc",
     "avg_fill_no_price",
     "fill_fees_dollars",
     "settled_utc",
-    "settlement_net_profit_dollars",
+    "market_settlement_net_profit_dollars",
 ]
 MARKOUTS = [f"markout_{kind}_{h}m" for h in (5, 15, 60) for kind in ("mid", "bid")]
 FILL_COLUMNS = [
@@ -116,15 +127,13 @@ FILL_COLUMNS = [
     "price_cents",
     "edge",
     "net_edge_after_fee_bound",
+    "edge_after_fee_buffer",
     "sportsbook_probability_yes_at_entry",
     "model_probability_yes_at_entry",
+    "p_model_yes",
     *MARKOUTS,
 ]
-SETTLEMENT_COLUMNS = [
-    "market",
-    "ticker",
-    "settled_utc",
-    "strategy_version",
+SETTLEMENT_FIELDS = [
     "revenue_dollars",
     "yes_cost_dollars",
     "no_cost_dollars",
@@ -132,21 +141,70 @@ SETTLEMENT_COLUMNS = [
     "net_profit_dollars",
     "accounting_complete",
 ]
+SETTLEMENT_COLUMNS = ["market", "ticker", "settled_utc", "strategy_version"]
+SETTLEMENT_COLUMNS += SETTLEMENT_FIELDS
+# Journal fields kept while reading, by event kind; everything else is
+# dropped at once (memory) and can never reach the output.
+KEEP = {
+    "intent": {"utc", "client_order_id", *INTENT_FIELDS},
+    "accepted": {"utc", "client_order_id", "order_id"},
+    "unknown_outcome": {"client_order_id"},
+    "reconciled_rejected": {"client_order_id", "utc"},
+    "queue": {"order_id", "ahead"},
+    "cancel_intent": {"utc", "order_id", "reason", "veto"},
+    "cancel_accepted": {"utc", "order_id"},
+    "emergency_cancel": {"utc", "order_id"},
+    "fill": {
+        "fill_id",
+        "utc",
+        "ticker",
+        "order_id",
+        "count",
+        "yes_price",
+        "no_price",
+        "fee",
+        "is_taker",
+    },
+    "markout": {"fill_id", "horizon_minutes", "mid_move_dollars", "bid_move_dollars"},
+    "settlement": {"ticker", "utc", *SETTLEMENT_FIELDS},
+}
+# Never delete more than this share of a market's files in one run (a bad
+# read must not wipe the archive; git history keeps everything anyway).
+MAX_DELETE_SHARE = 0.25
 
 
 class ExportError(RuntimeError):
     pass
 
 
-def read_events(path):
-    """Journal events; a line still being written at the end is skipped."""
-    if not path.exists():
-        return None
-    raw = path.read_text()
-    lines = raw.split("\n")
-    if lines and lines[-1]:  # no trailing newline yet: the writer is mid-line
-        lines = lines[:-1]
-    return [json.loads(line) for line in lines if line]
+def events(path):
+    """Slim journal events, one line at a time.
+
+    Yields (kind, fields) for the kinds in KEEP. A line still being written
+    at the end of the file is skipped, as are blank, non-JSON or non-object
+    lines (counted in ``skipped``).
+    """
+    skipped = {"lines": 0}
+
+    def generate():
+        with path.open("r", encoding="utf-8", errors="replace", newline="") as f:
+            for line in f:
+                if not line.endswith("\n"):
+                    break  # the writer is mid-line; the next export reads it
+                try:
+                    record = json.loads(line)
+                except ValueError:
+                    if line.strip():
+                        skipped["lines"] += 1
+                    continue
+                if not isinstance(record, dict):
+                    skipped["lines"] += 1
+                    continue
+                kind = record.get("event")
+                if kind in KEEP:
+                    yield kind, {k: record[k] for k in KEEP[kind] if k in record}
+
+    return generate(), skipped
 
 
 def ref(value):
@@ -179,83 +237,99 @@ def _number(value):
         return None
 
 
-def tables(market, events):
-    """(orders, fills, settlements) rows for one bot's journal."""
-    intents, accepted_by_client, client_by_order = {}, {}, {}
-    status = {}
-    for e in events:
-        kind = e.get("event")
-        if kind == "intent" and e.get("client_order_id"):
-            intents[e["client_order_id"]] = e
-            status.setdefault(e["client_order_id"], "intent_only")
-        elif kind == "accepted" and e.get("client_order_id"):
-            accepted_by_client[e["client_order_id"]] = e
-            client_by_order[str(e.get("order_id"))] = e["client_order_id"]
-            status[e["client_order_id"]] = "accepted"
-        elif kind == "unknown_outcome" and e.get("client_order_id"):
-            status[e["client_order_id"]] = "unknown_outcome"
-    queues, cancels, fills_by_client, markouts = {}, {}, {}, {}
-    settlements = {}
-    for e in events:
-        kind = e.get("event")
-        client = client_by_order.get(str(e.get("order_id")))
-        if kind == "queue" and client:
-            queues.setdefault(client, []).append(e.get("ahead"))
-        elif kind == "cancel_intent" and client:
-            cancels[client] = e
-        elif kind == "fill" and client:
-            fills_by_client.setdefault(client, []).append(e)
-        elif kind == "markout" and e.get("fill_id"):
-            markouts[(e["fill_id"], e.get("horizon_minutes"))] = e
-        elif kind == "settlement" and e.get("ticker"):
-            settlements[e["ticker"]] = e  # the latest record is the correction
+def tables(market, stream):
+    """(orders, fills, settlements, latest event time) for one bot's journal."""
+    intents, status, accepted, client_of = {}, {}, {}, {}
+    q_first, q_last, cancel, cancel_ok, emergency = {}, {}, {}, {}, {}
+    fills, markouts, settlements = {}, {}, {}
+    latest = None
+    for kind, e in stream:
+        stamp = _time(e.get("utc"))
+        if stamp and (latest is None or stamp > latest):
+            latest = stamp
+        cid, oid = e.get("client_order_id"), e.get("order_id")
+        oid = str(oid) if oid else None
+        if kind == "intent" and cid:
+            intents[cid] = e
+            status.setdefault(cid, "intent_only")
+        elif kind == "accepted" and cid:
+            accepted[cid] = e.get("utc", "")
+            status[cid] = "accepted"
+            if oid:
+                client_of[oid] = cid
+        elif kind == "unknown_outcome" and cid:
+            status[cid] = "unknown_outcome"
+        elif kind == "reconciled_rejected" and cid:
+            status[cid] = "reconciled_rejected"
+        elif not oid:
+            if kind == "markout" and e.get("fill_id"):
+                markouts[(e["fill_id"], e.get("horizon_minutes"))] = e
+            elif kind == "settlement" and e.get("ticker"):
+                settlements[e["ticker"]] = e  # the latest record is the correction
+        elif kind == "queue" and e.get("ahead") is not None:
+            q_first.setdefault(oid, e["ahead"])
+            q_last[oid] = e["ahead"]
+        elif kind == "cancel_intent":
+            cancel[oid] = e
+        elif kind == "cancel_accepted":
+            cancel_ok[oid] = e.get("utc", "")
+        elif kind == "emergency_cancel":
+            emergency[oid] = e.get("utc", "")
+        elif kind == "fill":
+            fills.setdefault(oid, []).append(e)
+    order_of = {cid: oid for oid, cid in client_of.items()}
     intent_by_ticker = {i.get("ticker"): i for i in intents.values()}
-    orders = []
-    for client, intent in intents.items():
-        fills = fills_by_client.get(client, [])
-        counts = [_number(f.get("count")) or 0 for f in fills]
-        prices = [_number(f.get("no_price")) for f in fills]
-        filled = sum(counts)
-        paid = sum(c * p for c, p in zip(counts, prices) if p is not None)
-        fees = [_number(f.get("fee")) for f in fills]
-        queue = [q for q in queues.get(client, []) if q is not None]
-        cancel = cancels.get(client, {})
+    orders, fill_rows = [], []
+    for cid, intent in intents.items():
+        oid = order_of.get(cid)
+        own = fills.get(oid, []) if oid else []
+        counts = [_number(f.get("count")) for f in own]
+        prices = [_number(f.get("no_price")) for f in own]
+        priced = [(c, p) for c, p in zip(counts, prices) if c and p is not None]
+        priced_count = sum(c for c, _ in priced)
+        fees = [_number(f.get("fee")) for f in own]
+        stop = cancel.get(oid, {})
         settled = settlements.get(intent.get("ticker"), {})
         orders.append(
             {
                 "market": market,
-                "order_ref": ref(client),
+                "order_ref": ref(cid),
                 "intent_utc": intent.get("utc", ""),
                 "side": "no",  # both bots post passive NO orders only
                 **{k: intent.get(k, "") for k in INTENT_FIELDS},
                 "minutes_before_tip": _minutes(
                     intent.get("utc"), intent.get("tip_utc")
                 ),
-                "status": status.get(client, ""),
-                "accepted_utc": accepted_by_client.get(client, {}).get("utc", ""),
-                "first_queue_ahead": queue[0] if queue else "",
-                "last_queue_ahead": queue[-1] if queue else "",
-                "cancel_utc": cancel.get("utc", ""),
-                "cancel_reason": cancel.get("reason", ""),
-                "cancel_veto": cancel.get("veto", ""),
-                "filled_contracts": filled,
-                "first_fill_utc": min((f.get("utc", "") for f in fills), default=""),
-                "avg_fill_no_price": round(paid / filled, 4) if filled else "",
+                "status": status.get(cid, ""),
+                "accepted_utc": accepted.get(cid, ""),
+                "first_queue_ahead": q_first.get(oid, ""),
+                "last_queue_ahead": q_last.get(oid, ""),
+                "cancel_requested_utc": stop.get("utc", ""),
+                "cancel_confirmed_utc": cancel_ok.get(oid, ""),
+                "cancel_reason": stop.get("reason", ""),
+                "cancel_veto": stop.get("veto", ""),
+                "emergency_cancel_utc": emergency.get(oid, ""),
+                "filled_contracts": sum(c for c in counts if c),
+                "first_fill_utc": min((f.get("utc", "") for f in own), default=""),
+                "avg_fill_no_price": round(
+                    sum(c * p for c, p in priced) / priced_count, 4
+                )
+                if priced_count
+                else "",
                 "fill_fees_dollars": round(sum(f for f in fees if f is not None), 6)
-                if fills
+                if own
                 else "",
                 "settled_utc": settled.get("utc", ""),
-                "settlement_net_profit_dollars": settled.get("net_profit_dollars", ""),
+                "market_settlement_net_profit_dollars": settled.get(
+                    "net_profit_dollars", ""
+                ),
             }
         )
-    fill_rows = []
-    for client, fills in fills_by_client.items():
-        intent = intents.get(client, {})
-        for f in fills:
+        for f in own:
             row = {
                 "market": market,
                 "fill_ref": ref(f.get("fill_id")),
-                "order_ref": ref(client),
+                "order_ref": ref(cid),
                 "fill_utc": f.get("utc", ""),
                 "ticker": f.get("ticker", ""),
                 "side": "no",
@@ -267,7 +341,7 @@ def tables(market, events):
                 "minutes_before_tip": _minutes(f.get("utc"), intent.get("tip_utc")),
             }
             for k in FILL_COLUMNS:
-                if k not in row:
+                if k not in row and k in INTENT_FIELDS:
                     row[k] = intent.get(k, "")
             for h in (5, 15, 60):
                 m = markouts.get((f.get("fill_id"), h), {})
@@ -282,11 +356,11 @@ def tables(market, events):
             "strategy_version": intent_by_ticker.get(ticker, {}).get(
                 "strategy_version", ""
             ),
-            **{k: s.get(k, "") for k in SETTLEMENT_COLUMNS[4:]},
+            **{k: s.get(k, "") for k in SETTLEMENT_FIELDS},
         }
         for ticker, s in settlements.items()
     ]
-    return orders, fill_rows, settlement_rows
+    return orders, fill_rows, settlement_rows, latest
 
 
 def _csv(columns, rows):
@@ -302,15 +376,26 @@ def _csv(columns, rows):
     return out.getvalue()
 
 
-def build_files(journals, now):
-    """{path in the private repo: text}. Journals missing on disk are skipped."""
-    files, summary = {}, {"as_of_utc": now.astimezone(UTC).isoformat(), "markets": {}}
+def build_files(journals):
+    """({path in the private repo: text}, summary, markets read completely).
+
+    The summary is stamped with the newest journal event, not the clock, so
+    an export with nothing new produces identical files (and no commit).
+    A market whose journal is missing or unreadable produces no files, and
+    its existing files in the private repo are left alone.
+    """
+    files, summary, complete = {}, {"markets": {}}, set()
     for market, path in journals.items():
-        events = read_events(path)
-        if events is None:
+        if not path.exists():
             summary["markets"][market] = {"status": "journal_missing"}
             continue
-        orders, fills, settlements = tables(market, events)
+        try:
+            stream, skipped = events(path)
+            orders, fills, settlements, latest = tables(market, stream)
+        except Exception as error:  # one bad journal must not stop the other
+            summary["markets"][market] = {"status": f"error_{type(error).__name__}"}
+            continue
+        complete.add(market)
         for name, columns, rows, when in (
             ("orders", ORDER_COLUMNS, orders, "intent_utc"),
             ("fills", FILL_COLUMNS, fills, "fill_utc"),
@@ -332,6 +417,8 @@ def build_files(journals, now):
             v["filled_orders"] += 1 if o["filled_contracts"] else 0
         summary["markets"][market] = {
             "status": "ok",
+            "data_through_utc": latest.astimezone(UTC).isoformat() if latest else None,
+            "skipped_lines": skipped["lines"],
             "orders": len(orders),
             "accepted_orders": sum(o["status"] == "accepted" for o in orders),
             "filled_orders": sum(1 for o in orders if o["filled_contracts"]),
@@ -346,28 +433,34 @@ def build_files(journals, now):
         }
     files["data/summary.json"] = json.dumps(summary, indent=2, sort_keys=True) + "\n"
     files["README.md"] = README
-    return files, summary
+    return files, summary, complete
 
 
 README = """# Private bot data (do not make this repository public)
 
 Written every hour by `tools/export_private_fills.py` on the trading server,
 from the two bots' journals. Never edit by hand: the next export rewrites it.
+These are LIVE results; never mix them with replays or simulations.
 
 - `data/<nba|nfl>/orders/<day>.csv`: one row per order the bot submitted (or
   tried to), by Eastern date of submission. Entry evidence (price, sportsbook
   and model probability, edge, Kalshi bid/ask, minutes before tip-off), then
-  what happened: accepted, queue position, cancel time, reason and veto,
-  filled contracts and price, fees, settlement profit.
+  what happened: accepted, queue position, cancel request/confirmation,
+  reason and veto, filled contracts and price, fees.
+  `market_settlement_net_profit_dollars` is the settled profit of the whole
+  MARKET (ticker), repeated on each order for that market; the bots post at
+  most one order per market, but never sum it across orders without checking.
 - `data/<nba|nfl>/fills/<day>.csv`: one row per fill, with the entry evidence
   of its order and the NO-price moves 5, 15 and 60 minutes after the fill
   (positive = the market moved our way; fees not included).
 - `data/<nba|nfl>/settlements/<day>.csv`: one row per settled market: revenue,
   costs, fees and net profit as Kalshi reported them.
-- `data/summary.json`: counts and settled profit by market and rules version.
+- `data/summary.json`: counts and settled profit by market and rules version,
+  up to the newest journal event (`data_through_utc`).
 
 `order_ref` and `fill_ref` are one-way hashes of the exchange identifiers,
-for joining the files. These are LIVE results; never mix them with replays.
+for joining the files. NBA and NFL name a few entry fields differently
+(e.g. `p_yes` and `p_yes_used`); both columns exist, one is blank per market.
 """
 
 
@@ -377,6 +470,20 @@ for joining the files. These are LIVE results; never mix them with replays.
 def blob_sha(text):
     data = text.encode()
     return hashlib.sha1(b"blob %d\0" % len(data) + data).hexdigest()
+
+
+class _NoRedirect(urllib.request.HTTPRedirectHandler):
+    """A redirect could carry the token to another host: refuse them all."""
+
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        raise ExportError(f"github_redirect_refused_{code}")
+
+
+_OPENER = urllib.request.build_opener(_NoRedirect)
+
+
+def urlopen(request, timeout):
+    return _OPENER.open(request, timeout=timeout)
 
 
 def github(method, path, token, payload=None):
@@ -403,8 +510,27 @@ def github(method, path, token, payload=None):
         raise ExportError(f"github_{method.lower()}_unreachable") from None
 
 
-def push(files, repo, token, call=None):
-    """Upload changed files as one commit. Returns the number of files changed."""
+def check_private(info, repo):
+    if str(info.get("full_name", "")).lower() != repo.lower():
+        raise ExportError("refuse_repository_name_mismatch")
+    if (
+        info.get("private") is not True
+        or info.get("visibility", "private") != "private"
+    ):
+        raise ExportError("refuse_repository_not_private")
+    if info.get("has_pages"):
+        raise ExportError("refuse_repository_has_pages")
+    if info.get("archived"):
+        raise ExportError("refuse_repository_archived")
+
+
+def push(files, repo, token, complete=(), call=None):
+    """Upload changed files as one commit; returns (changed, deleted).
+
+    Files under data/<market>/ that this export no longer produces are
+    deleted, but only for markets read completely this run, and never more
+    than MAX_DELETE_SHARE of a market's files at once.
+    """
     call = call or github  # looked up at call time (tests replace it)
     if not token:
         raise ExportError("private_export_token_not_configured")
@@ -413,34 +539,35 @@ def push(files, repo, token, call=None):
     if repo.lower() == PUBLIC_REPO.lower():
         raise ExportError("refuse_public_project_repository")
     info = call("GET", f"/repos/{repo}", token)
-    if info.get("private") is not True:
-        raise ExportError("refuse_repository_not_private")
+    check_private(info, repo)
     branch = info.get("default_branch") or "main"
     head = call("GET", f"/repos/{repo}/git/ref/heads/{branch}", token)["object"]["sha"]
     base_tree = call("GET", f"/repos/{repo}/git/commits/{head}", token)["tree"]["sha"]
     listing = call("GET", f"/repos/{repo}/git/trees/{base_tree}?recursive=1", token)
+    if listing.get("truncated"):
+        raise ExportError("tree_listing_truncated")
     remote = {
         t["path"]: t["sha"] for t in listing.get("tree", []) if t.get("type") == "blob"
     }
     changed = [
         p for p, text in sorted(files.items()) if remote.get(p) != blob_sha(text)
     ]
-    if not changed:
-        return 0
-    entries = []
-    for path in changed:
-        blob = call(
-            "POST",
-            f"/repos/{repo}/git/blobs",
-            token,
-            {
-                "content": base64.b64encode(files[path].encode()).decode(),
-                "encoding": "base64",
-            },
-        )
-        entries.append(
-            {"path": path, "mode": "100644", "type": "blob", "sha": blob["sha"]}
-        )
+    deleted = []
+    for market in sorted(complete):
+        prefix = f"data/{market}/"
+        mine = [p for p in remote if p.startswith(prefix)]
+        stale = [p for p in mine if p not in files]
+        if stale and len(stale) <= max(2, MAX_DELETE_SHARE * len(mine)):
+            deleted += stale
+    if not changed and not deleted:
+        return 0, 0
+    entries = [
+        {"path": p, "mode": "100644", "type": "blob", "content": files[p]}
+        for p in changed
+    ]
+    entries += [
+        {"path": p, "mode": "100644", "type": "blob", "sha": None} for p in deleted
+    ]
     tree = call(
         "POST",
         f"/repos/{repo}/git/trees",
@@ -452,7 +579,7 @@ def push(files, repo, token, call=None):
         f"/repos/{repo}/git/commits",
         token,
         {
-            "message": f"Export {len(changed)} file(s) {datetime.now(UTC):%Y-%m-%dT%H:%MZ}",
+            "message": f"Export: {len(changed)} changed, {len(deleted)} removed",
             "tree": tree["sha"],
             "parents": [head],
         },
@@ -463,7 +590,12 @@ def push(files, repo, token, call=None):
         token,
         {"sha": commit["sha"], "force": False},
     )
-    return len(changed)
+    return len(changed), len(deleted)
+
+
+def _inside_git_checkout(path):
+    path = path.resolve()
+    return any((p / ".git").exists() for p in (path, *path.parents))
 
 
 def main(argv=None):
@@ -478,8 +610,11 @@ def main(argv=None):
     parser.add_argument("--nfl-journal", type=Path, default=JOURNALS["nfl"])
     args = parser.parse_args(argv)
     try:
-        files, summary = build_files(
-            {"nba": args.nba_journal, "nfl": args.nfl_journal}, datetime.now(UTC)
+        if args.out and _inside_git_checkout(args.out):
+            # A checkout might be committed and pushed somewhere public.
+            raise ExportError("refuse_out_inside_git_checkout")
+        files, summary, complete = build_files(
+            {"nba": args.nba_journal, "nfl": args.nfl_journal}
         )
         if args.out:
             for path, text in files.items():
@@ -490,7 +625,8 @@ def main(argv=None):
             m: {
                 k: v
                 for k, v in s.items()
-                if k in ("status", "orders", "fills", "settled_markets")
+                if k
+                in ("status", "orders", "fills", "settled_markets", "skipped_lines")
             }
             for m, s in summary["markets"].items()
         }
@@ -500,8 +636,11 @@ def main(argv=None):
                 files,
                 os.environ.get("PRIVATE_EXPORT_REPO", ""),
                 os.environ.get("PRIVATE_EXPORT_TOKEN", ""),
+                complete=complete,
             )
-        print(json.dumps({"counts": counts, "files_changed": changed}, sort_keys=True))
+        print(
+            json.dumps({"counts": counts, "changed_removed": changed}, sort_keys=True)
+        )
     except Exception as error:
         # Error type and safe code only: never data, URLs or tokens.
         reason = str(error) if isinstance(error, ExportError) else type(error).__name__

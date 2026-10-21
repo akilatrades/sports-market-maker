@@ -18,6 +18,14 @@ leaving the server.
   reports that repository as private, and never to `sports-market-maker`.
 - It is separate from the trading bots: its own service and timer
   (`market-maker-private-export`), and it never starts, stops or changes them.
+  It cannot crowd them out either: memory is capped at 192 MB, it is the
+  first process killed if the server runs short, and it gets the lowest CPU
+  and disk priority. (A 79 MB journal, several seasons of orders, peaks at
+  about 120 MB and takes about 6 seconds.)
+- It also refuses a repository that is internal, archived, renamed or has
+  GitHub Pages turned on, and never follows a redirect (which could carry the
+  token elsewhere). The setup script installs the timer files exactly as they
+  are on GitHub `main`, not from copies on the server.
 
 ## 1. Create the private repository (GitHub website)
 

@@ -14,7 +14,14 @@ EnvironmentFile=/etc/market-maker-private-export.env
 Environment=PYTHONUNBUFFERED=1
 Environment=PYTHONDONTWRITEBYTECODE=1
 ExecStart=/home/trader/sports-market-maker-prod-auto/.venv/bin/python -m tools.export_private_fills --push
+# Never compete with the trading bots on the small server: capped memory,
+# first to be killed if memory runs out, lowest CPU and disk priority.
 Nice=15
+CPUWeight=10
+IOSchedulingClass=idle
+MemoryHigh=160M
+MemoryMax=192M
+OOMScoreAdjust=1000
 TimeoutStartSec=180
 NoNewPrivileges=true
 PrivateTmp=true

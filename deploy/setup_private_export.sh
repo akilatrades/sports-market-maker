@@ -13,18 +13,31 @@ umask 077
 ROOT=/home/trader/sports-market-maker-prod-auto
 ENV=/etc/market-maker-private-export.env
 UNIT=market-maker-private-export
+tgit() { runuser -u trader -- git -C "$ROOT" "$@"; }
 
 if [[ "${1:-}" == "--off" ]]; then
-  systemctl disable --now "$UNIT.timer" 2>/dev/null || true
+  systemctl disable --now "$UNIT.timer"
+  systemctl stop "$UNIT.service"
   echo "Hourly private export is OFF. (Settings file kept: $ENV)"
   exit 0
 fi
 
-[[ -f "$ROOT/deploy/$UNIT.service" && -f "$ROOT/deploy/$UNIT.timer" ]] || {
-  echo "Deploy the code with these files first (Deploy funded worker code)." >&2; exit 1; }
-
-install -m 644 -o root -g root "$ROOT/deploy/$UNIT.service" "$ROOT/deploy/$UNIT.timer" /etc/systemd/system/
+# Install the units exactly as reviewed on GitHub main, never from files
+# that could have been edited on this server.
+[[ -z "$(tgit status --porcelain --untracked-files=no)" ]] || {
+  echo "The server checkout has local changes; refusing. Deploy cleanly first." >&2; exit 1; }
+tgit fetch --quiet origin main
+for f in "$UNIT.service" "$UNIT.timer"; do
+  tgit cat-file -e "FETCH_HEAD:deploy/$f" 2>/dev/null || {
+    echo "deploy/$f is not on GitHub main yet: merge the pull request first." >&2; exit 1; }
+  tgit show "FETCH_HEAD:deploy/$f" > "/etc/systemd/system/$f"
+  chown root:root "/etc/systemd/system/$f"
+  chmod 644 "/etc/systemd/system/$f"
+done
+[[ -f "$ROOT/tools/export_private_fills.py" ]] || {
+  echo "Deploy the code first (Deploy funded worker code -> DEPLOY_CODE)." >&2; exit 1; }
 systemctl daemon-reload
+echo "Units installed from GitHub main $(tgit rev-parse --short FETCH_HEAD); server code at $(tgit rev-parse --short HEAD)."
 
 if [[ ! -f "$ENV" ]]; then
   install -m 600 -o root -g root /dev/null "$ENV"
