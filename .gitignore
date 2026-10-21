@@ -41,3 +41,6 @@ private-keys/
 # Owner-only trade journals and local account snapshots
 journal.jsonl
 *.private.json
+
+# Screenshots written by the dashboard smoke tests
+/test-artifacts/

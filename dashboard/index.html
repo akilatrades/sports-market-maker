@@ -4,10 +4,10 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#0b1015">
-<title>Sports Market Maker — AJ Quantitative Research</title>
-<meta name="description" content="An open quantitative research and execution system for prediction markets. Explore probability models, passive execution, historical evidence and forward validation.">
-<meta property="og:title" content="Sports Market Maker — AJ Quantitative Research">
-<meta property="og:description" content="From probability to execution. Pricing models, market microstructure and transparent performance evidence.">
+<title>Sports Market Maker — Kalshi Player-Prop Research</title>
+<meta name="description" content="Research and trading system for Kalshi NBA and NFL player props: statistical pricing, passive NO orders, historical evidence and live results under strict limits.">
+<meta property="og:title" content="Sports Market Maker — Kalshi Player-Prop Research">
+<meta property="og:description" content="Pricing models, passive execution and verified live results for Kalshi player props.">
 <meta property="og:type" content="website">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -351,102 +351,114 @@ footer p { max-width:100ch; font-size:10px; color:var(--ink-3); }
 
 .skip-link { position:absolute; left:20px; top:-70px; padding:12px; background:var(--accent); color:var(--bg); z-index:20; } .skip-link:focus { top:10px; }
 
-.live-pnl-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }
-@media (max-width: 500px) { .live-pnl-grid { grid-template-columns: 1fr; } }
+.live-pnl-grid { grid-template-columns: repeat(3,minmax(0,1fr)); }
+@media (max-width: 760px) { .live-pnl-grid { grid-template-columns: 1fr; } }
 </style>
 </head>
 <body>
-
-<a class="skip-link" href="#overview">Skip to research</a>
+<a class="skip-link" href="#overview">Skip to content</a>
 <div class="sitebar">
   <a href="#top" class="brand"><span class="brand-mark" aria-hidden="true">AJ</span><span>Sports Market Maker<small>QUANTITATIVE RESEARCH</small></span></a>
   <nav class="toplinks" aria-label="Dashboard sections">
-    <a href="#overview">Overview</a><a href="#production-pnl">Live P&amp;L</a><a href="#research-section">Research</a><a href="#methodology">Model &amp; execution</a><a href="#forward">Validation</a><a href="https://github.com/akilatrades/sports-market-maker/blob/main/docs/PROJECT_BRIEF.md">Case study ↗</a><a class="source-link" href="https://github.com/akilatrades/sports-market-maker">Source ↗</a>
+    <a href="#overview">At a glance</a><a href="#production-pnl">Live results</a><a href="#forward">Fill test</a><a href="#methodology">How it works</a><a href="#research-section">Research</a><a href="#risk">Risk</a><a href="https://github.com/akilatrades/sports-market-maker/blob/main/docs/PROJECT_BRIEF.md">Case study ↗</a><a class="source-link" href="https://github.com/akilatrades/sports-market-maker">Source ↗</a>
   </nav>
 </div>
 <main>
 <header class="report-head" id="top">
   <div>
-    <div class="kicker">RESEARCH PROJECT 001 / PREDICTION MARKETS</div>
-    <h1>From probability<br><span>to execution.</span></h1>
-    <p>An open research system for NBA and NFL player-prop markets. Price contracts, test directional passive-NO execution, and measure what survives real fills, fees, and settlement. Historical replay is not live profit.</p>
-    <div class="hero-actions"><a class="button primary" href="https://github.com/akilatrades/sports-market-maker/blob/main/docs/PROJECT_BRIEF.md">Read the case study <span aria-hidden="true">↗</span></a><a class="button" href="#methodology">Explore the framework <span aria-hidden="true">↗</span></a></div>
+    <div class="kicker">PREDICTION-MARKET RESEARCH · NBA &amp; NFL PLAYER PROPS</div>
+    <h1>Pricing and trading<br><span>Kalshi player props.</span></h1>
+    <p>A research and trading system that prices each contract with statistical models and sportsbook odds, then tests one strategy: directional passive-NO execution, meaning resting limit orders that sell the “over” to mostly uninformed buyers. Real orders now run under strict limits. Historical replay is not live profit.</p>
+    <div class="hero-actions"><a class="button primary" href="https://github.com/akilatrades/sports-market-maker/blob/main/docs/PROJECT_BRIEF.md">Read the case study <span aria-hidden="true">↗</span></a><a class="button" href="https://github.com/akilatrades/sports-market-maker">View the code <span aria-hidden="true">↗</span></a></div>
     <div class="skill-tags"><span>Probability models</span><span>Market microstructure</span><span>Python</span><span>Risk systems</span></div>
   </div>
   <aside class="study-card" aria-label="Historical NBA sportsbook-filter study">
     <div class="study-top"><strong>NBA / SPORTSBOOK FILTER</strong><span>HISTORICAL REPLAY</span></div>
-    <div class="study-metrics"><div><strong id="lead-edge">—</strong><span>Net cents / simulated contract</span></div><div class="sample"><strong id="lead-sample">—</strong><span>Retained simulated fills</span></div></div>
-    <div class="study-axis">Estimate ± 2 reported standard errors</div>
+    <div class="study-metrics"><div><strong id="lead-edge">—</strong><span>Net cents per simulated contract</span></div><div class="sample"><strong id="lead-sample">—</strong><span>Simulated fills kept</span></div></div>
+    <div class="study-axis">Estimate ± 2 standard errors</div>
     <div id="study-chart" role="img" aria-label="Historical net edge with and without the sportsbook filter"><p class="note">Loading the published study…</p></div>
     <p class="study-caption" id="study-source">2025–26 NBA data · after modeled fees · not live performance</p>
   </aside>
 </header>
-<div class="publication"><span class="state">PUBLIC RESEARCH SNAPSHOT</span><div id="stamp" aria-live="polite">Loading the latest published data…</div></div>
+<div class="publication"><span class="state">PUBLISHED SNAPSHOT</span><div id="stamp" aria-live="polite">Loading the latest published data…</div></div>
 
 <section id="overview">
-  <div class="section-heading"><div><div class="eyebrow"><span class="section-number">01 /</span> THE RESEARCH QUESTION</div><h2>Does a statistical edge survive execution?</h2><p class="desc">The hypothesis: passive NO orders can capture asymmetric demand in player props. Models and sportsbook probabilities filter candidates; exchange evidence decides whether the edge is tradable.</p></div></div>
-  <div class="research-metrics" aria-label="Historical research scope and validation design">
-    <article class="research-metric"><span class="metric-label">NBA market sample</span><strong>57,111</strong><small>2025–26 markets in the<br>model-versus-price study</small></article>
-    <article class="research-metric"><span class="metric-label">Model-veto replay</span><strong class="pos">+2.93¢</strong><small>Per simulated contract<br>after modeled fees</small></article>
-    <article class="research-metric"><span class="metric-label">Replay observations</span><strong>21,373</strong><small>Simulated fills in the<br>NBA model-veto cohort</small></article>
-    <article class="research-metric"><span class="metric-label">Forward review gate</span><strong class="subtle">30d / 500</strong><small>Days and settled fill events<br>per market / rule version</small></article>
+  <div class="section-heading"><div><div class="eyebrow"><span class="section-number">01 /</span> AT A GLANCE</div><h2>Does a statistical edge survive real trading?</h2><p class="desc">The idea: traders who buy YES at the ask on player props are mostly uninformed, so resting NO orders should earn a small edge. Models and sportsbook odds decide which lines to quote. Real fills decide whether it works.</p></div></div>
+  <div class="research-metrics" aria-label="Research scope">
+    <article class="research-metric"><span class="metric-label">Markets studied</span><strong>57,111</strong><small>NBA player-prop markets,<br>2025–26 season</small></article>
+    <article class="research-metric"><span class="metric-label">Historical edge</span><strong class="pos">+2.93¢</strong><small>Per simulated contract,<br>after modeled fees</small></article>
+    <article class="research-metric"><span class="metric-label">Simulated fills</span><strong>21,373</strong><small>Behind the historical<br>model-filter estimate</small></article>
+    <article class="research-metric"><span class="metric-label">Live test goal</span><strong class="subtle">500 fills</strong><small>Settled real fills and 30 days<br>before any sizing review</small></article>
   </div>
-  <div class="tiers" aria-label="Evidence classification">
-    <div class="tier hist"><div class="eyebrow">01 · HISTORICAL</div><h3>Backtest the mechanism</h3><p>Historical quotes and trade prints replayed against fixed rules. A research estimate with modeled execution, not realized account performance.</p></div>
-    <div class="tier sim"><div class="eyebrow">02 · SIMULATED</div><h3>Observe the forward sample</h3><p>Paper fills estimated from public prints. Each strategy runs on a separate $500 paper bankroll; ledgers are never presented as one funded account.</p></div>
-    <div class="tier real"><div class="eyebrow">03 · EXCHANGE-CONFIRMED</div><h3>Validate actual execution</h3><p>Accepted orders, actual fills, fees and settlements. NBA and NFL, and each material rule version, require separate forward cohorts.</p></div>
+  <div class="tiers" aria-label="How to read the evidence">
+    <div class="tier hist"><div class="eyebrow">1 · BACKTEST</div><h3>Historical replay</h3><p>Past quotes and trades replayed against fixed rules. Useful for finding the idea; not realized profit.</p></div>
+    <div class="tier sim"><div class="eyebrow">2 · PAPER</div><h3>Simulated forward test</h3><p>Fills estimated from public trades after each order is posted. Kept separate from real money.</p></div>
+    <div class="tier real"><div class="eyebrow">3 · EXCHANGE-CONFIRMED</div><h3>Real orders</h3><p>Accepted orders, actual fills, fees and settlement on the funded account. The only tier that counts as live results.</p></div>
   </div>
 </section>
 
 <section id="production-pnl" aria-labelledby="production-pnl-title">
-  <div class="section-heading"><div><div class="eyebrow"><span class="section-number">LIVE /</span> EXCHANGE RESULTS</div><h2 id="production-pnl-title">Realized P&amp;L · funded Kalshi account</h2><p class="desc">Actual settled-market results on the funded Kalshi account, with NFL and NBA trading-system results shown separately. Updated automatically when the secure live connection is configured. Open positions, early cash-outs and account credits are not included in settled-market P&amp;L.</p></div><span class="stage">Exchange-confirmed</span></div>
+  <div class="section-heading"><div><div class="eyebrow"><span class="section-number">02 /</span> LIVE RESULTS</div><h2 id="production-pnl-title">Settled P&amp;L on the funded Kalshi account</h2><p class="desc">Real orders only, after fees, from settled markets. NFL and NBA are shown separately. Open positions are not included. A missing report is shown as unknown, never as zero.</p></div><span class="stage">Exchange-confirmed</span></div>
   <div class="metric-grid live-pnl-grid" id="live-pnl-grid" aria-live="polite">
     <article class="metric-card"><span class="metric-label">Funded account / settled P&amp;L</span><div class="metric-value">—</div><span class="metric-caption">Awaiting secure live feed</span></article>
     <article class="metric-card"><span class="metric-label">NFL / settled P&amp;L</span><div class="metric-value">—</div><span class="metric-caption">Awaiting verified snapshot</span></article>
     <article class="metric-card"><span class="metric-label">NBA / settled P&amp;L</span><div class="metric-value">—</div><span class="metric-caption">Awaiting verified snapshot</span></article>
   </div>
-  <p class="note" id="live-pnl-asof" aria-live="polite">This public dashboard is not directly connected to a private Kalshi account. Published snapshots are timestamped; unreported results are not zero.</p>
-</section>
-
-<section id="research-section">
-  <div class="section-heading"><div><div class="eyebrow"><span class="section-number">02 /</span> HISTORICAL EVIDENCE</div><h2>Test the mechanism. Report the failures.</h2><p class="desc">Market selection and trade filtering are separate experiments. Estimates below describe their own historical samples.</p></div><a href="https://github.com/akilatrades/sports-market-maker/blob/main/RESEARCH_LOG.md">Full experiment log ↗</a></div>
-  <div class="two"><div><h2>Where did the NO edge appear?</h2><p class="desc">Net cents per simulated contract across scanned markets.</p><div id="scan"></div></div><div><h2>Does the sportsbook filter help?</h2><p class="desc">Historical fills, grouped by contemporaneous sportsbook-line filters.</p><div id="research"></div></div></div>
-  <div class="limitations"><p><strong>Execution assumption.</strong> Trade-through fills and modeled fees do not capture the full exchange queue. The scaling study's 50% flow share is assumed, not measured.</p><p><strong>Statistical limits.</strong> One NBA season, selected markets and correlated fills. ±2 reported standard errors are descriptive; live evaluation requires game-level uncertainty.</p><p><strong>Cohort boundaries.</strong> The 21,373-fill model-veto replay and the 151-game sportsbook study use different samples. Their headline estimates are not a matched comparison.</p><p><strong>Negative findings.</strong> The model-pick taker test lost 0.9¢ per contract after costs. Forecast information alone did not deliver an executable trading edge.</p></div>
-</section>
-
-<section id="methodology">
-  <div class="section-heading"><div><div class="eyebrow"><span class="section-number">03 /</span> MODEL &amp; EXECUTION</div><h2>A research question, built into a system.</h2><p class="desc">Four connected components make the work reproducible, measurable, and explicit about where uncertainty enters.</p></div><span class="stage hist">Open source</span></div>
-  <div class="method-grid">
-    <article class="method-step"><span class="step">01 / INGEST</span><h3>Build the market state</h3><p>Player box scores, schedules, usage and injury data, sportsbook consensus, and timestamped Kalshi quotes.</p><a href="https://github.com/akilatrades/sports-market-maker/tree/main/live">Data pipelines ↗</a></article>
-    <article class="method-step"><span class="step">02 / ESTIMATE</span><h3>Price the distribution</h3><p>NBA minutes and rate models; NFL usage and efficiency. Map stat distributions to contract probabilities and compare de-vigged lines.</p><a href="https://github.com/akilatrades/sports-market-maker/tree/main/markets">Pricing models ↗</a></article>
-    <article class="method-step"><span class="step">03 / EXECUTE</span><h3>Filter, quote, constrain</h3><p>Passive NO quotes, expected-edge filters, data freshness checks and bounded exposure. Record the strategy version behind each order.</p><a href="https://github.com/akilatrades/sports-market-maker/blob/main/live/prod_nfl_auto.py">Execution engine ↗</a></article>
-    <article class="method-step"><span class="step">04 / RECONCILE</span><h3>Measure realized evidence</h3><p>Separate orders from fills, account for actual fees and settlement, then examine capture, drawdown and independent games.</p><a href="https://github.com/akilatrades/sports-market-maker/blob/main/docs/FORWARD_VALIDATION.md">Validation protocol ↗</a></article>
-  </div>
-  <div class="equation"><div class="formula">EV(NO) = p̂(NO) − q(NO) − ĉ(fees)</div><p>Estimated edge per contract with a $1 winning payout. Fill selection, price and actual fees determine whether this estimate survives execution.</p></div>
+  <p class="note" id="live-pnl-asof" aria-live="polite">This public page is not directly connected to the private Kalshi account. Published reports are timestamped.</p>
 </section>
 
 <section id="forward">
-  <div class="section-heading"><div><div class="eyebrow"><span class="section-number">04 /</span> FORWARD VALIDATION</div><h2>The execution test is the next proof point.</h2><p class="desc">Published NBA exchange evidence. A missing report is not zero profit or proof that trading has stopped. NFL activity is evaluated in its own cohort.</p></div><span class="stage">Exchange-confirmed only</span></div>
+  <div class="section-heading"><div><div class="eyebrow"><span class="section-number">03 /</span> FILL TEST</div><h2>Do real fills behave like the backtest?</h2><p class="desc">The current phase measures NBA fills on real orders: how often orders fill, how much passing volume they capture, and what they earn after fees. Results are reviewed after 30 days and 500 settled fills.</p></div></div>
   <div class="metric-grid" id="hero-metrics" aria-live="polite"></div>
-  <div class="panel-grid"><article class="panel"><h3>NBA validation checkpoint</h3><p class="desc">30 days and 500 settled fill events trigger a review, not automatic scaling.</p><div id="forward-view" aria-live="polite">Loading published evidence…</div></article><article class="panel"><h3>Evidence and provenance</h3><p class="desc">Not a real-time feed of the account.</p><div id="system-view" aria-live="polite">Loading report coverage…</div></article></div>
-  <details class="quick-guide"><summary>Metric definitions &amp; reading guide</summary><dl><dt>Order / fill / contract</dt><dd>An order can receive multiple fill events; each fill can contain multiple contracts. These counts answer different questions.</dd><dt>Settled P&amp;L</dt><dd>Final contract payout minus entry cost and actual fees. Open position cost is not a realized loss.</dd><dt>Volume capture</dt><dd>Actual filled contracts divided by qualifying printed volume in comparable, fully observed resting-order windows.</dd><dt>Unsettled exposure</dt><dd>Outstanding orders and open positions are not included in the reported settled P&amp;L.</dd><dt>Standard error</dt><dd>Uncertainty around an estimated mean. Correlated fills and selected experiments limit what a conventional error bar can establish.</dd></dl></details>
+  <div class="panel-grid"><article class="panel"><h3>NBA review checkpoint</h3><p class="desc">30 days and 500 settled fills trigger a review, not automatic scaling.</p><div id="forward-view" aria-live="polite">Loading published evidence…</div></article><article class="panel"><h3>Source of these numbers</h3><p class="desc">Not a real-time feed of the account.</p><div id="system-view" aria-live="polite">Loading…</div></article></div>
+  <details class="quick-guide"><summary>What the terms mean</summary><dl>
+    <dt>Order, fill, contract</dt><dd>One order can fill in several pieces (fills); each fill can hold several contracts.</dd>
+    <dt>Settled P&amp;L</dt><dd>Contract payout minus entry cost and actual fees, once the market settles.</dd>
+    <dt>Volume capture</dt><dd>The share of the volume that traded through an order's price that the order actually received. The backtest assumes 50%.</dd>
+    <dt>NO order</dt><dd>A contract that pays $1 if the player does not reach the line. Buying NO is the same as selling the “over”.</dd>
+    <dt>Edge</dt><dd>Estimated probability of winning minus the price paid and fees, in cents per $1 contract.</dd>
+  </dl></details>
+</section>
+
+<section id="methodology">
+  <div class="section-heading"><div><div class="eyebrow"><span class="section-number">04 /</span> HOW IT WORKS</div><h2>From data to a settled trade</h2><p class="desc">Four parts, each tested and logged.</p></div><span class="stage hist">Open source</span></div>
+  <div class="method-grid">
+    <article class="method-step"><span class="step">01 / DATA</span><h3>Collect the inputs</h3><p>Box scores, schedules, injury reports, sportsbook odds and timestamped Kalshi quotes.</p><a href="https://github.com/akilatrades/sports-market-maker/tree/main/live">Data pipelines ↗</a></article>
+    <article class="method-step"><span class="step">02 / PRICE</span><h3>Estimate each probability</h3><p>Stat models for minutes and per-minute rates, checked against a de-vigged consensus of two or more sportsbooks.</p><a href="https://github.com/akilatrades/sports-market-maker/tree/main/markets">Pricing models ↗</a></article>
+    <article class="method-step"><span class="step">03 / TRADE</span><h3>Quote with limits</h3><p>Post-only NO orders one cent inside the spread, only with at least 3¢ of edge, under per-order, game, day and loss limits.</p><a href="https://github.com/akilatrades/sports-market-maker/blob/main/live/prod_nba_auto.py">Order worker ↗</a></article>
+    <article class="method-step"><span class="step">04 / MEASURE</span><h3>Reconcile every result</h3><p>Match orders, fills, fees and settlements to the exchange, then measure fill rate, capture and profit by game.</p><a href="https://github.com/akilatrades/sports-market-maker/blob/main/docs/FORWARD_VALIDATION.md">Validation rules ↗</a></article>
+  </div>
+  <div class="equation"><div class="formula">Edge(NO) = P(NO) − price(NO) − fees</div><p>Estimated value of one $1 contract. Which orders fill, at what price, decides whether this estimate holds up.</p></div>
+</section>
+
+<section id="research-section">
+  <div class="section-heading"><div><div class="eyebrow"><span class="section-number">05 /</span> RESEARCH</div><h2>What the history shows, including what failed</h2><p class="desc">Market selection and trade filtering were tested separately. Each chart describes its own historical sample.</p></div><a href="https://github.com/akilatrades/sports-market-maker/blob/main/RESEARCH_LOG.md">Full research log ↗</a></div>
+  <div class="two"><div><h2>Where did the NO edge appear?</h2><p class="desc">Net cents per simulated contract, by Kalshi market.</p><div id="scan"></div></div><div><h2>Does the sportsbook filter help?</h2><p class="desc">Historical fills grouped by the sportsbook filter.</p><div id="research"></div></div></div>
+  <div class="limitations">
+    <p><strong>Did not work.</strong> Buying the model's side at the ask lost money after fees. Gradient-boosted trees, player effects and recalibration did not improve trading. A second cent of price improvement and early order cancellation both reduced profit. Game-winner markets were flat to negative.</p>
+    <p><strong>Limits of the evidence.</strong> One NBA season, and the rule was chosen on that same season. Historical fills assume the order was first in line. Fills in the same game are correlated, so results are judged by game.</p>
+  </div>
 </section>
 
 <section id="risk">
-  <div class="section-heading"><div><div class="eyebrow"><span class="section-number">06 /</span> RISK &amp; ENGINEERING</div><h2>Constraints are part of the strategy.</h2><p class="desc">Execution safeguards and an auditable record make the model testable under real operational limits.</p></div><a href="https://github.com/akilatrades/sports-market-maker/tree/main/tests">Inspect the tests ↗</a></div>
-  <div class="risk-grid"><article class="risk-card"><b>PRE-TRADE</b><h3>Fresh inputs. Bounded exposure.</h3><p>Projection age, availability checks and fee-aware edge filters precede order submission. Per-order, game, team and active-exposure limits constrain the NFL runner.</p></article><article class="risk-card"><b>EXECUTION</b><h3>Orders are not fills.</h3><p>Resting quotes, cancellations and partial fills have distinct states. The account service is read-only; reporting does not submit orders.</p></article><article class="risk-card"><b>MEASUREMENT</b><h3>Keep a traceable research record.</h3><p>Preserve rule versions, probability sources and timestamps. Missing outcomes and fees remain unknown; a checkpoint prompts review rather than automatic sizing.</p></article></div>
-  <details class="ops-details"><summary>Inspect published research-job snapshots</summary><p class="desc">Scheduled GitHub output is a separate research mirror. A dry-run snapshot does not establish the private trading server's status.</p><div class="two" id="live"></div></details>
+  <div class="section-heading"><div><div class="eyebrow"><span class="section-number">06 /</span> RISK CONTROLS</div><h2>Limits are part of the strategy</h2><p class="desc">The bots stop rather than guess when anything is unclear.</p></div><a href="https://github.com/akilatrades/sports-market-maker/tree/main/tests">See the tests ↗</a></div>
+  <div class="risk-grid">
+    <article class="risk-card"><b>BEFORE AN ORDER</b><h3>Fresh inputs, fixed limits</h3><p>Model age, injury and roster checks, and fee-aware edge filters run first. Limits apply per order, game, team, day and lifetime, with daily and total loss stops.</p></article>
+    <article class="risk-card"><b>WHILE AN ORDER RESTS</b><h3>Re-checked every few minutes</h3><p>An order is cancelled if injury news, prices or the edge change. Every pass first reconciles orders, positions and fills with the exchange.</p></article>
+    <article class="risk-card"><b>AFTER</b><h3>A complete record</h3><p>Every order is written to a journal before it is sent. Fills, fees and settlements are reconciled, and missing data is reported as missing.</p></article>
+  </div>
+  <details class="ops-details"><summary>Scheduled research-job snapshots</summary><p class="desc">GitHub runs research jobs on a schedule. A dry-run snapshot here says nothing about the private trading server's status.</p><div class="two" id="live"></div></details>
 </section>
-
 <section id="exchange-watch">
-  <div class="section-heading"><div><div class="eyebrow"><span class="section-number">07 /</span> RESEARCH EXTENSION</div><h2>Cross-venue market structure</h2><p class="desc">Compare Kalshi and Polymarket US player-prop coverage, contract definitions and observed prices. Text matches are candidates for review, not executable arbitrage.</p></div><span class="stage hist">Read-only research</span></div>
-  <article class="panel"><div id="exchange-watch-data" aria-live="polite">Loading the latest public-market scan…</div><p class="note">Public production feeds. Contract wording, settlement rules, depth and costs must align before a price difference has trading meaning. <a href="https://github.com/akilatrades/sports-market-maker/blob/main/docs/CROSS_EXCHANGE_PROP_WATCH.md">Research specification ↗</a></p></article>
+  <details class="ops-details"><summary>Extra research: Kalshi versus Polymarket US player props</summary>
+    <p class="desc">Compares which player props each exchange lists and their quoted prices. Matches are candidates for review, not trades.</p>
+    <div id="exchange-watch-data" aria-live="polite">Loading the latest scan…</div>
+    <p class="note"><a href="https://github.com/akilatrades/sports-market-maker/blob/main/docs/CROSS_EXCHANGE_PROP_WATCH.md">Research notes ↗</a></p>
+  </details>
 </section>
-
 </main>
-<footer><div class="footer-top"><strong>AJ / SPORTS MARKET MAKER</strong><div><a href="https://github.com/akilatrades/sports-market-maker">Repository ↗</a> &nbsp; / &nbsp; <a href="../outputs/dashboard/production_pnl.json">Verified P&amp;L snapshot ↗</a> &nbsp; / &nbsp; <a href="https://github.com/akilatrades/sports-market-maker/blob/main/docs/FORWARD_VALIDATION.md">Validation protocol ↗</a></div></div><p>Independent quantitative research. Financial P&amp;L shown here is exclusively from approved, exchange-verified settlement snapshots. This public page is not a streaming account connection; private balances, credentials and order identifiers are not published.</p></footer>
+<footer><div class="footer-top"><strong>AJ / SPORTS MARKET MAKER</strong><div><a href="https://github.com/akilatrades/sports-market-maker">Repository ↗</a> &nbsp; / &nbsp; <a href="https://github.com/akilatrades/sports-market-maker/blob/main/docs/PROJECT_BRIEF.md">Case study ↗</a> &nbsp; / &nbsp; <a href="https://github.com/akilatrades/sports-market-maker/blob/main/docs/FORWARD_VALIDATION.md">Validation rules ↗</a></div></div><p>Independent research. P&amp;L shown here comes only from verified exchange settlements. Private balances, credentials and order IDs are never published. Nothing here is investment advice.</p></footer>
 <div class="tt" id="tt"></div>
-
 <script>
 
 const NAMES = {
@@ -464,83 +476,19 @@ const NAMES = {
   "KXWNBA1QSPREAD": "WNBA, 1st-quarter spread", "KXINDYCARTOP3": "IndyCar, top-3 finish", "KXRLGAME": "Rocket League, game winner", "KXVTBGAME": "VTB basketball, game winner",
   "KXINXDUD": "S&P 500, daily up/down", "KXAHLGAME": "AHL hockey, game winner", "KXEWSLGAME": "Women's Super League, winner",
 };
-const SLOT_ORDER = ["NBA no_seller_bookline","NBA no_seller","NBA no_seller_late","NBA no_seller_edge_sized","NBA no_seller_veto2","NBA no_seller_stat_veto","NBA model_side","KXNFLANYTD+model","KXNFLRECYDS+model","KXNFLANYTD","KXNFLRECYDS","KXCLUBFBTTS","KXNBAFTM","KXUCLCORNERS","KXUFCMOF","KXNCAAMENTION","KXNCAAMB1HSPREAD","KXNBA3D","KXITFMATCH","KXITFMATCH+no30","KXNASCARTOP10","KXNASCARRACE","KXLALIGASPREAD","KXLIGAMXSPREAD"];
-const SLOTS = ["var(--s1)","var(--s2)","var(--s3)","var(--s4)","var(--s5)","var(--s6)","var(--s7)","var(--s8)"];
 const name = k => NAMES[k] || k.replace(/^KX/, "");
 const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const money = v => v == null ? "—" : (v < 0 ? "−" : "") + "$" + Math.abs(v).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
-const money0 = v => v == null ? "—" : (v < 0 ? "−" : "") + "$" + Math.abs(v).toLocaleString(undefined, {maximumFractionDigits: 0});
 const cents = v => v == null ? "—" : (v > 0 ? "+" : v < 0 ? "−" : "") + Math.abs(v).toFixed(2) + "¢";
 const pct = v => v == null ? "—" : Math.round(100 * v) + "%";
 const cls = v => v == null ? "muted" : v > 0 ? "pos" : v < 0 ? "neg" : "";
-const fmt1 = v => v == null ? "—" : (typeof v === "number" ? v.toFixed(1) : v);
 const tt = document.getElementById("tt");
 function hover(el, text) {
   el.addEventListener("mousemove", e => { tt.style.display = "block"; tt.textContent = text; tt.style.left = (e.clientX + 12) + "px"; tt.style.top = (e.clientY + 12) + "px"; });
   el.addEventListener("mouseleave", () => tt.style.display = "none");
 }
-const colorOf = (() => { const map = {}; let i = 0; return key => { if (!(key in map)) { const idx = SLOT_ORDER.indexOf(key); map[key] = idx >= 0 && i < 8 ? SLOTS[i++] : "var(--other)"; } return map[key]; }; })();
 const widthOf = el => Math.max(300, Math.round(el.getBoundingClientRect().width || 640));
-function niceStep(span, n) { const raw = span / n, mag = Math.pow(10, Math.floor(Math.log10(raw || 1))); return [1, 2, 2.5, 5, 10].map(k => k * mag).find(k => k >= raw) || mag; }
 
-function frame(el, H, m, lo, hi, opts = {}) {
-  const W = widthOf(el);
-  const step = niceStep((hi - lo) || 1, opts.ticks || 4);
-  lo = Math.floor(lo / step) * step; hi = Math.ceil(hi / step) * step; if (hi === lo) hi = lo + step;
-  const y = v => m.t + (hi - v) / (hi - lo) * (H - m.t - m.b);
-  let g = `<g class="grid">`;
-  for (let v = lo; v <= hi + 1e-9; v += step) g += `<line x1="${m.l}" x2="${W - m.r}" y1="${y(v)}" y2="${y(v)}"/><text class="axis" x="${m.l - 6}" y="${y(v) + 4}" text-anchor="end">${opts.fmt ? opts.fmt(Math.round(v * 100) / 100) : money0(Math.round(v))}</text>`;
-  g += `</g>`;
-  if (lo <= 0 && hi >= 0) g += `<line class="zero" x1="${m.l}" x2="${W - m.r}" y1="${y(0)}" y2="${y(0)}"/>`;
-  return {W, y, g, lo, hi};
-}
-function xLabels(days, x, H, m, W) {
-  const step = Math.max(1, Math.ceil(days.length / Math.max(3, Math.floor((W - m.l - m.r) / 70))));
-  let g = ""; days.forEach((d, i) => { if (i % step === 0 || i === days.length - 1) g += `<text class="axis" x="${x(i)}" y="${H - 8}" text-anchor="middle">${d.slice(5)}</text>`; }); return g;
-}
-function crosshair(svg, days, x, rows, m, H) {
-  const cross = svg.querySelector(".cross"), rect = svg.querySelector("rect.hit");
-  rect.addEventListener("mousemove", e => {
-    const pt = svg.createSVGPoint(); pt.x = e.clientX; pt.y = e.clientY; const p = pt.matrixTransform(svg.getScreenCTM().inverse());
-    let i = 0, best = 1e9; days.forEach((d, j) => { const dx = Math.abs(x(j) - p.x); if (dx < best) { best = dx; i = j; } });
-    cross.innerHTML = `<line x1="${x(i)}" x2="${x(i)}" y1="${m.t}" y2="${H - m.b}" stroke="var(--ink-3)" stroke-width="1"/>` + rows.map(r => `<circle cx="${x(i)}" cy="${r.y(r.v[i])}" r="4" fill="${r.color}" stroke="var(--paper)" stroke-width="2"/>`).join("");
-    tt.style.display = "block"; tt.style.left = (e.clientX + 12) + "px"; tt.style.top = (e.clientY + 12) + "px";
-    tt.textContent = days[i] + "\n" + rows.map(r => `${r.label.padEnd(28)} ${r.fmt(r.v[i]).padStart(11)}`).join("\n");
-  });
-  rect.addEventListener("mouseleave", () => { cross.innerHTML = ""; tt.style.display = "none"; });
-}
-function lines(el, days, series, H, opts = {}) {
-  if (!days.length) { el.innerHTML = `<p class="note">${esc(opts.empty || "No settled fills yet. The chart begins with the first settlement.")}</p>`; return; }
-  const m = {t: 12, r: 16, b: 28, l: 56};
-  const vals = series.flatMap(r => r.v);
-  const f = frame(el, H, m, Math.min(0, ...vals), Math.max(0, ...vals), opts);
-  const x = i => m.l + (days.length === 1 ? (f.W - m.l - m.r) / 2 : i * (f.W - m.l - m.r) / (days.length - 1));
-  let g = f.g + xLabels(days, x, H, m, f.W);
-  if (opts.bands) for (const b of opts.bands) g = `<rect x="${x(b.from)}" y="${m.t}" width="${Math.max(3, x(b.to) - x(b.from))}" height="${H - m.t - m.b}" fill="${b.color}" opacity=".18"/>` + g;
-  for (const r of series) {
-    const path = r.v.map((p, i) => `${i ? "L" : "M"}${x(i).toFixed(1)},${f.y(p).toFixed(1)}`).join("");
-    if (r.area) g += `<path d="${path}L${x(r.v.length - 1)},${f.y(0)}L${x(0)},${f.y(0)}Z" fill="${r.color}" opacity=".15"/>`;
-    g += `<path d="${path}" fill="none" stroke="${r.color}" stroke-width="${r.width || 2}" ${r.dash ? 'stroke-dasharray="5 4"' : ""} stroke-linejoin="round"/>`;
-    if (days.length <= 2) r.v.forEach((p, i) => g += `<circle cx="${x(i)}" cy="${f.y(p)}" r="4" fill="${r.color}" stroke="var(--paper)" stroke-width="2"/>`);
-  }
-  el.innerHTML = `<svg viewBox="0 0 ${f.W} ${H}">${g}<g class="cross"></g><rect class="hit" x="${m.l}" y="${m.t}" width="${f.W - m.l - m.r}" height="${H - m.t - m.b}" fill="transparent"/></svg>`;
-  crosshair(el.querySelector("svg"), days, x, series.map(r => ({...r, y: f.y, fmt: r.fmt || money})), m, H);
-}
-function bars(el, labels, values, H, opts = {}) {
-  if (!labels.length) { el.innerHTML = `<p class="note">${esc(opts.empty || "Nothing settled yet.")}</p>`; return; }
-  const m = {t: 12, r: 12, b: 28, l: 52};
-  const f = frame(el, H, m, Math.min(0, ...values), Math.max(0, ...values), opts);
-  const n = labels.length, slot = (f.W - m.l - m.r) / n, bw = Math.max(2, Math.min(28, slot - 2));
-  let g = f.g;
-  const stepL = Math.max(1, Math.ceil(n / Math.max(3, Math.floor((f.W - m.l - m.r) / 60))));
-  labels.forEach((d, i) => { if (i % stepL === 0 || i === n - 1) g += `<text class="axis" x="${m.l + slot * (i + .5)}" y="${H - 8}" text-anchor="middle">${opts.lab ? opts.lab(d) : d.slice(5)}</text>`; });
-  values.forEach((v, i) => {
-    const cx = m.l + slot * (i + .5), y0 = f.y(0), y1 = f.y(v);
-    g += `<rect class="marker" data-i="${i}" x="${cx - bw / 2}" y="${Math.min(y0, y1)}" width="${bw}" height="${Math.max(1, Math.abs(y1 - y0))}" fill="${opts.color ? opts.color(v, i) : (v >= 0 ? "var(--up)" : "var(--down)")}" rx="1"/>`;
-  });
-  el.innerHTML = `<svg viewBox="0 0 ${f.W} ${H}">${g}</svg>`;
-  el.querySelectorAll(".marker").forEach(r => { const i = +r.dataset.i; hover(r, opts.tip ? opts.tip(i) : `${labels[i]}\n${money(values[i])}`); });
-}
 function forest(el, items, opts = {}) {
   const W = widthOf(el), rowH = 24, narrow = W < 480;
   const m = {t: 8, r: narrow ? 56 : 70, b: 26, l: Math.min(opts.labelW || 210, Math.round(W * 0.42))};
@@ -563,17 +511,7 @@ function forest(el, items, opts = {}) {
   el.innerHTML = `<svg viewBox="0 0 ${W} ${H}">${g}</svg>`;
   el.querySelectorAll(".marker").forEach(c => { const it = items[+c.dataset.i]; hover(c, `${it.label}\n${cents(it.est)} per contract${it.se != null ? ` ± ${(2 * it.se).toFixed(2)}¢ (2 SE)` : ""}${it.sub ? "\n" + it.sub : ""}`); });
 }
-function spark(values, color) {
-  if (!values || values.length < 2) return "";
-  const W = 90, H = 22, lo = Math.min(0, ...values), hi = Math.max(0, ...values) || 1;
-  const x = i => i * W / (values.length - 1), y = v => 2 + (hi - v) / (hi - lo || 1) * (H - 4);
-  return `<svg viewBox="0 0 ${W} ${H}"><line x1="0" x2="${W}" y1="${y(0)}" y2="${y(0)}" stroke="var(--rule-2)"/><path d="${values.map((v, i) => `${i ? "L" : "M"}${x(i)},${y(v)}`).join("")}" fill="none" stroke="${color}" stroke-width="1.5"/></svg>`;
-}
 
-function util(label, value, limit, hot) {
-  const f = limit ? Math.min(1, Math.max(0, value / limit)) : 0;
-  return `<div class="row"><span class="lab">${esc(label)}</span><div class="bar"><i class="${hot && f >= 1 ? "hot" : ""}" style="width:${(100 * f).toFixed(1)}%"></i></div><span class="val">${money(value)} of ${money0(limit)}</span></div>`;
-}
 function liveBlock(live, label) {
   const hasRun = Boolean(live.run_utc);
   const mode = hasRun ? String(live.mode || "unknown").toUpperCase() : "NO REPORT";
@@ -590,7 +528,7 @@ function research(s) {
   if (!b || !b.veto) { el.innerHTML = `<p class="note">Not run yet.</p>`; return; }
   const items = [["All fills in sample", b.all], ["Kept by sportsbook veto", b.veto], ["Removed by sportsbook veto", b.removed], ["Kept by model veto", b.model]].filter(x => x[1]).map(([label, r]) => ({label, est: r.cents, se: r.se, color: label.startsWith("Kept by sportsbook") ? "var(--algo)" : "var(--bench)", sub: `${r.fills.toLocaleString()} fills, t ${r.t}`}));
   forest(el, items, {labelW: 200});
-  el.insertAdjacentHTML("beforeend", `<p class="note">${b.games} games sampled from 2025-26 with the books' lines as they stood when each order was posted; an exact-line quote for ${Math.round(100 * b.coverage)}% of fills. Kept minus removed ${cents(b.difference?.cents)}, t ${b.difference?.t}. ${b.pass ? "Passed this historical study’s pre-registered threshold (at least 1¢ improvement, t ≥ 2, 2,000+ covered fills). Forward execution remains a separate test." : "Did not pass the pre-registered test."}</p>`);
+  el.insertAdjacentHTML("beforeend", `<p class="note">${b.games} sampled games from 2025–26, using the books' lines at the time each order was posted (exact-line quote for ${Math.round(100 * b.coverage)}% of fills). Kept minus removed: ${cents(b.difference?.cents)}, t ${b.difference?.t}. ${b.pass ? "Passed the study's pre-registered bar (at least 1¢ gain, t ≥ 2, 2,000+ covered fills). Live trading is a separate test." : "Did not pass the pre-registered test."}</p>`);
 }
 
 function overview(snapshot){
@@ -602,10 +540,10 @@ function overview(snapshot){
  const events=observed?Number(f.settled_buy_fill_events||0):null;
  const card=(label,value,caption,tone="")=>`<article class="metric-card"><span class="metric-label">${esc(label)}</span><div class="metric-value ${tone}">${esc(value)}</div><span class="metric-caption">${esc(caption)}</span></article>`;
  document.getElementById("hero-metrics").innerHTML=[
-  card("Live strategy P&L","NFL + NBA","See verified exchange-settlement results below"),
-  card("Settled NO contracts",contracts==null?"—":contracts.toLocaleString(),contracts==null?"No settled NBA contracts in the published cohort":"NBA contracts confirmed by the exchange"),
-  card("Volume capture",capture==null?"—":pct(capture),capture==null?"No completed order window to measure yet":"Backtest assumption: 50%"),
-  card("Settled fill events",events==null?"— / 500":events.toLocaleString()+" / 500",events==null?"No NBA fill-event count published":"Checkpoint: 30 days and 500 settled fills")
+  card("Real orders",observed?Number(f.eligible_real_orders).toLocaleString():"—",observed?"NBA orders accepted by the exchange":"No real NBA orders published yet"),
+  card("Settled NO contracts",contracts==null?"—":contracts.toLocaleString(),contracts==null?"No settled NBA contracts published yet":"NBA contracts confirmed by the exchange"),
+  card("Volume capture",capture==null?"—":pct(capture),capture==null?"Not measured yet":"Backtest assumes 50%"),
+  card("Settled fills",events==null?"— / 500":events.toLocaleString()+" / 500",events==null?"No NBA fill count published yet":"Review at 30 days and 500 settled fills")
  ].join("");
  const row=(label,value)=>`<div class="fwd-row"><span>${esc(label)}</span><strong>${esc(value)}</strong></div>`;
  const count=Number(f.settled_buy_fill_events||0),days=Number(f.elapsed_days||0);
@@ -621,24 +559,24 @@ function overview(snapshot){
  const tone=f.status==="checkpoint_ready_for_human_review"?"ok":f.status==="data_incomplete"?"warn":"";
  const ready=observed;
  const proof=document.getElementById("forward-view");
- proof.innerHTML=`<div class="proof-status ${tone}">${esc(ready?state:"No exchange-confirmed NBA cohort published yet. Historical and paper results do not establish live performance.")}</div>`+
- `<div class="progress-labels"><span>Real, settled fill events</span><strong>${esc(ready?count.toLocaleString()+" / 500":"Not started")}</strong></div>`+
+ proof.innerHTML=`<div class="proof-status ${tone}">${esc(ready?state:"No exchange-confirmed NBA results published yet. Historical and paper results are not live performance.")}</div>`+
+ `<div class="progress-labels"><span>Settled real fills</span><strong>${esc(ready?count.toLocaleString()+" / 500":"Not started")}</strong></div>`+
  `<div class="progress-track" role="progressbar" aria-label="Settlement-fill checkpoint" aria-valuemin="0" aria-valuemax="500" aria-valuenow="${Math.min(500,count)}"><span style="width:${pc}%"></span></div>`+
  `<div class="progress-labels" style="margin-top:17px"><span>Observation period</span><strong>${esc(ready?days.toFixed(1)+" / 30 days":"Not started")}</strong></div>`+
  `<div class="progress-track" role="progressbar" aria-label="Observation-day checkpoint" aria-valuemin="0" aria-valuemax="30" aria-valuenow="${Math.min(30,days)}"><span style="width:${pd}%"></span></div>`+
- `<div style="margin-top:19px">${row("Production P&L","See separate NFL and NBA results below")}${row("Volume data recorded",f.mature_volume_coverage==null?"—":pct(f.mature_volume_coverage))}${row("Independent games",f.independent_games==null?"—":String(f.independent_games))}${row("Position sizing","Frozen until the checkpoint review")}</div>`+
- `<p class="note">The checkpoint covers NBA “NO” buys only. The edge is judged on exchange-confirmed fills after fees and settlement, not on the backtest.</p>`;
+ `<div style="margin-top:19px">${row("Live P&L","Shown in Live results above")}${row("Volume data coverage",f.mature_volume_coverage==null?"—":pct(f.mature_volume_coverage))}${row("Independent games",f.independent_games==null?"—":String(f.independent_games))}${row("Sizing changes","Only after the review")}</div>`+
+ `<p class="note">The review covers NBA NO orders only. The edge is judged on real fills after fees and settlement, not on the backtest.</p>`;
  const statusLine=(name,item)=>`<div class="fwd-row"><span>${esc(name)} trader · ${esc(item.run_utc?String(item.mode||"unknown").toUpperCase():"NO LOG")}</span><strong>${esc(item.run_utc?String(item.run_utc).slice(0,16).replace("T"," ")+" UTC":"Not published")}</strong></div>`;
  const errors=[live.forward_validation_error,nfl.forward_validation_error].filter(Boolean).join(" · ");
  document.getElementById("system-view").innerHTML=
- `<div class="proof-status">Published reports only. Scheduled research runs and the private production service have separate data sources.</div>`+
+ `<div class="proof-status">Published reports only. Research jobs and the private trading server publish separately.</div>`+
  statusLine("NBA",live)+statusLine("NFL",nfl)+
- row("Evidence basis","Exchange fills + actual fees + settlement")+
- row("Cohort boundaries","Market and strategy version")+
- row("Missing observations","Unknown; never replaced with zero")+
- row("Review gate","30 days AND 500 settled fill events")+
+ row("Evidence","Real fills, actual fees, settlement")+
+ row("Grouped by","Market and strategy version")+
+ row("Missing data","Shown as unknown, never zero")+
+ row("Review point","30 days and 500 settled fills")+
  (errors?`<p class="note">${esc(errors)}</p>`:"")+
- `<p class="note">The source and timestamp describe this published snapshot, not the current account or trading-server state.</p>`;
+ `<p class="note">The timestamp describes this published snapshot, not the account right now.</p>`;
 }
 
 // Rebuild SVGs only if the screen WIDTH changes. Mobile address bars
@@ -656,7 +594,7 @@ function renderStudy(s) {
   document.getElementById("lead-sample").textContent = b.veto.fills.toLocaleString();
   const rows = [["All sampled fills",b.all],["Filter retained",b.veto],["Filter removed",b.removed]];
   forest(el, rows.filter(([,r])=>r && Number.isFinite(r.cents)).map(([label,r])=>({label,est:r.cents,se:r.se,color:label==="Filter retained"?"var(--accent)":"var(--bench)",sub:`${r.fills.toLocaleString()} simulated fills`})), {labelW:138});
-  document.getElementById("study-source").textContent = `2025–26 replay · ${b.games} games sampled · after modeled fees. Not live performance. Fills are not independent games.`;
+  document.getElementById("study-source").textContent = `2025–26 replay · ${b.games} sampled games · after modeled fees · not live performance.`;
 }
 function renderCharts(s) {
   renderStudy(s);
