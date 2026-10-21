@@ -1,60 +1,64 @@
 # Documentation
 
-A guide to the project's documents, grouped by what a reader is looking for.
-Dated documents are snapshots: they record what was known on that date and
-are kept unchanged as part of the record.
+The project's documents, grouped by what you are looking for. Dated
+documents (with a date in the name) are snapshots of what was known on that
+day and are kept unchanged as part of the record.
 
 ## Start here
 
 | Document | What it covers |
 |---|---|
-| [Project README](../README.md) | Summary, results, architecture and limitations |
-| [Project brief for hiring teams](PROJECT_BRIEF.md) | Two-minute case study, engineering contributions, live evidence versus simulations, what remains unproven |
-| [Deep audit matrix](DEEP_AUDIT_MATRIX.md) | Model, trading, data, risk, security, profitability and hiring-quality evidence gates |
-| [Research log](../RESEARCH_LOG.md) | Every hypothesis, written before it was tested, with its result |
-| [NBA and cross-market audit](NBA_AND_MARKET_AUDIT_2026-10-18.md) | Recomputed historical evidence with game-clustered intervals, multiple-comparison check, market census |
-| [Forward-validation protocol](FORWARD_VALIDATION.md) | Pre-registered rules for judging live results: 30 days and 500 settled fills |
+| [Project README](../README.md) | What the project does, results, how it works, limitations |
+| [Project brief](PROJECT_BRIEF.md) | Two-minute case study: approach, evidence, what is still unproven |
+| [Research log](../RESEARCH_LOG.md) | Every hypothesis, written down before it was tested, with its result |
+| [Forward-validation rules](FORWARD_VALIDATION.md) | How live results are judged: 30 days and 500 settled fills |
+| [Audit matrix](DEEP_AUDIT_MATRIX.md) | Checks across model, trading, data, risk and security |
 
-## Models and research
+## Models
 
 | Document | What it covers |
 |---|---|
-| [NBA prop model](nba-model.md) | Features, distributions, walk-forward validation and market tests |
+| [NBA prop model](nba-model.md) | Features, outcome distributions, walk-forward validation, market tests |
 | [NFL prop model](nfl-model.md) | The NFL counterpart and its results |
-| [NBA opening-night sizing review](NBA_OPENING_NIGHT_SIZING_RESEARCH_2026-10-19.md) | Historical sensitivity of pilot budgets and caps |
-| [La Liga margin audit](LALIGA_MARGIN_EDGE_AUDIT_2026-10-17.md) | Why a small positive paper result is not yet evidence |
-| [Cross-exchange prop watch](CROSS_EXCHANGE_PROP_WATCH.md) | Kalshi versus Polymarket US prop coverage |
-| [Polymarket US quote replay](POLYMARKET_US_QUOTE_REPLAY.md) | What archived quotes can and cannot show |
 | [Figures](figures/) | Charts used in the README and research log |
 
-## Production engineering and audits
+## Research and audits
 
 | Document | What it covers |
 |---|---|
-| [Project map and production audit](PROJECT_MAP_AND_PRODUCTION_AUDIT_2026-10-18.md) | Architecture walkthrough, live-fill reconciliation, open risks |
-| [NBA evidence and overnight audit, October 21](NBA_OVERNIGHT_AUDIT_2026-10-21.md) | Verified first maker fill, early-expiration discrepancy, projected-minutes/lineup evidence gaps, and forward-validation priorities |
-| [NFL roster guard](NFL_ROSTER_GUARD_2026-10-18.md) | Roster and identity safeguards added after the first live week |
-| [Execution readiness, October 17](EXECUTION_READINESS_2026-10-17.md) | Evidence checklist before any real-money order |
-| [Kalshi V2 demo rollout](KALSHI_DEMO_V2_ROLLOUT.md) | Demo-environment order and cancel verification |
+| [NBA statistical audit, Oct 18](NBA_AND_MARKET_AUDIT_2026-10-18.md) | Historical results recomputed with game-clustered intervals and a multiple-comparison check |
+| [Model and execution audit, Oct 20](NBA_MODEL_EXECUTION_AUDIT_2026-10-20.md) | Review of the projection math and order handling |
+| [Minutes and execution research, Oct 20](NBA_OCT20_MINUTES_AND_EXECUTION_RESEARCH.md) | Late-news context and order-timing research |
+| [Opening-night sizing review, Oct 19](NBA_OPENING_NIGHT_SIZING_RESEARCH_2026-10-19.md) | How pilot budgets and caps affect historical results |
+| [La Liga margin audit, Oct 17](LALIGA_MARGIN_EDGE_AUDIT_2026-10-17.md) | Why a small positive paper result is not yet evidence |
+| [Cross-exchange prop watch](CROSS_EXCHANGE_PROP_WATCH.md) | Kalshi versus Polymarket US player-prop coverage |
+| [Polymarket US quote replay](POLYMARKET_US_QUOTE_REPLAY.md) | What archived quotes can and cannot show |
 
-## Operations (owner-run procedures)
-
-| Document | What it covers |
-|---|---|
-| [Server deployment](../deploy/README.md) | Always-on trader setup |
-| [Go live / Stop button](../deploy/GO_LIVE_BUTTON.md) | Owner-only GitHub button to switch the funded bots on or off; public logs show only pass/fail and on/off |
-| [NBA production worker](../deploy/PROD_NBA_AUTO.md) | Bounded NBA pilot: preflight, activation and handoff |
-| [NFL production worker](../deploy/PROD_NFL_AUTO.md) | Bounded NFL pilot |
-| [Supervised NFL pilot](../deploy/PROD_NFL_PILOT.md) | The first single-order production test |
-| [NBA go/no-go, October 20](TUESDAY_NBA_GO_NO_GO_2026-10-20.md) | Launch conditions for the first NBA night |
-| [Account dashboard](../deploy/ACCOUNT_DASHBOARD.md) | Private read-only account view and public P&L snapshots |
-| [Public NFL/NBA P&L refresh](../deploy/PUBLIC_PNL_REFRESH.md) | Signed settlement reconciliation, staleness handling and opt-in automatic sanitized publishing |
-| [Near-live funded account P&L](../deploy/LIVE_ACCOUNT_PNL.md) | HTTPS-proxied GET-only 30-second account settlement feed for GitHub Pages |
-| [NFL worker memory repair](../deploy/NFL_WORKER_MEMORY.md) | Incident note |
-
-## Working notes and archive
+## Live trading
 
 | Document | What it covers |
 |---|---|
-| [Current project state](CURRENT_PROJECT_STATE.md) | Running status notes, updated as evidence arrives |
-| [Early README (archived)](ARCHIVED_EARLY_README_2026-10-17.md) | The project's first README, kept for the record; its bankroll examples are superseded |
+| [Operations guide](../deploy/README.md) | What runs where, releasing code, going live, stopping, monitoring |
+| [Go live / Stop button](../deploy/GO_LIVE_BUTTON.md) | Owner-only GitHub button to switch the bots on or off |
+| [NBA production worker](../deploy/PROD_NBA_AUTO.md) | NBA order rules and current limits |
+| [NFL production worker](../deploy/PROD_NFL_AUTO.md) | NFL order rules and limits |
+| [NBA 30-day live validation](NBA_30DAY_LIVE_VALIDATION.md) | Daily checks, stop rules and the live review |
+| [NBA live evidence, Oct 21](NBA_OVERNIGHT_AUDIT_2026-10-21.md) | First verified NBA fill and what it does and does not show |
+| [Production execution audit, Oct 20](PRODUCTION_EXECUTION_AUDIT_2026-10-20.md) | Order lifecycle checks before the NBA launch |
+| [Project map and production audit, Oct 18](PROJECT_MAP_AND_PRODUCTION_AUDIT_2026-10-18.md) | Architecture walkthrough and live-fill reconciliation |
+| [Account security checklist](LIVE_ACCOUNT_SECURITY_CHECKLIST.md) | Key handling and account safety |
+
+## Archive
+
+Earlier working notes, kept for the record.
+
+| Document | What it covers |
+|---|---|
+| [Current project state](CURRENT_PROJECT_STATE.md) | Running status notes |
+| [NBA v3 long-resting proposal, Oct 20](NBA_LONG_RESTING_V3_2026-10-20.md) | Superseded by the current NBA rules |
+| [Execution improvements v2](EXECUTION_IMPROVEMENTS_V2_2026-10.md) | Earlier execution research |
+| [NBA go/no-go, Oct 20](TUESDAY_NBA_GO_NO_GO_2026-10-20.md) | Launch conditions for the first NBA night |
+| [Execution readiness, Oct 17](EXECUTION_READINESS_2026-10-17.md) | Checklist before the first real-money order |
+| [NFL roster guard, Oct 18](NFL_ROSTER_GUARD_2026-10-18.md) | Roster safeguards added after the first live week |
+| [Kalshi demo rollout](KALSHI_DEMO_V2_ROLLOUT.md) | Order and cancel checks in Kalshi's demo environment |
+| [Early README](ARCHIVED_EARLY_README_2026-10-17.md) | The first README; its bankroll examples are superseded |

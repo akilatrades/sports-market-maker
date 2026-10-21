@@ -351,8 +351,8 @@ footer p { max-width:100ch; font-size:10px; color:var(--ink-3); }
 
 .skip-link { position:absolute; left:20px; top:-70px; padding:12px; background:var(--accent); color:var(--bg); z-index:20; } .skip-link:focus { top:10px; }
 
-.live-pnl-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }
-@media (max-width: 500px) { .live-pnl-grid { grid-template-columns: 1fr; } }
+.live-pnl-grid { grid-template-columns: repeat(3,minmax(0,1fr)); }
+@media (max-width: 760px) { .live-pnl-grid { grid-template-columns: 1fr; } }
 </style>
 </head>
 <body>
@@ -449,6 +449,13 @@ footer p { max-width:100ch; font-size:10px; color:var(--ink-3); }
   </div>
   <details class="ops-details"><summary>Scheduled research-job snapshots</summary><p class="desc">GitHub runs research jobs on a schedule. A dry-run snapshot here says nothing about the private trading server's status.</p><div class="two" id="live"></div></details>
 </section>
+<section id="exchange-watch">
+  <details class="quick-guide"><summary>Extra research: Kalshi versus Polymarket US player props</summary>
+    <p class="desc">Compares which player props each exchange lists and their quoted prices. Matches are candidates for review, not trades.</p>
+    <div id="exchange-watch-data" aria-live="polite">Loading the latest scan…</div>
+    <p class="note"><a href="https://github.com/akilatrades/sports-market-maker/blob/main/docs/CROSS_EXCHANGE_PROP_WATCH.md">Research notes ↗</a></p>
+  </details>
+</section>
 </main>
 <footer><div class="footer-top"><strong>AJ / SPORTS MARKET MAKER</strong><div><a href="https://github.com/akilatrades/sports-market-maker">Repository ↗</a> &nbsp; / &nbsp; <a href="https://github.com/akilatrades/sports-market-maker/blob/main/docs/PROJECT_BRIEF.md">Case study ↗</a> &nbsp; / &nbsp; <a href="https://github.com/akilatrades/sports-market-maker/blob/main/docs/FORWARD_VALIDATION.md">Validation rules ↗</a></div></div><p>Independent research. P&amp;L shown here comes only from verified exchange settlements. Private balances, credentials and order IDs are never published. Nothing here is investment advice.</p></footer>
 <div class="tt" id="tt"></div>
@@ -533,7 +540,7 @@ function overview(snapshot){
  const events=observed?Number(f.settled_buy_fill_events||0):null;
  const card=(label,value,caption,tone="")=>`<article class="metric-card"><span class="metric-label">${esc(label)}</span><div class="metric-value ${tone}">${esc(value)}</div><span class="metric-caption">${esc(caption)}</span></article>`;
  document.getElementById("hero-metrics").innerHTML=[
-  card("Live P&L","NFL + NBA","Shown in Live results, by market"),
+  card("Real orders",observed?Number(f.eligible_real_orders).toLocaleString():"—",observed?"NBA orders accepted by the exchange":"No real NBA orders published yet"),
   card("Settled NO contracts",contracts==null?"—":contracts.toLocaleString(),contracts==null?"No settled NBA contracts published yet":"NBA contracts confirmed by the exchange"),
   card("Volume capture",capture==null?"—":pct(capture),capture==null?"Not measured yet":"Backtest assumes 50%"),
   card("Settled fills",events==null?"— / 500":events.toLocaleString()+" / 500",events==null?"No NBA fill count published yet":"Review at 30 days and 500 settled fills")
@@ -673,6 +680,41 @@ async function refreshVerifiedPnl() {
 }
 refreshVerifiedPnl();
 setInterval(refreshVerifiedPnl, 15000);
+// Optional read-only cross-exchange snapshot. Never infer live trading status.
+fetch("../outputs/cross_exchange/latest.json", {cache:"no-store"})
+  .then(r => { if (!r.ok) throw new Error("not published"); return r.json(); })
+  .then(data => {
+    const node = document.getElementById("exchange-watch-data");
+    if (data.status !== "research_only_no_order_access" || data.venue !== "polymarket_us") {
+      node.textContent = "Cross-exchange scan has no verified data.";
+      return;
+    }
+    const summary = ["nfl", "nba"].map(league => {
+      const c = data.coverage?.[league];
+      if (!c) return `<div class="fwd-row"><span>${league.toUpperCase()}</span><strong>No report</strong></div>`;
+      const incomplete = !c.pagination_complete || c.bbo_scan_capped;
+      if (c.polymarket_us_catalog_empty) {
+         const d = c.unfiltered_sample_diagnostic;
+         const sampled = d && typeof d.sampled_rows === "number"
+           ? ` Unfiltered sample: ${d.sampled_rows} league-tagged markets, ${d.typed_prop_rows_seen} marked as props.`
+           : " No unfiltered diagnostic yet.";
+         return `<div class="fwd-row"><span>${league.toUpperCase()} · ${esc(c.kalshi_markets_scanned)} Kalshi markets</span><strong>Filtered prop catalog returned no listings; coverage unverified</strong></div><p class="note">${esc(sampled)} This is not a complete player-prop inventory or a trading signal.</p>`;
+      }
+      return `<div class="fwd-row"><span>${league.toUpperCase()} · ${esc(c.polymarket_us_strict_prop_markets)} strictly parsed props vs. ${esc(c.kalshi_markets_scanned)} Kalshi markets</span><strong>${esc(c.priced_pairs_needing_rules_review)} possible overlaps${incomplete ? " (partial scan)" : ""}</strong></div>`;
+    }).join("");
+    const rows = (data.candidates || []).slice(0, 5).map(r => {
+      const gap = Number(r.mid_gap_cents);
+      return `<tr><td class="lbl">${esc(r.player)} · ${esc(r.stat)} · ${esc(r.line)}</td><td>${esc(r.league.toUpperCase())}</td><td class="num">${Number.isFinite(gap) ? esc(gap.toFixed(2)) + "¢" : "—"}</td></tr>`;
+    }).join("");
+    node.innerHTML = `<p class="desc">Last scan: ${esc(data.updated_utc)}. These are candidate text/line matches, not verified equivalent contracts. A missing or partial scan does not mean zero opportunities.</p>${summary}`+
+      (rows ? `<div class="scroll" role="region" tabindex="0" aria-label="Candidate price differences, swipe sideways"><table><thead><tr><th>Player &amp; line</th><th>League</th><th class="num">YES midpoint difference*</th></tr></thead><tbody>${rows}</tbody></table></div>` : `<p class="note">No strictly matched and priced contracts in this saved snapshot.</p>`)+
+      `<p class="note">*Midprice difference only; excludes fees, executable depth, rule differences and fills. Not a tradable edge.</p>`;
+  })
+  .catch(() => {
+    document.getElementById("exchange-watch-data").textContent =
+      "No completed Polymarket US scan published yet. Waiting on the scheduled research job.";
+  });
+
 let pageWidth = document.documentElement.clientWidth;
 let resizeTimer = null;
 window.addEventListener("resize", () => {
