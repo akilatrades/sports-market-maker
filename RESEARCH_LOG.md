@@ -1859,3 +1859,16 @@ fills may be half that rate.
   points or more against the rest; live fill rate against the replay's.
 - **Stops:** the existing loss stops (−$20 a day, −$60 total, account-wide)
   apply throughout; no limit is raised during the evaluation.
+
+### Addendum to the v5 plan (21 October, before any v5 order)
+Added after the independent code review, before v5 was deployed or placed
+any order:
+- **Also reported separately:** orders priced 5–9¢ or 91–95¢, which v4's
+  10–90¢ range never traded live.
+- **Effective entry floor:** the candidate stage subtracts an estimated maker
+  fee (about 0.4¢ near 50¢) even when the live fee is zero, so new orders
+  need slightly more than 0¢; resting orders are kept down to exactly 0¢.
+- **Operational changes that do not affect selection:** no new order after
+  150 seconds of a scan's runtime, fee metadata fetched once per series and
+  game per scan, and queue position observed at most every 10 minutes per
+  order.

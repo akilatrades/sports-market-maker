@@ -69,12 +69,27 @@ before each order.
 
   If an input feed (projections, injuries, rosters or quotes) drops out with a connection error, the bot places nothing and holds its resting orders for up to 15 minutes; if good inputs have not returned by then, it cancels them. Data problems (malformed or undated injury records, duplicate tickers, mismatched files) cancel resting orders immediately.
 
-  Canceled and unfilled submissions still count toward the daily and lifetime submitted limits. The realized-loss stops are the binding money limit; on a $250 account the cumulative stop is 24% of the balance. In the extreme case that every open order also loses when the stop is reached, the loss could reach about the stop plus the active cap. NFL keeps its own limits ($15 active, $30 daily, $50 lifetime).
+  Canceled and unfilled submissions still count toward the daily and lifetime submitted limits. The realized-loss stops are the binding money limit; on a $250 account the cumulative stop is 24% of the balance. In the extreme case that every open order also fills and loses when the stop is reached, the loss could reach the stop plus the active cap: about $60 + $150 = $210 (v4: $135). The per-team cap now equals the per-game cap ($25), so one game's orders may all be on one team's players. NFL keeps its own limits ($15 active, $30 daily, $50 lifetime).
 - Contract count shrinks until price plus the 10% reserve fits. Reserve is a risk allowance, not an actual expense. Actual reported fees determine P&L.
 - Current series/event fees must be understood and the verified price must stay passive. Estimated edge after the fee bound must be zero or more (and at most 15¢; bigger "edges" are usually data errors) to enter and to keep resting; v4 required 3¢. Prices stay within 5–95¢. Unknown fee types block entry.
 - Current roster, exact fixture, projection timestamp/checksum and injury news must agree. New team injury news requires refreshed projections; book probabilities predating team news are discarded.
 - Long absences over 45 days and transfers require two fresh books on the exact line. Ambiguous player names, unsupported rookies/history, missing context and changed fixtures are skipped.
 - Durable intent precedes POST. Uncertain submission stops new orders pending manual reconciliation. Shared process locking and ownership checks prevent the two pilots from independently allocating the same account.
+
+## Keeping each scan short
+
+Each scan must finish inside the server's 4-minute limit (`TimeoutStartSec=240`); a scan stopped between an order's journal entry and its acceptance halts all future orders until reconciled by hand. With many more resting orders in v5, the worker:
+
+- starts no new order after 150 seconds of runtime (`NEW_ORDER_DEADLINE_SECONDS`);
+- fetches fee metadata once per series and game in a scan, not twice per order;
+- records each resting order's queue position at most every 10 minutes.
+
+`last_scan.json` reports `pass_seconds` and `orders_placed_this_pass`. If `pass_seconds` regularly approaches 150, investigate before the next deploy.
+
+## Deploying v5, and rolling back
+
+- **Deploy when no NBA order is resting:** after the night's last tip-off and before new entries open (about noon Eastern on most game days). If prior-version orders are resting, v5 leaves them untouched until they expire and places nothing until then, and those orders get no injury or edge cancels in the meantime.
+- **Rolling back to v4** with v5 orders resting would halt the v4 code (it does not recognise v5). Run **Go live / Stop → STOP_AND_CANCEL** first, then deploy the older commit, then **GO_LIVE**.
 
 ## Data and memory
 
@@ -100,4 +115,4 @@ The private account dashboard shows one market's journal at a time, chosen by `A
 
 Actual fills are identified by exchange ID and record cost, fees and maker/taker status. Resting orders have repeated queue observations. For each actual fill, the price movement 5, 15 and 60 minutes later is recorded ("markouts": the midpoint and the price you could actually sell at); missing windows are marked missing. Markouts are not realized profit. Settlements normalize dollar costs/fees and cent revenue, using append-only corrections.
 
-The NBA review checkpoint remains 30 days **and** 500 distinct settled buy-fill records with the existing coverage gates. In the 2025–26 replay (`python -m research.fill_sizing_replay`) the v5 limits reach about 1,900 filled orders over about 51 game nights, when the $2,000 lifetime allowance runs out; the bot then stops placing new orders until the owner raises it. (The v4 limits reached about 480 over 37 nights.) Fewer live fills than the replay would mean fewer filled orders by that point. No automatic reset or capital increase is implemented. Count independent games as well as fill records.
+For v5 the review checkpoint is when the $2,000 allowance runs out or 1,900 settled fills, whichever comes first, and in any case at 30 days (RESEARCH_LOG.md, "NBA rules v5"). In the 2025–26 replay (`python -m research.fill_sizing_replay`) the v5 limits reach about 1,900 filled orders over about 51 game nights, when the $2,000 lifetime allowance runs out; the bot then stops placing new orders until the owner raises it. (The v4 limits reached about 480 over 37 nights.) Fewer live fills than the replay would mean fewer filled orders by that point. No automatic reset or capital increase is implemented. Count independent games as well as fill records.

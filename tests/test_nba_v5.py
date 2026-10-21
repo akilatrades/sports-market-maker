@@ -174,3 +174,239 @@ def test_resting_orders_are_kept_at_zero_edge_and_cancelled_below(p_book, expect
     }
     market = {"status": "active", "yes_bid_dollars": 0.40, "yes_ask_dollars": 0.50}
     assert nba.resting_cancel_reason(row, intent, market, 0.0) == expected
+
+
+# --- Transition, ambiguity and per-pass caps (from the independent review) ---
+
+
+@pytest.fixture
+def exchange_offline(monkeypatch, no_fees):
+    monkeypatch.setattr(
+        nba,
+        "fetch_market",
+        lambda t: {
+            "status": "active",
+            "yes_bid_dollars": 0.40,
+            "yes_ask_dollars": 0.50,
+        },
+    )
+
+
+def write_v4_order(journal, ticker="KXNBA-V4-OLD", count=2, cents=92):
+    rows = [
+        {
+            "event": "intent",
+            "utc": NOW.isoformat(),
+            "client_order_id": "cid-v4",
+            "ticker": ticker,
+            "cost": round(count * cents / 100, 2),
+            "count": count,
+            "price_cents": cents,
+            "game_id": "20261019",
+            "team": "BOS",
+            "tip_utc": NOW.isoformat(),
+            "strategy_version": "nba-no-v4-smaller-orders-edge3-baseline",
+            "probability_source": "sportsbook",
+        },
+        {"event": "accepted", "client_order_id": "cid-v4", "order_id": "oid-v4"},
+    ]
+    journal.write_text("".join(json.dumps(r) + "\n" for r in rows))
+
+
+class Exchange(Client):
+    def __init__(self, resting=(), positions=(), **kw):
+        super().__init__(**kw)
+        self._resting, self._positions, self.cancels = (
+            list(resting),
+            list(positions),
+            [],
+        )
+
+    def orders(self, *args):
+        return list(self._resting)
+
+    def positions(self):
+        return list(self._positions)
+
+    def cancel(self, oid, ticker=None):
+        self.cancels.append(oid)
+        return {}
+
+
+def test_resting_v4_order_is_left_alone_and_v5_waits(tmp_path, exchange_offline):
+    journal = tmp_path / "journal.jsonl"
+    write_v4_order(journal)
+    client = Exchange(resting=[{"order_id": "oid-v4", "ticker": "KXNBA-V4-OLD"}])
+    assert not nba.pass_once(client, ARMED, several(5), NOW, journal)
+    assert client.posts == [] and client.cancels == []
+    report = json.loads((tmp_path / "last_scan.json").read_text())
+    assert report["decision"] == "waiting_for_prior_version_orders"
+
+
+def test_filled_v4_position_does_not_block_v5(tmp_path, exchange_offline):
+    journal = tmp_path / "journal.jsonl"
+    write_v4_order(journal)
+    client = Exchange(positions=[{"ticker": "KXNBA-V4-OLD", "position_fp": "-2"}])
+    assert nba.pass_once(client, ARMED, several(5), NOW, journal)
+    assert len(client.posts) == 3 and client.cancels == []
+
+
+def test_ambiguous_second_order_halts_this_and_the_next_pass(tmp_path, no_fees):
+    class Flaky(Client):
+        def place(self, order):
+            if self.posts:
+                raise TimeoutError("socket")
+            return super().place(order)
+
+    journal = tmp_path / "journal.jsonl"
+    with pytest.raises(TradingError, match="Ambiguous"):
+        nba.pass_once(Flaky(), ARMED, several(5), NOW, journal)
+    kinds = [e["event"] for e in nba.load_journal(journal) if e["event"] != "queue"]
+    assert kinds == ["intent", "accepted", "intent", "unknown_outcome"]
+    with pytest.raises(TradingError, match="Uncertain"):
+        nba.pass_once(Client(), ARMED, several(5), NOW, journal)
+
+
+@pytest.mark.parametrize(
+    "name, value, reason",
+    [
+        ("MAX_TEAM_COST", 1.20, "risk_nba_per_team_submissions"),
+        ("MAX_DAILY_COST", 1.20, "risk_nba_daily_submissions"),
+        ("MAX_ACTIVE_COST", 1.20, "risk_nba_active_exposure"),
+        ("MAX_GROSS_COST", 1.20, "risk_nba_lifetime_submissions"),
+        ("MAX_GAME_ORDERS", 2, "risk_nba_game_order_count"),
+    ],
+)
+def test_every_nba_cap_binds_within_one_pass(
+    tmp_path, no_fees, monkeypatch, name, value, reason
+):
+    monkeypatch.setattr(nba, name, value)
+    client = Client()
+    assert nba.pass_once(client, ARMED, several(5), NOW, tmp_path / "journal.jsonl")
+    assert len(client.posts) == 2
+    report = json.loads((tmp_path / "last_scan.json").read_text())
+    assert report["skipped"][reason] == 3
+
+
+def test_account_wide_caps_bind_within_one_pass(tmp_path, no_fees, monkeypatch):
+    import live.shared_account_risk as shared
+
+    journal = tmp_path / "journal.jsonl"
+
+    def fake_state_for(client, sport, now):
+        owner = shared.ownership({"nfl": [], "nba": nba.load_journal(journal)})
+        state = {
+            "resting": [],
+            "held": [],
+            "settled": set(),
+            "settlements": [],
+            "active": [],
+            "rejected_client_ids": set(),
+        }
+        context = {"ownership": owner, "active_client_ids": set()}
+        return state, {**context, "account_pnl": {"loss_stop": False}}
+
+    monkeypatch.setattr(shared, "dual_mode", lambda env: True)
+    monkeypatch.setattr(shared, "state_for", fake_state_for)
+    for key in ("active", "daily", "lifetime"):
+        monkeypatch.setitem(shared.LIMITS, key, 1.20)
+        journal.write_text("")
+        client = Client()
+        assert nba.pass_once(client, ARMED, several(5), NOW, journal)
+        assert len(client.posts) == 2, key
+        report = json.loads((tmp_path / "last_scan.json").read_text())
+        assert report["skipped"]["risk_shared_account_cap"] == 3
+        monkeypatch.setitem(shared.LIMITS, key, 10_000.0)
+
+
+def test_unfunded_shard_after_an_order_still_reports_it_placed(
+    tmp_path, no_fees, monkeypatch
+):
+    calls = []
+
+    def shard(client, ticker, amount):
+        calls.append(ticker)
+        if len(calls) > 1:
+            raise TradingError("SHARD_UNFUNDED_3: no")
+        return 3
+
+    monkeypatch.setattr(nba, "require_funded_shard", shard)
+    client = Client()
+    assert nba.pass_once(client, ARMED, several(5), NOW, tmp_path / "journal.jsonl")
+    report = json.loads((tmp_path / "last_scan.json").read_text())
+    assert len(client.posts) == 1
+    assert report["placed"] is True and report["orders_placed_this_pass"] == 1
+
+
+def test_entry_edge_floor_is_zero_after_the_estimated_fee(tmp_path, no_fees):
+    # NO at 51c. The candidate stage subtracts an estimated maker fee (about
+    # 0.44c here) even when the live fee is zero, so the effective floor is
+    # just above zero: a book probability up to 0.4856 passes, 0.486 does not.
+    for p_book, expected in ((0.48, 3), (0.4856, 3), (0.486, 0)):
+        frame = several(3)
+        frame["p_book"] = p_book
+        client = Client()
+        nba.pass_once(client, ARMED, frame, NOW, tmp_path / f"j{p_book}.jsonl")
+        assert len(client.posts) == expected, p_book
+
+
+# --- Keeping each pass inside the systemd timeout ---
+
+
+def test_no_new_order_starts_after_the_time_budget(tmp_path, no_fees, monkeypatch):
+    monkeypatch.setattr(nba, "elapsed_seconds", lambda: 151.0)
+    client = Client()
+    assert not nba.pass_once(client, ARMED, several(5), NOW, tmp_path / "j.jsonl")
+    assert client.posts == []
+    report = json.loads((tmp_path / "last_scan.json").read_text())
+    assert report["skipped"]["pass_time_budget"] == 1
+
+
+def test_time_budget_is_checked_again_just_before_each_order(
+    tmp_path, no_fees, monkeypatch
+):
+    # Within budget at the top of the loop, over it by the final check.
+    clock = iter([10.0, 10.0, 160.0] + [160.0] * 20)
+    monkeypatch.setattr(nba, "elapsed_seconds", lambda: next(clock))
+    client = Client()
+    assert nba.pass_once(client, ARMED, several(5), NOW, tmp_path / "j.jsonl")
+    assert len(client.posts) == 1
+
+
+def test_queue_position_is_observed_at_most_every_ten_minutes():
+    def observed(minutes_ago):
+        utc = (NOW - timedelta(minutes=minutes_ago)).isoformat()
+        return [{"event": "queue", "order_id": "o1", "utc": utc}]
+
+    assert nba.queue_observation_due([], "o1", NOW)
+    assert not nba.queue_observation_due(observed(3), "o1", NOW)
+    assert nba.queue_observation_due(observed(11), "o1", NOW)
+    assert nba.queue_observation_due(observed(3), "other", NOW)
+
+
+def test_fee_metadata_is_fetched_once_per_series_and_event(monkeypatch):
+    import kalshi.fees as fees
+
+    calls = []
+
+    def get_json(path, params, retries=1):
+        calls.append(path)
+        if path.startswith("/series/"):
+            ticker = path.rsplit("/", 1)[1]
+            return {
+                "series": {
+                    "ticker": ticker,
+                    "fee_type": "quadratic",
+                    "fee_multiplier": 1,
+                }
+            }
+        ticker = path.rsplit("/", 1)[1]
+        return {"event": {"event_ticker": ticker}}
+
+    monkeypatch.setattr(fees, "get_json", get_json)
+    cache = {}
+    for line in (20, 25, 30):
+        fees.live_maker_fee_bound(f"KXNBAPTS-26OCT21ATLORL-ORLX-{line}", 0.5, 1, cache)
+    assert len(calls) == 2  # one series and one event request, then reused
+    fees.live_maker_fee_bound("KXNBAPTS-26OCT21ATLORL-ORLX-35", 0.5, 1)
+    assert len(calls) == 4  # without a cache, fetched fresh as before

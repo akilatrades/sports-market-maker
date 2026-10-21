@@ -34,7 +34,8 @@ def shadow_quotes(candidate, *, max_ticks=2):
         return {"status": "not_whole_cent", "alternatives": []}
     # If the baseline cannot rest as a maker, evaluating price increases is
     # nonsensical. A buy NO at p corresponds to a sell YES ask at 1-p.
-    if not 10 <= cents <= 90 or 1 - base <= yes_bid + 1e-9:
+    # Same NO price band as the live NBA worker (v5: 5-95c).
+    if not 5 <= cents <= 95 or 1 - base <= yes_bid + 1e-9:
         return {"status": "baseline_not_passive", "alternatives": []}
     options = []
     for ticks in range(max_ticks + 1):
@@ -42,7 +43,7 @@ def shadow_quotes(candidate, *, max_ticks=2):
         price = price_cents / 100
         residual = edge - ticks / 100
         if (
-            price_cents > 90
+            price_cents > 95
             or residual < MIN_REMAINING_EDGE - 1e-9
             or 1 - price <= yes_bid + 1e-9
         ):

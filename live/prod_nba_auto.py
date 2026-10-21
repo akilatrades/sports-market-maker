@@ -13,6 +13,7 @@ import fcntl
 import json
 import math
 import os
+import time
 from datetime import UTC, datetime
 from pathlib import Path
 
@@ -54,6 +55,13 @@ MAX_GAME_ORDERS = 40
 MAX_CONTRACTS = 1  # one contract per order: more separate fills, same cash
 MAX_NEW_ORDERS_PER_PASS = 3
 PRICE_BAND_CENTS = (5, 95)  # NO price, inclusive
+# systemd stops a pass after TimeoutStartSec=240. A stop between an order's
+# journal intent and its acceptance halts all future orders, so no new order
+# starts after this many seconds of process runtime (main() sets the clock).
+NEW_ORDER_DEADLINE_SECONDS = 150
+PROCESS_START = None
+# Queue position is telemetry: observe each resting order at most this often.
+QUEUE_OBSERVATION_MINUTES = 10
 # P&L circuit breakers: no new orders after these realized losses.
 MAX_REALIZED_DAILY_LOSS = 20.0
 MAX_REALIZED_CUMULATIVE_LOSS = 60.0
@@ -105,6 +113,26 @@ def money(n):
 
 def reserve(cost):
     return math.ceil(money(cost) * FEE_RESERVE * 100 - 1e-8) / 100
+
+
+def elapsed_seconds():
+    """Seconds since main() started this process; 0 when not run via main()."""
+    return 0.0 if PROCESS_START is None else time.monotonic() - PROCESS_START
+
+
+def queue_observation_due(events, order_id, now):
+    """True unless this order's queue was observed within the last few minutes."""
+    last = None
+    for event in events:
+        if event.get("event") == "queue" and str(event.get("order_id")) == order_id:
+            last = event.get("utc")
+    if last is None:
+        return True
+    try:
+        age = (pd.Timestamp(now) - pd.Timestamp(last)).total_seconds() / 60
+    except (TypeError, ValueError):
+        return True
+    return not 0 <= age < QUEUE_OBSERVATION_MINUTES
 
 
 def records(events):
@@ -455,6 +483,7 @@ def cancel_invalid_resting(client, journal, state, frame, now, events):
     """
     from kalshi.fees import live_maker_fee_bound
 
+    fee_cache = {}  # series/event metadata, reused within this re-check
     accepted_by_id = {
         str(event["order_id"]): str(event["client_order_id"])
         for event in events
@@ -493,7 +522,9 @@ def cancel_invalid_resting(client, journal, state, frame, now, events):
             try:
                 market = fetch_market(ticker)
                 cents, count = int(intent["price_cents"]), int(intent["count"])
-                fee_bound, _ = live_maker_fee_bound(ticker, cents / 100, count)
+                fee_bound, _ = live_maker_fee_bound(
+                    ticker, cents / 100, count, fee_cache
+                )
             except Exception as error:
                 raise TradingError(
                     "Fresh resting quote/fee read failed; HALT new placements"
@@ -684,9 +715,10 @@ def record_markouts(journal, frame, now):
             write_event(journal, observation)
 
 
-# Guardrail for the small pilot. No change to maker/taker status or risk caps.
 # Optional second cent of improvement in >=3c spreads (only if after-fee edge
-# stays >=3c and the quote stays post-only). Off: it lost money in replay.
+# stays >=3c and the quote stays post-only). Off: it lost money in replay, so
+# execution_quote always returns the baseline quote; its 3c/90c checks only
+# apply if this is ever switched back on.
 EXTRA_MAKER_TICK = 0.0  # historical baseline already improves one tick
 MIN_EDGE_AFTER_IMPROVEMENT = 0.03
 # New entries and resting orders use the SAME after-fee edge floor, so an
@@ -1057,6 +1089,9 @@ def pass_once(client, env, frame, now, journal, *, dry=False):
 
     skipped = Counter()
     funnel = {}
+    placed_this_pass = 0
+    fee_cache = {}  # series/event fee metadata, reused within this pass
+    seen_tickers = set()
 
     def finish(decision, placed=False):
         report = {
@@ -1064,6 +1099,8 @@ def pass_once(client, env, frame, now, journal, *, dry=False):
             "strategy_version": STRATEGY_VERSION,
             "decision": decision,
             "placed": placed,
+            "orders_placed_this_pass": placed_this_pass,
+            "pass_seconds": round(elapsed_seconds(), 1),
             "legacy_prior_version_resting_orders": legacy_resting,
             "candidate_count": len(candidates),
             "selection_funnel": dict(funnel),
@@ -1161,7 +1198,8 @@ def pass_once(client, env, frame, now, journal, *, dry=False):
             state["settlements"],
         )
         for resting in state["resting"]:
-            record_queue_observation(client, journal, resting["order_id"], now)
+            if queue_observation_due(events, str(resting["order_id"]), now):
+                record_queue_observation(client, journal, resting["order_id"], now)
         record_markouts(journal, frame, now)
         if legacy_resting:
             # Never alter a previously submitted prior-version order or mix
@@ -1213,10 +1251,16 @@ def pass_once(client, env, frame, now, journal, *, dry=False):
     if not candidates:
         print("No eligible 2-6h NBA opportunities")
         return finish("no_eligible_candidates")
-    placed_this_pass = 0
     for row in candidates:
         if placed_this_pass >= MAX_NEW_ORDERS_PER_PASS:
             break
+        if elapsed_seconds() > NEW_ORDER_DEADLINE_SECONDS:
+            skipped["pass_time_budget"] += 1
+            break
+        if str(row.ticker) in seen_tickers:
+            skipped["duplicate_ticker_in_pass"] += 1
+            continue
+        seen_tickers.add(str(row.ticker))
         try:
             quoted, execution_edge, extra_ticks = execution_quote(row)
             order, cost = order_from_row(row, now, no_price=quoted)
@@ -1247,7 +1291,7 @@ def pass_once(client, env, frame, now, journal, *, dry=False):
             continue
         try:
             fee_bound, fee_metadata = live_maker_fee_bound(
-                order.ticker, quoted, order.count
+                order.ticker, quoted, order.count, fee_cache
             )
             p_book = float(getattr(row, "p_book", float("nan")))
             p_yes = p_book if math.isfinite(p_book) else float(row.p_model)
@@ -1304,8 +1348,14 @@ def pass_once(client, env, frame, now, journal, *, dry=False):
         except TradingError as error:
             if str(error).startswith("SHARD_UNFUNDED_"):
                 skipped["exchange_shard_unfunded"] += 1
-                return finish("exchange_shard_unfunded")
+                return finish("exchange_shard_unfunded", placed=bool(placed_this_pass))
             raise
+
+        # Last check before the irreversible intent: never start an order the
+        # systemd timeout could interrupt between intent and acceptance.
+        if elapsed_seconds() > NEW_ORDER_DEADLINE_SECONDS:
+            skipped["pass_time_budget"] += 1
+            break
 
         # Durable intent first; any failure after this (including a timeout)
         # disables all future automatic orders until manually investigated.
@@ -1360,6 +1410,11 @@ def pass_once(client, env, frame, now, journal, *, dry=False):
             "order_id": result["order_id"],
         }
         write_event(journal, acceptance)
+        # Charge this order to every cap (NBA and account-wide) and to cash
+        # before anything else, so the next candidate in this pass sees it.
+        charge_new_order(intent, acceptance, attempts, accepted, state, shared)
+        free -= reserve(cost)
+        placed_this_pass += 1
         print(
             "PROD AUTO ACCEPTED",
             order.ticker,
@@ -1389,11 +1444,6 @@ def pass_once(client, env, frame, now, journal, *, dry=False):
                 "issue": queue_issue,
             },
         )
-        # Charge this order to every cap (NBA and account-wide) and to cash
-        # before the next candidate is considered in the same pass.
-        charge_new_order(intent, acceptance, attempts, accepted, state, shared)
-        free -= reserve(cost)
-        placed_this_pass += 1
     if placed_this_pass:
         return finish("accepted", placed=True)
     print("No opportunities fit remaining production risk budget or fresh quotes")
@@ -1818,6 +1868,8 @@ def assert_nfl_production_stopped():
 
 
 def main():
+    global PROCESS_START
+    PROCESS_START = time.monotonic()
     from contextlib import nullcontext
     from live.production_lock import account_lock
     from live.nba_inputs import sync, atomic_write
