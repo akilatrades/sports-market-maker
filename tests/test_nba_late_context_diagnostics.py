@@ -41,21 +41,18 @@ def test_late_shadow_reports_both_independent_context_gates():
 def test_predicted_lineup_and_historical_minutes_never_count_as_confirmed():
     candidates = [SimpleNamespace(ticker="A")]
     assert (
-        late_context_diagnostics(
-            _frame(source="prior_only_uncalibrated"), candidates
-        )["both_verified"]
+        late_context_diagnostics(_frame(source="prior_only_uncalibrated"), candidates)[
+            "both_verified"
+        ]
         == 0
     )
     assert (
-        late_context_diagnostics(
-            _frame(status="expected", starter=True), candidates
-        )["both_verified"]
+        late_context_diagnostics(_frame(status="expected", starter=True), candidates)[
+            "both_verified"
+        ]
         == 0
     )
-    assert (
-        late_context_diagnostics(_frame(minutes=7), candidates)["both_verified"]
-        == 0
-    )
+    assert late_context_diagnostics(_frame(minutes=7), candidates)["both_verified"] == 0
     assert (
         late_context_diagnostics(_frame(starter="true"), candidates)[
             "confirmed_starting_five"
