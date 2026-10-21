@@ -1,0 +1,4 @@
+Audit request: investigate the first observed production NBA fill.
+Intent: signed GET-only dashboard inspection, no writes to exchange or Droplet.
+Trigger: 2026-10-21 initial automated request.
+Do not publish order identities, prices, exact execution timestamps or balances.
