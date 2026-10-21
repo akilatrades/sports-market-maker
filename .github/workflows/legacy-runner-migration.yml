@@ -1,0 +1,67 @@
+name: Legacy runner controlled migration
+
+# This does not touch the funded NBA/NFL checkout or trading authorization.
+on:
+  workflow_dispatch:
+    inputs:
+      operation:
+        required: true
+        type: choice
+        default: CHECK_ONLY
+        options:
+          - CHECK_ONLY
+          - MIGRATE_LEGACY
+
+permissions:
+  contents: read
+
+concurrency:
+  group: legacy-runner-migration
+  cancel-in-progress: false
+
+jobs:
+  validate:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - run: pip install pytest ruff==0.11.13
+      - run: |
+          set -euo pipefail
+          ruff check deploy/freeze_legacy_runner.py live/legacy_input_sync.py
+          ruff format --check deploy/freeze_legacy_runner.py live/legacy_input_sync.py
+          pytest -q tests/test_freeze_legacy_runner.py tests/test_legacy_input_sync.py
+
+  droplet:
+    needs: validate
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    env:
+      DROPLET_HOST: ${{ secrets.DROPLET_HOST }}
+      DROPLET_USER: ${{ secrets.DROPLET_USER }}
+      DROPLET_SSH_KEY: ${{ secrets.DROPLET_SSH_KEY }}
+      DROPLET_KNOWN_HOSTS: ${{ secrets.DROPLET_KNOWN_HOSTS }}
+      OPERATION: ${{ inputs.operation }}
+    steps:
+      - name: Configure pinned-host SSH
+        run: |
+          set -euo pipefail
+          [[ "$DROPLET_USER" == trader ]]
+          [[ "$OPERATION" == CHECK_ONLY || "$OPERATION" == MIGRATE_LEGACY ]]
+          umask 077
+          mkdir -p ~/.ssh
+          printf '%s\n' "$DROPLET_SSH_KEY" > ~/.ssh/smm_legacy
+          printf '%s\n' "$DROPLET_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/smm_legacy ~/.ssh/known_hosts
+          ssh-keygen -y -f ~/.ssh/smm_legacy >/dev/null
+      - name: Check or atomically migrate the legacy runner
+        run: |
+          set -euo pipefail
+          args=(-T -o BatchMode=yes -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes -o ConnectTimeout=12 -i "$HOME/.ssh/smm_legacy")
+          if [[ "$OPERATION" == CHECK_ONLY ]]; then
+            ssh "${args[@]}" "$DROPLET_USER@$DROPLET_HOST" \
+              'echo "Existing minute runner source update:"; if grep -qF "git pull -q --rebase origin main || true" /home/trader/run.sh; then echo AUTO_PULL_ENABLED; elif grep -qF "python -m live.legacy_input_sync" /home/trader/run.sh; then echo DATA_ONLY_MIGRATED; else echo UNKNOWN_RUNNER; fi; echo "Verified refresher installed:"; test -f /home/trader/sports-market-maker/live/legacy_input_sync.py && echo YES || echo NO'
+          else
+            ssh "${args[@]}" "$DROPLET_USER@$DROPLET_HOST" \
+              'python3 /home/trader/sports-market-maker/deploy/freeze_legacy_runner.py'
+          fi
