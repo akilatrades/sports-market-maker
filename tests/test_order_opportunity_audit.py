@@ -205,9 +205,9 @@ def test_signed_exchange_expiry_can_confirm_tip_independently_of_journal():
         "expiration_time": tip.isoformat(),
     }
     signed_fills = [{"order_id": "o1", "fill_id": "f1", "count_fp": "4"}]
-    row = audit_cohort(
-        events, [signed_order], signed_fills, sport="nba", now=NOW
-    )["orders"][0]
+    row = audit_cohort(events, [signed_order], signed_fills, sport="nba", now=NOW)[
+        "orders"
+    ][0]
     assert row["signed_exchange_expiry_matches_tip"] is True
     assert row["signed_exchange_expiry_matches_intent"] is False
     assert row["expiration_utc"] != row["signed_exchange_expiration_utc"]
