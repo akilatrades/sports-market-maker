@@ -196,3 +196,14 @@ def test_expiration_gap_is_bucketed_without_exact_time():
     assert row["journal_expiry_gap"] == "before_tip_1h_to_2h"
     assert row["intent_strategy_generation"] == "earlier_or_unknown"
     assert "expiry_delta_seconds" not in json.dumps(public)
+
+
+def test_only_verified_cohort_pnl_sign_is_public():
+    snap, events = fixture()
+    snap["live_pnl"]["nba"].update(settled_markets=1, settled_profit_dollars=1.75)
+    outcome = public_summary(summarize(snap, events, NOW))
+    assert outcome["cohort_realized_pnl_sign"] == "positive"
+    assert "1.75" not in json.dumps(outcome)
+    snap["live_pnl"]["nba"]["status"] = "cost_or_ownership_mismatch"
+    outcome = public_summary(summarize(snap, events, NOW))
+    assert outcome["cohort_realized_pnl_sign"] == "unknown"
