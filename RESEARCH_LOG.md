@@ -1947,3 +1947,64 @@ thousands of orders.
 Unfilled orders were further back in the queue, so the two groups are not
 randomly assigned; a difference could also come from where in the queue
 an order sat. Queue position at posting is reported alongside.
+
+## 2026-10-21: Market-making models applied to the NO seller (plan)
+
+*Written before any of these tests was run. Exploratory and in-sample: the
+v5 rules were chosen on 2025-26, the only season with Kalshi player props.
+A pass here only qualifies an idea for a written-down forward pilot; it is
+not evidence that it works.*
+
+Prompted by an outside article on optimal quoting (Avellaneda-Stoikov,
+Glosten-Milgrom). Five ideas, translated to one-sided resting NO orders held
+to settlement. `research/article_tests.py`.
+
+### Common setup
+- **Orders:** the 2025-26 replay orders (`outputs/decompose/orders_no.csv.gz`,
+  one per market, mostly posted 5 hours before tip), fair value = the frozen
+  stat model's probability, priced one cent better than the best NO bid when
+  the spread allows (else joining it), no maker fee (NBA props have none).
+- **Fills:** contracts a YES taker bought through our price before tip-off
+  (at our price only when we improved the market), as if first in line.
+  Every comparison is run at `flow_share` 1.0 and 0.25 (each contract that
+  traded reaches us with that chance; 0.25 averaged over 10 random draws).
+- **Rules (v5-like):** 1 contract, 0-15¢ edge, 5-95¢, 40 orders and $25 per
+  game, $25 per team and $150 a night, the −$20 nightly stop. The lifetime
+  allowance and cumulative stop are off, so every variant sees the whole
+  season.
+- **Statistics:** game-clustered t; "both halves" = the season split at its
+  median game date.
+
+### Tests, variants and pass bars (14 variants in all)
+1. **Profit decomposition** (descriptive, no variant). Profit per filled
+   contract = entry edge + surprise (outcome − fair value). Adverse
+   selection = surprise of filled orders − surprise of unfilled orders
+   (clustered t). Inventory: the within-game correlation of filled
+   contracts' results and the variance it adds per night.
+2. **Minimum edge (Glosten-Milgrom).** Minimum edge 1, 2, 3 and 4¢ against
+   0¢ (4 variants). Pass: season P&L at least 10% above 0¢ at both flow
+   shares and in both halves, with cents per contract t ≥ 2.
+3. **Time to tip-off (Avellaneda-Stoikov's horizon term).** Orders rebuilt
+   from hourly quotes posted 2, 4 or 6 hours before tip, each with a minimum
+   edge of 0 or 0.5¢ per hour before tip beyond 2 (6 variants), against
+   orders posted 5 hours before with 0¢ (control, rebuilt the same way).
+   Pass: season P&L at least 10% above control at both flow shares and in
+   both halves. Caveat written now: the replay puts every improving order
+   first in line whenever it was posted, so it cannot show the queue
+   advantage of posting earlier, only the price and selection effects.
+4. **Same-game inventory penalty (Avellaneda-Stoikov's inventory term).**
+   The k-th order in a game needs an extra (k − 1) × c of edge, for c = 0.1,
+   0.25 and 0.5¢ (3 variants). Pass: Sharpe ratio of nightly P&L at least
+   10% above control at both flow shares and in both halves, with season
+   P&L no more than 10% below control.
+5. **Fill-probability quote choice (order arrival intensity).** For each
+   order, choose join, improve 1¢ or improve 2¢ (when the spread allows) to
+   maximise P(fill) × edge, P(fill) from a logistic model fitted on the
+   first half using only what is known when posting (spread, price, option,
+   hours before tip, open interest at posting). 1 variant, against always
+   improving 1¢, scored on the second half: profit per 100 eligible orders
+   (one contract each, unfilled count zero). Pass: at least 10% above the
+   control with the paired difference's game-clustered t ≥ 2 at flow share
+   1.0, and above control at 0.25.
+
+Results will be appended below this plan without editing it.
