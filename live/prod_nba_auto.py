@@ -14,6 +14,7 @@ import os
 from datetime import UTC, datetime
 from pathlib import Path
 
+import numpy as np
 import pandas as pd
 
 from kalshi.api import fetch_market
@@ -896,8 +897,7 @@ def late_context_diagnostics(frame, candidates):
         )
         confirmed = (
             row.get("lineup_confirmation_status") == "confirmed"
-            and isinstance(row.get("confirmed_starter"), (bool, type(pd.NA)))
-            and row.get("confirmed_starter") is not pd.NA
+            and isinstance(row.get("confirmed_starter"), (bool, np.bool_))
         )
         counts["licensed_projected_minutes"] += int(verified_minutes)
         counts["confirmed_starting_five"] += int(confirmed)
