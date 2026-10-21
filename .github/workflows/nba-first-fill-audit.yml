@@ -1,0 +1,56 @@
+name: NBA filled-order audit (read only)
+
+# Owner-started diagnostic. Never places/cancels orders or deploys trading code.
+# PUBLIC repository: only de-identified metrics may reach job stdout.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: nba-private-fill-audit
+  cancel-in-progress: false
+
+jobs:
+  audit:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Verify redacted report behavior
+        run: |
+          set -euo pipefail
+          pip install pytest ruff==0.11.13
+          ruff check tools/review_recent_nba_fill.py tests/test_review_recent_nba_fill.py
+          ruff format --check tools/review_recent_nba_fill.py tests/test_review_recent_nba_fill.py
+          pytest -q tests/test_review_recent_nba_fill.py
+      - name: Read signed private NBA fill audit, print anonymous metrics only
+        env:
+          DROPLET_HOST: ${{ secrets.DROPLET_HOST }}
+          DROPLET_USER: ${{ secrets.DROPLET_USER }}
+          DROPLET_SSH_KEY: ${{ secrets.DROPLET_SSH_KEY }}
+          DROPLET_KNOWN_HOSTS: ${{ secrets.DROPLET_KNOWN_HOSTS }}
+        run: |
+          set -euo pipefail
+          [[ "$DROPLET_USER" == trader ]] || { echo "Private trader SSH account required"; exit 1; }
+          for secret in DROPLET_HOST DROPLET_SSH_KEY DROPLET_KNOWN_HOSTS; do
+            [[ -n "${!secret}" ]] || { echo "::error::Missing $secret"; exit 1; }
+          done
+          umask 077
+          mkdir -p ~/.ssh
+          printf '%s\n' "$DROPLET_SSH_KEY" > ~/.ssh/read_only_nba
+          printf '%s\n' "$DROPLET_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/read_only_nba ~/.ssh/known_hosts
+          ssh-keygen -y -f ~/.ssh/read_only_nba >/dev/null
+          # Audit source travels on stdin to ephemeral Python on the Droplet.
+          # Signed exchange reads happen in the existing dashboard process.
+          # No raw private dashboard JSON or journal entries leave the host.
+          ssh -T -o BatchMode=yes -o IdentitiesOnly=yes \
+            -o StrictHostKeyChecking=yes -o ConnectTimeout=12 \
+            -i "$HOME/.ssh/read_only_nba" \
+            "$DROPLET_USER@$DROPLET_HOST" 'python3 -' \
+            < tools/review_recent_nba_fill.py
