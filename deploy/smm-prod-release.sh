@@ -117,20 +117,34 @@ runuser -u trader -- "$ROOT/.venv/bin/python" -m compileall -q \
 # Signed production checks use the server's existing protected environment;
 # never print environment files or modify arm flags, risk, KILL, or journals.
 if (( nfl_was || nba_was )); then
-  systemd-run --quiet --wait --pipe --collect --uid=trader \
+  account_log="$(mktemp /root/smm-account-preflight.XXXXXXXX)"
+  chmod 600 "$account_log"
+  if ! systemd-run --quiet --wait --pipe --collect --uid=trader \
     -p "WorkingDirectory=$ROOT" \
     -p EnvironmentFile=/etc/market-maker-prod-auto.env \
     -p Environment=OPENBLAS_NUM_THREADS=1 \
     -p Environment=OMP_NUM_THREADS=1 \
-    "$ROOT/.venv/bin/python" -m tools.dual_account_preflight
+    "$ROOT/.venv/bin/python" -m tools.dual_account_preflight > "$account_log" 2>&1; then
+    echo "Funded account GET-only verification failed; details retained at $account_log on Droplet" >&2
+    exit 1
+  fi
+  rm -f "$account_log"
+  echo "Funded account GET-only verification: PASS"
 fi
 if (( nba_was )); then
-  systemd-run --quiet --wait --pipe --collect --uid=trader \
+  nba_log="$(mktemp /root/smm-nba-preflight.XXXXXXXX)"
+  chmod 600 "$nba_log"
+  if ! systemd-run --quiet --wait --pipe --collect --uid=trader \
     -p "WorkingDirectory=$ROOT" \
     -p EnvironmentFile=/etc/market-maker-prod-nba-auto.env \
     -p Environment=OPENBLAS_NUM_THREADS=1 \
     -p Environment=OMP_NUM_THREADS=1 \
-    "$ROOT/.venv/bin/python" -m live.prod_nba_auto --preflight --sync-inputs
+    "$ROOT/.venv/bin/python" -m live.prod_nba_auto --preflight --sync-inputs > "$nba_log" 2>&1; then
+    echo "NBA GET-only verification failed; details retained at $nba_log on Droplet" >&2
+    exit 1
+  fi
+  rm -f "$nba_log"
+  echo "NBA GET-only verification: PASS"
 fi
 
 # Code-only: NEVER alter the installed systemd units here, and NEVER
