@@ -362,3 +362,11 @@ def test_helper_keeps_check_output_off_the_public_log():
     assert '>"$log" 2>&1' in text  # account checks go to root-only files
     assert 'cat "$NFL_ENV"' not in text and 'cat "$NBA_ENV"' not in text
     assert "systemctl disable --now" in text  # stopped bots stay off after reboot
+
+
+def test_cancel_never_writes_through_a_planted_link(box):
+    target = box["t"] / "outside.txt"
+    (box["t"] / "nba" / "KILL").symlink_to(target)  # dangling link
+    code, out = box["run"]("stop-and-cancel")
+    assert not target.exists()
+    assert (box["t"] / "nba" / "KILL").is_symlink()  # left for the owner

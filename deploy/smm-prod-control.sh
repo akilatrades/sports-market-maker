@@ -151,7 +151,7 @@ go_live() {
     [[ -f "$f" ]] || { say "ERROR: a required settings file or journal is missing"; exit 1; }
   done
   for d in "$NFL_DIR" "$NBA_DIR"; do
-    [[ ! -e "$d/KILL" ]] || { say "ERROR: a KILL switch is present; remove it deliberately before going live"; exit 1; }
+    [[ ! -e "$d/KILL" && ! -L "$d/KILL" ]] || { say "ERROR: a KILL switch is present; remove it deliberately before going live"; exit 1; }
   done
   [[ "$(runuser -u trader -- git -C "$ROOT" branch --show-current)" == main ]] || {
     say "ERROR: production checkout is not on main"; exit 1; }
@@ -259,10 +259,11 @@ stop_and_cancel() {
   stop_timers
   local d svc name failed=0
   for d in "$NBA_DIR" "$NFL_DIR"; do
-    if [[ ! -e "$d/KILL" ]]; then
-      printf '%s\n' "$KILL_TAG" > "$d/KILL"
-      chown trader:trader "$d/KILL"
-      chmod 600 "$d/KILL"
+    if [[ ! -e "$d/KILL" && ! -L "$d/KILL" ]]; then
+      # Write as trader, never as root: root must not follow a link planted
+      # in a trader-owned directory. noclobber refuses any existing path.
+      runuser -u trader -- bash -c \
+        'set -o noclobber; umask 077; printf "%s\n" "$1" > "$2"' _ "$KILL_TAG" "$d/KILL"
     fi
   done
   for svc in "$NBA_SVC" "$NFL_SVC"; do
@@ -282,7 +283,7 @@ stop_and_cancel() {
   fi
   for d in "$NBA_DIR" "$NFL_DIR"; do
     # Remove only switches this helper created; an owner's own KILL stays.
-    if [[ -f "$d/KILL" && "$(cat "$d/KILL")" == "$KILL_TAG" ]]; then
+    if [[ -f "$d/KILL" && ! -L "$d/KILL" && "$(cat "$d/KILL")" == "$KILL_TAG" ]]; then
       rm -f "$d/KILL"
     fi
   done
