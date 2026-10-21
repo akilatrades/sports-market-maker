@@ -331,8 +331,10 @@ def record_queue_observation(client, journal, order_id, now):
 
 
 # Guardrail for the small pilot. No change to maker/taker status or risk caps.
-# Only improve a quote by a second tick in a spread wide enough to stay passive.
-EXTRA_MAKER_TICK = 0.01
+# The baseline quote already improves the NO bid by one tick. A second tick
+# cost about 17 cents per 100 orders (t -5) in the 2025-26 NBA replay, so it
+# is switched off here too; set above zero only in a separately reviewed test.
+EXTRA_MAKER_TICK = 0.0
 MIN_EDGE_AFTER_IMPROVEMENT = 0.03
 
 
@@ -358,7 +360,8 @@ def execution_quote(candidate):
     proposed = round(base + EXTRA_MAKER_TICK, 2)
     remaining_edge = round(original_edge - EXTRA_MAKER_TICK, 5)
     take_second_tick = (
-        spread_cents >= 3
+        EXTRA_MAKER_TICK > 0
+        and spread_cents >= 3
         and remaining_edge >= MIN_EDGE_AFTER_IMPROVEMENT
         and proposed <= 0.90
         and round(1 - proposed, 2) > round(bid, 2)

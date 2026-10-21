@@ -42,6 +42,7 @@ are kept unchanged as part of the record.
 | Document | What it covers |
 |---|---|
 | [Server deployment](../deploy/README.md) | Always-on trader setup |
+| [Go live / Stop button](../deploy/GO_LIVE_BUTTON.md) | Owner-only GitHub button to switch the funded bots on or off; public logs show only pass/fail and on/off |
 | [NBA production worker](../deploy/PROD_NBA_AUTO.md) | Bounded NBA pilot: preflight, activation and handoff |
 | [NFL production worker](../deploy/PROD_NFL_AUTO.md) | Bounded NFL pilot |
 | [Supervised NFL pilot](../deploy/PROD_NFL_PILOT.md) | The first single-order production test |

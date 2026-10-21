@@ -109,8 +109,9 @@ updater while both pilots are running.
 
 ## New entry cohort
 
-`nfl-no-v2-reserved-edge` requires 3 cents of estimated edge per contract **after
-the full existing 10% cost reserve, rounded up to cents**. This is a conservative
+`nfl-no-v3-baseline-quote` (formerly `nfl-no-v2-reserved-edge`, identical except
+that the optional second maker tick is now off) requires 3 cents of estimated
+edge per contract **after the full existing 10% cost reserve, rounded up to cents**. This is a conservative
 budget buffer, not a quote of the exchange's actual fee. It is deliberately not
 calibrated to the single settled NFL game in the saved comparison. Probability
 comes from the matched sportsbook line when available; otherwise from the model.
