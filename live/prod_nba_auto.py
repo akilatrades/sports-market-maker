@@ -101,9 +101,13 @@ def records(events):
         client_id = event.get("client_order_id")
         order_id = event.get("order_id")
         if not client_id or not order_id:
-            raise TradingError("Malformed exchange acceptance in production journal: HALT")
+            raise TradingError(
+                "Malformed exchange acceptance in production journal: HALT"
+            )
         if client_id in accepted or order_id in accepted_order_ids:
-            raise TradingError("Duplicate exchange acceptance in production journal: HALT")
+            raise TradingError(
+                "Duplicate exchange acceptance in production journal: HALT"
+            )
         accepted[client_id] = event
         accepted_order_ids.add(order_id)
     if len({e["client_order_id"] for e in attempts}) != len(attempts):
