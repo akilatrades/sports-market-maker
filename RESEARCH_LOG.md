@@ -1895,3 +1895,44 @@ Not a test; recorded because it changes which v5 orders are placed and kept.
   report news move against the order before tip-off more often than other
   resting markets (the "picked off" risk this is meant to avoid)? No pass/fail
   bar; it needs a pre-registered plan before any confirmatory claim.
+
+## 2026-10-21: Adverse selection on live v5 fills (plan)
+
+*Written before any live outcome was looked at. Running numbers shown in
+the owner's private nightly report before the checkpoint are monitoring
+only; nothing is decided from them.*
+
+### Question
+Do the orders that get filled lose more often than the sportsbooks' price
+said, compared with orders that rested at the same kind of price but did
+not fill? In other words, is P(NO | filled) below P(NO) at entry? If
+informed traders are the ones filling us, the edge we estimate at entry
+(`Edge(NO) = P(NO) − price − fees`) overstates the edge we actually earn.
+
+### Method
+- **Orders:** live NBA orders with strategy version
+  `nba-no-v5-one-contract-breadth`, accepted by the exchange and priced by
+  the sportsbooks (two or more books).
+- **Outcome:** each market's result from Kalshi's public results
+  (`data/kalshi/2027/results/`), so unfilled orders are scored too.
+- **Per order:** surprise = (1 if NO won, else 0) − fair NO at entry, where
+  fair NO = 1 − the sportsbooks' de-vigged probability at entry.
+- **Comparison:** mean surprise of filled orders against orders that never
+  filled, from a regression of surprise on a filled indicator with
+  standard errors clustered by game. Orders cancelled before tip-off are
+  reported separately (they were cancelled for a reason, such as injury
+  news or a lost edge), and the main comparison uses orders that rested
+  until tip-off.
+- **When:** at 500 settled filled orders and 500 settled unfilled orders,
+  or at the v5 checkpoint, whichever comes first.
+
+### Pass/fail bar (one test, one variant)
+Adverse selection is **found** if filled orders' surprise is below the
+unfilled orders' by at least 1¢ with t ≤ −2. Then a new plan, written
+first, tests raising the minimum edge by the measured gap. Otherwise
+nothing changes.
+
+### Caveats
+Unfilled orders were further back in the queue, so the two groups are not
+randomly assigned; a difference could also come from where in the queue
+an order sat. Queue position at posting is reported alongside.
