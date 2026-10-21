@@ -73,6 +73,13 @@ before each order.
 - Contract count shrinks until price plus the 10% reserve fits. Reserve is a risk allowance, not an actual expense. Actual reported fees determine P&L.
 - Current series/event fees must be understood and the verified price must stay passive. Estimated edge after the fee bound must be zero or more (and at most 15¢; bigger "edges" are usually data errors) to enter and to keep resting; v4 required 3¢. Prices stay within 5–95¢. Unknown fee types block entry.
 - Current roster, exact fixture, projection timestamp/checksum and injury news must agree. New team injury news requires refreshed projections; book probabilities predating team news are discarded.
+- **Official NBA injury report** (`markets/nba/official_injuries.py`), checked every scan on top of ESPN's feed. The league publishes it every 15 minutes; the worker reads the newest one (at most 60 minutes old) and the one from when the projections were made, for tonight's games only:
+  - a player listed **Out** or **Doubtful** is vetoed; **Questionable** is vetoed and his teammates need two fresh books;
+  - a team whose Out/Doubtful/Questionable listings **changed since the projections** has all its props vetoed until the next projection run (resting orders on them are cancelled); a player whose status changed at all is vetoed;
+  - a team still **"not yet submitted"** for tonight is vetoed; a high-risk player ESPN does not list yet makes teammates need two fresh books;
+  - G League two-way assignments never count as a team change. Probable and Available change nothing; the report never removes a veto.
+  - It **fails open**: if the report cannot be fetched or read within 20 seconds, the scan continues on ESPN's checks alone and `last_scan.json` shows `official_injury_report.status: unavailable` with the reason. The reader needs no extra packages; if the PDF layout changes it reports an error rather than guessing.
+  - Each `cancel_intent` journal entry records the veto that caused it (`veto`, e.g. `OFFICIAL_TEAM_INJURY_CHANGE`), so official-report cancels can be counted.
 - Long absences over 45 days and transfers require two fresh books on the exact line. Ambiguous player names, unsupported rookies/history, missing context and changed fixtures are skipped.
 - Durable intent precedes POST. Uncertain submission stops new orders pending manual reconciliation. Shared process locking and ownership checks prevent the two pilots from independently allocating the same account.
 
