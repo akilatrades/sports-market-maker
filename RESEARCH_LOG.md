@@ -1810,3 +1810,52 @@ of the flow:
   edge cap stays. A second cent of price improvement added about two fills a
   night but cut profit per contract by about 0.5¢.
 - All of this is in-sample with optimistic fills; live results will be lower.
+
+## 2026-10-21: NBA rules v5, more orders for faster evidence (plan)
+
+*Written before the v5 code change. Approved by the owner on 21 October
+2026. Results will be appended below, without editing this plan.*
+
+### Why
+At the v4 rules the replay reaches about 480 filled orders before the $1,000
+lifetime allowance runs out, too few to tell a 3¢ edge from luck (about
+1,900 are needed once same-game correlation is counted). v5 places more,
+smaller orders so that question can be answered sooner. Pricing does not
+change: one cent better than the best NO bid, post-only, resting until
+tip-off.
+
+### What changes (`nba-no-v5-one-contract-breadth`)
+| Setting | v4 | v5 |
+|---|---|---|
+| Contracts per order | 2 | 1 |
+| Minimum edge to place and to keep | 3¢ | 0¢ (15¢ cap unchanged) |
+| Price range | 10–90¢ | 5–95¢ |
+| Orders per game | 10 | 40 |
+| Cost per game / per team per day | $15 / $10 | $25 / $25 |
+| New orders per day; open at once | $75; $75 | $150; $150 |
+| New orders per scan | 1 | up to 3 |
+| Lifetime allowance | $1,000 | $2,000 |
+| Account-wide daily / open / lifetime | $105 / $90 / $1,050 | $180 / $165 / $2,050 |
+| Loss stops | −$20 a day, −$60 total | unchanged |
+
+Replay expectation (2025–26, in-sample, first in line): about 1,900 filled
+orders over about 51 game nights before the $2,000 allowance runs out; live
+fills may be half that rate.
+
+### How v5 will be judged
+- **Group:** every order whose journal intent says
+  `nba-no-v5-one-contract-breadth`, counted from its first accepted order.
+  v4 orders stay a separate group.
+- **Primary measure:** settled profit per filled contract, after actual
+  fees, with game-clustered t.
+- **Checkpoint:** when the $2,000 allowance runs out or 1,900 settled fills,
+  whichever comes first, and in any case at 30 days.
+- **Reading the result:** t ≥ 2 and positive means the edge is real at these
+  settings; positive but t < 2 means keep collecting; t ≤ −1 at the
+  checkpoint means stop and review.
+- **Reported separately, decided in advance:** orders with at least 3¢ of
+  edge at entry against those under 3¢; sportsbook-priced against
+  model-priced; orders where the model's view and the books' differ by 5
+  points or more against the rest; live fill rate against the replay's.
+- **Stops:** the existing loss stops (−$20 a day, −$60 total, account-wide)
+  apply throughout; no limit is raised during the evaluation.
