@@ -7,7 +7,7 @@ echo "inventory_utc=$(date -u +%FT%TZ)"
 echo "ssh_user=$(id -un)"
 echo "host_os=$(uname -s)"
 echo "systemd_services:"
-for unit in market-maker.timer market-maker.service prod-nba-auto.service prod-nba-auto.timer prod-nfl-auto.service prod-nfl-auto.timer nba-prod.service nfl-prod.service; do
+for unit in market-maker.timer market-maker.service market-maker-prod-nba-auto.service market-maker-prod-nba-auto.timer market-maker-prod-nfl-auto.service market-maker-prod-nfl-auto.timer prod-nba-auto.service prod-nba-auto.timer prod-nfl-auto.service prod-nfl-auto.timer market-maker-dashboard.service market-maker-live-pnl.service; do
   active=$(systemctl is-active "$unit" 2>/dev/null || true)
   enabled=$(systemctl is-enabled "$unit" 2>/dev/null || true)
   result=$(systemctl show "$unit" --property=Result --value 2>/dev/null || true)
@@ -18,6 +18,21 @@ echo "related_unit_names:"
 systemctl list-unit-files --no-legend --no-pager 2>/dev/null \
   | awk 'tolower($1) ~ /(market-maker|kalshi|nba|nfl|sports-market)/ {print $1}' \
   | sort -u | head -60
+
+echo "installed_unit_worker_modules:"
+for unit in market-maker-prod-nba-auto.service market-maker-prod-nfl-auto.service market-maker.service; do
+  path=$(systemctl show "$unit" --value --property=FragmentPath 2>/dev/null || true)
+  if [ -n "$path" ] && [ -r "$path" ]; then
+    printf '%s unit_file_readable=yes\\n' "$unit"
+    for module in live.prod_nba_auto live.prod_nfl_auto live.nba_trade; do
+      if grep -Fq "$module" "$path"; then
+        printf '%s points_to=%s\\n' "$unit" "$module"
+      fi
+    done
+  else
+    printf '%s unit_file_readable=no\\n' "$unit"
+  fi
+done
 
 echo "candidate_repository_locations:"
 for directory in \
