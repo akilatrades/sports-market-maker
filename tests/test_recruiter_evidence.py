@@ -2,6 +2,7 @@
 
 These are content integrity checks, not market-performance assertions.
 """
+
 import re
 from pathlib import Path
 from urllib.parse import unquote
