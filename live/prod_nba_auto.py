@@ -929,15 +929,15 @@ def entry_evidence(row):
     source = str(getattr(row, "projected_minutes_source", "unverified"))
     projected = number(getattr(row, "projected_minutes", None))
     verified_projection = (
-        source == "rotowire_licensed"
-        and projected is not None
-        and 8 <= projected <= 48
+        source == "rotowire_licensed" and projected is not None and 8 <= projected <= 48
     )
     lineup = str(getattr(row, "lineup_confirmation_status", "unverified"))
     starter = getattr(row, "confirmed_starter", None)
-    starter = bool(starter) if (
-        lineup == "confirmed" and isinstance(starter, (bool, np.bool_))
-    ) else None
+    starter = (
+        bool(starter)
+        if (lineup == "confirmed" and isinstance(starter, (bool, np.bool_)))
+        else None
+    )
     return {
         "projected_minutes_at_entry": projected if verified_projection else None,
         "projected_minutes_source_at_entry": source
@@ -957,9 +957,7 @@ def entry_evidence(row):
         "book_updated_utc_at_entry": stamp("book_updated_utc"),
         "book_game_tip_utc_at_entry": stamp("book_commence_utc"),
         "model_probability_yes_at_entry": number(getattr(row, "p_model", None)),
-        "sportsbook_probability_yes_at_entry": number(
-            getattr(row, "p_book", None)
-        ),
+        "sportsbook_probability_yes_at_entry": number(getattr(row, "p_book", None)),
         "kalshi_yes_bid_at_entry": number(getattr(row, "yes_bid", None)),
         "kalshi_yes_ask_at_entry": number(getattr(row, "yes_ask", None)),
     }
