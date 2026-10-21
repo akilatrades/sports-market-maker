@@ -895,9 +895,8 @@ def late_context_diagnostics(frame, candidates):
             and pd.notna(minutes)
             and 8 <= float(minutes) <= 48
         )
-        confirmed = (
-            row.get("lineup_confirmation_status") == "confirmed"
-            and isinstance(row.get("confirmed_starter"), (bool, np.bool_))
+        confirmed = row.get("lineup_confirmation_status") == "confirmed" and isinstance(
+            row.get("confirmed_starter"), (bool, np.bool_)
         )
         counts["licensed_projected_minutes"] += int(verified_minutes)
         counts["confirmed_starting_five"] += int(confirmed)
