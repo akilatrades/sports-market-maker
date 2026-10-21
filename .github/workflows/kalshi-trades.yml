@@ -1,0 +1,52 @@
+name: log Kalshi trade prints
+# Kalshi's PUBLIC trade prints for last night's NBA player-prop markets
+# (market data only: no account, order or position information), saved to
+# data/kalshi/<season>/trades/<night>.csv.gz. Used to measure what share of
+# the trading at a price a resting order really gets.
+on:
+  schedule:
+    - cron: "25 9 * * *" # 5:25 AM Eastern, after the last games have ended
+  workflow_dispatch:
+    inputs:
+      night:
+        description: "Eastern game date YYYY-MM-DD (blank = yesterday)"
+        required: false
+        default: ""
+permissions:
+  contents: write
+concurrency:
+  group: kalshi-trades
+  cancel-in-progress: false
+jobs:
+  log:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r requirements.txt
+      - name: Fetch trade prints
+        env:
+          NIGHT: ${{ inputs.night }}
+        run: |
+          set -euo pipefail
+          if [[ -n "${NIGHT:-}" ]]; then
+            [[ "$NIGHT" =~ ^20[0-9]{2}-[01][0-9]-[0-3][0-9]$ ]]
+            python -m live.log_kalshi_trades --night "$NIGHT"
+          else
+            python -m live.log_kalshi_trades
+          fi
+      - name: Commit
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A data/kalshi
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m "Kalshi trade prints $(date -u +%Y-%m-%dT%H:%MZ)"
+          for attempt in 1 2 3 4 5; do
+            if git pull --rebase -X theirs && git push; then exit 0; fi
+            sleep $((attempt * 5))
+          done
+          exit 1
