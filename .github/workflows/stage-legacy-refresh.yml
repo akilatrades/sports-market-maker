@@ -4,6 +4,14 @@ name: Stage legacy refresh files
 # directory; does NOT alter an installed Python module, runner, or timer.
 on:
   workflow_dispatch:
+    inputs:
+      operation:
+        required: true
+        type: choice
+        default: STAGE_ONLY
+        options:
+          - STAGE_ONLY
+          - MIGRATE_LEGACY
 
 permissions:
   contents: read
@@ -39,6 +47,7 @@ jobs:
       DROPLET_SSH_KEY: ${{ secrets.DROPLET_SSH_KEY }}
       DROPLET_KNOWN_HOSTS: ${{ secrets.DROPLET_KNOWN_HOSTS }}
       STAGING_SHA: ${{ github.sha }}
+      OPERATION: ${{ inputs.operation }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -48,6 +57,7 @@ jobs:
           set -euo pipefail
           [[ "$DROPLET_USER" == trader ]]
           [[ "$STAGING_SHA" =~ ^[0-9a-f]{40}$ ]]
+          [[ "$OPERATION" == STAGE_ONLY || "$OPERATION" == MIGRATE_LEGACY ]]
           umask 077
           mkdir -p ~/.ssh
           printf '%s\n' "$DROPLET_SSH_KEY" > ~/.ssh/legacy_stage
@@ -73,4 +83,12 @@ jobs:
             exit 1
           fi
           ssh -T "${args[@]}" "$target" \
-            "python3 -m py_compile '$stage/nba_inputs.py' '$stage/legacy_input_sync.py' '$stage/freeze_legacy_runner.py' && test -e /home/trader/run.sh && echo STAGED_ONLY_SHA=$STAGING_SHA && echo NO_LIVE_WORKER_CHANGED"
+            "python3 -m py_compile '$stage/nba_inputs.py' '$stage/legacy_input_sync.py' '$stage/freeze_legacy_runner.py' && test -e /home/trader/run.sh && echo VERIFIED_STAGE_SHA=$STAGING_SHA"
+          if [[ "$OPERATION" == STAGE_ONLY ]]; then
+            echo STAGED_ONLY_NO_WORKER_CHANGED
+          else
+            ssh -T "${args[@]}" "$target" \
+              "python3 '$stage/freeze_legacy_runner.py' --staged '$stage'"
+            ssh -T "${args[@]}" "$target" \
+              'grep -qF ".venv/bin/python -m live.legacy_input_sync" /home/trader/run.sh && ! grep -qF "git pull -q --rebase origin main || true" /home/trader/run.sh && echo VERIFIED_DATA_ONLY_RUNNER'
+          fi
