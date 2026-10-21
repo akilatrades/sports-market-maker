@@ -1810,3 +1810,48 @@ of the flow:
   edge cap stays. A second cent of price improvement added about two fills a
   night but cut profit per contract by about 0.5¢.
 - All of this is in-sample with optimistic fills; live results will be lower.
+
+## 2026-10-21: Do star players' props deserve bigger orders? (plan)
+
+*Written before running anything. Results are appended below the plan.*
+
+### Question
+A scenario table circulated today assumed star players' props earn either
+more (4.5¢ vs 3.2¢) or less (2.5¢ vs 4.0¢) per contract than other players'
+props, and that extra contracts on stars fill at the same rate. Measure
+instead: do resting NO orders on stars earn a different amount per contract,
+and does giving star props more contracts per order raise profit relative to
+drawdown?
+
+### Method (fixed in advance)
+- **Base replay:** `research.fill_sizing_replay` rules with 1 contract per
+  order, 0¢ minimum edge, 15¢ edge cap, 10–90¢ prices, 25 orders a game, no
+  cash limits; flow share 1 and 0.25. 2025–26 season, in-sample.
+- **Star, definition S1 (primary):** the player's projected points for that
+  game (`model_mean` on his points markets) is 20 or more. Known before the
+  game. A player with no points market that game is not a star.
+- **Star, definition S2 (secondary, popularity):** the player's average
+  traded contracts per market over his earlier games (strictly before that
+  day, at least 3 games) is in the top 30% of all player-games. The 30%
+  cut-off is taken over the whole season (a mild look-ahead, noted).
+- **Comparison:** ¢ per filled contract for stars and for everyone else, and
+  the star-minus-other difference with game-clustered t; fill rate and
+  traded-through volume by group.
+- **Weighting:** stars get 2, 3 or 5 contracts per order, everyone else 1;
+  fills are capped by the contracts that actually traded through the price
+  (times the flow share). Report P&L, ¢ per contract, max drawdown and P&L
+  per dollar of drawdown.
+- **Robustness:** regular season only; first and second half of the season
+  (split at the median date).
+- **Variants:** 2 definitions × 4 weightings × 2 flow shares = 16 replays,
+  plus the group comparisons in 3 samples. All are reported.
+
+### Pass/fail bar
+- **Weight stars up** only if, under S1, stars beat everyone else by at
+  least 1¢ per contract with t ≥ 2 on the full season, the sign holds in both
+  halves and in the regular season, and 2× weighting improves P&L per dollar
+  of drawdown at flow share 0.25.
+- **Look at weighting stars down** (a separate future test) if stars trail
+  by at least 1¢ with t ≤ −2 under the same conditions.
+- Otherwise: keep equal weighting. No live rule changes either way without
+  the owner's approval.
