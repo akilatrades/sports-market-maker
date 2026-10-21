@@ -1,10 +1,11 @@
 """Bounded unattended NBA production worker (shares one account with NFL).
 
 Limits are the MAX_* constants below (lifetime gross-cost budget MAX_GROSS_COST,
-including a fee buffer) plus the account-wide caps in shared_account_risk. One
-new post-only order max per pass, no automatic re-arming, and durable journal
-before each network write. Fail closed on inconsistent balances, orders,
-positions, fills or model data.
+including a fee buffer) plus the account-wide caps in shared_account_risk. At
+most MAX_NEW_ORDERS_PER_PASS new post-only orders per pass, each charged to
+every cap before the next is considered; no automatic re-arming, and durable
+journal before each network write. Fail closed on inconsistent balances,
+orders, positions, fills or model data.
 """
 
 import argparse
@@ -12,6 +13,7 @@ import fcntl
 import json
 import math
 import os
+import time
 from datetime import UTC, datetime
 from pathlib import Path
 
@@ -26,22 +28,40 @@ from live.nfl_policy import settlement_accounting
 from live.nba_inputs import MODEL_VERSION
 from live.reconciled_attempts import rejected_client_ids
 
-STRATEGY_VERSION = "nba-no-v4-smaller-orders-edge3-baseline"
+STRATEGY_VERSION = "nba-no-v5-one-contract-breadth"
+# Earlier versions whose resting orders are left untouched to expire while
+# new orders wait (see legacy_resting_count); any other version HALTs.
+PRIOR_VERSIONS = frozenset(
+    {
+        "nba-no-v2-opening-audit",
+        "nba-no-v3-long-resting-throughput",
+        "nba-no-v4-smaller-orders-edge3-baseline",
+    }
+)
 
-# Owner-approved larger fill-measurement sizing for a $250 account
-# (2026-10-21): about 500 fills in two to three weeks. Order size stays at
-# two contracts so the sample spreads across many markets. Submitted cost
-# is charged to the daily and lifetime allowances even when an order expires
-# unfilled; the realized-loss stops below are the binding money limit
-# (-$60 total is 24% of the account).
-MAX_GROSS_COST = 1000.0  # lifetime submitted allowance
+# Owner-approved v5 sizing for a $250 account (2026-10-21, RESEARCH_LOG.md
+# "NBA rules v5"): many one-contract orders so the edge can be measured on
+# about 1,900 fills. Pricing is unchanged. Submitted cost is charged to the
+# daily and lifetime allowances even when an order expires unfilled; the
+# realized-loss stops below are the binding money limit (-$60 total is 24% of
+# the account).
+MAX_GROSS_COST = 2000.0  # lifetime submitted allowance (pauses for review)
 MAX_ORDER_COST = 4.0
-MAX_ACTIVE_COST = 75.0  # orders rest until their games end, so ~ one day
-MAX_GAME_COST = 15.0
-MAX_TEAM_COST = 10.0  # per team per New York day
-MAX_DAILY_COST = 75.0
-MAX_GAME_ORDERS = 10
-MAX_CONTRACTS = 2  # smaller live validation fills; sample more markets
+MAX_ACTIVE_COST = 150.0  # orders rest until their games end, so ~ one day
+MAX_GAME_COST = 25.0
+MAX_TEAM_COST = 25.0  # per team per New York day
+MAX_DAILY_COST = 150.0
+MAX_GAME_ORDERS = 40
+MAX_CONTRACTS = 1  # one contract per order: more separate fills, same cash
+MAX_NEW_ORDERS_PER_PASS = 3
+PRICE_BAND_CENTS = (5, 95)  # NO price, inclusive
+# systemd stops a pass after TimeoutStartSec=240. A stop between an order's
+# journal intent and its acceptance halts all future orders, so no new order
+# starts after this many seconds of process runtime (main() sets the clock).
+NEW_ORDER_DEADLINE_SECONDS = 150
+PROCESS_START = None
+# Queue position is telemetry: observe each resting order at most this often.
+QUEUE_OBSERVATION_MINUTES = 10
 # P&L circuit breakers: no new orders after these realized losses.
 MAX_REALIZED_DAILY_LOSS = 20.0
 MAX_REALIZED_CUMULATIVE_LOSS = 60.0
@@ -93,6 +113,32 @@ def money(n):
 
 def reserve(cost):
     return math.ceil(money(cost) * FEE_RESERVE * 100 - 1e-8) / 100
+
+
+def elapsed_seconds():
+    """Seconds since main() started this process; 0 when not run via main()."""
+    return 0.0 if PROCESS_START is None else time.monotonic() - PROCESS_START
+
+
+def last_queue_times(events):
+    """Latest queue-observation time per order id, from one journal scan."""
+    return {
+        str(event.get("order_id")): event.get("utc")
+        for event in events
+        if event.get("event") == "queue"
+    }
+
+
+def queue_observation_due(last_times, order_id, now):
+    """True unless this order's queue was observed within the last few minutes."""
+    last = last_times.get(order_id)
+    if last is None:
+        return True
+    try:
+        age = (pd.Timestamp(now) - pd.Timestamp(last)).total_seconds() / 60
+    except (TypeError, ValueError):
+        return True
+    return not 0 <= age < QUEUE_OBSERVATION_MINUTES
 
 
 def records(events):
@@ -329,7 +375,8 @@ def resting_cancel_reason(row, intent, market, fee_bound):
 
         cents = int(intent["price_cents"])
         count = int(intent["count"])
-        if not 10 <= cents <= 90 or not 0 < count <= MAX_CONTRACTS:
+        low, high = PRICE_BAND_CENTS
+        if not low <= cents <= high or not 0 < count <= MAX_CONTRACTS:
             return "invalid_original_order"
         no_price = cents / 100
 
@@ -442,6 +489,7 @@ def cancel_invalid_resting(client, journal, state, frame, now, events):
     """
     from kalshi.fees import live_maker_fee_bound
 
+    fee_cache = {}  # series/event metadata, reused within this re-check
     accepted_by_id = {
         str(event["order_id"]): str(event["client_order_id"])
         for event in events
@@ -480,7 +528,9 @@ def cancel_invalid_resting(client, journal, state, frame, now, events):
             try:
                 market = fetch_market(ticker)
                 cents, count = int(intent["price_cents"]), int(intent["count"])
-                fee_bound, _ = live_maker_fee_bound(ticker, cents / 100, count)
+                fee_bound, _ = live_maker_fee_bound(
+                    ticker, cents / 100, count, fee_cache
+                )
             except Exception as error:
                 raise TradingError(
                     "Fresh resting quote/fee read failed; HALT new placements"
@@ -671,14 +721,16 @@ def record_markouts(journal, frame, now):
             write_event(journal, observation)
 
 
-# Guardrail for the small pilot. No change to maker/taker status or risk caps.
 # Optional second cent of improvement in >=3c spreads (only if after-fee edge
-# stays >=3c and the quote stays post-only). Off: it lost money in replay.
+# stays >=3c and the quote stays post-only). Off: it lost money in replay, so
+# execution_quote always returns the baseline quote; its 3c/90c checks only
+# apply if this is ever switched back on.
 EXTRA_MAKER_TICK = 0.0  # historical baseline already improves one tick
 MIN_EDGE_AFTER_IMPROVEMENT = 0.03
-# New entries and resting orders use the SAME after-fee edge floor (3c), so an
-# order is never placed on terms that the next scan would cancel it for.
-ENTRY_MIN_NET_EDGE = 0.03  # conservative versioned validation cohort
+# New entries and resting orders use the SAME after-fee edge floor, so an
+# order is never placed on terms that the next scan would cancel it for. v5
+# accepts any non-negative edge (v4 required 3c); the 15c outlier cap stays.
+ENTRY_MIN_NET_EDGE = 0.0
 RESTING_MIN_NET_EDGE = ENTRY_MIN_NET_EDGE
 
 
@@ -796,8 +848,9 @@ def order_from_row(row, now, no_price=None):
     cents = round(price * 100)
     if not math.isfinite(price) or abs(cents - price * 100) > 1e-6:
         raise TradingError("Order price not a whole cent")
-    if not 10 <= cents <= 90:
-        raise TradingError("Order price outside safe 10c–90c range")
+    low, high = PRICE_BAND_CENTS
+    if not low <= cents <= high:
+        raise TradingError(f"Order price outside safe {low}c–{high}c range")
     count = MAX_CONTRACTS
     while count > 0 and reserve(round(count * price, 2)) > MAX_ORDER_COST:
         count -= 1
@@ -905,10 +958,11 @@ def room_for(attempts, active, row, cost, now, shared=None, rejected=frozenset()
 
 
 def legacy_resting_count(attempts, accepted, resting):
-    """Count verified v2 resting orders without changing their exchange state.
+    """Count verified prior-version resting orders without changing them.
 
-    The old one-hour expiry remains the exchange-side safety boundary for
-    already-accepted orders. Any unowned or unknown-version order still HALTs.
+    Each prior version's own exchange-side expiry remains the safety boundary
+    for its already-accepted orders. Any unowned or unknown-version order
+    still HALTs.
     """
     intents = {str(a["client_order_id"]): a for a in attempts}
     count = 0
@@ -926,10 +980,7 @@ def legacy_resting_count(attempts, accepted, resting):
         if str(intent.get("ticker")) != ticker:
             raise TradingError("Resting NBA order/ticker mismatch: HALT")
         version = intent.get("strategy_version")
-        if version in {
-            "nba-no-v2-opening-audit",
-            "nba-no-v3-long-resting-throughput",
-        }:
+        if version in PRIOR_VERSIONS:
             count += 1
         elif version != STRATEGY_VERSION:
             raise TradingError("Unknown NBA resting order version: HALT")
@@ -1044,6 +1095,9 @@ def pass_once(client, env, frame, now, journal, *, dry=False):
 
     skipped = Counter()
     funnel = {}
+    placed_this_pass = 0
+    fee_cache = {}  # series/event fee metadata, reused within this pass
+    seen_tickers = set()
 
     def finish(decision, placed=False):
         report = {
@@ -1051,6 +1105,8 @@ def pass_once(client, env, frame, now, journal, *, dry=False):
             "strategy_version": STRATEGY_VERSION,
             "decision": decision,
             "placed": placed,
+            "orders_placed_this_pass": placed_this_pass,
+            "pass_seconds": round(elapsed_seconds(), 1),
             "legacy_prior_version_resting_orders": legacy_resting,
             "candidate_count": len(candidates),
             "selection_funnel": dict(funnel),
@@ -1147,14 +1203,16 @@ def pass_once(client, env, frame, now, journal, *, dry=False):
             fills,
             state["settlements"],
         )
+        last_queue = last_queue_times(events)
         for resting in state["resting"]:
-            record_queue_observation(client, journal, resting["order_id"], now)
+            if queue_observation_due(last_queue, str(resting["order_id"]), now):
+                record_queue_observation(client, journal, resting["order_id"], now)
         record_markouts(journal, frame, now)
         if legacy_resting:
-            # Never alter a previously submitted v2 order or mix its risk
-            # policy with v3. Still reconcile signed fills and publish a
-            # successful scan. When exchange-confirmed resting drops to
-            # zero, the next scan resumes v3 automatically.
+            # Never alter a previously submitted prior-version order or mix
+            # its risk policy with the current one. Still reconcile signed
+            # fills and publish a successful scan. When exchange-confirmed
+            # resting drops to zero, the next scan starts the current version.
             print(
                 f"NBA TRANSITION: waiting for {legacy_resting} prior-version "
                 "resting NBA order(s) to close; no new orders"
@@ -1201,6 +1259,15 @@ def pass_once(client, env, frame, now, journal, *, dry=False):
         print("No eligible 2-6h NBA opportunities")
         return finish("no_eligible_candidates")
     for row in candidates:
+        if placed_this_pass >= MAX_NEW_ORDERS_PER_PASS:
+            break
+        if elapsed_seconds() > NEW_ORDER_DEADLINE_SECONDS:
+            skipped["pass_time_budget"] += 1
+            break
+        if str(row.ticker) in seen_tickers:
+            skipped["duplicate_ticker_in_pass"] += 1
+            continue
+        seen_tickers.add(str(row.ticker))
         try:
             quoted, execution_edge, extra_ticks = execution_quote(row)
             order, cost = order_from_row(row, now, no_price=quoted)
@@ -1231,7 +1298,7 @@ def pass_once(client, env, frame, now, journal, *, dry=False):
             continue
         try:
             fee_bound, fee_metadata = live_maker_fee_bound(
-                order.ticker, quoted, order.count
+                order.ticker, quoted, order.count, fee_cache
             )
             p_book = float(getattr(row, "p_book", float("nan")))
             p_yes = p_book if math.isfinite(p_book) else float(row.p_model)
@@ -1288,44 +1355,46 @@ def pass_once(client, env, frame, now, journal, *, dry=False):
         except TradingError as error:
             if str(error).startswith("SHARD_UNFUNDED_"):
                 skipped["exchange_shard_unfunded"] += 1
-                return finish("exchange_shard_unfunded")
+                return finish("exchange_shard_unfunded", placed=bool(placed_this_pass))
             raise
+
+        # Last check before the irreversible intent: never start an order the
+        # systemd timeout could interrupt between intent and acceptance.
+        if elapsed_seconds() > NEW_ORDER_DEADLINE_SECONDS:
+            skipped["pass_time_budget"] += 1
+            break
 
         # Durable intent first; any failure after this (including a timeout)
         # disables all future automatic orders until manually investigated.
-        write_event(
-            journal,
-            {
-                "event": "intent",
-                "utc": now.isoformat(),
-                "client_order_id": order.client_order_id,
-                "ticker": order.ticker,
-                "cost": cost,
-                "count": order.count,
-                "price_cents": order.price_cents,
-                "game_id": str(row.game_id),
-                "team": str(row.team),
-                "tip_utc": pd.Timestamp(row.tip_utc).isoformat(),
-                "edge": round(execution_edge, 4),
-                "baseline_edge": round(float(row.edge), 4),
-                "extra_maker_ticks": extra_ticks,
-                "strategy_version": STRATEGY_VERSION,
-                "model_version": MODEL_VERSION,
-                "probability_source": "sportsbook"
-                if math.isfinite(p_book)
-                else "model",
-                "p_yes": p_yes,
-                "book_n": int(getattr(row, "book_n", 0)),
-                "fee_bound_dollars": fee_bound,
-                "net_edge_after_fee_bound": round(net_edge, 6),
-                "model_generated_utc": str(getattr(row, "model_generated_utc", "")),
-                "expiration_ts": order.expiration_ts,
-                "expiry_policy": "verified_scheduled_tip",
-                "quote_checked_utc": datetime.now(UTC).isoformat(),
-                **entry_evidence(row),
-                **fee_metadata,
-            },
-        )
+        intent = {
+            "event": "intent",
+            "utc": now.isoformat(),
+            "client_order_id": order.client_order_id,
+            "ticker": order.ticker,
+            "cost": cost,
+            "count": order.count,
+            "price_cents": order.price_cents,
+            "game_id": str(row.game_id),
+            "team": str(row.team),
+            "tip_utc": pd.Timestamp(row.tip_utc).isoformat(),
+            "edge": round(execution_edge, 4),
+            "baseline_edge": round(float(row.edge), 4),
+            "extra_maker_ticks": extra_ticks,
+            "strategy_version": STRATEGY_VERSION,
+            "model_version": MODEL_VERSION,
+            "probability_source": "sportsbook" if math.isfinite(p_book) else "model",
+            "p_yes": p_yes,
+            "book_n": int(getattr(row, "book_n", 0)),
+            "fee_bound_dollars": fee_bound,
+            "net_edge_after_fee_bound": round(net_edge, 6),
+            "model_generated_utc": str(getattr(row, "model_generated_utc", "")),
+            "expiration_ts": order.expiration_ts,
+            "expiry_policy": "verified_scheduled_tip",
+            "quote_checked_utc": datetime.now(UTC).isoformat(),
+            **entry_evidence(row),
+            **fee_metadata,
+        }
+        write_event(journal, intent)
         try:
             result = client.place(order)
         except Exception as error:
@@ -1341,15 +1410,18 @@ def pass_once(client, env, frame, now, journal, *, dry=False):
             raise TradingError(
                 "Ambiguous production submission. Auto halted until manual audit."
             ) from error
-        write_event(
-            journal,
-            {
-                "event": "accepted",
-                "utc": datetime.now(UTC).isoformat(),
-                "client_order_id": order.client_order_id,
-                "order_id": result["order_id"],
-            },
-        )
+        acceptance = {
+            "event": "accepted",
+            "utc": datetime.now(UTC).isoformat(),
+            "client_order_id": order.client_order_id,
+            "order_id": result["order_id"],
+        }
+        write_event(journal, acceptance)
+        # Charge this order to every cap (NBA and account-wide) and to cash
+        # before anything else, so the next candidate in this pass sees it.
+        charge_new_order(intent, acceptance, attempts, accepted, state, shared)
+        free -= reserve(cost)
+        placed_this_pass += 1
         print(
             "PROD AUTO ACCEPTED",
             order.ticker,
@@ -1379,9 +1451,28 @@ def pass_once(client, env, frame, now, journal, *, dry=False):
                 "issue": queue_issue,
             },
         )
+    if placed_this_pass:
         return finish("accepted", placed=True)
     print("No opportunities fit remaining production risk budget or fresh quotes")
     return finish("all_candidates_blocked")
+
+
+def charge_new_order(intent, acceptance, attempts, accepted, state, shared):
+    """Count a just-accepted order as an attempt, accepted and active.
+
+    Mirrors what the next pass would rebuild from the journal and exchange, so
+    every per-game, per-team, daily, lifetime, active and account-wide cap
+    sees it immediately. Only ever adds exposure; never frees any.
+    """
+    attempts.append(intent)
+    accepted[intent["client_order_id"]] = acceptance
+    state["active"].append(intent)
+    if shared is not None:
+        owner = shared["ownership"]
+        owner["attempts"].append({**intent, "_cohort": "nba"})
+        owner["tickers"][intent["ticker"]] = "nba"
+        owner["orders"][str(acceptance["order_id"])] = "nba"
+        shared["active_client_ids"].add(intent["client_order_id"])
 
 
 def nba_candidates(now, latest=Path("outputs/projections/latest.csv")):
@@ -1784,6 +1875,8 @@ def assert_nfl_production_stopped():
 
 
 def main():
+    global PROCESS_START
+    PROCESS_START = time.monotonic()
     from contextlib import nullcontext
     from live.production_lock import account_lock
     from live.nba_inputs import sync, atomic_write
@@ -1928,7 +2021,9 @@ def preflight(client, frame, now, journal):
             "resting": len(state["resting"]),
             "legacy_prior_version_resting_orders": old_resting,
             "entry_state": (
-                "waiting_for_prior_version_orders" if old_resting else "eligible_for_v4"
+                "waiting_for_prior_version_orders"
+                if old_resting
+                else "eligible_for_current_version"
             ),
             "held_markets": len(state["held"]),
             "realized_pnl_stop": pnl_check,

@@ -14,9 +14,9 @@ from kalshi.trading import TradingError
 from live.reconciled_attempts import rejected_client_ids
 
 ROOT = Path("/home/trader")
-# Cross-sport caps: NBA (larger fill-measurement sizing) plus NFL's own
+# Cross-sport caps: NBA v5 ($2,000 lifetime, $150 daily, $150 active) plus NFL's own
 # unchanged limits ($50 lifetime, $30 daily, $15 active).
-LIMITS = {"lifetime": 1050.0, "daily": 105.0, "active": 90.0}
+LIMITS = {"lifetime": 2050.0, "daily": 180.0, "active": 165.0}
 LOCAL_DAY = ZoneInfo("America/New_York")
 # Realized-loss stops for the WHOLE account (NBA + NFL settled markets
 # together). Each bot's own limits still apply on top of these.

@@ -5,9 +5,11 @@
 README or a manual clock, and the private account panel counts the 30 days
 from it, across rule versions. Under
 [FORWARD_VALIDATION.md](FORWARD_VALIDATION.md) each rule version is also
-judged as its own group, so the current rules
-(`nba-no-v4-smaller-orders-edge3-baseline`) get their own 30 days from their
-first accepted order.
+judged as its own group, so each rule version (v4
+`nba-no-v4-smaller-orders-edge3-baseline`, then v5
+`nba-no-v5-one-contract-breadth`) gets its own 30 days from its first
+accepted order. The v5 evaluation plan is in RESEARCH_LOG.md ("NBA rules
+v5").
 
 **Purpose:** determine whether the historically simulated NBA NO-bookline return
 survives real maker queue priority, current player roles, actual fees and settlement.
