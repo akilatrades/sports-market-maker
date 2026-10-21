@@ -1,5 +1,5 @@
 {
- "updated_utc": "2026-10-21T23:19+00:00",
+ "updated_utc": "2026-10-21T23:54+00:00",
  "paper": {
   "ledgers": [
    {
@@ -622,7 +622,7 @@
   "90": 3
  },
  "live": {
-  "run_utc": "2026-10-21T23:19+00:00",
+  "run_utc": "2026-10-21T23:54+00:00",
   "mode": "dry",
   "env": "prod",
   "rule": "no_seller_bookline",
@@ -632,19 +632,19 @@
   "pilot_day_cap": null,
   "pilot_total_cap": null,
   "bankroll": 250.0,
-  "injury_cancels": 41,
-  "candidates": 124,
-  "placed": 17,
-  "rejected": 107,
+  "injury_cancels": 6,
+  "candidates": 108,
+  "placed": 12,
+  "rejected": 96,
   "rejections": {
-   "6 orders already in game 401909841": 66,
-   "6 orders already in game 401909842": 41
+   "6 orders already in game 401909841": 61,
+   "6 orders already in game 401909842": 35
   },
-  "open_exposure": 38.62,
+  "open_exposure": 25.14,
   "orders_by_status": {
-   "rejected": 2543,
-   "dry": 321,
-   "cancelled": 81
+   "rejected": 2639,
+   "dry": 327,
+   "cancelled": 87
   },
   "dollars_resting": 0.0
  },
@@ -679,6 +679,31 @@
   "max_per_team": 15.0,
   "daily_loss_stop": 25.0,
   "max_orders_per_game": 6
+ },
+ "running_now": {
+  "nba_rules": "nba-no-v5-one-contract-breadth",
+  "contracts_per_order": 1,
+  "entry_edge_cents": [
+   0,
+   15
+  ],
+  "entry_hours_before_tip": [
+   2.0,
+   6.0
+  ],
+  "price_band_cents": [
+   5,
+   95
+  ],
+  "nba_max_open": 150.0,
+  "nba_max_daily": 150.0,
+  "nba_max_game": 25.0,
+  "nba_max_lifetime": 2000.0,
+  "account_max_open": 165.0,
+  "daily_loss_stop": 20.0,
+  "total_loss_stop": 60.0,
+  "odds_snapshot_utc": "2026-10-21T23:50+00:00",
+  "trade_prints_through": "2026-10-20"
  },
  "research": {
   "bookline": {
