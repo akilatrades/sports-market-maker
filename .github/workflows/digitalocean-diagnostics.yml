@@ -1,0 +1,46 @@
+name: DigitalOcean approved diagnostics
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: digitalocean-diagnostics
+  cancel-in-progress: false
+jobs:
+  diagnostics:
+    runs-on: ubuntu-latest
+    environment: production-diagnostics
+    timeout-minutes: 5
+    steps:
+      - name: Validate SSH configuration
+        env:
+          SSH_HOST: ${{ secrets.DROPLET_HOST }}
+          SSH_USER: ${{ secrets.DROPLET_USER }}
+          SSH_KEY: ${{ secrets.DROPLET_SSH_KEY }}
+          SSH_HOST_KEY: ${{ secrets.DROPLET_KNOWN_HOSTS }}
+        run: |
+          test -n "$SSH_HOST" && test -n "$SSH_USER" && test -n "$SSH_KEY" && test -n "$SSH_HOST_KEY"
+          mkdir -p ~/.ssh && chmod 700 ~/.ssh
+          printf '%s\n' "$SSH_KEY" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          printf '%s\n' "$SSH_HOST_KEY" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/known_hosts
+          echo "SSH prerequisites supplied; no credentials printed"
+      - name: Read service health without exposing credentials or account data
+        env:
+          SSH_HOST: ${{ secrets.DROPLET_HOST }}
+          SSH_USER: ${{ secrets.DROPLET_USER }}
+        run: |
+          ssh -o BatchMode=yes -o StrictHostKeyChecking=yes -o ConnectTimeout=10 \
+            "$SSH_USER@$SSH_HOST" 'set -eu
+              printf "UTC: "; date -u +%FT%TZ
+              for unit in market-maker.timer market-maker.service prod-nba-auto.service prod-nfl-auto.service; do
+                printf "%s active=" "$unit"
+                systemctl is-active "$unit" || true
+                printf "%s enabled=" "$unit"
+                systemctl is-enabled "$unit" || true
+              done
+              if [ -d /home/trader/sports-market-maker/.git ]; then
+                printf "deployed_commit="
+                git -C /home/trader/sports-market-maker rev-parse HEAD
+              fi'
