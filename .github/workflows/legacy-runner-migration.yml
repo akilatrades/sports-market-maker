@@ -10,7 +10,6 @@ on:
         default: CHECK_ONLY
         options:
           - CHECK_ONLY
-          - MIGRATE_LEGACY
 
 permissions:
   contents: read
@@ -47,7 +46,7 @@ jobs:
         run: |
           set -euo pipefail
           [[ "$DROPLET_USER" == trader ]]
-          [[ "$OPERATION" == CHECK_ONLY || "$OPERATION" == MIGRATE_LEGACY ]]
+          [[ "$OPERATION" == CHECK_ONLY ]]
           umask 077
           mkdir -p ~/.ssh
           printf '%s\n' "$DROPLET_SSH_KEY" > ~/.ssh/smm_legacy
@@ -58,10 +57,5 @@ jobs:
         run: |
           set -euo pipefail
           args=(-T -o BatchMode=yes -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes -o ConnectTimeout=12 -i "$HOME/.ssh/smm_legacy")
-          if [[ "$OPERATION" == CHECK_ONLY ]]; then
-            ssh "${args[@]}" "$DROPLET_USER@$DROPLET_HOST" \
+          ssh "${args[@]}" "$DROPLET_USER@$DROPLET_HOST" \
               'echo "Existing minute runner source update:"; if grep -qF "git pull -q --rebase origin main || true" /home/trader/run.sh; then echo AUTO_PULL_ENABLED; elif grep -qF "python -m live.legacy_input_sync" /home/trader/run.sh; then echo DATA_ONLY_MIGRATED; else echo UNKNOWN_RUNNER; fi; echo "Verified refresher installed:"; test -f /home/trader/sports-market-maker/live/legacy_input_sync.py && echo YES || echo NO'
-          else
-            ssh "${args[@]}" "$DROPLET_USER@$DROPLET_HOST" \
-              'python3 /home/trader/sports-market-maker/deploy/freeze_legacy_runner.py'
-          fi
