@@ -2387,3 +2387,42 @@ its profit. Categories (by series name: sports, mentions, weather,
 economics, crypto, politics, entertainment, other) are ranked on the earlier
 half only and the best is reported on the later half. Variant count: 5
 rules, and 8 categories per rule reported descriptively.
+
+## 2026-10-22: A different strategy across all scanned Kalshi markets (results)
+
+*Exploratory and simulated; `python -m research.explore_strategies`, tables
+in `outputs/research/explore_strategies.md`. 202,805 markets, 1,763 series,
+99,555 events; halves split at 2026-05-10. Nothing here changes the live
+rules.*
+
+**The planned rules failed, and the plan had a flaw.** S1 as written ("buy
+the side whose ask is at least X") also bought illiquid markets whose ask is
+high only because the spread is wide; all five planned rules lost 8.5-13.3¢
+per contract (t −27 to −56). **Extra variants, added after that run and
+counted:** favourites chosen by the mid with a spread of at most 3¢ (80¢
+and 90¢), momentum and reversal with a spread of at most 3¢, and a resting
+(maker) order on the favourite side from the scan's own order rows. 10
+variants in all.
+
+- **Taker rules, corrected: none works after costs.** Favourite at mid 80¢+:
+  −1.04¢ (t −7.3); 90¢+: −0.56¢ (t −4.0); momentum −0.99¢ (t −1.7, +0.15¢
+  before fees); reversal −2.98¢ (t −5.2). Negative in both halves. The
+  category ranked best on the earlier half never held on the later half.
+- **Calibration** (realised YES rate minus the mid): long shots under 5¢
+  are overpriced by 0.5¢ (t −3.3) and favourites at 90-95¢ underpriced by
+  1.1¢ (t 2.4): a real favourite-longshot bias, but smaller than the spread
+  plus the taker fee. Mid-priced YES at 35-50¢ is overpriced by 1.1¢
+  (t −4.6), the region the current NO seller works in.
+- **One lead: favourites in economic-data markets** (CPI, rates, fuel and
+  commodity prices, jobless claims and similar). Their favourite side was
+  underpriced at the mid by 2.46¢ (t 5.23, 3,106 markets); resting on it
+  made +1.51¢ per filled contract (t 1.80; +2.24¢ earlier, +0.72¢ later);
+  buying at the ask made +0.5¢ to +0.75¢ (t 0.7-1.1). Positive but not
+  significant out of sample, and chosen after looking at every category.
+- **Resting on favourites everywhere:** −0.05¢ (t −0.27), and sports
+  −0.30¢.
+
+**Verdict:** no separate model-free strategy works across Kalshi's markets
+on this data. The economic-data favourites are the one lead worth a
+dedicated study, priced from outside data (futures-implied rate odds,
+inflation nowcasts, daily fuel prices) rather than the quotes alone.

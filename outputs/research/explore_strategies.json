@@ -1,0 +1,2523 @@
+{
+ "markets": 202805,
+ "series": 1763,
+ "events": 99555,
+ "split_date": "2026-05-10",
+ "categories": {
+  "sports": 172044,
+  "other": 22837,
+  "economics": 4467,
+  "mentions": 1806,
+  "politics": 970,
+  "entertainment": 490,
+  "crypto": 191
+ },
+ "calibration": {
+  "by_price": [
+   {
+    "band": "(-0.001, 0.05]",
+    "markets": 12976,
+    "mid": 0.030991792540073164,
+    "yes_rate": 0.026356350184956842,
+    "gap_cents": -0.4635442355117145,
+    "t": -3.294222070671024
+   },
+   {
+    "band": "(0.05, 0.1]",
+    "markets": 13808,
+    "mid": 0.07610823435690375,
+    "yes_rate": 0.0729287369640788,
+    "gap_cents": -0.3179497392815757,
+    "t": -1.4390760205264883
+   },
+   {
+    "band": "(0.1, 0.2]",
+    "markets": 24996,
+    "mid": 0.15272887662026569,
+    "yes_rate": 0.1520243238918227,
+    "gap_cents": -0.0704552728436555,
+    "t": -0.3120468839739544
+   },
+   {
+    "band": "(0.2, 0.35]",
+    "markets": 45428,
+    "mid": 0.274958769921631,
+    "yes_rate": 0.27485251386809895,
+    "gap_cents": -0.010625605353526737,
+    "t": -0.05334332390913949
+   },
+   {
+    "band": "(0.35, 0.5]",
+    "markets": 44511,
+    "mid": 0.4325202983532357,
+    "yes_rate": 0.4217609130327335,
+    "gap_cents": -1.0759385320482575,
+    "t": -4.558966075686827
+   },
+   {
+    "band": "(0.5, 0.65]",
+    "markets": 30509,
+    "mid": 0.5692946015929504,
+    "yes_rate": 0.5643580582778852,
+    "gap_cents": -0.49365433150873556,
+    "t": -1.6952042710143165
+   },
+   {
+    "band": "(0.65, 0.8]",
+    "markets": 18337,
+    "mid": 0.7221127501772381,
+    "yes_rate": 0.7255276217483776,
+    "gap_cents": 0.34148715711403155,
+    "t": 1.0059937983949772
+   },
+   {
+    "band": "(0.8, 0.9]",
+    "markets": 7376,
+    "mid": 0.8473657131236325,
+    "yes_rate": 0.8529013015184381,
+    "gap_cents": 0.553558839479393,
+    "t": 1.3134832337730333
+   },
+   {
+    "band": "(0.9, 0.95]",
+    "markets": 2829,
+    "mid": 0.9269563449982388,
+    "yes_rate": 0.9381406857546837,
+    "gap_cents": 1.118434075645104,
+    "t": 2.4068628375938053
+   },
+   {
+    "band": "(0.95, 1.0]",
+    "markets": 2035,
+    "mid": 0.9691412776412577,
+    "yes_rate": 0.975921375921376,
+    "gap_cents": 0.6780098280098302,
+    "t": 1.8674009447417597
+   }
+  ],
+  "favourite_side_by_category": {
+   "crypto": {
+    "markets": 191,
+    "favourite_markets": 148,
+    "favourite_gap_cents": -0.5658783783783771,
+    "t": -0.24773719434918165
+   },
+   "economics": {
+    "markets": 4467,
+    "favourite_markets": 3106,
+    "favourite_gap_cents": 2.4588055376690297,
+    "t": 5.2302245724512195
+   },
+   "entertainment": {
+    "markets": 490,
+    "favourite_markets": 332,
+    "favourite_gap_cents": 2.8162650602409656,
+    "t": 2.1334397559728737
+   },
+   "mentions": {
+    "markets": 1806,
+    "favourite_markets": 805,
+    "favourite_gap_cents": 1.2465838509316776,
+    "t": 1.2517011953628026
+   },
+   "other": {
+    "markets": 22837,
+    "favourite_markets": 10202,
+    "favourite_gap_cents": 1.057096647716135,
+    "t": 3.809362083975171
+   },
+   "politics": {
+    "markets": 970,
+    "favourite_markets": 376,
+    "favourite_gap_cents": 2.1224734042553197,
+    "t": 1.7398788057243895
+   },
+   "sports": {
+    "markets": 172044,
+    "favourite_markets": 49418,
+    "favourite_gap_cents": 0.011307620705006951,
+    "t": 0.07618488038069209
+   }
+  }
+ },
+ "rules": {
+  "S1 favourite at 80c+": {
+   "fee_large_order": {
+    "all": {
+     "trades": 88830,
+     "events": 49520,
+     "series": 1567,
+     "cents": -8.528159658617584,
+     "t": -56.045127688755215,
+     "win_rate": 0.8287065180682202,
+     "avg_price": 0.9084365079366501,
+     "top_series_share_of_profit": 0.03585649992705188,
+     "top_series": "KXINTLFRIENDLYGAME"
+    },
+    "earlier": {
+     "trades": 39889,
+     "events": 24150,
+     "series": 992,
+     "cents": -8.450477607886885,
+     "t": -38.623585966445944,
+     "win_rate": 0.8261174759958886,
+     "avg_price": 0.904879716212553,
+     "top_series_share_of_profit": 0.030348189117553787,
+     "top_series": "KXEUROLEAGUEGAME"
+    },
+    "later": {
+     "trades": 48941,
+     "events": 25370,
+     "series": 978,
+     "cents": -8.591473839398459,
+     "t": -40.74154588749734,
+     "win_rate": 0.8308166976563618,
+     "avg_price": 0.9113354447191758,
+     "top_series_share_of_profit": 0.04188667363052724,
+     "top_series": "KXINTLFRIENDLYGAME"
+    }
+   },
+   "fee_one_contract": {
+    "all": {
+     "trades": 88830,
+     "events": 49520,
+     "series": 1567,
+     "cents": -9.10986716199482,
+     "t": -59.85359215200155,
+     "win_rate": 0.8287065180682202,
+     "avg_price": 0.9084365079366501,
+     "top_series_share_of_profit": 0.04131420680495925,
+     "top_series": "KXINTLFRIENDLYGAME"
+    },
+    "earlier": {
+     "trades": 39889,
+     "events": 24150,
+     "series": 992,
+     "cents": -9.02418461229913,
+     "t": -41.239931397949555,
+     "win_rate": 0.8261174759958886,
+     "avg_price": 0.904879716212553,
+     "top_series_share_of_profit": 0.03506264967782054,
+     "top_series": "KXEUROLEAGUEGAME"
+    },
+    "later": {
+     "trades": 48941,
+     "events": 25370,
+     "series": 978,
+     "cents": -9.17970209027196,
+     "t": -43.518087693516954,
+     "win_rate": 0.8308166976563618,
+     "avg_price": 0.9113354447191758,
+     "top_series_share_of_profit": 0.04706992192682052,
+     "top_series": "KXINTLFRIENDLYGAME"
+    }
+   },
+   "no_fee": {
+    "cents": -7.972998986828774,
+    "t": -52.38228940175781
+   },
+   "promising": false,
+   "categories": {
+    "crypto": {
+     "earlier": {
+      "trades": 120,
+      "events": 100,
+      "series": 19,
+      "cents": -5.411865641666664,
+      "t": -1.8328975885829815,
+      "win_rate": 0.9,
+      "avg_price": 0.9510249999999996,
+      "top_series_share_of_profit": 0.537166580556378,
+      "top_series": "KXXRP"
+     },
+     "later": {
+      "trades": 42,
+      "events": 39,
+      "series": 15,
+      "cents": -0.6573568095238085,
+      "t": -0.2009286612894196,
+      "win_rate": 0.9523809523809523,
+      "avg_price": 0.9561428571428572,
+      "top_series_share_of_profit": 0.2699355615778727,
+      "top_series": "KXXRPD"
+     }
+    },
+    "economics": {
+     "earlier": {
+      "trades": 1878,
+      "events": 779,
+      "series": 48,
+      "cents": -1.8236070851970174,
+      "t": -2.3684667343670123,
+      "win_rate": 0.9206602768903088,
+      "avg_price": 0.9348402555910658,
+      "top_series_share_of_profit": 0.14831831299781986,
+      "top_series": "KXWTIW"
+     },
+     "later": {
+      "trades": 1580,
+      "events": 657,
+      "series": 44,
+      "cents": -0.49693797468354334,
+      "t": -0.7472594832859641,
+      "win_rate": 0.9392405063291139,
+      "avg_price": 0.9404810126582382,
+      "top_series_share_of_profit": 0.13459091379125432,
+      "top_series": "KXSILVERD"
+     }
+    },
+    "entertainment": {
+     "earlier": {
+      "trades": 323,
+      "events": 139,
+      "series": 43,
+      "cents": -8.787953250773992,
+      "t": -3.4653490413779386,
+      "win_rate": 0.8637770897832817,
+      "avg_price": 0.9483900928792587,
+      "top_series_share_of_profit": 0.18575323625737727,
+      "top_series": "KXGRAMMYNOMAOTY"
+     },
+     "later": {
+      "trades": 99,
+      "events": 62,
+      "series": 9,
+      "cents": 1.5017181818181826,
+      "t": 1.0528452224942286,
+      "win_rate": 0.9797979797979798,
+      "avg_price": 0.9623232323232318,
+      "top_series_share_of_profit": 0.32684834168587684,
+      "top_series": "KXPUREALBUMS"
+     }
+    },
+    "mentions": {
+     "earlier": {
+      "trades": 943,
+      "events": 310,
+      "series": 49,
+      "cents": -5.734382396606575,
+      "t": -4.1559782415975794,
+      "win_rate": 0.8600212089077413,
+      "avg_price": 0.9120254506892922,
+      "top_series_share_of_profit": 0.31309540984657164,
+      "top_series": "KXFEDMENTION"
+     },
+     "later": {
+      "trades": 68,
+      "events": 13,
+      "series": 10,
+      "cents": 1.796052941176471,
+      "t": 0.5011574594330871,
+      "win_rate": 0.9558823529411765,
+      "avg_price": 0.9338235294117646,
+      "top_series_share_of_profit": 0.5210861274411235,
+      "top_series": "KXRUBIOMENTION"
+     }
+    },
+    "other": {
+     "earlier": {
+      "trades": 3727,
+      "events": 1584,
+      "series": 344,
+      "cents": -8.742680517306143,
+      "t": -12.261684070822128,
+      "win_rate": 0.8532331634022001,
+      "avg_price": 0.936746444861801,
+      "top_series_share_of_profit": 0.06955194855510499,
+      "top_series": "KXLITHIUMW"
+     },
+     "later": {
+      "trades": 9407,
+      "events": 3541,
+      "series": 209,
+      "cents": -6.412303038694588,
+      "t": -16.56478660620453,
+      "win_rate": 0.8700967364728394,
+      "avg_price": 0.9298829594981795,
+      "top_series_share_of_profit": 0.08164200263712204,
+      "top_series": "KXBRASILEIRO1H"
+     }
+    },
+    "politics": {
+     "earlier": {
+      "trades": 179,
+      "events": 103,
+      "series": 38,
+      "cents": 1.104384826815642,
+      "t": 0.5648089869593976,
+      "win_rate": 0.9162011173184358,
+      "avg_price": 0.899106145251397,
+      "top_series_share_of_profit": 0.4483184413584383,
+      "top_series": "KXDIMAYORGAME"
+     },
+     "later": {
+      "trades": 241,
+      "events": 131,
+      "series": 22,
+      "cents": -0.46320583817427363,
+      "t": -0.27419153834966253,
+      "win_rate": 0.9294605809128631,
+      "avg_price": 0.9297468879668038,
+      "top_series_share_of_profit": 0.6728446467529383,
+      "top_series": "KXDIMAYORGAME"
+     }
+    },
+    "sports": {
+     "earlier": {
+      "trades": 32719,
+      "events": 21135,
+      "series": 451,
+      "cents": -8.935927944435953,
+      "t": -36.55853971451386,
+      "win_rate": 0.8154894709496011,
+      "avg_price": 0.8987569913506236,
+      "top_series_share_of_profit": 0.05330283451396257,
+      "top_series": "KXEUROLEAGUEGAME"
+     },
+     "later": {
+      "trades": 37504,
+      "events": 20927,
+      "series": 669,
+      "cents": -9.585675783809727,
+      "t": -37.85283198577572,
+      "win_rate": 0.8150063993174061,
+      "avg_price": 0.9051115081058466,
+      "top_series_share_of_profit": 0.05649551465680634,
+      "top_series": "KXINTLFRIENDLYGAME"
+     }
+    }
+   },
+   "best_category_on_earlier_half": "politics"
+  },
+  "S1 favourite at 90c+": {
+   "fee_large_order": {
+    "all": {
+     "trades": 53167,
+     "events": 30339,
+     "series": 1457,
+     "cents": -10.325297372054093,
+     "t": -53.519883945100055,
+     "win_rate": 0.8551733217973555,
+     "avg_price": 0.9555107115317135,
+     "top_series_share_of_profit": 0.033896226835313646,
+     "top_series": "KXBOXING"
+    },
+    "earlier": {
+     "trades": 22379,
+     "events": 13861,
+     "series": 923,
+     "cents": -11.11476494619956,
+     "t": -38.616970813611296,
+     "win_rate": 0.8482505920729255,
+     "avg_price": 0.9565505607935659,
+     "top_series_share_of_profit": 0.03519660895833478,
+     "top_series": "KXSAUDIPLGAME"
+    },
+    "later": {
+     "trades": 30788,
+     "events": 16478,
+     "series": 894,
+     "cents": -9.751453834253605,
+     "t": -37.539751049091294,
+     "win_rate": 0.8602052747823827,
+     "avg_price": 0.9547548720281275,
+     "top_series_share_of_profit": 0.04093237471741102,
+     "top_series": "KXBOXING"
+    }
+   },
+   "fee_one_contract": {
+    "all": {
+     "trades": 53167,
+     "events": 30339,
+     "series": 1457,
+     "cents": -11.033738973423363,
+     "t": -57.18985208587775,
+     "win_rate": 0.8551733217973555,
+     "avg_price": 0.9555107115317135,
+     "top_series_share_of_profit": 0.040927510434155205,
+     "top_series": "KXBOXING"
+    },
+    "earlier": {
+     "trades": 22379,
+     "events": 13861,
+     "series": 923,
+     "cents": -11.829996872067564,
+     "t": -41.10652756952036,
+     "win_rate": 0.8482505920729255,
+     "avg_price": 0.9565505607935659,
+     "top_series_share_of_profit": 0.04175608105965296,
+     "top_series": "KXSAUDIPLGAME"
+    },
+    "later": {
+     "trades": 30788,
+     "events": 16478,
+     "series": 894,
+     "cents": -10.454959724568011,
+     "t": -40.24226419306271,
+     "win_rate": 0.8602052747823827,
+     "avg_price": 0.9547548720281275,
+     "top_series_share_of_profit": 0.049790898927580644,
+     "top_series": "KXBOXING"
+    }
+   },
+   "no_fee": {
+    "cents": -10.033738973423361,
+    "t": -52.006672365600764
+   },
+   "promising": false,
+   "categories": {
+    "crypto": {
+     "earlier": {
+      "trades": 102,
+      "events": 84,
+      "series": 19,
+      "cents": -5.925450754901961,
+      "t": -1.9021937193272402,
+      "win_rate": 0.9117647058823529,
+      "avg_price": 0.9689509803921567,
+      "top_series_share_of_profit": 0.3626752455618891,
+      "top_series": "KXXRP"
+     },
+     "later": {
+      "trades": 38,
+      "events": 36,
+      "series": 15,
+      "cents": 0.3221687894736857,
+      "t": 0.12180260663513036,
+      "win_rate": 0.9736842105263158,
+      "avg_price": 0.9683684210526317,
+      "top_series_share_of_profit": 0.24963329564503062,
+      "top_series": "KXXRPD"
+     }
+    },
+    "economics": {
+     "earlier": {
+      "trades": 1428,
+      "events": 698,
+      "series": 48,
+      "cents": -2.4053258242296907,
+      "t": -3.0390317953962214,
+      "win_rate": 0.9397759103641457,
+      "avg_price": 0.9612780112044954,
+      "top_series_share_of_profit": 0.12977013647156288,
+      "top_series": "KXINX"
+     },
+     "later": {
+      "trades": 1246,
+      "events": 596,
+      "series": 44,
+      "cents": -0.9583078651685379,
+      "t": -1.4874481317696688,
+      "win_rate": 0.956661316211878,
+      "avg_price": 0.9638523274478453,
+      "top_series_share_of_profit": 0.12007618919600427,
+      "top_series": "KXDENSUPERLIGASPREAD"
+     }
+    },
+    "entertainment": {
+     "earlier": {
+      "trades": 279,
+      "events": 137,
+      "series": 42,
+      "cents": -7.887765949820788,
+      "t": -3.3135298968704987,
+      "win_rate": 0.8888888888888888,
+      "avg_price": 0.965483870967743,
+      "top_series_share_of_profit": 0.11753980318030623,
+      "top_series": "KXGRAMMYNOMAOTY"
+     },
+     "later": {
+      "trades": 94,
+      "events": 61,
+      "series": 9,
+      "cents": 0.8813436170212775,
+      "t": 0.6031538490180555,
+      "win_rate": 0.9787234042553191,
+      "avg_price": 0.9677659574468082,
+      "top_series_share_of_profit": 0.3959694625613024,
+      "top_series": "KXPUREALBUMS"
+     }
+    },
+    "mentions": {
+     "earlier": {
+      "trades": 554,
+      "events": 219,
+      "series": 46,
+      "cents": -5.560233212996389,
+      "t": -3.463411117721484,
+      "win_rate": 0.9061371841155235,
+      "avg_price": 0.9590613718411607,
+      "top_series_share_of_profit": 0.13493955376215963,
+      "top_series": "KXEARNINGSMENTIONEA"
+     },
+     "later": {
+      "trades": 54,
+      "events": 13,
+      "series": 10,
+      "cents": 1.8306500000000017,
+      "t": 1.0528541548194912,
+      "win_rate": 0.9814814814814815,
+      "avg_price": 0.9605555555555555,
+      "top_series_share_of_profit": 0.3903944583249661,
+      "top_series": "KXMADDOWMENTION"
+     }
+    },
+    "other": {
+     "earlier": {
+      "trades": 2893,
+      "events": 1242,
+      "series": 324,
+      "cents": -8.702607462150016,
+      "t": -11.259705725585025,
+      "win_rate": 0.8807466297960594,
+      "avg_price": 0.965490494296567,
+      "top_series_share_of_profit": 0.062319897958323794,
+      "top_series": "KXLITHIUMW"
+     },
+     "later": {
+      "trades": 7024,
+      "events": 2641,
+      "series": 197,
+      "cents": -6.090333497294987,
+      "t": -15.293968207725667,
+      "win_rate": 0.901623006833713,
+      "avg_price": 0.9598873861047073,
+      "top_series_share_of_profit": 0.13000665701391037,
+      "top_series": "KXBRENTD"
+     }
+    },
+    "politics": {
+     "earlier": {
+      "trades": 95,
+      "events": 57,
+      "series": 34,
+      "cents": 0.21806614736842128,
+      "t": 0.11722825147560245,
+      "win_rate": 0.9578947368421052,
+      "avg_price": 0.9526315789473678,
+      "top_series_share_of_profit": 0.09436008404557099,
+      "top_series": "KXPERUPRES1R"
+     },
+     "later": {
+      "trades": 184,
+      "events": 108,
+      "series": 22,
+      "cents": 0.14707007065217484,
+      "t": 0.10544332946699031,
+      "win_rate": 0.9619565217391305,
+      "avg_price": 0.9577119565217381,
+      "top_series_share_of_profit": 0.33586081400730144,
+      "top_series": "KXTRUMPTIME"
+     }
+    },
+    "sports": {
+     "earlier": {
+      "trades": 17028,
+      "events": 11424,
+      "series": 410,
+      "cents": -12.582871768440215,
+      "t": -37.61740813687616,
+      "win_rate": 0.831512802443035,
+      "avg_price": 0.9543547686162684,
+      "top_series_share_of_profit": 0.06466718081299853,
+      "top_series": "KXSAUDIPLGAME"
+     },
+     "later": {
+      "trades": 22148,
+      "events": 13023,
+      "series": 597,
+      "cents": -11.580107064791404,
+      "t": -35.21410021786022,
+      "win_rate": 0.8398049485280838,
+      "avg_price": 0.9524980585154014,
+      "top_series_share_of_profit": 0.060188721251059375,
+      "top_series": "KXBOXING"
+     }
+    }
+   },
+   "best_category_on_earlier_half": "economics"
+  },
+  "S1 favourite at 95c+": {
+   "fee_large_order": {
+    "all": {
+     "trades": 35083,
+     "events": 21582,
+     "series": 1312,
+     "cents": -11.97589742522019,
+     "t": -51.43884521597567,
+     "win_rate": 0.8563976854886982,
+     "avg_price": 0.9744266168801636,
+     "top_series_share_of_profit": 0.021762463059279223,
+     "top_series": "KXNASCARRACE"
+    },
+    "earlier": {
+     "trades": 15094,
+     "events": 9683,
+     "series": 829,
+     "cents": -13.288489372863388,
+     "t": -37.5851587143724,
+     "win_rate": 0.8439114880084801,
+     "avg_price": 0.9751109049951687,
+     "top_series_share_of_profit": 0.03524285721420587,
+     "top_series": "KXCBAGAME"
+    },
+    "later": {
+     "trades": 19989,
+     "events": 11899,
+     "series": 777,
+     "cents": -10.984739145279903,
+     "t": -35.37890121647521,
+     "win_rate": 0.8658262044124269,
+     "avg_price": 0.9739099004451698,
+     "top_series_share_of_profit": 0.020525978996442807,
+     "top_series": "KXLEAGUESCUPTOTAL"
+    }
+   },
+   "fee_one_contract": {
+    "all": {
+     "trades": 35083,
+     "events": 21582,
+     "series": 1312,
+     "cents": -12.80289313912721,
+     "t": -54.98930880235813,
+     "win_rate": 0.8563976854886982,
+     "avg_price": 0.9744266168801636,
+     "top_series_share_of_profit": 0.021865669391078788,
+     "top_series": "KXCBAGAME"
+    },
+    "earlier": {
+     "trades": 15094,
+     "events": 9683,
+     "series": 829,
+     "cents": -14.119941698688217,
+     "t": -39.9413860169021,
+     "win_rate": 0.8439114880084801,
+     "avg_price": 0.9751109049951687,
+     "top_series_share_of_profit": 0.04361951747788934,
+     "top_series": "KXCBAGAME"
+    },
+    "later": {
+     "trades": 19989,
+     "events": 11899,
+     "series": 777,
+     "cents": -11.8083696032818,
+     "t": -38.02569686492701,
+     "win_rate": 0.8658262044124269,
+     "avg_price": 0.9739099004451698,
+     "top_series_share_of_profit": 0.019388329476515115,
+     "top_series": "KXLEAGUESCUPTOTAL"
+    }
+   },
+   "no_fee": {
+    "cents": -11.80289313912721,
+    "t": -50.694239851551686
+   },
+   "promising": false,
+   "categories": {
+    "crypto": {
+     "earlier": {
+      "trades": 83,
+      "events": 68,
+      "series": 18,
+      "cents": -6.384226397590361,
+      "t": -1.8606500207964232,
+      "win_rate": 0.9156626506024096,
+      "avg_price": 0.9780120481927707,
+      "top_series_share_of_profit": 0.3087512487774853,
+      "top_series": "KXXRP"
+     },
+     "later": {
+      "trades": 28,
+      "events": 26,
+      "series": 15,
+      "cents": -1.9339602142857137,
+      "t": -0.5502022373969314,
+      "win_rate": 0.9642857142857143,
+      "avg_price": 0.982428571428571,
+      "top_series_share_of_profit": 0.18540601901098538,
+      "top_series": "KXXRP"
+     }
+    },
+    "economics": {
+     "earlier": {
+      "trades": 1033,
+      "events": 599,
+      "series": 46,
+      "cents": -2.9304098741529514,
+      "t": -3.4323800221616727,
+      "win_rate": 0.9486931268151017,
+      "avg_price": 0.9763969022265377,
+      "top_series_share_of_profit": 0.1314108645653224,
+      "top_series": "KXSILVERMON"
+     },
+     "later": {
+      "trades": 970,
+      "events": 527,
+      "series": 44,
+      "cents": -1.1330543298969058,
+      "t": -1.6945894396613228,
+      "win_rate": 0.965979381443299,
+      "avg_price": 0.9756597938144457,
+      "top_series_share_of_profit": 0.14456050114100275,
+      "top_series": "KXCOPPERW"
+     }
+    },
+    "entertainment": {
+     "earlier": {
+      "trades": 222,
+      "events": 120,
+      "series": 41,
+      "cents": -9.591236486486485,
+      "t": -3.5029983276062837,
+      "win_rate": 0.8828828828828829,
+      "avg_price": 0.9772522522522522,
+      "top_series_share_of_profit": 0.09995885679739816,
+      "top_series": "KXTOPMODEL"
+     },
+     "later": {
+      "trades": 79,
+      "events": 52,
+      "series": 8,
+      "cents": 0.9172974683544317,
+      "t": 0.7333912735977417,
+      "win_rate": 0.9873417721518988,
+      "avg_price": 0.9765822784810125,
+      "top_series_share_of_profit": 0.3529962641357028,
+      "top_series": "KXALBUMEQUIV"
+     }
+    },
+    "mentions": {
+     "earlier": {
+      "trades": 397,
+      "events": 168,
+      "series": 44,
+      "cents": -5.412669017632242,
+      "t": -1.9125104151692334,
+      "win_rate": 0.9269521410579346,
+      "avg_price": 0.9796977329974845,
+      "top_series_share_of_profit": 0.10841774087367011,
+      "top_series": "KXEARNINGSMENTIONEA"
+     },
+     "later": {
+      "trades": 43,
+      "events": 11,
+      "series": 10,
+      "cents": 2.884602325581397,
+      "t": 14.057569703688669,
+      "win_rate": 1.0,
+      "avg_price": 0.9690697674418605,
+      "top_series_share_of_profit": 0.4435442715492603,
+      "top_series": "KXMADDOWMENTION"
+     }
+    },
+    "other": {
+     "earlier": {
+      "trades": 2310,
+      "events": 1047,
+      "series": 294,
+      "cents": -9.381735195238095,
+      "t": -10.994417510086873,
+      "win_rate": 0.8852813852813853,
+      "avg_price": 0.977576190476194,
+      "top_series_share_of_profit": 0.05959949388048233,
+      "top_series": "KXLITHIUMW"
+     },
+     "later": {
+      "trades": 4986,
+      "events": 2086,
+      "series": 180,
+      "cents": -6.614522219815481,
+      "t": -14.67705329691171,
+      "win_rate": 0.9113517849979944,
+      "avg_price": 0.9758624147612585,
+      "top_series_share_of_profit": 0.09022518706186586,
+      "top_series": "KXBRENTD"
+     }
+    },
+    "politics": {
+     "earlier": {
+      "trades": 56,
+      "events": 36,
+      "series": 31,
+      "cents": 2.1059769464285734,
+      "t": 10.65390819496729,
+      "win_rate": 1.0,
+      "avg_price": 0.9774107142857144,
+      "top_series_share_of_profit": 0.06328756023809749,
+      "top_series": "KXMAYORJERSEY"
+     },
+     "later": {
+      "trades": 121,
+      "events": 85,
+      "series": 20,
+      "cents": -1.0828252809917345,
+      "t": -0.6761524970595189,
+      "win_rate": 0.9669421487603306,
+      "avg_price": 0.9761570247933876,
+      "top_series_share_of_profit": 0.46953612144311585,
+      "top_series": "KXTRUMPTIME"
+     }
+    },
+    "sports": {
+     "earlier": {
+      "trades": 10993,
+      "events": 7645,
+      "series": 355,
+      "cents": -15.572409416082959,
+      "t": -37.8176104806456,
+      "win_rate": 0.8202492495224234,
+      "avg_price": 0.9742295096878572,
+      "top_series_share_of_profit": 0.08507203713684719,
+      "top_series": "KXCBAGAME"
+     },
+     "later": {
+      "trades": 13762,
+      "events": 9112,
+      "series": 500,
+      "cents": -13.479596856706872,
+      "t": -33.27326617751316,
+      "win_rate": 0.8400668507484377,
+      "avg_price": 0.9730418543814754,
+      "top_series_share_of_profit": 0.03211976717727623,
+      "top_series": "KXLEAGUESCUPTOTAL"
+     }
+    }
+   },
+   "best_category_on_earlier_half": "economics"
+  },
+  "S2 momentum": {
+   "fee_large_order": {
+    "all": {
+     "trades": 20779,
+     "events": 14526,
+     "series": 1033,
+     "cents": -13.31883048366139,
+     "t": -37.70765221169952,
+     "win_rate": 0.5843399586120602,
+     "avg_price": 0.7066400693006967,
+     "top_series_share_of_profit": 0.0228768513084767,
+     "top_series": "KXHNLGAME"
+    },
+    "earlier": {
+     "trades": 8925,
+     "events": 6271,
+     "series": 545,
+     "cents": -14.588428283025213,
+     "t": -26.78027106476924,
+     "win_rate": 0.5737815126050421,
+     "avg_price": 0.7088925490195906,
+     "top_series_share_of_profit": 0.04910671322947878,
+     "top_series": "KXHNLGAME"
+    },
+    "later": {
+     "trades": 11854,
+     "events": 8255,
+     "series": 746,
+     "cents": -12.36293708402227,
+     "t": -26.613146913829933,
+     "win_rate": 0.5922895225240425,
+     "avg_price": 0.7049441538720906,
+     "top_series_share_of_profit": 0.027814488484238013,
+     "top_series": "KXWNBA2HTOTAL"
+    }
+   },
+   "fee_one_contract": {
+    "all": {
+     "trades": 20779,
+     "events": 14526,
+     "series": 1033,
+     "cents": -13.839568795418453,
+     "t": -39.16998324874105,
+     "win_rate": 0.5843399586120602,
+     "avg_price": 0.7066400693006967,
+     "top_series_share_of_profit": 0.024279361304148536,
+     "top_series": "KXHNLGAME"
+    },
+    "earlier": {
+     "trades": 8925,
+     "events": 6271,
+     "series": 545,
+     "cents": -15.106621848739495,
+     "t": -27.72238540922009,
+     "win_rate": 0.5737815126050421,
+     "avg_price": 0.7088925490195906,
+     "top_series_share_of_profit": 0.05124954482312159,
+     "top_series": "KXHNLGAME"
+    },
+    "later": {
+     "trades": 11854,
+     "events": 8255,
+     "series": 746,
+     "cents": -12.885591361565718,
+     "t": -27.73064666088988,
+     "win_rate": 0.5922895225240425,
+     "avg_price": 0.7049441538720906,
+     "top_series_share_of_profit": 0.02856985012667019,
+     "top_series": "KXWNBA2HTOTAL"
+    }
+   },
+   "no_fee": {
+    "cents": -12.230011068867606,
+    "t": -34.61910546677551
+   },
+   "promising": false,
+   "categories": {
+    "crypto": {
+     "earlier": {
+      "trades": 42,
+      "events": 42,
+      "series": 13,
+      "cents": -9.399278571428571,
+      "t": -1.503740991486382,
+      "win_rate": 0.5952380952380952,
+      "avg_price": 0.6792857142857143,
+      "top_series_share_of_profit": 0.6990256285733206,
+      "top_series": "KXSOLD"
+     },
+     "later": {
+      "trades": 17,
+      "events": 17,
+      "series": 6,
+      "cents": -11.7748,
+      "t": -1.3856378227742843,
+      "win_rate": 0.7058823529411765,
+      "avg_price": 0.8164705882352942,
+      "top_series_share_of_profit": 0.8705640292562419,
+      "top_series": "KXXRP"
+     }
+    },
+    "economics": {
+     "earlier": {
+      "trades": 472,
+      "events": 291,
+      "series": 30,
+      "cents": -7.984433686440677,
+      "t": -3.691143822321321,
+      "win_rate": 0.6313559322033898,
+      "avg_price": 0.701970338983051,
+      "top_series_share_of_profit": 0.3005628212282617,
+      "top_series": "KXPAYROLLS"
+     },
+     "later": {
+      "trades": 658,
+      "events": 424,
+      "series": 35,
+      "cents": -4.747364741641337,
+      "t": -3.544914354390009,
+      "win_rate": 0.7082066869300911,
+      "avg_price": 0.747325227963528,
+      "top_series_share_of_profit": 0.25343982715913255,
+      "top_series": "KXGOLDW"
+     }
+    },
+    "entertainment": {
+     "earlier": {
+      "trades": 34,
+      "events": 21,
+      "series": 16,
+      "cents": -42.72497941176471,
+      "t": -4.1726931592295475,
+      "win_rate": 0.35294117647058826,
+      "avg_price": 0.7720588235294117,
+      "top_series_share_of_profit": 0.33854654738814943,
+      "top_series": "KXSPOTIFYALBUMRELEASEDATEKANYE"
+     },
+     "later": {
+      "trades": 8,
+      "events": 8,
+      "series": 6,
+      "cents": -20.4653,
+      "t": -2.054890355735902,
+      "win_rate": 0.375,
+      "avg_price": 0.5700000000000001,
+      "top_series_share_of_profit": 1.0,
+      "top_series": "KXALBUMEQUIV"
+     }
+    },
+    "mentions": {
+     "earlier": {
+      "trades": 662,
+      "events": 249,
+      "series": 23,
+      "cents": -15.145531419939578,
+      "t": -6.979147300014489,
+      "win_rate": 0.5211480362537765,
+      "avg_price": 0.660604229607251,
+      "top_series_share_of_profit": 0.4460238587763782,
+      "top_series": "KXMLBMENTION"
+     },
+     "later": {
+      "trades": 9,
+      "events": 4,
+      "series": 4,
+      "cents": -0.7896999999999987,
+      "t": -0.12486960834032593,
+      "win_rate": 0.6666666666666666,
+      "avg_price": 0.6633333333333332,
+      "top_series_share_of_profit": 0.9282337829158638,
+      "top_series": "KXRUBIOMENTION"
+     }
+    },
+    "other": {
+     "earlier": {
+      "trades": 1365,
+      "events": 863,
+      "series": 123,
+      "cents": -15.807324994871793,
+      "t": -11.31404495722594,
+      "win_rate": 0.5853479853479854,
+      "avg_price": 0.7335120879120905,
+      "top_series_share_of_profit": 0.1509336688068342,
+      "top_series": "KXLOLGAMES"
+     },
+     "later": {
+      "trades": 2462,
+      "events": 1516,
+      "series": 143,
+      "cents": -11.908634527213648,
+      "t": -10.739313870908214,
+      "win_rate": 0.5926076360682372,
+      "avg_price": 0.7004216084484196,
+      "top_series_share_of_profit": 0.08757961455201624,
+      "top_series": "KXBRENTD"
+     }
+    },
+    "politics": {
+     "earlier": {
+      "trades": 15,
+      "events": 11,
+      "series": 7,
+      "cents": -11.720386666666666,
+      "t": -0.8532452099061761,
+      "win_rate": 0.5333333333333333,
+      "avg_price": 0.6373333333333334,
+      "top_series_share_of_profit": 0.7499311174643138,
+      "top_series": "KXSEYCHELLESPRES"
+     },
+     "later": {
+      "trades": 22,
+      "events": 19,
+      "series": 8,
+      "cents": -29.27242081818182,
+      "t": -2.9383134837474487,
+      "win_rate": 0.4090909090909091,
+      "avg_price": 0.6924545454545457,
+      "top_series_share_of_profit": 0.6168744196747713,
+      "top_series": "KXDIMAYORGAME"
+     }
+    },
+    "sports": {
+     "earlier": {
+      "trades": 6335,
+      "events": 4794,
+      "series": 333,
+      "cents": -14.64980339510655,
+      "t": -22.79397559004263,
+      "win_rate": 0.5736385161799527,
+      "avg_price": 0.7091763220205116,
+      "top_series_share_of_profit": 0.07661440523888899,
+      "top_series": "KXHNLGAME"
+     },
+     "later": {
+      "trades": 8678,
+      "events": 6267,
+      "series": 544,
+      "cents": -13.032085437888913,
+      "t": -24.160937289960398,
+      "win_rate": 0.5837750633786587,
+      "avg_price": 0.7029944687715899,
+      "top_series_share_of_profit": 0.040304314331087526,
+      "top_series": "KXWNBA2HTOTAL"
+     }
+    }
+   },
+   "best_category_on_earlier_half": "economics"
+  },
+  "S2 reversal": {
+   "fee_large_order": {
+    "all": {
+     "trades": 20779,
+     "events": 14526,
+     "series": 1033,
+     "cents": -8.718914003320661,
+     "t": -27.057363259088625,
+     "win_rate": 0.41566004138793977,
+     "avg_price": 0.4907913277828528,
+     "top_series_share_of_profit": 0.02772318095788346,
+     "top_series": "KXNBASUMMERSPREAD"
+    },
+    "earlier": {
+     "trades": 8925,
+     "events": 6271,
+     "series": 545,
+     "cents": -8.631046889187676,
+     "t": -17.125182595799124,
+     "win_rate": 0.426218487394958,
+     "avg_price": 0.49995271708682765,
+     "top_series_share_of_profit": 0.03154893139269493,
+     "top_series": "KXNCAAMB1HWINNER"
+    },
+    "later": {
+     "trades": 11854,
+     "events": 8255,
+     "series": 746,
+     "cents": -8.785070068247006,
+     "t": -20.995316398788354,
+     "win_rate": 0.40771047747595746,
+     "avg_price": 0.4838936224059327,
+     "top_series_share_of_profit": 0.04066662757718181,
+     "top_series": "KXNBASUMMERSPREAD"
+    }
+   },
+   "fee_one_contract": {
+    "all": {
+     "trades": 20779,
+     "events": 14526,
+     "series": 1033,
+     "cents": -9.195452139178979,
+     "t": -28.536603045168864,
+     "win_rate": 0.41566004138793977,
+     "avg_price": 0.4907913277828528,
+     "top_series_share_of_profit": 0.027523326255456206,
+     "top_series": "KXNBASUMMERSPREAD"
+    },
+    "earlier": {
+     "trades": 8925,
+     "events": 6271,
+     "series": 545,
+     "cents": -9.098240896358543,
+     "t": -18.05405040235649,
+     "win_rate": 0.426218487394958,
+     "avg_price": 0.49995271708682765,
+     "top_series_share_of_profit": 0.029911432166037605,
+     "top_series": "KXNCAAMB1HWINNER"
+    },
+    "later": {
+     "trades": 11854,
+     "events": 8255,
+     "series": 746,
+     "cents": -9.268643495866376,
+     "t": -22.149694095966066,
+     "win_rate": 0.40771047747595746,
+     "avg_price": 0.4838936224059327,
+     "top_series_share_of_profit": 0.04046865765045374,
+     "top_series": "KXNBASUMMERSPREAD"
+    }
+   },
+   "no_fee": {
+    "cents": -7.513128639491795,
+    "t": -23.311853423111952
+   },
+   "promising": false,
+   "categories": {
+    "crypto": {
+     "earlier": {
+      "trades": 42,
+      "events": 42,
+      "series": 13,
+      "cents": -3.608228571428571,
+      "t": -0.638857511307513,
+      "win_rate": 0.40476190476190477,
+      "avg_price": 0.4304761904761905,
+      "top_series_share_of_profit": 0.5002024273649468,
+      "top_series": "KXXRPD"
+     },
+     "later": {
+      "trades": 17,
+      "events": 17,
+      "series": 6,
+      "cents": 0.5423117647058815,
+      "t": 0.06247140177658637,
+      "win_rate": 0.29411764705882354,
+      "avg_price": 0.278235294117647,
+      "top_series_share_of_profit": 0.6020733724262427,
+      "top_series": "KXXRPD"
+     }
+    },
+    "economics": {
+     "earlier": {
+      "trades": 472,
+      "events": 291,
+      "series": 30,
+      "cents": -8.375111440677966,
+      "t": -4.91903008011861,
+      "win_rate": 0.3686440677966102,
+      "avg_price": 0.4430932203389828,
+      "top_series_share_of_profit": 0.2914466733045287,
+      "top_series": "KXINXU"
+     },
+     "later": {
+      "trades": 658,
+      "events": 424,
+      "series": 35,
+      "cents": -7.154060790273556,
+      "t": -5.9386270871369895,
+      "win_rate": 0.2917933130699088,
+      "avg_price": 0.35480243161094255,
+      "top_series_share_of_profit": 0.355507108734694,
+      "top_series": "KXSILVERD"
+     }
+    },
+    "entertainment": {
+     "earlier": {
+      "trades": 34,
+      "events": 21,
+      "series": 16,
+      "cents": -8.063476470588233,
+      "t": -1.6546356949816714,
+      "win_rate": 0.6470588235294118,
+      "avg_price": 0.7194117647058823,
+      "top_series_share_of_profit": 0.2871601878516057,
+      "top_series": "KXOSCARNOMBSOUND"
+     },
+     "later": {
+      "trades": 8,
+      "events": 8,
+      "series": 6,
+      "cents": 0.37710000000000177,
+      "t": 0.04435814461725699,
+      "win_rate": 0.625,
+      "avg_price": 0.6124999999999999,
+      "top_series_share_of_profit": 0.49897881955886453,
+      "top_series": "KXRANKLISTSONGSPOTGLOBAL"
+     }
+    },
+    "mentions": {
+     "earlier": {
+      "trades": 662,
+      "events": 249,
+      "series": 23,
+      "cents": -7.2398237160120855,
+      "t": -3.7490834171007155,
+      "win_rate": 0.4788519637462236,
+      "avg_price": 0.5381117824773413,
+      "top_series_share_of_profit": 0.42072478627134763,
+      "top_series": "KXEARNINGSMENTIONCOINBASE"
+     },
+     "later": {
+      "trades": 9,
+      "events": 4,
+      "series": 4,
+      "cents": -11.66851111111111,
+      "t": -2.3606780855017084,
+      "win_rate": 0.3333333333333333,
+      "avg_price": 0.4377777777777778,
+      "top_series_share_of_profit": 1.0,
+      "top_series": "KXHEARINGMENTION"
+     }
+    },
+    "other": {
+     "earlier": {
+      "trades": 1365,
+      "events": 863,
+      "series": 123,
+      "cents": -12.768720471062272,
+      "t": -10.158536947605388,
+      "win_rate": 0.4146520146520147,
+      "avg_price": 0.5312139194139212,
+      "top_series_share_of_profit": 0.18520715242680194,
+      "top_series": "KXCODMAP"
+     },
+     "later": {
+      "trades": 2462,
+      "events": 1516,
+      "series": 143,
+      "cents": -9.883413503655564,
+      "t": -11.07176065164943,
+      "win_rate": 0.4073923639317628,
+      "avg_price": 0.4944589764419163,
+      "top_series_share_of_profit": 0.08988323250348938,
+      "top_series": "KXRUGBYNRLMATCH"
+     }
+    },
+    "politics": {
+     "earlier": {
+      "trades": 15,
+      "events": 11,
+      "series": 7,
+      "cents": -4.8811333333333335,
+      "t": -0.39938195466625653,
+      "win_rate": 0.4666666666666667,
+      "avg_price": 0.5013333333333333,
+      "top_series_share_of_profit": 0.7668723616894216,
+      "top_series": "KXHONDURASPRES"
+     },
+     "later": {
+      "trades": 22,
+      "events": 19,
+      "series": 8,
+      "cents": 9.322419409090909,
+      "t": 0.7849027012186172,
+      "win_rate": 0.5909090909090909,
+      "avg_price": 0.4899545454545455,
+      "top_series_share_of_profit": 0.5086310794756186,
+      "top_series": "KXSEOULMAYOR"
+     }
+    },
+    "sports": {
+     "earlier": {
+      "trades": 6335,
+      "events": 4794,
+      "series": 333,
+      "cents": -7.949179691081293,
+      "t": -13.089123892232916,
+      "win_rate": 0.42636148382004735,
+      "avg_price": 0.4927452249408009,
+      "top_series_share_of_profit": 0.04188883487279647,
+      "top_series": "KXNCAAMB1HWINNER"
+     },
+     "later": {
+      "trades": 8678,
+      "events": 6267,
+      "series": 544,
+      "cents": -8.666766221479602,
+      "t": -17.25291064836485,
+      "win_rate": 0.4162249366213413,
+      "avg_price": 0.4910011523392424,
+      "top_series_share_of_profit": 0.05382998104250023,
+      "top_series": "KXNBASUMMERSPREAD"
+     }
+    }
+   },
+   "best_category_on_earlier_half": "mentions"
+  },
+  "S1b favourite mid 80c+, spread <= 3c": {
+   "fee_large_order": {
+    "all": {
+     "trades": 45545,
+     "events": 26657,
+     "series": 1300,
+     "cents": -1.0442003975848058,
+     "t": -7.251098087162461,
+     "win_rate": 0.903655725107037,
+     "avg_price": 0.9085145240970747,
+     "top_series_share_of_profit": 0.02796790179159545,
+     "top_series": "KXINTLFRIENDLYGAME"
+    },
+    "earlier": {
+     "trades": 18186,
+     "events": 11807,
+     "series": 770,
+     "cents": -0.7513844551303197,
+     "t": -3.2346939698177803,
+     "win_rate": 0.8993181568239305,
+     "avg_price": 0.9008221159132698,
+     "top_series_share_of_profit": 0.02608730919091906,
+     "top_series": "KXLIGAPORTUGALGAME"
+    },
+    "later": {
+     "trades": 27359,
+     "events": 14850,
+     "series": 831,
+     "cents": -1.238840213713951,
+     "t": -6.756914680167523,
+     "win_rate": 0.9065389816879272,
+     "avg_price": 0.9136278007237344,
+     "top_series_share_of_profit": 0.03485619013954818,
+     "top_series": "KXBOXING"
+    }
+   },
+   "fee_one_contract": {
+    "all": {
+     "trades": 45545,
+     "events": 26657,
+     "series": 1300,
+     "cents": -1.583585464924799,
+     "t": -10.998116683008984,
+     "win_rate": 0.903655725107037,
+     "avg_price": 0.9085145240970747,
+     "top_series_share_of_profit": 0.03255551219671941,
+     "top_series": "KXINTLFRIENDLYGAME"
+    },
+    "earlier": {
+     "trades": 18186,
+     "events": 11807,
+     "series": 770,
+     "cents": -1.2703233256351036,
+     "t": -5.469573891248276,
+     "win_rate": 0.8993181568239305,
+     "avg_price": 0.9008221159132698,
+     "top_series_share_of_profit": 0.028094049532145775,
+     "top_series": "KXLIGAPORTUGALGAME"
+    },
+    "later": {
+     "trades": 27359,
+     "events": 14850,
+     "series": 831,
+     "cents": -1.7918162213531188,
+     "t": -9.774416976233704,
+     "win_rate": 0.9065389816879272,
+     "avg_price": 0.9136278007237344,
+     "top_series_share_of_profit": 0.039026551038098635,
+     "top_series": "KXBOXING"
+    }
+   },
+   "no_fee": {
+    "cents": -0.4858798990009872,
+    "t": -3.374687543377341
+   },
+   "promising": false,
+   "categories": {
+    "crypto": {
+     "earlier": {
+      "trades": 50,
+      "events": 44,
+      "series": 17,
+      "cents": -0.09709131999999898,
+      "t": -0.03804809387848343,
+      "win_rate": 0.96,
+      "avg_price": 0.9583599999999999,
+      "top_series_share_of_profit": 0.3791206292441189,
+      "top_series": "KXDOGED"
+     },
+     "later": {
+      "trades": 29,
+      "events": 26,
+      "series": 14,
+      "cents": 2.808266,
+      "t": 5.73845406473665,
+      "win_rate": 1.0,
+      "avg_price": 0.9699310344827583,
+      "top_series_share_of_profit": 0.2294728097890913,
+      "top_series": "KXXRPD"
+     }
+    },
+    "economics": {
+     "earlier": {
+      "trades": 1096,
+      "events": 531,
+      "series": 45,
+      "cents": 0.5138893430656943,
+      "t": 0.6491007119747877,
+      "win_rate": 0.9443430656934306,
+      "avg_price": 0.9351350364963569,
+      "top_series_share_of_profit": 0.3083146787386011,
+      "top_series": "KXLALIGASPREAD"
+     },
+     "later": {
+      "trades": 1025,
+      "events": 463,
+      "series": 43,
+      "cents": 0.7476444878048791,
+      "t": 1.1057175085496176,
+      "win_rate": 0.9560975609756097,
+      "avg_price": 0.9451512195122029,
+      "top_series_share_of_profit": 0.17375971398860368,
+      "top_series": "KXSILVERD"
+     }
+    },
+    "entertainment": {
+     "earlier": {
+      "trades": 128,
+      "events": 57,
+      "series": 35,
+      "cents": -3.4453414062499994,
+      "t": -1.3486946928524506,
+      "win_rate": 0.921875,
+      "avg_price": 0.9533593749999997,
+      "top_series_share_of_profit": 0.1225225952502504,
+      "top_series": "KXAPPRANKFREE2"
+     },
+     "later": {
+      "trades": 49,
+      "events": 38,
+      "series": 8,
+      "cents": 2.4940551020408175,
+      "t": 8.749607639322516,
+      "win_rate": 1.0,
+      "avg_price": 0.9732653061224488,
+      "top_series_share_of_profit": 0.358818152881096,
+      "top_series": "KXALBUMEQUIV"
+     }
+    },
+    "mentions": {
+     "earlier": {
+      "trades": 522,
+      "events": 214,
+      "series": 41,
+      "cents": -1.3656406130268193,
+      "t": -1.0848394466053957,
+      "win_rate": 0.9157088122605364,
+      "avg_price": 0.9247509578544086,
+      "top_series_share_of_profit": 0.18732344306985593,
+      "top_series": "KXFEDMENTION"
+     },
+     "later": {
+      "trades": 36,
+      "events": 11,
+      "series": 9,
+      "cents": 5.363355555555557,
+      "t": 3.209642258777748,
+      "win_rate": 1.0,
+      "avg_price": 0.9427777777777777,
+      "top_series_share_of_profit": 0.5404581915964713,
+      "top_series": "KXRUBIOMENTION"
+     }
+    },
+    "other": {
+     "earlier": {
+      "trades": 1232,
+      "events": 539,
+      "series": 250,
+      "cents": 0.08777301055194886,
+      "t": 0.1439283797335437,
+      "win_rate": 0.9496753246753247,
+      "avg_price": 0.9453595779220879,
+      "top_series_share_of_profit": 0.031018476471932014,
+      "top_series": "KXLIVTOUR"
+     },
+     "later": {
+      "trades": 5102,
+      "events": 1989,
+      "series": 179,
+      "cents": -1.1421215356722845,
+      "t": -3.2073757451365785,
+      "win_rate": 0.9286554292434339,
+      "avg_price": 0.9360833006663682,
+      "top_series_share_of_profit": 0.07493270310008919,
+      "top_series": "KXBRENTD"
+     }
+    },
+    "politics": {
+     "earlier": {
+      "trades": 129,
+      "events": 79,
+      "series": 27,
+      "cents": 1.0566573100775194,
+      "t": 0.5032003953527765,
+      "win_rate": 0.9224806201550387,
+      "avg_price": 0.9061937984496125,
+      "top_series_share_of_profit": 0.2156410802582224,
+      "top_series": "KXDIMAYORGAME"
+     },
+     "later": {
+      "trades": 197,
+      "events": 115,
+      "series": 18,
+      "cents": 0.19118013197969613,
+      "t": 0.11773589919579272,
+      "win_rate": 0.9390862944162437,
+      "avg_price": 0.932994923857867,
+      "top_series_share_of_profit": 0.5442102864156699,
+      "top_series": "KXDIMAYORGAME"
+     }
+    },
+    "sports": {
+     "earlier": {
+      "trades": 15029,
+      "events": 10343,
+      "series": 355,
+      "cents": -0.8858621928937386,
+      "t": -3.338146338077651,
+      "win_rate": 0.8907445605163351,
+      "avg_price": 0.8931527713087556,
+      "top_series_share_of_profit": 0.03778697232719788,
+      "top_series": "KXLIGAPORTUGALGAME"
+     },
+     "later": {
+      "trades": 20921,
+      "events": 12208,
+      "series": 560,
+      "cents": -1.3989318212322541,
+      "t": -6.3494304935362065,
+      "win_rate": 0.8979016299412074,
+      "avg_price": 0.9061568758663302,
+      "top_series_share_of_profit": 0.04365189092242879,
+      "top_series": "KXBOXING"
+     }
+    }
+   },
+   "best_category_on_earlier_half": "politics"
+  },
+  "S1b favourite mid 90c+, spread <= 3c": {
+   "fee_large_order": {
+    "all": {
+     "trades": 24113,
+     "events": 14720,
+     "series": 1123,
+     "cents": -0.5600058684112292,
+     "t": -4.000202744562556,
+     "win_rate": 0.9537593829054867,
+     "avg_price": 0.9564954588810671,
+     "top_series_share_of_profit": 0.02581384360213343,
+     "top_series": "KXBOXING"
+    },
+    "earlier": {
+     "trades": 8341,
+     "events": 5542,
+     "series": 666,
+     "cents": -0.13197319542021238,
+     "t": -0.5778761462504592,
+     "win_rate": 0.9587579426927227,
+     "avg_price": 0.9572649562401878,
+     "top_series_share_of_profit": 0.03370282943115447,
+     "top_series": "KXNASCARRACE"
+    },
+    "later": {
+     "trades": 15772,
+     "events": 9178,
+     "series": 701,
+     "cents": -0.786370345041845,
+     "t": -4.452201159047031,
+     "win_rate": 0.9511159015977682,
+     "avg_price": 0.9560885112857325,
+     "top_series_share_of_profit": 0.032993758756144485,
+     "top_series": "KXBOXING"
+    }
+   },
+   "fee_one_contract": {
+    "all": {
+     "trades": 24113,
+     "events": 14720,
+     "series": 1123,
+     "cents": -1.2736075975614798,
+     "t": -9.098338614705238,
+     "win_rate": 0.9537593829054867,
+     "avg_price": 0.9564954588810671,
+     "top_series_share_of_profit": 0.03284044876389879,
+     "top_series": "KXBOXING"
+    },
+    "earlier": {
+     "trades": 8341,
+     "events": 5542,
+     "series": 666,
+     "cents": -0.8507013547536252,
+     "t": -3.7247002419669895,
+     "win_rate": 0.9587579426927227,
+     "avg_price": 0.9572649562401878,
+     "top_series_share_of_profit": 0.03491340331276688,
+     "top_series": "KXCBAGAME"
+    },
+    "later": {
+     "trades": 15772,
+     "events": 9178,
+     "series": 701,
+     "cents": -1.4972609688054763,
+     "t": -8.478397794206469,
+     "win_rate": 0.9511159015977682,
+     "avg_price": 0.9560885112857325,
+     "top_series_share_of_profit": 0.04212550253452194,
+     "top_series": "KXBOXING"
+    }
+   },
+   "no_fee": {
+    "cents": -0.2736075975614795,
+    "t": -1.9545852073563597
+   },
+   "promising": false,
+   "categories": {
+    "crypto": {
+     "earlier": {
+      "trades": 42,
+      "events": 36,
+      "series": 17,
+      "cents": 1.9360508095238107,
+      "t": 7.245812465108172,
+      "win_rate": 1.0,
+      "avg_price": 0.9792380952380952,
+      "top_series_share_of_profit": 0.24130737222141468,
+      "top_series": "KXDOGED"
+     },
+     "later": {
+      "trades": 28,
+      "events": 26,
+      "series": 14,
+      "cents": 2.540179071428572,
+      "t": 5.550559205245937,
+      "win_rate": 1.0,
+      "avg_price": 0.9727857142857139,
+      "top_series_share_of_profit": 0.26275144212976875,
+      "top_series": "KXXRPD"
+     }
+    },
+    "economics": {
+     "earlier": {
+      "trades": 797,
+      "events": 477,
+      "series": 42,
+      "cents": 0.1963660690087841,
+      "t": 0.2707054464441302,
+      "win_rate": 0.9661229611041405,
+      "avg_price": 0.9616198243412869,
+      "top_series_share_of_profit": 0.2817821448686592,
+      "top_series": "KXBUNDESLIGASPREAD"
+     },
+     "later": {
+      "trades": 819,
+      "events": 432,
+      "series": 43,
+      "cents": 0.5097548229548243,
+      "t": 0.8396939201857931,
+      "win_rate": 0.9731379731379731,
+      "avg_price": 0.9657631257631347,
+      "top_series_share_of_profit": 0.14737241772521248,
+      "top_series": "KXWTI"
+     }
+    },
+    "entertainment": {
+     "earlier": {
+      "trades": 107,
+      "events": 52,
+      "series": 34,
+      "cents": -1.9165158878504656,
+      "t": -0.9413084927014125,
+      "win_rate": 0.9532710280373832,
+      "avg_price": 0.9704672897196258,
+      "top_series_share_of_profit": 0.08351099998655535,
+      "top_series": "KXTOPMODEL"
+     },
+     "later": {
+      "trades": 49,
+      "events": 38,
+      "series": 8,
+      "cents": 2.4940551020408175,
+      "t": 8.749607639322516,
+      "win_rate": 1.0,
+      "avg_price": 0.9732653061224488,
+      "top_series_share_of_profit": 0.358818152881096,
+      "top_series": "KXALBUMEQUIV"
+     }
+    },
+    "mentions": {
+     "earlier": {
+      "trades": 316,
+      "events": 152,
+      "series": 37,
+      "cents": -0.2515215189873409,
+      "t": -0.2659598355580033,
+      "win_rate": 0.9683544303797469,
+      "avg_price": 0.9687974683544314,
+      "top_series_share_of_profit": 0.15099745488740154,
+      "top_series": "KXFEDMENTION"
+     },
+     "later": {
+      "trades": 30,
+      "events": 11,
+      "series": 9,
+      "cents": 3.3600400000000015,
+      "t": 8.205036899389967,
+      "win_rate": 1.0,
+      "avg_price": 0.964,
+      "top_series_share_of_profit": 0.3515771637639235,
+      "top_series": "KXMADDOWMENTION"
+     }
+    },
+    "other": {
+     "earlier": {
+      "trades": 967,
+      "events": 444,
+      "series": 221,
+      "cents": 0.8960575480868679,
+      "t": 1.9668029650784924,
+      "win_rate": 0.9793174767321613,
+      "avg_price": 0.9682450879007335,
+      "top_series_share_of_profit": 0.050165498356342465,
+      "top_series": "KXWOMHOCKEY"
+     },
+     "later": {
+      "trades": 3730,
+      "events": 1453,
+      "series": 163,
+      "cents": -0.7325003150134035,
+      "t": -2.2944345203152436,
+      "win_rate": 0.9587131367292225,
+      "avg_price": 0.9636319034852244,
+      "top_series_share_of_profit": 0.08307619194321007,
+      "top_series": "KXBRENTD"
+     }
+    },
+    "politics": {
+     "earlier": {
+      "trades": 65,
+      "events": 39,
+      "series": 27,
+      "cents": 1.1514737384615392,
+      "t": 0.6155546962604687,
+      "win_rate": 0.9692307692307692,
+      "avg_price": 0.9547538461538462,
+      "top_series_share_of_profit": 0.12430158589983913,
+      "top_series": "KXPERUPRES1R"
+     },
+     "later": {
+      "trades": 144,
+      "events": 93,
+      "series": 18,
+      "cents": 0.24471656944444567,
+      "t": 0.16742479393927587,
+      "win_rate": 0.9652777777777778,
+      "avg_price": 0.9602083333333324,
+      "top_series_share_of_profit": 0.5738582108284918,
+      "top_series": "KXDIMAYORSPREAD"
+     }
+    },
+    "sports": {
+     "earlier": {
+      "trades": 6047,
+      "events": 4342,
+      "series": 288,
+      "cents": -0.3299804458409119,
+      "t": -1.1610786724890805,
+      "win_rate": 0.9536960476269224,
+      "avg_price": 0.9539732098560747,
+      "top_series_share_of_profit": 0.05302361033349135,
+      "top_series": "KXNASCARRACE"
+     },
+     "later": {
+      "trades": 10972,
+      "events": 7125,
+      "series": 446,
+      "cents": -0.9494413240065608,
+      "t": -4.238668239997552,
+      "win_rate": 0.9462267590229676,
+      "avg_price": 0.9526069084942873,
+      "top_series_share_of_profit": 0.04561285291641606,
+      "top_series": "KXBOXING"
+     }
+    }
+   },
+   "best_category_on_earlier_half": "other"
+  },
+  "S2b momentum, spread <= 3c": {
+   "fee_large_order": {
+    "all": {
+     "trades": 6027,
+     "events": 4713,
+     "series": 701,
+     "cents": -0.9948340975609757,
+     "t": -1.7276871996267404,
+     "win_rate": 0.6766218682594989,
+     "avg_price": 0.6751700680272029,
+     "top_series_share_of_profit": 0.02744005721737348,
+     "top_series": "KXLOLGAME"
+    },
+    "earlier": {
+     "trades": 2006,
+     "events": 1608,
+     "series": 342,
+     "cents": -1.760693715852443,
+     "t": -1.656966244024213,
+     "win_rate": 0.6415752741774676,
+     "avg_price": 0.6469990029910305,
+     "top_series_share_of_profit": 0.04108984211300192,
+     "top_series": "KXNBAPTS"
+    },
+    "later": {
+     "trades": 4021,
+     "events": 3105,
+     "series": 519,
+     "cents": -0.6127613807510569,
+     "t": -0.8997329000006694,
+     "win_rate": 0.6941059437950758,
+     "avg_price": 0.6892240736135278,
+     "top_series_share_of_profit": 0.049569474415859426,
+     "top_series": "KXITFMATCH"
+    }
+   },
+   "fee_one_contract": {
+    "all": {
+     "trades": 6027,
+     "events": 4713,
+     "series": 701,
+     "cents": -1.4937779990044804,
+     "t": -2.594213916971054,
+     "win_rate": 0.6766218682594989,
+     "avg_price": 0.6751700680272029,
+     "top_series_share_of_profit": 0.027421552302069583,
+     "top_series": "KXLOLGAME"
+    },
+    "earlier": {
+     "trades": 2006,
+     "events": 1608,
+     "series": 342,
+     "cents": -2.2417746759720845,
+     "t": -2.1095599944190138,
+     "win_rate": 0.6415752741774676,
+     "avg_price": 0.6469990029910305,
+     "top_series_share_of_profit": 0.041767361269435935,
+     "top_series": "KXNBAPTS"
+    },
+    "later": {
+     "trades": 4021,
+     "events": 3105,
+     "series": 519,
+     "cents": -1.1206167619995033,
+     "t": -1.645518297334203,
+     "win_rate": 0.6941059437950758,
+     "avg_price": 0.6892240736135278,
+     "top_series_share_of_profit": 0.044999681305373206,
+     "top_series": "KXITFMATCH"
+    }
+   },
+   "no_fee": {
+    "cents": 0.14518002322880388,
+    "t": 0.2522231248907009
+   },
+   "promising": false,
+   "categories": {
+    "crypto": {
+     "earlier": {
+      "trades": 7,
+      "events": 7,
+      "series": 5,
+      "cents": 5.648400000000002,
+      "t": 1.8557508512031895,
+      "win_rate": 1.0,
+      "avg_price": 0.9400000000000001,
+      "top_series_share_of_profit": 0.8115117302497797,
+      "top_series": "KXDOGED"
+     },
+     "later": {
+      "trades": 7,
+      "events": 7,
+      "series": 3,
+      "cents": 0.6064571428571441,
+      "t": 0.09652013537060034,
+      "win_rate": 0.8571428571428571,
+      "avg_price": 0.8457142857142858,
+      "top_series_share_of_profit": 0.8394997663397333,
+      "top_series": "KXSOLD"
+     }
+    },
+    "economics": {
+     "earlier": {
+      "trades": 113,
+      "events": 94,
+      "series": 24,
+      "cents": -0.27405398230088585,
+      "t": -0.0870763452896319,
+      "win_rate": 0.7699115044247787,
+      "avg_price": 0.7645132743362828,
+      "top_series_share_of_profit": 0.3933647619028673,
+      "top_series": "KXPAYROLLS"
+     },
+     "later": {
+      "trades": 372,
+      "events": 259,
+      "series": 25,
+      "cents": 2.3577244623655917,
+      "t": 1.651739232446445,
+      "win_rate": 0.8306451612903226,
+      "avg_price": 0.7999193548387107,
+      "top_series_share_of_profit": 0.25076893087392466,
+      "top_series": "KXNATGASD"
+     }
+    },
+    "entertainment": {
+     "earlier": {
+      "trades": 5,
+      "events": 4,
+      "series": 4,
+      "cents": 12.262279999999999,
+      "t": 2.8857875865276186,
+      "win_rate": 0.8,
+      "avg_price": 0.6679999999999999,
+      "top_series_share_of_profit": 0.43366812697149315,
+      "top_series": "KXEMMYCSACTR"
+     },
+     "later": {
+      "trades": 3,
+      "events": 3,
+      "series": 3,
+      "cents": -7.93393333333333,
+      "t": -1.1536775843642886,
+      "win_rate": 0.3333333333333333,
+      "avg_price": 0.40666666666666657,
+      "top_series_share_of_profit": 1.0,
+      "top_series": "KXALBUMEQUIV"
+     }
+    },
+    "mentions": {
+     "earlier": {
+      "trades": 126,
+      "events": 86,
+      "series": 13,
+      "cents": 3.7183317460317458,
+      "t": 0.9336889446873834,
+      "win_rate": 0.6666666666666666,
+      "avg_price": 0.6180952380952378,
+      "top_series_share_of_profit": 0.5390569829828278,
+      "top_series": "KXNCAABMENTION"
+     },
+     "later": {
+      "trades": 5,
+      "events": 2,
+      "series": 2,
+      "cents": 7.785000000000002,
+      "t": 1.52330450436348,
+      "win_rate": 0.8,
+      "avg_price": 0.712,
+      "top_series_share_of_profit": 0.9282337829158638,
+      "top_series": "KXRUBIOMENTION"
+     }
+    },
+    "other": {
+     "earlier": {
+      "trades": 155,
+      "events": 114,
+      "series": 52,
+      "cents": 1.9076650000000002,
+      "t": 0.6822523859396147,
+      "win_rate": 0.7935483870967742,
+      "avg_price": 0.766419354838709,
+      "top_series_share_of_profit": 0.14048940483512778,
+      "top_series": "KXCOFFEEW"
+     },
+     "later": {
+      "trades": 771,
+      "events": 544,
+      "series": 89,
+      "cents": 0.051072236057068794,
+      "t": 0.033520685975159184,
+      "win_rate": 0.7003891050583657,
+      "avg_price": 0.6889857328145279,
+      "top_series_share_of_profit": 0.11239963239696409,
+      "top_series": "KXWCCORNERS"
+     }
+    },
+    "politics": {
+     "earlier": {
+      "trades": 8,
+      "events": 6,
+      "series": 2,
+      "cents": 2.653687499999999,
+      "t": 0.13921195973363043,
+      "win_rate": 0.625,
+      "avg_price": 0.58375,
+      "top_series_share_of_profit": 1.0,
+      "top_series": "KXSEYCHELLESPRES"
+     },
+     "later": {
+      "trades": 9,
+      "events": 9,
+      "series": 5,
+      "cents": -30.365437,
+      "t": -1.6215944346226525,
+      "win_rate": 0.4444444444444444,
+      "avg_price": 0.7387777777777776,
+      "top_series_share_of_profit": 0.8009580812768726,
+      "top_series": "KXDIMAYORGAME"
+     }
+    },
+    "sports": {
+     "earlier": {
+      "trades": 1592,
+      "events": 1297,
+      "series": 242,
+      "cents": -2.755817254396985,
+      "t": -2.212086217736555,
+      "win_rate": 0.6136934673366834,
+      "avg_price": 0.6282820351758802,
+      "top_series_share_of_profit": 0.05478227221592047,
+      "top_series": "KXNBAPTS"
+     },
+     "later": {
+      "trades": 2854,
+      "events": 2281,
+      "series": 392,
+      "cents": -1.0954601166783464,
+      "t": -1.2980646690930964,
+      "win_rate": 0.6751927119831815,
+      "avg_price": 0.6745770847932744,
+      "top_series_share_of_profit": 0.06549038756828891,
+      "top_series": "KXITFMATCH"
+     }
+    }
+   },
+   "best_category_on_earlier_half": "mentions"
+  },
+  "S2b reversal, spread <= 3c": {
+   "fee_large_order": {
+    "all": {
+     "trades": 6027,
+     "events": 4713,
+     "series": 701,
+     "cents": -2.9834843144184506,
+     "t": -5.184513862121781,
+     "win_rate": 0.32337813174050106,
+     "avg_price": 0.34143404678944356,
+     "top_series_share_of_profit": 0.021128089538638935,
+     "top_series": "KXWNBA1HTOTAL"
+    },
+    "earlier": {
+     "trades": 2006,
+     "events": 1608,
+     "series": 342,
+     "cents": -2.485684769192423,
+     "t": -2.338291593869398,
+     "win_rate": 0.3584247258225324,
+     "avg_price": 0.370756231306081,
+     "top_series_share_of_profit": 0.03791328602355597,
+     "top_series": "KXNCAAWBGAME"
+    },
+    "later": {
+     "trades": 4021,
+     "events": 3105,
+     "series": 519,
+     "cents": -3.2318269873165884,
+     "t": -4.750679823318472,
+     "win_rate": 0.30589405620492416,
+     "avg_price": 0.32680576970902564,
+     "top_series_share_of_profit": 0.03187960354354617,
+     "top_series": "KXWNBA1HTOTAL"
+    }
+   },
+   "fee_one_contract": {
+    "all": {
+     "trades": 6027,
+     "events": 4713,
+     "series": 701,
+     "cents": -3.4574912891986083,
+     "t": -6.008440560969232,
+     "win_rate": 0.32337813174050106,
+     "avg_price": 0.34143404678944356,
+     "top_series_share_of_profit": 0.02130480991429325,
+     "top_series": "KXWNBA1HTOTAL"
+    },
+    "earlier": {
+     "trades": 2006,
+     "events": 1608,
+     "series": 342,
+     "cents": -2.942023928215356,
+     "t": -2.7679014896027065,
+     "win_rate": 0.3584247258225324,
+     "avg_price": 0.370756231306081,
+     "top_series_share_of_profit": 0.03687803242659316,
+     "top_series": "KXNCAAWBGAME"
+    },
+    "later": {
+     "trades": 4021,
+     "events": 3105,
+     "series": 519,
+     "cents": -3.7146480974881877,
+     "t": -5.460378664653051,
+     "win_rate": 0.30589405620492416,
+     "avg_price": 0.32680576970902564,
+     "top_series_share_of_profit": 0.0320724529188134,
+     "top_series": "KXWNBA1HTOTAL"
+    }
+   },
+   "no_fee": {
+    "cents": -1.805591504894641,
+    "t": -3.1372556303000705
+   },
+   "promising": false,
+   "categories": {
+    "crypto": {
+     "earlier": {
+      "trades": 7,
+      "events": 7,
+      "series": 5,
+      "cents": -8.324042857142857,
+      "t": -2.5749690442470077,
+      "win_rate": 0.0,
+      "avg_price": 0.07857142857142858,
+      "top_series_share_of_profit": NaN,
+      "top_series": "KXTRUMPCRYPTOCONF"
+     },
+     "later": {
+      "trades": 7,
+      "events": 7,
+      "series": 3,
+      "cents": -3.911414285714286,
+      "t": -0.6432427971309648,
+      "win_rate": 0.14285714285714285,
+      "avg_price": 0.1757142857142857,
+      "top_series_share_of_profit": 1.0,
+      "top_series": "KXXRPD"
+     }
+    },
+    "economics": {
+     "earlier": {
+      "trades": 113,
+      "events": 94,
+      "series": 24,
+      "cents": -3.330583185840709,
+      "t": -1.0541489181508445,
+      "win_rate": 0.23008849557522124,
+      "avg_price": 0.2546017699115044,
+      "top_series_share_of_profit": 0.3085991729110563,
+      "top_series": "KXNASDAQ100"
+     },
+     "later": {
+      "trades": 372,
+      "events": 259,
+      "series": 25,
+      "cents": -5.362721774193549,
+      "t": -3.763479004537401,
+      "win_rate": 0.1693548387096774,
+      "avg_price": 0.21529569892473108,
+      "top_series_share_of_profit": 0.6459643045375867,
+      "top_series": "KXSILVERD"
+     }
+    },
+    "entertainment": {
+     "earlier": {
+      "trades": 5,
+      "events": 4,
+      "series": 4,
+      "cents": -15.779160000000001,
+      "t": -3.2712381751014292,
+      "win_rate": 0.2,
+      "avg_price": 0.348,
+      "top_series_share_of_profit": NaN,
+      "top_series": "KXRT"
+     },
+     "later": {
+      "trades": 3,
+      "events": 3,
+      "series": 3,
+      "cents": 5.110633333333334,
+      "t": 0.8674192522683033,
+      "win_rate": 0.6666666666666666,
+      "avg_price": 0.61,
+      "top_series_share_of_profit": 0.72875089525948,
+      "top_series": "KXTOPMODEL"
+     }
+    },
+    "mentions": {
+     "earlier": {
+      "trades": 126,
+      "events": 86,
+      "series": 13,
+      "cents": -7.686120634920636,
+      "t": -1.9256685067468537,
+      "win_rate": 0.3333333333333333,
+      "avg_price": 0.3985714285714285,
+      "top_series_share_of_profit": 0.5944034293757423,
+      "top_series": "KXMENTION"
+     },
+     "later": {
+      "trades": 5,
+      "events": 2,
+      "series": 2,
+      "cents": -11.25322,
+      "t": -1.747346656364671,
+      "win_rate": 0.2,
+      "avg_price": 0.30200000000000005,
+      "top_series_share_of_profit": NaN,
+      "top_series": "KXMADDOWMENTION"
+     }
+    },
+    "other": {
+     "earlier": {
+      "trades": 155,
+      "events": 114,
+      "series": 52,
+      "cents": -5.364519180645162,
+      "t": -1.9109593955422874,
+      "win_rate": 0.2064516129032258,
+      "avg_price": 0.2514129032258066,
+      "top_series_share_of_profit": 0.1681680974055009,
+      "top_series": "KXT20MATCH"
+     },
+     "later": {
+      "trades": 771,
+      "events": 544,
+      "series": 89,
+      "cents": -3.9218982788586256,
+      "t": -2.5816595163971487,
+      "win_rate": 0.29961089494163423,
+      "avg_price": 0.3275343709468225,
+      "top_series_share_of_profit": 0.13752958733458476,
+      "top_series": "KXWCTCORNERS"
+     }
+    },
+    "politics": {
+     "earlier": {
+      "trades": 8,
+      "events": 6,
+      "series": 2,
+      "cents": -7.363112499999999,
+      "t": -0.3868573918755832,
+      "win_rate": 0.375,
+      "avg_price": 0.43375,
+      "top_series_share_of_profit": 1.0,
+      "top_series": "KXDIMAYORGAME"
+     },
+     "later": {
+      "trades": 9,
+      "events": 9,
+      "series": 5,
+      "cents": 26.79446966666667,
+      "t": 1.4294881389952099,
+      "win_rate": 0.5555555555555556,
+      "avg_price": 0.2776666666666667,
+      "top_series_share_of_profit": 0.5902158919381982,
+      "top_series": "KXDIMAYORSPREAD"
+     }
+    },
+    "sports": {
+     "earlier": {
+      "trades": 1592,
+      "events": 1297,
+      "series": 242,
+      "cents": -1.6419014283919602,
+      "t": -1.317058624738442,
+      "win_rate": 0.3863065326633166,
+      "avg_price": 0.3894585427135682,
+      "top_series_share_of_profit": 0.04425141343118219,
+      "top_series": "KXNCAAWBGAME"
+     },
+     "later": {
+      "trades": 2854,
+      "events": 2281,
+      "series": 392,
+      "cents": -2.8553946636299936,
+      "t": -3.3850961821493417,
+      "win_rate": 0.3248072880168185,
+      "avg_price": 0.3414148563419755,
+      "top_series_share_of_profit": 0.03821282883848767,
+      "top_series": "KXWNBA1HTOTAL"
+     }
+    }
+   },
+   "best_category_on_earlier_half": "sports"
+  }
+ },
+ "resting_favourite": {
+  "all": {
+   "earlier": {
+    "fills": 15819,
+    "cents": 0.5579974588311492,
+    "t": 2.162928705665582
+   },
+   "later": {
+    "fills": 20804,
+    "cents": -0.5049614425951772,
+    "t": -2.19785267993503
+   },
+   "all": {
+    "fills": 36623,
+    "cents": -0.04582519319826653,
+    "t": -0.26700343670881155,
+    "avg_price": 0.8866927886846664
+   }
+  },
+  "crypto": {
+   "earlier": {
+    "fills": 36,
+    "cents": -4.862718055555559,
+    "t": -0.8945183277554927
+   },
+   "later": {
+    "fills": 18,
+    "cents": 5.958751388888888,
+    "t": 6.893163261820931
+   },
+   "all": {
+    "fills": 54,
+    "cents": -1.2555615740740764,
+    "t": -0.34098678496148793,
+    "avg_price": 0.9187037037037036
+   }
+  },
+  "economics": {
+   "earlier": {
+    "fills": 648,
+    "cents": 2.2387480613425894,
+    "t": 2.045400724756589
+   },
+   "later": {
+    "fills": 593,
+    "cents": 0.7188457841483954,
+    "t": 0.5609774070082045
+   },
+   "all": {
+    "fills": 1241,
+    "cents": 1.5124772713537442,
+    "t": 1.804194243541161,
+    "avg_price": 0.9028114423851777
+   }
+  },
+  "entertainment": {
+   "earlier": {
+    "fills": 73,
+    "cents": -1.1811500000000026,
+    "t": -0.3284498138335423
+   },
+   "later": {
+    "fills": 28,
+    "cents": 8.192509821428565,
+    "t": 7.697187198691662
+   },
+   "all": {
+    "fills": 101,
+    "cents": 1.4174883663366304,
+    "t": 0.5326082413885688,
+    "avg_price": 0.9252475247524747
+   }
+  },
+  "mentions": {
+   "earlier": {
+    "fills": 588,
+    "cents": 0.09419621598639194,
+    "t": 0.07166088628378323
+   },
+   "later": {
+    "fills": 27,
+    "cents": 7.217535185185181,
+    "t": 5.253674407238914
+   },
+   "all": {
+    "fills": 615,
+    "cents": 0.40692817073170495,
+    "t": 0.3224353160432622,
+    "avg_price": 0.8885691056910601
+   }
+  },
+  "other": {
+   "earlier": {
+    "fills": 902,
+    "cents": 2.203334398281593,
+    "t": 2.6251714672544173
+   },
+   "later": {
+    "fills": 4360,
+    "cents": 0.708315257798162,
+    "t": 1.6123587104262083
+   },
+   "all": {
+    "fills": 5262,
+    "cents": 0.9645880181014792,
+    "t": 2.464605336888894,
+    "avg_price": 0.9035528316229496
+   }
+  },
+  "politics": {
+   "earlier": {
+    "fills": 87,
+    "cents": 1.4146195402298816,
+    "t": 0.4368701788106699
+   },
+   "later": {
+    "fills": 118,
+    "cents": -1.98159027966102,
+    "t": -0.6303584157687925
+   },
+   "all": {
+    "fills": 205,
+    "cents": -0.5402719658536623,
+    "t": -0.23811115451633028,
+    "avg_price": 0.8866243902439018
+   }
+  },
+  "sports": {
+   "earlier": {
+    "fills": 13485,
+    "cents": 0.40575958140526186,
+    "t": 1.4224957385319035
+   },
+   "later": {
+    "fills": 15660,
+    "cents": -0.9142682964719059,
+    "t": -3.3353499080852336
+   },
+   "all": {
+    "fills": 29145,
+    "cents": -0.30350912909590305,
+    "t": -1.534518987442094,
+    "avg_price": 0.8827304168810708
+   }
+  }
+ }
+}
