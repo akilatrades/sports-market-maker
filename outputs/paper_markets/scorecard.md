@@ -4,9 +4,9 @@ One $500 paper bankroll per series; rule in kalshi/paper_markets.py. Series mark
 
 | Series | Orders | Open | Fill rate | Fills settled | ¢/contract | t | Bankroll |
 |---|---:|---:|---:|---:|---:|---:|---:|
-| KXITFMATCH | 642 | 37 | 69% | 420 | 0.09 | 0.09 | $366.17 |
+| KXITFMATCH | 660 | 36 | 68% | 425 | -0.13 | -0.13 | $365.56 |
 | KXNASCARRACE | 77 | 0 | 78% | 60 | 0.74 | 1.11 | $502.33 |
-| KXLIGAMXSPREAD | 133 | 11 | 60% | 73 | -8.95 | -1.06 | $465.37 |
+| KXLIGAMXSPREAD | 133 | 0 | 62% | 82 | -7.78 | -1.02 | $465.70 |
 | KXLALIGASPREAD | 63 | 0 | 43% | 27 | -2.42 | -0.22 | $493.67 |
 | KXNFLANYTD | 0 | 0 |  | 0 |  |  | $500.00 |
 | KXNFLRECYDS | 250 | 0 | 56% | 140 | -8.91 | -1.72 | $359.44 |
@@ -16,8 +16,8 @@ One $500 paper bankroll per series; rule in kalshi/paper_markets.py. Series mark
 | KXNBAFTM | 0 | 0 |  | 0 |  |  | $500.00 |
 | KXNCAAMENTION | 0 | 0 |  | 0 |  |  | $500.00 |
 | KXNCAAMB1HSPREAD | 0 | 0 |  | 0 |  |  | $500.00 |
-| KXNBA3D | 22 | 4 | 61% | 11 | 5.42 | 3.43 | $503.17 |
+| KXNBA3D | 22 | 0 | 68% | 15 | 6.38 | 3.95 | $504.97 |
 | KXNASCARTOP10 | 77 | 0 | 73% | 56 | 1.49 | 0.56 | $479.39 |
 | KXNFLANYTD+model | 0 | 0 |  | 0 |  |  | $500.00 |
 | KXNFLRECYDS+model | 231 | 0 | 48% | 111 | -9.15 | -1.21 | $384.34 |
-| KXITFMATCH+no30 | 449 | 40 | 73% | 300 | 1.18 | 0.77 | $536.28 |
+| KXITFMATCH+no30 | 468 | 39 | 72% | 308 | 0.75 | 0.49 | $537.83 |
