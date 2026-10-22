@@ -2350,3 +2350,40 @@ job can score it from public files (projection ladders, sportsbook
 snapshots, Kalshi snapshots, trade prints and results). The totals maker
 needs time-stamped sportsbook totals first; that is an odds-feed change and
 an owner decision.
+
+## 2026-10-22: A different strategy across all scanned Kalshi markets (exploratory plan)
+
+*Written before running. Exploratory; nothing here changes the live rules.*
+
+The owner asked for a strategy separate from the resting-NO seller that
+works across Kalshi's markets. Data: the cross-market scan's hourly quotes
+(`outputs/scan/orders_*.csv.gz`; about 1,760 series in every category,
+quotes 7 to 4 hours before each market's expected expiration, with the
+result). One row per market at its first and last quote in that window.
+Only the result and the quotes are used, no model.
+`research/explore_strategies.py`.
+
+**Strategies (taker: buy at the ask, held to settlement):**
+- **S1, favourite-longshot.** Prediction markets are often said to overprice
+  long shots. At the first quote, buy whichever side's ask is at least X,
+  for X = 80¢, 90¢ and 95¢ (3 variants).
+- **S2, momentum or reversal.** Where the mid moved at least 5¢ between the
+  first and last quote (about 3 hours), buy the side it moved toward
+  (momentum), or the other side (reversal), at the last quote's ask (2
+  variants).
+- **Calibration** (descriptive, no variant): realised YES rate minus the
+  mid, by price band and by category, which says where any of this could
+  come from.
+
+**Costs:** Kalshi's taker fee, 0.07 × P × (1 − P) per contract, unrounded
+(a large order); and rounded up to the cent on a one-contract order. One
+contract per market, at the quoted ask (depth unknown).
+
+**Statistics and bar:** event-clustered t; halves split at the median
+market date of the whole scan. A rule is **promising** if, after the
+unrounded fee, it makes money in both halves with t ≥ 2 on the later half,
+at least 1,000 trades, and no single series supplies more than a quarter of
+its profit. Categories (by series name: sports, mentions, weather,
+economics, crypto, politics, entertainment, other) are ranked on the earlier
+half only and the best is reported on the later half. Variant count: 5
+rules, and 8 categories per rule reported descriptively.
