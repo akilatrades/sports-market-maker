@@ -2528,3 +2528,56 @@ series are ranked on the earlier half and the top 10 pooled on the later
 half; a family or series is **promising** only if the later half makes
 money with t ≥ 2 on at least 300 fills and the earlier half was also
 positive.
+
+## 2026-10-22: Strategy sweep across all scanned markets, with profit factor (results)
+
+*Exploratory and simulated, run once as planned; `python -m
+research.strategy_sweep`, tables in `outputs/research/strategy_sweep.md`.
+202,805 markets; one contract per hourly resting order, first in line,
+held to settlement. Profit factor (PF) = winning dollars / losing
+dollars. Nothing here changes the live rules.*
+
+| Family | Fills | ¢/contract (t) | PF | Earlier ¢ | Later ¢ (t) |
+|---|---:|---:|---:|---:|---:|
+| 1 NO everywhere | 257,561 | +0.85 (6.7) | 1.05 | +1.09 | +0.59 (3.1) |
+| 2 YES everywhere | 136,330 | −1.41 (−8.5) | 0.93 | −0.92 | −1.85 (−8.0) |
+| 3 both sides | 393,891 | +0.07 (1.1) | 1.01 | +0.44 | −0.31 (−3.7) |
+| 4 favourite side | 63,393 | +0.55 (3.0) | 1.06 | +0.88 | +0.28 (1.2) |
+| 5 long-shot side | 54,900 | −0.54 (−3.0) | 0.94 | +0.02 | −0.93 (−4.2) |
+| 6 NO, YES 35-50¢ | 58,256 | +0.76 (2.5) | 1.03 | +0.83 | +0.67 (1.5) |
+| **7 both sides, spread 5¢+** | **76,694** | **+2.44 (15.9)** | **1.22** | **+3.07** | **+1.70 (7.8)** |
+| 8 NO after a quiet hour | 59,944 | +0.27 (1.3) | 1.02 | +0.80 | −0.27 (−0.9) |
+| 9 NO after a traded hour | 141,022 | +0.86 (5.6) | 1.05 | +0.97 | +0.73 (3.1) |
+
+- **Economic and financial markets: no edge from quotes alone.** NO
+  everywhere +2.46¢ (PF 1.20) but +0.38¢ on the later half (t 0.2); YES
+  everywhere −6.04¢ (PF 0.59); both sides −1.51¢; both sides in wide
+  spreads +0.27¢.
+- **Family 7, two-sided quotes in wide-spread markets, is the one
+  different strategy that held up.** Post a YES bid and a NO bid one cent
+  inside a spread of 5¢ or more, hold whatever fills to settlement.
+  - Positive in both halves, and broad: 1,179 series, of which 369 have
+    enough data; 249 were positive, 72 had t ≥ 2 against 10 with t ≤ −2,
+    and 67 survived a 10% false-discovery-rate correction. The top 10
+    series supply only 15% of the profit. Sports +2.74¢ (PF 1.23),
+    esports and other +1.28¢, mentions +3.36¢; economics +0.27¢.
+  - Where the money comes from: 21% of filled hours filled both sides,
+    locking in the spread less 2¢ (9.7¢ a pair on an average 11.7¢
+    spread). That gave $1,303 of the $1,873. One-sided fills made +1.14¢
+    (t 4.9).
+  - It grows with the spread: 5-8¢ +0.71¢ (PF 1.07); 8-15¢ +1.44¢
+    (PF 1.12); 15-30¢ +4.60¢ (PF 1.38); 30¢+ +8.44¢ (PF 1.82).
+  - Capacity: a median of 86 contracts traded through a filled order's
+    price in its hour (quartiles 18 and 375).
+  - **Caveats.** In-sample (the 5¢ threshold was chosen with the family);
+    fills are read from trade prints, so a wide-spread market's few
+    prints decide everything. Other bots may now quote inside those
+    spreads. Holding both sides needs about a dollar of capital per pair
+    until settlement.
+- Families 1 and 9 (NO everywhere) also held on the later half, but they
+  are v5's idea applied everywhere, and their top-10 series did not hold.
+
+**What carries forward:** family 7 deserves a written forward paper test
+(two-sided quotes one cent inside, spreads of 8¢ or more, the scan's
+sports, esports and mentions series), scored from public trade prints in
+the `kalshi/paper_markets.py` style, before anything live.
