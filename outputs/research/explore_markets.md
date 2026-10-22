@@ -81,16 +81,27 @@ each order resting one hour. Halves by game date; cells are ¢ (t, fills).
 | KXNBA3D | 1.0 | 927 | 55% | 509 | +4.47 | 2.25 | +245 | +7.47 (2.24, 145) | +3.27 (1.35, 364) |
 | KXNBA3D | 0.25 | 927 | 54% | 501 | +4.25 | 2.13 | +230 | +6.80 (2.06, 142) | +3.25 (1.32, 359) |
 
-- KXNBA2D: 334 markets (of 4879 listed in data/kalshi_history) in 281 games (2025-12-04 to 2026-06-05); 6% of fills at NO 96¢+. Fees: no maker fee +2.94¢, scan fee +2.67¢, 1¢ per contract +1.94¢. Extra variants: NO 5-95¢ +3.17¢ (t 1.17, 599 fills); first look per market +0.70¢ (t 0.20, 138 fills).
-- KXNBA3D: 283 markets (of 1171 listed in data/kalshi_history) in 251 games (2025-12-04 to 2026-06-13); 37% of fills at NO 96¢+. Fees: no maker fee +4.62¢, scan fee +4.47¢, 1¢ per contract +3.62¢. Extra variants: NO 5-95¢ +5.35¢ (t 1.71, 323 fills); first look per market +4.47¢ (t 1.94, 124 fills).
+- KXNBA2D: 334 markets (of 4,879 listed in data/kalshi_history) in 281 games (2025-12-04 to 2026-06-05); 6% of fills at NO 96¢+. Fees: no maker fee +2.94¢, scan fee +2.67¢, 1¢ per contract +1.94¢. Extra variants: NO 5-95¢ +3.17¢ (t 1.17, 599 fills); first look per market +0.70¢ (t 0.20, 138 fills).
+- KXNBA3D: 283 markets (of 1,171 listed in data/kalshi_history) in 251 games (2025-12-04 to 2026-06-13); 37% of fills at NO 96¢+. Fees: no maker fee +4.62¢, scan fee +4.47¢, 1¢ per contract +3.62¢. Extra variants: NO 5-95¢ +5.35¢ (t 1.71, 323 fills); first look per market +4.47¢ (t 1.94, 124 fills).
 
 ## Variant count
 
 Planned: 12 (2 combo series, 10 holdout series). Extra: 12 (8 new series from ranking by t; 4 combo variants (NO 5-95¢, first look per market)). Total: 24. Fee and flow share versions are sensitivities of the same orders, not new selections.
 
-## Data gaps
+## Data gaps and caveats
 
 - Unreadable scan files (skipped): orders_KXCHESSMATCH.csv.gz, orders_KXCHNSLBTTS.csv.gz.
 - No trade prints for KXNBA2D/KXNBA3D in data/kalshi_history, so the combo
-  replay is the scan's 400-market sample with its hourly 1-hour orders, not
-  a v5-style order resting until tip; there is no model filter.
+  replay is the scan's sample (400 markets drawn, fewer with quotes) with
+  its hourly one-hour orders, not a v5-style order resting until tip, and
+  with no model filter.
+- Fills assume first in line at our price. Flow share 0.25 barely changes
+  the numbers because many contracts usually trade through within the hour;
+  queue position and whether the quote is there at all matter more.
+- Each series' sample is a few weeks to a year, and the two halves come from
+  the same stretch of time, so the holdout is not a different season.
+- Fee: the scan's unrounded quarter fee for every series. Series with
+  'quadratic' fees (NBA props among them) charge makers nothing; a series
+  that charges makers rounds a one-contract fee up to 1¢.
+- A clustered t from fewer than about 20 events, or from a series with few
+  or no losing fills (NO prices near 95¢), is not reliable.

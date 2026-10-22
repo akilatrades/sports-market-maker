@@ -19,7 +19,9 @@ def _rows(series, days, pnl, per_market=1, traded=5.0, price=0.5):
                     "ticker": f"{series}-E{i}-M",
                     "event_ticker": f"{series}-E{i}",
                     "end_ts": 1_000_000 + 3600 * k,
-                    "date": str(pd.Timestamp("2026-01-01") + pd.Timedelta(days=day))[:10],
+                    "date": str(pd.Timestamp("2026-01-01") + pd.Timedelta(days=day))[
+                        :10
+                    ],
                     "side": "no",
                     "price": price,
                     "traded": traded,

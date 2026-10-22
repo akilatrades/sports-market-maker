@@ -339,7 +339,8 @@ def combos(o):
             "share_of_fills_at_no_96c_plus": float(
                 s.fill_1[s.price > BAND[1]].sum() / max(s.fill_1.sum(), 1)
             ),
-            "mean_scan_fee_cents_on_fills": 100 * float(s.scan_fee[s.fill_1 > 0].mean()),
+            "mean_scan_fee_cents_on_fills": 100
+            * float(s.scan_fee[s.fill_1 > 0].mean()),
             "scan_fee": combo_block(s),
             "fee_sensitivity_flow_1": {
                 "scan_fee": score(s)["cents"],
@@ -382,7 +383,9 @@ def fee_types(path=FEES_SEEN):
 
 
 def _f(v, fmt):
-    return "n/a" if v is None or (isinstance(v, float) and not np.isfinite(v)) else fmt % v
+    return (
+        "n/a" if v is None or (isinstance(v, float) and not np.isfinite(v)) else fmt % v
+    )
 
 
 def report(r):
@@ -523,9 +526,11 @@ def report(r):
         f = c["fee_sensitivity_flow_1"]
         band = c["extra_no_price_5_95"]["flow_1.0"]["all"]
         first = c["extra_first_look_per_market"]["flow_1.0"]["all"]
+        listed = c["markets_listed_in_history"]
+        listed = f"{listed:,}" if listed else "n/a"
         lines.append(
-            f"- {series}: {c['markets']} markets (of {_f(c['markets_listed_in_history'], '%d')} "
-            f"listed in data/kalshi_history) in {c['games']} games "
+            f"- {series}: {c['markets']} markets (of {listed} listed in "
+            f"data/kalshi_history) in {c['games']} games "
             f"({c['first_game_day']} to {c['last_game_day']}); "
             f"{c['share_of_fills_at_no_96c_plus']:.0%} of fills at NO 96¢+. Fees: no "
             f"maker fee {f['no_maker_fee']:+.2f}¢, scan fee {f['scan_fee']:+.2f}¢, 1¢ per "
