@@ -221,6 +221,7 @@ def running_now():
     """What the funded bots run, read from the code itself, plus public data
     freshness. No account data."""
     from live import prod_nba_auto as nba
+    from live import spread_policy as spread
     from live.shared_account_risk import LIMITS
 
     odds = None
@@ -244,6 +245,46 @@ def running_now():
         "total_loss_stop": nba.MAX_REALIZED_CUMULATIVE_LOSS,
         "odds_snapshot_utc": odds,
         "trade_prints_through": prints[-1].name[:10] if prints else None,
+        "spread": {
+            "rules": spread.STRATEGY_VERSION,
+            "contracts_per_order": spread.CONTRACTS,
+            "max_net_per_market_side": spread.MAX_NET_PER_MARKET,
+            "min_spread_cents": spread.MIN_SPREAD_CENTS,
+            "hours_before_expiration": list(spread.WINDOW_HOURS),
+            "series": len(spread.SERIES),
+            "max_open": spread.MAX_ACTIVE_COST,
+            "daily_loss_stop": spread.DAILY_LOSS_STOP,
+            "total_loss_stop": spread.CUMULATIVE_LOSS_STOP,
+            "order_lifetime_minutes": spread.ORDER_LIFETIME_MINUTES,
+        },
+    }
+
+
+def spread_research(path=Path("outputs/research/strategy_sweep.json")):
+    """The backtest behind the spread maker (simulated, in-sample): two-sided
+    quotes one cent inside spreads of 5c or more, held to settlement."""
+    if not path.exists():
+        return None
+    family = json.loads(path.read_text()).get("7 both sides, spread 5c+")
+    if not family:
+        return None
+
+    def pick(block):
+        return {
+            k: block.get(k)
+            for k in ("fills", "cents", "t", "profit_factor", "total_usd")
+        }
+
+    return {
+        "label": "Both sides, spread 5c+ (simulated, in-sample)",
+        "all": pick(family["all"]),
+        "earlier": pick(family["earlier"]),
+        "later": pick(family["later"]),
+        "categories": {
+            c: pick(v["all"])
+            for c, v in family.get("categories", {}).items()
+            if (v["all"].get("fills") or 0) >= 1000
+        },
     }
 
 
@@ -373,6 +414,7 @@ def main():
         "live_nfl": live_nfl,
         "limits": limits,
         "running_now": running_now(),
+        "spread_research": spread_research(),
         "research": research,
         "scan_top": scan,
     }

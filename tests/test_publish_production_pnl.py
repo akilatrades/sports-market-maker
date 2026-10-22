@@ -124,3 +124,116 @@ def test_only_signed_exchange_read_and_private_journals(tmp_path):
         "/portfolio/settlements",
     ]
     assert not any("balance" in x[0] for x in client.calls)
+
+
+def spread_events():
+    out = []
+    for key, side, cents in (("a", "yes", 41), ("b", "no", 49)):
+        out += [
+            {
+                "event": "intent",
+                "utc": "2026-10-22T18:00:00+00:00",
+                "client_order_id": f"smm-spread-{key}",
+                "ticker": "KXDOTA2GAME-X-A",
+                "side": side,
+                "price_cents": cents,
+                "count": 5,
+                "cost": 5 * cents / 100,
+            },
+            {
+                "event": "accepted",
+                "client_order_id": f"smm-spread-{key}",
+                "order_id": f"spread-{key}",
+            },
+        ]
+    return out
+
+
+def spread_fill(key, side, cents, minute):
+    yes = cents if side == "yes" else 100 - cents
+    return {
+        "fill_id": f"f-{key}",
+        "order_id": f"spread-{key}",
+        "ticker": "KXDOTA2GAME-X-A",
+        "created_time": f"2026-10-22T18:{minute:02d}:00+00:00",
+        "count_fp": "5.00",
+        "yes_price_dollars": f"{yes / 100:.2f}",
+        "no_price_dollars": f"{(100 - yes) / 100:.2f}",
+        "outcome_side": side,
+        "fee_cost": "0.00",
+    }
+
+
+def test_spread_maker_is_reported_from_its_fill_ledger():
+    pair = [spread_fill("a", "yes", 41, 20), spread_fill("b", "no", 49, 30)]
+    report = build_report(
+        {"nfl": [], "nba": [], "spread": spread_events()}, pair, [], NOW
+    )
+    spread = report["markets"]["spread"]
+    # Five pairs at 41c + 49c: +$0.50 with no settlement record at all.
+    assert spread["status"] == "verified_fill_ledger"
+    assert spread["realized_profit_dollars"] == 0.5 and spread["filled_contracts"] == 10
+    assert spread["exchange_accepted_orders"] == 2
+    assert set(spread) == {
+        "status",
+        "realized_profit_dollars",
+        "filled_contracts",
+        "settled_markets",
+        "exchange_accepted_orders",
+        "note",
+    }  # aggregates only: no tickers, ids or prices
+
+
+def test_spread_maker_unknown_states_are_never_a_fake_zero():
+    none = build_report({"nfl": [], "nba": [], "spread": None}, [], [], NOW)
+    assert none["markets"]["spread"]["status"] == "unavailable"
+    waiting = build_report(
+        {"nfl": [], "nba": [], "spread": spread_events()}, [], [], NOW
+    )
+    assert waiting["markets"]["spread"]["status"] == "awaiting_first_fill"
+    assert waiting["markets"]["spread"]["realized_profit_dollars"] is None
+    bad = {**spread_fill("a", "yes", 41, 20), "outcome_side": "no"}
+    broken = build_report(
+        {"nfl": [], "nba": [], "spread": spread_events()}, [bad], [], NOW
+    )
+    assert broken["markets"]["spread"]["status"] == "unreconciled"
+    assert broken["markets"]["spread"]["realized_profit_dollars"] is None
+    # NBA and NFL are unaffected by a spread problem.
+    assert broken["markets"]["nba"]["status"] == "awaiting_first_order"
+
+
+def test_a_torn_spread_journal_never_blocks_nba_and_nfl(tmp_path):
+    class FakeClient:
+        def pages(self, path, key, **params):
+            return []
+
+    n, b, s = tmp_path / "nfl.jsonl", tmp_path / "nba.jsonl", tmp_path / "spread.jsonl"
+    n.write_text("".join(json.dumps(x) + "\n" for x in events("NFL", "n1")))
+    b.write_text("")
+    s.write_text('{"event": "intent", "client')  # torn last line
+    report = collect_report(
+        now=NOW, client=FakeClient(), journals={"nfl": n, "nba": b, "spread": s}
+    )
+    assert report["markets"]["spread"]["status"] == "unavailable"
+    assert report["markets"]["nfl"]["exchange_accepted_orders"] is not None
+
+
+def test_malformed_spread_data_is_unreconciled_not_a_crash():
+    bad = [
+        {
+            "event": "intent",
+            "client_order_id": "c",
+            "ticker": "KX-1",
+            "side": "yes",
+            "price_cents": "x",
+        },
+        {"event": "accepted", "client_order_id": "c", "order_id": "o"},
+    ]
+    fill = {
+        "fill_id": "f",
+        "order_id": "o",
+        "created_time": "2026-10-19T14:00:00+00:00",
+        "count_fp": "1.00",
+    }
+    report = build_report({"nfl": [], "nba": [], "spread": bad}, [fill], [], NOW)
+    assert report["markets"]["spread"]["status"] == "unreconciled"

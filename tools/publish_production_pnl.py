@@ -1,4 +1,8 @@
-"""Publish redacted, exchange-verified NFL/NBA settlement totals to GitHub Pages.
+"""Publish redacted, exchange-verified bot P&L totals to GitHub Pages.
+
+NFL and NBA: settled P&L on reconciled settlement markets. Spread maker:
+realized P&L from its own fills (a YES+NO pair closes when its second leg
+fills and never reaches a settlement record).
 
 Must be run from the trading Droplet with Kalshi production GET-only
 credentials. By default PRINTS ONLY a public-safe summary. Publishing is
@@ -20,6 +24,7 @@ from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
 from live.account_dashboard import ReadOnlyClient, cohort_settled_pnl, read_journal
+from live.shared_account_risk import spread_ledger
 
 REPO = "akilatrades/sports-market-maker"
 PUBLISHED = "outputs/dashboard/production_pnl.json"
@@ -27,7 +32,80 @@ API = f"https://api.github.com/repos/{REPO}/contents/{PUBLISHED}"
 JOURNALS = {
     "nfl": Path("/home/trader/prod-nfl-auto/journal.jsonl"),
     "nba": Path("/home/trader/prod-nba-auto/journal.jsonl"),
+    "spread": Path("/home/trader/prod-spread-auto/journal.jsonl"),
 }
+SPREAD_NOTE = (
+    "Realized P&L from the bot's own fills: a YES+NO pair counts when its "
+    "second leg fills, a contract held to settlement when its market "
+    "settles; fees included. Open positions excluded."
+)
+
+
+def read_spread_journal(path):
+    """The spread maker's journal, or None if missing or unreadable: a bad
+    spread journal shows the spread card as unavailable and never blocks
+    the NBA and NFL figures."""
+    if not path or not path.exists():
+        return None
+    try:
+        return read_journal(path)
+    except Exception:
+        return None
+
+
+def spread_report(events, exchange_fills, settlements, now):
+    """Aggregate-only public values for the spread maker; never raises."""
+    if events is None:
+        return {
+            "status": "unavailable",
+            "realized_profit_dollars": None,
+            "filled_contracts": None,
+            "settled_markets": None,
+            "exchange_accepted_orders": None,
+            "note": "Spread maker journal unavailable; no P&L assertion.",
+        }
+    accepted = sum(1 for e in events if e.get("event") == "accepted")
+    try:
+        ledger = spread_ledger(events, exchange_fills, settlements, now)
+    except Exception:  # any bad spread record: no number, NBA/NFL unaffected
+        return {
+            "status": "unreconciled",
+            "realized_profit_dollars": None,
+            "filled_contracts": None,
+            "settled_markets": None,
+            "exchange_accepted_orders": accepted,
+            "note": "Fills or settlements could not be reconciled; no P&L assertion.",
+        }
+    contracts = 0.0
+    owned = {str(e.get("order_id")) for e in events if e.get("event") == "accepted"}
+    seen = set()
+    for fill in [
+        *[
+            {**e, "created_time": e.get("utc")}
+            for e in events
+            if e.get("event") == "fill"
+        ],
+        *exchange_fills,
+    ]:
+        fid = fill.get("fill_id") or fill.get("trade_id")
+        if str(fill.get("order_id")) not in owned or not fid or fid in seen:
+            continue
+        seen.add(fid)
+        raw = fill.get("count_fp")
+        raw = fill.get("count") if raw is None else raw
+        try:
+            contracts += float(raw)
+        except (TypeError, ValueError):
+            pass
+    filled = ledger["fills"] > 0
+    return {
+        "status": "verified_fill_ledger" if filled else "awaiting_first_fill",
+        "realized_profit_dollars": round(ledger["cumulative"], 2) if filled else None,
+        "filled_contracts": round(contracts, 2),
+        "settled_markets": len(ledger["settled"]),
+        "exchange_accepted_orders": accepted,
+        "note": SPREAD_NOTE,
+    }
 
 
 def build_report(cohorts, exchange_fills, settlements, now):
@@ -66,6 +144,9 @@ def build_report(cohorts, exchange_fills, settlements, now):
                 "positions, cash movements and unsettled orders excluded."
             ),
         }
+    markets["spread"] = spread_report(
+        cohorts.get("spread"), exchange_fills, settlements, now
+    )
     # Intentionally choose an ALLOWLIST, never copy an account response or
     # settlement object into the public JSON.
     return {
@@ -73,7 +154,7 @@ def build_report(cohorts, exchange_fills, settlements, now):
         "as_of_utc": now.astimezone(UTC).isoformat(),
         "source": (
             "Signed read-only Kalshi production fills/settlements; "
-            "matched to separate private NFL and NBA order journals"
+            "matched to separate private NFL, NBA and spread maker order journals"
         ),
         "refresh_type": "automated_signed_aggregate_snapshot_not_real_time",
         "markets": markets,
@@ -86,8 +167,9 @@ def collect_report(now=None, client=None, journals=None):
     paths = journals or JOURNALS
     cohorts = {}
     for name in ("nfl", "nba"):
-        path = paths[name]
-        cohorts[name] = read_journal(path) if path.exists() else None
+        path = paths.get(name)
+        cohorts[name] = read_journal(path) if path and path.exists() else None
+    cohorts["spread"] = read_spread_journal(paths.get("spread"))
     starts = [
         datetime.fromisoformat(e["utc"]).timestamp()
         for events in cohorts.values()
