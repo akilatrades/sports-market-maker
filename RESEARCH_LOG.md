@@ -2595,3 +2595,69 @@ one contract is held in that market: +3.60¢ (PF 1.30), $1,219 (−25%),
 daily sd $5.10 (−29%), worst day −$14.7. About the same profit per unit of
 risk as (A). Hold to settlement, with a per-market inventory cap as a risk
 control once sizes grow.
+
+## 2026-10-22: Spread maker pilot, shadow and small live (plan)
+
+*Written before the code. Requested by the owner on 22 October ("we need to
+seriously start building this spread bot ... push to live"); defaults
+chosen by the owner's "no preference" answers. Evidence: the strategy
+sweep above (family 7), simulated and in-sample.*
+
+**Strategy `spread-maker-v1`.** In the allowed series (below), for open
+markets whose expected expiration is 4 to 7 hours away and whose spread is
+8¢ or more: rest a YES bid one cent above the best YES bid and a NO bid one
+cent above the best NO bid, one contract each, post-only, each order
+expiring after 65 minutes; re-quote when the book moves. Hold fills to
+settlement. Do not quote a side once one contract of that side is held in
+the market (net).
+
+**Universe.** The 66 series that passed the 10% false-discovery check at
+8¢ (strategy sweep), minus `KXNBAPTS` and `KXNFLRECYDS` (traded by v5 and
+the NFL bot); never a ticker in another bot's journal; never a series that
+pays a maker fee on Kalshi's schedule.
+
+**Two modes, one worker** (`live/prod_spread_auto.py`):
+- **Shadow** (default, no orders): every 10 minutes, write the quotes it
+  would post on every eligible market (at most one per market and side per
+  hour, as in the backtest), then score them from Kalshi's public trade
+  prints and results with the backtest's fill rule.
+- **Live** (only with `SPREAD_AUTO_ARM=YES` and the owner-created marker
+  `/etc/market-maker-spread.enabled`): the same quotes as real orders,
+  within the caps below. The shadow ledger keeps running beside it, so live
+  fills can be compared with shadow fills on the same markets.
+
+**Risk limits (old → new, why).**
+- New, spread bot only: 1 contract per order; at most 1 net contract per
+  market and side; $25 of open exposure (resting orders plus held
+  contracts at cost); 20 orders per pass and 300 a day; a $5 daily and $15
+  total realized-loss stop of its own. Why: a pilot sized so the worst
+  plausible week costs less than v5's daily stop.
+- Account-wide realized-loss stops: −$20 a day and −$60 total, unchanged
+  in size, now counting the spread bot's settled markets as well as NBA
+  and NFL (old scope: NBA + NFL markets). Why: the owner chose one stop for
+  the whole $350 account.
+- NBA and NFL caps (`LIMITS`: $2,050 lifetime, $180 daily, $165 active)
+  unchanged and still computed from NBA and NFL orders only; the spread
+  bot's orders count against its own $25 instead. Total open exposure of
+  all three is therefore at most $190.
+- `live/shared_account_risk.py` learns a third cohort: the NBA and NFL
+  workers recognise the spread bot's orders, fills and positions (YES or
+  NO, net per market, never more than it ordered) instead of halting on
+  them, and still halt on anything unowned.
+
+**Failure handling.** Journal before every order and cancel. A placement
+the exchange rejects with an HTTP 4xx (for example a post-only order that
+would cross) is recorded as rejected only after a signed read confirms no
+order with that client id exists; any other failure is an unknown outcome
+that halts all three bots until the owner reconciles it, as today. A `KILL`
+file cancels the spread bot's resting orders.
+
+**What will be measured and when.**
+- **Shadow, after 2 weeks:** profit per filled contract from the shadow
+  ledger at flow share 0.25, with at least 300 fills. Pass: above zero.
+- **Live, after 300 filled contracts or 4 weeks, whichever comes first:**
+  live profit per filled contract (event-clustered t) and the live fill
+  rate against the shadow fill rate on the same markets. Continue if live
+  profit per contract is above zero; stop and review if the $15 total stop
+  is hit or live fills are less than half the shadow's. No size increase
+  before that review.
