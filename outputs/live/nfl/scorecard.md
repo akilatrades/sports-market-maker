@@ -1,17 +1,17 @@
 # Live trader
 
-Updated 2026-10-22 19:27 UTC. Risk limits: kalshi/risk.py. Rule: no_seller_bookline.
+Updated 2026-10-22 20:00 UTC. Risk limits: kalshi/risk.py. Rule: no_seller_bookline.
 
 | Status | Orders | Dollars |
 |---|---:|---:|
-| dry | 291 | $620.84 |
-| rejected | 1153 | $2,346.86 |
+| dry | 297 | $634.31 |
+| rejected | 1216 | $2,479.54 |
 
 Rejections:
 
 - 6 orders already in game 26OCT18DALGB: 455
 - 6 orders already in game 26OCT18LACKC: 217
-- 6 orders already in game 26OCT22NECHI: 139
+- 6 orders already in game 26OCT22NECHI: 202
 - 6 orders already in game 26OCT18BUFLV: 118
 - 6 orders already in game 26OCT18HOUJAC: 84
 - 6 orders already in game 26OCT19WASSF: 84
