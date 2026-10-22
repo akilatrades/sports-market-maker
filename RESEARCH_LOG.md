@@ -2127,3 +2127,108 @@ joined ones, and this season most rungs v5 trades allow only joining. The
 pre-registered live adverse-selection check (this log,
 2026-10-21) should therefore also be read separately for joined and
 improving orders at the v5 checkpoint, as a description, not a new test.
+
+## 2026-10-22: Where is the NO edge thicker? (exploratory plan)
+
+*Exploratory and in-sample (2025-26), written before running. Nothing here
+changes the live rules. Anything promising becomes its own written plan,
+tested forward on 2026-27 beside the unchanged v5 rules.*
+
+Live v5 orders carry about 1-1.5¢ of estimated edge against the sportsbooks
+(21 October). Four places the edge could be thicker:
+
+**Common setup** (A and B, `research/explore_edge.py`): the replay orders
+under the v5 filter (one contract, 0-15¢ of model edge, NO 5-95¢), no caps
+(so caps do not distort the slices), fills as if first in line (flow share
+1.0) and at 0.25 (expected value over the thinning), game-clustered t,
+halves split at 2026-02-09. A slice counts as **promising** only if its
+cents per filled contract beat the rest of the season with a clustered t of
+at least 2 for the difference, the difference is positive in both halves,
+and it has at least 1,000 fills.
+
+- **A. Who is on the other side:** NO price (6 bands); line minus the
+  model's mean (5 quintiles); the market's trading volume before posting (5
+  quintiles); the whole game's prop volume before posting, a stand-in for
+  national TV and star power (5 quintiles); tip-off time (3); weekend or
+  weekday (2); regular season, play-in or playoffs (3); stat (4).
+- **B. Being first in line:** spread at posting (1, 2, 3-4, 5¢+: 4 bins);
+  market age at posting (under 24, 24-48, over 48 hours: 3 bins); and,
+  descriptively, the share of markets with a spread of 2¢ or more at 2-6
+  hours before tip.
+- **C. Ladder prices from the sportsbooks** (`research/explore_ladder.py`):
+  a count distribution fitted to every sportsbook line for the player, stat
+  and game (negative binomial and normal: 2 variants), pricing every Kalshi
+  rung. Judged on calibration against outcomes (log loss) beside the stat
+  model and Kalshi's mid, and on replay profit for rungs that lack a
+  two-book exact line, in the 151 games with sportsbook history.
+- **D. Other markets** (`research/explore_markets.py`): the 2025-26 combo
+  markets (double-double and triple-double) re-scored with game-clustered t
+  and halves; and the cross-market scan re-scored with a time holdout (rank
+  series on the earlier half of their markets, test the top 10 on the later
+  half).
+
+Variant count: 40 slice bins (A, B), 2 (C), 12 (D): 54 in all. At t ≥ 2,
+about 1 of the 40 slice bins would look promising by chance alone.
+
+Results will be appended below this plan without editing it.
+
+## 2026-10-22: Where is the NO edge thicker? (results)
+
+*Exploratory, simulated and in-sample (2025-26 and the scan's samples),
+run once as planned above. Tables: `outputs/research/explore_edge.md`,
+`explore_ladder.md`, `explore_markets.md`. 54 planned variants plus 12
+extra in D (ranking by t instead of cents, and four combo variants): 66.
+Nothing here changes the live rules.*
+
+**A and B, slices of the NBA replay** (v5 filter, no caps, first in line;
+flow share 0.25 changes nothing material). Of 40 bins, 1 met the bar
+(the second quintile of line minus the model's mean: +4.47¢ per contract,
++1.62¢ above the rest, t 2.06), about what chance alone gives (0.9); its
+neighbours are not in order (fourth quintile −1.61¢, t −2.35), so it reads
+as noise. Two weak spots were consistent in both halves, though still
+profitable: **rebounds** (+1.15¢, 2.65¢ below the rest, t −2.59; known
+since 2026-10-15) and **the busiest markets**, the top fifth by trading
+before posting (+1.66¢, 2.02¢ below, t −2.54). Busy markets look more
+efficient, not more fan-heavy. Spread at posting points the same way as
+the 21 October tests (1¢: +2.23¢ with 46% filled; 5¢ or more: +3.62¢ with
+57% filled), not significantly.
+
+**Room to go first in line.** In 2025-26, 81-85% of prop markets had a
+spread of 2¢ or more 2-6 hours before tip. In public snapshots of 20-21
+October 2026, 39% of the rungs with a two-book sportsbook line had one,
+against 80% of the rungs without. v5 trades only the former, so this
+season it mostly joins queues on the tightest rungs.
+
+**C, ladder prices from the sportsbooks** (150 games with book history,
+7,218 rungs). The fitted ladders reproduce the books' own lines (median
+error 0.4 points for the negative binomial). On the 4,678 rungs without a
+two-book line, they predicted outcomes better than the stat model (log loss
+0.4684 against 0.4814, t −3.34) and better than Kalshi's price at posting
+(0.4798, t −3.18). In the replay on those rungs the negative-binomial
+ladder made fewer but better orders: 1,183 fills at +4.59¢ (t 3.13)
+against the current rule's 1,568 at +2.26¢ (t 1.70). The ladder's stated
+edge (1.9¢) undershot what it made, while the stat model's (5.3¢)
+overshot by 3¢. The total gain per rung over the current rule was +$0.40
+per 100 rungs (t 1.29) for the negative binomial and +$0.51 (t 1.78) for
+the normal, positive in both halves but mostly in the first. On rungs
+with a two-book line the ladder is worse than the book line itself, as
+expected. **The one candidate from this exploration:** price rungs without
+a two-book line from the fitted ladder. That is where the wide spreads are.
+
+**D, other markets.** The scan's best series mostly do not survive a time
+holdout: the top 10 on the earlier half of their samples averaged +19.2¢
+there and +3.1¢ on the later half (pooled +1.2¢, t 0.44). Only college
+basketball first-half spreads (`KXNCAAMB1HSPREAD`) passed every check
+(+14.8¢, t 2.84, on the later half; survives a 10% false-discovery-rate
+correction); it is already on the paper ledger from November. Club soccer
+both-teams-to-score and NCAA mention markets are a weaker second tier
+(short samples), also already on paper. NBA double-doubles fail (+2.7¢,
+t 1.02); triple-doubles are thin and longshot-heavy (+4.5¢, t 2.25, 37% of
+fills at NO 96¢ or more). Scans of hundreds of series produce false
+winners: 45 series had t ≥ 2 against about 16 expected, but 20 had t ≤ −2.
+
+**What carries forward.** One written forward plan is worth drafting:
+ladder pricing for rungs without a two-book line, run as a separate paper
+ledger beside the unchanged v5 rules, judged on 2026-27 outcomes.
+Rebounds and the busiest markets stay in v5 (still profitable); NCAA
+first-half spreads proceed on paper in November as already planned.
