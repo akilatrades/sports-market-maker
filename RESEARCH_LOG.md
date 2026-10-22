@@ -2700,3 +2700,48 @@ in the plan's strategy, limits or pass/fail bars changed.*
 - The private fills export and the public P&L page do not yet include the
   spread bot; until they do, live spread results are on the server only
   (`--status`).
+
+## 2026-10-22: Spread maker pilot, 5 contracts per order (plan amendment)
+
+*Written before the code change and before any live spread order. The
+owner chose 5 contracts per order on 22 October ("i want to do 5
+contracts") after seeing the sizing simulation below. Nothing else in the
+plan changes: same markets, quotes, window, failure handling and
+pass/fail bars.*
+
+**Limits (old → new).** Contracts per order 1 → 5. Net contracts per
+market and side 1 → 5 (an order shrinks so held plus resting never goes
+past 5). Open exposure $25 → $60. Own realized-loss stop −$5 → −$10 a day
+and −$15 → −$40 in total. Unchanged: 20 orders per pass, 300 a day, and
+the account stops (−$20 a day, −$60 in total, all three bots). Why: at 5
+contracts a $25 cap is full most of the time, and in the simulation the old
+stops would have paused the bot on about 14 ordinary days a year and could
+be reached by an ordinary drawdown (worst −$18). With these limits all three
+bots together can have at most $225 open on the $350 account (NBA $150, NFL
+$15, spread $60). A −$10 spread day leaves NBA $10 of the shared daily stop.
+
+**Sizing simulation (exploratory, simulated, in-sample; about 20
+variants: 1, 2, 5 and 10 contracts × flow share 1 and 0.25 × open caps).**
+Scan rows for the 64 pilot series, 8¢+ spreads, 4–7 hours before expected
+expiration, 24,768 two-sided market-hours, Sep 2025 – Aug 2026; fills =
+min(contracts traded through our price, order size), binomial at flow
+share 0.25; per-market net cap = order size; held to settlement.
+
+| Setup (flow share 0.25) | $/month | ¢/contract (t) | Worst day | Days ≤ −$5 | Worst drawdown |
+|---|---:|---:|---:|---:|---:|
+| 1 contract, $25 open | 53 | 7.2 (20.4) | −$4.0 | 0 | −$4.0 |
+| 5 contracts, $25 open | 136 | 6.7 (14.5) | −$11.7 | 11 | −$16.4 |
+| 5 contracts, $60 open | 185 | 6.5 (16.5) | −$15.8 | 14 | −$17.9 |
+| 5 contracts, no cap | 204 | 6.1 (16.9) | −$20.7 | 12 | −$20.7 |
+
+Caveats: the 64 series were selected on this same data (across all
+wide-spread markets the edge was 3.9¢ a contract, not 6–7¢), so expect
+less; months ranged from $3 to $353; fills come from trade prints. Larger
+orders earn a little less per contract (6.5¢ against 7.2¢), consistent
+with bigger orders filling more when the market moves against them.
+
+**What changes in measurement.** Live and shadow profit are reported per
+contract and in dollars at 5 contracts; the shadow ledger scores a
+5-contract quote as min(contracts traded through, 5) first in line and as
+the expected fill at flow share 0.25. The live review after 300 filled
+contracts or 4 weeks now comes sooner; its bars are unchanged.
