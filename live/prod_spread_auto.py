@@ -18,11 +18,15 @@ Modes (``--auto`` picks live only when armed, else shadow):
   the owner-created marker /etc/market-maker-spread.enabled. The shadow
   ledger keeps running beside it.
 - ``--status``: summary of both ledgers.
+- ``--preflight``: signed GET-only readiness check (no orders).
+- ``--reconcile``: owner-run, signed GET-only resolution of an ambiguous
+  order: found in any status (accepted) or absent 10+ minutes later.
 
 Every order and cancel is journaled before it is sent. An exchange HTTP 4xx
 refusal is recorded as rejected only after a signed read finds no order with
-that client id; any other failure halts all bots until the owner reconciles.
-A KILL file in STATE cancels this bot's resting orders.
+that client id in any status; any other failure halts all bots until the
+owner runs ``--reconcile``. A pass that halts first cancels this bot's
+provably owned resting orders. A KILL file in STATE cancels them every pass.
 """
 
 import argparse
@@ -31,6 +35,8 @@ import json
 import math
 import os
 import re
+import signal
+import time
 import uuid
 from collections import Counter
 from datetime import UTC, datetime, timedelta
@@ -79,8 +85,7 @@ def load_events(path):
         raise TradingError("Invalid spread journal: HALT") from error
 
 
-def records(events):
-    """Intents by client id, accepted order ids, and refused client ids."""
+def _intents(events):
     intents = {}
     for e in events:
         if e.get("event") != "intent":
@@ -89,8 +94,6 @@ def records(events):
         if not cid or cid in intents:
             raise TradingError("Duplicate or incomplete spread intent: HALT")
         intents[cid] = e
-    if any(e.get("event") == "unknown_outcome" for e in events):
-        raise TradingError("Ambiguous spread order: HALT, reconcile manually")
     accepted = {}
     for e in events:
         if e.get("event") == "accepted":
@@ -98,7 +101,23 @@ def records(events):
             if cid not in intents or not oid or cid in accepted:
                 raise TradingError("Invalid spread acceptance: HALT")
             accepted[cid] = str(oid)
-    refused = shared.spread_rejected_ids(events)
+    return intents, accepted, shared.spread_rejected_ids(events)
+
+
+def records(events):
+    """Intents by client id, accepted order ids, and refused client ids.
+
+    Halts while any order's outcome is unproven (an ``unknown_outcome`` or
+    an intent with no reply) until the owner's ``--reconcile`` resolves it.
+    """
+    intents, accepted, refused = _intents(events)
+    unknown = {
+        e.get("client_order_id") for e in events if e.get("event") == "unknown_outcome"
+    }
+    if unknown - set(accepted) - refused:
+        raise TradingError(
+            "Ambiguous spread order: HALT, owner runs setup_spread_maker.sh --reconcile"
+        )
     if set(intents) != set(accepted) | refused:
         raise TradingError("Unreconciled spread submission: HALT")
     return intents, accepted, refused
@@ -445,50 +464,21 @@ def armed(env):
     return env.get("SPREAD_AUTO_ARM") == "YES" and P.ARM_MARKER.exists()
 
 
-def own_realized(settlements, tickers, now):
-    """Daily and cumulative realized P&L on this bot's settled markets."""
-    today = now.astimezone(NY).date()
-    seen, daily, total = set(), 0.0, 0.0
-    for item in settlements:
-        ticker = item.get("market_ticker") or item.get("ticker")
-        if ticker not in tickers:
-            continue
-        accounted = nfl_policy.settlement_accounting(item)
-        amount = accounted.get("net_profit_dollars")
-        if not accounted["accounting_complete"] or amount is None:
-            raise TradingError("Incomplete spread settlement: HALT")
-        key = (ticker, str(item.get("settled_time")))
-        if key in seen:
-            continue
-        seen.add(key)
-        total += float(amount)
-        when = pd.to_datetime(item.get("settled_time"), utc=True, errors="coerce")
-        if pd.notna(when) and when.to_pydatetime().astimezone(NY).date() == today:
-            daily += float(amount)
-    return round(daily, 4), round(total, 4)
+def held_cost(positions, open_lots):
+    """Dollars at risk in held contracts, at the price paid.
 
-
-def held_cost(positions, fills, owned_orders):
-    """Dollars at risk in held contracts: |net| x average price paid, else $1."""
-    paid = {}
-    for f in fills:
-        if str(f.get("order_id")) not in owned_orders:
-            continue
-        ticker = f.get("ticker") or f.get("market_ticker")
-        side = str(f.get("side") or "").lower()
-        key = "yes_price_dollars" if side == "yes" else "no_price_dollars"
-        try:
-            price, count = float(f.get(key)), float(f.get("count_fp") or f.get("count"))
-        except (TypeError, ValueError):
-            continue
-        cost, n = paid.get((ticker, side), (0.0, 0.0))
-        paid[(ticker, side)] = (cost + price * count, n + count)
+    ``open_lots`` (from the fill ledger) gives the price of each contract
+    still held. Where it does not match the exchange's position (for
+    example a fill not yet listed), every contract counts as $1.
+    """
     total = 0.0
     for ticker, qty in positions.items():
-        side = "yes" if qty > 0 else "no"
-        cost, n = paid.get((ticker, side), (0.0, 0.0))
-        average = cost / n if n > 0 else 1.0
-        total += abs(qty) * average
+        lots = open_lots.get(ticker, [])
+        net = sum(count if side == "yes" else -count for side, _, count in lots)
+        if abs(net - qty) < 1e-6:
+            total += sum(price * count for _, price, count in lots)
+        else:
+            total += abs(qty)
     return round(total, 4)
 
 
@@ -505,6 +495,9 @@ def desired_quotes(markets, positions):
 
 
 def cancel_order(client, journal, order_id, ticker, reason, now):
+    """Cancel one owned quote. Returns "canceled", or "moot" when the order
+    had already filled or expired (a signed read shows it is gone, or the
+    exchange cancelled nothing)."""
     write_event(
         journal,
         {
@@ -516,7 +509,7 @@ def cancel_order(client, journal, order_id, ticker, reason, now):
         },
     )
     try:
-        client.cancel(order_id, ticker=ticker)
+        result = client.cancel(order_id, ticker=ticker)
     except Exception as error:
         # A quote can fill or expire between our read and the cancel. Accept
         # that only when a signed read shows the order is no longer resting.
@@ -536,16 +529,23 @@ def cancel_order(client, journal, order_id, ticker, reason, now):
                         "detail": str(error)[:200],
                     },
                 )
-                return
+                return "moot"
         raise TradingError("Cannot confirm spread cancellation: HALT") from error
+    reduced = result.get("reduced_by") if isinstance(result, dict) else None
+    try:
+        nothing_left = reduced is not None and float(reduced) <= 1e-9
+    except (TypeError, ValueError):
+        nothing_left = False
     write_event(
         journal,
         {
-            "event": "cancel_accepted",
+            "event": "cancel_moot" if nothing_left else "cancel_accepted",
             "utc": datetime.now(UTC).isoformat(),
             "order_id": order_id,
+            **({"detail": "reduced_by_zero"} if nothing_left else {}),
         },
     )
+    return "moot" if nothing_left else "canceled"
 
 
 def cancel_all_owned(client, journal, resting, reason, now):
@@ -555,6 +555,7 @@ def cancel_all_owned(client, journal, resting, reason, now):
 
 
 def record_execution(journal, events, owned_orders, fills, settlements, tickers):
+    """Copy this bot's fills and settlements into its journal (for --status)."""
     seen_fills = {e.get("fill_id") for e in events if e.get("event") == "fill"}
     seen_settled = {
         (e.get("ticker"), e.get("utc"))
@@ -564,7 +565,7 @@ def record_execution(journal, events, owned_orders, fills, settlements, tickers)
     for fill in fills:
         oid = str(fill.get("order_id"))
         fid = fill.get("fill_id") or fill.get("trade_id")
-        if not fid or fid in seen_fills or oid not in owned_orders:
+        if not fid or str(fid) in seen_fills or oid not in owned_orders:
             continue
         write_event(
             journal,
@@ -572,17 +573,26 @@ def record_execution(journal, events, owned_orders, fills, settlements, tickers)
                 "event": "fill",
                 "fill_id": str(fid),
                 "order_id": oid,
-                "utc": str(fill.get("created_time", "")),
-                "ticker": str(fill.get("ticker") or fill.get("market_ticker") or ""),
-                "side": str(fill.get("side", "")),
-                "count": str(fill.get("count_fp", fill.get("count", ""))),
-                "yes_price": str(fill.get("yes_price_dollars", "")),
-                "no_price": str(fill.get("no_price_dollars", "")),
-                "fee": str(fill.get("fee_cost", "")),
-                "is_taker": fill.get("is_taker"),
+                "utc": fill.get("created_time"),
+                "ticker": fill.get("ticker") or fill.get("market_ticker"),
+                **{
+                    key: fill.get(key)
+                    for key in (
+                        "side",
+                        "action",
+                        "outcome_side",
+                        "book_side",
+                        "count_fp",
+                        "count",
+                        "yes_price_dollars",
+                        "no_price_dollars",
+                        "fee_cost",
+                        "is_taker",
+                    )
+                },
             },
         )
-        seen_fills.add(fid)
+        seen_fills.add(str(fid))
     for item in settlements:
         ticker = item.get("market_ticker") or item.get("ticker")
         key = (ticker, str(item.get("settled_time", "")))
@@ -594,15 +604,43 @@ def record_execution(journal, events, owned_orders, fills, settlements, tickers)
                 "event": "settlement",
                 "ticker": ticker,
                 "utc": key[1],
+                "market_result": item.get("market_result"),
                 **nfl_policy.settlement_accounting(item),
             },
         )
         seen_settled.add(key)
 
 
+def journal_ledger(events, now):
+    """The fill ledger rebuilt from the journal's copies (no exchange reads)."""
+    fills = [
+        {**e, "created_time": e.get("utc")} for e in events if e.get("event") == "fill"
+    ]
+    settlements = [
+        {
+            "market_ticker": e.get("ticker"),
+            "settled_time": e.get("utc"),
+            "market_result": e.get("market_result"),
+            "revenue_dollars": e.get("revenue_dollars"),
+        }
+        for e in events
+        if e.get("event") == "settlement"
+    ]
+    return shared.spread_ledger(events, fills, settlements, now)
+
+
 def is_http_4xx(error):
     match = re.search(r"-> HTTP ([0-9]{3})", str(error))
     return int(match.group(1)) if match and match.group(1).startswith("4") else None
+
+
+def find_order(client, ticker, client_order_id):
+    """Our order with this client id in any status, from signed reads."""
+    for status in ("resting", "executed", "canceled"):
+        for order in client.orders(status, ticker=ticker):
+            if order.get("client_order_id") == client_order_id:
+                return order
+    return None
 
 
 def place_quote(client, journal, market, side, price, now, require_shard):
@@ -643,18 +681,19 @@ def place_quote(client, journal, market, side, price, now, require_shard):
             "strategy_version": P.STRATEGY_VERSION,
         },
     )
+    # From here on, anything but a proven outcome is an unknown outcome.
     try:
-        result = client.place(order)
-    except Exception as error:
-        status = is_http_4xx(error)
-        if status is not None:
-            # The exchange refused the request. Confirm with a signed read that
-            # no such order exists before treating it as never placed.
-            resting = client.orders("resting", ticker=order.ticker)
-            match = [
-                o for o in resting if o.get("client_order_id") == order.client_order_id
-            ]
-            if not match:
+        try:
+            result = client.place(order)
+        except Exception as error:
+            status = is_http_4xx(error)
+            if status is None:
+                raise
+            # The exchange refused the request. Confirm with signed reads that
+            # no such order exists in any status before treating it as never
+            # placed.
+            found = find_order(client, order.ticker, order.client_order_id)
+            if found is None:
                 write_event(
                     journal,
                     {
@@ -667,31 +706,23 @@ def place_quote(client, journal, market, side, price, now, require_shard):
                     },
                 )
                 return "rejected"
-            result = {"order_id": match[0].get("order_id")}
-        else:
-            write_event(
-                journal,
-                {
-                    "event": "unknown_outcome",
-                    "utc": datetime.now(UTC).isoformat(),
-                    "client_order_id": order.client_order_id,
-                    "type": type(error).__name__,
-                },
-            )
-            raise TradingError(
-                "Ambiguous spread submission: all bots halt until manual audit"
-            ) from error
-    if not result.get("order_id"):
+            result = {"order_id": found.get("order_id")}
+        if not isinstance(result, dict) or not result.get("order_id"):
+            raise TradingError("Spread placement returned no order id")
+    except Exception as error:
         write_event(
             journal,
             {
                 "event": "unknown_outcome",
                 "utc": datetime.now(UTC).isoformat(),
                 "client_order_id": order.client_order_id,
-                "type": "missing_order_id",
+                "type": type(error).__name__,
             },
         )
-        raise TradingError("Spread placement returned no order id: HALT")
+        raise TradingError(
+            "Ambiguous spread submission: all bots halt until the owner runs "
+            "setup_spread_maker.sh --reconcile"
+        ) from error
     write_event(
         journal,
         {
@@ -712,26 +743,60 @@ def fresh_prices(public, ticker, own=()):
     return quote_prices(*book_quote(public["fetch_orderbook"](ticker), own))
 
 
-def pass_live(client, env, now, state_dir, public, require_shard=None):
-    """One live pass: (report for last_scan.json, eligible markets or None)."""
-    require_shard = require_shard or shard_funding.require_funded_shard
+# Set by SIGTERM (systemd's timeout): finish the order in flight, place no more.
+STOP = {"requested": False}
+PROCESS_START = time.monotonic()
+
+
+def _request_stop(signum, frame):
+    STOP["requested"] = True
+
+
+def out_of_time(deadline):
+    return STOP["requested"] or (deadline is not None and time.monotonic() > deadline)
+
+
+def pass_live(client, env, now, state_dir, public, require_shard=None, deadline=None):
+    """One live pass: (report for last_scan.json, eligible markets or None).
+
+    Any halt first cancels this bot's provably owned resting orders.
+    """
     guard(env, client)
     journal = state_dir / "journal.jsonl"
+    try:
+        return _pass_live(client, now, journal, public, require_shard, deadline)
+    except Exception:
+        try:
+            cancel_owned_on_kill(client, journal, reason="halt")
+        except Exception:
+            pass  # the original failure is what the owner needs to see
+        raise
+
+
+def _pass_live(client, now, journal, public, require_shard, deadline):
+    require_shard = require_shard or shard_funding.require_funded_shard
     events = load_events(journal)
     intents, accepted, _ = records(events)
     state, context = shared.state_for(client, "spread", now)
     order_to_cid = {oid: cid for cid, oid in accepted.items()}
-    owned_orders = set(order_to_cid)
     own_tickers = {i["ticker"] for i in intents.values()}
     record_execution(
-        journal, events, owned_orders, state["fills"], state["settlements"], own_tickers
+        journal,
+        events,
+        set(order_to_cid),
+        state["fills"],
+        state["settlements"],
+        own_tickers,
     )
     report = Counter()
     resting = [
         {"order_id": str(o["order_id"]), "ticker": o.get("ticker")}
         for o in state["resting"]
     ]
-    daily, total = own_realized(state["settlements"], own_tickers, now)
+    ledger = state["ledger"]
+    if ledger.get("unavailable"):
+        raise TradingError(f"Spread P&L unverifiable ({ledger['unavailable']})")
+    daily, total = ledger["daily"], ledger["cumulative"]
     if daily <= -P.DAILY_LOSS_STOP + 1e-9 or total <= -P.CUMULATIVE_LOSS_STOP + 1e-9:
         report["canceled"] = cancel_all_owned(
             client, journal, resting, "loss_stop", now
@@ -768,6 +833,7 @@ def pass_live(client, env, now, state_dir, public, require_shard=None):
     wanted = desired_quotes(markets, positions)
     # Cancel quotes that are stale, too old, or no longer wanted.
     keep = {}
+    just_filled = set()
     oldest = (now - timedelta(minutes=P.ORDER_LIFETIME_MINUTES - 5)).isoformat()
     for order, intent in resting_intents:
         key = (intent["ticker"], intent["side"])
@@ -778,13 +844,18 @@ def pass_live(client, env, now, state_dir, public, require_shard=None):
         ):
             keep[key] = intent
             continue
-        cancel_order(
+        outcome = cancel_order(
             client, journal, order["order_id"], intent["ticker"], "requote", now
         )
         report["canceled"] += 1
+        if outcome == "moot":
+            # It filled (or expired) after the account read: the positions
+            # used here are stale for this market, so leave it until the
+            # next pass reads them again.
+            just_filled.add(intent["ticker"])
     # Exposure: kept resting quotes at cost plus held contracts at cost.
     exposure = sum(float(i["cost"]) for i in keep.values()) + held_cost(
-        positions, state["fills"], owned_orders
+        positions, ledger["open"]
     )
     today = now.astimezone(NY).date()
     submitted_today = sum(
@@ -802,6 +873,12 @@ def pass_live(client, env, now, state_dir, public, require_shard=None):
     for (ticker, side), price in wanted.items():
         if (ticker, side) in keep:
             continue
+        if ticker in just_filled:
+            report["skip_just_filled"] += 1
+            continue
+        if out_of_time(deadline):
+            report["skip_out_of_time"] += 1
+            break
         if placed >= P.MAX_ORDERS_PER_PASS:
             report["skip_pass_cap"] += 1
             break
@@ -842,19 +919,76 @@ def pass_live(client, env, now, state_dir, public, require_shard=None):
     }, markets
 
 
-def cancel_owned_on_kill(client, journal):
+def cancel_owned_on_kill(client, journal, reason="kill"):
+    """Cancel every resting order this bot provably placed (by order id or
+    client id in its journal); leave every other order alone."""
     events = load_events(journal)
-    ids = {e["order_id"] for e in events if e.get("event") == "accepted"}
+    ids = {str(e["order_id"]) for e in events if e.get("event") == "accepted"}
     cids = {e["client_order_id"] for e in events if e.get("event") == "intent"}
     now = datetime.now(UTC)
     canceled = 0
     for item in client.orders("resting"):
-        if item.get("order_id") not in ids and item.get("client_order_id") not in cids:
+        if (
+            str(item.get("order_id")) not in ids
+            and item.get("client_order_id") not in cids
+        ):
             continue
-        cancel_order(client, journal, item["order_id"], item["ticker"], "kill", now)
+        cancel_order(client, journal, item["order_id"], item["ticker"], reason, now)
         canceled += 1
-    print(f"SPREAD MAKER HALTED: canceled {canceled} owned resting orders")
+    print(f"SPREAD MAKER {reason.upper()}: canceled {canceled} owned resting orders")
     return canceled
+
+
+def reconcile(client, journal, now):
+    """Owner-run resolution of orders whose outcome the journal cannot prove.
+
+    Signed GET only. An order found with the client id in any status is
+    recorded as accepted; one absent from every status at least 10 minutes
+    after its intent is recorded as never placed. Anything newer is left
+    for a later run. Places and cancels nothing.
+    """
+    events = load_events(journal)
+    intents, accepted, refused = _intents(events)
+    summary = Counter()
+    pending = [i for c, i in intents.items() if c not in accepted and c not in refused]
+    for intent in sorted(pending, key=lambda i: i["utc"]):
+        cid = intent["client_order_id"]
+        found = find_order(client, intent["ticker"], cid)
+        if found is not None and found.get("order_id"):
+            write_event(
+                journal,
+                {
+                    "event": "accepted",
+                    "utc": now.isoformat(),
+                    "client_order_id": cid,
+                    "order_id": str(found["order_id"]),
+                    "reconciled": "owner_signed_lookup",
+                },
+            )
+            summary["found_on_exchange"] += 1
+            continue
+        age = int((now - datetime.fromisoformat(intent["utc"])).total_seconds())
+        if age < shared.SPREAD_ABSENT_MIN_AGE_SECONDS:
+            summary["too_recent_try_again_later"] += 1
+            continue
+        write_event(
+            journal,
+            {
+                "event": "reconciled_absent",
+                "utc": now.isoformat(),
+                "client_order_id": cid,
+                "evidence": shared.SPREAD_ABSENT_EVIDENCE,
+                "intent_age_seconds": age,
+            },
+        )
+        summary["never_placed"] += 1
+    try:
+        records(load_events(journal))
+        summary["bots_can_trade"] = True
+    except TradingError as error:
+        summary["bots_can_trade"] = False
+        summary["still_blocked_by"] = str(error)
+    return dict(summary)
 
 
 # ------------------------------------------------------------------ main
@@ -882,8 +1016,9 @@ def preflight(client, env, now, state_dir, public):
 
     Checks production settings (except this bot's arm switch), that the
     spread journal reconciles, that all three bots' journals together own
-    every order and position in the account, and how many markets qualify
-    right now. Prints counts only: no balances, ids or prices.
+    every order and position in the account, that the fill ledger accounts
+    for every fill, and how many markets qualify right now. Prints counts
+    only: no balances, ids or prices.
     """
     failures = []
     for name in ("KALSHI_ENV", "ALLOW_PRODUCTION_TRADING"):
@@ -891,7 +1026,7 @@ def preflight(client, env, now, state_dir, public):
             failures.append(f"{name} is not {REQUIRED[name]}")
     if not shared.dual_mode(env):
         failures.append("shared-account mode is off")
-    if client.env != "prod" or client.dry_run or not client.can_sign:
+    if client.env != "prod" or not client.can_sign:
         failures.append("no signed production client")
     if failures:
         return {"ready": False, "failures": failures}
@@ -901,6 +1036,8 @@ def preflight(client, env, now, state_dir, public):
     state, context = shared.state_for(client, "spread", now)
     for sport in ("nba", "nfl"):
         shared.state_for(client, sport, now)  # the other bots still reconcile
+    if state["ledger"].get("unavailable"):
+        return {"ready": False, "failures": [state["ledger"]["unavailable"]]}
     others = {
         t for t, cohort in context["ownership"]["tickers"].items() if cohort != "spread"
     }
@@ -912,22 +1049,35 @@ def preflight(client, env, now, state_dir, public):
         "spread_orders_journaled": len(intents),
         "spread_resting": len(state["resting"]),
         "spread_markets_held": len(state["positions"]),
+        "spread_fills": state["ledger"]["fills"],
         "account_loss_stop": bool(shared.account_loss_stop(context)),
         "eligible_markets_now": len(markets),
     }
 
 
 def status(state_dir):
-    journal = load_events(state_dir / "journal.jsonl")
-    print("Live intents:", sum(e.get("event") == "intent" for e in journal))
-    print("Live accepted:", sum(e.get("event") == "accepted" for e in journal))
-    print("Live refused (4xx):", sum(e.get("event") == "rejected_4xx" for e in journal))
-    print("Live fills:", sum(e.get("event") == "fill" for e in journal))
-    settled = [e for e in journal if e.get("event") == "settlement"]
-    net = sum(float(e.get("net_profit_dollars") or 0) for e in settled)
-    print(f"Live settled markets: {len(settled)}, net ${net:+.2f}")
+    """Offline summary from this bot's own files. Live and shadow results are
+    reported separately and must never be added together."""
+    events = load_events(state_dir / "journal.jsonl")
+    count = Counter(e.get("event") for e in events)
     print(
-        "Shadow:", json.dumps(shadow_summary(load_events(state_dir / "shadow.jsonl")))
+        f"LIVE orders: {count['intent']} sent, {count['accepted']} accepted, "
+        f"{count['rejected_4xx'] + count['reconciled_absent']} never placed, "
+        f"{count['fill']} fills"
+    )
+    try:
+        ledger = journal_ledger(events, datetime.now(UTC))
+        print(
+            f"LIVE realized P&L (from fills): today ${ledger['daily']:+.2f}, "
+            f"total ${ledger['cumulative']:+.2f}; "
+            f"{len(ledger['settled'])} markets settled, "
+            f"{len(ledger['open'])} still held"
+        )
+    except TradingError as error:
+        print(f"LIVE realized P&L unavailable: {error}")
+    print(
+        "SHADOW (simulated, first in line unless flow-weighted):",
+        json.dumps(shadow_summary(load_events(state_dir / "shadow.jsonl"))),
     )
     last = state_dir / "last_scan.json"
     if last.exists():
@@ -939,6 +1089,8 @@ def prefetch(public):
     so the other bots wait only for the signed part of a pass."""
     listings = {}
     for series in P.SERIES:
+        if STOP["requested"]:
+            break
         try:
             listings[series] = public["fetch_markets"](series, status="open") or []
         except Exception:  # one bad series must not stop the others
@@ -952,7 +1104,14 @@ def prefetch(public):
 def main():
     parser = argparse.ArgumentParser()
     mode = parser.add_mutually_exclusive_group(required=True)
-    for flag in ("--shadow", "--live", "--auto", "--status", "--preflight"):
+    for flag in (
+        "--shadow",
+        "--live",
+        "--auto",
+        "--status",
+        "--preflight",
+        "--reconcile",
+    ):
         mode.add_argument(flag, action="store_true")
     args = parser.parse_args()
     state_dir = P.STATE
@@ -960,23 +1119,38 @@ def main():
     if args.status:
         status(state_dir)
         return
-    if args.preflight:
-        public = prefetch(public_api())
-        with production_lock.account_lock():
-            client = TradingClient(dry_run=False, env="prod")
-            result = preflight(client, os.environ, datetime.now(UTC), state_dir, public)
-        print("SPREAD PREFLIGHT", json.dumps(result, sort_keys=True))
-        if not result["ready"]:
-            raise SystemExit(2)
-        return
-    live = args.live or (args.auto and armed(os.environ))
     journal = state_dir / "journal.jsonl"
-    if live:
-        journal.touch(mode=0o600, exist_ok=True)
-    kill = (state_dir / "KILL").exists() and journal.exists()
+    owner_command = args.preflight or args.reconcile
     with (state_dir / "lock").open("a+") as lock:
-        fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
-        if kill:  # cancels only; works even after the owner disarms the bot
+        # Owner commands wait for a running pass; a timer pass never queues.
+        fcntl.flock(
+            lock, fcntl.LOCK_EX if owner_command else fcntl.LOCK_EX | fcntl.LOCK_NB
+        )
+        if owner_command:
+            public = prefetch(public_api()) if args.preflight else None
+            with production_lock.account_lock():
+                # Signed reads only: a dry-run client cannot send an order.
+                client = TradingClient(dry_run=True, env="prod")
+                now = datetime.now(UTC)
+                if args.preflight:
+                    result = preflight(client, os.environ, now, state_dir, public)
+                else:
+                    if not client.can_sign:
+                        raise TradingError("Reconcile needs signed production reads")
+                    result = reconcile(client, journal, now)
+            label = "PREFLIGHT" if args.preflight else "RECONCILE"
+            print(f"SPREAD {label}", json.dumps(result, sort_keys=True))
+            if args.preflight and not result["ready"]:
+                raise SystemExit(2)
+            return
+        signal.signal(signal.SIGTERM, _request_stop)
+        deadline = PROCESS_START + P.PASS_DEADLINE_SECONDS
+        live = args.live or (args.auto and armed(os.environ))
+        if live:
+            journal.touch(mode=0o600, exist_ok=True)
+        # lexists: even a broken link named KILL counts as a kill switch.
+        if os.path.lexists(state_dir / "KILL") and journal.exists():
+            # Cancels only; works even after the owner disarms the bot.
             with production_lock.account_lock():
                 client = TradingClient(dry_run=False, env="prod")
                 if client.env != "prod" or not client.can_sign:
@@ -992,7 +1166,12 @@ def main():
                 with production_lock.account_lock():
                     client = TradingClient(dry_run=False, env="prod")
                     report["live"], markets = pass_live(
-                        client, os.environ, datetime.now(UTC), state_dir, public
+                        client,
+                        os.environ,
+                        datetime.now(UTC),
+                        state_dir,
+                        public,
+                        deadline=deadline,
                     )
             except Exception as error:
                 report["live"] = {"decision": "halt", "error": str(error)[:300]}

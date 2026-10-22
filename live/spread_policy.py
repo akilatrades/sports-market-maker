@@ -24,6 +24,9 @@ CUMULATIVE_LOSS_STOP = 15.00  # own realized loss since launch, dollars
 MAX_ORDERS_PER_PASS = 20
 MAX_SUBMISSIONS_PER_DAY = 300
 ORDER_LIFETIME_MINUTES = 65  # orders expire on the exchange even if the bot stops
+# No new order after this many seconds from process start (lock waits count):
+# systemd stops the pass at 240, and one order's calls can take up to 120.
+PASS_DEADLINE_SECONDS = 110
 SHADOW_REPOST_MINUTES = 60  # shadow: one quote per market and side per hour
 
 # The 66 series that passed the 10% false-discovery check at 8c+ spreads in

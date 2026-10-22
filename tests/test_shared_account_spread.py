@@ -189,24 +189,128 @@ def test_state_for_with_spread_journal(monkeypatch, tmp_path):
         shared.state_for(foreign, "spread", NOW)
 
 
-def test_account_loss_stop_counts_spread_markets(monkeypatch, tmp_path):
-    def settled(ticker, pnl):
-        return {
-            "market_ticker": ticker,
-            "settled_time": NOW.isoformat(),
-            "revenue_dollars": "0.00",
-            "yes_total_cost_dollars": str(abs(pnl)),
-            "no_total_cost_dollars": "0.00",
-            "fee_cost": "0.00",
-        }
+def settled(ticker, pnl, result="no"):
+    return {
+        "market_ticker": ticker,
+        "settled_time": NOW.isoformat(),
+        "market_result": result,
+        "revenue_dollars": "0.00",
+        "yes_total_cost_dollars": str(abs(pnl)),
+        "no_total_cost_dollars": "0.00",
+        "fee_cost": "0.00",
+    }
 
+
+def spread_events(*legs):
+    """Spread intents with prices, each accepted: (key, side, cents)."""
+    events = []
+    for key, side, cents in legs:
+        for e in pair("spread", "KXDOTA2GAME-C", key, cost=cents / 100, side=side):
+            events.append({**e, "price_cents": cents} if e["event"] == "intent" else e)
+    return events
+
+
+def spread_fill(key, side, cents, minutes, **extra):
+    yes = cents if side == "yes" else 100 - cents
+    return {
+        "fill_id": f"f-{key}",
+        "order_id": f"order-client-spread-{key}",
+        "ticker": "KXDOTA2GAME-C",
+        "created_time": (NOW - timedelta(minutes=minutes)).isoformat(),
+        "count_fp": "1.00",
+        "yes_price_dollars": f"{yes / 100:.2f}",
+        "no_price_dollars": f"{(100 - yes) / 100:.2f}",
+        "fee_cost": "0.00",
+        **extra,
+    }
+
+
+def test_spread_ledger_pairs_settlements_and_checks():
+    events = spread_events(("a", "yes", 41), ("b", "no", 74), ("c", "yes", 40))
+    fills = [spread_fill("a", "yes", 41, 30), spread_fill("b", "no", 74, 20)]
+    # A closed pair realizes $1 - 41c - 74c = -15c when the second leg fills.
+    ledger = shared.spread_ledger(events, fills, [], NOW)
+    assert ledger["daily"] == pytest.approx(-0.15) and ledger["open"] == {}
+    # A duplicate copy of a fill counts once.
+    assert shared.spread_ledger(events, fills + fills[:1], [], NOW) == ledger
+    # A contract still held at settlement realizes payout minus price.
+    fills.append(spread_fill("c", "yes", 40, 10))
+    held = shared.spread_ledger(events, fills, [], NOW)
+    assert held["open"] == {"KXDOTA2GAME-C": [("yes", 0.40, 1.0)]}
+    win = shared.spread_ledger(
+        events,
+        fills,
+        [{**settled("KXDOTA2GAME-C", 0, "yes"), "revenue_dollars": "1.00"}],
+        NOW,
+    )
+    assert win["daily"] == pytest.approx(-0.15 + 0.60) and win["settled"] == {
+        "KXDOTA2GAME-C"
+    }
+    for bad_settlement in (
+        {**settled("KXDOTA2GAME-C", 0, "yes")},  # revenue 0 but we held a winner
+        {**settled("KXDOTA2GAME-C", 0, ""), "revenue_dollars": None},
+    ):
+        with pytest.raises(TradingError, match="settlement"):
+            shared.spread_ledger(events, fills, [bad_settlement], NOW)
+    for bad_fill, message in (
+        (spread_fill("a", "yes", 41, 30, outcome_side="no"), "direction"),
+        (spread_fill("a", "yes", 45, 30), "price"),
+        ({**spread_fill("a", "yes", 41, 30), "fill_id": None}, "identity"),
+        ({**spread_fill("a", "yes", 41, 30), "created_time": None}, "Undated"),
+    ):
+        with pytest.raises(TradingError, match=message):
+            shared.spread_ledger(events, [bad_fill], [], NOW)
+
+
+def test_account_loss_stop_counts_spread_pairs_and_settlements(monkeypatch, tmp_path):
     monkeypatch.setattr(shared, "ROOT", tmp_path)
-    events = cohorts()
+    events = cohorts(spread=spread_events(("a", "yes", 41), ("b", "no", 74)))
     for sport in ("nfl", "nba", "spread"):
         _write(tmp_path, sport, events[sport])
-    exchange = Exchange(
-        settlements=[settled("KXNBAPTS-B", -12), settled("KXDOTA2GAME-C", -8)]
-    )
+    fills = [spread_fill("a", "yes", 41, 30), spread_fill("b", "no", 74, 20)]
+    nba_loss = settled("KXNBAPTS-B", -19.85)
+    exchange = Exchange(settlements=[nba_loss], fills=fills)
     _, context = shared.state_for(exchange, "nba", NOW)
-    assert context["account_pnl"]["daily_realized_pnl_dollars"] == -20
+    pnl = context["account_pnl"]
+    # -19.85 settled on NBA plus the spread pair's -0.15 that no settlement shows.
+    assert pnl["daily_realized_pnl_dollars"] == pytest.approx(-20.0)
+    assert pnl["spread_daily_realized_pnl_dollars"] == pytest.approx(-0.15)
     assert shared.account_loss_stop(context) is True
+    # Spread settlement records never count twice: its markets come from the ledger.
+    exchange = Exchange(settlements=[settled("KXDOTA2GAME-C", -8)], fills=fills)
+    _, context = shared.state_for(exchange, "nba", NOW)
+    assert context["account_pnl"]["daily_realized_pnl_dollars"] == pytest.approx(-0.15)
+    # An unaccountable spread fill blocks new orders for every bot.
+    bad = Exchange(fills=[spread_fill("a", "yes", 45, 30)])
+    _, context = shared.state_for(bad, "nba", NOW)
+    with pytest.raises(TradingError, match="unverifiable"):
+        shared.account_loss_stop(context)
+
+
+def test_owner_reconciliation_resolves_an_ambiguous_spread_order():
+    pending = pair("spread", "KXDOTA2GAME-C", "p", accepted=False) + [
+        {"event": "unknown_outcome", "client_order_id": "client-spread-p"}
+    ]
+    found = pending + [
+        {"event": "accepted", "client_order_id": "client-spread-p", "order_id": "o-p"}
+    ]
+    assert shared.ownership(cohorts(spread=found))["orders"]["o-p"] == "spread"
+    absent = {
+        "event": "reconciled_absent",
+        "client_order_id": "client-spread-p",
+        "evidence": shared.SPREAD_ABSENT_EVIDENCE,
+        "intent_age_seconds": 900,
+        "utc": NOW.isoformat(),
+    }
+    owner = shared.ownership(cohorts(spread=pending + [absent]))
+    assert "client-spread-p" in owner["rejected_by_sport"]["spread"]
+    assert "KXDOTA2GAME-C" not in owner["rejected_tickers"]
+    for bad in ({"intent_age_seconds": 300}, {"evidence": "assumed"}, {"utc": ""}):
+        with pytest.raises(TradingError, match="spread rejection"):
+            shared.ownership(cohorts(spread=pending + [{**absent, **bad}]))
+    # NBA keeps its stricter rule: an acceptance never clears an unknown.
+    nba = pair("nba", "KXNBAPTS-B", "b") + [
+        {"event": "unknown_outcome", "client_order_id": "client-nba-b"}
+    ]
+    with pytest.raises(TradingError, match="Ambiguous"):
+        shared.ownership({**cohorts(), "nba": nba})

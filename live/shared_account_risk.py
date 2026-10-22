@@ -34,6 +34,10 @@ REQUIRED_COHORTS = ("nfl", "nba")
 SPREAD = "spread"
 CAPPED_COHORTS = ("nfl", "nba")  # cohorts counted against LIMITS
 SPREAD_REJECTION_EVIDENCE = "http_4xx_and_signed_get_absent"
+# Owner-run reconciliation (live.prod_spread_auto --reconcile): no order with
+# the client id in any status, at least 10 minutes after the intent.
+SPREAD_ABSENT_EVIDENCE = "owner_signed_get_absent_all_statuses"
+SPREAD_ABSENT_MIN_AGE_SECONDS = 600
 
 
 def journal_events(sport):
@@ -55,11 +59,13 @@ def journal_events(sport):
 
 
 def spread_rejected_ids(events):
-    """Spread-maker placements the exchange refused with an HTTP 4xx.
+    """Spread-maker placements proven never to have reached the book.
 
-    Recorded by the spread worker only after a signed read of the market's
-    resting orders found no order with that client id. Never used for NBA
-    or NFL, whose rejections still need the owner's reconciliation tool.
+    ``rejected_4xx``: the exchange refused the request with an HTTP 4xx and
+    a signed read found no order with that client id in any status (written
+    by the worker at once). ``reconciled_absent``: the owner's signed
+    reconciliation found no such order at least 10 minutes later, after an
+    ambiguous outcome. Never used for NBA or NFL.
     """
     intents = {e.get("client_order_id") for e in events if e.get("event") == "intent"}
     accepted = {
@@ -70,24 +76,164 @@ def spread_rejected_ids(events):
     }
     found = set()
     for event in events:
-        if event.get("event") != "rejected_4xx":
+        kind = event.get("event")
+        if kind not in ("rejected_4xx", "reconciled_absent"):
             continue
         cid = event.get("client_order_id")
-        status = event.get("http_status")
-        if (
-            not cid
-            or cid not in intents
-            or cid in accepted
-            or cid in unknown
-            or cid in found
-            or type(status) is not int
-            or not 400 <= status <= 499
-            or event.get("evidence") != SPREAD_REJECTION_EVIDENCE
-            or not event.get("utc")
-        ):
+        if not cid or cid not in intents or cid in accepted or cid in found:
+            raise TradingError("Invalid or duplicate spread rejection: HALT")
+        if kind == "rejected_4xx":
+            status = event.get("http_status")
+            valid = (
+                cid not in unknown
+                and type(status) is int
+                and 400 <= status <= 499
+                and event.get("evidence") == SPREAD_REJECTION_EVIDENCE
+            )
+        else:
+            age = event.get("intent_age_seconds")
+            valid = (
+                event.get("evidence") == SPREAD_ABSENT_EVIDENCE
+                and type(age) is int
+                and age >= SPREAD_ABSENT_MIN_AGE_SECONDS
+            )
+        if not valid or not event.get("utc"):
             raise TradingError("Invalid or duplicate spread rejection: HALT")
         found.add(cid)
     return found
+
+
+def _when(value, label):
+    try:
+        when = datetime.fromisoformat(str(value).replace("Z", "+00:00"))
+    except (ValueError, TypeError) as error:
+        raise TradingError(f"Undated spread {label}: HALT") from error
+    if when.tzinfo is None:
+        raise TradingError(f"Undated spread {label}: HALT")
+    return when
+
+
+def _amount(value, label, positive=False):
+    try:
+        number = float(value)
+    except (TypeError, ValueError) as error:
+        raise TradingError(f"Unreadable spread {label}: HALT") from error
+    if not math.isfinite(number) or number < 0 or (positive and number <= 0):
+        raise TradingError(f"Unreadable spread {label}: HALT")
+    return number
+
+
+def spread_ledger(events, fills, settlements, now):
+    """Realized P&L of the spread maker from its own fills, and what it holds.
+
+    Kalshi nets YES against NO in a market, so a YES+NO pair closes the
+    moment its second leg fills and never reaches a settlement record. The
+    bot's P&L therefore comes from its own fills, matched first in, first
+    out per market: a closed pair realizes $1 minus both prices when the
+    second leg fills; contracts still held at settlement realize their
+    payout minus their price then. Fees count when charged. The fill's side
+    and price must agree with the journaled order; anything that cannot be
+    accounted for halts instead of being skipped.
+    """
+    from live.nfl_policy import settlement_accounting
+
+    intents = {
+        e.get("client_order_id"): e for e in events if e.get("event") == "intent"
+    }
+    orders = {
+        str(e.get("order_id")): intents[e.get("client_order_id")]
+        for e in events
+        if e.get("event") == "accepted" and e.get("client_order_id") in intents
+    }
+    tickers = {i.get("ticker") for i in intents.values()}
+    rows = {}
+    for fill in fills:
+        intent = orders.get(str(fill.get("order_id")))
+        if intent is None:
+            continue
+        fid = fill.get("fill_id") or fill.get("trade_id")
+        if not fid:
+            raise TradingError("Spread fill without identity: HALT")
+        side = intent.get("side")
+        outcome = fill.get("outcome_side")
+        book = fill.get("book_side")
+        if (outcome is not None and outcome != side) or (
+            book is not None and book != ("bid" if side == "yes" else "ask")
+        ):
+            raise TradingError("Spread fill direction disagrees with journal: HALT")
+        expected = int(intent.get("price_cents")) / 100
+        raw = fill.get(f"{side}_price_dollars")
+        price = expected if raw is None else _amount(raw, "fill price")
+        if abs(price - expected) > 0.005:
+            raise TradingError("Spread fill price disagrees with journal: HALT")
+        row = {
+            "when": _when(fill.get("created_time"), "fill"),
+            "fid": str(fid),
+            "ticker": intent.get("ticker"),
+            "side": side,
+            "price": expected,
+            "count": _amount(fill.get("count_fp", fill.get("count")), "fill", True),
+            "fee": _amount(fill.get("fee_cost") or 0, "fee"),
+        }
+        if row["fid"] in rows and rows[row["fid"]] != row:
+            raise TradingError("Conflicting spread fill copies: HALT")
+        rows[row["fid"]] = row
+    lots, realized = {}, []
+    for row in sorted(rows.values(), key=lambda r: (r["when"], r["fid"])):
+        queue = lots.setdefault(row["ticker"], [])
+        left = row["count"]
+        if row["fee"]:
+            realized.append((row["when"], -row["fee"]))
+        while left > 1e-9 and queue and queue[0][0] != row["side"]:
+            side, price, count = queue[0]
+            matched = min(left, count)
+            realized.append((row["when"], matched * (1 - row["price"] - price)))
+            left -= matched
+            if count - matched > 1e-9:
+                queue[0] = (side, price, count - matched)
+            else:
+                queue.pop(0)
+        if left > 1e-9:
+            queue.append((row["side"], row["price"], left))
+    seen, settled = {}, set()
+    for item in settlements:
+        if not isinstance(item, dict):
+            raise TradingError("Malformed settlement: HALT")
+        ticker = item.get("market_ticker") or item.get("ticker")
+        if ticker not in tickers:
+            continue
+        when = _when(item.get("settled_time"), "settlement")
+        if (when - now).total_seconds() > 300:
+            raise TradingError("Future spread settlement: HALT")
+        result = str(item.get("market_result") or "").lower()
+        revenue = settlement_accounting(item)["revenue_dollars"]
+        key = (ticker, when.isoformat())
+        if key in seen:
+            if seen[key] != (result, revenue):
+                raise TradingError("Conflicting settlement copies: HALT")
+            continue
+        seen[key] = (result, revenue)
+        held = lots.pop(ticker, [])
+        cost = sum(price * count for _, price, count in held)
+        if result in ("yes", "no"):
+            payout = sum(count for side, _, count in held if side == result)
+            if revenue is not None and abs(revenue - payout) > 0.005:
+                raise TradingError("Spread settlement disagrees with its fills: HALT")
+        elif revenue is not None:
+            payout = revenue
+        else:
+            raise TradingError("Unaccountable spread settlement: HALT")
+        realized.append((when, payout - cost))
+        settled.add(ticker)
+    today = now.astimezone(LOCAL_DAY).date()
+    daily = sum(a for when, a in realized if when.astimezone(LOCAL_DAY).date() == today)
+    return {
+        "daily": round(daily, 4),
+        "cumulative": round(sum(a for _, a in realized), 4),
+        "open": {t: q for t, q in lots.items() if q},
+        "settled": settled,
+        "fills": len(rows),
+    }
 
 
 def cohorts_of(events_by_sport):
@@ -115,9 +261,14 @@ def ownership(events_by_sport):
             rejected_by_sport[sport] = rejected
         intents = [e for e in events if e.get("event") == "intent"]
         accepted = [e for e in events if e.get("event") == "accepted"]
+        resolved = set(rejected_by_sport[sport])
+        if sport == SPREAD:
+            # A spread order with an ambiguous outcome is settled by the
+            # owner's signed reconciliation: found (accepted) or absent.
+            resolved |= {e.get("client_order_id") for e in accepted}
         if any(
             e.get("event") == "unknown_outcome"
-            and e.get("client_order_id") not in rejected
+            and e.get("client_order_id") not in resolved
             for e in events
         ):
             raise TradingError("Ambiguous production order: HALT")
@@ -138,7 +289,7 @@ def ownership(events_by_sport):
             client_ids.add(cid)
             tickers[ticker] = sport
             by_id[cid] = e
-            if cid in rejected:
+            if cid in rejected and sport != SPREAD:
                 rejected_tickers.add(ticker)
             attempts.append({**e, "_cohort": sport, "_refused": cid in refused})
         seen = set()
@@ -298,17 +449,40 @@ def account_realized_pnl(settlements, owned_tickers, now):
     }
 
 
-def _account_pnl_or_unavailable(settlements, owned_tickers, now):
+def _account_pnl_or_unavailable(settlements, owned_tickers, now, spread=None):
     """Never let a bad settlement record block the bots' safety cancels.
 
     The workers read shared state at the start of a pass, before they
     cancel unsafe resting orders. A malformed record is kept as a marker
     here and halts new orders only at the loss-stop check, after cancels.
+
+    NBA and NFL markets count from settlement records; the spread maker's
+    markets count from its fill ledger (``spread``: the ledger, or a
+    ``{"unavailable": ...}`` marker), because its closed YES+NO pairs never
+    reach a settlement record.
     """
+    if isinstance(spread, dict) and spread.get("unavailable"):
+        return {"unavailable": spread["unavailable"]}
     try:
-        return account_realized_pnl(settlements, owned_tickers, now)
+        pnl = account_realized_pnl(settlements, owned_tickers, now)
     except TradingError as error:
         return {"unavailable": str(error)}
+    if spread is not None:
+        daily = pnl["daily_realized_pnl_dollars"] + spread["daily"]
+        cumulative = pnl["cumulative_realized_pnl_dollars"] + spread["cumulative"]
+        pnl.update(
+            {
+                "daily_realized_pnl_dollars": round(daily, 4),
+                "cumulative_realized_pnl_dollars": round(cumulative, 4),
+                "spread_daily_realized_pnl_dollars": spread["daily"],
+                "spread_cumulative_realized_pnl_dollars": spread["cumulative"],
+                "loss_stop": (
+                    daily <= -ACCOUNT_LOSS_STOPS["daily"] + 1e-9
+                    or cumulative <= -ACCOUNT_LOSS_STOPS["cumulative"] + 1e-9
+                ),
+            }
+        )
+    return pnl
 
 
 def account_loss_stop(context):
@@ -416,23 +590,30 @@ def state_for(client, sport, now):
         state["active"] = active
         snapshots[name] = state
         active_ids.update(a["client_order_id"] for a in active)
+    ledger = None
+    spread_tickers = set()
     if SPREAD in owner["cohorts"]:
         own = [a for a in attempts if a["_cohort"] == SPREAD]
-        own_tickers = {a["ticker"] for a in own}
+        spread_tickers = {a["ticker"] for a in own}
+        try:
+            ledger = spread_ledger(events[SPREAD], fills, settlements, now)
+        except TradingError as error:
+            ledger = {"unavailable": str(error)}
         snapshots[SPREAD] = {
             "resting": classified[SPREAD]["resting"],
             "held": classified[SPREAD]["held"],
             "positions": classified[SPREAD]["positions"],
-            "settled": settled & own_tickers,
+            "settled": settled & spread_tickers,
             "settlements": settlements,
             "attempts": own,
             "fills": fills,
+            "ledger": ledger,
         }
     return snapshots[sport], {
         "ownership": owner,
         "active_client_ids": active_ids,
         "account_pnl": _account_pnl_or_unavailable(
-            settlements, set(owner["tickers"]), now
+            settlements, set(owner["tickers"]) - spread_tickers, now, ledger
         ),
     }
 

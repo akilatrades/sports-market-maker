@@ -10,6 +10,7 @@ from datetime import UTC, datetime
 
 from kalshi.trading import TradingError
 from live.account_dashboard import ReadOnlyClient
+from live.production_lock import account_lock
 from live.shared_account_risk import LIMITS, room, state_for
 
 
@@ -43,10 +44,14 @@ def report(client, now):
 
 def main():
     try:
-        now = datetime.now(UTC)
-        # ReadOnlyClient enforces prod-only signed GET access in its constructor.
-        client = ReadOnlyClient()
-        print(json.dumps(report(client, now), indent=2, sort_keys=True))
+        # Under the account lock: never read the journals while another bot
+        # is between journaling an order and recording the exchange's reply.
+        with account_lock():
+            now = datetime.now(UTC)
+            # ReadOnlyClient enforces prod-only signed GET access in its constructor.
+            client = ReadOnlyClient()
+            result = report(client, now)
+        print(json.dumps(result, indent=2, sort_keys=True))
     except Exception as error:
         print(
             json.dumps(

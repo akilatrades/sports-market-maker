@@ -10,6 +10,8 @@
 #   --disarm      no new orders; resting quotes expire within 65 minutes
 #   --cancel      cancel this bot's resting orders now and keep it halted
 #   --resume      remove the halt left by --cancel (does not arm)
+#   --reconcile   after an "Ambiguous spread order" halt: signed GET-only
+#                 lookup that records the order as placed or never placed
 #   --off         disarm, cancel, and stop the timer (shadow stops too)
 #   --status      timer, arm and halt state, and both ledgers' summaries
 #
@@ -51,9 +53,15 @@ cancel_now() {
     return 0
   fi
   runuser -u trader -- touch "$STATE/KILL"
-  systemctl start "$UNIT.service" || true
-  journalctl -u "$UNIT.service" -n 5 --no-pager -o cat | grep -E "HALTED|Error|HALT" || true
   echo "KILL is in place: every pass cancels this bot's orders and places none."
+  if ! flock -n /run/lock/smm-production-release.lock true; then
+    echo "A code release is running, so the cancel pass waits for the next"
+    echo "timer pass (within 10 minutes). Run --cancel again after the release"
+    echo "to cancel at once."
+  else
+    systemctl start "$UNIT.service" || true
+    journalctl -u "$UNIT.service" -n 5 --no-pager -o cat | grep -E "KILL|HALT|Error" || true
+  fi
   echo "Run --resume to remove it."
 }
 yesno() { [[ -e "$1" ]] && echo yes || echo no; }
@@ -80,6 +88,11 @@ case "$COMMAND" in
     exit 0 ;;
   --preflight)
     as_trader --preflight
+    exit 0 ;;
+  --reconcile)
+    as_trader --reconcile
+    echo "If bots_can_trade is false and it says too recent, run this again in"
+    echo "10 minutes. Anything else: stop and ask before trading again."
     exit 0 ;;
   --arm)
     systemctl is-active --quiet "$UNIT.timer" || {

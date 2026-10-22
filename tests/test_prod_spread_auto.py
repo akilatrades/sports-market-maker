@@ -136,24 +136,11 @@ def test_inventory_cap_and_held_cost():
     assert set(bot.desired_quotes(rows, {})) == {(TICKER, "yes"), (TICKER, "no")}
     assert set(bot.desired_quotes(rows, {TICKER: 1.0})) == {(TICKER, "no")}
     assert set(bot.desired_quotes(rows, {TICKER: -1.0})) == {(TICKER, "yes")}
-    fills = [
-        {
-            "order_id": "o1",
-            "ticker": TICKER,
-            "side": "yes",
-            "yes_price_dollars": "0.41",
-            "count_fp": "1",
-        },
-        {
-            "order_id": "foreign",
-            "ticker": TICKER,
-            "side": "yes",
-            "yes_price_dollars": "0.90",
-            "count_fp": "1",
-        },
-    ]
-    assert bot.held_cost({TICKER: 1.0}, fills, {"o1"}) == pytest.approx(0.41)
-    assert bot.held_cost({"KXOTHER": -2.0}, fills, {"o1"}) == pytest.approx(2.0)
+    lots = {TICKER: [("yes", 0.41, 1.0)]}
+    assert bot.held_cost({TICKER: 1.0}, lots) == pytest.approx(0.41)
+    # Exchange and ledger disagree (a fill not listed yet): $1 a contract.
+    assert bot.held_cost({TICKER: -1.0}, lots) == pytest.approx(1.0)
+    assert bot.held_cost({"KXOTHER": -2.0}, lots) == pytest.approx(2.0)
 
 
 # ------------------------------------------------------------- live pass
@@ -171,9 +158,11 @@ class FakeExchange:
             None,
         )
         self.n = 0
+        self.history = {"executed": [], "canceled": []}  # orders off the book
 
     def orders(self, status="resting", ticker=None):
-        return [o for o in self.resting if ticker is None or o["ticker"] == ticker]
+        rows = self.resting if status == "resting" else self.history[status]
+        return [o for o in rows if ticker is None or o["ticker"] == ticker]
 
     def positions(self):
         return self.positions_
@@ -207,6 +196,9 @@ class FakeExchange:
             self.resting = [o for o in self.resting if o["order_id"] != order_id]
             raise error
         self.canceled.append(order_id)
+        self.history["canceled"] += [
+            o for o in self.resting if o["order_id"] == order_id
+        ]
         self.resting = [o for o in self.resting if o["order_id"] != order_id]
 
 
@@ -422,7 +414,7 @@ def test_ambiguous_submission_halts_and_stays_halted(world):
 
 def test_missing_order_id_halts(world):
     world["exchange"].place = lambda order: {}
-    with pytest.raises(TradingError, match="no order id"):
+    with pytest.raises(TradingError, match="Ambiguous spread submission"):
         run(world)
     with pytest.raises(TradingError, match="Ambiguous"):
         run(world, NOW + timedelta(minutes=10))
@@ -466,26 +458,98 @@ def test_cancel_of_an_order_that_just_filled_is_not_a_halt(world):
     ex.fail_cancel = TradingError(
         "DELETE /portfolio/events/orders/oid-1 -> HTTP 404: not found"
     )
-    run(world, NOW + timedelta(minutes=10))
+    placed = len(ex.placed)
+    report, _ = run(world, NOW + timedelta(minutes=10))
     assert any(e.get("event") == "cancel_moot" for e in journal(world))
+    # It probably filled after the account read: no replacement YES in that
+    # market until the next pass sees the new position (inventory cap).
+    assert len(ex.placed) == placed and report["skip_just_filled"] == 1
 
 
-def test_own_loss_stop_cancels_everything(world):
+def test_cancel_that_removes_nothing_is_moot(world):
     run(world)
     ex = world["exchange"]
-    ex.settlements_ = [
+    world["quotes"][TICKER] = market(bid=0.44, ask=0.52)
+    original = ex.cancel
+
+    def nothing_left(order_id, ticker=None):
+        original(order_id, ticker)
+        return {"reduced_by": "0.00"}
+
+    ex.cancel = nothing_left
+    report, _ = run(world, NOW + timedelta(minutes=10))
+    assert report["skip_just_filled"] == 1 and report["placed"] == 0
+
+
+def fill_of(order, minutes, fid=None):
+    """An exchange fill of one of our placed orders, as Kalshi lists it."""
+    yes = order.price_cents if order.side == "yes" else 100 - order.price_cents
+    return {
+        "fill_id": fid or f"fill-{order.client_order_id}",
+        "order_id": None,  # set by the caller from the fake exchange
+        "ticker": order.ticker,
+        "created_time": (NOW + timedelta(minutes=minutes)).isoformat(),
+        "count_fp": "1.00",
+        "yes_price_dollars": f"{yes / 100:.4f}",
+        "no_price_dollars": f"{(100 - yes) / 100:.4f}",
+        "outcome_side": order.side,
+        "book_side": "bid" if order.side == "yes" else "ask",
+        "fee_cost": "0.00",
+    }
+
+
+def fill_placed(world, index, minutes):
+    """Fill the index-th order we placed: it leaves the book."""
+    ex = world["exchange"]
+    order = ex.placed[index]
+    oid = f"oid-{index + 1}"
+    ex.resting = [o for o in ex.resting if o["order_id"] != oid]
+    ex.fills_.append({**fill_of(order, minutes), "order_id": oid})
+    return order
+
+
+def test_own_loss_stop_cancels_everything(world, monkeypatch):
+    monkeypatch.setattr(P, "DAILY_LOSS_STOP", 0.40)
+    run(world)
+    ex = world["exchange"]
+    fill_placed(world, 0, 5)  # the YES quote at 41c fills
+    ex.settlements_ = [  # and the market settles NO: -41c
         {
             "market_ticker": TICKER,
-            "settled_time": NOW.isoformat(),
+            "settled_time": (NOW + timedelta(minutes=8)).isoformat(),
+            "market_result": "no",
             "revenue_dollars": "0.00",
-            "yes_total_cost_dollars": "5.00",
+            "yes_total_cost_dollars": "0.41",
             "no_total_cost_dollars": "0.00",
             "fee_cost": "0.00",
         }
     ]
     report, markets = run(world, NOW + timedelta(minutes=10))
     assert report["decision"] == "spread_loss_stop" and markets is None
-    assert ex.resting == [] and len(ex.canceled) == 2
+    assert report["daily"] == pytest.approx(-0.41)
+    assert ex.resting == [] and len(ex.canceled) == 1  # the NO quote
+
+
+def test_a_losing_pair_counts_at_once_without_any_settlement(world, monkeypatch):
+    # The reviewer's case: YES fills at 41c, the market falls, our NO quote
+    # is repriced to 74c and fills. Kalshi nets the pair to zero: no
+    # settlement record will ever show the 15c loss, but the stop must.
+    monkeypatch.setattr(P, "DAILY_LOSS_STOP", 0.10)
+    run(world)
+    ex = world["exchange"]
+    fill_placed(world, 0, 5)
+    ex.positions_ = [{"market_ticker": TICKER, "position_fp": "1"}]
+    world["quotes"][TICKER] = market(bid=0.15, ask=0.27)  # NO bid now 74c
+    run(world, NOW + timedelta(minutes=10))
+    no_74 = len(ex.placed) - 1
+    assert (ex.placed[no_74].side, ex.placed[no_74].price_cents) == ("no", 74)
+    fill_placed(world, no_74, 12)
+    ex.positions_ = []  # netted to zero
+    report, markets = run(world, NOW + timedelta(minutes=20))
+    assert report["decision"] == "spread_loss_stop" and report[
+        "daily"
+    ] == pytest.approx(-0.15)
+    assert ex.resting == []
 
 
 def test_account_loss_stop_from_another_bot_pulls_spread_quotes(world):
@@ -641,3 +705,125 @@ def test_deploy_units_and_owner_script():
     assert "cat $" not in setup and 'cat "' not in setup  # never prints settings
     assert "printf 'SPREAD_AUTO_ARM=%s\\n'" in setup
     assert str(P.ARM_MARKER) in setup and str(P.STATE) in setup
+    assert "as_trader --reconcile" in setup
+    # The other preflights read under the account lock (never mid-order).
+    nba = (root / "live/prod_nba_auto.py").read_text()
+    assert "account_lock() if args.live or args.preflight else nullcontext()" in nba
+
+
+def test_refused_order_found_filled_is_recorded_as_accepted(world):
+    ex = world["exchange"]
+    original = ex.place
+
+    def refused_but_executed(order):
+        original(order)  # it reached the book and filled at once
+        ex.history["executed"].append(ex.resting.pop())
+        raise TradingError("POST /portfolio/events/orders -> HTTP 409: conflict")
+
+    ex.place = refused_but_executed
+    report, _ = run(world)
+    assert report["accepted"] == 2 and "rejected" not in report
+    _, accepted, refused = bot.records(journal(world))
+    assert len(accepted) == 2 and not refused
+
+
+def test_failed_check_after_a_refusal_is_ambiguous_and_owner_reconciles(world):
+    ex = world["exchange"]
+    ex.fail_place = TradingError("POST /portfolio/events/orders -> HTTP 429: slow down")
+    real_orders = ex.orders
+
+    def broken(status="resting", ticker=None):
+        if ticker is not None:
+            raise OSError("timed out")
+        return real_orders(status, ticker)
+
+    ex.orders = broken
+    with pytest.raises(TradingError, match="Ambiguous spread submission"):
+        run(world)
+    assert [e["event"] for e in journal(world)][-1] == "unknown_outcome"
+    with pytest.raises(TradingError, match="Ambiguous"):
+        shared.state_for(ex, "nba", NOW)  # every bot is blocked
+    ex.orders = real_orders
+    path = world["dir"] / "journal.jsonl"
+    # Too soon after the intent: nothing can be concluded yet.
+    soon = bot.reconcile(ex, path, NOW + timedelta(minutes=2))
+    assert soon["too_recent_try_again_later"] == 1 and soon["bots_can_trade"] is False
+    later = bot.reconcile(ex, path, NOW + timedelta(minutes=11))
+    assert later == {"never_placed": 1, "bots_can_trade": True}
+    shared.state_for(ex, "nba", NOW)  # unblocked
+    ex.fail_place = None
+    report, _ = run(world, NOW + timedelta(minutes=10))
+    assert report["accepted"] == 2
+
+
+def test_reconcile_finds_an_order_that_did_reach_the_book(world):
+    ex = world["exchange"]
+    original = ex.place
+
+    def timed_out_after_sending(order):
+        original(order)
+        raise TimeoutError("read timed out")
+
+    ex.place = timed_out_after_sending
+    with pytest.raises(TradingError, match="Ambiguous"):
+        run(world)
+    path = world["dir"] / "journal.jsonl"
+    result = bot.reconcile(ex, path, NOW + timedelta(minutes=2))
+    assert result == {"found_on_exchange": 1, "bots_can_trade": True}
+    state, _ = shared.state_for(ex, "spread", NOW)
+    assert len(state["resting"]) == 0  # the halt cancelled it; it is still owned
+    assert any(e.get("reconciled") for e in bot.load_events(path))
+
+
+def test_a_halt_cancels_our_quotes_first(world):
+    run(world)
+    ex = world["exchange"]
+    ex.resting.append({"order_id": "manual-1", "ticker": "KXOTHER-1"})  # unowned
+    with pytest.raises(TradingError, match="Unowned resting"):
+        run(world, NOW + timedelta(minutes=10))
+    assert ex.resting == [{"order_id": "manual-1", "ticker": "KXOTHER-1"}]
+
+
+def test_no_new_orders_after_the_pass_deadline(world):
+    report, _ = bot.pass_live(
+        world["exchange"],
+        ENV,
+        NOW,
+        world["dir"],
+        world["public"],
+        require_shard=lambda client, ticker, cost: 1,
+        deadline=0.0,  # long past
+    )
+    assert report["placed"] == 0 and report["skip_out_of_time"] == 1
+    bot.STOP["requested"] = True
+    try:
+        report, _ = run(world, NOW + timedelta(minutes=1))
+        assert report["placed"] == 0  # SIGTERM: finish, place nothing more
+    finally:
+        bot.STOP["requested"] = False
+
+
+def test_a_broken_link_named_kill_still_halts(world, monkeypatch, tmp_path):
+    import contextlib
+
+    import live.production_lock as production_lock
+
+    run(world)
+    monkeypatch.setattr(P, "STATE", world["dir"])
+    (world["dir"] / "KILL").symlink_to(tmp_path / "missing")
+    monkeypatch.setattr(bot, "TradingClient", lambda **kwargs: world["exchange"])
+    monkeypatch.setattr(production_lock, "account_lock", contextlib.nullcontext)
+    monkeypatch.setattr("sys.argv", ["prod_spread_auto", "--auto"])
+    bot.main()
+    assert world["exchange"].resting == [] and len(world["exchange"].canceled) == 2
+
+
+def test_status_reports_live_and_shadow_apart(world, capsys):
+    run(world)
+    fill_placed(world, 0, 5)  # YES 41c
+    fill_placed(world, 1, 6)  # NO 49c: a locked pair, +10c
+    run(world, NOW + timedelta(minutes=10))
+    bot.status(world["dir"])
+    out = capsys.readouterr().out
+    assert "LIVE realized P&L (from fills): today $+0.10" in out
+    assert "SHADOW (simulated" in out

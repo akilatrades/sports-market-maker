@@ -2691,6 +2691,12 @@ in the plan's strategy, limits or pass/fail bars changed.*
   −$20 daily and −$60 total stops, so a bad spread day can stop the NBA and
   NFL bots too (and the reverse). The spread bot's own $5 and $15 stops
   usually trigger first.
+- **Realized P&L comes from the bot's own fills**, not settlement records
+  (found by the independent review): Kalshi nets YES against NO, so a closed
+  pair (profitable or not) never reaches a settlement record. Fills are
+  matched first in, first out per market; a pair realizes when its second
+  leg fills, a held contract at settlement. This is the number both loss
+  stops use and the live result the pilot reports.
 - The private fills export and the public P&L page do not yet include the
   spread bot; until they do, live spread results are on the server only
   (`--status`).

@@ -52,8 +52,16 @@ directly: that comparison is the main point of the pilot.
 - The NBA and NFL caps ($165 open, $180 a day, $2,050 lifetime) are
   unchanged and do not include spread orders. All three bots together can
   have at most $190 open.
-- The account stops count settled markets of all three bots, so spread
+- The account stops count realized losses of all three bots, so spread
   losses can stop NBA and NFL for the day, and the reverse.
+- **How spread P&L is counted.** Kalshi nets YES against NO, so when both
+  quotes fill the pair closes at once and never appears in a settlement
+  record. The bot (and the account stop) therefore count its P&L from its
+  own fills: a closed pair counts $1 minus both prices the moment the second
+  leg fills; a contract still held counts its payout minus its price when the
+  market settles. A fill whose side or price disagrees with the journal, or a
+  settlement whose payout disagrees with the fills, blocks new orders for all
+  three bots until it is explained. Watch the first settled market closely.
 - Worst plausible case: the $15 own stop is reached and every open position
   then loses: about $15 + $25 = $40.
 
@@ -62,9 +70,16 @@ directly: that comparison is the main point of the pilot.
 - Every order and cancel is written to the journal
   (`/home/trader/prod-spread-auto/journal.jsonl`) before it is sent.
 - A placement the exchange refuses with an HTTP 4xx (for example a post-only
-  order that would have crossed) is recorded as refused only after a signed
-  read shows no such order. **Any other failure halts all three bots** until
-  the owner reconciles it, exactly as for NBA and NFL.
+  order that would have crossed) is recorded as refused only after signed
+  reads find no such order in any status (resting, filled or cancelled).
+  **Any other failure halts all three bots** until the owner runs
+  `setup_spread_maker.sh --reconcile` (below).
+- A pass that halts first cancels the bot's own resting quotes.
+- A quote that turns out to have filled just as the bot cancels it is not
+  replaced in that pass, so the one-contract inventory cap holds.
+- No new order after 110 seconds from the start of a pass (waiting for the
+  other bots counts), so systemd's 240-second limit never cuts an order off
+  mid-send; a stop signal also lets the order in flight finish first.
 - The NBA and NFL workers recognise the spread bot's orders, fills and
   positions through `live/shared_account_risk.py`, and still halt on anything
   unowned. The spread bot needs shared-account mode (`SMM_DUAL_MARKET=YES`
@@ -108,6 +123,21 @@ directly: that comparison is the main point of the pilot.
    settled P&L, the shadow ledger's fill rate and profit per contract (at
    flow share 1 and 0.25), and the last pass.
 
+## After an "Ambiguous spread order" halt
+
+All three bots stop placing orders. Run:
+
+```bash
+sudo bash /home/trader/sports-market-maker-prod-auto/deploy/setup_spread_maker.sh --reconcile
+```
+
+It only reads. For each order the journal cannot prove, it looks the order
+up on Kalshi in every status: found means it was placed (recorded as
+accepted, so its fills are owned); not found 10 or more minutes after it was
+sent means it never reached the exchange. If it says `too_recent`, run it
+again in 10 minutes. `"bots_can_trade": true` means the bots resume on their
+next passes. Anything else: stop and look before trading again.
+
 ## Switching off
 
 | Command | Effect |
@@ -116,9 +146,12 @@ directly: that comparison is the main point of the pilot.
 | `--cancel` | Cancels the bot's resting orders now and leaves a `KILL` file, so every pass only cancels. `--resume` removes it. |
 | `--off` | `--disarm` + `--cancel`, then stops the timer (shadow stops too). |
 
-The **Go live / Stop funded bots** workflow controls the NBA and NFL bots
-only; it does not stop the spread bot. Use this script for the spread bot.
-The account loss stops do apply to all three.
+The **Go live / Stop funded bots** workflow and the code release helper
+manage the NBA and NFL timers only; neither stops the spread bot. Use this
+script for the spread bot. The account loss stops do apply to all three.
+During a code release the spread bot skips its passes, and the release's
+read-only account checks wait for any spread pass in progress (they take
+the account lock).
 
 ## Not yet included
 
