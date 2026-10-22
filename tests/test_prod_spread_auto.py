@@ -133,9 +133,12 @@ def test_shadow_posts_hourly_scores_and_settles():
 
 def test_inventory_cap_and_held_cost():
     rows = bot.eligible_markets([market()], "KXDOTA2GAME", NOW)
-    assert set(bot.desired_quotes(rows, {})) == {(TICKER, "yes"), (TICKER, "no")}
-    assert set(bot.desired_quotes(rows, {TICKER: 1.0})) == {(TICKER, "no")}
-    assert set(bot.desired_quotes(rows, {TICKER: -1.0})) == {(TICKER, "yes")}
+    yes, no = (TICKER, "yes"), (TICKER, "no")
+    assert bot.desired_quotes(rows, {}) == {yes: (41, 5), no: (49, 5)}
+    # Holding 2 YES: a YES order may add only 3 more; NO may buy all 5.
+    assert bot.desired_quotes(rows, {TICKER: 2.0}) == {yes: (41, 3), no: (49, 5)}
+    assert bot.desired_quotes(rows, {TICKER: 5.0}) == {no: (49, 5)}
+    assert bot.desired_quotes(rows, {TICKER: -4.0}) == {yes: (41, 5), no: (49, 1)}
     lots = {TICKER: [("yes", 0.41, 1.0)]}
     assert bot.held_cost({TICKER: 1.0}, lots) == pytest.approx(0.41)
     # Exchange and ledger disagree (a fill not listed yet): $1 a contract.
@@ -186,6 +189,7 @@ class FakeExchange:
                 "client_order_id": order.client_order_id,
                 "side": order.side,
                 "price_cents": order.price_cents,
+                "remaining_count_fp": f"{order.count:.2f}",
             }
         )
         return {"order_id": oid}
@@ -232,7 +236,8 @@ def world(monkeypatch, tmp_path):
         no = [[f"{1 - float(m['yes_ask_dollars']):.2f}", "5.00"]]
         for o in exchange.resting:
             if o["ticker"] == ticker and o.get("side"):
-                level = [f"{o['price_cents'] / 100:.2f}", "1.00"]
+                left = o.get("remaining_count_fp", "1.00")
+                level = [f"{o['price_cents'] / 100:.2f}", left]
                 (yes if o["side"] == "yes" else no).append(level)
         return {"yes_dollars": sorted(yes), "no_dollars": sorted(no)}
 
@@ -282,8 +287,8 @@ def test_places_both_quotes_and_every_bot_still_owns_the_account(world):
     ex = world["exchange"]
     assert report["accepted"] == 2 and len(markets) == 1
     assert {(o.side, o.price_cents, o.count, o.post_only) for o in ex.placed} == {
-        ("yes", 41, 1, True),
-        ("no", 49, 1, True),
+        ("yes", 41, 5, True),
+        ("no", 49, 5, True),
     }
     assert all(
         o.expiration_ts <= (NOW + timedelta(minutes=66)).timestamp() for o in ex.placed
@@ -322,18 +327,14 @@ def test_quotes_are_pulled_when_the_market_leaves_the_window(world):
 
 def test_held_side_is_not_quoted_again(world):
     run(world)
-    ex = world["exchange"]
-    yes = [
-        o for o in ex.resting if o["client_order_id"] == ex.placed[0].client_order_id
-    ]
-    ex.resting = [o for o in ex.resting if o not in yes]  # the YES quote filled
-    ex.positions_ = [{"market_ticker": TICKER, "position_fp": "1"}]
+    fill_placed(world, 0, 5)  # all 5 YES fill: the market is at the cap
     report, _ = run(world, NOW + timedelta(minutes=10))
     assert report["placed"] == 0  # NO quote kept, YES not re-posted
+    assert report["resting_kept"] == 1
 
 
 def test_active_cap_blocks_new_quotes(world, monkeypatch):
-    monkeypatch.setattr(P, "MAX_ACTIVE_COST", 0.45)
+    monkeypatch.setattr(P, "MAX_ACTIVE_COST", 2.10)  # YES 5 x 41c fits, NO does not
     report, _ = run(world)
     assert report["accepted"] == 1 and report["skip_active_cap"] == 1
 
@@ -481,7 +482,7 @@ def test_cancel_that_removes_nothing_is_moot(world):
     assert report["skip_just_filled"] == 1 and report["placed"] == 0
 
 
-def fill_of(order, minutes, fid=None):
+def fill_of(order, minutes, fid=None, count=None):
     """An exchange fill of one of our placed orders, as Kalshi lists it."""
     yes = order.price_cents if order.side == "yes" else 100 - order.price_cents
     return {
@@ -489,7 +490,7 @@ def fill_of(order, minutes, fid=None):
         "order_id": None,  # set by the caller from the fake exchange
         "ticker": order.ticker,
         "created_time": (NOW + timedelta(minutes=minutes)).isoformat(),
-        "count_fp": "1.00",
+        "count_fp": f"{count or order.count:.2f}",
         "yes_price_dollars": f"{yes / 100:.4f}",
         "no_price_dollars": f"{(100 - yes) / 100:.4f}",
         "outcome_side": order.side,
@@ -498,35 +499,51 @@ def fill_of(order, minutes, fid=None):
     }
 
 
-def fill_placed(world, index, minutes):
-    """Fill the index-th order we placed: it leaves the book."""
+def fill_placed(world, index, minutes, count=None):
+    """Fill the index-th order we placed (all of it unless ``count``); it
+    leaves the book once nothing remains, and the position nets."""
     ex = world["exchange"]
     order = ex.placed[index]
     oid = f"oid-{index + 1}"
-    ex.resting = [o for o in ex.resting if o["order_id"] != oid]
-    ex.fills_.append({**fill_of(order, minutes), "order_id": oid})
+    n = count or order.count
+    for o in ex.resting:
+        if o["order_id"] == oid:
+            o["remaining_count_fp"] = f"{float(o['remaining_count_fp']) - n:.2f}"
+    ex.resting = [
+        o
+        for o in ex.resting
+        if o["order_id"] != oid or float(o["remaining_count_fp"]) > 0
+    ]
+    fid = f"fill-{order.client_order_id}-{len(ex.fills_)}"
+    ex.fills_.append({**fill_of(order, minutes, fid, n), "order_id": oid})
+    net = {p["market_ticker"]: float(p["position_fp"]) for p in ex.positions_}
+    net[order.ticker] = net.get(order.ticker, 0.0) + (n if order.side == "yes" else -n)
+    ex.positions_ = [
+        {"market_ticker": t, "position_fp": f"{q:.2f}"} for t, q in net.items() if q
+    ]
     return order
 
 
 def test_own_loss_stop_cancels_everything(world, monkeypatch):
-    monkeypatch.setattr(P, "DAILY_LOSS_STOP", 0.40)
+    monkeypatch.setattr(P, "DAILY_LOSS_STOP", 2.00)
     run(world)
     ex = world["exchange"]
-    fill_placed(world, 0, 5)  # the YES quote at 41c fills
-    ex.settlements_ = [  # and the market settles NO: -41c
+    fill_placed(world, 0, 5)  # the 5 YES at 41c fill
+    ex.positions_ = []  # and the market settles NO: 5 x -41c
+    ex.settlements_ = [
         {
             "market_ticker": TICKER,
             "settled_time": (NOW + timedelta(minutes=8)).isoformat(),
             "market_result": "no",
             "revenue_dollars": "0.00",
-            "yes_total_cost_dollars": "0.41",
+            "yes_total_cost_dollars": "2.05",
             "no_total_cost_dollars": "0.00",
             "fee_cost": "0.00",
         }
     ]
     report, markets = run(world, NOW + timedelta(minutes=10))
     assert report["decision"] == "spread_loss_stop" and markets is None
-    assert report["daily"] == pytest.approx(-0.41)
+    assert report["daily"] == pytest.approx(-2.05)
     assert ex.resting == [] and len(ex.canceled) == 1  # the NO quote
 
 
@@ -534,21 +551,20 @@ def test_a_losing_pair_counts_at_once_without_any_settlement(world, monkeypatch)
     # The reviewer's case: YES fills at 41c, the market falls, our NO quote
     # is repriced to 74c and fills. Kalshi nets the pair to zero: no
     # settlement record will ever show the 15c loss, but the stop must.
-    monkeypatch.setattr(P, "DAILY_LOSS_STOP", 0.10)
+    monkeypatch.setattr(P, "DAILY_LOSS_STOP", 0.70)
     run(world)
     ex = world["exchange"]
     fill_placed(world, 0, 5)
-    ex.positions_ = [{"market_ticker": TICKER, "position_fp": "1"}]
     world["quotes"][TICKER] = market(bid=0.15, ask=0.27)  # NO bid now 74c
     run(world, NOW + timedelta(minutes=10))
     no_74 = len(ex.placed) - 1
     assert (ex.placed[no_74].side, ex.placed[no_74].price_cents) == ("no", 74)
-    fill_placed(world, no_74, 12)
-    ex.positions_ = []  # netted to zero
+    fill_placed(world, no_74, 12)  # nets to zero: 5 x (1 - 41c - 74c)
+    assert ex.positions_ == []
     report, markets = run(world, NOW + timedelta(minutes=20))
     assert report["decision"] == "spread_loss_stop" and report[
         "daily"
-    ] == pytest.approx(-0.15)
+    ] == pytest.approx(-0.75)
     assert ex.resting == []
 
 
@@ -821,11 +837,11 @@ def test_a_broken_link_named_kill_still_halts(world, monkeypatch, tmp_path):
 def test_status_reports_live_and_shadow_apart(world, capsys):
     run(world)
     fill_placed(world, 0, 5)  # YES 41c
-    fill_placed(world, 1, 6)  # NO 49c: a locked pair, +10c
+    fill_placed(world, 1, 6)  # NO 49c: five locked pairs, 5 x 10c
     run(world, NOW + timedelta(minutes=10))
     bot.status(world["dir"])
     out = capsys.readouterr().out
-    assert "LIVE realized P&L (from fills): today $+0.10" in out
+    assert "LIVE realized P&L (from fills): today $+0.50" in out
     assert "SHADOW (simulated" in out
 
 
@@ -881,19 +897,17 @@ def test_kill_works_even_with_a_torn_journal(world):
 
 
 def test_ledger_keeps_fills_the_exchange_no_longer_lists(world, monkeypatch):
-    monkeypatch.setattr(P, "DAILY_LOSS_STOP", 0.10)
+    monkeypatch.setattr(P, "DAILY_LOSS_STOP", 0.70)
     run(world)
     ex = world["exchange"]
     fill_placed(world, 0, 5)
-    ex.positions_ = [{"market_ticker": TICKER, "position_fp": "1"}]
     world["quotes"][TICKER] = market(bid=0.15, ask=0.27)
     run(world, NOW + timedelta(minutes=10))  # journals the YES fill
     fill_placed(world, len(ex.placed) - 1, 12)  # the NO at 74c
-    ex.positions_ = []
     ex.fills_ = ex.fills_[1:]  # the old YES fill has aged out of the listing
     report, _ = run(world, NOW + timedelta(minutes=20))
     assert report["decision"] == "spread_loss_stop"
-    assert report["daily"] == pytest.approx(-0.15)
+    assert report["daily"] == pytest.approx(-0.75)
 
 
 def test_reconcile_never_calls_a_found_order_absent(world):
@@ -911,3 +925,91 @@ def test_reconcile_never_calls_a_found_order_absent(world):
     result = bot.reconcile(ex, world["dir"] / "journal.jsonl", NOW + timedelta(hours=1))
     assert result["found_without_order_id_check_by_hand"] == 1
     assert result["bots_can_trade"] is False
+
+
+def test_partly_filled_quote_keeps_its_place_and_the_cap_holds(world):
+    run(world)
+    ex = world["exchange"]
+    fill_placed(world, 0, 5, count=2)  # 2 of 5 YES fill; 3 still rest
+    report, _ = run(world, NOW + timedelta(minutes=10))
+    # Room for 3 more YES: the 3 resting fit, so it keeps its queue place.
+    assert report["resting_kept"] == 2 and report["placed"] == 0 and not ex.canceled
+    # Exposure: 3 resting YES + 5 resting NO + 2 held YES, all at cost.
+    assert report["exposure_dollars"] == pytest.approx(3 * 0.41 + 5 * 0.49 + 2 * 0.41)
+    fill_placed(world, 0, 15, count=3)  # the rest fill: 5 YES held
+    report, _ = run(world, NOW + timedelta(minutes=20))
+    assert report["placed"] == 0  # at the cap: no YES order at all
+
+
+def test_a_partly_filled_order_is_not_mistaken_for_someone_else(world):
+    run(world)
+    ex = world["exchange"]
+    fill_placed(world, 0, 5, count=2)  # our YES at 41c: 3 left in the book
+    # Another trader joins at 41c with 2. The book shows 5 at 41c: 3 ours.
+    original = world["public"]["fetch_orderbook"]
+
+    def joined(ticker):
+        book = original(ticker)
+        book["yes_dollars"] = sorted(book["yes_dollars"] + [["0.41", "2.00"]])
+        return book
+
+    world["public"]["fetch_orderbook"] = joined
+    report, _ = run(world, NOW + timedelta(minutes=10))
+    # Their 41c is now the best other bid: we move to 42c with the 3 we
+    # still have room for (holding 2).
+    assert (ex.placed[-1].side, ex.placed[-1].price_cents, ex.placed[-1].count) == (
+        "yes",
+        42,
+        3,
+    )
+
+
+def test_a_resting_order_bigger_than_the_room_is_replaced(world):
+    run(world)
+    ex = world["exchange"]
+    ex.positions_ = [{"market_ticker": TICKER, "position_fp": "4.00"}]  # 4 YES held
+    report, _ = run(world, NOW + timedelta(minutes=10))
+    # The 5-contract YES quote would take net YES to 9: cancelled and
+    # replaced by a 1-contract quote.
+    assert report["canceled"] == 1
+    assert (ex.placed[-1].side, ex.placed[-1].count) == ("yes", 1)
+
+
+def test_missing_remaining_count_falls_back_to_fills(world):
+    run(world)
+    ex = world["exchange"]
+    fill_placed(world, 0, 5, count=2)
+    for o in ex.resting:
+        o.pop("remaining_count_fp")  # an order listing without the field
+    report, _ = run(world, NOW + timedelta(minutes=10))
+    assert report["resting_kept"] == 2 and report["placed"] == 0
+    for o in ex.resting:
+        o["remaining_count_fp"] = "9.00"  # more than we ever ordered
+    with pytest.raises(TradingError, match="resting count"):
+        run(world, NOW + timedelta(minutes=20))
+
+
+def test_shadow_scores_five_contracts():
+    assert bot.expected_fill(2, 0.25, 5) == pytest.approx(0.5)  # E[Bin(2, .25)]
+    assert bot.expected_fill(1000, 0.25, 5) == pytest.approx(5.0)
+    assert bot.expected_fill(3, 1.0, 5) == 3.0 and bot.expected_fill(0, 0.25, 5) == 0
+    assert bot.expected_fill(20, 0.25, 5) == pytest.approx(
+        sum(
+            min(k, 5) * __import__("math").comb(20, k) * 0.25**k * 0.75 ** (20 - k)
+            for k in range(21)
+        )
+    )
+
+
+def test_pilot_limits_are_the_owner_approved_ones():
+    # RESEARCH_LOG.md, 2026-10-22, "5 contracts per order" (old: 1, 1, $25,
+    # $5, $15). Change these only through a new, recorded amendment.
+    assert (P.CONTRACTS, P.MAX_NET_PER_MARKET) == (5, 5)
+    assert (P.MAX_ACTIVE_COST, P.DAILY_LOSS_STOP, P.CUMULATIVE_LOSS_STOP) == (
+        60,
+        10,
+        40,
+    )
+    assert (P.MAX_ORDERS_PER_PASS, P.MAX_SUBMISSIONS_PER_DAY) == (20, 300)
+    assert P.MIN_SPREAD_CENTS == 8 and P.WINDOW_HOURS == (4.0, 7.0)
+    assert shared.ACCOUNT_LOSS_STOPS == {"daily": 20.0, "cumulative": 60.0}

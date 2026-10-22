@@ -16,11 +16,13 @@ ARM_MARKER = Path("/etc/market-maker-spread.enabled")
 MIN_SPREAD_CENTS = 8
 WINDOW_HOURS = (4.0, 7.0)  # hours before the market's expected expiration
 PRICE_RANGE_CENTS = (2, 98)  # both of our quotes must lie inside this range
-CONTRACTS = 1
-MAX_NET_PER_MARKET = 1  # never quote a side already held (net) in that market
-MAX_ACTIVE_COST = 25.00  # resting orders plus held contracts at cost, dollars
-DAILY_LOSS_STOP = 5.00  # own realized loss, New York day, dollars
-CUMULATIVE_LOSS_STOP = 15.00  # own realized loss since launch, dollars
+# Sizes and stops: owner's 5-contract amendment (RESEARCH_LOG.md, 2026-10-22,
+# "5 contracts per order"). Old values: 1 contract, 1 net, $25, $5, $15.
+CONTRACTS = 5  # largest order; it shrinks to stay inside MAX_NET_PER_MARKET
+MAX_NET_PER_MARKET = 5  # held plus resting on one side of a market, contracts
+MAX_ACTIVE_COST = 60.00  # resting orders plus held contracts at cost, dollars
+DAILY_LOSS_STOP = 10.00  # own realized loss, New York day, dollars
+CUMULATIVE_LOSS_STOP = 40.00  # own realized loss since launch, dollars
 MAX_ORDERS_PER_PASS = 20
 MAX_SUBMISSIONS_PER_DAY = 300
 ORDER_LIFETIME_MINUTES = 65  # orders expire on the exchange even if the bot stops

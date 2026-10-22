@@ -4,8 +4,9 @@ Plan: RESEARCH_LOG.md, "2026-10-22: Spread maker pilot, shadow and small
 live (plan)". For open markets in the allowed series whose expected
 expiration is 4 to 7 hours away and whose spread is 8c or more, quote a YES
 bid one cent above the best YES bid and a NO bid one cent above the best NO
-bid, one contract each, post-only, expiring after 65 minutes. Hold fills to
-settlement; never quote a side already held in that market.
+bid, up to five contracts each, post-only, expiring after 65 minutes. Hold
+fills to settlement; an order shrinks so that held plus resting contracts on
+one side of a market never exceed the per-market cap.
 
 Modes (``--auto`` picks live only when armed, else shadow):
 - ``--shadow``: public data only. Writes the quotes it would post to
@@ -288,6 +289,7 @@ def shadow_post(events, markets, now):
                     "event_ticker": m["event_ticker"],
                     "side": side,
                     "price_cents": price,
+                    "contracts": P.CONTRACTS,
                     "spread": m["spread"],
                     "posted_utc": now.isoformat(),
                     "expires_utc": (
@@ -384,7 +386,26 @@ def shadow_settle(events, fetch_market):
     return out
 
 
+def expected_fill(through, flow, size):
+    """Expected contracts filled, E[min(Binomial(through, flow), size)]: our
+    share of the contracts traded through our price, capped at our size."""
+    n = int(math.floor(through))
+    if n <= 0 or size <= 0:
+        return 0.0
+    if flow >= 1:
+        return float(min(n, size))
+    pmf = math.exp(n * math.log1p(-flow))  # P(X = 0)
+    below, total = 0.0, 0.0
+    for k in range(1, int(size) + 1):  # E = sum over k of P(X >= k)
+        below += pmf
+        total += max(0.0, 1.0 - below)
+        pmf *= (n - (k - 1)) / k * flow / (1 - flow)
+    return total
+
+
 def shadow_summary(events, flow=0.25):
+    """Shadow ledger results: first in line (every contract traded through
+    our price up to our size), and at the given flow share. Simulated."""
     quotes = {e["id"]: e for e in events if e.get("event") == "shadow_quote"}
     fills = {
         e["id"]: float(e["through"]) for e in events if e.get("event") == "shadow_fill"
@@ -397,14 +418,14 @@ def shadow_summary(events, flow=0.25):
         q = quotes.get(qid)
         if q is None:
             continue
+        size = int(q.get("contracts", 1))
         result = results.get(q["ticker"])
         won = None if result is None else float(result == q["side"])
         rows.append(
             {
-                "ticker": q["ticker"],
-                "event_ticker": q["event_ticker"],
                 "filled": through >= 1,
-                "expected": 1 - (1 - flow) ** math.floor(through),
+                "first": float(min(math.floor(through), size)),
+                "expected": expected_fill(through, flow, size),
                 "pnl": None if won is None else won - q["price_cents"] / 100,
             }
         )
@@ -420,13 +441,16 @@ def shadow_summary(events, flow=0.25):
         "settled_fills": len(settled),
     }
     if len(settled):
-        out["cents_per_contract"] = 100 * float(settled.pnl.mean())
-        weights = frame.loc[settled.index, "expected"]
-        if weights.sum() > 0:
+        first = (settled.pnl * settled["first"]).sum()
+        out["contracts_first_in_line"] = float(settled["first"].sum())
+        out["cents_per_contract"] = 100 * float(first / settled["first"].sum())
+        out["dollars_first_in_line"] = round(float(first), 2)
+        if settled.expected.sum() > 0:
+            share = (settled.pnl * settled.expected).sum()
             out[f"cents_per_contract_flow_{flow:g}"] = 100 * float(
-                (settled.pnl * weights).sum() / weights.sum()
+                share / settled.expected.sum()
             )
-        out["dollars_one_contract"] = float(settled.pnl.sum())
+            out[f"dollars_flow_{flow:g}"] = round(float(share), 2)
     return out
 
 
@@ -483,15 +507,47 @@ def held_cost(positions, open_lots):
 
 
 def desired_quotes(markets, positions):
-    """{(ticker, side): price} after the inventory cap."""
+    """{(ticker, side): (price, contracts)} after the inventory cap.
+
+    A YES order is at most the room left before net YES reaches the cap
+    (positive net = YES held), a NO order likewise; a side with no room is
+    not quoted.
+    """
     out = {}
     for m in markets:
         net = positions.get(m["ticker"], 0.0)
-        if net < P.MAX_NET_PER_MARKET - 1e-9:
-            out[(m["ticker"], "yes")] = m["yes_price"]
-        if net > -P.MAX_NET_PER_MARKET + 1e-9:
-            out[(m["ticker"], "no")] = m["no_price"]
+        rooms = {
+            "yes": math.floor(P.MAX_NET_PER_MARKET - net + 1e-9),
+            "no": math.floor(P.MAX_NET_PER_MARKET + net + 1e-9),
+        }
+        for side, price in (("yes", m["yes_price"]), ("no", m["no_price"])):
+            size = int(min(P.CONTRACTS, rooms[side]))
+            if size >= 1:
+                out[(m["ticker"], side)] = (price, size)
     return out
+
+
+def remaining_count(order, intent, fills):
+    """Contracts still resting on one of our orders: the exchange's
+    remaining count, else the order size less its listed fills."""
+    raw = order.get("remaining_count_fp", order.get("remaining_count"))
+    size = float(intent["count"])
+    if raw is None:
+        done = 0.0
+        for f in fills:
+            if str(f.get("order_id")) == str(order.get("order_id")):
+                try:
+                    done += float(f.get("count_fp", f.get("count")))
+                except (TypeError, ValueError) as error:
+                    raise TradingError("Unreadable spread fill count: HALT") from error
+        return max(0.0, size - done)
+    try:
+        left = float(raw)
+    except (TypeError, ValueError) as error:
+        raise TradingError("Unreadable spread resting count: HALT") from error
+    if not math.isfinite(left) or left < 0 or left > size + 1e-9:
+        raise TradingError("Spread resting count disagrees with journal: HALT")
+    return left
 
 
 def cancel_order(client, journal, order_id, ticker, reason, now):
@@ -634,7 +690,7 @@ CLIENT_ID_PREFIX = "smm-spread-"  # NBA/NFL ids are smm-<uuid4>: never "smm-s...
 
 
 def place_quote(
-    client, journal, market, side, price, now, require_shard, deadline=None
+    client, journal, market, side, price, now, require_shard, deadline=None, size=None
 ):
     """Journal, place, and record one post-only quote. Returns the outcome.
 
@@ -645,7 +701,7 @@ def place_quote(
     order = Order(
         ticker=market["ticker"],
         side=side,
-        count=P.CONTRACTS,
+        count=int(size or P.CONTRACTS),
         price_cents=int(price),
         expiration_ts=int(
             (now + timedelta(minutes=P.ORDER_LIFETIME_MINUTES)).timestamp()
@@ -653,7 +709,7 @@ def place_quote(
         post_only=True,
         client_order_id=f"{CLIENT_ID_PREFIX}{uuid.uuid4()}",
     )
-    cost = round(P.CONTRACTS * price / 100, 2)
+    cost = round(order.count * price / 100, 2)
     try:
         order.exchange_index = require_shard(client, order.ticker, cost)
     except Exception as error:
@@ -675,7 +731,7 @@ def place_quote(
             "event_ticker": market["event_ticker"],
             "side": side,
             "price_cents": int(price),
-            "count": P.CONTRACTS,
+            "count": order.count,
             "cost": cost,
             "spread": market["spread"],
             "market_expiration_utc": market["expiration_utc"],
@@ -804,7 +860,7 @@ def _pass_live(client, now, journal, public, require_shard, deadline):
     )
     report = Counter()
     resting = [
-        {"order_id": str(o["order_id"]), "ticker": o.get("ticker")}
+        {**o, "order_id": str(o["order_id"]), "ticker": o.get("ticker")}
         for o in state["resting"]
     ]
     ledger = state["ledger"]
@@ -835,9 +891,11 @@ def _pass_live(client, now, journal, public, require_shard, deadline):
         intent = intents.get(order_to_cid.get(order["order_id"]))
         if intent is None:
             raise TradingError("Resting order missing from spread journal: HALT")
-        resting_intents.append((order, intent))
+        left = remaining_count(order, intent, state["fills"])
+        resting_intents.append((order, intent, left))
+        # Only what is still resting is in the book (after a partial fill).
         own.setdefault(intent["ticker"], []).append(
-            (intent["side"], int(intent["price_cents"]), float(intent["count"]))
+            (intent["side"], int(intent["price_cents"]), left)
         )
     markets = universe(
         public["fetch_markets"],
@@ -853,14 +911,19 @@ def _pass_live(client, now, journal, public, require_shard, deadline):
     keep = {}
     just_filled = set()
     oldest = (now - timedelta(minutes=P.ORDER_LIFETIME_MINUTES - 5)).isoformat()
-    for order, intent in resting_intents:
+    for order, intent, left in resting_intents:
         key = (intent["ticker"], intent["side"])
+        price, size = wanted.get(key, (None, 0))
+        # Keep a quote at the right price whose remaining contracts still
+        # fit the inventory room (a partly filled order keeps its place in
+        # the queue and is not topped up).
         if (
-            wanted.get(key) == intent["price_cents"]
+            price == intent["price_cents"]
+            and 0 < left <= size + 1e-9
             and intent["utc"] > oldest
             and key not in keep
         ):
-            keep[key] = intent
+            keep[key] = (intent, left)
             continue
         outcome = cancel_order(
             client, journal, order["order_id"], intent["ticker"], "requote", now
@@ -872,9 +935,9 @@ def _pass_live(client, now, journal, public, require_shard, deadline):
             # next pass reads them again.
             just_filled.add(intent["ticker"])
     # Exposure: kept resting quotes at cost plus held contracts at cost.
-    exposure = sum(float(i["cost"]) for i in keep.values()) + held_cost(
-        positions, ledger["open"]
-    )
+    exposure = sum(
+        left * int(i["price_cents"]) / 100 for i, left in keep.values()
+    ) + held_cost(positions, ledger["open"])
     today = now.astimezone(NY).date()
     submitted_today = sum(
         datetime.fromisoformat(i["utc"]).astimezone(NY).date() == today
@@ -884,11 +947,11 @@ def _pass_live(client, now, journal, public, require_shard, deadline):
     # Our quotes resting in each market (kept, then placed this pass), taken
     # out of every fresh book read.
     mine = {}
-    for (ticker, _), intent in keep.items():
+    for (ticker, _), (intent, left) in keep.items():
         mine.setdefault(ticker, []).append(
-            (intent["side"], int(intent["price_cents"]), float(intent["count"]))
+            (intent["side"], int(intent["price_cents"]), left)
         )
-    for (ticker, side), price in wanted.items():
+    for (ticker, side), (price, size) in wanted.items():
         if (ticker, side) in keep:
             continue
         if ticker in just_filled:
@@ -903,7 +966,7 @@ def _pass_live(client, now, journal, public, require_shard, deadline):
         if submitted_today + placed >= P.MAX_SUBMISSIONS_PER_DAY:
             report["skip_daily_cap"] += 1
             break
-        cost = P.CONTRACTS * price / 100
+        cost = size * price / 100
         if exposure + cost > P.MAX_ACTIVE_COST + 1e-9:
             report["skip_active_cap"] += 1
             continue
@@ -924,6 +987,7 @@ def _pass_live(client, now, journal, public, require_shard, deadline):
             now,
             require_shard,
             deadline,
+            size,
         )
         report[outcome] += 1
         if outcome in ("shard_unfunded", "shard_check_failed", "out_of_time"):
@@ -931,7 +995,7 @@ def _pass_live(client, now, journal, public, require_shard, deadline):
         placed += 1
         if outcome == "accepted":
             exposure += cost
-            mine.setdefault(ticker, []).append((side, int(price), float(P.CONTRACTS)))
+            mine.setdefault(ticker, []).append((side, int(price), float(size)))
     return {
         "decision": "quoted",
         "eligible_markets": len(markets),

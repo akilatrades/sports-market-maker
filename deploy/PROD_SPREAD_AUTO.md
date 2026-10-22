@@ -1,14 +1,15 @@
 # Spread maker pilot (third bot)
 
 `live/prod_spread_auto.py`, strategy version `spread-maker-v1`. It posts a
-small buy order on **both sides** of markets where the gap between the best
+buy order of up to 5 contracts on **both sides** of markets where the gap between the best
 bid and the best offer (the *spread*) is 8¢ or more, one cent better than
 anyone else on each side. When both orders fill, the bot owns a YES and a NO
 contract that together pay exactly $1 and cost less than $1: a locked profit.
 When only one fills, it holds that contract to settlement.
 
 Plan and pass/fail bars: `RESEARCH_LOG.md`, "2026-10-22: Spread maker pilot,
-shadow and small live (plan)" and its implementation notes. The evidence is a
+shadow and small live (plan)", its implementation notes and the 5-contract
+amendment. The evidence is a
 **simulated, in-sample** backtest (strategy sweep, family 7). The pilot exists
 to find out whether real fills look like the simulated ones; it is not a
 profit forecast.
@@ -20,12 +21,14 @@ profit forecast.
   racing and others). Never an NBA or NFL player prop and never a market
   another bot holds. Series that pay a maker fee are skipped.
 - **When:** markets whose expected expiration is 4 to 7 hours away.
-- **Quote:** YES bid at best YES bid + 1¢, NO bid at best NO bid + 1¢, one
-  contract each, post-only (never takes liquidity), expiring on the exchange
+- **Quote:** YES bid at best YES bid + 1¢, NO bid at best NO bid + 1¢, up to
+  5 contracts each, post-only (never takes liquidity), expiring on the exchange
   after 65 minutes. Prices come from the public order book with the bot's own
   orders removed, so it never prices off itself.
-- **Inventory:** once it holds one contract on a side of a market, it stops
-  quoting that side there.
+- **Inventory:** held plus resting contracts on one side of a market never
+  exceed 5. Holding 2 YES, its YES order is for 3; holding 5, it stops
+  quoting YES there (NO quotes, which close YES contracts, continue). A
+  partly filled order keeps its place in the queue and is not topped up.
 - **Every 10 minutes** (minute 3, 13, 23, ...). Each pass also writes the
   **shadow ledger**: the quotes the rule would post on every eligible market,
   scored later from Kalshi's public trade prints. Shadow mode alone uses no
@@ -42,18 +45,19 @@ directly: that comparison is the main point of the pilot.
 
 | Limit | Spread bot | Notes |
 |---|---:|---|
-| Contracts per order | 1 | |
-| Net contracts per market and side | 1 | |
-| Open exposure (resting orders + held contracts, at cost) | $25 | |
+| Contracts per order | up to 5 | Was 1 (owner's amendment, 22 October) |
+| Net contracts per market and side | 5 | Was 1 |
+| Open exposure (resting orders + held contracts, at cost) | $60 | Was $25 |
 | Orders per pass / per New York day | 20 / 300 | Cancelled orders still count |
-| Own realized-loss stop, per day / total | −$5 / −$15 | Cancels its quotes and stops |
+| Own realized-loss stop, per day / total | −$10 / −$40 | Was −$5 / −$15; cancels its quotes and stops |
 | Account realized-loss stop, per day / total | −$20 / −$60 | Shared with NBA and NFL |
 
 - The NBA and NFL caps ($165 open, $180 a day, $2,050 lifetime) are
   unchanged and do not include spread orders. All three bots together can
-  have at most $190 open.
+  have at most $225 open (NBA $150, NFL $15, spread $60) on the $350 account.
 - The account stops count realized losses of all three bots, so spread
-  losses can stop NBA and NFL for the day, and the reverse.
+  losses can stop NBA and NFL for the day, and the reverse. A −$10 spread
+  day leaves NBA only $10 of the shared −$20 daily stop.
 - **How spread P&L is counted.** Kalshi nets YES against NO, so when both
   quotes fill the pair closes at once and never appears in a settlement
   record. The bot (and the account stop) therefore count its P&L from its
@@ -64,8 +68,9 @@ directly: that comparison is the main point of the pilot.
   three bots until it is explained. Watch the first settled market closely.
   The journal keeps its own copy of every fill and settlement, so the count
   does not depend on how long Kalshi keeps listing old fills.
-- Worst plausible case: the $15 own stop is reached and every open position
-  then loses: about $15 + $25 = $40.
+- Worst plausible case: the $40 own stop is reached and every open position
+  then loses: about $40 + $60 = $100. In the (simulated, in-sample) sizing
+  test the worst day was −$16 and the worst drawdown −$18.
 
 ## Safety rules (same as the other bots)
 
@@ -82,7 +87,7 @@ directly: that comparison is the main point of the pilot.
   is not a halt: the quotes stay, expire on their own, and the next pass
   checks again.
 - A quote that turns out to have filled just as the bot cancels it is not
-  replaced in that pass, so the one-contract inventory cap holds.
+  replaced in that pass, so the inventory cap holds.
 - No new order after 110 seconds from the start of a pass (waiting for the
   other bots counts), so systemd's 240-second limit never cuts an order off
   mid-send; a stop signal also lets the order in flight finish first.

@@ -108,8 +108,8 @@ case "$COMMAND" in
     as_trader --preflight || { echo "Preflight failed: NOT armed." >&2; exit 1; }
     set_arm YES
     install -m 644 -o root -g root /dev/null "$ARM_MARKER"
-    echo "ARMED. The next pass (within 10 minutes) may place real one-contract quotes."
-    echo "Caps: \$25 open, \$5 daily and \$15 total own loss stops, inside the shared"
+    echo "ARMED. The next pass (within 10 minutes) may place real quotes of up to 5 contracts."
+    echo "Caps: \$60 open, \$10 daily and \$40 total own loss stops, inside the shared"
     echo "account stops. Undo: --disarm (no new orders) or --cancel (pull them now)."
     exit 0 ;;
   "") ;;
