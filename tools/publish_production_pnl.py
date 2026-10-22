@@ -23,7 +23,6 @@ from pathlib import Path
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
-from kalshi.trading import TradingError
 from live.account_dashboard import ReadOnlyClient, cohort_settled_pnl, read_journal
 from live.shared_account_risk import spread_ledger
 
@@ -42,6 +41,18 @@ SPREAD_NOTE = (
 )
 
 
+def read_spread_journal(path):
+    """The spread maker's journal, or None if missing or unreadable: a bad
+    spread journal shows the spread card as unavailable and never blocks
+    the NBA and NFL figures."""
+    if not path or not path.exists():
+        return None
+    try:
+        return read_journal(path)
+    except Exception:
+        return None
+
+
 def spread_report(events, exchange_fills, settlements, now):
     """Aggregate-only public values for the spread maker; never raises."""
     if events is None:
@@ -56,7 +67,7 @@ def spread_report(events, exchange_fills, settlements, now):
     accepted = sum(1 for e in events if e.get("event") == "accepted")
     try:
         ledger = spread_ledger(events, exchange_fills, settlements, now)
-    except TradingError:
+    except Exception:  # any bad spread record: no number, NBA/NFL unaffected
         return {
             "status": "unreconciled",
             "realized_profit_dollars": None,
@@ -155,9 +166,10 @@ def collect_report(now=None, client=None, journals=None):
     client = client or ReadOnlyClient()
     paths = journals or JOURNALS
     cohorts = {}
-    for name in ("nfl", "nba", "spread"):
+    for name in ("nfl", "nba"):
         path = paths.get(name)
         cohorts[name] = read_journal(path) if path and path.exists() else None
+    cohorts["spread"] = read_spread_journal(paths.get("spread"))
     starts = [
         datetime.fromisoformat(e["utc"]).timestamp()
         for events in cohorts.values()

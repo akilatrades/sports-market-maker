@@ -168,8 +168,15 @@ During a code release the spread bot skips its passes, and the release's
 read-only account checks wait for any spread pass in progress (they take
 the account lock).
 
-## Not yet included
+## Where its results appear
 
-- The private fills export and the public P&L page cover NBA and NFL only.
-  Until a follow-up adds the spread bot, its live results are on the server
-  (`--status`). Never mix them with the shadow ledger or with replays.
+- **Private fills export** (`smm-private-data`, hourly): `data/spread/` with
+  orders, fills, settlements and realized P&L by day, plus the shadow
+  ledger's simulated summary kept separately in `data/summary.json`. The
+  export uses the fills and settlements the bot copies into its journal on
+  each live pass; while the bot is disarmed or stopped, later settlements
+  appear only after its next live pass.
+- **Public dashboard:** a "Spread maker / realized P&L" card (aggregate only)
+  from the live P&L feed. After a release that changes the feed, restart it:
+  `sudo systemctl restart market-maker-live-pnl.service`.
+- On the server: `--status`. Never mix live and shadow results.

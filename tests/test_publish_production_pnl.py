@@ -200,3 +200,40 @@ def test_spread_maker_unknown_states_are_never_a_fake_zero():
     assert broken["markets"]["spread"]["realized_profit_dollars"] is None
     # NBA and NFL are unaffected by a spread problem.
     assert broken["markets"]["nba"]["status"] == "awaiting_first_order"
+
+
+def test_a_torn_spread_journal_never_blocks_nba_and_nfl(tmp_path):
+    class FakeClient:
+        def pages(self, path, key, **params):
+            return []
+
+    n, b, s = tmp_path / "nfl.jsonl", tmp_path / "nba.jsonl", tmp_path / "spread.jsonl"
+    n.write_text("".join(json.dumps(x) + "\n" for x in events("NFL", "n1")))
+    b.write_text("")
+    s.write_text('{"event": "intent", "client')  # torn last line
+    report = collect_report(
+        now=NOW, client=FakeClient(), journals={"nfl": n, "nba": b, "spread": s}
+    )
+    assert report["markets"]["spread"]["status"] == "unavailable"
+    assert report["markets"]["nfl"]["exchange_accepted_orders"] is not None
+
+
+def test_malformed_spread_data_is_unreconciled_not_a_crash():
+    bad = [
+        {
+            "event": "intent",
+            "client_order_id": "c",
+            "ticker": "KX-1",
+            "side": "yes",
+            "price_cents": "x",
+        },
+        {"event": "accepted", "client_order_id": "c", "order_id": "o"},
+    ]
+    fill = {
+        "fill_id": "f",
+        "order_id": "o",
+        "created_time": "2026-10-19T14:00:00+00:00",
+        "count_fp": "1.00",
+    }
+    report = build_report({"nfl": [], "nba": [], "spread": bad}, [fill], [], NOW)
+    assert report["markets"]["spread"]["status"] == "unreconciled"

@@ -26,6 +26,10 @@ leaving the server.
   for 8,000 orders and close to the cap at about 25,000 (the NBA bot's
   lifetime cap allows about 4,000 one-contract orders). If the bots ever
   get near that, raise `MemoryMax` before the export starts failing.
+  The spread maker adds about 5 KB per order (about 75 MB at 10,000
+  orders, 210 MB at 40,000; it can submit up to 300 a day). Check
+  `orders` for `spread` in `data/summary.json` and raise `MemoryMax`
+  before it passes about 25,000.
 - It also refuses a repository that is internal, archived, renamed or has
   GitHub Pages turned on, and never follows a redirect (which could carry the
   token elsewhere). If a journal ever shows fewer orders or older data than

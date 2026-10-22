@@ -464,16 +464,19 @@ SPREAD_PNL_COLUMNS = ["market", "day", "realized_pnl_dollars", "cumulative_dolla
 def spread_tables(stream, now=None):
     """(orders, fills, settlements, P&L by day, ledger, latest event time).
 
-    The ledger is ``live.shared_account_risk.spread_ledger`` on the journal's
-    own fill and settlement copies: the realized P&L the bot's stops use.
+    The ledger is ``live.shared_account_risk.spread_ledger`` (the calculation
+    the bot's loss stops use) on the fills and settlements the bot has copied
+    into its journal. The bot copies them on every live pass, so while it is
+    disarmed or stopped, later fills and settlements appear here only after
+    its next live pass. Each event is held once (memory grows with orders).
     """
     from live.shared_account_risk import spread_ledger
 
-    kept, intents, status, accepted, reconciled = [], {}, {}, {}, set()
+    intents, status, accepted, reconciled, acceptances = {}, {}, {}, set(), []
     client_of, cancel, cancel_done, fills, settlements = {}, {}, {}, {}, {}
     latest = None
     for kind, e in stream:
-        kept.append({"event": kind, **e})
+        e["event"] = kind  # the ledger reads these same records
         stamp = _time(e.get("utc"))
         if stamp and (latest is None or stamp > latest):
             latest = stamp
@@ -489,6 +492,7 @@ def spread_tables(stream, now=None):
                 reconciled.add(cid)
             if oid:
                 client_of[oid] = cid
+                acceptances.append(e)
         elif kind == "rejected_4xx" and cid:
             status[cid] = "refused_4xx"
         elif kind == "reconciled_absent" and cid:
@@ -513,7 +517,13 @@ def spread_tables(stream, now=None):
     try:
         # Stamped by the newest journal event, not the clock, like the rest
         # of the export (identical input, identical files).
-        ledger = spread_ledger(kept, [], [], now or latest or datetime.now(UTC))
+        records = [
+            *intents.values(),
+            *acceptances,
+            *(f for per_order in fills.values() for f in per_order.values()),
+            *settlements.values(),
+        ]
+        ledger = spread_ledger(records, [], [], now or latest or datetime.now(UTC))
     except Exception as error:  # report it; never invent a number
         ledger = {"unavailable": str(error)[:120]}
     order_of = {cid: oid for oid, cid in client_of.items()}
@@ -522,12 +532,13 @@ def spread_tables(stream, now=None):
         oid = order_of.get(cid)
         side = intent.get("side", "")
         own = list(fills.get(oid, {}).values()) if oid else []
-        priced = []
+        priced, filled = [], 0.0
         for f in own:
             count = _number(
                 f.get("count_fp") if f.get("count_fp") is not None else f.get("count")
             )
             price = _number(f.get(f"{side}_price_dollars"))
+            filled += count or 0.0
             if count and price is not None:
                 priced.append((count, price))
         stop = cancel.get(oid, {}) if oid else {}
@@ -554,7 +565,7 @@ def spread_tables(stream, now=None):
                 "cancel_reason": stop.get("reason", ""),
                 "cancel_result": done[0],
                 "cancel_reduced_by": done[1],
-                "filled_contracts": sum(c for c, _ in priced),
+                "filled_contracts": filled,
                 "first_fill_utc": min((f.get("utc", "") for f in own), default=""),
                 "avg_fill_price": round(
                     sum(c * p for c, p in priced) / sum(c for c, _ in priced), 4
@@ -725,7 +736,10 @@ def build_files(journals, shadow=None):
             except Exception as error:
                 summary["markets"][market] = {"status": f"error_{type(error).__name__}"}
                 continue
-            complete.add(market)
+            if not ledger.get("unavailable"):
+                # Only a complete read may remove files it no longer writes
+                # (never the last good pnl_by_day.csv on a bad ledger).
+                complete.add(market)
             for name, columns, rows, when in (
                 ("orders", SPREAD_ORDER_COLUMNS, orders, "intent_utc"),
                 ("fills", SPREAD_FILL_COLUMNS, fills, "fill_utc"),
@@ -863,9 +877,13 @@ markets and holds fills to settlement.
 - `fills/<day>.csv`: one row per fill, with the side bought and its price.
 - `settlements/<day>.csv`: the market result and revenue Kalshi reported.
 - `pnl_by_day.csv`: REALIZED P&L by Eastern day from the bot's own fills
-  (the same ledger its loss stops use): a YES+NO pair counts when its second
+  (the calculation its loss stops use): a YES+NO pair counts when its second
   leg fills; a contract still held counts when its market settles. Kalshi
-  nets YES against NO, so settlement records alone miss closed pairs.
+  nets YES against NO, so settlement records alone miss closed pairs. It
+  uses the fills and settlements the bot copies into its journal on every
+  live pass; while the bot is disarmed or stopped, later settlements show up
+  only after its next live pass (`markets_still_held` in the summary counts
+  what is still open).
 - `data/summary.json` → `spread_shadow_simulated`: the shadow ledger's
   SIMULATED results (first in line, and at flow share 0.25). Compare it
   with the live numbers; never add the two together.
