@@ -1,0 +1,242 @@
+{
+ "splits_2025_26": {
+  "stat": [
+   {
+    "bin": "assists",
+    "rungs": 929,
+    "ladder_nb": {
+     "eligible": 487,
+     "fills": 217.0,
+     "cents": 2.9124423963133643,
+     "t": 1.0531196567539758
+    },
+    "live": {
+     "eligible": 536,
+     "fills": 244.0,
+     "cents": 1.9344262295081964,
+     "t": 0.693322117458217
+    }
+   },
+   {
+    "bin": "points",
+    "rungs": 1642,
+    "ladder_nb": {
+     "eligible": 631,
+     "fills": 436.0,
+     "cents": 4.137614678899084,
+     "t": 1.804387693025177
+    },
+    "live": {
+     "eligible": 916,
+     "fills": 652.0,
+     "cents": 2.38957055214724,
+     "t": 1.2442009743679443
+    }
+   },
+   {
+    "bin": "rebounds",
+    "rungs": 1222,
+    "ladder_nb": {
+     "eligible": 629,
+     "fills": 265.0,
+     "cents": 5.792452830188679,
+     "t": 2.04168323844332
+    },
+    "live": {
+     "eligible": 725,
+     "fills": 324.0,
+     "cents": 3.6759259259259256,
+     "t": 1.3800966639489567
+    }
+   },
+   {
+    "bin": "threes",
+    "rungs": 885,
+    "ladder_nb": {
+     "eligible": 478,
+     "fills": 265.0,
+     "cents": 5.505660377358492,
+     "t": 1.9454105648141227
+    },
+    "live": {
+     "eligible": 588,
+     "fills": 348.0,
+     "cents": 0.9482758620689656,
+     "t": 0.37909310293722404
+    }
+   }
+  ],
+  "book lines for player and stat": [
+   {
+    "bin": "1",
+    "rungs": 390,
+    "ladder_nb": {
+     "eligible": 243,
+     "fills": 127.0,
+     "cents": 13.897637795275589,
+     "t": 4.101623090348322
+    },
+    "live": {
+     "eligible": 194,
+     "fills": 99.0,
+     "cents": 7.747474747474747,
+     "t": 1.9816727161554555
+    }
+   },
+   {
+    "bin": "2",
+    "rungs": 608,
+    "ladder_nb": {
+     "eligible": 308,
+     "fills": 141.0,
+     "cents": 1.234042553191489,
+     "t": 0.2952418331609477
+    },
+    "live": {
+     "eligible": 345,
+     "fills": 171.0,
+     "cents": -2.1286549707602345,
+     "t": -0.55281258885929
+    }
+   },
+   {
+    "bin": "3+",
+    "rungs": 3680,
+    "ladder_nb": {
+     "eligible": 1674,
+     "fills": 915.0,
+     "cents": 3.8153005464480882,
+     "t": 2.414539010581939
+    },
+    "live": {
+     "eligible": 2226,
+     "fills": 1298.0,
+     "cents": 2.4252696456086285,
+     "t": 1.6878576980804425
+    }
+   }
+  ],
+  "spread at posting": [
+   {
+    "bin": "1\u00a2",
+    "rungs": 720,
+    "ladder_nb": {
+     "eligible": 319,
+     "fills": 95.0,
+     "cents": 4.368421052631579,
+     "t": 1.0944123057790738
+    },
+    "live": {
+     "eligible": 453,
+     "fills": 172.0,
+     "cents": 2.4011627906976742,
+     "t": 0.676751236198649
+    }
+   },
+   {
+    "bin": "2\u00a2+",
+    "rungs": 3958,
+    "ladder_nb": {
+     "eligible": 1906,
+     "fills": 1088.0,
+     "cents": 4.609375,
+     "t": 2.9465767151328848
+    },
+    "live": {
+     "eligible": 2312,
+     "fills": 1396.0,
+     "cents": 2.2478510028653296,
+     "t": 1.5959824168137784
+    }
+   }
+  ],
+  "distance from nearest book line": [
+   {
+    "bin": "0 (one-book line)",
+    "rungs": 1987,
+    "ladder_nb": {
+     "eligible": 1058,
+     "fills": 640.0,
+     "cents": 3.0874999999999995,
+     "t": 1.606439732659107
+    },
+    "live": {
+     "eligible": 1276,
+     "fills": 817.0,
+     "cents": 1.711138310893513,
+     "t": 0.9420881925397377
+    }
+   },
+   {
+    "bin": "1-3",
+    "rungs": 2192,
+    "ladder_nb": {
+     "eligible": 1058,
+     "fills": 487.0,
+     "cents": 6.784394250513347,
+     "t": 3.99640960297932
+    },
+    "live": {
+     "eligible": 1247,
+     "fills": 608.0,
+     "cents": 2.983552631578947,
+     "t": 1.822407821163203
+    }
+   },
+   {
+    "bin": "more than 3",
+    "rungs": 499,
+    "ladder_nb": {
+     "eligible": 109,
+     "fills": 56.0,
+     "cents": 2.6785714285714284,
+     "t": 0.4623658663347419
+    },
+    "live": {
+     "eligible": 242,
+     "fills": 143.0,
+     "cents": 2.3706293706293695,
+     "t": 0.7254447209638636
+    }
+   }
+  ]
+ },
+ "this_season": {
+  "nights": [
+   "2026-10-20",
+   "2026-10-21"
+  ],
+  "book_lines_per_player_stat": {
+   "median": 2.0,
+   "mean": 3.546074350509545,
+   "share_with_3_plus": 0.44251471221472655
+  },
+  "kalshi_rungs": 1113,
+  "with_two_book_line": 177,
+  "ladder_price_but_no_two_book_line": 884,
+  "no_book_line_for_player_stat": 52,
+  "spread_2c_plus_two_book": 0.3389830508474576,
+  "spread_2c_plus_ladder_only": 0.7613122171945701
+ },
+ "pipeline_check": {
+  "rungs": 865,
+  "games": 7,
+  "nights": [
+   "2026-10-20",
+   "2026-10-21"
+  ],
+  "log_loss_ladder_nb": 0.4296260181812561,
+  "log_loss_p_model": 0.47195128727832275,
+  "log_loss_mid": 0.426363310441564,
+  "paper_ladder_nb": {
+   "orders": 229,
+   "fills": 101.0,
+   "pnl_usd": 2.4099999999999993
+  },
+  "paper_p_model": {
+   "orders": 470,
+   "fills": 256.0,
+   "pnl_usd": 8.859999999999998
+  }
+ }
+}
