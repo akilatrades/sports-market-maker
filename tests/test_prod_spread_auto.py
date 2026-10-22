@@ -603,3 +603,41 @@ def test_unarmed_auto_run_is_shadow_only(world, monkeypatch, tmp_path, capsys):
     assert report["mode"] == "shadow" and "live" not in report
     assert report["shadow"]["quotes"] == 2
     assert not (state / "journal.jsonl").exists()
+
+
+def test_preflight_reads_only_and_reports_counts(world):
+    ex = world["exchange"]
+    ex.place = ex.cancel = None  # any order call would fail the test
+    env = {**ENV, "SPREAD_AUTO_ARM": "NO"}
+    result = bot.preflight(ex, env, NOW, world["dir"], world["public"])
+    assert result["ready"] and result["eligible_markets_now"] == 1
+    assert result["armed"] is False and result["spread_resting"] == 0
+    bad = bot.preflight(
+        ex, {**env, "ALLOW_PRODUCTION_TRADING": ""}, NOW, world["dir"], world["public"]
+    )
+    assert bad == {"ready": False, "failures": ["ALLOW_PRODUCTION_TRADING is not YES"]}
+
+
+def test_deploy_units_and_owner_script():
+    from pathlib import Path
+
+    root = Path(__file__).resolve().parents[1]
+    unit = (root / "deploy/market-maker-prod-spread-auto.service").read_text()
+    for line in (
+        "User=trader",
+        "UMask=0077",
+        "EnvironmentFile=-/etc/market-maker-spread.env",
+        "ExecCondition=+/usr/bin/flock -n /run/lock/smm-production-release.lock",
+    ):
+        assert line in unit
+    # The timer only ever runs --auto: live needs the owner's two arm steps.
+    assert "-m live.prod_spread_auto --auto\n" in unit and "--live" not in unit
+    timer = (root / "deploy/market-maker-prod-spread-auto.timer").read_text()
+    assert "OnCalendar=*-*-* *:03/10:00 UTC" in timer
+    setup = (root / "deploy/setup_spread_maker.sh").read_text()
+    assert "FETCH_HEAD:deploy/" in setup  # units come from GitHub main
+    for funded in ("prod-nba-auto.timer", "prod-nfl-auto", "prod-nba-auto.service"):
+        assert funded not in setup
+    assert "cat $" not in setup and 'cat "' not in setup  # never prints settings
+    assert "printf 'SPREAD_AUTO_ARM=%s\\n'" in setup
+    assert str(P.ARM_MARKER) in setup and str(P.STATE) in setup

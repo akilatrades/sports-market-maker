@@ -30,6 +30,7 @@ import fcntl
 import json
 import math
 import os
+import re
 import uuid
 from collections import Counter
 from datetime import UTC, datetime, timedelta
@@ -37,7 +38,15 @@ from zoneinfo import ZoneInfo
 
 import pandas as pd
 
+from kalshi import api as kalshi_api
+from kalshi import shard_funding
 from kalshi.trading import Order, TradingClient, TradingError
+
+# Every module a pass can need is loaded when the process starts (including
+# the two modules the shared account check loads), so a code release landing
+# mid-pass cannot mix old and new code inside one pass.
+from live import nfl_policy, prod_nba_auto, prod_nfl_auto, production_lock  # noqa: F401
+from live import shared_account_risk as shared
 from live import spread_policy as P
 
 NY = ZoneInfo("America/New_York")
@@ -72,8 +81,6 @@ def load_events(path):
 
 def records(events):
     """Intents by client id, accepted order ids, and refused client ids."""
-    from live.shared_account_risk import spread_rejected_ids
-
     intents = {}
     for e in events:
         if e.get("event") != "intent":
@@ -91,7 +98,7 @@ def records(events):
             if cid not in intents or not oid or cid in accepted:
                 raise TradingError("Invalid spread acceptance: HALT")
             accepted[cid] = str(oid)
-    refused = spread_rejected_ids(events)
+    refused = shared.spread_rejected_ids(events)
     if set(intents) != set(accepted) | refused:
         raise TradingError("Unreconciled spread submission: HALT")
     return intents, accepted, refused
@@ -428,9 +435,7 @@ def guard(env, client):
             raise TradingError(f"Unarmed spread maker: {name} must be {expected}")
     if not P.ARM_MARKER.exists():
         raise TradingError("Owner has not enabled the spread maker")
-    from live.shared_account_risk import dual_mode
-
-    if not dual_mode(env):
+    if not shared.dual_mode(env):
         raise TradingError("Spread maker requires shared-account mode")
     if client.env != "prod" or client.dry_run or not client.can_sign:
         raise TradingError("Signed production execution client required")
@@ -442,15 +447,13 @@ def armed(env):
 
 def own_realized(settlements, tickers, now):
     """Daily and cumulative realized P&L on this bot's settled markets."""
-    from live.nfl_policy import settlement_accounting
-
     today = now.astimezone(NY).date()
     seen, daily, total = set(), 0.0, 0.0
     for item in settlements:
         ticker = item.get("market_ticker") or item.get("ticker")
         if ticker not in tickers:
             continue
-        accounted = settlement_accounting(item)
+        accounted = nfl_policy.settlement_accounting(item)
         amount = accounted.get("net_profit_dollars")
         if not accounted["accounting_complete"] or amount is None:
             raise TradingError("Incomplete spread settlement: HALT")
@@ -558,8 +561,6 @@ def record_execution(journal, events, owned_orders, fills, settlements, tickers)
         for e in events
         if e.get("event") == "settlement"
     }
-    from live.nfl_policy import settlement_accounting
-
     for fill in fills:
         oid = str(fill.get("order_id"))
         fid = fill.get("fill_id") or fill.get("trade_id")
@@ -593,15 +594,13 @@ def record_execution(journal, events, owned_orders, fills, settlements, tickers)
                 "event": "settlement",
                 "ticker": ticker,
                 "utc": key[1],
-                **settlement_accounting(item),
+                **nfl_policy.settlement_accounting(item),
             },
         )
         seen_settled.add(key)
 
 
 def is_http_4xx(error):
-    import re
-
     match = re.search(r"-> HTTP ([0-9]{3})", str(error))
     return int(match.group(1)) if match and match.group(1).startswith("4") else None
 
@@ -656,8 +655,6 @@ def place_quote(client, journal, market, side, price, now, require_shard):
                 o for o in resting if o.get("client_order_id") == order.client_order_id
             ]
             if not match:
-                from live.shared_account_risk import SPREAD_REJECTION_EVIDENCE
-
                 write_event(
                     journal,
                     {
@@ -665,7 +662,7 @@ def place_quote(client, journal, market, side, price, now, require_shard):
                         "utc": datetime.now(UTC).isoformat(),
                         "client_order_id": order.client_order_id,
                         "http_status": status,
-                        "evidence": SPREAD_REJECTION_EVIDENCE,
+                        "evidence": shared.SPREAD_REJECTION_EVIDENCE,
                         "detail": str(error)[:200],
                     },
                 )
@@ -717,15 +714,12 @@ def fresh_prices(public, ticker, own=()):
 
 def pass_live(client, env, now, state_dir, public, require_shard=None):
     """One live pass: (report for last_scan.json, eligible markets or None)."""
-    from kalshi.shard_funding import require_funded_shard
-    from live.shared_account_risk import account_loss_stop, state_for
-
-    require_shard = require_shard or require_funded_shard
+    require_shard = require_shard or shard_funding.require_funded_shard
     guard(env, client)
     journal = state_dir / "journal.jsonl"
     events = load_events(journal)
     intents, accepted, _ = records(events)
-    state, shared = state_for(client, "spread", now)
+    state, context = shared.state_for(client, "spread", now)
     order_to_cid = {oid: cid for cid, oid in accepted.items()}
     owned_orders = set(order_to_cid)
     own_tickers = {i["ticker"] for i in intents.values()}
@@ -748,13 +742,13 @@ def pass_live(client, env, now, state_dir, public, require_shard=None):
             "total": total,
             **report,
         }, None
-    if account_loss_stop(shared):
+    if shared.account_loss_stop(context):
         report["canceled"] = cancel_all_owned(
             client, journal, resting, "account_loss_stop", now
         )
         return {"decision": "account_loss_stop", **report}, None
     others = {
-        t for t, cohort in shared["ownership"]["tickers"].items() if cohort != "spread"
+        t for t, cohort in context["ownership"]["tickers"].items() if cohort != "spread"
     }
     resting_intents = []
     own = {}
@@ -867,13 +861,11 @@ def cancel_owned_on_kill(client, journal):
 
 
 def public_api():
-    from kalshi.api import fetch_market, fetch_markets, fetch_orderbook, fetch_trades
-
     return {
-        "fetch_markets": fetch_markets,
-        "fetch_market": fetch_market,
-        "fetch_orderbook": fetch_orderbook,
-        "fetch_trades": fetch_trades,
+        "fetch_markets": kalshi_api.fetch_markets,
+        "fetch_market": kalshi_api.fetch_market,
+        "fetch_orderbook": kalshi_api.fetch_orderbook,
+        "fetch_trades": kalshi_api.fetch_trades,
     }
 
 
@@ -883,6 +875,46 @@ def write_report(state_dir, report):
     temporary.write_text(json.dumps(report, indent=2, default=str) + "\n")
     temporary.chmod(0o600)
     temporary.replace(target)
+
+
+def preflight(client, env, now, state_dir, public):
+    """Signed GET-only readiness check before arming. Never places or cancels.
+
+    Checks production settings (except this bot's arm switch), that the
+    spread journal reconciles, that all three bots' journals together own
+    every order and position in the account, and how many markets qualify
+    right now. Prints counts only: no balances, ids or prices.
+    """
+    failures = []
+    for name in ("KALSHI_ENV", "ALLOW_PRODUCTION_TRADING"):
+        if env.get(name) != REQUIRED[name]:
+            failures.append(f"{name} is not {REQUIRED[name]}")
+    if not shared.dual_mode(env):
+        failures.append("shared-account mode is off")
+    if client.env != "prod" or client.dry_run or not client.can_sign:
+        failures.append("no signed production client")
+    if failures:
+        return {"ready": False, "failures": failures}
+    journal = state_dir / "journal.jsonl"
+    journal.touch(mode=0o600, exist_ok=True)
+    intents, accepted, refused = records(load_events(journal))
+    state, context = shared.state_for(client, "spread", now)
+    for sport in ("nba", "nfl"):
+        shared.state_for(client, sport, now)  # the other bots still reconcile
+    others = {
+        t for t, cohort in context["ownership"]["tickers"].items() if cohort != "spread"
+    }
+    markets = universe(public["fetch_markets"], now, others)
+    return {
+        "ready": True,
+        "failures": [],
+        "armed": armed(env),
+        "spread_orders_journaled": len(intents),
+        "spread_resting": len(state["resting"]),
+        "spread_markets_held": len(state["positions"]),
+        "account_loss_stop": bool(shared.account_loss_stop(context)),
+        "eligible_markets_now": len(markets),
+    }
 
 
 def status(state_dir):
@@ -918,17 +950,24 @@ def prefetch(public):
 
 
 def main():
-    from live.production_lock import account_lock
-
     parser = argparse.ArgumentParser()
     mode = parser.add_mutually_exclusive_group(required=True)
-    for flag in ("--shadow", "--live", "--auto", "--status"):
+    for flag in ("--shadow", "--live", "--auto", "--status", "--preflight"):
         mode.add_argument(flag, action="store_true")
     args = parser.parse_args()
     state_dir = P.STATE
     state_dir.mkdir(mode=0o700, parents=True, exist_ok=True)
     if args.status:
         status(state_dir)
+        return
+    if args.preflight:
+        public = prefetch(public_api())
+        with production_lock.account_lock():
+            client = TradingClient(dry_run=False, env="prod")
+            result = preflight(client, os.environ, datetime.now(UTC), state_dir, public)
+        print("SPREAD PREFLIGHT", json.dumps(result, sort_keys=True))
+        if not result["ready"]:
+            raise SystemExit(2)
         return
     live = args.live or (args.auto and armed(os.environ))
     journal = state_dir / "journal.jsonl"
@@ -938,7 +977,7 @@ def main():
     with (state_dir / "lock").open("a+") as lock:
         fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
         if kill:  # cancels only; works even after the owner disarms the bot
-            with account_lock():
+            with production_lock.account_lock():
                 client = TradingClient(dry_run=False, env="prod")
                 if client.env != "prod" or not client.can_sign:
                     raise TradingError("KILL needs signed production credentials")
@@ -950,7 +989,7 @@ def main():
         markets = None
         if live:
             try:
-                with account_lock():
+                with production_lock.account_lock():
                     client = TradingClient(dry_run=False, env="prod")
                     report["live"], markets = pass_live(
                         client, os.environ, datetime.now(UTC), state_dir, public

@@ -106,6 +106,13 @@ stop for the day after $20 of settled losses and for good after $60. Dollar
 limits include a 10% cushion for fees. An edge above 15¢ is treated as a
 likely data error, not a bargain.
 
+A third bot, the **spread maker pilot** ([`prod_spread_auto.py`](../live/prod_spread_auto.py),
+limits in [`spread_policy.py`](../live/spread_policy.py)), quotes both sides
+of wide-spread markets outside NBA and NFL props: 1 contract per order, $25
+open, its own −$5 daily and −$15 total loss stops, and the account stops
+above. It places orders only after the owner arms it
+([deploy/PROD_SPREAD_AUTO.md](../deploy/PROD_SPREAD_AUTO.md)).
+
 ## Repository map
 
 | Path | What is in it | Start with |

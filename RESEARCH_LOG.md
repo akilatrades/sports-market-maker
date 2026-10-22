@@ -2661,3 +2661,36 @@ file cancels the spread bot's resting orders.
   profit per contract is above zero; stop and review if the $15 total stop
   is hit or live fills are less than half the shadow's. No size increase
   before that review.
+
+## 2026-10-22: Spread maker pilot (implementation notes)
+
+*Added after the code, to record choices the plan above left open. Nothing
+in the plan's strategy, limits or pass/fail bars changed.*
+
+- **Prices come from the order book without our own quotes.** Once our
+  quotes rest, Kalshi's listed best bid and offer are often ours; pricing
+  off them would make the bot chase itself one cent at a time, and on an
+  8¢ market our own quotes would shrink the listed spread to 6¢ and switch
+  it off. For any market where the bot already rests quotes, it reads the
+  public order book and removes its own orders before applying the rule.
+  The backtest used other traders' prices only, so this is the faithful
+  version of the rule.
+- **Re-quoting.** A resting quote is cancelled and replaced when its price
+  is no longer the rule's price, or after 60 minutes (orders expire on the
+  exchange at 65). Quotes are pulled when a market drops out of the 4–7 hour
+  window, its spread falls below 8¢, or its book cannot be read. Each new
+  quote is checked against a fresh book read just before it is sent.
+- **Series.** The 64 series in `live/spread_policy.py` (the 66 minus
+  `KXNBAPTS` and `KXNFLRECYDS`), plus a block on every ticker prefix the
+  NBA and NFL bots trade.
+- **Shadow fill rule** (same as the backtest): a YES quote at p counts
+  contracts sold by takers at p or below during its hour; a NO quote at q
+  counts YES contracts bought at 1 − q or above. Block trades are ignored.
+  Shadow quotes ignore the live inventory cap, as the backtest did.
+- **Shared stops cut both ways.** Spread losses count toward the account's
+  −$20 daily and −$60 total stops, so a bad spread day can stop the NBA and
+  NFL bots too (and the reverse). The spread bot's own $5 and $15 stops
+  usually trigger first.
+- The private fills export and the public P&L page do not yet include the
+  spread bot; until they do, live spread results are on the server only
+  (`--status`).
