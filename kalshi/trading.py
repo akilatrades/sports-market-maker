@@ -35,6 +35,25 @@ BASES = {
     "demo": "https://demo-api.kalshi.co",
 }
 PREFIX = "/trade-api/v2"
+# Kalshi refuses a balance read repeated within about a second (HTTP 429).
+# Only that read is retried, after these waits (seconds): every bot reads the
+# balance before it journals an order, never between an order's journal entry
+# and its result, so the retry cannot stretch that window. No other request
+# is retried, and writes never are.
+RETRY_THROTTLED_PATHS = frozenset({"/portfolio/balance"})
+READ_RETRY_WAITS = (1.0, 2.0)
+MAX_RETRY_WAIT = 3.0
+
+
+def retry_wait(error, default):
+    """Kalshi's Retry-After (seconds) when given, within [default, 3 s]."""
+    try:
+        asked = float(error.headers.get("Retry-After"))
+    except (AttributeError, TypeError, ValueError):
+        return default
+    if not math.isfinite(asked):
+        return default
+    return min(max(asked, default), MAX_RETRY_WAIT)
 
 
 class TradingError(RuntimeError):
@@ -182,23 +201,32 @@ class TradingClient:
         }
 
     def _request(self, method, path, params=None, body=None):
+        """One signed request. A throttled balance read (HTTP 429) is
+        retried after a short wait; nothing else is retried, so an order or
+        cancel is sent at most once per call."""
         full = PREFIX + path
         url = self.base + full
         if params:
             url += "?" + urllib.parse.urlencode(params)
         data = json.dumps(body).encode() if body is not None else None
-        request = urllib.request.Request(
-            url, data=data, method=method, headers=self._headers(method, full)
-        )
-        try:
-            with urllib.request.urlopen(request, timeout=self.timeout) as response:
-                raw = response.read()
-                return json.loads(raw) if raw else {}
-        except urllib.error.HTTPError as error:
-            detail = error.read(500).decode("utf-8", "replace")
-            raise TradingError(
-                f"{method} {path} -> HTTP {error.code}: {detail}"
-            ) from error
+        throttle_safe = method == "GET" and path in RETRY_THROTTLED_PATHS
+        waits = READ_RETRY_WAITS if throttle_safe else ()
+        for attempt in range(len(waits) + 1):
+            request = urllib.request.Request(  # freshly signed each attempt
+                url, data=data, method=method, headers=self._headers(method, full)
+            )
+            try:
+                with urllib.request.urlopen(request, timeout=self.timeout) as response:
+                    raw = response.read()
+                    return json.loads(raw) if raw else {}
+            except urllib.error.HTTPError as error:
+                detail = error.read(500).decode("utf-8", "replace")
+                if error.code == 429 and attempt < len(waits):
+                    time.sleep(retry_wait(error, waits[attempt]))
+                    continue
+                raise TradingError(
+                    f"{method} {path} -> HTTP {error.code}: {detail}"
+                ) from error
 
     # --- reads ---------------------------------------------------------------
 

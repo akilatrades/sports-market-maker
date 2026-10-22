@@ -1075,3 +1075,28 @@ def test_kill_keeps_going_after_one_order_already_filled(world):
     path.write_text(path.read_text() + '{"torn')  # unreadable: prefix fallback
     bot.cancel_owned_on_kill(ex, path)
     assert ex.resting == []  # the second order was still cancelled
+
+
+def test_one_balance_read_per_pass_and_orders_reserve_from_it():
+    class Reads:
+        env, dry_run, can_sign = "prod", False, True
+
+        def __init__(self):
+            self.calls = []
+
+        def _request(self, method, path, params=None, body=None):
+            assert method == "GET"
+            self.calls.append(path)
+            if path == "/portfolio/balance":
+                return {"balance_breakdown": [{"exchange_index": 3, "balance": "5.00"}]}
+            ticker = path.rsplit("/", 1)[1]
+            return {"market": {"ticker": ticker, "exchange_index": 3}}
+
+    client, funding = Reads(), bot.PassShardFunding()
+    assert funding(client, "KXA-1", 2.05) == 3
+    assert funding(client, "KXA-2", 2.45) == 3
+    with pytest.raises(TradingError, match="SHARD_UNFUNDED_3"):
+        funding(client, "KXA-3", 0.60)  # $5.00 - $4.50 reserved < $0.60
+    assert client.calls.count("/portfolio/balance") == 1
+    with pytest.raises(TradingError, match="Invalid market ticker"):
+        funding(client, "NBA-1", 1.0)
