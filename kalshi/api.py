@@ -222,6 +222,17 @@ def fetch_market(ticker):
     return None
 
 
+def fetch_orderbook(ticker):
+    """Public order book, or None: {"yes_dollars": [[price, count], ...],
+    "no_dollars": [...]}. Both lists are bids (NO bids at NO prices), sorted
+    by price ascending, so the best bid is the last entry."""
+    path = f"/markets/{urllib.parse.quote(ticker, safe='')}/orderbook"
+    payload = get_json(path, {})
+    if not payload or not isinstance(payload.get("orderbook_fp"), dict):
+        return None
+    return payload["orderbook_fp"]
+
+
 def fetch_trades(ticker, min_ts, max_ts):
     """Trade prints from the live endpoint, else the historical one."""
     rows = trades(ticker, min_ts, max_ts, historical=False)
