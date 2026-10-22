@@ -30,8 +30,9 @@ then a walkthrough with the owner.
    results and status at a glance (5 minutes).
 2. The [README](../README.md): what was tried, what worked, what did not
    (10 minutes).
-3. The [project brief](PROJECT_BRIEF.md): the case study in two pages
-   (10 minutes).
+3. The [project brief](PROJECT_BRIEF.md): the one-page case study of both
+   strategies, then the [design decisions](DESIGN_DECISIONS.md) behind the
+   numbers (10 minutes).
 4. The two sections below, *How a game night works* and *Where things
    run* (5 minutes).
 5. The [NBA production worker](../deploy/PROD_NBA_AUTO.md): the live order

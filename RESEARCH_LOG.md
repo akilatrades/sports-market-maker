@@ -2745,3 +2745,28 @@ contract and in dollars at 5 contracts; the shadow ledger scores a
 5-contract quote as min(contracts traded through, 5) first in line and as
 the expected fill at flow share 0.25. The live review after 300 filled
 contracts or 4 weeks now comes sooner; its bars are unchanged.
+
+## 2026-10-22: Spread maker live fill share (measurement definition)
+
+*Written before any live order window was scored. It defines how the
+pilot plan's "live fills against the shadow's" is computed; no strategy,
+limit or pass/fail bar changes.*
+
+- **Window.** Each accepted live order rests from its journal intent until
+  65 minutes later or its first cancel, whichever is sooner. It is scored
+  once, 5 minutes after the window ends.
+- **Through.** Contracts in Kalshi's public trade prints, on the order's
+  ticker during its window, at or through its price on its side. First in
+  line, the order would have filled min(through, order size).
+- **Live fill share** = Σ min(contracts we filled, min(through, size)) /
+  Σ min(through, size), over all scored orders. 1.0 is the backtest's
+  first-in-line assumption; 0.25 is the cautious case used in the
+  replays. Our own fills appear in the prints, so they count in both.
+  Also reported: orders scored, orders traded through, and how many of
+  those got any fill.
+- **How the bar is read.** "Live fills less than half the shadow's" at
+  the checkpoint means a live fill share below 0.5.
+- **Where.** `live/prod_spread_auto.py` (`live_windows`,
+  `score_live_windows`, `fill_share`), the server's `--status`, the
+  private export's `markets.spread.live_fill_share`, and
+  `python -m research.live_checkpoint`, which applies the plan's bars.

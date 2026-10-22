@@ -1,100 +1,134 @@
-# Sports Market Maker — project brief
+# Sports Market Maker — case study
 
 **Python · prediction-market research · execution engineering · risk controls**
 
-[Research dashboard](https://akilatrades.github.io/sports-market-maker/dashboard/) ·
+[Dashboard](https://akilatrades.github.io/sports-market-maker/dashboard/) ·
 [Source code](https://github.com/akilatrades/sports-market-maker) ·
-[Experiment log](../RESEARCH_LOG.md) ·
+[Research log](../RESEARCH_LOG.md) ·
+[Design decisions](DESIGN_DECISIONS.md) ·
 [Forward-test rules](FORWARD_VALIDATION.md) ·
 [Deep audit matrix](DEEP_AUDIT_MATRIX.md)
 
 ## The question
 
-Can I post passive **NO** orders in NBA player-prop markets and earn a
-positive return **after fees and actual exchange fills**? One-sided demand
-for YES may create an opportunity, but a profitable backtest is not a
-profitable executable strategy.
+Some traders on Kalshi, a US prediction-market exchange, pay predictably too
+much. Can a small bot that only ever *rests* orders on the book (a maker)
+earn from them **after fees and real exchange fills**, not just in a
+backtest? Two places looked promising, so there are two strategies.
 
-Despite the repository name, this is a **directional, one-sided
-liquidity-provision strategy**, not a delta-neutral or continuous two-sided
-market maker.
+| | 1. Prop NO maker | 2. Spread maker |
+|---|---|---|
+| Markets | NBA and NFL player props ("25+ points?") | 64 series with wide spreads: esports, smaller leagues, cricket, soccer side markets and others |
+| Who overpays | Fans buying YES on their player at the ask | Impatient traders who cross a spread of 8¢ or more |
+| Order | One-sided: a NO bid one cent inside the spread | Two-sided: a YES bid and a NO bid, each one cent inside |
+| How it earns | NO wins more often than its price implies | A filled YES+NO pair pays $1 for less than $1; a one-sided fill is held to settlement |
+| Live since | 19–20 October 2026 | 22 October 2026 |
+
+The prop strategy is **directional, one-sided liquidity provision**, not a
+delta-neutral market maker. The spread maker is closer to classic market
+making, but it holds inventory to settlement (with a cap) instead of
+hedging, for the reason in [design decision 4](DESIGN_DECISIONS.md#4-hold-to-settlement-with-an-inventory-cap-instead-of-hedging).
 
 ## How I approached it
 
-1. **Start with probabilities.** Build NBA player-stat forecasts using
-   expected playing time, rate estimates, matchup and availability context.
-   Match each player, line, stat and game against the market.
-2. **Test the trade, not just the forecast.** The original approach—buying
-   the model's preferred outcome as a taker—lost money after execution
-   costs. I then tested passive NO limit orders and sportsbook-price vetoes.
-3. **Make the execution assumptions explicit.** Historical fills are inferred
-   from public trade prints. Queue priority (other orders ahead at the same
-   price), how much of the passing trading an order really captures, quote
-   changes, selection bias, and some late-arriving model inputs can make
-   the historical figures optimistic.
-4. **Build bounded live infrastructure.** Signed Kalshi exchange access,
-   post-only quotes, fee-aware pricing, order-intent journals, position/fill
-   reconciliation, per-order and aggregate risk caps, isolated cohorts,
-   kill switches, and a private read-only account view.
-5. **Measure forward results separately.** Signed exchange fills,
-   actual fees, settlement reconciliation, queue observations, and price
-   moves 5, 15 and 60 minutes after each fill ("markouts") are recorded
-   separately from simulated P&L.
+1. **Start with probabilities.** NBA player-stat models (expected minutes,
+   shrunk per-minute rates, matchup, availability) and de-vigged sportsbook
+   consensus, matched to Kalshi's exact game, player, stat and line.
+2. **Test the trade, not the forecast.** Buying the model's side as a taker
+   lost after costs, so I tested passive orders instead, then searched other
+   Kalshi series for the same kind of mispriced flow.
+3. **Say what the backtest assumes.** Historical fills are inferred from
+   **public trade prints** and assume we were first in line. Queue priority,
+   adverse selection and some late-arriving inputs make every simulated
+   figure optimistic, so replays also report a cautious 25%-of-flow case.
+4. **Build bounded live infrastructure.** Signed Kalshi access, post-only
+   orders, journal-before-send, reconciliation of every order, fill and
+   position, per-bot and account-wide caps and loss stops, kill switches.
+5. **Keep live and simulated results apart.** Exchange fills, fees and
+   settlements are recorded separately from replays and never blended.
 
-## Results — evidence tiers, not one blended equity curve
+## Evidence, by tier
 
-| Evidence | Observation | Important limit |
-|---|---|---|
-| Original taker-model test | Lost after spread and fees | Better forecasts do not automatically create executable trades |
-| 2025–26 exploratory passive-NO replay | +1.65¢ per inferred fill without a model; +2.93¢ with a model veto | Selected in-sample; optimistic first-in-queue fill assumption |
-| Smaller independent sportsbook comparisons | Approximately +3.4¢ to +4.0¢ per inferred contract | Game-clustered intervals touch or cross zero; not confirmatory |
-| Signed NBA live audit, **21 Oct 2026 UTC** | 9 accepted orders, 1 fully filled maker order, 1 reconciled **positive** settled NBA market | Tiny, selected sample; **not** a fill-rate estimate, proven edge or income |
+| Evidence | Tier | Observation | Important limit |
+|---|---|---|---|
+| Buying the model's side at the ask | Historical, pre-registered | Lost after spread and fees | Better forecasts did not make executable trades |
+| Resting NO on 2025–26 NBA props | Simulated, **in-sample** | +1.65¢ per contract with no model (33,475 contracts, 1,013 games); +2.93¢ with a model veto | Rule chosen on this season; first-in-line fills |
+| Smaller sportsbook comparisons | Simulated | About +3.4¢ to +4.0¢ per contract | Game-clustered intervals touch or cross zero |
+| Two-sided quotes in 5¢+ spreads, all Kalshi | Simulated, in-sample | +2.44¢ per contract (76,694 fills, event-clustered t 15.9); positive in both halves (+3.07¢, +1.70¢); 67 of 369 series survive a 10% false-discovery correction | A wide-spread market's few prints decide its fills |
+| Holding vs hedging those fills (8¢+) | Simulated, in-sample | Hold +3.91¢; sell back at market +0.22¢ | Exploratory, two extra variants |
+| Signed NBA live audit, **21 Oct 2026 UTC** | Live | 9 accepted orders, 1 fully filled maker order, 1 reconciled **positive** settled market | Tiny; not a fill rate, proven edge or income |
+| Spread maker, from 22 Oct 2026 | Live | Running; realized P&L on the [dashboard](https://akilatrades.github.io/sports-market-maker/dashboard/) | Too early to mean anything |
 
-The first verified NBA fill occurred within 15 minutes of posting, in the
-2–6-hour pre-tip entry window, with a positive estimated entry edge and
-multiple sportsbook observations. The NO midpoint later moved favorably,
-**but the executable NO bid did not improve** in the measured windows.
-Its original journal expiry was more than two hours before tip; that
-order came from an older or unknown strategy generation. Confirmed
-starter status and independently projected minutes were not preserved
-on that historical entry.
-
-This is what we *know*, not an estimate of what all nine accepted orders
-will eventually earn. The public dashboard's last published P&L can be
-historical or stale; it is **not** a substitute for the signed private
-exchange audit. Evidence:
-[read-only audit 1](https://github.com/akilatrades/sports-market-maker/actions/runs/39541489414),
+About the one verified NBA fill: it filled within 15 minutes, in the
+2–6-hour entry window, with positive estimated edge and several sportsbook
+observations. The NO midpoint later moved favourably,
+**but the executable NO bid did not improve** in the measured windows, and
+the order came from an older strategy generation. Evidence:
+[audit 1](https://github.com/akilatrades/sports-market-maker/actions/runs/39541489414),
 [audit 2](https://github.com/akilatrades/sports-market-maker/actions/runs/39542054076),
-[execution review](NBA_OVERNIGHT_AUDIT_2026-10-21.md).
+[execution review](NBA_OVERNIGHT_AUDIT_2026-10-21.md). The public dashboard
+is a summary; the signed private audit is the record.
+
+## What did not work
+
+Taking liquidity; gradient-boosted trees (better forecasts, no better
+trades); recalibrating the model to Kalshi's lines (−22¢ per 100 orders); a
+second cent of price improvement (−17¢ per 100); the same NO rule on game
+winners; cancelling unfilled orders early (gave up 40–75% of the profit);
+hedging one-sided spread fills; two-sided quotes in economics and financial
+markets (+0.27¢, no edge). Details in the
+[research log](../RESEARCH_LOG.md) and the README's
+[table](../README.md#what-did-not-work).
+
+## What is being measured now
+
+- **Fixed checkpoints, written before launch.** NBA v5: 1,900 settled fills,
+  the $2,000 allowance or 30 days, whichever comes first; positive with a
+  game-clustered t of 2 or more means the edge is real, −1 or less means
+  stop and review, and no earlier look counts. Spread maker:
+  300 filled contracts or 4 weeks; continue if live profit per contract is
+  above zero; stop and review at its −$40 total stop or if live fills are
+  less than half of what first-in-line fills would have been.
+- **The headline number: live fill share.** For every finished live order,
+  the contracts that traded at or through its price while it rested,
+  against the contracts it actually got. The backtests assume 1.0 and the
+  cautious case is 0.25. This decides whether the simulated edge survives,
+  so it is computed on every pass and reported in the private export.
+- **One command grades both bots** against those bars from the private fills
+  export: `python -m research.live_checkpoint --data <private export>`.
+  Before a checkpoint it reports progress only ("no conclusion yet"); it
+  prints, and writes nothing into this repository.
 
 ## Engineering decisions worth reviewing
 
 | Concern | Where to inspect |
 |---|---|
-| Model generation, source freshness, and independent pregame context | [NBA projections](../live/nba_projections.py), [input verification](../live/nba_inputs.py), [pregame context](../live/nba_pregame_context.py) |
-| How the strategy posts, verifies quotes, and cancels | [Production NBA worker](../live/prod_nba_auto.py), [Kalshi client](../kalshi/trading.py) |
-| Ownership, fills, fees, and realized settlement | [Signed private audit](../live/order_opportunity_audit.py), [account reconciliation](../live/account_dashboard.py) |
-| Shared-account risk isolation and kill conditions | [Shared risk](../live/shared_account_risk.py), [risk tests](../tests/test_shared_account_risk.py) |
-| Hypotheses, negative results, and constraints on inference | [Research log](../RESEARCH_LOG.md), [NBA statistical audit](NBA_AND_MARKET_AUDIT_2026-10-18.md), [forward protocol](FORWARD_VALIDATION.md) |
-| Automated CI and staged deployments | [Tests](../.github/workflows/tests.yml), [deployment workflow](../.github/workflows/droplet-release.yml) |
+| Seven design decisions, with evidence and alternatives | [Design decisions](DESIGN_DECISIONS.md) |
+| Model inputs and freshness | [NBA projections](../live/nba_projections.py), [input checks](../live/nba_inputs.py), [pregame context](../live/nba_pregame_context.py) |
+| Posting, verifying and cancelling quotes | [NBA worker](../live/prod_nba_auto.py), [spread worker](../live/prod_spread_auto.py), [Kalshi client](../kalshi/trading.py) |
+| Ownership, fills, fees, settlement, loss stops | [Shared account risk](../live/shared_account_risk.py), [tests](../tests/test_shared_account_risk.py), [spread tests](../tests/test_shared_account_spread.py) |
+| Live grading against pre-written bars | [Live checkpoint](../research/live_checkpoint.py), [forward protocol](FORWARD_VALIDATION.md) |
+| Hypotheses, negative results, limits on inference | [Research log](../RESEARCH_LOG.md), [NBA statistical audit](NBA_AND_MARKET_AUDIT_2026-10-18.md) |
+| CI and owner-run deployments | [Tests](../.github/workflows/tests.yml), [deployment workflow](../.github/workflows/droplet-release.yml) |
 
 ## What is still unproven
 
-- **Profitability:** One settled NBA trade cannot identify a durable net
-  edge. Orders still resting or unfilled are part of the denominator.
-- **Queue and capacity:** Public prints are not guaranteed fills. Higher
-  quote priority can cost price improvement and worsen adverse selection.
-- **As-of validity:** Some historical inputs were unavailable at posting
-  time. Live projected-minutes and confirmed-lineup source coverage still
-  need prospective measurement.
-- **Robustness:** A future cohort must hold rules fixed, track independent
-  games, reconcile every order/settlement, and measure actual capital
-  usage before any decision to increase size.
+- **Profitability.** No live sample yet is large enough to identify an
+  edge; unfilled and still-resting orders count in the denominator.
+- **Fill share and capacity.** Public prints are not fills. If the live
+  share is near 0.25, most of the simulated profit per day disappears.
+- **Selection.** Both strategies were chosen on 2025–26 data. The spread
+  maker's 64 series were picked from the same scan they are judged on
+  (about 6–7¢ simulated in those series against 3.9¢ across all wide
+  spreads), so live results should be expected nearer the lower figure.
+- **As-of inputs.** Some historical model inputs were not available hours
+  before tip-off; live coverage of lineups and projected minutes is still
+  being measured.
 
-**Why it matters for trading roles:** the technical exercise is not simply
-predicting NBA statistics. It connects pricing uncertainty to market
-microstructure, live API execution, operational controls, and an honest
-feedback loop from simulated fills to exchange-confirmed results.
+**Why it matters for trading roles:** the hard part was not predicting NBA
+statistics. It was connecting pricing uncertainty to market
+microstructure, live API execution and operational controls, and keeping
+an honest loop from simulated fills to exchange-confirmed results.
 
 *Research and software development used AI assistance; the repository
-retains tests, experiment logs, and evidence sources for review.*
+keeps the tests, experiment logs and evidence sources for review.*

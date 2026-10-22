@@ -11,7 +11,8 @@ day and are kept unchanged as part of the record.
 | [Start here](START_HERE.md) | For new collaborators: the project in a minute, reading order, how a night works, using AI to get up to speed, first projects |
 | [Notes for AI assistants](../CLAUDE.md) | The project's rules and map, read automatically by Claude Code |
 | [Project README](../README.md) | What the project does, results, how it works, limitations |
-| [Project brief](PROJECT_BRIEF.md) | Two-minute case study: approach, evidence, what is still unproven |
+| [Project brief](PROJECT_BRIEF.md) | One-page case study of both strategies: approach, evidence by tier, what is being measured, what is still unproven |
+| [Design decisions](DESIGN_DECISIONS.md) | Seven choices that shape what the numbers mean, each with evidence and the alternative |
 | [Current project state](CURRENT_PROJECT_STATE.md) | What is live, what the evidence shows so far, what is still unknown |
 | [Research log](../RESEARCH_LOG.md) | Every hypothesis, written down before it was tested, with its result |
 | [Forward-validation rules](FORWARD_VALIDATION.md) | How live results are judged: 30 days and 500 settled fills |
