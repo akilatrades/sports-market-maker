@@ -428,8 +428,15 @@ def test_failures_print_a_reason_never_the_token(tmp_path, monkeypatch, capsys):
     monkeypatch.setenv("PRIVATE_EXPORT_REPO", REPO)
     monkeypatch.setenv("PRIVATE_EXPORT_TOKEN", secret)
     monkeypatch.setattr(
-        export, "JOURNALS", {"nba": tmp_path / "nba.jsonl", "nfl": tmp_path / "x"}
+        export,
+        "JOURNALS",
+        {
+            "nba": tmp_path / "nba.jsonl",
+            "nfl": tmp_path / "x",
+            "spread": tmp_path / "y",
+        },
     )
+    monkeypatch.setattr(export, "SPREAD_SHADOW", tmp_path / "z")
     args = ["--push"]
 
     def unreachable(*a, **k):
@@ -574,3 +581,174 @@ def test_the_real_opener_refuses_a_redirect():
         export._OPENER.open(request, timeout=5)
     server.server_close()
     assert seen == ["Bearer t"]  # one request, to the original host only
+
+
+# --- the spread maker ---------------------------------------------------------
+
+SPREAD_TICKER = "KXDOTA2GAME-26OCT22AB-A"
+
+
+def _spread_order(key, side, cents, utc, accepted=True):
+    events = [
+        {
+            "event": "intent",
+            "utc": utc,
+            "client_order_id": f"smm-spread-{key}",
+            "ticker": SPREAD_TICKER,
+            "series": "KXDOTA2GAME",
+            "event_ticker": "KXDOTA2GAME-26OCT22AB",
+            "side": side,
+            "price_cents": cents,
+            "count": 5,
+            "cost": round(5 * cents / 100, 2),
+            "spread": 12,
+            "market_expiration_utc": "2026-10-22T23:00:00+00:00",
+            "strategy_version": "spread-maker-v1",
+        }
+    ]
+    if accepted:
+        events.append(
+            {
+                "event": "accepted",
+                "utc": utc,
+                "client_order_id": f"smm-spread-{key}",
+                "order_id": f"exchange-spread-{key}",
+            }
+        )
+    return events
+
+
+def _spread_fill(key, side, cents, utc, count="5.00"):
+    yes = cents if side == "yes" else 100 - cents
+    return {
+        "event": "fill",
+        "fill_id": f"exchange-fill-{key}",
+        "order_id": f"exchange-spread-{key}",
+        "utc": utc,
+        "created_time": utc,
+        "ticker": SPREAD_TICKER,
+        "outcome_side": side,
+        "book_side": "bid" if side == "yes" else "ask",
+        "count_fp": count,
+        "yes_price_dollars": f"{yes / 100:.4f}",
+        "no_price_dollars": f"{(100 - yes) / 100:.4f}",
+        "fee_cost": "0.00",
+        "is_taker": False,
+    }
+
+
+SPREAD_EVENTS = [
+    *_spread_order("a", "yes", 41, "2026-10-22T18:00:00+00:00"),
+    *_spread_order("b", "no", 49, "2026-10-22T18:00:01+00:00"),
+    *_spread_order("c", "yes", 42, "2026-10-22T18:10:00+00:00", accepted=False),
+    {
+        "event": "rejected_4xx",
+        "utc": "2026-10-22T18:10:01+00:00",
+        "client_order_id": "smm-spread-c",
+        "http_status": 400,
+        "evidence": "http_4xx_and_signed_get_absent",
+    },
+    _spread_fill("a", "yes", 41, "2026-10-22T18:20:00+00:00"),
+    _spread_fill("b", "no", 49, "2026-10-22T18:30:00+00:00"),
+    {
+        "event": "cancel_intent",
+        "utc": "2026-10-22T18:40:00+00:00",
+        "order_id": "exchange-spread-b",
+        "ticker": SPREAD_TICKER,
+        "reason": "requote",
+    },
+    {
+        "event": "cancel_moot",
+        "utc": "2026-10-22T18:40:01+00:00",
+        "order_id": "exchange-spread-b",
+    },
+    {
+        "event": "settlement",
+        "ticker": SPREAD_TICKER,
+        "utc": "2026-10-23T01:00:00+00:00",
+        "market_result": "yes",
+        "revenue_dollars": 0.0,
+    },
+]
+SHADOW_EVENTS = [
+    {"event": "shadow_quote", "id": "q1", "ticker": SPREAD_TICKER, "side": "yes",
+     "price_cents": 41, "contracts": 5},
+    {"event": "shadow_quote", "id": "q2", "ticker": SPREAD_TICKER, "side": "no",
+     "price_cents": 49, "contracts": 5},
+    {"event": "shadow_fill", "id": "q1", "through": 8.0},
+    {"event": "shadow_fill", "id": "q2", "through": 0.0},
+    {"event": "shadow_result", "ticker": SPREAD_TICKER, "result": "yes"},
+]  # fmt: skip
+
+
+def spread_files(tmp_path):
+    journals = {
+        "nba": write(tmp_path / "nba.jsonl", NBA_EVENTS),
+        "nfl": write(tmp_path / "nfl.jsonl", NFL_EVENTS),
+        "spread": write(tmp_path / "spread.jsonl", SPREAD_EVENTS),
+    }
+    shadow = write(tmp_path / "shadow.jsonl", SHADOW_EVENTS)
+    return export.build_files(journals, shadow=shadow)
+
+
+def test_spread_orders_fills_and_realized_pnl(tmp_path):
+    files, summary, complete = spread_files(tmp_path)
+    assert "spread" in complete
+    orders = rows(files["data/spread/orders/2026-10-22.csv"])
+    by_side = {(o["side"], o["status"]) for o in orders}
+    assert by_side == {("yes", "accepted"), ("no", "accepted"), ("yes", "refused_4xx")}
+    no = next(o for o in orders if o["side"] == "no")
+    assert no["cancel_result"] == "already_filled_or_expired"
+    assert no["filled_contracts"] == "5.0" and no["avg_fill_price"] == "0.49"
+    fills = rows(files["data/spread/fills/2026-10-22.csv"])
+    assert {(f["side"], f["price"]) for f in fills} == {
+        ("yes", "0.4100"),
+        ("no", "0.4900"),
+    }
+    pnl = rows(files["data/spread/pnl_by_day.csv"])
+    # Five YES at 41c and five NO at 49c: five pairs, each $1 - 90c.
+    assert pnl == [
+        {"market": "spread", "day": "2026-10-22", "realized_pnl_dollars": "0.5",
+         "cumulative_dollars": "0.5"}
+    ]  # fmt: skip
+    s = summary["markets"]["spread"]
+    assert s["realized_pnl_dollars"] == 0.5 and s["filled_contracts"] == 10
+    assert s["never_placed_orders"] == 1 and s["markets_still_held"] == 0
+    assert (
+        rows(files["data/spread/settlements/2026-10-22.csv"])[0]["market_result"]
+        == "yes"
+    )
+
+
+def test_spread_shadow_is_reported_apart_and_labelled_simulated(tmp_path):
+    files, summary, _ = spread_files(tmp_path)
+    shadow = summary["spread_shadow_simulated"]
+    assert shadow["note"].startswith("SIMULATED")
+    assert shadow["first_in_line"] == {
+        "contracts": 5,
+        "dollars": 2.95,
+        "cents_per_contract": 59.0,
+    }
+    assert shadow["flow_share_0.25"]["contracts"] < 5
+    # Live realized P&L is not changed by the simulated ledger.
+    assert summary["markets"]["spread"]["realized_pnl_dollars"] == 0.5
+    assert "spread_shadow_simulated" in json.loads(files["data/summary.json"])
+
+
+def test_spread_export_never_contains_exchange_ids(tmp_path):
+    files, _, _ = spread_files(tmp_path)
+    text = "".join(files.values())
+    for raw in ("exchange-spread-a", "exchange-fill-a", "smm-spread-a"):
+        assert raw not in text
+
+
+def test_a_missing_spread_journal_leaves_other_bots_alone(tmp_path):
+    journals = {
+        "nba": write(tmp_path / "nba.jsonl", NBA_EVENTS),
+        "nfl": write(tmp_path / "nfl.jsonl", NFL_EVENTS),
+        "spread": tmp_path / "absent.jsonl",
+    }
+    files, summary, complete = export.build_files(journals, shadow=tmp_path / "none")
+    assert summary["markets"]["spread"] == {"status": "journal_missing"}
+    assert "spread" not in complete and "spread_shadow_simulated" not in summary
+    assert summary["markets"]["nba"]["status"] == "ok"

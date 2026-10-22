@@ -1,9 +1,10 @@
 """Export the bots' orders, fills and settlements to a PRIVATE GitHub repo.
 
-Runs on the trading server from its own timer. It reads only the two bot
-journals (the bots already record every order, fill, queue reading, price
-move after a fill, cancel and settlement there); it makes no Kalshi request
-and needs no Kalshi credentials. It writes nothing on the server. Journals
+Runs on the trading server from its own timer. It reads only the bot
+journals (NBA, NFL and the spread maker, which already record every order,
+fill, queue reading, price move after a fill, cancel and settlement there)
+and the spread maker's shadow ledger; it makes no Kalshi request and needs
+no Kalshi credentials. It writes nothing on the server. Journals
 are read line by line, keeping only the fields exported, so memory stays
 small even after a long season.
 
@@ -46,7 +47,11 @@ PUBLIC_REPO = "akilatrades/sports-market-maker"
 JOURNALS = {
     "nba": Path("/home/trader/prod-nba-auto/journal.jsonl"),
     "nfl": Path("/home/trader/prod-nfl-auto/journal.jsonl"),
+    "spread": Path("/home/trader/prod-spread-auto/journal.jsonl"),
 }
+# The spread maker's simulated ledger: summarized separately, never added to
+# live results.
+SPREAD_SHADOW = Path("/home/trader/prod-spread-auto/shadow.jsonl")
 # Copied from each order's intent record, when present. Nothing else is.
 # NBA and NFL name some fields differently; both are kept.
 INTENT_FIELDS = [
@@ -180,13 +185,14 @@ class ExportError(RuntimeError):
     pass
 
 
-def events(path):
+def events(path, keep=None):
     """Slim journal events, one line at a time.
 
-    Yields (kind, fields) for the kinds in KEEP. A line still being written
-    at the end of the file is skipped, as are blank, non-JSON or non-object
-    lines (counted in ``skipped``).
+    Yields (kind, fields) for the kinds in ``keep`` (default KEEP). A line
+    still being written at the end of the file is skipped, as are blank,
+    non-JSON or non-object lines (counted in ``skipped``).
     """
+    keep = keep or KEEP
     skipped = {"lines": 0}
 
     def generate():
@@ -204,8 +210,8 @@ def events(path):
                     skipped["lines"] += 1
                     continue
                 kind = record.get("event")
-                if isinstance(kind, str) and kind in KEEP:
-                    yield kind, {k: record[k] for k in KEEP[kind] if k in record}
+                if isinstance(kind, str) and kind in keep:
+                    yield kind, {k: record[k] for k in keep[kind] if k in record}
 
     return generate(), skipped
 
@@ -366,6 +372,326 @@ def tables(market, stream):
     return orders, fill_rows, settlement_rows, latest
 
 
+# --- the spread maker ------------------------------------------------------------
+# It buys YES or NO (up to 5 contracts) and holds to settlement; a YES+NO pair
+# in one market closes at once, so its realized P&L comes from its fills (the
+# same ledger its loss stops use), not from settlement records.
+SPREAD_INTENT_FIELDS = [
+    "ticker",
+    "series",
+    "event_ticker",
+    "side",
+    "price_cents",
+    "count",
+    "cost",
+    "spread",
+    "market_expiration_utc",
+    "strategy_version",
+]
+SPREAD_FILL_FIELDS = [
+    "fill_id",
+    "order_id",
+    "utc",
+    "ticker",
+    "side",
+    "action",
+    "outcome_side",
+    "book_side",
+    "count_fp",
+    "count",
+    "yes_price_dollars",
+    "no_price_dollars",
+    "fee_cost",
+    "is_taker",
+]
+KEEP_SPREAD = {
+    "intent": {"utc", "client_order_id", *SPREAD_INTENT_FIELDS},
+    "accepted": {"utc", "client_order_id", "order_id", "reconciled"},
+    "rejected_4xx": {"utc", "client_order_id", "http_status"},
+    "reconciled_absent": {"utc", "client_order_id"},
+    "unknown_outcome": {"utc", "client_order_id"},
+    "cancel_intent": {"utc", "order_id", "reason"},
+    "cancel_accepted": {"utc", "order_id", "reduced_by", "expected"},
+    "cancel_moot": {"utc", "order_id"},
+    "fill": set(SPREAD_FILL_FIELDS),
+    "settlement": {"ticker", "utc", "market_result", "revenue_dollars"},
+}
+SPREAD_ORDER_COLUMNS = [
+    "market",
+    "order_ref",
+    "intent_utc",
+    *[f for f in SPREAD_INTENT_FIELDS],
+    "hours_before_expiration",
+    "status",
+    "accepted_utc",
+    "reconciled",
+    "cancel_requested_utc",
+    "cancel_reason",
+    "cancel_result",
+    "cancel_reduced_by",
+    "filled_contracts",
+    "first_fill_utc",
+    "avg_fill_price",
+    "fill_fees_dollars",
+]
+SPREAD_FILL_COLUMNS = [
+    "market",
+    "fill_ref",
+    "order_ref",
+    "fill_utc",
+    "ticker",
+    "series",
+    "side",
+    "count",
+    "price",
+    "yes_price",
+    "no_price",
+    "fee",
+    "is_taker",
+    "price_cents",
+    "spread",
+]
+SPREAD_SETTLEMENT_COLUMNS = [
+    "market",
+    "ticker",
+    "settled_utc",
+    "market_result",
+    "revenue_dollars",
+]
+SPREAD_PNL_COLUMNS = ["market", "day", "realized_pnl_dollars", "cumulative_dollars"]
+
+
+def spread_tables(stream, now=None):
+    """(orders, fills, settlements, P&L by day, ledger, latest event time).
+
+    The ledger is ``live.shared_account_risk.spread_ledger`` on the journal's
+    own fill and settlement copies: the realized P&L the bot's stops use.
+    """
+    from live.shared_account_risk import spread_ledger
+
+    kept, intents, status, accepted, reconciled = [], {}, {}, {}, set()
+    client_of, cancel, cancel_done, fills, settlements = {}, {}, {}, {}, {}
+    latest = None
+    for kind, e in stream:
+        kept.append({"event": kind, **e})
+        stamp = _time(e.get("utc"))
+        if stamp and (latest is None or stamp > latest):
+            latest = stamp
+        cid, oid = e.get("client_order_id"), e.get("order_id")
+        oid = str(oid) if oid else None
+        if kind == "intent" and cid:
+            intents[cid] = e
+            status.setdefault(cid, "intent_only")
+        elif kind == "accepted" and cid:
+            accepted[cid] = e.get("utc", "")
+            status[cid] = "accepted"
+            if e.get("reconciled"):
+                reconciled.add(cid)
+            if oid:
+                client_of[oid] = cid
+        elif kind == "rejected_4xx" and cid:
+            status[cid] = "refused_4xx"
+        elif kind == "reconciled_absent" and cid:
+            status[cid] = "never_placed_reconciled"
+        elif kind == "unknown_outcome" and cid and status.get(cid) == "intent_only":
+            status[cid] = "unknown_outcome"
+        elif kind == "settlement" and e.get("ticker"):
+            settlements[e["ticker"]] = e
+        elif kind == "cancel_intent" and oid:
+            cancel[oid] = e
+        elif kind == "cancel_accepted" and oid:
+            reduced, expected = _number(e.get("reduced_by")), _number(e.get("expected"))
+            partial = expected is not None and (reduced is None or reduced < expected)
+            cancel_done[oid] = (
+                "partial" if partial else "canceled",
+                e.get("reduced_by"),
+            )
+        elif kind == "cancel_moot" and oid:
+            cancel_done[oid] = ("already_filled_or_expired", "")
+        elif kind == "fill" and oid and e.get("fill_id"):
+            fills.setdefault(oid, {})[str(e["fill_id"])] = e
+    try:
+        # Stamped by the newest journal event, not the clock, like the rest
+        # of the export (identical input, identical files).
+        ledger = spread_ledger(kept, [], [], now or latest or datetime.now(UTC))
+    except Exception as error:  # report it; never invent a number
+        ledger = {"unavailable": str(error)[:120]}
+    order_of = {cid: oid for oid, cid in client_of.items()}
+    orders, fill_rows = [], []
+    for cid, intent in intents.items():
+        oid = order_of.get(cid)
+        side = intent.get("side", "")
+        own = list(fills.get(oid, {}).values()) if oid else []
+        priced = []
+        for f in own:
+            count = _number(
+                f.get("count_fp") if f.get("count_fp") is not None else f.get("count")
+            )
+            price = _number(f.get(f"{side}_price_dollars"))
+            if count and price is not None:
+                priced.append((count, price))
+        stop = cancel.get(oid, {}) if oid else {}
+        done = cancel_done.get(oid, ("", "")) if oid else ("", "")
+        fees = [_number(f.get("fee_cost")) for f in own]
+        orders.append(
+            {
+                "market": "spread",
+                "order_ref": ref(cid),
+                "intent_utc": intent.get("utc", ""),
+                **{k: intent.get(k, "") for k in SPREAD_INTENT_FIELDS},
+                "hours_before_expiration": round(
+                    _minutes(intent.get("utc"), intent.get("market_expiration_utc"))
+                    / 60,
+                    2,
+                )
+                if _minutes(intent.get("utc"), intent.get("market_expiration_utc"))
+                != ""
+                else "",
+                "status": status.get(cid, ""),
+                "accepted_utc": accepted.get(cid, ""),
+                "reconciled": "yes" if cid in reconciled else "",
+                "cancel_requested_utc": stop.get("utc", ""),
+                "cancel_reason": stop.get("reason", ""),
+                "cancel_result": done[0],
+                "cancel_reduced_by": done[1],
+                "filled_contracts": sum(c for c, _ in priced),
+                "first_fill_utc": min((f.get("utc", "") for f in own), default=""),
+                "avg_fill_price": round(
+                    sum(c * p for c, p in priced) / sum(c for c, _ in priced), 4
+                )
+                if priced
+                else "",
+                "fill_fees_dollars": round(sum(f for f in fees if f is not None), 6)
+                if own
+                else "",
+            }
+        )
+        for f in own:
+            count = (
+                f.get("count_fp") if f.get("count_fp") is not None else f.get("count")
+            )
+            fill_rows.append(
+                {
+                    "market": "spread",
+                    "fill_ref": ref(f.get("fill_id")),
+                    "order_ref": ref(cid),
+                    "fill_utc": f.get("utc", ""),
+                    "ticker": f.get("ticker") or intent.get("ticker", ""),
+                    "series": intent.get("series", ""),
+                    "side": side,
+                    "count": count if count is not None else "",
+                    "price": f.get(f"{side}_price_dollars", ""),
+                    "yes_price": f.get("yes_price_dollars", ""),
+                    "no_price": f.get("no_price_dollars", ""),
+                    "fee": f.get("fee_cost", ""),
+                    "is_taker": f.get("is_taker", ""),
+                    "price_cents": intent.get("price_cents", ""),
+                    "spread": intent.get("spread", ""),
+                }
+            )
+    settlement_rows = [
+        {
+            "market": "spread",
+            "ticker": ticker,
+            "settled_utc": e.get("utc", ""),
+            "market_result": e.get("market_result", ""),
+            "revenue_dollars": e.get("revenue_dollars", ""),
+        }
+        for ticker, e in settlements.items()
+    ]
+    pnl_rows, running = [], 0.0
+    for day, amount in (ledger.get("by_day") or {}).items():
+        running += amount
+        pnl_rows.append(
+            {
+                "market": "spread",
+                "day": day,
+                "realized_pnl_dollars": round(amount, 4),
+                "cumulative_dollars": round(running, 4),
+            }
+        )
+    return orders, fill_rows, settlement_rows, pnl_rows, ledger, latest
+
+
+def shadow_expected(through, flow, size):
+    """E[min(Binomial(through, flow), size)] (the spread maker's shadow rule)."""
+    import math
+
+    n = int(math.floor(through))
+    if n <= 0 or size <= 0:
+        return 0.0
+    if flow >= 1:
+        return float(min(n, size))
+    pmf = math.exp(n * math.log1p(-flow))
+    below, total = 0.0, 0.0
+    for k in range(1, int(size) + 1):
+        below += pmf
+        total += max(0.0, 1.0 - below)
+        pmf *= (n - (k - 1)) / k * flow / (1 - flow)
+    return total
+
+
+def shadow_summary(path, flow=0.25):
+    """Counts and simulated profit of the spread maker's shadow ledger.
+
+    SIMULATED from public trade prints (first in line, and at flow share
+    0.25); kept apart from live results and never added to them.
+    """
+    quotes, fills, results = {}, {}, {}
+    keep = {
+        "shadow_quote": {"id", "ticker", "side", "price_cents", "contracts"},
+        "shadow_fill": {"id", "through"},
+        "shadow_result": {"ticker", "result"},
+    }
+    stream, skipped = events(path, keep)
+    for kind, e in stream:
+        if kind == "shadow_quote" and e.get("id"):
+            quotes[e["id"]] = e
+        elif kind == "shadow_fill" and e.get("id"):
+            fills[e["id"]] = _number(e.get("through")) or 0.0
+        elif kind == "shadow_result" and e.get("ticker"):
+            results[e["ticker"]] = e.get("result")
+    first_n = first_pnl = flow_n = flow_pnl = 0.0
+    filled = settled = 0
+    for qid, through in fills.items():
+        q = quotes.get(qid)
+        if q is None or through < 1:
+            continue
+        filled += 1
+        result = results.get(q.get("ticker"))
+        if result not in ("yes", "no"):
+            continue
+        settled += 1
+        size = int(_number(q.get("contracts")) or 1)
+        pnl = (
+            float(result == q.get("side")) - (_number(q.get("price_cents")) or 0) / 100
+        )
+        first = min(int(through), size)
+        expected = shadow_expected(through, flow, size)
+        first_n, first_pnl = first_n + first, first_pnl + first * pnl
+        flow_n, flow_pnl = flow_n + expected, flow_pnl + expected * pnl
+    return {
+        "note": "SIMULATED from public trade prints; never add to live results",
+        "quotes": len(quotes),
+        "scored": len(fills),
+        "filled_quotes": filled,
+        "settled_filled_quotes": settled,
+        "skipped_lines": skipped["lines"],
+        "first_in_line": {
+            "contracts": first_n,
+            "dollars": round(first_pnl, 2),
+            "cents_per_contract": round(100 * first_pnl / first_n, 2)
+            if first_n
+            else None,
+        },
+        f"flow_share_{flow:g}": {
+            "contracts": round(flow_n, 2),
+            "dollars": round(flow_pnl, 2),
+            "cents_per_contract": round(100 * flow_pnl / flow_n, 2) if flow_n else None,
+        },
+    }
+
+
 def _csv(columns, rows):
     out = io.StringIO()
     writer = csv.DictWriter(
@@ -379,7 +705,7 @@ def _csv(columns, rows):
     return out.getvalue()
 
 
-def build_files(journals):
+def build_files(journals, shadow=None):
     """({path in the private repo: text}, summary, markets read completely).
 
     The summary is stamped with the newest journal event, not the clock, so
@@ -391,6 +717,62 @@ def build_files(journals):
     for market, path in journals.items():
         if not path.exists():
             summary["markets"][market] = {"status": "journal_missing"}
+            continue
+        if market == "spread":
+            try:
+                stream, skipped = events(path, KEEP_SPREAD)
+                orders, fills, settlements, pnl, ledger, latest = spread_tables(stream)
+            except Exception as error:
+                summary["markets"][market] = {"status": f"error_{type(error).__name__}"}
+                continue
+            complete.add(market)
+            for name, columns, rows, when in (
+                ("orders", SPREAD_ORDER_COLUMNS, orders, "intent_utc"),
+                ("fills", SPREAD_FILL_COLUMNS, fills, "fill_utc"),
+                ("settlements", SPREAD_SETTLEMENT_COLUMNS, settlements, "settled_utc"),
+            ):
+                by_day = {}
+                for row in rows:
+                    by_day.setdefault(_day(row.get(when)), []).append(row)
+                for day, day_rows in by_day.items():
+                    files[f"data/spread/{name}/{day}.csv"] = _csv(columns, day_rows)
+            if pnl:
+                files["data/spread/pnl_by_day.csv"] = _csv(SPREAD_PNL_COLUMNS, pnl)
+            versions = {}
+            for o in orders:
+                v = versions.setdefault(
+                    str(o.get("strategy_version") or "unknown"),
+                    {"orders": 0, "filled_orders": 0},
+                )
+                v["orders"] += 1
+                v["filled_orders"] += 1 if o["filled_contracts"] else 0
+            summary["markets"][market] = {
+                "status": "ok",
+                "data_through_utc": latest.astimezone(UTC).isoformat()
+                if latest
+                else None,
+                "skipped_lines": skipped["lines"],
+                "orders": len(orders),
+                "accepted_orders": sum(o["status"] == "accepted" for o in orders),
+                "never_placed_orders": sum(
+                    o["status"] in ("refused_4xx", "never_placed_reconciled")
+                    for o in orders
+                ),
+                "filled_orders": sum(1 for o in orders if o["filled_contracts"]),
+                "filled_contracts": sum(o["filled_contracts"] or 0 for o in orders),
+                "fills": len(fills),
+                "settled_markets": len(settlements),
+                "realized_pnl_dollars": None
+                if ledger.get("unavailable")
+                else round(ledger["cumulative"], 2),
+                "realized_pnl_note": ledger.get("unavailable")
+                or "From the bot's own fills: a YES+NO pair counts when its second "
+                "leg fills, a held contract when its market settles (fees included).",
+                "markets_still_held": None
+                if ledger.get("unavailable")
+                else len(ledger.get("open", {})),
+                "by_strategy_version": versions,
+            }
             continue
         try:
             stream, skipped = events(path)
@@ -434,6 +816,13 @@ def build_files(journals):
             else None,
             "by_strategy_version": versions,
         }
+    if shadow is not None and Path(shadow).exists():
+        try:
+            summary["spread_shadow_simulated"] = shadow_summary(Path(shadow))
+        except Exception as error:
+            summary["spread_shadow_simulated"] = {
+                "status": f"error_{type(error).__name__}"
+            }
     files["data/summary.json"] = json.dumps(summary, indent=2, sort_keys=True) + "\n"
     files["README.md"] = README
     return files, summary, complete
@@ -442,7 +831,7 @@ def build_files(journals):
 README = """# Private bot data (do not make this repository public)
 
 Written every hour by `tools/export_private_fills.py` on the trading server,
-from the two bots' journals. Never edit by hand: the next export rewrites it.
+from the bots' journals. Never edit by hand: the next export rewrites it.
 These are LIVE results; never mix them with replays or simulations.
 
 - `data/<nba|nfl>/orders/<day>.csv`: one row per order the bot submitted (or
@@ -460,6 +849,26 @@ These are LIVE results; never mix them with replays or simulations.
   costs, fees and net profit as Kalshi reported them.
 - `data/summary.json`: counts and settled profit by market and rules version,
   up to the newest journal event (`data_through_utc`).
+
+## Spread maker (`data/spread/`)
+
+The third bot quotes BOTH sides (YES and NO, up to 5 contracts) of wide-spread
+markets and holds fills to settlement.
+
+- `orders/<day>.csv`: one row per order: side, price, contracts, the
+  market's spread and series, hours before expected expiration, status
+  (`accepted`, `refused_4xx`, `never_placed_reconciled`, `unknown_outcome`),
+  cancel request and result (`canceled`, `partial` = some filled first,
+  `already_filled_or_expired`), filled contracts, average fill price, fees.
+- `fills/<day>.csv`: one row per fill, with the side bought and its price.
+- `settlements/<day>.csv`: the market result and revenue Kalshi reported.
+- `pnl_by_day.csv`: REALIZED P&L by Eastern day from the bot's own fills
+  (the same ledger its loss stops use): a YES+NO pair counts when its second
+  leg fills; a contract still held counts when its market settles. Kalshi
+  nets YES against NO, so settlement records alone miss closed pairs.
+- `data/summary.json` → `spread_shadow_simulated`: the shadow ledger's
+  SIMULATED results (first in line, and at flow share 0.25). Compare it
+  with the live numbers; never add the two together.
 
 `order_ref` and `fill_ref` are one-way hashes of the exchange identifiers,
 for joining the files. NBA and NFL name a few entry fields differently
@@ -660,10 +1069,15 @@ def main(argv=None):
     )
     parser.add_argument("--nba-journal", type=Path, default=JOURNALS["nba"])
     parser.add_argument("--nfl-journal", type=Path, default=JOURNALS["nfl"])
+    parser.add_argument("--spread-journal", type=Path, default=JOURNALS["spread"])
+    parser.add_argument("--spread-shadow", type=Path, default=SPREAD_SHADOW)
     args = parser.parse_args(argv)
     try:
         if args.push and (
-            args.nba_journal != JOURNALS["nba"] or args.nfl_journal != JOURNALS["nfl"]
+            args.nba_journal != JOURNALS["nba"]
+            or args.nfl_journal != JOURNALS["nfl"]
+            or args.spread_journal != JOURNALS["spread"]
+            or args.spread_shadow != SPREAD_SHADOW
         ):
             # Pushing from another journal could overwrite the real export.
             raise ExportError("refuse_push_with_other_journals")
@@ -671,7 +1085,12 @@ def main(argv=None):
             # A checkout might be committed and pushed somewhere public.
             raise ExportError("refuse_out_inside_git_checkout")
         files, summary, complete = build_files(
-            {"nba": args.nba_journal, "nfl": args.nfl_journal}
+            {
+                "nba": args.nba_journal,
+                "nfl": args.nfl_journal,
+                "spread": args.spread_journal,
+            },
+            shadow=args.spread_shadow,
         )
         if args.out:
             for path, text in files.items():

@@ -249,10 +249,14 @@ def spread_ledger(events, fills, settlements, now):
         realized.append((when, payout - cost))
         settled.add(ticker)
     today = now.astimezone(LOCAL_DAY).date()
-    daily = sum(a for when, a in realized if when.astimezone(LOCAL_DAY).date() == today)
+    by_day = {}
+    for when, amount in realized:
+        day = when.astimezone(LOCAL_DAY).date().isoformat()
+        by_day[day] = by_day.get(day, 0.0) + amount
     return {
-        "daily": round(daily, 4),
+        "daily": round(by_day.get(today.isoformat(), 0.0), 4),
         "cumulative": round(sum(a for _, a in realized), 4),
+        "by_day": {day: round(v, 4) for day, v in sorted(by_day.items())},
         "open": {t: q for t, q in lots.items() if q},
         "settled": settled,
         "fills": len(rows),

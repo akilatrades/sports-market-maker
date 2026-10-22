@@ -5,8 +5,10 @@ a **private** GitHub repository, so the owner (and Claude, when that repository
 is added to a session) can study real results without the Kalshi key ever
 leaving the server.
 
-- **What it reads:** only the two bot journals (`/home/trader/prod-nba-auto/`
-  and `/home/trader/prod-nfl-auto/journal.jsonl`). No Kalshi request, no Kalshi
+- **What it reads:** only the bot journals (`/home/trader/prod-nba-auto/`,
+  `/home/trader/prod-nfl-auto/` and `/home/trader/prod-spread-auto/journal.jsonl`)
+  and the spread maker's shadow ledger (`prod-spread-auto/shadow.jsonl`,
+  summarized separately and labelled simulated). No Kalshi request, no Kalshi
   credentials. It writes nothing on the server (systemd makes `/home`
   read-only for it).
 - **What it sends:** daily CSV files of orders, fills and settled markets, and

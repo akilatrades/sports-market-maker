@@ -354,7 +354,8 @@ footer p { max-width:100ch; font-size:10px; color:var(--ink-3); }
 
 .skip-link { position:absolute; left:20px; top:-70px; padding:12px; background:var(--accent); color:var(--bg); z-index:20; } .skip-link:focus { top:10px; }
 
-.live-pnl-grid { grid-template-columns: repeat(3,minmax(0,1fr)); }
+.live-pnl-grid { grid-template-columns: repeat(4,minmax(0,1fr)); }
+@media (max-width: 1050px) { .live-pnl-grid { grid-template-columns: repeat(2,minmax(0,1fr)); } }
 @media (max-width: 760px) { .live-pnl-grid { grid-template-columns: 1fr; } }
 </style>
 </head>
@@ -363,15 +364,15 @@ footer p { max-width:100ch; font-size:10px; color:var(--ink-3); }
 <div class="sitebar">
   <a href="#top" class="brand"><span class="brand-mark" aria-hidden="true">AJ</span><span>Sports Market Maker<small>QUANTITATIVE RESEARCH</small></span></a>
   <nav class="toplinks" aria-label="Dashboard sections">
-    <a href="#overview">At a glance</a><a href="#production-pnl">Live results</a><a href="#forward">Fill test</a><a href="#methodology">How it works</a><a href="#research-section">Research</a><a href="#risk">Risk</a><a href="https://github.com/akilatrades/sports-market-maker/blob/main/docs/PROJECT_BRIEF.md">Case study ↗</a><a class="source-link" href="https://github.com/akilatrades/sports-market-maker">Source ↗</a>
+    <a href="#overview">At a glance</a><a href="#production-pnl">Live results</a><a href="#forward">Fill test</a><a href="#methodology">How it works</a><a href="#spread-maker">Spread maker</a><a href="#research-section">Research</a><a href="#risk">Risk</a><a href="https://github.com/akilatrades/sports-market-maker/blob/main/docs/PROJECT_BRIEF.md">Case study ↗</a><a class="source-link" href="https://github.com/akilatrades/sports-market-maker">Source ↗</a>
   </nav>
 </div>
 <main>
 <header class="report-head" id="top">
   <div>
-    <div class="kicker">PREDICTION-MARKET RESEARCH · NBA &amp; NFL PLAYER PROPS</div>
-    <h1>Pricing and trading<br><span>Kalshi player props.</span></h1>
-    <p>A research and trading system that prices each contract with statistical models and sportsbook odds, then tests one strategy: directional passive-NO execution, meaning resting limit orders that sell the “over” to mostly uninformed buyers. Real orders now run under strict limits. Historical replay is not live profit.</p>
+    <div class="kicker">PREDICTION-MARKET RESEARCH · TWO LIVE KALSHI STRATEGIES</div>
+    <h1>Pricing and trading<br><span>Kalshi markets.</span></h1>
+    <p>A research and trading system running two strategies on real money under strict limits. <strong>Prop maker:</strong> directional passive-NO execution on NBA and NFL player props, meaning resting limit orders, priced with statistical models and sportsbook odds, that sell the “over” to mostly uninformed buyers. <strong>Spread maker:</strong> a YES bid and a NO bid one cent inside wide bid–ask spreads in other markets, held to settlement. Historical replay is not live profit.</p>
     <div class="hero-actions"><a class="button primary" href="https://github.com/akilatrades/sports-market-maker/blob/main/docs/PROJECT_BRIEF.md">Read the case study <span aria-hidden="true">↗</span></a><a class="button" href="https://github.com/akilatrades/sports-market-maker">View the code <span aria-hidden="true">↗</span></a></div>
     <div class="skill-tags"><span>Probability models</span><span>Market microstructure</span><span>Python</span><span>Risk systems</span></div>
   </div>
@@ -386,7 +387,11 @@ footer p { max-width:100ch; font-size:10px; color:var(--ink-3); }
 <div class="publication"><span class="state">PUBLISHED SNAPSHOT</span><div id="stamp" aria-live="polite">Loading the latest published data…</div></div>
 
 <section id="overview">
-  <div class="section-heading"><div><div class="eyebrow"><span class="section-number">01 /</span> AT A GLANCE</div><h2>Does a statistical edge survive real trading?</h2><p class="desc">The idea: traders who buy YES at the ask on player props are mostly uninformed, so resting NO orders should earn a small edge. Models and sportsbook odds decide which lines to quote. Real fills decide whether it works.</p></div></div>
+  <div class="section-heading"><div><div class="eyebrow"><span class="section-number">01 /</span> AT A GLANCE</div><h2>Does a statistical edge survive real trading?</h2><p class="desc">Two strategies, each tested the same way: backtest first, then small real orders. Real fills decide whether either works.</p></div></div>
+  <div class="panel-grid strategy-pair">
+    <article class="panel"><div class="eyebrow">STRATEGY 1 · PROP MAKER · LIVE SINCE 19–20 OCT 2026</div><h3>Resting NO orders on player props</h3><p class="desc">Traders who buy YES at the ask on NBA and NFL player props are mostly uninformed, so resting NO orders should earn a small edge. Models and sportsbook odds decide which lines to quote. The figures below are this strategy's.</p></article>
+    <article class="panel"><div class="eyebrow">STRATEGY 2 · SPREAD MAKER · LIVE SINCE 22 OCT 2026</div><h3>Quoting both sides of wide spreads</h3><p class="desc">Smaller markets (esports, college and minor-league sports, fights, racing and more) often trade with a gap of 8¢ or more between bid and offer. Bidding one cent inside on both sides earns most of that gap when both fill. No model: it prices from the order book. <a href="#spread-maker">How it works ↓</a></p></article>
+  </div>
   <div class="research-metrics" aria-label="Research scope">
     <article class="research-metric"><span class="metric-label">Markets studied</span><strong>57,111</strong><small>NBA player-prop markets,<br>2025–26 season</small></article>
     <article class="research-metric"><span class="metric-label">Historical edge</span><strong class="pos">+2.93¢</strong><small>Per simulated contract,<br>after modeled fees</small></article>
@@ -401,11 +406,12 @@ footer p { max-width:100ch; font-size:10px; color:var(--ink-3); }
 </section>
 
 <section id="production-pnl" aria-labelledby="production-pnl-title">
-  <div class="section-heading"><div><div class="eyebrow"><span class="section-number">02 /</span> LIVE RESULTS</div><h2 id="production-pnl-title">Settled P&amp;L on the funded Kalshi account</h2><p class="desc">Real orders only, after fees, from settled markets. NFL and NBA are shown separately. Open positions are not included. A missing report is shown as unknown, never as zero.</p></div><span class="stage">Exchange-confirmed</span></div>
+  <div class="section-heading"><div><div class="eyebrow"><span class="section-number">02 /</span> LIVE RESULTS</div><h2 id="production-pnl-title">Realized P&amp;L on the funded Kalshi account</h2><p class="desc">Real orders only, after fees. Each bot is shown separately: NFL and NBA from settled markets, the spread maker from its own fills (a YES+NO pair counts when both sides fill, a single side when its market settles). Open positions are not included. A missing report is shown as unknown, never as zero.</p></div><span class="stage">Exchange-confirmed</span></div>
   <div class="metric-grid live-pnl-grid" id="live-pnl-grid" aria-live="polite">
     <article class="metric-card"><span class="metric-label">Funded account / settled P&amp;L</span><div class="metric-value">—</div><span class="metric-caption">Awaiting secure live feed</span></article>
     <article class="metric-card"><span class="metric-label">NFL / settled P&amp;L</span><div class="metric-value">—</div><span class="metric-caption">Awaiting verified snapshot</span></article>
     <article class="metric-card"><span class="metric-label">NBA / settled P&amp;L</span><div class="metric-value">—</div><span class="metric-caption">Awaiting verified snapshot</span></article>
+    <article class="metric-card"><span class="metric-label">Spread maker / realized P&amp;L</span><div class="metric-value">—</div><span class="metric-caption">Awaiting verified snapshot</span></article>
   </div>
   <p class="note" id="live-pnl-asof" aria-live="polite">Settled totals come from a sanitized, read-only feed on the trading server (aggregates only). Reports are timestamped.</p>
 </section>
@@ -435,8 +441,23 @@ footer p { max-width:100ch; font-size:10px; color:var(--ink-3); }
   <div class="equation"><div class="formula">Edge(NO) = P(NO) − price(NO) − fees</div><p>Estimated value of one $1 contract. Which orders fill, at what price, decides whether this estimate holds up.</p></div>
 </section>
 
+<section id="spread-maker">
+  <div class="section-heading"><div><div class="eyebrow"><span class="section-number">05 /</span> STRATEGY 2</div><h2>The spread maker</h2><p class="desc">A market maker for thin markets: it never predicts the outcome. When a market's best bid and best offer are 8¢ or more apart, it bids one cent above the best YES bid and one cent above the best NO bid. If both fill, it owns a YES and a NO that together pay exactly $1 and cost less than $1. If only one fills, it holds that contract to settlement.</p></div><span class="stage">Live, small size</span></div>
+  <div class="metric-grid" id="spread-metrics" aria-live="polite"><p class="note">Loading the published research…</p></div>
+  <div class="method-grid">
+    <article class="method-step"><span class="step">01 / FIND</span><h3>Wide spreads, near the end</h3><p>Every 10 minutes it scans 64 series that passed a false-discovery check, for markets 4–7 hours before expected expiration with a spread of 8¢ or more. NBA and NFL props are left to strategy 1.</p><a href="https://github.com/akilatrades/sports-market-maker/blob/main/live/spread_policy.py">Rules ↗</a></article>
+    <article class="method-step"><span class="step">02 / QUOTE</span><h3>One cent inside, both sides</h3><p>Post-only bids of up to 5 contracts that expire after 65 minutes. Prices come from the order book with its own orders removed, so it never bids against itself.</p><a href="https://github.com/akilatrades/sports-market-maker/blob/main/live/prod_spread_auto.py">Order worker ↗</a></article>
+    <article class="method-step"><span class="step">03 / HOLD</span><h3>Pairs lock the spread</h3><p>A filled pair is profit at once. Single fills are held, never sold back, and at most 5 contracts are held or resting on one side of a market.</p><a href="https://github.com/akilatrades/sports-market-maker/blob/main/RESEARCH_LOG.md">Hedging test ↗</a></article>
+    <article class="method-step"><span class="step">04 / MEASURE</span><h3>Real fills against a shadow</h3><p>A shadow ledger records what the rule would have filled from public trades. Comparing it with real fills shows how much of the trading at our price we really get.</p><a href="https://github.com/akilatrades/sports-market-maker/blob/main/deploy/PROD_SPREAD_AUTO.md">Pilot plan ↗</a></article>
+  </div>
+  <div class="limitations">
+    <p><strong>Where the evidence comes from.</strong> A simulated sweep of nine strategy families across about 200,000 Kalshi markets (September 2025 – August 2026). Two-sided quoting in spreads of 5¢+ was the one family that held up in both halves of the sample; the wider the spread, the larger the edge. About 70% of its simulated profit came from hours in which both sides filled.</p>
+    <p><strong>Limits of the evidence.</strong> Simulated from public trade prints, assuming our order was first in line; the threshold and the 64 series were chosen on the same data. Other traders may already quote inside these spreads. The live pilot, at small size, is the real test.</p>
+  </div>
+</section>
+
 <section id="research-section">
-  <div class="section-heading"><div><div class="eyebrow"><span class="section-number">05 /</span> RESEARCH</div><h2>What the history shows, including what failed</h2><p class="desc">Market selection and trade filtering were tested separately. Each chart describes its own historical sample.</p></div><a href="https://github.com/akilatrades/sports-market-maker/blob/main/RESEARCH_LOG.md">Full research log ↗</a></div>
+  <div class="section-heading"><div><div class="eyebrow"><span class="section-number">06 /</span> RESEARCH</div><h2>What the history shows, including what failed</h2><p class="desc">Market selection and trade filtering were tested separately. Each chart describes its own historical sample.</p></div><a href="https://github.com/akilatrades/sports-market-maker/blob/main/RESEARCH_LOG.md">Full research log ↗</a></div>
   <div class="two"><div><h2>Where did the NO edge appear?</h2><p class="desc">Net cents per simulated contract, by Kalshi market.</p><div id="scan"></div></div><div><h2>Does the sportsbook filter help?</h2><p class="desc">Historical fills grouped by the sportsbook filter.</p><div id="research"></div></div></div>
   <div class="limitations">
     <p><strong>Did not work.</strong> Buying the model's side at the ask lost money after fees. Gradient-boosted trees, player effects and recalibration did not improve trading. A second cent of price improvement and early order cancellation both reduced profit. Game-winner markets were flat to negative.</p>
@@ -445,11 +466,12 @@ footer p { max-width:100ch; font-size:10px; color:var(--ink-3); }
 </section>
 
 <section id="risk">
-  <div class="section-heading"><div><div class="eyebrow"><span class="section-number">06 /</span> RISK CONTROLS</div><h2>Limits are part of the strategy</h2><p class="desc">The bots stop rather than guess when anything is unclear.</p></div><a href="https://github.com/akilatrades/sports-market-maker/tree/main/tests">See the tests ↗</a></div>
+  <div class="section-heading"><div><div class="eyebrow"><span class="section-number">07 /</span> RISK CONTROLS</div><h2>Limits are part of the strategy</h2><p class="desc">The bots stop rather than guess when anything is unclear.</p></div><a href="https://github.com/akilatrades/sports-market-maker/tree/main/tests">See the tests ↗</a></div>
   <div class="risk-grid">
     <article class="risk-card"><b>BEFORE AN ORDER</b><h3>Fresh inputs, fixed limits</h3><p>Model age, injury and roster checks, and fee-aware edge filters run first. Limits apply per order, game, team, day and lifetime, with daily and total loss stops.</p></article>
     <article class="risk-card"><b>WHILE AN ORDER RESTS</b><h3>Re-checked every few minutes</h3><p>An order is cancelled if injury news (ESPN or the NBA's official report), prices or the edge change, or if the sportsbook odds behind it go stale. Every pass first reconciles orders, positions and fills with the exchange.</p></article>
     <article class="risk-card"><b>AFTER</b><h3>A complete record</h3><p>Every order is written to a journal before it is sent. Fills, fees and settlements are reconciled, and missing data is reported as missing.</p></article>
+    <article class="risk-card"><b>ACROSS BOTH STRATEGIES</b><h3>One account, shared stops</h3><p>Each bot owns its markets and recognises the other's orders; anything unexplained stops all of them. Realized losses of every bot count toward one daily and one total loss stop, on top of each bot's own limits.</p></article>
   </div>
   <details class="ops-details"><summary>Scheduled research-job snapshots</summary><p class="desc">GitHub runs research jobs on a schedule. A dry-run snapshot here says nothing about the private trading server's status.</p><div class="two" id="live"></div></details>
 </section>
@@ -602,7 +624,35 @@ function runningNow(s){
   row("Loss stops (account)",`−${money(r.daily_loss_stop)} a day, −${money(r.total_loss_stop)} total`)+
   row("Sportsbook odds, latest snapshot",when(r.odds_snapshot_utc))+
   row("Public trade prints logged through",r.trade_prints_through||"—")+
-  `</div></div><p class="note">Injury news is checked every scan from ESPN and the NBA's official report; sportsbook odds refresh every 20 minutes for games within 6½ hours. Limits shown are the code's; the account itself is private.</p>`;
+  `</div></div>`+spreadRunning(r.spread,row,money)+`<p class="note">Injury news is checked every scan from ESPN and the NBA's official report; sportsbook odds refresh every 20 minutes for games within 6½ hours. Limits shown are the code's; the account itself is private.</p>`;
+}
+function spreadRunning(sp,row,money){
+ if(!sp)return "";
+ const [h0,h1]=sp.hours_before_expiration||[];
+ return `<div class="eyebrow" style="margin:20px 0 6px">Spread maker</div><div class="running-grid"><div>`+
+  row("Spread maker rules",sp.rules||"—")+
+  row("Order size",`Up to ${sp.contracts_per_order} contracts a side`)+
+  row("Markets",`${sp.series} series, spread ${sp.min_spread_cents}¢ or more`)+
+  row("When",`${h0}–${h1} h before expected expiration`)+
+  `</div><div>`+
+  row("Open (orders + held)",money(sp.max_open))+
+  row("Most on one side of a market",`${sp.max_net_per_market_side} contracts`)+
+  row("Own loss stops",`−${money(sp.daily_loss_stop)} a day, −${money(sp.total_loss_stop)} total`)+
+  row("Order lifetime",`${sp.order_lifetime_minutes} minutes`)+
+  `</div></div>`;
+}
+function spreadSection(s){
+ const r=(s&&s.spread_research)||null, el=document.getElementById("spread-metrics"), sp=s&&s.running_now&&s.running_now.spread;
+ if(!r||!r.all||!r.later){el.innerHTML=`<p class="note">Spread maker research is not in this snapshot.</p>`;return;}
+ const card=(label,value,caption,tone="")=>`<article class="metric-card"><span class="metric-label">${esc(label)}</span><div class="metric-value ${tone}">${esc(value)}</div><span class="metric-caption">${esc(caption)}</span></article>`;
+ const tone=v=>Number.isFinite(v)?(v>0?"positive":v<0?"negative":""):"";
+ const num=v=>Number.isFinite(v)?v:null;
+ el.innerHTML=[
+  card("Simulated edge",cents(num(r.all.cents)),`Per contract, spreads 5¢+, ${Math.round(r.all.fills||0).toLocaleString()} simulated fills`,tone(r.all.cents)),
+  card("Profit factor",Number.isFinite(r.all.profit_factor)?r.all.profit_factor.toFixed(2):"—","Winning dollars ÷ losing dollars, simulated"),
+  card("Later half of the sample",cents(num(r.later.cents)),`Positive in both halves · t ${Number.isFinite(r.later.t)?r.later.t.toFixed(1):"—"} · simulated`,tone(r.later.cents)),
+  card("Live pilot size",sp?String(sp.contracts_per_order):"—",sp?`Contracts per order · ${money(sp.max_open)} open · results under Live results`:"Rules not in this snapshot")
+ ].join("");
 }
 
 // Rebuild SVGs only if the screen WIDTH changes. Mobile address bars
@@ -651,16 +701,35 @@ function renderProductionPnl(snapshot) {
     const tone = amount === null ? "" : amount > 0 ? "positive" : amount < 0 ? "negative" : "";
     return `<article class="metric-card"><span class="metric-label">${label} / settled P&amp;L</span><div class="metric-value ${tone}">${esc(value)}</div><span class="metric-caption">${esc(caption)}</span></article>`;
   };
+  const realized = (label, item) => {
+    item = item || {};
+    const verified = item.status === "verified_fill_ledger"
+      && typeof item.realized_profit_dollars === "number"
+      && Number.isFinite(item.realized_profit_dollars);
+    const amount = fresh && verified ? item.realized_profit_dollars : null;
+    const value = amount === null ? "—" : signed(amount);
+    const contracts = Number(item.filled_contracts || 0).toLocaleString();
+    const caption = !fresh
+      ? verified
+        ? `Stale report · Last verified ${signed(item.realized_profit_dollars)} as of ${stamp.slice(0,16).replace("T"," ")} UTC; current result unknown`
+        : "Live result unavailable; no verified current result"
+      : verified ? `${contracts} contracts filled · pairs count when both sides fill`
+      : item.status === "awaiting_first_fill" ? `${Number(item.exchange_accepted_orders || 0).toLocaleString()} orders accepted · no fills yet`
+      : "No current verified result";
+    const tone = amount === null ? "" : amount > 0 ? "positive" : amount < 0 ? "negative" : "";
+    return `<article class="metric-card"><span class="metric-label">${label} / realized P&amp;L</span><div class="metric-value ${tone}">${esc(value)}</div><span class="metric-caption">${esc(caption)}</span></article>`;
+  };
   document.getElementById("live-pnl-grid").innerHTML =
     card("FUNDED ACCOUNT", snapshot?.account, ["verified_settlement_snapshot"], " across account") +
     card("NFL", markets.nfl, ["verified_snapshot", "verified"]) +
-    card("NBA", markets.nba, ["verified_snapshot", "verified"]);
+    card("NBA", markets.nba, ["verified_snapshot", "verified"]) +
+    realized("SPREAD MAKER", markets.spread);
   document.getElementById("live-pnl-asof").textContent = !stamp ?
     "Live account P&L feed unavailable or not configured. The last repository snapshot is not assumed to be current." :
     `Last verified ${live ? "secure Kalshi read" : "published snapshot"}: ${stamp.slice(0,16).replace("T"," ")} UTC. ${fresh ?
       "Automatic updates are enabled for the available source." :
       "Report expired. Last verified values appear only as labelled historical results."
-    } Funded-account totals cover API-visible settlements; they do not include unrealized positions, non-settlement exits, credits or archived history.`;
+    } Funded-account totals cover API-visible settlements; they do not include unrealized positions, non-settlement exits, credits or archived history, and may not reflect the spread maker's pairs, which close before settlement (see its own card).`;
 }
 let latestDashboard = null;
 fetch("../outputs/dashboard/summary.json", {cache: "no-store"}).then(r => { if (!r.ok) throw new Error(r.status); return r.json(); }).then(s => {
@@ -668,6 +737,7 @@ fetch("../outputs/dashboard/summary.json", {cache: "no-store"}).then(r => { if (
   document.getElementById("stamp").innerHTML = `<strong>Research data as of</strong> ${esc(s.updated_utc.slice(0, 16).replace("T", " "))} UTC`;
   overview(s);
   runningNow(s);
+  spreadSection(s);
   renderCharts(s);
   document.getElementById("live").innerHTML = liveBlock(s.live || {}, "NBA props", s.limits || {}) + liveBlock(s.live_nfl || {}, "NFL props", s.limits || {});
 }).catch(e => {
@@ -676,6 +746,7 @@ fetch("../outputs/dashboard/summary.json", {cache: "no-store"}).then(r => { if (
   renderStudy({});
   overview({});
   runningNow({});
+  spreadSection({});
   document.getElementById("system-view").textContent = "Source unavailable; do not infer live account status.";
 });
 async function refreshVerifiedPnl() {

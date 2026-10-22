@@ -74,7 +74,8 @@ def collect_public(client=None, journal_paths=None, now=None):
     client = client or ReadOnlyClient()
     paths = journal_paths or JOURNALS
     cohorts = {
-        m: read_journal(paths[m]) if paths[m].exists() else None for m in ("nfl", "nba")
+        m: read_journal(paths[m]) if paths.get(m) and paths[m].exists() else None
+        for m in ("nfl", "nba", "spread")
     }
     # Account-level collection MUST NOT be limited by the bot's first order.
     # All visible account settlements, including manual markets, are included.

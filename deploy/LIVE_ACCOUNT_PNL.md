@@ -2,12 +2,25 @@
 
 **Purpose.** Display automatic realized **settlement** gains and losses from
 the actual FUNDED Kalshi account—not a static GitHub snapshot. The public
-dashboard displays three metrics:
+dashboard displays four metrics:
 
 - **FUNDED ACCOUNT:** net results from *all available account settlements*,
   including manual orders and both NFL/NBA bots.
 - **NFL:** settlement results *owned by the NFL production journal*.
 - **NBA:** settlement results *owned by the NBA production journal*.
+- **SPREAD MAKER:** realized P&L *from the spread maker's own fills* (its
+  journal's copies merged with the exchange's fill list): a YES+NO pair
+  counts when its second leg fills, a contract held to settlement when its
+  market settles. Kalshi nets YES against NO, so these pairs never reach a
+  settlement record; the FUNDED ACCOUNT settlement total may not reflect
+  them. The same fill ledger drives the bot's own and the account's loss
+  stops. If any fill or settlement cannot be reconciled the card shows
+  "unreconciled" with no number.
+
+After a code release that changes this feed, restart it from the
+DigitalOcean console so it loads the new code (it is a long-running
+service, which the release helper does not restart):
+`sudo systemctl restart market-maker-live-pnl.service`.
 
 Real money only. No paper, demo, projections or historical simulation.
 
