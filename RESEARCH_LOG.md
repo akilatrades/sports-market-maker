@@ -2497,3 +2497,34 @@ to 20,000 contracts per side; our share decides the payout).
 - Tail outcomes (skew and fat tails) can make a simple volatility model
   misprice the far strikes in exactly the region where the mispricing
   appears.
+
+## 2026-10-22: Strategy sweep across all scanned markets, with profit factor (exploratory plan)
+
+*Written before running. Exploratory; nothing here changes the live rules.*
+
+The owner asked for profitability and profit factor (winning dollars over
+losing dollars) by market, and for more strategy types. Data: the scan's
+hourly resting-order rows (`outputs/scan/orders_*.csv.gz`; one YES and one
+NO order per market per hour, 7 to 4 hours before expected expiration, one
+cent inside the spread when it allows, filled from public trade prints as
+if first in line, held to settlement). Fees: Kalshi's default maker fee is
+zero; the series on Kalshi's fee schedule with a maker multiplier pay
+0.0175 × P × (1 − P) per contract (unrounded, a larger order).
+`research/strategy_sweep.py`.
+
+**Families (resting orders, one contract per hourly order):**
+1. NO on every market; 2. YES on every market; 3. both sides at once
+(market making); 4. the favourite side (price 80¢+); 5. the long-shot side
+(price 20¢ or less); 6. NO where YES is 35-50¢ (the band that looked
+overpriced across all markets); 7. both sides only where the spread is 5¢
+or more; 8. NO only in hours with no trading in the previous hour, and
+9. NO only in hours with trading. Nine families.
+
+**Reported** for each family, overall and by category (sports, economics,
+mentions, politics, entertainment, crypto, other): filled contracts, cents
+per contract with event-clustered t, profit factor, total dollars, and the
+earlier and later halves (split at the median date). Within each family,
+series are ranked on the earlier half and the top 10 pooled on the later
+half; a family or series is **promising** only if the later half makes
+money with t ≥ 2 on at least 300 fills and the earlier half was also
+positive.
