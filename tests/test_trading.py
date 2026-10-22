@@ -274,7 +274,7 @@ def _signed_client():
     return TradingClient(dry_run=False, env="demo", key_id="k", private_key_pem=text)
 
 
-def test_throttled_reads_are_retried_and_re_signed(monkeypatch):
+def test_a_throttled_balance_read_is_retried_and_re_signed(monkeypatch):
     import urllib.request
 
     throttle, waits = _Throttle(fails=2), []
@@ -285,7 +285,7 @@ def test_throttled_reads_are_retried_and_re_signed(monkeypatch):
     assert waits == [1.0, 2.0]
 
 
-def test_a_read_throttled_four_times_fails(monkeypatch):
+def test_a_balance_read_throttled_three_times_fails(monkeypatch):
     import urllib.request
 
     throttle, waits = _Throttle(fails=9, retry_after="30"), []
@@ -293,7 +293,36 @@ def test_a_read_throttled_four_times_fails(monkeypatch):
     monkeypatch.setattr(time, "sleep", waits.append)
     with pytest.raises(TradingError, match="HTTP 429"):
         _signed_client()._request("GET", "/portfolio/balance")
-    assert len(throttle.calls) == 4 and waits == [5.0, 5.0, 5.0]  # capped
+    assert len(throttle.calls) == 3 and waits == [3.0, 3.0]  # capped at 3 s
+
+
+def test_retry_wait_reads_kalshi_headers():
+    import email.message
+
+    from kalshi.trading import retry_wait
+
+    class Error:
+        headers = email.message.Message()
+
+    Error.headers["retry-after"] = "2"  # real headers ignore case
+    assert retry_wait(Error, 1.0) == 2.0
+    Error.headers.replace_header("Retry-After", "Wed, 21 Oct 2026 07:28:00 GMT")
+    assert retry_wait(Error, 1.0) == 1.0  # a date: use the default
+    Error.headers = None
+    assert retry_wait(Error, 2.0) == 2.0
+
+
+def test_other_throttled_reads_are_not_retried(monkeypatch):
+    import urllib.request
+
+    throttle, waits = _Throttle(fails=1), []
+    monkeypatch.setattr(urllib.request, "urlopen", throttle)
+    monkeypatch.setattr(time, "sleep", waits.append)
+    with pytest.raises(TradingError, match="HTTP 429"):
+        _signed_client()._request(
+            "GET", "/portfolio/orders", params={"status": "resting"}
+        )
+    assert len(throttle.calls) == 1 and waits == []
 
 
 @pytest.mark.parametrize("method", ["POST", "DELETE"])

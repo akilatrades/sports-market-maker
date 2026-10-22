@@ -35,15 +35,18 @@ BASES = {
     "demo": "https://demo-api.kalshi.co",
 }
 PREFIX = "/trade-api/v2"
-# Waits before retrying a throttled read (HTTP 429), in seconds. Kalshi limits
-# how often some reads (the balance, for one) may repeat; a second read half a
-# second after the first can be refused.
-READ_RETRY_WAITS = (1.0, 2.0, 4.0)
-MAX_RETRY_WAIT = 5.0
+# Kalshi refuses a balance read repeated within about a second (HTTP 429).
+# Only that read is retried, after these waits (seconds): every bot reads the
+# balance before it journals an order, never between an order's journal entry
+# and its result, so the retry cannot stretch that window. No other request
+# is retried, and writes never are.
+RETRY_THROTTLED_PATHS = frozenset({"/portfolio/balance"})
+READ_RETRY_WAITS = (1.0, 2.0)
+MAX_RETRY_WAIT = 3.0
 
 
 def retry_wait(error, default):
-    """Kalshi's Retry-After (seconds) when given, within [default, 5 s]."""
+    """Kalshi's Retry-After (seconds) when given, within [default, 3 s]."""
     try:
         asked = float(error.headers.get("Retry-After"))
     except (AttributeError, TypeError, ValueError):
@@ -198,15 +201,16 @@ class TradingClient:
         }
 
     def _request(self, method, path, params=None, body=None):
-        """One signed request. A read (GET) that Kalshi throttles (HTTP 429)
-        is retried after a short wait; writes are never retried, so an order
-        or cancel is sent at most once per call."""
+        """One signed request. A throttled balance read (HTTP 429) is
+        retried after a short wait; nothing else is retried, so an order or
+        cancel is sent at most once per call."""
         full = PREFIX + path
         url = self.base + full
         if params:
             url += "?" + urllib.parse.urlencode(params)
         data = json.dumps(body).encode() if body is not None else None
-        waits = READ_RETRY_WAITS if method == "GET" else ()
+        throttle_safe = method == "GET" and path in RETRY_THROTTLED_PATHS
+        waits = READ_RETRY_WAITS if throttle_safe else ()
         for attempt in range(len(waits) + 1):
             request = urllib.request.Request(  # freshly signed each attempt
                 url, data=data, method=method, headers=self._headers(method, full)
