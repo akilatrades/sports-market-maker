@@ -1,7 +1,15 @@
-"""Cross-sport ownership and budget checks. No exchange writes.
+"""Cross-bot ownership and budget checks. No exchange writes.
 
-Import from the two production workers only while their existing account_lock
+Import from the production workers only while their existing account_lock
 is held. Absent, ambiguous or unowned account data must stop new entries.
+
+Cohorts: NBA and NFL (always), and the spread maker (``spread``) once its
+journal exists on the server (RESEARCH_LOG.md, 2026-10-22, spread maker
+pilot). The spread maker buys YES and NO, so its positions may have either
+sign; NBA and NFL positions must still be NO only. The shared lifetime,
+daily and active caps (``LIMITS``) are computed from NBA and NFL orders
+only; the spread maker has its own caps (live/spread_policy.py). The
+account-wide realized-loss stops count all three bots' settled markets.
 """
 
 from datetime import datetime
@@ -18,16 +26,24 @@ ROOT = Path("/home/trader")
 # unchanged limits ($50 lifetime, $30 daily, $15 active).
 LIMITS = {"lifetime": 2050.0, "daily": 180.0, "active": 165.0}
 LOCAL_DAY = ZoneInfo("America/New_York")
-# Realized-loss stops for the WHOLE account (NBA + NFL settled markets
-# together). Each bot's own limits still apply on top of these.
+# Realized-loss stops for the WHOLE account (NBA + NFL + spread maker settled
+# markets together; the spread maker joined on 2026-10-22, sizes unchanged).
+# Each bot's own limits still apply on top of these.
 ACCOUNT_LOSS_STOPS = {"daily": 20.0, "cumulative": 60.0}
+REQUIRED_COHORTS = ("nfl", "nba")
+SPREAD = "spread"
+CAPPED_COHORTS = ("nfl", "nba")  # cohorts counted against LIMITS
+SPREAD_REJECTION_EVIDENCE = "http_4xx_and_signed_get_absent"
 
 
 def journal_events(sport):
-    if sport not in ("nfl", "nba"):
+    """A cohort's journal events; ``None`` only for an undeployed spread maker."""
+    if sport not in (*REQUIRED_COHORTS, SPREAD):
         raise TradingError("Invalid production cohort")
     path = ROOT / f"prod-{sport}-auto" / "journal.jsonl"
     if not path.exists():
+        if sport == SPREAD:
+            return None  # not deployed: no spread orders can be recognised
         raise TradingError("Missing other-cohort production journal")
     raw = path.read_text()
     if raw and not raw.endswith("\n"):
@@ -38,17 +54,67 @@ def journal_events(sport):
         raise TradingError("Invalid production journal") from error
 
 
+def spread_rejected_ids(events):
+    """Spread-maker placements the exchange refused with an HTTP 4xx.
+
+    Recorded by the spread worker only after a signed read of the market's
+    resting orders found no order with that client id. Never used for NBA
+    or NFL, whose rejections still need the owner's reconciliation tool.
+    """
+    intents = {e.get("client_order_id") for e in events if e.get("event") == "intent"}
+    accepted = {
+        e.get("client_order_id") for e in events if e.get("event") == "accepted"
+    }
+    unknown = {
+        e.get("client_order_id") for e in events if e.get("event") == "unknown_outcome"
+    }
+    found = set()
+    for event in events:
+        if event.get("event") != "rejected_4xx":
+            continue
+        cid = event.get("client_order_id")
+        status = event.get("http_status")
+        if (
+            not cid
+            or cid not in intents
+            or cid in accepted
+            or cid in unknown
+            or cid in found
+            or type(status) is not int
+            or not 400 <= status <= 499
+            or event.get("evidence") != SPREAD_REJECTION_EVIDENCE
+            or not event.get("utc")
+        ):
+            raise TradingError("Invalid or duplicate spread rejection: HALT")
+        found.add(cid)
+    return found
+
+
+def cohorts_of(events_by_sport):
+    present = [s for s in REQUIRED_COHORTS]
+    if events_by_sport.get(SPREAD) is not None:
+        present.append(SPREAD)
+    return tuple(present)
+
+
 def ownership(events_by_sport):
     orders, tickers, attempts = {}, {}, []
     client_ids = set()
     rejected_tickers = set()
     rejected_by_sport = {}
-    for sport in ("nfl", "nba"):
+    for sport in cohorts_of(events_by_sport):
         events = events_by_sport[sport]
+        rejected = rejected_client_ids(events)
+        if sport == SPREAD:
+            refused = spread_rejected_ids(events)
+            # A refused quote never existed; the market may still hold
+            # contracts from earlier fills, so it is not a rejected ticker.
+            rejected_by_sport[sport] = rejected | refused
+        else:
+            refused = set()
+            rejected_by_sport[sport] = rejected
         intents = [e for e in events if e.get("event") == "intent"]
         accepted = [e for e in events if e.get("event") == "accepted"]
-        rejected = rejected_client_ids(events)
-        rejected_by_sport[sport] = rejected
         if any(
             e.get("event") == "unknown_outcome"
             and e.get("client_order_id") not in rejected
@@ -74,7 +140,7 @@ def ownership(events_by_sport):
             by_id[cid] = e
             if cid in rejected:
                 rejected_tickers.add(ticker)
-            attempts.append({**e, "_cohort": sport})
+            attempts.append({**e, "_cohort": sport, "_refused": cid in refused})
         seen = set()
         for e in accepted:
             cid, oid = e.get("client_order_id"), e.get("order_id")
@@ -82,7 +148,7 @@ def ownership(events_by_sport):
                 raise TradingError("Invalid production acceptance")
             seen.add(cid)
             orders[str(oid)] = sport
-        if seen != set(by_id) - rejected:
+        if seen != set(by_id) - rejected_by_sport[sport]:
             raise TradingError("Unreconciled production submission: HALT")
     return {
         "orders": orders,
@@ -90,14 +156,20 @@ def ownership(events_by_sport):
         "attempts": attempts,
         "rejected_tickers": rejected_tickers,
         "rejected_by_sport": rejected_by_sport,
+        "cohorts": cohorts_of(events_by_sport),
     }
 
 
 def classify(resting, positions, owner):
-    """Return only cohort-owned open orders/NO positions; fail on manual risk."""
+    """Return only cohort-owned open orders and positions; fail on manual risk.
+
+    NBA and NFL may only hold NO (negative) positions. The spread maker may
+    hold either side, never more contracts than it ordered in that market.
+    """
     if not isinstance(resting, list) or not isinstance(positions, list):
         raise TradingError("Invalid production account snapshot")
-    result = {s: {"resting": [], "held": []} for s in ("nfl", "nba")}
+    cohorts = owner.get("cohorts", REQUIRED_COHORTS)
+    result = {s: {"resting": [], "held": [], "positions": {}} for s in cohorts}
     for row in resting:
         sport = owner["orders"].get(str(row.get("order_id")))
         if sport not in result:
@@ -119,14 +191,17 @@ def classify(resting, positions, owner):
         sport = owner["tickers"].get(ticker)
         if ticker in owner.get("rejected_tickers", set()):
             raise TradingError("Position appeared for reconciled rejected order: HALT")
-        if sport not in result or qty > 0:
+        if sport not in result or (qty > 0 and sport != SPREAD):
             raise TradingError("Unowned or wrong-side account position: HALT")
         owned_count = sum(
-            float(a["count"]) for a in owner["attempts"] if a["ticker"] == ticker
+            float(a["count"])
+            for a in owner["attempts"]
+            if a["ticker"] == ticker and not a.get("_refused")
         )
         if abs(qty) > owned_count + 1e-8:
             raise TradingError("Held inventory exceeds accepted intent: HALT")
         result[sport]["held"].append(ticker)
+        result[sport]["positions"][ticker] = qty
     return result
 
 
@@ -134,7 +209,10 @@ def room(owner, active_client_ids, cost, now):
     """Global admission requires previously verified active-order identities."""
     if now.tzinfo is None:
         raise TradingError("Current timestamp has no timezone")
-    attempts = owner["attempts"]
+    # LIMITS cover NBA and NFL; the spread maker has its own caps.
+    attempts = [
+        a for a in owner["attempts"] if a.get("_cohort", "nba") in CAPPED_COHORTS
+    ]
     ids = {a["client_order_id"] for a in attempts}
     if not isinstance(active_client_ids, set) or not active_client_ids <= ids:
         raise TradingError("Unreconciled shared active capacity")
@@ -260,19 +338,22 @@ def dual_mode(env):
 
 
 def state_for(client, sport, now):
-    """Read both journals and the entire exchange under the shared process lock.
+    """Read every cohort's journal and the entire exchange under the shared lock.
 
     All known orders and held positions must belong to exactly one journal.
     Release an expired unfilled order from active capacity only through the
     legacy verified-expiry function, using signed fills and account holdings.
     Lifetime and daily submission charges are never recycled.
     """
-    if sport not in ("nfl", "nba"):
+    if sport not in (*REQUIRED_COHORTS, SPREAD):
         raise TradingError("Unknown shared account cohort")
     from live import prod_nba_auto, prod_nfl_auto
 
     modules = {"nfl": prod_nfl_auto, "nba": prod_nba_auto}
     events = {name: journal_events(name) for name in modules}
+    events[SPREAD] = journal_events(SPREAD)
+    if sport == SPREAD and events[SPREAD] is None:
+        raise TradingError("Missing spread production journal")
     owner = ownership(events)
     resting = client.orders("resting")
     positions = client.positions()
@@ -335,6 +416,18 @@ def state_for(client, sport, now):
         state["active"] = active
         snapshots[name] = state
         active_ids.update(a["client_order_id"] for a in active)
+    if SPREAD in owner["cohorts"]:
+        own = [a for a in attempts if a["_cohort"] == SPREAD]
+        own_tickers = {a["ticker"] for a in own}
+        snapshots[SPREAD] = {
+            "resting": classified[SPREAD]["resting"],
+            "held": classified[SPREAD]["held"],
+            "positions": classified[SPREAD]["positions"],
+            "settled": settled & own_tickers,
+            "settlements": settlements,
+            "attempts": own,
+            "fills": fills,
+        }
     return snapshots[sport], {
         "ownership": owner,
         "active_client_ids": active_ids,
