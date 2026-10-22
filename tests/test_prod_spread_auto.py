@@ -1100,3 +1100,53 @@ def test_one_balance_read_per_pass_and_orders_reserve_from_it():
     assert client.calls.count("/portfolio/balance") == 1
     with pytest.raises(TradingError, match="Invalid market ticker"):
         funding(client, "NBA-1", 1.0)
+
+
+def test_fill_share_scores_finished_windows_from_public_prints(world):
+    run(world)  # YES 5 @ 41c and NO 5 @ 49c rest from NOW
+    fill_placed(world, 0, 5, count=2)  # 2 of the YES fill
+    run(world, NOW + timedelta(minutes=10))  # copies the fill into the journal
+    at = (NOW + timedelta(minutes=30)).isoformat()
+    calls = []
+
+    def trades(ticker, start, end):
+        calls.append(ticker)
+        return [
+            # 8 contracts sold at 40c went through our 41c YES bid ...
+            {
+                "created_time": at,
+                "yes_price": 0.40,
+                "count": 8,
+                "taker_outcome_side": "no",
+            },
+            # ... nothing reached our NO bid (a YES offer at 51c).
+            {
+                "created_time": at,
+                "yes_price": 0.50,
+                "count": 3,
+                "taker_outcome_side": "yes",
+            },
+        ]
+
+    state = world["dir"]
+    # Windows still open (or too fresh) are not scored yet.
+    assert bot.score_live_windows(state, NOW + timedelta(minutes=60), trades) == 0
+    assert bot.score_live_windows(state, NOW + timedelta(minutes=71), trades) == 2
+    assert (
+        bot.score_live_windows(state, NOW + timedelta(minutes=90), trades) == 0
+    )  # once
+    assert calls == [TICKER]
+    share = bot.fill_share(journal(world), bot.load_events(state / "shadow.jsonl"))
+    # Up to 5 of the 8 were ours to take first in line; we got 2.
+    assert share["first_in_line_contracts"] == 5 and share["filled_contracts"] == 2
+    assert share["fill_share"] == 0.4 and share["orders_traded_through"] == 1
+
+
+def test_a_cancelled_order_is_scored_only_up_to_its_cancel(world):
+    run(world)
+    world["quotes"][TICKER] = market(bid=0.42, ask=0.52)
+    run(world, NOW + timedelta(minutes=10))  # YES @ 41c cancelled, re-posted at 43c
+    windows = bot.live_windows(journal(world), set(), NOW + timedelta(minutes=200))
+    first_yes = next(w for w in windows if w["price_cents"] == 41)
+    assert first_yes["end"] == NOW + timedelta(minutes=10)
+    assert {w["price_cents"] for w in windows} == {41, 43, 49}

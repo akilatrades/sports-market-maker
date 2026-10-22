@@ -752,3 +752,38 @@ def test_a_missing_spread_journal_leaves_other_bots_alone(tmp_path):
     assert summary["markets"]["spread"] == {"status": "journal_missing"}
     assert "spread" not in complete and "spread_shadow_simulated" not in summary
     assert summary["markets"]["nba"]["status"] == "ok"
+
+
+def test_live_fill_share_joins_scored_windows_with_live_fills(tmp_path):
+    journals = {
+        "nba": write(tmp_path / "nba.jsonl", NBA_EVENTS),
+        "nfl": write(tmp_path / "nfl.jsonl", NFL_EVENTS),
+        "spread": write(tmp_path / "spread.jsonl", SPREAD_EVENTS),
+    }
+    windows = [
+        # YES order: 8 traded through, all 5 of ours filled -> 5 of 5.
+        {
+            "event": "live_window",
+            "client_order_id": "smm-spread-a",
+            "size": 5,
+            "through": 8,
+        },
+        # NO order: 20 traded through, all 5 of ours filled -> 5 of 5.
+        {
+            "event": "live_window",
+            "client_order_id": "smm-spread-b",
+            "size": 5,
+            "through": 20,
+        },
+    ]
+    shadow = write(tmp_path / "shadow.jsonl", SHADOW_EVENTS + windows)
+    _, summary, _ = export.build_files(journals, shadow=shadow)
+    share = summary["markets"]["spread"]["live_fill_share"]
+    assert share["fill_share"] == 1.0 and share["first_in_line_contracts"] == 10
+    assert share["orders_filled_when_traded_through"] == 2
+    windows[1]["through"] = 0  # nothing reached the NO price: no capacity there
+    shadow = write(tmp_path / "shadow.jsonl", SHADOW_EVENTS + windows)
+    _, summary, _ = export.build_files(journals, shadow=shadow)
+    assert (
+        summary["markets"]["spread"]["live_fill_share"]["first_in_line_contracts"] == 5
+    )

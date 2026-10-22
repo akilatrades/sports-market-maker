@@ -482,6 +482,150 @@ def run_shadow(state_dir, now, public, markets=None):
     return shadow_summary(load_events(path))
 
 
+# ------------------------------------------- live fill share (measurement)
+# The backtest assumed we were first in line at our price. For every live
+# order whose resting window has ended, count the contracts that public
+# trade prints show traded at or through its price during that window (the
+# same rule as the shadow ledger). Our share of those, up to the order's
+# size, is the fill share: 1.0 is the backtest's assumption, 0.25 the
+# cautious case. Public data only; the result is read with the journal's
+# fills and never added to profit.
+WINDOW_SETTLE_MINUTES = 5  # let trade prints for a window arrive
+MAX_WINDOW_TICKERS_PER_PASS = 40
+
+
+def live_windows(events, scored, now):
+    """Finished, unscored resting windows of this bot's accepted orders."""
+    intents = {
+        e.get("client_order_id"): e for e in events if e.get("event") == "intent"
+    }
+    accepted = {
+        e.get("client_order_id"): str(e.get("order_id"))
+        for e in events
+        if e.get("event") == "accepted" and e.get("order_id")
+    }
+    canceled = {}
+    for e in events:
+        if e.get("event") == "cancel_intent" and e.get("order_id"):
+            when = datetime.fromisoformat(e["utc"])
+            oid = str(e["order_id"])
+            canceled[oid] = min(canceled.get(oid, when), when)
+    out = []
+    for cid, oid in accepted.items():
+        intent = intents.get(cid)
+        if intent is None or cid in scored:
+            continue
+        start = datetime.fromisoformat(intent["utc"])
+        end = start + timedelta(minutes=P.ORDER_LIFETIME_MINUTES)
+        if oid in canceled:
+            end = min(end, canceled[oid])
+        if end > now - timedelta(minutes=WINDOW_SETTLE_MINUTES):
+            continue
+        out.append(
+            {
+                "client_order_id": cid,
+                "ticker": intent["ticker"],
+                "side": intent["side"],
+                "price_cents": int(intent["price_cents"]),
+                "size": float(intent["count"]),
+                "start": start,
+                "end": end,
+            }
+        )
+    return out
+
+
+def score_live_windows(state_dir, now, fetch_trades):
+    """Write a ``live_window`` record to the shadow file for each finished
+    live order: contracts traded at or through its price while it rested."""
+    journal, shadow = state_dir / "journal.jsonl", state_dir / "shadow.jsonl"
+    if not journal.exists():
+        return 0
+    scored = {
+        e.get("client_order_id")
+        for e in load_events(shadow)
+        if e.get("event") == "live_window"
+    }
+    by_ticker = {}
+    for w in live_windows(load_events(journal), scored, now):
+        by_ticker.setdefault(w["ticker"], []).append(w)
+    written = 0
+    for ticker in sorted(by_ticker)[:MAX_WINDOW_TICKERS_PER_PASS]:
+        windows = by_ticker[ticker]
+        start = min(w["start"] for w in windows)
+        end = max(w["end"] for w in windows)
+        try:
+            trades = fetch_trades(
+                ticker, int(start.timestamp()) - 1, int(end.timestamp()) + 1
+            )
+        except Exception:
+            continue  # try again next pass
+        for w in windows:
+            through = contracts_through(
+                trades, w["side"], w["price_cents"], w["start"], w["end"]
+            )
+            write_event(
+                shadow,
+                {
+                    "event": "live_window",
+                    "client_order_id": w["client_order_id"],
+                    "ticker": ticker,
+                    "side": w["side"],
+                    "price_cents": w["price_cents"],
+                    "size": w["size"],
+                    "through": through,
+                    "start_utc": w["start"].isoformat(),
+                    "end_utc": w["end"].isoformat(),
+                },
+            )
+            written += 1
+    return written
+
+
+def fill_share(journal_events, shadow_events):
+    """Our share of the contracts that traded at or through our price, up to
+    each order's size, over the scored live windows (a measurement, not P&L)."""
+    oid_of = {
+        e.get("client_order_id"): str(e.get("order_id"))
+        for e in journal_events
+        if e.get("event") == "accepted" and e.get("order_id")
+    }
+    filled, seen = {}, set()
+    for e in journal_events:
+        if e.get("event") != "fill" or e.get("fill_id") in seen:
+            continue
+        seen.add(e.get("fill_id"))
+        raw = e.get("count_fp") if e.get("count_fp") is not None else e.get("count")
+        try:
+            filled[str(e.get("order_id"))] = filled.get(
+                str(e.get("order_id")), 0.0
+            ) + float(raw)
+        except (TypeError, ValueError):
+            continue
+    capacity = got = 0.0
+    orders = traded_through = filled_when_traded = 0
+    for e in shadow_events:
+        if e.get("event") != "live_window":
+            continue
+        size, through = float(e.get("size") or 0), float(e.get("through") or 0)
+        mine = min(filled.get(oid_of.get(e.get("client_order_id")), 0.0), size)
+        orders += 1
+        capacity += min(through, size)
+        got += min(mine, min(through, size)) if through else 0.0
+        if through >= 1:
+            traded_through += 1
+            filled_when_traded += mine > 0
+    return {
+        "orders_scored": orders,
+        "orders_traded_through": traded_through,
+        "orders_filled_when_traded_through": filled_when_traded,
+        "first_in_line_contracts": round(capacity, 2),
+        "filled_contracts": round(got, 2),
+        "fill_share": round(got / capacity, 3) if capacity else None,
+        "note": "1.0 = the backtest's first-in-line assumption; 0.25 = the cautious case",
+    }
+
+
 # ------------------------------------------------------------------ live
 
 
@@ -1291,9 +1435,16 @@ def status(state_dir):
         )
     except TradingError as error:
         print(f"LIVE realized P&L unavailable: {error}")
+    shadow_events = load_events(state_dir / "shadow.jsonl")
+    share = fill_share(events, shadow_events)
+    print(
+        f"LIVE fill share: {share['fill_share'] if share['fill_share'] is not None else '—'} "
+        f"of {share['first_in_line_contracts']:g} contracts traded at or through our "
+        f"price ({share['orders_scored']} finished orders scored; backtest assumed 1.0)"
+    )
     print(
         "SHADOW (simulated, first in line unless flow-weighted):",
-        json.dumps(shadow_summary(load_events(state_dir / "shadow.jsonl"))),
+        json.dumps(shadow_summary(shadow_events)),
     )
     last = state_dir / "last_scan.json"
     if last.exists():
@@ -1395,6 +1546,12 @@ def main():
                 raise
         # The shadow ledger needs no lock: public reads and its own file only.
         report["shadow"] = run_shadow(state_dir, started, public, markets)
+        try:  # measurement only: a failure here never affects trading
+            report["live_windows_scored"] = score_live_windows(
+                state_dir, started, public["fetch_trades"]
+            )
+        except Exception as error:
+            report["live_windows_error"] = type(error).__name__
         write_report(state_dir, report)
         print("SPREAD MAKER", json.dumps(report, sort_keys=True, default=str))
 
