@@ -1947,3 +1947,183 @@ thousands of orders.
 Unfilled orders were further back in the queue, so the two groups are not
 randomly assigned; a difference could also come from where in the queue
 an order sat. Queue position at posting is reported alongside.
+
+## 2026-10-21: Market-making models applied to the NO seller (plan)
+
+*Written before any of these tests was run. Exploratory and in-sample: the
+v5 rules were chosen on 2025-26, the only season with Kalshi player props.
+A pass here only qualifies an idea for a written-down forward pilot; it is
+not evidence that it works.*
+
+Prompted by an outside article on optimal quoting (Avellaneda-Stoikov,
+Glosten-Milgrom). Five ideas, translated to one-sided resting NO orders held
+to settlement. `research/article_tests.py`.
+
+### Common setup
+- **Orders:** the 2025-26 replay orders (`outputs/decompose/orders_no.csv.gz`,
+  one per market, mostly posted 5 hours before tip), fair value = the frozen
+  stat model's probability, priced one cent better than the best NO bid when
+  the spread allows (else joining it), no maker fee (NBA props have none).
+- **Fills:** contracts a YES taker bought through our price before tip-off
+  (at our price only when we improved the market), as if first in line.
+  Every comparison is run at `flow_share` 1.0 and 0.25 (each contract that
+  traded reaches us with that chance; 0.25 averaged over 10 random draws).
+- **Rules (v5-like):** 1 contract, 0-15¢ edge, 5-95¢, 40 orders and $25 per
+  game, $25 per team and $150 a night, the −$20 nightly stop. The lifetime
+  allowance and cumulative stop are off, so every variant sees the whole
+  season.
+- **Statistics:** game-clustered t; "both halves" = the season split at its
+  median game date.
+
+### Tests, variants and pass bars (14 variants in all)
+1. **Profit decomposition** (descriptive, no variant). Profit per filled
+   contract = entry edge + surprise (outcome − fair value). Adverse
+   selection = surprise of filled orders − surprise of unfilled orders
+   (clustered t). Inventory: the within-game correlation of filled
+   contracts' results and the variance it adds per night.
+2. **Minimum edge (Glosten-Milgrom).** Minimum edge 1, 2, 3 and 4¢ against
+   0¢ (4 variants). Pass: season P&L at least 10% above 0¢ at both flow
+   shares and in both halves, with cents per contract t ≥ 2.
+3. **Time to tip-off (Avellaneda-Stoikov's horizon term).** Orders rebuilt
+   from hourly quotes posted 2, 4 or 6 hours before tip, each with a minimum
+   edge of 0 or 0.5¢ per hour before tip beyond 2 (6 variants), against
+   orders posted 5 hours before with 0¢ (control, rebuilt the same way).
+   Pass: season P&L at least 10% above control at both flow shares and in
+   both halves. Caveat written now: the replay puts every improving order
+   first in line whenever it was posted, so it cannot show the queue
+   advantage of posting earlier, only the price and selection effects.
+4. **Same-game inventory penalty (Avellaneda-Stoikov's inventory term).**
+   The k-th order in a game needs an extra (k − 1) × c of edge, for c = 0.1,
+   0.25 and 0.5¢ (3 variants). Pass: Sharpe ratio of nightly P&L at least
+   10% above control at both flow shares and in both halves, with season
+   P&L no more than 10% below control.
+5. **Fill-probability quote choice (order arrival intensity).** For each
+   order, choose join, improve 1¢ or improve 2¢ (when the spread allows) to
+   maximise P(fill) × edge, P(fill) from a logistic model fitted on the
+   first half using only what is known when posting (spread, price, option,
+   hours before tip, open interest at posting). 1 variant, against always
+   improving 1¢, scored on the second half: profit per 100 eligible orders
+   (one contract each, unfilled count zero). Pass: at least 10% above the
+   control with the paired difference's game-clustered t ≥ 2 at flow share
+   1.0, and above control at 0.25.
+
+**Related earlier tests on the same season** (added before running, so the
+multiplicity is visible): a 2¢ minimum edge (`edge2` in the placement study
+and the `no_seller_veto2` paper ledger, both fewer orders and less profit
+per 100 eligible orders); a second cent of price improvement
+(`quote_placement.py`, less profit); posting 2 hours instead of 5 before tip
+(+4.5¢ against +1.4¢ per fill in the decomposition, the `no_seller_late`
+ledger); and cancelling unfilled orders after 30-180 minutes (less profit).
+Tests 2, 3 and 5 overlap with these, so their bars are read as confirmation
+of earlier exploratory results, not as new discoveries. Counting those four,
+this season has now been used for at least 18 variants of these ideas.
+
+Two details settled before running: in test 3, at 2 hours the 0 and 0.5¢
+per hour rules are the same rule, so 5 of the 6 variants are distinct; and
+the trade prints on file start 6 hours before tip, so an order posted 6 or
+more hours before can only fill from then on.
+
+Results will be appended below this plan without editing it.
+
+## 2026-10-21: Market-making models applied to the NO seller (results)
+
+*Simulated and in-sample (2025-26, the season the v5 rules were chosen on).
+Run once as planned above, `python -m research.article_tests`; tables in
+`outputs/research/article_tests.md`. 14 variants as registered (13
+distinct); with the four earlier related tests, at least 18 on this season.
+None passed its bar, so nothing changes in the rules.*
+
+Checks before reading the results: the season loop reproduces
+`fill_sizing_replay.simulate` exactly ($481.04 under the v5-like rules), and
+orders rebuilt from hourly candles at 5 hours reproduce all 48,868 original
+5-hour orders (price, posting time and traded-through volume). An
+independent recomputation (written without this module) matched the season
+P&L, the decomposition and test 5's control exactly. Its review led to three
+small fixes before this entry, none of which moved a pass/fail result: open
+interest missing at posting is now filled from the first half only (test 5,
+no number changed), and the nightly variance ratio below is now measured
+around the average result rather than the model's edge (2.3 became 1.7).
+
+**A caveat that matters for every test.** Among filled replay orders, the
+median volume traded through our price was 164 contracts, so giving each
+contract a 25% chance of reaching us (flow share 0.25) rarely changes
+whether a one-contract order fills (fills fall only 5%). The 0.25 runs are
+therefore not a real stress test for one-contract orders. The real unknown
+is queue position, which the replay does not model. In public Kalshi
+snapshots from 20-21 October 2026 (2-6 hours before tip), 61% of the rungs
+with a two-book sportsbook line, the only ones v5 trades, had a 1¢ spread,
+where an order can only join the queue.
+
+1. **Where the profit per filled contract comes from** (v5-like caps, flow
+   share 1.0; 0.25 in brackets). 14,478 filled contracts made +3.32¢ each
+   (t 6.10) [13,726, +3.31¢]. That splits exactly into:
+   - entry edge, the model's fair value minus our price: +6.40¢ [+6.42¢];
+   - model error, measured on the orders that did not fill: −5.10¢
+     [−4.90¢]. Picking orders where the model disagrees with the market
+     picks the model's own mistakes, so about 5¢ of the stated edge is not
+     real;
+   - selection by the fill, filled minus unfilled outcomes: **+2.02¢,
+     t 2.96** [+1.79¢, t 2.66]. Fills were *favourable*, not adverse: the
+     orders YES buyers took did better than the ones they left. Across all
+     53,549 orders with no caps: +2.35¢ (t 4.87).
+   - By placement, the favourable selection belongs to the orders one cent
+     inside the spread: +2.62¢ (t 3.56) among v5-like placed orders, +2.85¢
+     (t 5.46) across all orders. Orders that joined the NO bid got none:
+     −1.54¢ (t −1.01) placed, +0.27¢ (t 0.26) across all orders. A joined
+     order fills only when YES trades *through* its price, which tends to
+     follow news against NO (the textbook adverse selection), so it loses
+     the benefit of being filled by fans at the ask. Joined orders also earned less
+     per filled contract (+2.81¢, t 2.19, 1,473 fills) than improving ones
+     (+3.38¢, t 6.02, 13,005 fills). They were 13% of the replay's
+     orders; this season most rungs v5 can trade have a 1¢ spread (above),
+     so joining is far more common live.
+   - Inventory (holding to settlement has no expected cost, only risk):
+     results of filled contracts in the same game correlate at 0.06; with
+     about 21 fills per game that makes the variance 2.2 times what
+     independent contracts would give (design effect 2.18), and nightly P&L
+     varies 1.7 times as much as independent contracts would. This is the
+     900 → 1,900 fills arithmetic in `CLAUDE.md`.
+   - The fill rate did not depend on the edge: 61% for 0-3¢ and for 3-15¢.
+
+2. **Minimum edge: fails at every level.** Cents per contract rise with the
+   minimum (+3.32¢ at 0¢ to +3.69¢ at 4¢), but the orders lost cost more:
+   season P&L $481 (0¢), $472 (1¢), $445 (2¢), $413 (3¢), $375 (4¢) at flow
+   share 1.0, the same order at 0.25 and in both halves. Agrees with the
+   earlier `edge2` and `no_seller_veto2` results.
+
+3. **Posting time: fails.** On the same markets, rebuilt 2, 4, 5 and 6
+   hours before tip (control 5 hours, $431 at 1.0, $412 at 0.25): 2 hours
+   $431 / $408; 4 hours $463 / $433 (+7% and +5%, short of the 10% bar, and
+   below control in the first half); 6 hours $295 / $286 (2.3¢ per
+   contract against 3.2¢). Asking for 0.5¢ more edge per hour made 4 and 6
+   hours worse. The earlier "2 hours before tip made +4.5¢ against +1.4¢ at
+   5 hours" does **not** hold on the same markets (+3.27¢ against +3.15¢
+   here): it compared different markets, those first priced 2 hours before
+   tip having opened late. Caveat from the plan: the replay puts every order
+   first in line whenever it was posted, so posting earlier gets no queue
+   credit here.
+
+4. **Same-game inventory penalty: fails.** Nightly Sharpe ratio 0.48 with no
+   penalty; 0.48, 0.44 and 0.37 at 0.1, 0.25 and 0.5¢ per order already in
+   the game, with season P&L $458, $355 and $250 against $481 (flow share
+   1.0; 0.25 the same). With a correlation of 0.06, the extra orders in a
+   game add more expected profit than risk.
+
+5. **Choosing join / improve 1¢ / improve 2¢ by P(fill) × edge: fails, and
+   loses.** Second half, 22,135 eligible orders: −11.8¢ per 100 orders
+   against always improving 1¢ (t −2.68) at flow share 1.0; −14.6¢
+   (t −3.39) at 0.25. The fill model was well calibrated (join predicted 35%,
+   actual 34%; improve 1¢ 64% vs 67%), so the loss is what the score leaves
+   out: it treats the edge at entry as the profit if filled, and joined
+   fills are the adversely selected ones (point 1). It chose to join on 29%
+   of orders.
+
+**What carries forward.** The rules stay as they are (0¢ minimum, one cent
+inside when the spread allows, no same-game penalty, 2-6 hours). The useful
+lesson is Glosten-Milgrom's: profit is the edge at entry plus what being
+filled says about the outcome. In the replay that second part was about
++2.6¢ to +2.9¢ for improving orders and about zero (−1.5¢ to +0.3¢) for
+joined ones, and this season most rungs v5 trades allow only joining. The
+pre-registered live adverse-selection check (this log,
+2026-10-21) should therefore also be read separately for joined and
+improving orders at the v5 checkpoint, as a description, not a new test.
