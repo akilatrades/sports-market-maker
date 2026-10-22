@@ -2123,3 +2123,47 @@ filled says about the outcome. In the replay that second part was about
 joined ones, and live orders are mostly joined. The pre-registered live adverse-selection check (this log,
 2026-10-21) should therefore also be read separately for joined and
 improving orders at the v5 checkpoint, as a description, not a new test.
+
+## 2026-10-22: Where is the NO edge thicker? (exploratory plan)
+
+*Exploratory and in-sample (2025-26), written before running. Nothing here
+changes the live rules. Anything promising becomes its own written plan,
+tested forward on 2026-27 beside the unchanged v5 rules.*
+
+Live v5 orders carry about 1-1.5¢ of estimated edge against the sportsbooks
+(21 October). Four places the edge could be thicker:
+
+**Common setup** (A and B, `research/explore_edge.py`): the replay orders
+under the v5 filter (one contract, 0-15¢ of model edge, NO 5-95¢), no caps
+(so caps do not distort the slices), fills as if first in line (flow share
+1.0) and at 0.25 (expected value over the thinning), game-clustered t,
+halves split at 2026-02-09. A slice counts as **promising** only if its
+cents per filled contract beat the rest of the season with a clustered t of
+at least 2 for the difference, the difference is positive in both halves,
+and it has at least 1,000 fills.
+
+- **A. Who is on the other side:** NO price (6 bands); line minus the
+  model's mean (5 quintiles); the market's trading volume before posting (5
+  quintiles); the whole game's prop volume before posting, a stand-in for
+  national TV and star power (5 quintiles); tip-off time (3); weekend or
+  weekday (2); regular season, play-in or playoffs (3); stat (4).
+- **B. Being first in line:** spread at posting (1, 2, 3-4, 5¢+: 4 bins);
+  market age at posting (under 24, 24-48, over 48 hours: 3 bins); and,
+  descriptively, the share of markets with a spread of 2¢ or more at 2-6
+  hours before tip.
+- **C. Ladder prices from the sportsbooks** (`research/explore_ladder.py`):
+  a count distribution fitted to every sportsbook line for the player, stat
+  and game (negative binomial and normal: 2 variants), pricing every Kalshi
+  rung. Judged on calibration against outcomes (log loss) beside the stat
+  model and Kalshi's mid, and on replay profit for rungs that lack a
+  two-book exact line, in the 151 games with sportsbook history.
+- **D. Other markets** (`research/explore_markets.py`): the 2025-26 combo
+  markets (double-double and triple-double) re-scored with game-clustered t
+  and halves; and the cross-market scan re-scored with a time holdout (rank
+  series on the earlier half of their markets, test the top 10 on the later
+  half).
+
+Variant count: 40 slice bins (A, B), 2 (C), 12 (D): 54 in all. At t ≥ 2,
+about 1 of the 40 slice bins would look promising by chance alone.
+
+Results will be appended below this plan without editing it.
