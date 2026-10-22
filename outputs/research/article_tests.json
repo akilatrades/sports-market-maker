@@ -19,7 +19,7 @@
    "design_effect": 2.1789696582757645,
    "fills_per_game_weighted": 20.97347699958558,
    "within_game_correlation": 0.05902676125444891,
-   "nightly_variance_vs_independent": 2.2714673779410246
+   "nightly_variance_vs_independent": 1.743651531358769
   },
   "0.25": {
    "filled_contracts": 13725.7,
@@ -39,13 +39,17 @@
    "design_effect": 2.1502759879407325,
    "fills_per_game_weighted": 20.070435760895435,
    "within_game_correlation": 0.06031737919771035,
-   "nightly_variance_vs_independent": 2.2103620634415453
+   "nightly_variance_vs_independent": 1.7085893436087543
   },
   "all_orders_uncapped": {
    "orders": 53549,
    "fill_rate": 0.6247175484136025,
    "adverse_selection": 2.3487464625497076,
-   "t_adverse_selection": 4.872665091669224
+   "t_adverse_selection": 4.872665091669224,
+   "adverse_selection_improved": 2.848600890652091,
+   "t_adverse_selection_improved": 5.460420512134691,
+   "adverse_selection_joined": 0.2650303331493711,
+   "t_adverse_selection_joined": 0.26433305309260824
   }
  },
  "2_min_edge": {

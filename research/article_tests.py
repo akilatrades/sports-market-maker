@@ -128,7 +128,8 @@ def rebuild(base, candles, trades, hours):
     last = c.drop_duplicates("ticker", keep="last")
     last = last[["ticker", "end_ts", "yes_bid", "yes_ask", "open_interest"]]
     drop = ["end_ts", "yes_bid", "yes_ask", "price", "improved", "yes_level"]
-    drop += ["edge", "pnl_c", "through", "open_interest"]
+    drop += ["edge", "pnl_c", "through", "open_interest", "hours_before", "filled"]
+    drop += ["filled_contracts", "pnl_if_filled", "pnl_no_fee", "model_edge"]
     q = base.drop(columns=[c for c in drop if c in base]).merge(last, on="ticker")
     spread = (q.yes_ask - q.yes_bid).round(4)
     q = q[(q.yes_bid > 0) & (q.yes_ask < 1) & (spread > 0)].copy()
@@ -253,9 +254,9 @@ def correlation(placed, nights):
     sizes = f.groupby("game_id").size()
     deff = float((by_game**2).sum() / (r**2).sum())
     m_w = float((sizes**2).sum() / sizes.sum())
-    # Nightly swings around the model's expectation, against the sum of each
-    # contract's own variance (what independent contracts would give).
-    expected = (f.edge).groupby(f.day.to_numpy()).sum()
+    # Nightly swings around the average result per contract, against the sum
+    # of each contract's own variance (what independent contracts would give).
+    expected = f.groupby(f.day.to_numpy()).size() * f.pnl_c.mean()
     var_alone = (f.p_model * (1 - f.p_model)).groupby(f.day.to_numpy()).sum()
     swing = ((nights.reindex(expected.index) - expected) ** 2).sum()
     return {
@@ -313,6 +314,11 @@ def decomposition(orders, u, split):
         "adverse_selection": 100 * gap,
         "t_adverse_selection": t_gap,
     }
+    for kind, mask in (("improved", orders.improved), ("joined", ~orders.improved)):
+        m = orders[mask]
+        g, tg = clustered_difference(m.p_model - m.over, m.through >= 1, m.game_id)
+        out["all_orders_uncapped"][f"adverse_selection_{kind}"] = 100 * g
+        out["all_orders_uncapped"][f"t_adverse_selection_{kind}"] = tg
     return out
 
 
@@ -429,8 +435,8 @@ def option_rows(base, trades, candles):
     return q
 
 
-def features(q):
-    oi = q.open_interest.fillna(q.open_interest.median())
+def features(q, oi_fill):
+    oi = q.open_interest.fillna(oi_fill)
     return np.column_stack(
         [
             q.option.eq("improve1"),
@@ -453,8 +459,11 @@ def quote_choice_test(base, trades, candles, u, split):
         filled = fill_matrix(q, share, u).mean(
             axis=1
         )  # per-row fill, averaged over draws
-        beta, _ = clustered_logit(filled[first], features(q[first]), q.game_id[first])
-        x = np.column_stack([np.ones(len(q)), features(q)])
+        oi_fill = q.open_interest[first].median()  # first half only
+        beta, _ = clustered_logit(
+            filled[first], features(q[first], oi_fill), q.game_id[first]
+        )
+        x = np.column_stack([np.ones(len(q)), features(q, oi_fill)])
         p_hat = 1 / (1 + np.exp(-x @ beta))
         test = q[~first].assign(p_hat=p_hat[~first], fill=filled[~first])
         test["score"] = test.p_hat * test.edge
@@ -541,7 +550,7 @@ def report(results):
         "",
         "## 1. Where the profit per filled contract comes from (cents)",
         "",
-        "| Flow share | Filled | ¢ per contract | Entry edge | Model error (unfilled) | Adverse selection (filled − unfilled) | t | Design effect | Within-game corr. |",
+        "| Flow share | Filled | ¢ per contract | Entry edge | Model error (unfilled) | Fill selection (filled − unfilled; + = good for us) | t | Design effect | Within-game corr. |",
         "|---|---:|---:|---:|---:|---:|---:|---:|---:|",
     ]
     for s in map(str, SHARES):
@@ -556,8 +565,17 @@ def report(results):
     lines += [
         "",
         (
-            f"All {a['orders']:,} replay orders, no caps: adverse selection "
-            f"{a['adverse_selection']:+.2f}¢ (t {a['t_adverse_selection']:.2f})."
+            f"All {a['orders']:,} replay orders, no caps: fill selection "
+            f"{a['adverse_selection']:+.2f}¢ (t {a['t_adverse_selection']:.2f}); "
+            f"improving orders {a['adverse_selection_improved']:+.2f}¢ "
+            f"(t {a['t_adverse_selection_improved']:.2f}), joined orders "
+            f"{a['adverse_selection_joined']:+.2f}¢ "
+            f"(t {a['t_adverse_selection_joined']:.2f}). v5-like placed orders "
+            f"at flow share 1.0: improving "
+            f"{d['1.0']['adverse_selection_improved']:+.2f}¢ "
+            f"(t {d['1.0']['t_adverse_selection_improved']:.2f}), joined "
+            f"{d['1.0']['adverse_selection_joined']:+.2f}¢ "
+            f"(t {d['1.0']['t_adverse_selection_joined']:.2f})."
         ),
         "",
         "## 2. Minimum edge",

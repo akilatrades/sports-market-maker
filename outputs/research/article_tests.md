@@ -6,12 +6,12 @@ trading reaching us (0.25, 10 draws). ✅/❌ = the plan's pass bar.
 
 ## 1. Where the profit per filled contract comes from (cents)
 
-| Flow share | Filled | ¢ per contract | Entry edge | Model error (unfilled) | Adverse selection (filled − unfilled) | t | Design effect | Within-game corr. |
+| Flow share | Filled | ¢ per contract | Entry edge | Model error (unfilled) | Fill selection (filled − unfilled; + = good for us) | t | Design effect | Within-game corr. |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|
 | 1.0 | 14,478 | +3.32 | +6.40 | -5.10 | +2.02 | 2.96 | 2.18 | 0.059 |
 | 0.25 | 13,726 | +3.31 | +6.42 | -4.90 | +1.79 | 2.66 | 2.15 | 0.060 |
 
-All 53,549 replay orders, no caps: adverse selection +2.35¢ (t 4.87).
+All 53,549 replay orders, no caps: fill selection +2.35¢ (t 4.87); improving orders +2.85¢ (t 5.46), joined orders +0.27¢ (t 0.26). v5-like placed orders at flow share 1.0: improving +2.62¢ (t 3.56), joined -1.54¢ (t -1.01).
 
 ## 2. Minimum edge
 
