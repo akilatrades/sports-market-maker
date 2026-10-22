@@ -62,6 +62,8 @@ directly: that comparison is the main point of the pilot.
   market settles. A fill whose side or price disagrees with the journal, or a
   settlement whose payout disagrees with the fills, blocks new orders for all
   three bots until it is explained. Watch the first settled market closely.
+  The journal keeps its own copy of every fill and settlement, so the count
+  does not depend on how long Kalshi keeps listing old fills.
 - Worst plausible case: the $15 own stop is reached and every open position
   then loses: about $15 + $25 = $40.
 
@@ -74,7 +76,11 @@ directly: that comparison is the main point of the pilot.
   reads find no such order in any status (resting, filled or cancelled).
   **Any other failure halts all three bots** until the owner runs
   `setup_spread_maker.sh --reconcile` (below).
-- A pass that halts first cancels the bot's own resting quotes.
+- A pass that halts first cancels the bot's own resting quotes (found by
+  journal or by its `smm-spread-` client-id prefix, so this works even if
+  the journal is damaged). A brief read failure (timeout, HTTP 429 or 5xx)
+  is not a halt: the quotes stay, expire on their own, and the next pass
+  checks again.
 - A quote that turns out to have filled just as the bot cancels it is not
   replaced in that pass, so the one-contract inventory cap holds.
 - No new order after 110 seconds from the start of a pass (waiting for the

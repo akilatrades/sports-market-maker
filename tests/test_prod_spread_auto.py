@@ -827,3 +827,87 @@ def test_status_reports_live_and_shadow_apart(world, capsys):
     out = capsys.readouterr().out
     assert "LIVE realized P&L (from fills): today $+0.10" in out
     assert "SHADOW (simulated" in out
+
+
+def test_a_brief_read_failure_keeps_our_quotes(world):
+    run(world)
+    ex = world["exchange"]
+
+    def throttled():
+        raise TradingError("GET /portfolio/positions -> HTTP 429: too many requests")
+
+    ex.positions = throttled
+    with pytest.raises(TradingError, match="429"):
+        run(world, NOW + timedelta(minutes=10))
+    assert len(ex.resting) == 2 and not ex.canceled  # they expire on their own
+
+
+def test_a_failed_shard_check_stops_placing_without_a_halt(world):
+    calls = {"n": 0}
+
+    def flaky(client, ticker, cost):
+        calls["n"] += 1
+        if calls["n"] == 2:
+            raise OSError("timed out")
+        return 1
+
+    report, _ = bot.pass_live(
+        world["exchange"], ENV, NOW, world["dir"], world["public"], require_shard=flaky
+    )
+    assert report["accepted"] == 1 and report["shard_check_failed"] == 1
+    bot.records(journal(world))  # nothing ambiguous: the second order was never sent
+
+
+def test_deadline_is_checked_again_just_before_the_order(world, monkeypatch):
+    checks = iter([False, True])
+    monkeypatch.setattr(bot, "out_of_time", lambda deadline: next(checks, True))
+    report, _ = run(world)
+    assert report["out_of_time"] == 1 and report["placed"] == 0
+    assert [e for e in journal(world) if e["event"] == "intent"] == []
+
+
+def test_kill_works_even_with_a_torn_journal(world):
+    run(world)
+    ex = world["exchange"]
+    ex.resting.append(
+        {"order_id": "nba-1", "ticker": "KXNBAPTS-X", "client_order_id": "smm-0a1b"}
+    )
+    path = world["dir"] / "journal.jsonl"
+    path.write_text(path.read_text() + '{"event": "intent", "client')  # torn
+    before = path.read_text()
+    assert bot.cancel_owned_on_kill(ex, path) == 2
+    assert [o["order_id"] for o in ex.resting] == ["nba-1"]  # NBA's order stays
+    assert path.read_text() == before  # nothing appended to the damaged journal
+
+
+def test_ledger_keeps_fills_the_exchange_no_longer_lists(world, monkeypatch):
+    monkeypatch.setattr(P, "DAILY_LOSS_STOP", 0.10)
+    run(world)
+    ex = world["exchange"]
+    fill_placed(world, 0, 5)
+    ex.positions_ = [{"market_ticker": TICKER, "position_fp": "1"}]
+    world["quotes"][TICKER] = market(bid=0.15, ask=0.27)
+    run(world, NOW + timedelta(minutes=10))  # journals the YES fill
+    fill_placed(world, len(ex.placed) - 1, 12)  # the NO at 74c
+    ex.positions_ = []
+    ex.fills_ = ex.fills_[1:]  # the old YES fill has aged out of the listing
+    report, _ = run(world, NOW + timedelta(minutes=20))
+    assert report["decision"] == "spread_loss_stop"
+    assert report["daily"] == pytest.approx(-0.15)
+
+
+def test_reconcile_never_calls_a_found_order_absent(world):
+    ex = world["exchange"]
+    original = ex.place
+
+    def lost_reply(order):
+        original(order)
+        ex.history["executed"].append({**ex.resting.pop(), "order_id": None})
+        raise TimeoutError("read timed out")
+
+    ex.place = lost_reply
+    with pytest.raises(TradingError, match="Ambiguous"):
+        run(world)
+    result = bot.reconcile(ex, world["dir"] / "journal.jsonl", NOW + timedelta(hours=1))
+    assert result["found_without_order_id_check_by_hand"] == 1
+    assert result["bots_can_trade"] is False

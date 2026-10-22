@@ -134,6 +134,10 @@ def spread_ledger(events, fills, settlements, now):
     payout minus their price then. Fees count when charged. The fill's side
     and price must agree with the journaled order; anything that cannot be
     accounted for halts instead of being skipped.
+
+    The bot's journal keeps a copy of every fill and settlement it has seen,
+    merged here with the exchange's lists (duplicates removed), so a fill or
+    settlement that ages out of the exchange's listing is never forgotten.
     """
     from live.nfl_policy import settlement_accounting
 
@@ -146,8 +150,21 @@ def spread_ledger(events, fills, settlements, now):
         if e.get("event") == "accepted" and e.get("client_order_id") in intents
     }
     tickers = {i.get("ticker") for i in intents.values()}
+    journal_fills = [
+        {**e, "created_time": e.get("utc")} for e in events if e.get("event") == "fill"
+    ]
+    journal_settlements = [
+        {
+            "market_ticker": e.get("ticker"),
+            "settled_time": e.get("utc"),
+            "market_result": e.get("market_result"),
+            "revenue_dollars": e.get("revenue_dollars"),
+        }
+        for e in events
+        if e.get("event") == "settlement"
+    ]
     rows = {}
-    for fill in fills:
+    for fill in [*journal_fills, *fills]:
         intent = orders.get(str(fill.get("order_id")))
         if intent is None:
             continue
@@ -196,7 +213,7 @@ def spread_ledger(events, fills, settlements, now):
         if left > 1e-9:
             queue.append((row["side"], row["price"], left))
     seen, settled = {}, set()
-    for item in settlements:
+    for item in [*journal_settlements, *settlements]:
         if not isinstance(item, dict):
             raise TradingError("Malformed settlement: HALT")
         ticker = item.get("market_ticker") or item.get("ticker")

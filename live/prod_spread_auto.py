@@ -612,21 +612,8 @@ def record_execution(journal, events, owned_orders, fills, settlements, tickers)
 
 
 def journal_ledger(events, now):
-    """The fill ledger rebuilt from the journal's copies (no exchange reads)."""
-    fills = [
-        {**e, "created_time": e.get("utc")} for e in events if e.get("event") == "fill"
-    ]
-    settlements = [
-        {
-            "market_ticker": e.get("ticker"),
-            "settled_time": e.get("utc"),
-            "market_result": e.get("market_result"),
-            "revenue_dollars": e.get("revenue_dollars"),
-        }
-        for e in events
-        if e.get("event") == "settlement"
-    ]
-    return shared.spread_ledger(events, fills, settlements, now)
+    """The fill ledger from the journal's own copies only (no exchange reads)."""
+    return shared.spread_ledger(events, [], [], now)
 
 
 def is_http_4xx(error):
@@ -643,8 +630,18 @@ def find_order(client, ticker, client_order_id):
     return None
 
 
-def place_quote(client, journal, market, side, price, now, require_shard):
-    """Journal, place, and record one post-only quote. Returns the outcome."""
+CLIENT_ID_PREFIX = "smm-spread-"  # NBA/NFL ids are smm-<uuid4>: never "smm-s..."
+
+
+def place_quote(
+    client, journal, market, side, price, now, require_shard, deadline=None
+):
+    """Journal, place, and record one post-only quote. Returns the outcome.
+
+    Nothing before the intent sends an order, so a failed shard check only
+    stops this pass's placements ("shard_check_failed"); from the intent on,
+    anything but a proven outcome is an unknown outcome.
+    """
     order = Order(
         ticker=market["ticker"],
         side=side,
@@ -654,15 +651,19 @@ def place_quote(client, journal, market, side, price, now, require_shard):
             (now + timedelta(minutes=P.ORDER_LIFETIME_MINUTES)).timestamp()
         ),
         post_only=True,
-        client_order_id=f"smm-spread-{uuid.uuid4()}",
+        client_order_id=f"{CLIENT_ID_PREFIX}{uuid.uuid4()}",
     )
     cost = round(P.CONTRACTS * price / 100, 2)
     try:
         order.exchange_index = require_shard(client, order.ticker, cost)
-    except TradingError as error:
+    except Exception as error:
         if str(error).startswith("SHARD_UNFUNDED_"):
             return "shard_unfunded"
-        raise
+        if isinstance(error, TradingError) and "HALT" in str(error):
+            raise
+        return "shard_check_failed"  # a read failed; no order was sent
+    if out_of_time(deadline):
+        return "out_of_time"
     write_event(
         journal,
         {
@@ -737,10 +738,11 @@ def place_quote(client, journal, market, side, price, now, require_shard):
 
 def fresh_prices(public, ticker, own=()):
     """Our quote prices from a fresh read of the book, without our own quotes."""
-    market = public["fetch_market"](ticker) or {}
+    market = public.get("quote_market", public["fetch_market"])(ticker) or {}
     if market.get("status") not in ("active", "open"):
         return None
-    return quote_prices(*book_quote(public["fetch_orderbook"](ticker), own))
+    book = public.get("quote_orderbook", public["fetch_orderbook"])(ticker)
+    return quote_prices(*book_quote(book, own))
 
 
 # Set by SIGTERM (systemd's timeout): finish the order in flight, place no more.
@@ -765,12 +767,24 @@ def pass_live(client, env, now, state_dir, public, require_shard=None, deadline=
     journal = state_dir / "journal.jsonl"
     try:
         return _pass_live(client, now, journal, public, require_shard, deadline)
-    except Exception:
-        try:
-            cancel_owned_on_kill(client, journal, reason="halt")
-        except Exception:
-            pass  # the original failure is what the owner needs to see
+    except Exception as error:
+        if not transient(error):
+            try:
+                cancel_owned_on_kill(client, journal, reason="halt")
+            except Exception:
+                pass  # the original failure is what the owner needs to see
         raise
+
+
+def transient(error):
+    """A read that timed out or was throttled: quotes stay (they expire on
+    the exchange within 65 minutes) and the next pass checks again. Any
+    other failure, including every ambiguous order, cancels them."""
+    if isinstance(error, OSError):
+        return True
+    return isinstance(error, TradingError) and bool(
+        re.search(r"-> HTTP (429|5[0-9][0-9])\b", str(error))
+    )
 
 
 def _pass_live(client, now, journal, public, require_shard, deadline):
@@ -826,7 +840,11 @@ def _pass_live(client, now, journal, public, require_shard, deadline):
             (intent["side"], int(intent["price_cents"]), float(intent["count"]))
         )
     markets = universe(
-        public["fetch_markets"], now, others, own, public["fetch_orderbook"]
+        public["fetch_markets"],
+        now,
+        others,
+        own,
+        public.get("quote_orderbook", public["fetch_orderbook"]),
     )
     by_ticker = {m["ticker"]: m for m in markets}
     positions = state["positions"]
@@ -898,10 +916,17 @@ def _pass_live(client, now, journal, public, require_shard, deadline):
             continue
         # The pass start time: expirations are then a little early, never late.
         outcome = place_quote(
-            client, journal, by_ticker[ticker], side, price, now, require_shard
+            client,
+            journal,
+            by_ticker[ticker],
+            side,
+            price,
+            now,
+            require_shard,
+            deadline,
         )
         report[outcome] += 1
-        if outcome == "shard_unfunded":
+        if outcome in ("shard_unfunded", "shard_check_failed", "out_of_time"):
             break
         placed += 1
         if outcome == "accepted":
@@ -921,19 +946,29 @@ def _pass_live(client, now, journal, public, require_shard, deadline):
 
 def cancel_owned_on_kill(client, journal, reason="kill"):
     """Cancel every resting order this bot provably placed (by order id or
-    client id in its journal); leave every other order alone."""
-    events = load_events(journal)
-    ids = {str(e["order_id"]) for e in events if e.get("event") == "accepted"}
-    cids = {e["client_order_id"] for e in events if e.get("event") == "intent"}
+    client id in its journal, or this bot's client-id prefix); leave every
+    other order alone. Works even when the journal cannot be read: then it
+    cancels by prefix and writes nothing to the damaged journal."""
+    try:
+        events = load_events(journal)
+    except TradingError:
+        events = None
+    ids = {str(e["order_id"]) for e in events or [] if e.get("event") == "accepted"}
+    cids = {e["client_order_id"] for e in events or [] if e.get("event") == "intent"}
     now = datetime.now(UTC)
     canceled = 0
     for item in client.orders("resting"):
+        cid = str(item.get("client_order_id") or "")
         if (
             str(item.get("order_id")) not in ids
-            and item.get("client_order_id") not in cids
+            and cid not in cids
+            and not cid.startswith(CLIENT_ID_PREFIX)
         ):
             continue
-        cancel_order(client, journal, item["order_id"], item["ticker"], reason, now)
+        if events is None:
+            client.cancel(item["order_id"], ticker=item["ticker"])
+        else:
+            cancel_order(client, journal, item["order_id"], item["ticker"], reason, now)
         canceled += 1
     print(f"SPREAD MAKER {reason.upper()}: canceled {canceled} owned resting orders")
     return canceled
@@ -954,7 +989,10 @@ def reconcile(client, journal, now):
     for intent in sorted(pending, key=lambda i: i["utc"]):
         cid = intent["client_order_id"]
         found = find_order(client, intent["ticker"], cid)
-        if found is not None and found.get("order_id"):
+        if found is not None and not found.get("order_id"):
+            summary["found_without_order_id_check_by_hand"] += 1
+            continue
+        if found is not None:
             write_event(
                 journal,
                 {
@@ -994,12 +1032,31 @@ def reconcile(client, journal, now):
 # ------------------------------------------------------------------ main
 
 
+def _quick(path):
+    """One public read with a single attempt: used while holding the account
+    lock, where a slow read must not eat into the other bots' time."""
+    return kalshi_api.get_json(path, {}, retries=1)
+
+
+def quote_market(ticker):
+    payload = _quick(f"/markets/{ticker}") or {}
+    return payload.get("market")
+
+
+def quote_orderbook(ticker):
+    payload = _quick(f"/markets/{ticker}/orderbook") or {}
+    book = payload.get("orderbook_fp")
+    return book if isinstance(book, dict) else None
+
+
 def public_api():
     return {
         "fetch_markets": kalshi_api.fetch_markets,
-        "fetch_market": kalshi_api.fetch_market,
+        "fetch_market": kalshi_api.fetch_market,  # shadow results (any age)
         "fetch_orderbook": kalshi_api.fetch_orderbook,
         "fetch_trades": kalshi_api.fetch_trades,
+        "quote_market": quote_market,  # live quoting, under the lock
+        "quote_orderbook": quote_orderbook,
     }
 
 
