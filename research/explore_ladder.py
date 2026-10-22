@@ -249,6 +249,9 @@ def fit_all(book, split=SPLIT):
         one = info[info.n_lines == 1].copy()
         for family in FAMILIES:
             fixed = {s: v["shape"] for s, v in shapes[family].items()}
+            missing = set(one.stat) - set(fixed)
+            if missing:
+                raise ValueError(f"no 3+ line ladders before {split} for {missing}")
             f = _fit_groups(single, family, fixed=fixed).rename(
                 columns={
                     "mean": f"{family}_mean",
@@ -587,7 +590,11 @@ def write_markdown(results, path):
         ]
         for s, v in block["sources"].items():
             lines.append(f"| {SOURCES[s]} | {v['log_loss']:.4f} | {v['brier']:.4f} |")
-        lines += ["", "| Paired log loss | A minus B | clustered t |", "|---|---:|---:|"]
+        lines += [
+            "",
+            "| Paired log loss | A minus B | clustered t |",
+            "|---|---:|---:|",
+        ]
         for p in block["paired_log_loss"]:
             lines.append(
                 f"| {SOURCES[p['a']]} − {SOURCES[p['b']]} | {p['a_minus_b']:+.4f} | {p['t']} |"
