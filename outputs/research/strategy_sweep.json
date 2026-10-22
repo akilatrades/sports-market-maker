@@ -1,0 +1,2098 @@
+{
+ "1 NO on every market": {
+  "all": {
+   "fills": 257561.0,
+   "events": 73533,
+   "cents": 0.8521825262471805,
+   "t": 6.686329150903242,
+   "profit_factor": 1.0463365704251055,
+   "total_usd": 2194.8898364275005
+  },
+  "earlier": {
+   "fills": 134873.0,
+   "events": 38773,
+   "cents": 1.0896581482561376,
+   "t": 6.417517022475772,
+   "profit_factor": 1.057913094397976,
+   "total_usd": 1469.6546342975003
+  },
+  "later": {
+   "fills": 122688.0,
+   "events": 34760,
+   "cents": 0.5911215458154018,
+   "t": 3.083239664365112,
+   "profit_factor": 1.0329779530111132,
+   "total_usd": 725.2352021300002
+  },
+  "categories": {
+   "crypto": {
+    "all": {
+     "fills": 110.0,
+     "events": 70,
+     "cents": -2.154545454545455,
+     "t": -0.5018512084734955,
+     "profit_factor": 0.8227374719521315,
+     "total_usd": -2.3700000000000006
+    },
+    "earlier": {
+     "fills": 76.0,
+     "events": 50,
+     "cents": -3.868421052631579,
+     "t": -0.6999884498604028,
+     "profit_factor": 0.7218543046357615,
+     "total_usd": -2.9400000000000004
+    },
+    "later": {
+     "fills": 34.0,
+     "events": 20,
+     "cents": 1.676470588235294,
+     "t": 0.2740877218321396,
+     "profit_factor": 1.2035714285714285,
+     "total_usd": 0.57
+    }
+   },
+   "economics": {
+    "all": {
+     "fills": 3313.0,
+     "events": 843,
+     "cents": 2.464112126471476,
+     "t": 1.7947501133863402,
+     "profit_factor": 1.1967608042242317,
+     "total_usd": 81.63603475
+    },
+    "earlier": {
+     "fills": 1433.0,
+     "events": 346,
+     "cents": 5.204617341242149,
+     "t": 2.3384156308105375,
+     "profit_factor": 1.4134481754191135,
+     "total_usd": 74.5821665
+    },
+    "later": {
+     "fills": 1880.0,
+     "events": 497,
+     "cents": 0.3752057579787235,
+     "t": 0.21883791826975402,
+     "profit_factor": 1.0300792714689968,
+     "total_usd": 7.0538682500000025
+    }
+   },
+   "entertainment": {
+    "all": {
+     "fills": 347.0,
+     "events": 100,
+     "cents": 3.878071541786744,
+     "t": 1.9909203511612215,
+     "profit_factor": 1.454224513818952,
+     "total_usd": 13.456908250000001
+    },
+    "earlier": {
+     "fills": 271.0,
+     "events": 78,
+     "cents": 3.467493819188193,
+     "t": 1.5148514367654227,
+     "profit_factor": 1.3587137940724323,
+     "total_usd": 9.396908250000003
+    },
+    "later": {
+     "fills": 76.0,
+     "events": 22,
+     "cents": 5.342105263157896,
+     "t": 1.5159149481794008,
+     "profit_factor": 2.183673469387755,
+     "total_usd": 4.0600000000000005
+    }
+   },
+   "mentions": {
+    "all": {
+     "fills": 3517.0,
+     "events": 391,
+     "cents": 5.503554165481945,
+     "t": 4.25176107988487,
+     "profit_factor": 1.36933997366764,
+     "total_usd": 193.56
+    },
+    "earlier": {
+     "fills": 3469.0,
+     "events": 383,
+     "cents": 5.501873738829635,
+     "t": 4.201066685902874,
+     "profit_factor": 1.366559115003457,
+     "total_usd": 190.86
+    },
+    "later": {
+     "fills": 48.0,
+     "events": 8,
+     "cents": 5.624999999999999,
+     "t": 0.8633203460258009,
+     "profit_factor": 1.7964601769911506,
+     "total_usd": 2.6999999999999997
+    }
+   },
+   "other": {
+    "all": {
+     "fills": 28376.0,
+     "events": 6671,
+     "cents": 1.2420614189808288,
+     "t": 3.161894656693516,
+     "profit_factor": 1.0787661701033355,
+     "total_usd": 352.44734825
+    },
+    "earlier": {
+     "fills": 5830.0,
+     "events": 1993,
+     "cents": 0.6892354159519725,
+     "t": 0.9437720436748052,
+     "profit_factor": 1.04078156415329,
+     "total_usd": 40.182424749999996
+    },
+    "later": {
+     "fills": 22546.0,
+     "events": 4678,
+     "cents": 1.3850125232857273,
+     "t": 3.033019620097027,
+     "profit_factor": 1.0894922803957285,
+     "total_usd": 312.26492350000007
+    }
+   },
+   "politics": {
+    "all": {
+     "fills": 136.0,
+     "events": 54,
+     "cents": 5.110294117647059,
+     "t": 1.7102231152657321,
+     "profit_factor": 1.453566533968544,
+     "total_usd": 6.95
+    },
+    "earlier": {
+     "fills": 88.0,
+     "events": 31,
+     "cents": 2.4318181818181825,
+     "t": 0.6441259174666587,
+     "profit_factor": 1.2163801820020224,
+     "total_usd": 2.1400000000000006
+    },
+    "later": {
+     "fills": 48.0,
+     "events": 23,
+     "cents": 10.020833333333332,
+     "t": 2.3322114782031425,
+     "profit_factor": 1.8853303883673846,
+     "total_usd": 4.81
+    }
+   },
+   "sports": {
+    "all": {
+     "fills": 221762.0,
+     "events": 65404,
+     "cents": 0.6985910774512768,
+     "t": 5.135692856705303,
+     "profit_factor": 1.0369770445472641,
+     "total_usd": 1549.2095451775003
+    },
+    "earlier": {
+     "fills": 123706.0,
+     "events": 35892,
+     "cents": 0.9340154356276174,
+     "t": 5.307845442712863,
+     "profit_factor": 1.0488682071807987,
+     "total_usd": 1155.4331347975003
+    },
+    "later": {
+     "fills": 98056.0,
+     "events": 29512,
+     "cents": 0.40158318754589223,
+     "t": 1.8855725565360506,
+     "profit_factor": 1.0215736453732185,
+     "total_usd": 393.77641038000013
+    }
+   }
+  },
+  "holdout": {
+   "top_series": [
+    "KXUCLCORNERS",
+    "KXJOBLESSCLAIMS",
+    "KXNATGASD",
+    "KXATPGAMETOTAL",
+    "KXWBCF5SPREAD",
+    "KXIPLFOUR",
+    "KXWBCRFI",
+    "KXIPLSIX",
+    "KXUCLTCORNERS",
+    "KXWTI"
+   ],
+   "later_pooled": {
+    "fills": 468.0,
+    "events": 138,
+    "cents": -2.8183760683760686,
+    "t": -0.9453990403386944,
+    "profit_factor": 0.8235923498729439,
+    "total_usd": -13.190000000000001
+   }
+  },
+  "promising": true,
+  "holdout_promising": false
+ },
+ "2 YES on every market": {
+  "all": {
+   "fills": 136330.0,
+   "events": 53411,
+   "cents": -1.410655323707181,
+   "t": -8.500210850877389,
+   "profit_factor": 0.9246888710745713,
+   "total_usd": -1923.14640281
+  },
+  "earlier": {
+   "fills": 64276.0,
+   "events": 26464,
+   "cents": -0.9224418835957433,
+   "t": -3.8489853399572995,
+   "profit_factor": 0.952972934809278,
+   "total_usd": -592.9087451
+  },
+  "later": {
+   "fills": 72054.0,
+   "events": 26947,
+   "cents": -1.8461676766175366,
+   "t": -8.025235871345963,
+   "profit_factor": 0.8971057284254441,
+   "total_usd": -1330.23765771
+  },
+  "categories": {
+   "crypto": {
+    "all": {
+     "fills": 99.0,
+     "events": 63,
+     "cents": -3.232323232323232,
+     "t": -0.9945007415854944,
+     "profit_factor": 0.6878048780487805,
+     "total_usd": -3.1999999999999993
+    },
+    "earlier": {
+     "fills": 58.0,
+     "events": 39,
+     "cents": -0.7068965517241381,
+     "t": -0.17844582724579564,
+     "profit_factor": 0.9196078431372551,
+     "total_usd": -0.41000000000000014
+    },
+    "later": {
+     "fills": 41.0,
+     "events": 24,
+     "cents": -6.8048780487804885,
+     "t": -1.2952482613968666,
+     "profit_factor": 0.45825242718446607,
+     "total_usd": -2.79
+    }
+   },
+   "economics": {
+    "all": {
+     "fills": 2914.0,
+     "events": 825,
+     "cents": -6.038435595144131,
+     "t": -5.9641709303277235,
+     "profit_factor": 0.5896949845406771,
+     "total_usd": -175.9600132425
+    },
+    "earlier": {
+     "fills": 1148.0,
+     "events": 329,
+     "cents": -6.389875282447735,
+     "t": -3.5575875920513305,
+     "profit_factor": 0.6004281970126778,
+     "total_usd": -73.3557682425
+    },
+    "later": {
+     "fills": 1766.0,
+     "events": 496,
+     "cents": -5.809979898074745,
+     "t": -4.8539863190805175,
+     "profit_factor": 0.5816609774369825,
+     "total_usd": -102.60424499999999
+    }
+   },
+   "entertainment": {
+    "all": {
+     "fills": 254.0,
+     "events": 87,
+     "cents": -1.2615530511811026,
+     "t": -0.520742457334736,
+     "profit_factor": 0.863918769180017,
+     "total_usd": -3.2043447500000006
+    },
+    "earlier": {
+     "fills": 172.0,
+     "events": 55,
+     "cents": -1.7583399709302334,
+     "t": -0.5209787688886729,
+     "profit_factor": 0.8406335091820784,
+     "total_usd": -3.024344750000002
+    },
+    "later": {
+     "fills": 82.0,
+     "events": 32,
+     "cents": -0.21951219512195164,
+     "t": -0.08466056137665583,
+     "profit_factor": 0.9606126914660834,
+     "total_usd": -0.18000000000000033
+    }
+   },
+   "mentions": {
+    "all": {
+     "fills": 2827.0,
+     "events": 379,
+     "cents": -4.480721613017334,
+     "t": -3.1604933624216396,
+     "profit_factor": 0.7745764521640092,
+     "total_usd": -126.67000000000002
+    },
+    "earlier": {
+     "fills": 2787.0,
+     "events": 371,
+     "cents": -4.512737710800143,
+     "t": -3.140618190053624,
+     "profit_factor": 0.7749243902002543,
+     "total_usd": -125.77
+    },
+    "later": {
+     "fills": 40.0,
+     "events": 8,
+     "cents": -2.2500000000000004,
+     "t": -0.5431692493688771,
+     "profit_factor": 0.7124600638977635,
+     "total_usd": -0.9000000000000001
+    }
+   },
+   "other": {
+    "all": {
+     "fills": 15854.0,
+     "events": 5009,
+     "cents": -1.9582235744922418,
+     "t": -3.8622183572404056,
+     "profit_factor": 0.8875540449432219,
+     "total_usd": -310.4567655
+    },
+    "earlier": {
+     "fills": 3536.0,
+     "events": 1521,
+     "cents": -1.4145233455882353,
+     "t": -1.5645118338210688,
+     "profit_factor": 0.9151608767482183,
+     "total_usd": -50.0175455
+    },
+    "later": {
+     "fills": 12318.0,
+     "events": 3488,
+     "cents": -2.114297937976944,
+     "t": -3.531699054206557,
+     "profit_factor": 0.8800584512001377,
+     "total_usd": -260.43922
+    }
+   },
+   "politics": {
+    "all": {
+     "fills": 125.0,
+     "events": 51,
+     "cents": -0.22800000000000098,
+     "t": -0.0800996290478294,
+     "profit_factor": 0.979928163955208,
+     "total_usd": -0.28500000000000125
+    },
+    "earlier": {
+     "fills": 51.0,
+     "events": 20,
+     "cents": 1.7254901960784312,
+     "t": 0.4000322864700196,
+     "profit_factor": 1.1339421613394218,
+     "total_usd": 0.8799999999999999
+    },
+    "later": {
+     "fills": 74.0,
+     "events": 31,
+     "cents": -1.5743243243243252,
+     "t": -0.4160616558326064,
+     "profit_factor": 0.8472932232271593,
+     "total_usd": -1.1650000000000007
+    }
+   },
+   "sports": {
+    "all": {
+     "fills": 114257.0,
+     "events": 46997,
+     "cents": -1.1407356042233738,
+     "t": -6.35072724401673,
+     "profit_factor": 0.9400371840354561,
+     "total_usd": -1303.3702793175003
+    },
+    "earlier": {
+     "fills": 56524.0,
+     "events": 24129,
+     "cents": -0.6036570069483759,
+     "t": -2.377672236104392,
+     "profit_factor": 0.9696572835598605,
+     "total_usd": -341.21108660749996
+    },
+    "later": {
+     "fills": 57733.0,
+     "events": 22868,
+     "cents": -1.666567115358634,
+     "t": -6.555434606687203,
+     "profit_factor": 0.9082877930056985,
+     "total_usd": -962.1591927100002
+    }
+   }
+  },
+  "holdout": {
+   "top_series": [
+    "KXIPLTEAMTOTAL",
+    "KXNBA2HWINNER",
+    "KXUFCDISTANCE",
+    "KXNCAAHOCKEYGAME",
+    "KXCS2MAP",
+    "KXFIBACHAMPLEAGUEGAME",
+    "KXUELSPREAD",
+    "KXCODTOTALMAPS",
+    "KXSWISSLEAGUEGAME",
+    "KXNCAAWBSPREAD"
+   ],
+   "later_pooled": {
+    "fills": 836.0,
+    "events": 349,
+    "cents": -6.315789473684211,
+    "t": -2.3741403090735274,
+    "profit_factor": 0.7344999245738422,
+    "total_usd": -52.8
+   }
+  },
+  "promising": false,
+  "holdout_promising": false
+ },
+ "3 both sides (market making)": {
+  "all": {
+   "fills": 393891.0,
+   "events": 78292,
+   "cents": 0.06898950055154865,
+   "t": 1.1225236476744826,
+   "profit_factor": 1.0066860555604205,
+   "total_usd": 271.7434336175005
+  },
+  "earlier": {
+   "fills": 199149.0,
+   "events": 41015,
+   "cents": 0.44024619214633276,
+   "t": 4.972251512534077,
+   "profit_factor": 1.0401471242874076,
+   "total_usd": 876.7458891975002
+  },
+  "later": {
+   "fills": 194742.0,
+   "events": 37277,
+   "cents": -0.31066870812664954,
+   "t": -3.6450400891754584,
+   "profit_factor": 0.9678275528873408,
+   "total_usd": -605.0024555799998
+  },
+  "categories": {
+   "crypto": {
+    "all": {
+     "fills": 209.0,
+     "events": 91,
+     "cents": -2.665071770334929,
+     "t": -1.3456539582260052,
+     "profit_factor": 0.657441574415744,
+     "total_usd": -5.570000000000001
+    },
+    "earlier": {
+     "fills": 134.0,
+     "events": 61,
+     "cents": -2.5,
+     "t": -0.8390757737110626,
+     "profit_factor": 0.7212978369384359,
+     "total_usd": -3.35
+    },
+    "later": {
+     "fills": 75.0,
+     "events": 30,
+     "cents": -2.96,
+     "t": -1.9467397541954652,
+     "profit_factor": 0.47641509433962265,
+     "total_usd": -2.22
+    }
+   },
+   "economics": {
+    "all": {
+     "fills": 6227.0,
+     "events": 966,
+     "cents": -1.5147579651919063,
+     "t": -3.1893160925239314,
+     "profit_factor": 0.7819144606486598,
+     "total_usd": -94.3239784925
+    },
+    "earlier": {
+     "fills": 2581.0,
+     "events": 395,
+     "cents": 0.0475163989732665,
+     "t": 0.06239724451571318,
+     "profit_factor": 1.007056044173597,
+     "total_usd": 1.2263982575000085
+    },
+    "later": {
+     "fills": 3646.0,
+     "events": 571,
+     "cents": -2.6206905307185955,
+     "t": -4.377122228494797,
+     "profit_factor": 0.6306530988709509,
+     "total_usd": -95.55037675
+    }
+   },
+   "entertainment": {
+    "all": {
+     "fills": 601.0,
+     "events": 120,
+     "cents": 1.7059173876871878,
+     "t": 2.7362547570418,
+     "profit_factor": 1.446942022224771,
+     "total_usd": 10.252563499999999
+    },
+    "earlier": {
+     "fills": 443.0,
+     "events": 84,
+     "cents": 1.4385019187358916,
+     "t": 1.9069711251572574,
+     "profit_factor": 1.3162663139805093,
+     "total_usd": 6.3725635
+    },
+    "later": {
+     "fills": 158.0,
+     "events": 36,
+     "cents": 2.4556962025316458,
+     "t": 2.356957074104637,
+     "profit_factor": 2.39068100358423,
+     "total_usd": 3.8800000000000003
+    }
+   },
+   "mentions": {
+    "all": {
+     "fills": 6344.0,
+     "events": 400,
+     "cents": 1.0543820933165196,
+     "t": 2.9516872075142557,
+     "profit_factor": 1.179884361973914,
+     "total_usd": 66.89
+    },
+    "earlier": {
+     "fills": 6256.0,
+     "events": 391,
+     "cents": 1.0404411764705883,
+     "t": 2.880556354132803,
+     "profit_factor": 1.1775940629177923,
+     "total_usd": 65.09
+    },
+    "later": {
+     "fills": 88.0,
+     "events": 9,
+     "cents": 2.045454545454545,
+     "t": 0.9737866854596257,
+     "profit_factor": 1.3370786516853932,
+     "total_usd": 1.7999999999999998
+    }
+   },
+   "other": {
+    "all": {
+     "fills": 44230.0,
+     "events": 7141,
+     "cents": 0.09493688164141995,
+     "t": 0.5623371201895078,
+     "profit_factor": 1.0115508305511711,
+     "total_usd": 41.990582750000044
+    },
+    "earlier": {
+     "fills": 9366.0,
+     "events": 2243,
+     "cents": -0.1050087630792226,
+     "t": -0.29709729004029833,
+     "profit_factor": 0.9887421554240279,
+     "total_usd": -9.835120749999989
+    },
+    "later": {
+     "fills": 34864.0,
+     "events": 4898,
+     "cents": 0.14865105409591572,
+     "t": 0.7745795159434872,
+     "profit_factor": 1.018766120870258,
+     "total_usd": 51.82570350000006
+    }
+   },
+   "politics": {
+    "all": {
+     "fills": 261.0,
+     "events": 67,
+     "cents": 2.553639846743295,
+     "t": 1.4249323419622966,
+     "profit_factor": 1.4180780328691502,
+     "total_usd": 6.664999999999999
+    },
+    "earlier": {
+     "fills": 139.0,
+     "events": 33,
+     "cents": 2.1726618705035974,
+     "t": 1.1489669813339325,
+     "profit_factor": 1.3296943231441047,
+     "total_usd": 3.0200000000000005
+    },
+    "later": {
+     "fills": 122.0,
+     "events": 34,
+     "cents": 2.987704918032786,
+     "t": 0.9385030208202606,
+     "profit_factor": 1.5374520790327337,
+     "total_usd": 3.644999999999999
+    }
+   },
+   "sports": {
+    "all": {
+     "fills": 336019.0,
+     "events": 69507,
+     "cents": 0.07316231101812713,
+     "t": 1.0824066153862333,
+     "profit_factor": 1.0068008107336435,
+     "total_usd": 245.83926586000058
+    },
+    "earlier": {
+     "fills": 180230.0,
+     "events": 37808,
+     "cents": 0.45176832280419477,
+     "t": 4.775966943581034,
+     "profit_factor": 1.0399460316326337,
+     "total_usd": 814.2220481900004
+    },
+    "later": {
+     "fills": 155789.0,
+     "events": 31699,
+     "cents": -0.36484140878367527,
+     "t": -3.785851440609496,
+     "profit_factor": 0.9639476184516731,
+     "total_usd": -568.3827823299998
+    }
+   }
+  },
+  "holdout": {
+   "top_series": [
+    "KXIPLTEAMTOTAL",
+    "KXWBCF5SPREAD",
+    "KXBALGAME",
+    "KXIPLSIX",
+    "KXNATGASD",
+    "KXATPGAMETOTAL",
+    "KXIPLFOUR",
+    "KXATPTOTALSETS",
+    "KXJOBLESSCLAIMS",
+    "KXNCAAHOCKEYGAME"
+   ],
+   "later_pooled": {
+    "fills": 619.0,
+    "events": 122,
+    "cents": 0.1017770597738286,
+    "t": 0.06326341568759115,
+    "profit_factor": 1.0087475701194113,
+    "total_usd": 0.629999999999999
+   }
+  },
+  "promising": false,
+  "holdout_promising": false
+ },
+ "4 favourite side (80c+)": {
+  "all": {
+   "fills": 63393.0,
+   "events": 23677,
+   "cents": 0.5516172601549071,
+   "t": 3.0185125031435476,
+   "profit_factor": 1.0602670741686202,
+   "total_usd": 349.68672973000025
+  },
+  "earlier": {
+   "fills": 28671.0,
+   "events": 10951,
+   "cents": 0.8773616234086712,
+   "t": 3.1506818139257344,
+   "profit_factor": 1.0939858004781944,
+   "total_usd": 251.54835104750012
+  },
+  "later": {
+   "fills": 34722.0,
+   "events": 12726,
+   "cents": 0.28264033950377326,
+   "t": 1.168762440965832,
+   "profit_factor": 1.0313958998972457,
+   "total_usd": 98.13837868250016
+  },
+  "categories": {
+   "crypto": {
+    "all": {
+     "fills": 76.0,
+     "events": 52,
+     "cents": 0.10526315789473707,
+     "t": 0.03153321126646718,
+     "profit_factor": 1.0160965794768613,
+     "total_usd": 0.08000000000000018
+    },
+    "earlier": {
+     "fills": 49.0,
+     "events": 35,
+     "cents": -3.36734693877551,
+     "t": -0.6664987209005657,
+     "profit_factor": 0.6680080482897384,
+     "total_usd": -1.65
+    },
+    "later": {
+     "fills": 27.0,
+     "events": 17,
+     "cents": 6.407407407407409,
+     "t": 7.651041500993184,
+     "profit_factor": NaN,
+     "total_usd": 1.7300000000000004
+    }
+   },
+   "economics": {
+    "all": {
+     "fills": 1279.0,
+     "events": 546,
+     "cents": 1.0803914972634883,
+     "t": 0.9899460364030485,
+     "profit_factor": 1.1459243774519245,
+     "total_usd": 13.818207250000015
+    },
+    "earlier": {
+     "fills": 527.0,
+     "events": 220,
+     "cents": 1.4054567362428847,
+     "t": 0.8130015017010477,
+     "profit_factor": 1.18941756089078,
+     "total_usd": 7.4067570000000025
+    },
+    "later": {
+     "fills": 752.0,
+     "events": 326,
+     "cents": 0.8525864694148945,
+     "t": 0.6059328349368452,
+     "profit_factor": 1.1153314782866568,
+     "total_usd": 6.411450250000006
+    }
+   },
+   "entertainment": {
+    "all": {
+     "fills": 220.0,
+     "events": 67,
+     "cents": 1.384533522727273,
+     "t": 0.4482214058683223,
+     "profit_factor": 1.246039882875606,
+     "total_usd": 3.045973750000001
+    },
+    "earlier": {
+     "fills": 165.0,
+     "events": 46,
+     "cents": -1.1236522727272726,
+     "t": -0.2777360526585652,
+     "profit_factor": 0.8502402059773829,
+     "total_usd": -1.85402625
+    },
+    "later": {
+     "fills": 55.0,
+     "events": 21,
+     "cents": 8.90909090909091,
+     "t": 11.766063126738064,
+     "profit_factor": NaN,
+     "total_usd": 4.900000000000001
+    }
+   },
+   "mentions": {
+    "all": {
+     "fills": 1150.0,
+     "events": 238,
+     "cents": 1.0260869565217396,
+     "t": 0.714581743214982,
+     "profit_factor": 1.1143743336241154,
+     "total_usd": 11.800000000000006
+    },
+    "earlier": {
+     "fills": 1114.0,
+     "events": 231,
+     "cents": 0.8366247755834835,
+     "t": 0.564629246438341,
+     "profit_factor": 1.0903363380827757,
+     "total_usd": 9.320000000000006
+    },
+    "later": {
+     "fills": 36.0,
+     "events": 7,
+     "cents": 6.888888888888889,
+     "t": 4.216414851429363,
+     "profit_factor": NaN,
+     "total_usd": 2.48
+    }
+   },
+   "other": {
+    "all": {
+     "fills": 10429.0,
+     "events": 2308,
+     "cents": 1.4570217734202708,
+     "t": 3.4087604827711178,
+     "profit_factor": 1.204944484951049,
+     "total_usd": 151.95280075000005
+    },
+    "earlier": {
+     "fills": 1520.0,
+     "events": 502,
+     "cents": 2.6288630098684216,
+     "t": 2.8309152977120027,
+     "profit_factor": 1.4349958387763995,
+     "total_usd": 39.95871775000001
+    },
+    "later": {
+     "fills": 8909.0,
+     "events": 1806,
+     "cents": 1.2570892692782587,
+     "t": 2.6481467367249656,
+     "profit_factor": 1.1724115961462147,
+     "total_usd": 111.99408300000006
+    }
+   },
+   "politics": {
+    "all": {
+     "fills": 71.0,
+     "events": 31,
+     "cents": 2.45492957746479,
+     "t": 0.6530930844303897,
+     "profit_factor": 1.4140142517814727,
+     "total_usd": 1.743000000000001
+    },
+    "earlier": {
+     "fills": 40.0,
+     "events": 14,
+     "cents": 1.0500000000000018,
+     "t": 0.23579716938261522,
+     "profit_factor": 1.1714285714285717,
+     "total_usd": 0.4200000000000007
+    },
+    "later": {
+     "fills": 31.0,
+     "events": 17,
+     "cents": 4.267741935483871,
+     "t": 0.6530772812096478,
+     "profit_factor": 1.7517045454545455,
+     "total_usd": 1.323
+    }
+   },
+   "sports": {
+    "all": {
+     "fills": 50168.0,
+     "events": 20435,
+     "cents": 0.3333733614654763,
+     "t": 1.6016788553925763,
+     "profit_factor": 1.034544931311057,
+     "total_usd": 167.24674798000015
+    },
+    "earlier": {
+     "fills": 25256.0,
+     "events": 9903,
+     "cents": 0.7837618884522493,
+     "t": 2.6063994862041913,
+     "profit_factor": 1.081711227651794,
+     "total_usd": 197.9469025475001
+    },
+    "later": {
+     "fills": 24912.0,
+     "events": 10532,
+     "cents": -0.1232344033698615,
+     "t": -0.42814912772684016,
+     "profit_factor": 0.9873082627467337,
+     "total_usd": -30.700154567499894
+    }
+   }
+  },
+  "holdout": {
+   "top_series": [
+    "KXCSGOGAME",
+    "KXHNLGAME",
+    "KXABAGAME",
+    "KXNCAAFSPREAD",
+    "KXLOLMAP",
+    "KXEUROCUPGAME",
+    "KXCS2GAME",
+    "KXAFCONGAME",
+    "KXVTBGAME",
+    "KXBUNDESLIGAGAME"
+   ],
+   "later_pooled": {
+    "fills": 180.0,
+    "events": 101,
+    "cents": 0.9222222222222224,
+    "t": 0.23837987473423275,
+    "profit_factor": 1.081612586037365,
+    "total_usd": 1.6600000000000001
+   }
+  },
+  "promising": false,
+  "holdout_promising": false
+ },
+ "5 long-shot side (20c or less)": {
+  "all": {
+   "fills": 54900.0,
+   "events": 23995,
+   "cents": -0.5391946575637526,
+   "t": -2.950543791984828,
+   "profit_factor": 0.9424211275196466,
+   "total_usd": -296.01786700250017
+  },
+  "earlier": {
+   "fills": 22443.0,
+   "events": 10350,
+   "cents": 0.019351737256605408,
+   "t": 0.06231469172978729,
+   "profit_factor": 1.0019433108113989,
+   "total_usd": 4.343110392499952
+  },
+  "later": {
+   "fills": 32457.0,
+   "events": 13645,
+   "cents": -0.9254120140339531,
+   "t": -4.159755242739837,
+   "profit_factor": 0.8966475755747657,
+   "total_usd": -300.36097739500013
+  },
+  "categories": {
+   "crypto": {
+    "all": {
+     "fills": 73.0,
+     "events": 47,
+     "cents": -2.9726027397260286,
+     "t": -0.9298266701986074,
+     "profit_factor": 0.5668662674650697,
+     "total_usd": -2.170000000000001
+    },
+    "earlier": {
+     "fills": 48.0,
+     "events": 32,
+     "cents": -0.6250000000000001,
+     "t": -0.1330102633725465,
+     "profit_factor": 0.9044585987261146,
+     "total_usd": -0.30000000000000004
+    },
+    "later": {
+     "fills": 25.0,
+     "events": 15,
+     "cents": -7.48,
+     "t": -8.030238422628148,
+     "profit_factor": 0.0,
+     "total_usd": -1.87
+    }
+   },
+   "economics": {
+    "all": {
+     "fills": 2336.0,
+     "events": 793,
+     "cents": -2.4017614083904113,
+     "t": -3.292434539100184,
+     "profit_factor": 0.6566197581185217,
+     "total_usd": -56.105146500000004
+    },
+    "earlier": {
+     "fills": 863.0,
+     "events": 300,
+     "cents": -0.4795795770567794,
+     "t": -0.3131300025771713,
+     "profit_factor": 0.9310116348610166,
+     "total_usd": -4.138771750000006
+    },
+    "later": {
+     "fills": 1473.0,
+     "events": 493,
+     "cents": -3.5279276816021734,
+     "t": -4.889315539563192,
+     "profit_factor": 0.497416109909834,
+     "total_usd": -51.966374750000014
+    }
+   },
+   "entertainment": {
+    "all": {
+     "fills": 231.0,
+     "events": 96,
+     "cents": -1.4257187229437238,
+     "t": -0.48519482157719546,
+     "profit_factor": 0.7910724774799286,
+     "total_usd": -3.2934102500000018
+    },
+    "earlier": {
+     "fills": 160.0,
+     "events": 67,
+     "cents": 1.3978685937499988,
+     "t": 0.3356163816712096,
+     "profit_factor": 1.2185576162159628,
+     "total_usd": 2.236589749999998
+    },
+    "later": {
+     "fills": 71.0,
+     "events": 29,
+     "cents": -7.788732394366195,
+     "t": -9.888673171924767,
+     "profit_factor": 0.0,
+     "total_usd": -5.5299999999999985
+    }
+   },
+   "mentions": {
+    "all": {
+     "fills": 1292.0,
+     "events": 278,
+     "cents": 0.9102167182662534,
+     "t": 0.7013497267203794,
+     "profit_factor": 1.098385342591818,
+     "total_usd": 11.759999999999994
+    },
+    "earlier": {
+     "fills": 1265.0,
+     "events": 269,
+     "cents": 1.053754940711462,
+     "t": 0.7951521343767042,
+     "profit_factor": 1.113004408273991,
+     "total_usd": 13.329999999999995
+    },
+    "later": {
+     "fills": 27.0,
+     "events": 9,
+     "cents": -5.814814814814816,
+     "t": -4.964921505000793,
+     "profit_factor": 0.0,
+     "total_usd": -1.5700000000000003
+    }
+   },
+   "other": {
+    "all": {
+     "fills": 7699.0,
+     "events": 2553,
+     "cents": -1.0891648525782573,
+     "t": -2.357590568456578,
+     "profit_factor": 0.8691326861794778,
+     "total_usd": -83.85480200000003
+    },
+    "earlier": {
+     "fills": 2017.0,
+     "events": 744,
+     "cents": -1.0128875309866145,
+     "t": -1.1901655545259746,
+     "profit_factor": 0.8673614188964222,
+     "total_usd": -20.429941500000016
+    },
+    "later": {
+     "fills": 5682.0,
+     "events": 1809,
+     "cents": -1.1162418250615984,
+     "t": -2.0354538721831297,
+     "profit_factor": 0.8696932033287146,
+     "total_usd": -63.42486050000002
+    }
+   },
+   "politics": {
+    "all": {
+     "fills": 104.0,
+     "events": 50,
+     "cents": 1.2615384615384613,
+     "t": 0.2617197635166074,
+     "profit_factor": 1.1786979024788884,
+     "total_usd": 1.3119999999999998
+    },
+    "earlier": {
+     "fills": 36.0,
+     "events": 20,
+     "cents": -3.666666666666666,
+     "t": -0.7665653109601109,
+     "profit_factor": 0.5494880546075085,
+     "total_usd": -1.3199999999999998
+    },
+    "later": {
+     "fills": 68.0,
+     "events": 30,
+     "cents": 3.8705882352941168,
+     "t": 0.5617193065516203,
+     "profit_factor": 1.596554850407978,
+     "total_usd": 2.6319999999999992
+    }
+   },
+   "sports": {
+    "all": {
+     "fills": 43165.0,
+     "events": 20178,
+     "cents": -0.3791648517375191,
+     "t": -1.8129606787496255,
+     "profit_factor": 0.9609321297865352,
+     "total_usd": -163.66650825250014
+    },
+    "earlier": {
+     "fills": 18054.0,
+     "events": 8918,
+     "cents": 0.08289151375041523,
+     "t": 0.2349267726441954,
+     "profit_factor": 1.0079323000815348,
+     "total_usd": 14.965233892499967
+    },
+    "later": {
+     "fills": 25111.0,
+     "events": 11260,
+     "cents": -0.7113684924734184,
+     "t": -2.79078948804618,
+     "profit_factor": 0.9224239776517601,
+     "total_usd": -178.6317421450001
+    }
+   }
+  },
+  "holdout": {
+   "top_series": [
+    "KXALEAGUEGAME",
+    "KXNCAAWBSPREAD",
+    "KXNCAAHOCKEYGAME",
+    "KXJOBLESSCLAIMS",
+    "KXNCAAMB1HWINNER",
+    "KXIPLTEAMTOTAL",
+    "KXLOLTOTALMAPS",
+    "KXWOCURLGAME",
+    "KXUNITEDCUPMATCH",
+    "KXNBAREB"
+   ],
+   "later_pooled": {
+    "fills": 54.0,
+    "events": 39,
+    "cents": -1.666666666666667,
+    "t": -0.3220841025032927,
+    "profit_factor": 0.8569157392686804,
+    "total_usd": -0.9000000000000001
+   }
+  },
+  "promising": false,
+  "holdout_promising": false
+ },
+ "6 NO where YES is 35-50c": {
+  "all": {
+   "fills": 58256.0,
+   "events": 28325,
+   "cents": 0.757085654009887,
+   "t": 2.4568002226751227,
+   "profit_factor": 1.0316319875614333,
+   "total_usd": 441.0478185999998
+  },
+  "earlier": {
+   "fills": 30829.0,
+   "events": 14510,
+   "cents": 0.8310784148042425,
+   "t": 1.928594502822702,
+   "profit_factor": 1.034696749681113,
+   "total_usd": 256.21316449999995
+  },
+  "later": {
+   "fills": 27427.0,
+   "events": 13815,
+   "cents": 0.6739149527837531,
+   "t": 1.530734405792817,
+   "profit_factor": 1.0281814316308282,
+   "total_usd": 184.83465409999997
+  },
+  "categories": {
+   "crypto": {
+    "all": {
+     "fills": 6.0,
+     "events": 4,
+     "cents": 38.66666666666667,
+     "t": 1.8362134782306023,
+     "profit_factor": 5.549019607843137,
+     "total_usd": 2.3200000000000003
+    },
+    "earlier": {
+     "fills": 2.0,
+     "events": 2,
+     "cents": 71.5,
+     "t": 2.9183673469387754,
+     "profit_factor": NaN,
+     "total_usd": 1.43
+    },
+    "later": {
+     "fills": 4.0,
+     "events": 2,
+     "cents": 22.249999999999996,
+     "t": 0.6075085324232082,
+     "profit_factor": 2.745098039215686,
+     "total_usd": 0.8899999999999999
+    }
+   },
+   "economics": {
+    "all": {
+     "fills": 396.0,
+     "events": 247,
+     "cents": 4.527628282828282,
+     "t": 1.3013524092583586,
+     "profit_factor": 1.2049154268081115,
+     "total_usd": 17.929407999999995
+    },
+    "earlier": {
+     "fills": 196.0,
+     "events": 117,
+     "cents": 5.877274362244895,
+     "t": 1.1830587479037784,
+     "profit_factor": 1.2741259699536656,
+     "total_usd": 11.519457749999995
+    },
+    "later": {
+     "fills": 200.0,
+     "events": 130,
+     "cents": 3.2049751250000003,
+     "t": 0.6552284327732862,
+     "profit_factor": 1.1409581823360688,
+     "total_usd": 6.40995025
+    }
+   },
+   "entertainment": {
+    "all": {
+     "fills": 27.0,
+     "events": 17,
+     "cents": 3.925925925925925,
+     "t": 0.37740350792563127,
+     "profit_factor": 1.2274678111587982,
+     "total_usd": 1.0599999999999998
+    },
+    "earlier": {
+     "fills": 27.0,
+     "events": 17,
+     "cents": 3.925925925925925,
+     "t": 0.37740350792563127,
+     "profit_factor": 1.2274678111587982,
+     "total_usd": 1.0599999999999998
+    },
+    "later": {
+     "fills": 0.0
+    }
+   },
+   "mentions": {
+    "all": {
+     "fills": 588.0,
+     "events": 188,
+     "cents": 8.134353741496598,
+     "t": 2.706094419488003,
+     "profit_factor": 1.4054076962196982,
+     "total_usd": 47.83
+    },
+    "earlier": {
+     "fills": 587.0,
+     "events": 187,
+     "cents": 8.06473594548552,
+     "t": 2.679269676890553,
+     "profit_factor": 1.4012544499067638,
+     "total_usd": 47.34
+    },
+    "later": {
+     "fills": 1.0
+    }
+   },
+   "other": {
+    "all": {
+     "fills": 5690.0,
+     "events": 2794,
+     "cents": 1.9182693585237256,
+     "t": 1.9556689480247167,
+     "profit_factor": 1.0829559588295616,
+     "total_usd": 109.14952649999998
+    },
+    "earlier": {
+     "fills": 1336.0,
+     "events": 739,
+     "cents": -0.029492907934131764,
+     "t": -0.014915648200522564,
+     "profit_factor": 0.9987747311823839,
+     "total_usd": -0.3940252500000003
+    },
+    "later": {
+     "fills": 4354.0,
+     "events": 2055,
+     "cents": 2.5159290709692232,
+     "t": 2.2301015771147505,
+     "profit_factor": 1.1101859357554542,
+     "total_usd": 109.54355174999998
+    }
+   },
+   "politics": {
+    "all": {
+     "fills": 10.0,
+     "events": 6,
+     "cents": 38.2,
+     "t": 2.9747314690339395,
+     "profit_factor": 6.701492537313434,
+     "total_usd": 3.8200000000000003
+    },
+    "earlier": {
+     "fills": 8.0,
+     "events": 4,
+     "cents": 26.125,
+     "t": 1.9001537721092971,
+     "profit_factor": 4.119402985074627,
+     "total_usd": 2.09
+    },
+    "later": {
+     "fills": 2.0,
+     "events": 2,
+     "cents": 86.5,
+     "t": 57.666666666666615,
+     "profit_factor": NaN,
+     "total_usd": 1.73
+    }
+   },
+   "sports": {
+    "all": {
+     "fills": 51539.0,
+     "events": 25069,
+     "cents": 0.5024134812472105,
+     "t": 1.5317002655715586,
+     "profit_factor": 1.020855214343662,
+     "total_usd": 258.9388840999998
+    },
+    "earlier": {
+     "fills": 28673.0,
+     "events": 13444,
+     "cents": 0.673692086632023,
+     "t": 1.50264318543312,
+     "profit_factor": 1.0280057092291177,
+     "total_usd": 193.16773199999994
+    },
+    "later": {
+     "fills": 22866.0,
+     "events": 11625,
+     "cents": 0.2876373309717482,
+     "t": 0.599060143363482,
+     "profit_factor": 1.011918119204441,
+     "total_usd": 65.77115209999994
+    }
+   }
+  },
+  "holdout": {
+   "top_series": [
+    "KXFIBAGAME",
+    "KXUCLCORNERS",
+    "KXAFCCLGAME",
+    "KXAFLGAME",
+    "KXLIIGAGAME",
+    "KXNCAAHOCKEYGAME",
+    "KXCONCACAFCCUPGAME",
+    "KXNFLMENTION",
+    "KXABAGAME",
+    "KXWBCSPREAD"
+   ],
+   "later_pooled": {
+    "fills": 82.0,
+    "events": 43,
+    "cents": -2.329268292682926,
+    "t": -0.3017768574785315,
+    "profit_factor": 0.9083932853717026,
+    "total_usd": -1.9099999999999993
+   }
+  },
+  "promising": false,
+  "holdout_promising": false
+ },
+ "7 both sides, spread 5c+": {
+  "all": {
+   "fills": 76694.0,
+   "events": 26402,
+   "cents": 2.4421364061953996,
+   "t": 15.861472126177402,
+   "profit_factor": 1.216772977329225,
+   "total_usd": 1872.9720953675
+  },
+  "earlier": {
+   "fills": 41594.0,
+   "events": 14283,
+   "cents": 3.0666730273597147,
+   "t": 14.135369948977994,
+   "profit_factor": 1.256720176481801,
+   "total_usd": 1275.5519789999998
+  },
+  "later": {
+   "fills": 35100.0,
+   "events": 12119,
+   "cents": 1.7020516135826211,
+   "t": 7.818554188477914,
+   "profit_factor": 1.1627138367959258,
+   "total_usd": 597.4201163675
+  },
+  "categories": {
+   "crypto": {
+    "all": {
+     "fills": 65.0,
+     "events": 38,
+     "cents": -2.230769230769232,
+     "t": -0.45730296422339717,
+     "profit_factor": 0.8370786516853932,
+     "total_usd": -1.450000000000001
+    },
+    "earlier": {
+     "fills": 52.0,
+     "events": 30,
+     "cents": 0.17307692307692238,
+     "t": 0.030561489369351092,
+     "profit_factor": 1.0133333333333334,
+     "total_usd": 0.08999999999999964
+    },
+    "later": {
+     "fills": 13.0,
+     "events": 8,
+     "cents": -11.846153846153847,
+     "t": -1.6202029613411024,
+     "profit_factor": 0.283720930232558,
+     "total_usd": -1.54
+    }
+   },
+   "economics": {
+    "all": {
+     "fills": 1988.0,
+     "events": 547,
+     "cents": 0.26719471830985886,
+     "t": 0.3134819638962353,
+     "profit_factor": 1.0320736665228911,
+     "total_usd": 5.311830999999994
+    },
+    "earlier": {
+     "fills": 1221.0,
+     "events": 286,
+     "cents": 0.6903619983619981,
+     "t": 0.6851459448848094,
+     "profit_factor": 1.0857737422809868,
+     "total_usd": 8.429319999999997
+    },
+    "later": {
+     "fills": 767.0,
+     "events": 261,
+     "cents": -0.4064522816166885,
+     "t": -0.2664212435881791,
+     "profit_factor": 0.9537049433441919,
+     "total_usd": -3.117489000000001
+    }
+   },
+   "entertainment": {
+    "all": {
+     "fills": 217.0,
+     "events": 67,
+     "cents": 3.0875576036866352,
+     "t": 2.15717600397712,
+     "profit_factor": 1.6025179856115106,
+     "total_usd": 6.699999999999998
+    },
+    "earlier": {
+     "fills": 155.0,
+     "events": 53,
+     "cents": 2.154838709677419,
+     "t": 1.1529239821381407,
+     "profit_factor": 1.3415132924335378,
+     "total_usd": 3.3399999999999994
+    },
+    "later": {
+     "fills": 62.0,
+     "events": 14,
+     "cents": 5.419354838709676,
+     "t": 2.9162849137046254,
+     "profit_factor": 3.5074626865671648,
+     "total_usd": 3.3599999999999994
+    }
+   },
+   "mentions": {
+    "all": {
+     "fills": 2581.0,
+     "events": 313,
+     "cents": 3.359550561797753,
+     "t": 5.424846309457171,
+     "profit_factor": 1.4741360454943133,
+     "total_usd": 86.71
+    },
+    "earlier": {
+     "fills": 2551.0,
+     "events": 306,
+     "cents": 3.352410819286553,
+     "t": 5.370392681751514,
+     "profit_factor": 1.474241668053014,
+     "total_usd": 85.51999999999998
+    },
+    "later": {
+     "fills": 30.0,
+     "events": 7,
+     "cents": 3.9666666666666663,
+     "t": 0.8230832705520663,
+     "profit_factor": 1.4666666666666666,
+     "total_usd": 1.19
+    }
+   },
+   "other": {
+    "all": {
+     "fills": 13074.0,
+     "events": 3947,
+     "cents": 1.280856698409056,
+     "t": 3.7491956015645425,
+     "profit_factor": 1.1261866687445392,
+     "total_usd": 167.45920474999997
+    },
+    "earlier": {
+     "fills": 4822.0,
+     "events": 1652,
+     "cents": 0.8517034270012441,
+     "t": 1.6118292066912228,
+     "profit_factor": 1.0776755343696314,
+     "total_usd": 41.06913924999999
+    },
+    "later": {
+     "fills": 8252.0,
+     "events": 2295,
+     "cents": 1.5316294898206495,
+     "t": 3.4517762604557434,
+     "profit_factor": 1.1583144188759544,
+     "total_usd": 126.39006549999999
+    }
+   },
+   "politics": {
+    "all": {
+     "fills": 99.0,
+     "events": 36,
+     "cents": 2.04040404040404,
+     "t": 0.5633202526021991,
+     "profit_factor": 1.2640522875816995,
+     "total_usd": 2.0199999999999996
+    },
+    "earlier": {
+     "fills": 41.0,
+     "events": 15,
+     "cents": -1.1951219512195113,
+     "t": -0.284588997290112,
+     "profit_factor": 0.8583815028901736,
+     "total_usd": -0.4899999999999996
+    },
+    "later": {
+     "fills": 58.0,
+     "events": 21,
+     "cents": 4.327586206896552,
+     "t": 0.7819885100543617,
+     "profit_factor": 1.5990453460620526,
+     "total_usd": 2.51
+    }
+   },
+   "sports": {
+    "all": {
+     "fills": 58670.0,
+     "events": 21454,
+     "cents": 2.737721253822226,
+     "t": 15.070815397854751,
+     "profit_factor": 1.2315437667980014,
+     "total_usd": 1606.2210596175
+    },
+    "earlier": {
+     "fills": 32752.0,
+     "events": 11941,
+     "cents": 3.473355885900098,
+     "t": 13.550563430262192,
+     "profit_factor": 1.2746930326991113,
+     "total_usd": 1137.59351975
+    },
+    "later": {
+     "fills": 25918.0,
+     "events": 9513,
+     "cents": 1.8081161349930548,
+     "t": 7.108513352608031,
+     "profit_factor": 1.1676254823483438,
+     "total_usd": 468.6275398675
+    }
+   }
+  },
+  "holdout": {
+   "top_series": [
+    "KXNHLGAME",
+    "KXIPLTEAMTOTAL",
+    "KXBALGAME",
+    "KXWBCF5SPREAD",
+    "KXNATGASD",
+    "KXWTACHALLENGERMATCH",
+    "KXATPTOTALSETS",
+    "KXSERIEA1H",
+    "KXCOPADELREYADVANCE",
+    "KXNBAPTSLEADER"
+   ],
+   "later_pooled": {
+    "fills": 299.0,
+    "events": 90,
+    "cents": 5.31103678929766,
+    "t": 2.2942751932164978,
+    "profit_factor": 1.5251322751322753,
+    "total_usd": 15.88
+   }
+  },
+  "promising": true,
+  "holdout_promising": false
+ },
+ "8 NO after an hour with no trading": {
+  "all": {
+   "fills": 59944.0,
+   "events": 36589,
+   "cents": 0.26516410237888705,
+   "t": 1.3102223228495227,
+   "profit_factor": 1.0145618931164935,
+   "total_usd": 158.94996953000003
+  },
+  "earlier": {
+   "fills": 29824.0,
+   "events": 18909,
+   "cents": 0.8033960677642169,
+   "t": 2.9361007227427214,
+   "profit_factor": 1.0437890981800075,
+   "total_usd": 239.60484325000004
+  },
+  "later": {
+   "fills": 30120.0,
+   "events": 17680,
+   "cents": -0.26777846520584325,
+   "t": -0.8990946983261874,
+   "profit_factor": 0.985183764976534,
+   "total_usd": -80.65487372
+  },
+  "categories": {
+   "crypto": {
+    "all": {
+     "fills": 24.0,
+     "events": 23,
+     "cents": 2.041666666666664,
+     "t": 0.21250579965681174,
+     "profit_factor": 1.1368715083798882,
+     "total_usd": 0.4899999999999993
+    },
+    "earlier": {
+     "fills": 20.0,
+     "events": 19,
+     "cents": 3.5000000000000018,
+     "t": 0.30770403327704876,
+     "profit_factor": 1.2194357366771156,
+     "total_usd": 0.7000000000000003
+    },
+    "later": {
+     "fills": 4.0,
+     "events": 4,
+     "cents": -5.249999999999999,
+     "t": -0.4609358519832103,
+     "profit_factor": 0.4615384615384617,
+     "total_usd": -0.20999999999999996
+    }
+   },
+   "economics": {
+    "all": {
+     "fills": 463.0,
+     "events": 288,
+     "cents": 2.6659050215982716,
+     "t": 1.376124332565896,
+     "profit_factor": 1.2831509135814445,
+     "total_usd": 12.343140249999998
+    },
+    "earlier": {
+     "fills": 256.0,
+     "events": 152,
+     "cents": 3.8137530273437505,
+     "t": 1.4568966339432037,
+     "profit_factor": 1.3729403569881569,
+     "total_usd": 9.763207750000001
+    },
+    "later": {
+     "fills": 207.0,
+     "events": 136,
+     "cents": 1.2463442028985512,
+     "t": 0.42680018342971504,
+     "profit_factor": 1.1481605664384076,
+     "total_usd": 2.579932500000001
+    }
+   },
+   "entertainment": {
+    "all": {
+     "fills": 65.0,
+     "events": 40,
+     "cents": 4.6000000000000005,
+     "t": 1.3753567904949537,
+     "profit_factor": 1.505922165820643,
+     "total_usd": 2.99
+    },
+    "earlier": {
+     "fills": 61.0,
+     "events": 37,
+     "cents": 4.491803278688526,
+     "t": 1.262118590553556,
+     "profit_factor": 1.4675767918088738,
+     "total_usd": 2.7400000000000007
+    },
+    "later": {
+     "fills": 4.0,
+     "events": 3,
+     "cents": 6.250000000000002,
+     "t": 0.9523809523809523,
+     "profit_factor": 6.000000000000001,
+     "total_usd": 0.25000000000000006
+    }
+   },
+   "mentions": {
+    "all": {
+     "fills": 357.0,
+     "events": 150,
+     "cents": 7.285714285714286,
+     "t": 3.3609125819252945,
+     "profit_factor": 1.5846257585974375,
+     "total_usd": 26.01
+    },
+    "earlier": {
+     "fills": 340.0,
+     "events": 145,
+     "cents": 7.6,
+     "t": 3.3654570149027303,
+     "profit_factor": 1.5993968916724655,
+     "total_usd": 25.84
+    },
+    "later": {
+     "fills": 17.0,
+     "events": 5,
+     "cents": 1.0000000000000002,
+     "t": 0.1817636125858138,
+     "profit_factor": 1.1231884057971016,
+     "total_usd": 0.17000000000000004
+    }
+   },
+   "other": {
+    "all": {
+     "fills": 5498.0,
+     "events": 3617,
+     "cents": 0.41596674245180054,
+     "t": 0.6801401312354266,
+     "profit_factor": 1.0233521798160912,
+     "total_usd": 22.869851499999996
+    },
+    "earlier": {
+     "fills": 1813.0,
+     "events": 1222,
+     "cents": -1.016194663541092,
+     "t": -0.9128788547354049,
+     "profit_factor": 0.9457868422252126,
+     "total_usd": -18.42360925
+    },
+    "later": {
+     "fills": 3685.0,
+     "events": 2395,
+     "cents": 1.1205823812754412,
+     "t": 1.5390386131726814,
+     "profit_factor": 1.0645705722512728,
+     "total_usd": 41.29346075
+    }
+   },
+   "politics": {
+    "all": {
+     "fills": 23.0,
+     "events": 18,
+     "cents": -1.608695652173913,
+     "t": -0.42570738252909635,
+     "profit_factor": 0.8438818565400843,
+     "total_usd": -0.37
+    },
+    "earlier": {
+     "fills": 13.0,
+     "events": 10,
+     "cents": -0.07692307692307614,
+     "t": -0.018608937431232833,
+     "profit_factor": 0.9933774834437086,
+     "total_usd": -0.009999999999999898
+    },
+    "later": {
+     "fills": 10.0,
+     "events": 8,
+     "cents": -3.6000000000000005,
+     "t": -0.509767469603469,
+     "profit_factor": 0.5813953488372093,
+     "total_usd": -0.36000000000000004
+    }
+   },
+   "sports": {
+    "all": {
+     "fills": 53514.0,
+     "events": 32453,
+     "cents": 0.17680789658780888,
+     "t": 0.8166821638363059,
+     "profit_factor": 1.0096192742814798,
+     "total_usd": 94.61697778000004
+    },
+    "earlier": {
+     "fills": 27321.0,
+     "events": 17324,
+     "cents": 0.8015637961641229,
+     "t": 2.7979226268638806,
+     "profit_factor": 1.0433473123510586,
+     "total_usd": 218.99524475000004
+    },
+    "later": {
+     "fills": 26193.0,
+     "events": 15129,
+     "cents": -0.4748530789523919,
+     "t": -1.4575029250016727,
+     "profit_factor": 0.9740016334490446,
+     "total_usd": -124.37826697000003
+    }
+   }
+  },
+  "holdout": {
+   "top_series": [
+    "KXIPLTEAMTOTAL",
+    "KXMLBF5TOTAL",
+    "KXNCAABMENTION",
+    "KXFACUPTOTAL",
+    "KXNCAAMENTION",
+    "KXLIGUE11H",
+    "KXMLBF5SPREAD",
+    "KXBALLERLEAGUEGAME",
+    "KXATPSETWINNER",
+    "KXBOLPDIVGAME"
+   ],
+   "later_pooled": {
+    "fills": 429.0,
+    "events": 319,
+    "cents": 1.104895104895105,
+    "t": 0.45364597980534493,
+    "profit_factor": 1.0573155985489724,
+    "total_usd": 4.74
+   }
+  },
+  "promising": false,
+  "holdout_promising": false
+ },
+ "9 NO after an hour with trading": {
+  "all": {
+   "fills": 141022.0,
+   "events": 52644,
+   "cents": 0.8576220716076216,
+   "t": 5.573883797618156,
+   "profit_factor": 1.046052279856008,
+   "total_usd": 1209.4357978225003
+  },
+  "earlier": {
+   "fills": 73945.0,
+   "events": 28410,
+   "cents": 0.9703525275238354,
+   "t": 4.7747664688502205,
+   "profit_factor": 1.0507308713845056,
+   "total_usd": 717.5271764775001
+  },
+  "later": {
+   "fills": 67077.0,
+   "events": 24234,
+   "cents": 0.7333491678891425,
+   "t": 3.1424565147222694,
+   "profit_factor": 1.0405917531292947,
+   "total_usd": 491.90862134500014
+  },
+  "categories": {
+   "crypto": {
+    "all": {
+     "fills": 49.0,
+     "events": 35,
+     "cents": -5.244897959183676,
+     "t": -1.0088377295020718,
+     "profit_factor": 0.580065359477124,
+     "total_usd": -2.570000000000001
+    },
+    "earlier": {
+     "fills": 31.0,
+     "events": 24,
+     "cents": -9.193548387096772,
+     "t": -1.4059799585684531,
+     "profit_factor": 0.36946902654867253,
+     "total_usd": -2.8499999999999996
+    },
+    "later": {
+     "fills": 18.0,
+     "events": 11,
+     "cents": 1.5555555555555551,
+     "t": 0.19799495866805478,
+     "profit_factor": 1.1749999999999996,
+     "total_usd": 0.2799999999999999
+    }
+   },
+   "economics": {
+    "all": {
+     "fills": 1912.0,
+     "events": 666,
+     "cents": 3.1729105779288704,
+     "t": 1.9293549865264052,
+     "profit_factor": 1.246267134240829,
+     "total_usd": 60.66605025
+    },
+    "earlier": {
+     "fills": 776.0,
+     "events": 251,
+     "cents": 6.716964722938144,
+     "t": 2.342278235648072,
+     "profit_factor": 1.5020221689212525,
+     "total_usd": 52.12364625
+    },
+    "later": {
+     "fills": 1136.0,
+     "events": 415,
+     "cents": 0.7519721830985915,
+     "t": 0.38712410738626796,
+     "profit_factor": 1.0599403537835215,
+     "total_usd": 8.542404
+    }
+   },
+   "entertainment": {
+    "all": {
+     "fills": 181.0,
+     "events": 58,
+     "cents": 3.458260220994476,
+     "t": 1.3012087944894424,
+     "profit_factor": 1.4111271469505016,
+     "total_usd": 6.259451000000002
+    },
+    "earlier": {
+     "fills": 133.0,
+     "events": 44,
+     "cents": 2.5559781954887217,
+     "t": 0.7769425175860635,
+     "profit_factor": 1.2601933077768208,
+     "total_usd": 3.399451
+    },
+    "later": {
+     "fills": 48.0,
+     "events": 14,
+     "cents": 5.958333333333334,
+     "t": 1.454832636158763,
+     "profit_factor": 2.324074074074074,
+     "total_usd": 2.8600000000000003
+    }
+   },
+   "mentions": {
+    "all": {
+     "fills": 2296.0,
+     "events": 365,
+     "cents": 5.23301393728223,
+     "t": 3.66682573281649,
+     "profit_factor": 1.3430798663658947,
+     "total_usd": 120.14999999999999
+    },
+    "earlier": {
+     "fills": 2273.0,
+     "events": 358,
+     "cents": 5.192696876374836,
+     "t": 3.6091086298218498,
+     "profit_factor": 1.338408165605826,
+     "total_usd": 118.03
+    },
+    "later": {
+     "fills": 23.0,
+     "events": 7,
+     "cents": 9.217391304347826,
+     "t": 0.9832454888118878,
+     "profit_factor": 2.4825174825174825,
+     "total_usd": 2.12
+    }
+   },
+   "other": {
+    "all": {
+     "fills": 15872.0,
+     "events": 4146,
+     "cents": 1.6170562121975807,
+     "t": 3.330659118802289,
+     "profit_factor": 1.1048113820062821,
+     "total_usd": 256.65916200000004
+    },
+    "earlier": {
+     "fills": 2581.0,
+     "events": 1033,
+     "cents": 1.414493549012011,
+     "t": 1.4704501321036798,
+     "profit_factor": 1.0871605928201558,
+     "total_usd": 36.5080785
+    },
+    "later": {
+     "fills": 13291.0,
+     "events": 3113,
+     "cents": 1.656392171394177,
+     "t": 3.017992690136217,
+     "profit_factor": 1.1084535144182035,
+     "total_usd": 220.15108350000006
+    }
+   },
+   "politics": {
+    "all": {
+     "fills": 66.0,
+     "events": 28,
+     "cents": 3.43939393939394,
+     "t": 0.7573737108473867,
+     "profit_factor": 1.2325104988220832,
+     "total_usd": 2.2700000000000005
+    },
+    "earlier": {
+     "fills": 43.0,
+     "events": 18,
+     "cents": 2.558139534883721,
+     "t": 0.4057126185352041,
+     "profit_factor": 1.198915009041591,
+     "total_usd": 1.1
+    },
+    "later": {
+     "fills": 23.0,
+     "events": 10,
+     "cents": 5.086956521739132,
+     "t": 0.8713275626387643,
+     "profit_factor": 1.276399716513111,
+     "total_usd": 1.1700000000000004
+    }
+   },
+   "sports": {
+    "all": {
+     "fills": 120646.0,
+     "events": 47346,
+     "cents": 0.634916312660594,
+     "t": 3.8792656231151135,
+     "profit_factor": 1.0330375077588023,
+     "total_usd": 766.0011345725002
+    },
+    "earlier": {
+     "fills": 68108.0,
+     "events": 26682,
+     "cents": 0.7476596005278384,
+     "t": 3.570735936584073,
+     "profit_factor": 1.0384336727186334,
+     "total_usd": 509.21600072750016
+    },
+    "later": {
+     "fills": 52538.0,
+     "events": 20664,
+     "cents": 0.48876077095626036,
+     "t": 1.8800456053746666,
+     "profit_factor": 1.0258423865733544,
+     "total_usd": 256.7851338450001
+    }
+   }
+  },
+  "holdout": {
+   "top_series": [
+    "KXUCLCORNERS",
+    "KXNCAAMB1HSPREAD",
+    "KXWBCRFI",
+    "KXWTI",
+    "KXCOPADOBRASILGAME",
+    "KXFIFASPREAD",
+    "KXCODMAP",
+    "KXUCLTCORNERS",
+    "KXUFCROUNDS",
+    "KXSIXNATIONSMATCH"
+   ],
+   "later_pooled": {
+    "fills": 641.0,
+    "events": 281,
+    "cents": -3.1575663026521066,
+    "t": -1.1938271305917436,
+    "profit_factor": 0.854231184731725,
+    "total_usd": -20.240000000000002
+   }
+  },
+  "promising": true,
+  "holdout_promising": false
+ }
+}

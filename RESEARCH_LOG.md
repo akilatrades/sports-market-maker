@@ -2350,3 +2350,248 @@ job can score it from public files (projection ladders, sportsbook
 snapshots, Kalshi snapshots, trade prints and results). The totals maker
 needs time-stamped sportsbook totals first; that is an odds-feed change and
 an owner decision.
+
+## 2026-10-22: A different strategy across all scanned Kalshi markets (exploratory plan)
+
+*Written before running. Exploratory; nothing here changes the live rules.*
+
+The owner asked for a strategy separate from the resting-NO seller that
+works across Kalshi's markets. Data: the cross-market scan's hourly quotes
+(`outputs/scan/orders_*.csv.gz`; about 1,760 series in every category,
+quotes 7 to 4 hours before each market's expected expiration, with the
+result). One row per market at its first and last quote in that window.
+Only the result and the quotes are used, no model.
+`research/explore_strategies.py`.
+
+**Strategies (taker: buy at the ask, held to settlement):**
+- **S1, favourite-longshot.** Prediction markets are often said to overprice
+  long shots. At the first quote, buy whichever side's ask is at least X,
+  for X = 80¢, 90¢ and 95¢ (3 variants).
+- **S2, momentum or reversal.** Where the mid moved at least 5¢ between the
+  first and last quote (about 3 hours), buy the side it moved toward
+  (momentum), or the other side (reversal), at the last quote's ask (2
+  variants).
+- **Calibration** (descriptive, no variant): realised YES rate minus the
+  mid, by price band and by category, which says where any of this could
+  come from.
+
+**Costs:** Kalshi's taker fee, 0.07 × P × (1 − P) per contract, unrounded
+(a large order); and rounded up to the cent on a one-contract order. One
+contract per market, at the quoted ask (depth unknown).
+
+**Statistics and bar:** event-clustered t; halves split at the median
+market date of the whole scan. A rule is **promising** if, after the
+unrounded fee, it makes money in both halves with t ≥ 2 on the later half,
+at least 1,000 trades, and no single series supplies more than a quarter of
+its profit. Categories (by series name: sports, mentions, weather,
+economics, crypto, politics, entertainment, other) are ranked on the earlier
+half only and the best is reported on the later half. Variant count: 5
+rules, and 8 categories per rule reported descriptively.
+
+## 2026-10-22: A different strategy across all scanned Kalshi markets (results)
+
+*Exploratory and simulated; `python -m research.explore_strategies`, tables
+in `outputs/research/explore_strategies.md`. 202,805 markets, 1,763 series,
+99,555 events; halves split at 2026-05-10. Nothing here changes the live
+rules.*
+
+**The planned rules failed, and the plan had a flaw.** S1 as written ("buy
+the side whose ask is at least X") also bought illiquid markets whose ask is
+high only because the spread is wide; all five planned rules lost 8.5-13.3¢
+per contract (t −27 to −56). **Extra variants, added after that run and
+counted:** favourites chosen by the mid with a spread of at most 3¢ (80¢
+and 90¢), momentum and reversal with a spread of at most 3¢, and a resting
+(maker) order on the favourite side from the scan's own order rows. 10
+variants in all.
+
+- **Taker rules, corrected: none works after costs.** Favourite at mid 80¢+:
+  −1.04¢ (t −7.3); 90¢+: −0.56¢ (t −4.0); momentum −0.99¢ (t −1.7, +0.15¢
+  before fees); reversal −2.98¢ (t −5.2). Negative in both halves. The
+  category ranked best on the earlier half never held on the later half.
+- **Calibration** (realised YES rate minus the mid): long shots under 5¢
+  are overpriced by 0.5¢ (t −3.3) and favourites at 90-95¢ underpriced by
+  1.1¢ (t 2.4): a real favourite-longshot bias, but smaller than the spread
+  plus the taker fee. Mid-priced YES at 35-50¢ is overpriced by 1.1¢
+  (t −4.6), the region the current NO seller works in.
+- **Correction, made before this entry was merged:** the first category
+  labels read "GAS" inside soccer and golf names (LALIGASPREAD,
+  BUNDESLIGASPREAD, PGASTROKEMARGIN), so two soccer spread series were
+  counted as economics and drove that category's resting-order result
+  (+1.51¢). With the labels fixed (sports checked first; tested):
+- **Economic-data favourites** (rates, CPI, payrolls, jobless claims, stock
+  indexes, metals, oil, natural gas): the favourite side is underpriced at
+  the mid by 2.64¢ (t 4.61, 2,163 markets), but not by enough to trade on
+  the quotes alone. Resting on it: +0.60¢ per filled contract (t 0.56, 820
+  fills); buying at the ask with a spread of 3¢ or less: about 0 to +0.6¢
+  (t 0.9 or less). The average spread on these favourites is 4.1¢ (median
+  2¢), which absorbs the mispricing.
+- **Resting on favourites everywhere:** −0.05¢ (t −0.27), and sports
+  −0.25¢.
+
+**Verdict:** no separate model-free strategy works across Kalshi's markets
+on this data. The economic-data favourite mispricing is real at the mid
+but too small to beat the spread with quotes alone; it would need a better
+fair price from outside data (futures-implied rate odds, inflation
+nowcasts, daily commodity prices) to be worth a dedicated study.
+
+## 2026-10-22: Economic and financial markets priced from outside data (scope)
+
+*A scope for the owner's decision, not yet a test plan. Each phase gets
+its own written plan before it runs.*
+
+**Why.** Across Kalshi, the favourite side of economic and financial
+markets is underpriced at the mid by about 2.6¢ (t 4.6), but quotes alone
+cannot capture it after the spread (entry above). A fair price from outside
+data would let a strategy trade only where the favourite is clearly cheap.
+That is a different strategy from v5: priced from financial data, not
+sports, and taking or making on whichever side the outside price favours.
+
+**Universe** (from the scan; sample volume is the scan's sample, not the
+full market):
+
+| Tier | Series | Events a year | Kalshi maker fee | Outside price |
+|---|---|---|---|---|
+| A, daily and weekly prices | S&P 500 (`KXINX`, `KXINXU`, `KXINXDUD`), Nasdaq-100 (`KXNASDAQDUD`), oil (`KXWTI`, `KXWTIW`), gold (`KXGOLDD`, `KXGOLDW`), silver (`KXSILVERD`), copper (`KXCOPPERD`, `KXCOPPERW`), natural gas (`KXNATGASD`, `KXNATGASW`) | about 250 per daily series | none (default) | price now plus implied volatility: the chance of finishing above a strike is a standard digital-option price (VIX, VXN, gold and oil volatility indexes are free daily; hourly prices needed) |
+| A2, Treasury yields | `KX2YRRATEH` to `KX10YRRATEH` | daily | none listed | Treasury futures and yield volatility; liquidity rewards of about $4,300 open per series on 22 Oct |
+| B, scheduled releases | CPI (`KXCPI`, `KXCPIYOY`, core), Fed (`KXFED`, `KXFEDDECISION`), payrolls, jobless claims, GDP, monthly gas (`KXAAAGASM`) | 8-52 | yes for CPI, Fed, payrolls, GDP, monthly gas (0.0175 × P × (1 − P), rounded up: 1¢ on a one-contract fill) | Cleveland Fed inflation nowcast (daily); Atlanta Fed Market Probability Tracker (daily, history downloadable); prior releases |
+
+**What decides the order.** Tier B has few independent events (CPI and the
+Fed about 20 a year together), so a backtest cannot tell a 2¢ edge from
+luck for years, and maker fees eat thin edges on one-contract fills. Tier A
+has hundreds of events a year per series, no maker fee and an
+off-the-shelf pricing method, so it is the place to start. Tier A2 adds
+liquidity rewards if quotes are large enough to count (target sizes of 100
+to 20,000 contracts per side; our share decides the payout).
+
+**Phases and gates.**
+1. **Inventory (no new data, about a day).** For each Tier A series:
+   settlement source and time, strike layout, spreads and volume by hour
+   before expiry, fee status, open reward programs.
+2. **Backtest (free data, about a week).** Kalshi's full public history for
+   the shortlisted series (candles and trade prints, fetched like
+   `research/backfill_kalshi.py`), hourly prices and daily volatility
+   indexes. Fair value = digital-option probability, with one volatility
+   scale fitted on the earlier half only. **Gate:** on the later half, log
+   loss beats Kalshi's mid (paired, event-clustered t ≤ −2), and a replay
+   (resting orders where the outside price says the favourite is cheap,
+   one contract, first in line and at flow share 0.25) makes money after
+   fees with t ≥ 2 on at least 300 events.
+3. **Paper (two to four weeks).** The forward ledger in the
+   `kalshi/paper_markets.py` style, with the outside price as the filter.
+4. **Small live pilot,** only after paper passes: its own caps inside the
+   shared account loss stops, separate from v5.
+
+**Needs from the owner.**
+- A way to download data: a GitHub workflow (a `.github/` change) or a
+  script run on the server. The workspace cannot reach Kalshi or price
+  feeds.
+- Agreement that hourly price data from a free source is acceptable for
+  research. Raw downloaded data would not be committed, only derived
+  results.
+
+**Risks.**
+- These markets attract professional traders who already price from
+  options, so the edge may be smaller than the quotes suggest.
+- A price feed that is even minutes stale creates fake edge, so every
+  timestamp has to be aligned.
+- Tail outcomes (skew and fat tails) can make a simple volatility model
+  misprice the far strikes in exactly the region where the mispricing
+  appears.
+
+## 2026-10-22: Strategy sweep across all scanned markets, with profit factor (exploratory plan)
+
+*Written before running. Exploratory; nothing here changes the live rules.*
+
+The owner asked for profitability and profit factor (winning dollars over
+losing dollars) by market, and for more strategy types. Data: the scan's
+hourly resting-order rows (`outputs/scan/orders_*.csv.gz`; one YES and one
+NO order per market per hour, 7 to 4 hours before expected expiration, one
+cent inside the spread when it allows, filled from public trade prints as
+if first in line, held to settlement). Fees: Kalshi's default maker fee is
+zero; the series on Kalshi's fee schedule with a maker multiplier pay
+0.0175 × P × (1 − P) per contract (unrounded, a larger order).
+`research/strategy_sweep.py`.
+
+**Families (resting orders, one contract per hourly order):**
+1. NO on every market; 2. YES on every market; 3. both sides at once
+(market making); 4. the favourite side (price 80¢+); 5. the long-shot side
+(price 20¢ or less); 6. NO where YES is 35-50¢ (the band that looked
+overpriced across all markets); 7. both sides only where the spread is 5¢
+or more; 8. NO only in hours with no trading in the previous hour, and
+9. NO only in hours with trading. Nine families.
+
+**Reported** for each family, overall and by category (sports, economics,
+mentions, politics, entertainment, crypto, other): filled contracts, cents
+per contract with event-clustered t, profit factor, total dollars, and the
+earlier and later halves (split at the median date). Within each family,
+series are ranked on the earlier half and the top 10 pooled on the later
+half; a family or series is **promising** only if the later half makes
+money with t ≥ 2 on at least 300 fills and the earlier half was also
+positive.
+
+## 2026-10-22: Strategy sweep across all scanned markets, with profit factor (results)
+
+*Exploratory and simulated, run once as planned; `python -m
+research.strategy_sweep`, tables in `outputs/research/strategy_sweep.md`.
+202,805 markets; one contract per hourly resting order, first in line,
+held to settlement. Profit factor (PF) = winning dollars / losing
+dollars. Nothing here changes the live rules.*
+
+| Family | Fills | ¢/contract (t) | PF | Earlier ¢ | Later ¢ (t) |
+|---|---:|---:|---:|---:|---:|
+| 1 NO everywhere | 257,561 | +0.85 (6.7) | 1.05 | +1.09 | +0.59 (3.1) |
+| 2 YES everywhere | 136,330 | −1.41 (−8.5) | 0.93 | −0.92 | −1.85 (−8.0) |
+| 3 both sides | 393,891 | +0.07 (1.1) | 1.01 | +0.44 | −0.31 (−3.7) |
+| 4 favourite side | 63,393 | +0.55 (3.0) | 1.06 | +0.88 | +0.28 (1.2) |
+| 5 long-shot side | 54,900 | −0.54 (−3.0) | 0.94 | +0.02 | −0.93 (−4.2) |
+| 6 NO, YES 35-50¢ | 58,256 | +0.76 (2.5) | 1.03 | +0.83 | +0.67 (1.5) |
+| **7 both sides, spread 5¢+** | **76,694** | **+2.44 (15.9)** | **1.22** | **+3.07** | **+1.70 (7.8)** |
+| 8 NO after a quiet hour | 59,944 | +0.27 (1.3) | 1.02 | +0.80 | −0.27 (−0.9) |
+| 9 NO after a traded hour | 141,022 | +0.86 (5.6) | 1.05 | +0.97 | +0.73 (3.1) |
+
+- **Economic and financial markets: no edge from quotes alone.** NO
+  everywhere +2.46¢ (PF 1.20) but +0.38¢ on the later half (t 0.2); YES
+  everywhere −6.04¢ (PF 0.59); both sides −1.51¢; both sides in wide
+  spreads +0.27¢.
+- **Family 7, two-sided quotes in wide-spread markets, is the one
+  different strategy that held up.** Post a YES bid and a NO bid one cent
+  inside a spread of 5¢ or more, hold whatever fills to settlement.
+  - Positive in both halves, and broad: 1,179 series, of which 369 have
+    enough data; 249 were positive, 72 had t ≥ 2 against 10 with t ≤ −2,
+    and 67 survived a 10% false-discovery-rate correction. The top 10
+    series supply only 15% of the profit. Sports +2.74¢ (PF 1.23),
+    esports and other +1.28¢, mentions +3.36¢; economics +0.27¢.
+  - Where the money comes from: 21% of filled hours filled both sides,
+    locking in the spread less 2¢ (9.7¢ a pair on an average 11.7¢
+    spread). That gave $1,303 of the $1,873. One-sided fills made +1.14¢
+    (t 4.9).
+  - It grows with the spread: 5-8¢ +0.71¢ (PF 1.07); 8-15¢ +1.44¢
+    (PF 1.12); 15-30¢ +4.60¢ (PF 1.38); 30¢+ +8.44¢ (PF 1.82).
+  - Capacity: a median of 86 contracts traded through a filled order's
+    price in its hour (quartiles 18 and 375).
+  - **Caveats.** In-sample (the 5¢ threshold was chosen with the family);
+    fills are read from trade prints, so a wide-spread market's few
+    prints decide everything. Other bots may now quote inside those
+    spreads. Holding both sides needs about a dollar of capital per pair
+    until settlement.
+- Families 1 and 9 (NO everywhere) also held on the later half, but they
+  are v5's idea applied everywhere, and their top-10 series did not hold.
+
+**What carries forward:** family 7 deserves a written forward paper test
+(two-sided quotes one cent inside, spreads of 8¢ or more, the scan's
+sports, esports and mentions series), scored from public trade prints in
+the `kalshi/paper_markets.py` style, before anything live.
+
+### Addendum: hedging versus holding (exploratory, 2 extra variants)
+
+Same rows, spreads of 8¢ or more, one contract per order (simulated,
+in-sample). (A) Hold every fill to settlement: +3.91¢ per contract
+(PF 1.33), $1,625, daily sd $7.14, worst day −$14.8. (B) When only one
+side fills, sell it back at the market an hour later (taker, paying the
+fee): +0.22¢ (PF 1.03), $91, daily sd $3.74, worst day −$21.2. Exiting
+pays the wide spread the strategy is trying to earn; one-sided fills
+averaged +5.0¢ held and −4.6¢ sold. (C) Hold, but stop quoting a side once
+one contract is held in that market: +3.60¢ (PF 1.30), $1,219 (−25%),
+daily sd $5.10 (−29%), worst day −$14.7. About the same profit per unit of
+risk as (A). Hold to settlement, with a per-market inventory cap as a risk
+control once sizes grow.
