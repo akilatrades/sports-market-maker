@@ -189,7 +189,13 @@ def spread_ledger(events, fills, settlements, now):
             "ticker": intent.get("ticker"),
             "side": side,
             "price": expected,
-            "count": _amount(fill.get("count_fp", fill.get("count")), "fill", True),
+            "count": _amount(
+                fill.get("count_fp")
+                if fill.get("count_fp") is not None
+                else fill.get("count"),
+                "fill",
+                True,
+            ),
             "fee": _amount(fill.get("fee_cost") or 0, "fee"),
         }
         if row["fid"] in rows and rows[row["fid"]] != row:

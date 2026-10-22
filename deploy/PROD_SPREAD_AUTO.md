@@ -86,8 +86,12 @@ directly: that comparison is the main point of the pilot.
   the journal is damaged). A brief read failure (timeout, HTTP 429 or 5xx)
   is not a halt: the quotes stay, expire on their own, and the next pass
   checks again.
-- A quote that turns out to have filled just as the bot cancels it is not
-  replaced in that pass, so the inventory cap holds.
+- A quote that turns out to have filled, fully or partly, just as the bot
+  cancels it (the exchange cancels fewer contracts than were resting) is not
+  replaced in that pass, and the possibly filled contracts count toward the
+  $60 cap, so the 5-contract cap per market side holds.
+- If a market's order book cannot be read, the bot leaves its quotes there
+  alone (they expire on the exchange) and adds nothing new in that market.
 - No new order after 110 seconds from the start of a pass (waiting for the
   other bots counts), so systemd's 240-second limit never cuts an order off
   mid-send; a stop signal also lets the order in flight finish first.

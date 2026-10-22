@@ -200,10 +200,12 @@ class FakeExchange:
             self.resting = [o for o in self.resting if o["order_id"] != order_id]
             raise error
         self.canceled.append(order_id)
-        self.history["canceled"] += [
-            o for o in self.resting if o["order_id"] == order_id
-        ]
+        gone = [o for o in self.resting if o["order_id"] == order_id]
+        self.history["canceled"] += gone
         self.resting = [o for o in self.resting if o["order_id"] != order_id]
+        # Kalshi V2 answers with the contracts it cancelled (fixed-point).
+        left = sum(float(o.get("remaining_count_fp", 0)) for o in gone)
+        return {"order_id": order_id, "reduced_by": f"{left:.2f}"}
 
 
 ENV = {
@@ -370,15 +372,19 @@ def test_quote_that_moved_since_the_scan_is_skipped(world):
     assert report["skip_quote_moved"] == 1 and report["accepted"] == 1
 
 
-def test_unreadable_book_pulls_our_quotes(world):
+def test_unreadable_book_holds_our_quotes(world):
     run(world)
+    ex = world["exchange"]
 
     def broken(ticker):
         raise OSError("timed out")
 
     world["public"]["fetch_orderbook"] = broken
     report, markets = run(world, NOW + timedelta(minutes=10))
-    assert markets == [] and report["canceled"] == 2 and report["placed"] == 0
+    # One failed read: keep the quotes (they expire on the exchange) and add
+    # nothing in that market, instead of cancelling and re-posting.
+    assert markets == [] and report["held_book_unreadable"] == 2
+    assert "canceled" not in report and report["placed"] == 0 and len(ex.resting) == 2
 
 
 def test_daily_submission_cap(world, monkeypatch):
@@ -1013,3 +1019,59 @@ def test_pilot_limits_are_the_owner_approved_ones():
     assert (P.MAX_ORDERS_PER_PASS, P.MAX_SUBMISSIONS_PER_DAY) == (20, 300)
     assert P.MIN_SPREAD_CENTS == 8 and P.WINDOW_HOURS == (4.0, 7.0)
     assert shared.ACCOUNT_LOSS_STOPS == {"daily": 20.0, "cumulative": 60.0}
+
+
+def test_a_partial_fill_just_before_a_requote_cancel_never_breaks_the_cap(world):
+    run(world)
+    ex = world["exchange"]
+    world["quotes"][TICKER] = market(bid=0.44, ask=0.52)  # YES moves to 45c
+    original = ex.cancel
+
+    def filled_four_first(order_id, ticker=None):
+        if order_id == "oid-1":  # 4 of the 5 YES fill just before the cancel
+            fill_placed(world, 0, 9, count=4)
+        return original(order_id, ticker)
+
+    ex.cancel = filled_four_first
+    report, _ = run(world, NOW + timedelta(minutes=10))
+    # Only 1 was cancelled: 4 filled after the account read. No new YES in
+    # that market this pass, and the 4 count toward open exposure.
+    assert report["skip_just_filled"] >= 1 and report["placed"] == 0
+    assert report["exposure_dollars"] >= 5 * 0.41 + 5 * 0.49 - 1e-9
+    report, _ = run(world, NOW + timedelta(minutes=20))
+    yes = [o for o in ex.placed[2:] if o.side == "yes"]
+    assert [o.count for o in yes] == [1]  # holding 4: room for 1
+
+
+def test_journal_fill_copies_without_count_fp_do_not_halt(world):
+    run(world)
+    ex = world["exchange"]
+    fill_placed(world, 0, 5)
+    ex.fills_[0].pop("count_fp")
+    ex.fills_[0]["count"] = 5  # an older fill shape: count only
+    run(world, NOW + timedelta(minutes=10))
+    run(world, NOW + timedelta(minutes=20))  # now the journal copy is merged
+    copies = [e for e in journal(world) if e["event"] == "fill"]
+    assert copies and all(v is not None for e in copies for v in e.values())
+    state, context = shared.state_for(ex, "nba", NOW)
+    assert "unavailable" not in context["account_pnl"]
+
+
+def test_kill_keeps_going_after_one_order_already_filled(world):
+    run(world)
+    ex = world["exchange"]
+    original = ex.cancel
+
+    def first_is_gone(order_id, ticker=None):
+        if order_id == "oid-1":
+            ex.resting = [o for o in ex.resting if o["order_id"] != order_id]
+            raise TradingError(
+                "DELETE /portfolio/events/orders/oid-1 -> HTTP 404: gone"
+            )
+        return original(order_id, ticker)
+
+    ex.cancel = first_is_gone
+    path = world["dir"] / "journal.jsonl"
+    path.write_text(path.read_text() + '{"torn')  # unreadable: prefix fallback
+    bot.cancel_owned_on_kill(ex, path)
+    assert ex.resting == []  # the second order was still cancelled

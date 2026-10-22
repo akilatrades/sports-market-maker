@@ -231,13 +231,21 @@ def _dollars(cents, default):
     return f"{(default if cents is None else cents) / 100:.2f}"
 
 
-def universe(fetch_markets, now, other_tickers=frozenset(), own=None, fetch_book=None):
+def universe(
+    fetch_markets,
+    now,
+    other_tickers=frozenset(),
+    own=None,
+    fetch_book=None,
+    unreadable=None,
+):
     """Eligible markets, widest spread first.
 
     For markets where we already rest quotes (``own``: ticker -> list of
     (side, price_cents, count)), the listed best bid and offer may be ours, so
-    the quote comes from the order book with our orders removed; a market
-    whose book cannot be read is left out this pass (its quotes are pulled).
+    the quote comes from the order book with our orders removed. A market
+    whose book cannot be read is left out and added to ``unreadable``: the
+    live pass keeps its quotes as they are and adds nothing there.
     """
     own = own or {}
     rows = []
@@ -251,9 +259,14 @@ def universe(fetch_markets, now, other_tickers=frozenset(), own=None, fetch_book
             ticker = m.get("ticker")
             if ticker in own:
                 try:
-                    bid, ask = book_quote(fetch_book(ticker), own[ticker])
+                    book = fetch_book(ticker)
                 except Exception:
+                    book = None
+                if not isinstance(book, dict):
+                    if unreadable is not None:
+                        unreadable.add(ticker)
                     continue
+                bid, ask = book_quote(book, own[ticker])
                 m = {
                     **m,
                     "yes_bid_dollars": _dollars(bid, 0),
@@ -550,10 +563,12 @@ def remaining_count(order, intent, fills):
     return left
 
 
-def cancel_order(client, journal, order_id, ticker, reason, now):
-    """Cancel one owned quote. Returns "canceled", or "moot" when the order
-    had already filled or expired (a signed read shows it is gone, or the
-    exchange cancelled nothing)."""
+def cancel_order(client, journal, order_id, ticker, reason, now, expected=None):
+    """Cancel one owned quote. Returns "canceled"; "moot" when the order had
+    already filled or expired (a signed read shows it is gone, or the
+    exchange cancelled nothing); or "partial" when the exchange cancelled
+    fewer contracts than ``expected`` were resting (or did not say how many):
+    some filled after the account was read."""
     write_event(
         journal,
         {
@@ -587,21 +602,31 @@ def cancel_order(client, journal, order_id, ticker, reason, now):
                 )
                 return "moot"
         raise TradingError("Cannot confirm spread cancellation: HALT") from error
-    reduced = result.get("reduced_by") if isinstance(result, dict) else None
+    raw = result.get("reduced_by") if isinstance(result, dict) else None
     try:
-        nothing_left = reduced is not None and float(reduced) <= 1e-9
+        reduced = float(raw)
+        if not math.isfinite(reduced):
+            reduced = None
     except (TypeError, ValueError):
-        nothing_left = False
+        reduced = None
+    if reduced is not None and reduced <= 1e-9:
+        outcome = "moot"
+    elif expected is not None and (reduced is None or reduced < expected - 1e-9):
+        outcome = "partial"
+    else:
+        outcome = "canceled"
     write_event(
         journal,
         {
-            "event": "cancel_moot" if nothing_left else "cancel_accepted",
+            "event": "cancel_moot" if outcome == "moot" else "cancel_accepted",
             "utc": datetime.now(UTC).isoformat(),
             "order_id": order_id,
-            **({"detail": "reduced_by_zero"} if nothing_left else {}),
+            "reduced_by": raw,
+            "expected": expected,
+            **({"detail": "reduced_by_zero"} if outcome == "moot" else {}),
         },
     )
-    return "moot" if nothing_left else "canceled"
+    return outcome
 
 
 def cancel_all_owned(client, journal, resting, reason, now):
@@ -632,7 +657,7 @@ def record_execution(journal, events, owned_orders, fills, settlements, tickers)
                 "utc": fill.get("created_time"),
                 "ticker": fill.get("ticker") or fill.get("market_ticker"),
                 **{
-                    key: fill.get(key)
+                    key: fill[key]
                     for key in (
                         "side",
                         "action",
@@ -645,6 +670,7 @@ def record_execution(journal, events, owned_orders, fills, settlements, tickers)
                         "fee_cost",
                         "is_taker",
                     )
+                    if fill.get(key) is not None
                 },
             },
         )
@@ -897,12 +923,14 @@ def _pass_live(client, now, journal, public, require_shard, deadline):
         own.setdefault(intent["ticker"], []).append(
             (intent["side"], int(intent["price_cents"]), left)
         )
+    unreadable = set()
     markets = universe(
         public["fetch_markets"],
         now,
         others,
         own,
         public.get("quote_orderbook", public["fetch_orderbook"]),
+        unreadable,
     )
     by_ticker = {m["ticker"]: m for m in markets}
     positions = state["positions"]
@@ -911,8 +939,15 @@ def _pass_live(client, now, journal, public, require_shard, deadline):
     keep = {}
     just_filled = set()
     oldest = (now - timedelta(minutes=P.ORDER_LIFETIME_MINUTES - 5)).isoformat()
+    unseen = 0.0  # contracts that may have filled since the account read
     for order, intent, left in resting_intents:
         key = (intent["ticker"], intent["side"])
+        if intent["ticker"] in unreadable and key not in keep:
+            # Book unreadable this pass: leave the quote alone (it expires
+            # on the exchange); nothing new goes into that market.
+            keep[key] = (intent, left)
+            report["held_book_unreadable"] += 1
+            continue
         price, size = wanted.get(key, (None, 0))
         # Keep a quote at the right price whose remaining contracts still
         # fit the inventory room (a partly filled order keeps its place in
@@ -926,18 +961,27 @@ def _pass_live(client, now, journal, public, require_shard, deadline):
             keep[key] = (intent, left)
             continue
         outcome = cancel_order(
-            client, journal, order["order_id"], intent["ticker"], "requote", now
+            client,
+            journal,
+            order["order_id"],
+            intent["ticker"],
+            "requote",
+            now,
+            expected=left,
         )
         report["canceled"] += 1
-        if outcome == "moot":
-            # It filled (or expired) after the account read: the positions
-            # used here are stale for this market, so leave it until the
-            # next pass reads them again.
+        if outcome in ("moot", "partial"):
+            # Some or all of it filled after the account read: positions are
+            # stale for this market, so leave it until the next pass reads
+            # them again, and count what may now be held.
             just_filled.add(intent["ticker"])
+            unseen += left * int(intent["price_cents"]) / 100
     # Exposure: kept resting quotes at cost plus held contracts at cost.
-    exposure = sum(
-        left * int(i["price_cents"]) / 100 for i, left in keep.values()
-    ) + held_cost(positions, ledger["open"])
+    exposure = (
+        sum(left * int(i["price_cents"]) / 100 for i, left in keep.values())
+        + held_cost(positions, ledger["open"])
+        + unseen
+    )
     today = now.astimezone(NY).date()
     submitted_today = sum(
         datetime.fromisoformat(i["utc"]).astimezone(NY).date() == today
@@ -1020,7 +1064,7 @@ def cancel_owned_on_kill(client, journal, reason="kill"):
     ids = {str(e["order_id"]) for e in events or [] if e.get("event") == "accepted"}
     cids = {e["client_order_id"] for e in events or [] if e.get("event") == "intent"}
     now = datetime.now(UTC)
-    canceled = 0
+    canceled, failed = 0, []
     for item in client.orders("resting"):
         cid = str(item.get("client_order_id") or "")
         if (
@@ -1029,12 +1073,22 @@ def cancel_owned_on_kill(client, journal, reason="kill"):
             and not cid.startswith(CLIENT_ID_PREFIX)
         ):
             continue
-        if events is None:
-            client.cancel(item["order_id"], ticker=item["ticker"])
-        else:
-            cancel_order(client, journal, item["order_id"], item["ticker"], reason, now)
-        canceled += 1
+        try:
+            if events is None:
+                client.cancel(item["order_id"], ticker=item["ticker"])
+            else:
+                cancel_order(
+                    client, journal, item["order_id"], item["ticker"], reason, now
+                )
+            canceled += 1
+        except Exception as error:  # one failure must not stop the rest
+            if is_http_4xx(error) is None and not isinstance(error, TradingError):
+                failed.append(type(error).__name__)
+            elif is_http_4xx(error) is None:
+                failed.append(str(error)[:80])
     print(f"SPREAD MAKER {reason.upper()}: canceled {canceled} owned resting orders")
+    if failed:
+        raise TradingError(f"Could not cancel {len(failed)} spread orders: {failed}")
     return canceled
 
 
