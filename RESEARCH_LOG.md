@@ -2581,3 +2581,17 @@ dollars. Nothing here changes the live rules.*
 (two-sided quotes one cent inside, spreads of 8¢ or more, the scan's
 sports, esports and mentions series), scored from public trade prints in
 the `kalshi/paper_markets.py` style, before anything live.
+
+### Addendum: hedging versus holding (exploratory, 2 extra variants)
+
+Same rows, spreads of 8¢ or more, one contract per order (simulated,
+in-sample). (A) Hold every fill to settlement: +3.91¢ per contract
+(PF 1.33), $1,625, daily sd $7.14, worst day −$14.8. (B) When only one
+side fills, sell it back at the market an hour later (taker, paying the
+fee): +0.22¢ (PF 1.03), $91, daily sd $3.74, worst day −$21.2. Exiting
+pays the wide spread the strategy is trying to earn; one-sided fills
+averaged +5.0¢ held and −4.6¢ sold. (C) Hold, but stop quoting a side once
+one contract is held in that market: +3.60¢ (PF 1.30), $1,219 (−25%),
+daily sd $5.10 (−29%), worst day −$14.7. About the same profit per unit of
+risk as (A). Hold to settlement, with a per-market inventory cap as a risk
+control once sizes grow.
