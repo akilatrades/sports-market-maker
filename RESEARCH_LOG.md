@@ -2049,8 +2049,10 @@ median volume traded through our price was 164 contracts, so giving each
 contract a 25% chance of reaching us (flow share 0.25) rarely changes
 whether a one-contract order fills (fills fall only 5%). The 0.25 runs are
 therefore not a real stress test for one-contract orders. The real unknown
-is queue position, which the replay does not model: on 21 October, 74 of 90
-live orders joined a queue of about 2,000 contracts.
+is queue position, which the replay does not model. In public Kalshi
+snapshots from 20-21 October 2026 (2-6 hours before tip), 63% of the rungs
+with a two-book sportsbook line, the only ones v5 trades, had a 1¢ spread,
+where an order can only join the queue.
 
 1. **Where the profit per filled contract comes from** (v5-like caps, flow
    share 1.0; 0.25 in brackets). 14,478 filled contracts made +3.32¢ each
@@ -2072,8 +2074,9 @@ live orders joined a queue of about 2,000 contracts.
      follow news against NO (the textbook adverse selection), so it loses
      the benefit of being filled by fans at the ask. Joined orders also earned less
      per filled contract (+2.81¢, t 2.19, 1,473 fills) than improving ones
-     (+3.38¢, t 6.02, 13,005 fills), and they were 13% of the replay's
-     orders against 82% of the live orders on 21 October.
+     (+3.38¢, t 6.02, 13,005 fills). They were 13% of the replay's
+     orders; this season most rungs v5 can trade have a 1¢ spread (above),
+     so joining is far more common live.
    - Inventory (holding to settlement has no expected cost, only risk):
      results of filled contracts in the same game correlate at 0.06; with
      about 21 fills per game that makes the variance 2.2 times what
@@ -2120,7 +2123,8 @@ inside when the spread allows, no same-game penalty, 2-6 hours). The useful
 lesson is Glosten-Milgrom's: profit is the edge at entry plus what being
 filled says about the outcome. In the replay that second part was about
 +2.6¢ to +2.9¢ for improving orders and about zero (−1.5¢ to +0.3¢) for
-joined ones, and live orders are mostly joined. The pre-registered live adverse-selection check (this log,
+joined ones, and this season most rungs v5 trades allow only joining. The
+pre-registered live adverse-selection check (this log,
 2026-10-21) should therefore also be read separately for joined and
 improving orders at the v5 checkpoint, as a description, not a new test.
 
