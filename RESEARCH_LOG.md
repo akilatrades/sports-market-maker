@@ -2232,3 +2232,49 @@ ladder pricing for rungs without a two-book line, run as a separate paper
 ledger beside the unchanged v5 rules, judged on 2026-27 outcomes.
 Rebounds and the busiest markets stay in v5 (still profitable); NCAA
 first-half spreads proceed on paper in November as already planned.
+
+## 2026-10-22: Two proposed NBA strategies, ladder maker and totals maker (research plan)
+
+*Written before running. Exploratory; nothing here changes the live rules.*
+
+The owner proposed two paper strategies beside v5: (1) an **NBA sportsbook
+ladder maker**, which prices every player-prop rung from a distribution
+fitted to all sportsbook lines (exploration C above), and (2) an **NBA
+totals maker**, which posts NO on Kalshi game-total contracts
+(`KXNBATOTAL`, YES when the final total is above the strike) priced from
+sportsbook over/under lines. The proposal quotes +4.59¢ per simulated
+filled contract for (1) and +3.45¢ for (2) "across the archived sample,
+simple NO strategy, 1¢ fee".
+
+**Ladder maker** (`research/two_strategies.py ladder`), descriptive only:
+- the NB ladder's replay on rungs without a two-book line (exploration C),
+  split by stat (4), number of book lines for the player and stat (1, 2,
+  3+), spread at posting (1¢, 2¢+) and distance from the nearest book line
+  (0, 1-3, more than 3): 12 bins, reported without pass bars;
+- this season's feed: alternate-line coverage in `outputs/books`, and the
+  share of Kalshi rungs (public snapshots) that get a ladder price but lack
+  a two-book line, with their spreads;
+- a pipeline check on this season's nights with logged results, too small
+  to be evidence.
+
+**Totals maker** (`research/two_strategies.py totals`):
+- trace the +3.45¢ figure and re-score the archived scan rows
+  (`outputs/scan/orders_KXNBATOTAL.csv.gz`) with game-clustered t, both
+  fee assumptions (0 and 1¢ per contract) and both halves;
+- fair value P(final > strike) from ESPN's game total (`data/games.parquet`)
+  and the distribution of (final − ESPN total) fitted on 2020-21 to
+  2024-25 only: normal and empirical (2 variants). Judged against the
+  outcome (log loss) beside Kalshi's mid at the order's quote time, and in a
+  replay of the scan's hourly NO quotes (1-4.5 hours before tip, each
+  resting one hour): an order when the edge is 0-15¢ and NO is 5-95¢, at
+  most one filled contract per market, flow share 1.0 and 0.25;
+- **lookahead caveat, written now:** ESPN stores one total per game,
+  probably near the close, while the orders were quoted 1-4.5 hours before
+  tip. Any edge here is an upper bound. Decision rule: if even this upper
+  bound shows no edge (cents per filled contract at or below zero, or
+  t < 1 with no fee), drop totals; if it shows one, the honest test needs
+  time-stamped sportsbook totals at posting time before any paper ledger;
+- correlation between the game total and the player-prop NO results in the
+  same game, since both strategies would hold the same games.
+
+Variant count: 2 (totals), plus 12 descriptive bins (ladder).
