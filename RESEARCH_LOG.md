@@ -2288,8 +2288,9 @@ here is live P&L or a forecast, and nothing changes the live rules.*
 
 ### Totals maker
 
-- **The +3.45¢ figure does not come from NBA totals.** The only +3.45¢ in
-  the scan's results is NFL passing yards, YES side (t 0.90). The archived
+- **The +3.45¢ figure could not be reproduced** from this repository's
+  data; the only +3.45¢ in the scan's results is NFL passing yards, YES
+  side (t 0.90). The archived
   NBA totals scan, NO side, every hourly quote as an order: 1,671 fills in
   620 games, +0.74¢ per contract with no fee (t 0.36) and −0.26¢ with a 1¢
   fee (t −0.12). One contract per market: +0.15¢ and −0.85¢. A simple NO
