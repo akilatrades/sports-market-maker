@@ -4,7 +4,7 @@ One $500 paper bankroll per series; rule in kalshi/paper_markets.py. Series mark
 
 | Series | Orders | Open | Fill rate | Fills settled | ¢/contract | t | Bankroll |
 |---|---:|---:|---:|---:|---:|---:|---:|
-| KXITFMATCH | 696 | 38 | 67% | 443 | -0.03 | -0.03 | $371.47 |
+| KXITFMATCH | 698 | 34 | 68% | 449 | -0.26 | -0.25 | $370.42 |
 | KXNASCARRACE | 77 | 0 | 78% | 60 | 0.74 | 1.11 | $502.33 |
 | KXLIGAMXSPREAD | 133 | 0 | 62% | 82 | -7.78 | -1.02 | $465.70 |
 | KXLALIGASPREAD | 63 | 0 | 43% | 27 | -2.42 | -0.22 | $493.67 |
@@ -20,4 +20,4 @@ One $500 paper bankroll per series; rule in kalshi/paper_markets.py. Series mark
 | KXNASCARTOP10 | 77 | 0 | 73% | 56 | 1.49 | 0.56 | $479.39 |
 | KXNFLANYTD+model | 0 | 0 |  | 0 |  |  | $500.00 |
 | KXNFLRECYDS+model | 231 | 0 | 48% | 111 | -9.15 | -1.21 | $384.34 |
-| KXITFMATCH+no30 | 500 | 39 | 71% | 327 | 1.1 | 0.73 | $554.38 |
+| KXITFMATCH+no30 | 501 | 35 | 71% | 332 | 0.79 | 0.52 | $553.76 |
