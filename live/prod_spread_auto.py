@@ -818,6 +818,47 @@ def place_quote(
     return "accepted"
 
 
+class PassShardFunding:
+    """``require_funded_shard`` with one balance read per pass.
+
+    Kalshi refuses a balance read repeated within about a second, so the bot
+    reads the per-shard balance once, then charges each order it sends this
+    pass against its market's shard. The pass holds the shared account lock,
+    so no other bot spends in between. Signed GETs only.
+    """
+
+    def __init__(self):
+        self.breakdown = None
+        self.reserved = {}
+
+    def __call__(self, client, ticker, cost):
+        from decimal import Decimal, InvalidOperation
+        from urllib.parse import quote
+
+        if not isinstance(ticker, str) or not ticker.startswith("KX"):
+            raise TradingError("Invalid market ticker for shard routing")
+        try:
+            required = Decimal(str(cost))
+        except (TypeError, InvalidOperation) as error:
+            raise TradingError("Invalid reserved dollar amount") from error
+        if not required.is_finite() or required <= 0:
+            raise TradingError("Invalid reserved dollar amount")
+        market = client._request("GET", f"/markets/{quote(ticker, safe='')}")
+        shard = shard_funding.verify_market_shard(market)
+        if market["market"].get("ticker") != ticker:
+            raise TradingError("Market ticker mismatch in shard routing: HALT")
+        if self.breakdown is None:
+            self.breakdown = client._request("GET", "/portfolio/balance")
+        used = self.reserved.get(shard, Decimal(0))
+        if shard_funding.shard_balance(self.breakdown, shard) - used < required:
+            raise TradingError(
+                f"SHARD_UNFUNDED_{shard}: Kalshi account funds are not allocated "
+                "to this matching engine; no order was sent."
+            )
+        self.reserved[shard] = used + required
+        return shard
+
+
 def fresh_prices(public, ticker, own=()):
     """Our quote prices from a fresh read of the book, without our own quotes."""
     market = public.get("quote_market", public["fetch_market"])(ticker) or {}
@@ -870,7 +911,7 @@ def transient(error):
 
 
 def _pass_live(client, now, journal, public, require_shard, deadline):
-    require_shard = require_shard or shard_funding.require_funded_shard
+    require_shard = require_shard or PassShardFunding()
     events = load_events(journal)
     intents, accepted, _ = records(events)
     state, context = shared.state_for(client, "spread", now)

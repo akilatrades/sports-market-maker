@@ -234,3 +234,75 @@ def test_v2_dry_run_does_not_send_order(monkeypatch):
     result = client.place(Order("TEST", "no", 1, 40))
     assert result["order_id"] == "dry-run"
     assert result["outcome_side"] == "no" and result["action"] == "buy"
+
+
+class _Throttle:
+    """urlopen stand-in: HTTP 429 for the first ``fails`` calls, then OK."""
+
+    def __init__(self, fails, retry_after=None):
+        self.fails, self.calls, self.retry_after = fails, [], retry_after
+
+    def __call__(self, request, timeout=None):
+        import io
+        import urllib.error
+
+        self.calls.append(
+            (request.get_method(), request.headers.get("Kalshi-access-timestamp"))
+        )
+        if len(self.calls) <= self.fails:
+            headers = {"Retry-After": self.retry_after} if self.retry_after else {}
+            raise urllib.error.HTTPError(
+                request.full_url,
+                429,
+                "Too Many Requests",
+                headers,
+                io.BytesIO(b'{"error":{"code":"too_many_requests"}}'),
+            )
+
+        class Response(io.BytesIO):
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *exc):
+                return False
+
+        return Response(b'{"balance": 100}')
+
+
+def _signed_client():
+    _, text = pem()
+    return TradingClient(dry_run=False, env="demo", key_id="k", private_key_pem=text)
+
+
+def test_throttled_reads_are_retried_and_re_signed(monkeypatch):
+    import urllib.request
+
+    throttle, waits = _Throttle(fails=2), []
+    monkeypatch.setattr(urllib.request, "urlopen", throttle)
+    monkeypatch.setattr(time, "sleep", waits.append)
+    assert _signed_client()._request("GET", "/portfolio/balance") == {"balance": 100}
+    assert [m for m, _ in throttle.calls] == ["GET"] * 3
+    assert waits == [1.0, 2.0]
+
+
+def test_a_read_throttled_four_times_fails(monkeypatch):
+    import urllib.request
+
+    throttle, waits = _Throttle(fails=9, retry_after="30"), []
+    monkeypatch.setattr(urllib.request, "urlopen", throttle)
+    monkeypatch.setattr(time, "sleep", waits.append)
+    with pytest.raises(TradingError, match="HTTP 429"):
+        _signed_client()._request("GET", "/portfolio/balance")
+    assert len(throttle.calls) == 4 and waits == [5.0, 5.0, 5.0]  # capped
+
+
+@pytest.mark.parametrize("method", ["POST", "DELETE"])
+def test_writes_are_never_retried(monkeypatch, method):
+    import urllib.request
+
+    throttle, waits = _Throttle(fails=1), []
+    monkeypatch.setattr(urllib.request, "urlopen", throttle)
+    monkeypatch.setattr(time, "sleep", waits.append)
+    with pytest.raises(TradingError, match="HTTP 429"):
+        _signed_client()._request(method, "/portfolio/events/orders", body={})
+    assert len(throttle.calls) == 1 and waits == []
