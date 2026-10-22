@@ -1,5 +1,5 @@
 {
- "updated_utc": "2026-10-22T23:09+00:00",
+ "updated_utc": "2026-10-22T23:29+00:00",
  "paper": {
   "ledgers": [
    {
@@ -654,7 +654,7 @@
   "90": 3
  },
  "live": {
-  "run_utc": "2026-10-22T23:00+00:00",
+  "run_utc": "2026-10-22T23:29+00:00",
   "mode": "dry",
   "env": "prod",
   "rule": "no_seller_bookline",
@@ -664,17 +664,17 @@
   "pilot_day_cap": null,
   "pilot_total_cap": null,
   "bankroll": 250.0,
-  "injury_cancels": 4,
-  "candidates": 70,
+  "injury_cancels": 0,
+  "candidates": 72,
   "placed": 6,
-  "rejected": 64,
+  "rejected": 66,
   "rejections": {
-   "6 orders already in game 401909094": 64
+   "6 orders already in game 401909094": 66
   },
-  "open_exposure": 11.54,
+  "open_exposure": 13.67,
   "orders_by_status": {
-   "rejected": 3657,
-   "dry": 317,
+   "rejected": 3723,
+   "dry": 323,
    "cancelled": 187
   },
   "dollars_resting": 0.0
@@ -733,8 +733,77 @@
   "account_max_open": 165.0,
   "daily_loss_stop": 20.0,
   "total_loss_stop": 60.0,
-  "odds_snapshot_utc": "2026-10-22T22:51+00:00",
-  "trade_prints_through": "2026-10-21"
+  "odds_snapshot_utc": "2026-10-22T23:26+00:00",
+  "trade_prints_through": "2026-10-21",
+  "spread": {
+   "rules": "spread-maker-v1",
+   "contracts_per_order": 5,
+   "max_net_per_market_side": 5,
+   "min_spread_cents": 8,
+   "hours_before_expiration": [
+    4.0,
+    7.0
+   ],
+   "series": 64,
+   "max_open": 60.0,
+   "daily_loss_stop": 10.0,
+   "total_loss_stop": 40.0,
+   "order_lifetime_minutes": 65
+  }
+ },
+ "spread_research": {
+  "label": "Both sides, spread 5c+ (simulated, in-sample)",
+  "all": {
+   "fills": 76694.0,
+   "cents": 2.4421364061953996,
+   "t": 15.861472126177402,
+   "profit_factor": 1.216772977329225,
+   "total_usd": 1872.9720953675
+  },
+  "earlier": {
+   "fills": 41594.0,
+   "cents": 3.0666730273597147,
+   "t": 14.135369948977994,
+   "profit_factor": 1.256720176481801,
+   "total_usd": 1275.5519789999998
+  },
+  "later": {
+   "fills": 35100.0,
+   "cents": 1.7020516135826211,
+   "t": 7.818554188477914,
+   "profit_factor": 1.1627138367959258,
+   "total_usd": 597.4201163675
+  },
+  "categories": {
+   "economics": {
+    "fills": 1988.0,
+    "cents": 0.26719471830985886,
+    "t": 0.3134819638962353,
+    "profit_factor": 1.0320736665228911,
+    "total_usd": 5.311830999999994
+   },
+   "mentions": {
+    "fills": 2581.0,
+    "cents": 3.359550561797753,
+    "t": 5.424846309457171,
+    "profit_factor": 1.4741360454943133,
+    "total_usd": 86.71
+   },
+   "other": {
+    "fills": 13074.0,
+    "cents": 1.280856698409056,
+    "t": 3.7491956015645425,
+    "profit_factor": 1.1261866687445392,
+    "total_usd": 167.45920474999997
+   },
+   "sports": {
+    "fills": 58670.0,
+    "cents": 2.737721253822226,
+    "t": 15.070815397854751,
+    "profit_factor": 1.2315437667980014,
+    "total_usd": 1606.2210596175
+   }
+  }
  },
  "research": {
   "bookline": {
