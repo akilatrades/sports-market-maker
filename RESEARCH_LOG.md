@@ -2050,7 +2050,7 @@ contract a 25% chance of reaching us (flow share 0.25) rarely changes
 whether a one-contract order fills (fills fall only 5%). The 0.25 runs are
 therefore not a real stress test for one-contract orders. The real unknown
 is queue position, which the replay does not model. In public Kalshi
-snapshots from 20-21 October 2026 (2-6 hours before tip), 63% of the rungs
+snapshots from 20-21 October 2026 (2-6 hours before tip), 61% of the rungs
 with a two-book sportsbook line, the only ones v5 trades, had a 1¢ spread,
 where an order can only join the queue.
 
