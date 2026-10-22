@@ -2433,3 +2433,67 @@ on this data. The economic-data favourite mispricing is real at the mid
 but too small to beat the spread with quotes alone; it would need a better
 fair price from outside data (futures-implied rate odds, inflation
 nowcasts, daily commodity prices) to be worth a dedicated study.
+
+## 2026-10-22: Economic and financial markets priced from outside data (scope)
+
+*A scope for the owner's decision, not yet a test plan. Each phase gets
+its own written plan before it runs.*
+
+**Why.** Across Kalshi, the favourite side of economic and financial
+markets is underpriced at the mid by about 2.6¢ (t 4.6), but quotes alone
+cannot capture it after the spread (entry above). A fair price from outside
+data would let a strategy trade only where the favourite is clearly cheap.
+That is a different strategy from v5: priced from financial data, not
+sports, and taking or making on whichever side the outside price favours.
+
+**Universe** (from the scan; sample volume is the scan's sample, not the
+full market):
+
+| Tier | Series | Events a year | Kalshi maker fee | Outside price |
+|---|---|---|---|---|
+| A, daily and weekly prices | S&P 500 (`KXINX`, `KXINXU`, `KXINXDUD`), Nasdaq-100 (`KXNASDAQDUD`), oil (`KXWTI`, `KXWTIW`), gold (`KXGOLDD`, `KXGOLDW`), silver (`KXSILVERD`), copper (`KXCOPPERD`, `KXCOPPERW`), natural gas (`KXNATGASD`, `KXNATGASW`) | about 250 per daily series | none (default) | price now plus implied volatility: the chance of finishing above a strike is a standard digital-option price (VIX, VXN, gold and oil volatility indexes are free daily; hourly prices needed) |
+| A2, Treasury yields | `KX2YRRATEH` to `KX10YRRATEH` | daily | none listed | Treasury futures and yield volatility; liquidity rewards of about $4,300 open per series on 22 Oct |
+| B, scheduled releases | CPI (`KXCPI`, `KXCPIYOY`, core), Fed (`KXFED`, `KXFEDDECISION`), payrolls, jobless claims, GDP, monthly gas (`KXAAAGASM`) | 8-52 | yes for CPI, Fed, payrolls, GDP, monthly gas (0.0175 × P × (1 − P), rounded up: 1¢ on a one-contract fill) | Cleveland Fed inflation nowcast (daily); Atlanta Fed Market Probability Tracker (daily, history downloadable); prior releases |
+
+**What decides the order.** Tier B has few independent events (CPI and the
+Fed about 20 a year together), so a backtest cannot tell a 2¢ edge from
+luck for years, and maker fees eat thin edges on one-contract fills. Tier A
+has hundreds of events a year per series, no maker fee and an
+off-the-shelf pricing method, so it is the place to start. Tier A2 adds
+liquidity rewards if quotes are large enough to count (target sizes of 100
+to 20,000 contracts per side; our share decides the payout).
+
+**Phases and gates.**
+1. **Inventory (no new data, about a day).** For each Tier A series:
+   settlement source and time, strike layout, spreads and volume by hour
+   before expiry, fee status, open reward programs.
+2. **Backtest (free data, about a week).** Kalshi's full public history for
+   the shortlisted series (candles and trade prints, fetched like
+   `research/backfill_kalshi.py`), hourly prices and daily volatility
+   indexes. Fair value = digital-option probability, with one volatility
+   scale fitted on the earlier half only. **Gate:** on the later half, log
+   loss beats Kalshi's mid (paired, event-clustered t ≤ −2), and a replay
+   (resting orders where the outside price says the favourite is cheap,
+   one contract, first in line and at flow share 0.25) makes money after
+   fees with t ≥ 2 on at least 300 events.
+3. **Paper (two to four weeks).** The forward ledger in the
+   `kalshi/paper_markets.py` style, with the outside price as the filter.
+4. **Small live pilot,** only after paper passes: its own caps inside the
+   shared account loss stops, separate from v5.
+
+**Needs from the owner.**
+- A way to download data: a GitHub workflow (a `.github/` change) or a
+  script run on the server. The workspace cannot reach Kalshi or price
+  feeds.
+- Agreement that hourly price data from a free source is acceptable for
+  research. Raw downloaded data would not be committed, only derived
+  results.
+
+**Risks.**
+- These markets attract professional traders who already price from
+  options, so the edge may be smaller than the quotes suggest.
+- A price feed that is even minutes stale creates fake edge, so every
+  timestamp has to be aligned.
+- Tail outcomes (skew and fat tails) can make a simple volatility model
+  misprice the far strikes in exactly the region where the mispricing
+  appears.
