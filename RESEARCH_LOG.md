@@ -2413,16 +2413,23 @@ variants in all.
   1.1¢ (t 2.4): a real favourite-longshot bias, but smaller than the spread
   plus the taker fee. Mid-priced YES at 35-50¢ is overpriced by 1.1¢
   (t −4.6), the region the current NO seller works in.
-- **One lead: favourites in economic-data markets** (CPI, rates, fuel and
-  commodity prices, jobless claims and similar). Their favourite side was
-  underpriced at the mid by 2.46¢ (t 5.23, 3,106 markets); resting on it
-  made +1.51¢ per filled contract (t 1.80; +2.24¢ earlier, +0.72¢ later);
-  buying at the ask made +0.5¢ to +0.75¢ (t 0.7-1.1). Positive but not
-  significant out of sample, and chosen after looking at every category.
+- **Correction, made before this entry was merged:** the first category
+  labels read "GAS" inside soccer and golf names (LALIGASPREAD,
+  BUNDESLIGASPREAD, PGASTROKEMARGIN), so two soccer spread series were
+  counted as economics and drove that category's resting-order result
+  (+1.51¢). With the labels fixed (sports checked first; tested):
+- **Economic-data favourites** (rates, CPI, payrolls, jobless claims, stock
+  indexes, metals, oil, natural gas): the favourite side is underpriced at
+  the mid by 2.64¢ (t 4.61, 2,163 markets), but not by enough to trade on
+  the quotes alone. Resting on it: +0.60¢ per filled contract (t 0.56, 820
+  fills); buying at the ask with a spread of 3¢ or less: about 0 to +0.6¢
+  (t 0.9 or less). The average spread on these favourites is 4.1¢ (median
+  2¢), which absorbs the mispricing.
 - **Resting on favourites everywhere:** −0.05¢ (t −0.27), and sports
-  −0.30¢.
+  −0.25¢.
 
 **Verdict:** no separate model-free strategy works across Kalshi's markets
-on this data. The economic-data favourites are the one lead worth a
-dedicated study, priced from outside data (futures-implied rate odds,
-inflation nowcasts, daily fuel prices) rather than the quotes alone.
+on this data. The economic-data favourite mispricing is real at the mid
+but too small to beat the spread with quotes alone; it would need a better
+fair price from outside data (futures-implied rate odds, inflation
+nowcasts, daily commodity prices) to be worth a dedicated study.
