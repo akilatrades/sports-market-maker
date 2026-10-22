@@ -29,6 +29,10 @@ def test_categories_by_series_name():
     assert es.category("KXNBAGAME") == "sports"
     assert es.category("KXTEMPNYCH") == "weather"
     assert es.category("KXTRUMPMENTION") == "mentions"
+    assert es.category("KXLALIGASPREAD") == "sports"  # not "GAS"
+    assert es.category("KXBUNDESLIGASPREAD") == "sports"
+    assert es.category("KXAAAGASD") == "economics"
+    assert es.category("KXNATGASD") == "economics"
 
 
 def test_taker_fee_rounds_up_for_one_contract():
