@@ -1,0 +1,27 @@
+[Unit]
+Description=Spread maker pilot: shadow ledger always, live quotes only when the owner arms it
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=oneshot
+User=trader
+Group=trader
+WorkingDirectory=/home/trader/sports-market-maker-prod-auto
+# The same Kalshi account and shared-account settings as the NBA bot.
+EnvironmentFile=/etc/market-maker-prod-nba-auto.env
+# This bot's own arm switch (SPREAD_AUTO_ARM=YES), written only by
+# deploy/setup_spread_maker.sh --arm. Optional: without it the pass is shadow only.
+EnvironmentFile=-/etc/market-maker-spread.env
+Environment=PYTHONUNBUFFERED=1
+Environment=OPENBLAS_NUM_THREADS=1
+Environment=OMP_NUM_THREADS=1
+# Skip the pass while a code release is updating the checkout.
+ExecCondition=+/usr/bin/flock -n /run/lock/smm-production-release.lock /bin/true
+ExecStart=/home/trader/sports-market-maker-prod-auto/.venv/bin/python -m live.prod_spread_auto --auto
+# Stay behind the NBA and NFL bots for CPU and disk on the small server.
+Nice=5
+MemoryAccounting=true
+Restart=no
+UMask=0077
+TimeoutStartSec=240

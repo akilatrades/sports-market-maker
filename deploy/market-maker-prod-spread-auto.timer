@@ -1,0 +1,14 @@
+[Unit]
+Description=Spread maker pilot passes every 10 minutes
+
+[Timer]
+# Minute 3, 13, 23, ...: away from the NBA bot's even-minute scans. Quotes
+# expire on the exchange after 65 minutes, so a stopped timer leaves nothing
+# resting for long. Systemd never overlaps the oneshot worker.
+OnCalendar=*-*-* *:03/10:00 UTC
+AccuracySec=10s
+Persistent=false
+Unit=market-maker-prod-spread-auto.service
+
+[Install]
+WantedBy=timers.target

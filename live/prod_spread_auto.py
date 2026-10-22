@@ -1,0 +1,1362 @@
+"""Spread maker (spread-maker-v1): two-sided quotes one cent inside wide spreads.
+
+Plan: RESEARCH_LOG.md, "2026-10-22: Spread maker pilot, shadow and small
+live (plan)". For open markets in the allowed series whose expected
+expiration is 4 to 7 hours away and whose spread is 8c or more, quote a YES
+bid one cent above the best YES bid and a NO bid one cent above the best NO
+bid, up to five contracts each, post-only, expiring after 65 minutes. Hold
+fills to settlement; an order shrinks so that held plus resting contracts on
+one side of a market never exceed the per-market cap.
+
+Modes (``--auto`` picks live only when armed, else shadow):
+- ``--shadow``: public data only. Writes the quotes it would post to
+  STATE/shadow.jsonl and scores them later from Kalshi's public trade prints
+  and results. No credentials, no orders.
+- ``--live``: real orders, under the shared account lock, inside the shared
+  account risk checks (live/shared_account_risk.py) and the pilot caps
+  (live/spread_policy.py). Requires KALSHI_ENV=prod,
+  ALLOW_PRODUCTION_TRADING=YES, SPREAD_AUTO_ARM=YES, shared-account mode and
+  the owner-created marker /etc/market-maker-spread.enabled. The shadow
+  ledger keeps running beside it.
+- ``--status``: summary of both ledgers.
+- ``--preflight``: signed GET-only readiness check (no orders).
+- ``--reconcile``: owner-run, signed GET-only resolution of an ambiguous
+  order: found in any status (accepted) or absent 10+ minutes later.
+
+Every order and cancel is journaled before it is sent. An exchange HTTP 4xx
+refusal is recorded as rejected only after a signed read finds no order with
+that client id in any status; any other failure halts all bots until the
+owner runs ``--reconcile``. A pass that halts first cancels this bot's
+provably owned resting orders. A KILL file in STATE cancels them every pass.
+"""
+
+import argparse
+import fcntl
+import json
+import math
+import os
+import re
+import signal
+import time
+import uuid
+from collections import Counter
+from datetime import UTC, datetime, timedelta
+from zoneinfo import ZoneInfo
+
+import pandas as pd
+
+from kalshi import api as kalshi_api
+from kalshi import shard_funding
+from kalshi.trading import Order, TradingClient, TradingError
+
+# Every module a pass can need is loaded when the process starts (including
+# the two modules the shared account check loads), so a code release landing
+# mid-pass cannot mix old and new code inside one pass.
+from live import nfl_policy, prod_nba_auto, prod_nfl_auto, production_lock  # noqa: F401
+from live import shared_account_risk as shared
+from live import spread_policy as P
+
+NY = ZoneInfo("America/New_York")
+REQUIRED = {
+    "KALSHI_ENV": "prod",
+    "ALLOW_PRODUCTION_TRADING": "YES",
+    "SPREAD_AUTO_ARM": "YES",
+}
+
+
+# --------------------------------------------------------------- journal
+
+
+def write_event(path, data):
+    with path.open("a", encoding="utf-8") as f:
+        f.write(json.dumps(data, sort_keys=True) + "\n")
+        f.flush()
+        os.fsync(f.fileno())
+
+
+def load_events(path):
+    if not path.exists():
+        return []
+    raw = path.read_text()
+    if raw and not raw.endswith("\n"):
+        raise TradingError("Incomplete spread journal: HALT")
+    try:
+        return [json.loads(line) for line in raw.splitlines() if line.strip()]
+    except (ValueError, TypeError) as error:
+        raise TradingError("Invalid spread journal: HALT") from error
+
+
+def _intents(events):
+    intents = {}
+    for e in events:
+        if e.get("event") != "intent":
+            continue
+        cid = e.get("client_order_id")
+        if not cid or cid in intents:
+            raise TradingError("Duplicate or incomplete spread intent: HALT")
+        intents[cid] = e
+    accepted = {}
+    for e in events:
+        if e.get("event") == "accepted":
+            cid, oid = e.get("client_order_id"), e.get("order_id")
+            if cid not in intents or not oid or cid in accepted:
+                raise TradingError("Invalid spread acceptance: HALT")
+            accepted[cid] = str(oid)
+    return intents, accepted, shared.spread_rejected_ids(events)
+
+
+def records(events):
+    """Intents by client id, accepted order ids, and refused client ids.
+
+    Halts while any order's outcome is unproven (an ``unknown_outcome`` or
+    an intent with no reply) until the owner's ``--reconcile`` resolves it.
+    """
+    intents, accepted, refused = _intents(events)
+    unknown = {
+        e.get("client_order_id") for e in events if e.get("event") == "unknown_outcome"
+    }
+    if unknown - set(accepted) - refused:
+        raise TradingError(
+            "Ambiguous spread order: HALT, owner runs setup_spread_maker.sh --reconcile"
+        )
+    if set(intents) != set(accepted) | refused:
+        raise TradingError("Unreconciled spread submission: HALT")
+    return intents, accepted, refused
+
+
+# ------------------------------------------------------------ the market
+
+
+def _cents(value):
+    try:
+        number = float(value)
+    except (TypeError, ValueError):
+        return None
+    if not math.isfinite(number):
+        return None
+    cents = round(number * 100)
+    return cents if abs(cents - number * 100) < 1e-6 else None
+
+
+def excluded(ticker, other_tickers):
+    return str(ticker).startswith(P.EXCLUDED_PREFIXES) or ticker in other_tickers
+
+
+def quote_prices(yes_bid_cents, yes_ask_cents):
+    """(YES bid price, NO bid price) one cent inside, or None if not eligible."""
+    if yes_bid_cents is None or yes_ask_cents is None:
+        return None
+    if not 0 < yes_bid_cents < yes_ask_cents < 100:
+        return None
+    if yes_ask_cents - yes_bid_cents < P.MIN_SPREAD_CENTS:
+        return None
+    yes_price = yes_bid_cents + 1
+    no_price = (100 - yes_ask_cents) + 1
+    lo, hi = P.PRICE_RANGE_CENTS
+    if not (lo <= yes_price <= hi and lo <= no_price <= hi):
+        return None
+    # Both stay strictly inside the spread: post-only, never crossing.
+    if not (yes_price < yes_ask_cents and 100 - no_price > yes_bid_cents):
+        return None
+    return yes_price, no_price
+
+
+def eligible_markets(markets, series, now, other_tickers=frozenset()):
+    """Open markets in the window with a wide two-sided quote."""
+    rows = []
+    for m in markets:
+        ticker = m.get("ticker")
+        if not ticker or excluded(ticker, other_tickers):
+            continue
+        if series in P.MAKER_FEE_SERIES or m.get("status") not in ("active", "open"):
+            continue
+        expires = pd.to_datetime(
+            m.get("expected_expiration_time"), utc=True, errors="coerce"
+        )
+        if pd.isna(expires):
+            continue
+        hours = (expires.to_pydatetime() - now).total_seconds() / 3600
+        if not P.WINDOW_HOURS[0] <= hours <= P.WINDOW_HOURS[1]:
+            continue
+        bid, ask = _cents(m.get("yes_bid_dollars")), _cents(m.get("yes_ask_dollars"))
+        prices = quote_prices(bid, ask)
+        if prices is None:
+            continue
+        rows.append(
+            {
+                "ticker": ticker,
+                "series": series,
+                "event_ticker": m.get("event_ticker", ""),
+                "yes_bid": bid,
+                "yes_ask": ask,
+                "spread": ask - bid,
+                "yes_price": prices[0],
+                "no_price": prices[1],
+                "expiration_utc": expires.isoformat(),
+            }
+        )
+    return rows
+
+
+def book_quote(book, own=()):
+    """(best YES bid, best YES offer) in cents from a public order book, with
+    our own resting quotes taken out so the bot never prices off itself.
+
+    ``own`` holds (side, price_cents, count) for our resting quotes in that
+    market. Our NO bid at q shows in the book's NO bids at q.
+    """
+    if not isinstance(book, dict):
+        return None, None
+    depth = {}
+    for side in ("yes", "no"):
+        levels = {}
+        for entry in book.get(f"{side}_dollars") or []:
+            try:
+                price, quantity = _cents(entry[0]), float(entry[1])
+            except (TypeError, ValueError, IndexError, KeyError):
+                return None, None
+            if price is None or not math.isfinite(quantity):
+                return None, None
+            levels[price] = levels.get(price, 0.0) + quantity
+        depth[side] = levels
+    for side, price, count in own:
+        if price in depth.get(side, {}):
+            depth[side][price] -= count
+    yes = [p for p, q in depth["yes"].items() if q > 1e-9]
+    no = [p for p, q in depth["no"].items() if q > 1e-9]
+    return (max(yes) if yes else None), (100 - max(no) if no else None)
+
+
+def _dollars(cents, default):
+    return f"{(default if cents is None else cents) / 100:.2f}"
+
+
+def universe(
+    fetch_markets,
+    now,
+    other_tickers=frozenset(),
+    own=None,
+    fetch_book=None,
+    unreadable=None,
+):
+    """Eligible markets, widest spread first.
+
+    For markets where we already rest quotes (``own``: ticker -> list of
+    (side, price_cents, count)), the listed best bid and offer may be ours, so
+    the quote comes from the order book with our orders removed. A market
+    whose book cannot be read is left out and added to ``unreadable``: the
+    live pass keeps its quotes as they are and adds nothing there.
+    """
+    own = own or {}
+    rows = []
+    for series in P.SERIES:
+        try:
+            markets = fetch_markets(series, status="open") or []
+        except Exception:  # one bad series must not stop the others
+            continue
+        adjusted = []
+        for m in markets:
+            ticker = m.get("ticker")
+            if ticker in own:
+                try:
+                    book = fetch_book(ticker)
+                except Exception:
+                    book = None
+                if not isinstance(book, dict):
+                    if unreadable is not None:
+                        unreadable.add(ticker)
+                    continue
+                bid, ask = book_quote(book, own[ticker])
+                m = {
+                    **m,
+                    "yes_bid_dollars": _dollars(bid, 0),
+                    "yes_ask_dollars": _dollars(ask, 100),
+                }
+            adjusted.append(m)
+        rows.extend(eligible_markets(adjusted, series, now, other_tickers))
+    return sorted(rows, key=lambda r: (-r["spread"], r["ticker"]))
+
+
+# ---------------------------------------------------------------- shadow
+
+
+def shadow_post(events, markets, now):
+    """At most one shadow quote per market and side per hour."""
+    recent = {}
+    for e in events:
+        if e.get("event") == "shadow_quote":
+            key = (e["ticker"], e["side"])
+            recent[key] = max(recent.get(key, ""), e["posted_utc"])
+    cutoff = (now - timedelta(minutes=P.SHADOW_REPOST_MINUTES)).isoformat()
+    new = []
+    for m in markets:
+        for side, price in (("yes", m["yes_price"]), ("no", m["no_price"])):
+            if recent.get((m["ticker"], side), "") > cutoff:
+                continue
+            new.append(
+                {
+                    "event": "shadow_quote",
+                    "id": str(uuid.uuid4()),
+                    "ticker": m["ticker"],
+                    "series": m["series"],
+                    "event_ticker": m["event_ticker"],
+                    "side": side,
+                    "price_cents": price,
+                    "contracts": P.CONTRACTS,
+                    "spread": m["spread"],
+                    "posted_utc": now.isoformat(),
+                    "expires_utc": (
+                        now + timedelta(minutes=P.SHADOW_REPOST_MINUTES)
+                    ).isoformat(),
+                    "market_expiration_utc": m["expiration_utc"],
+                }
+            )
+    return new
+
+
+def contracts_through(trades, side, price_cents, start, end):
+    """Contracts a taker traded at or through our price in (start, end].
+
+    A YES bid at p is hit by YES sellers (taker side "no") at p or below; a NO
+    bid at q is a YES offer at 1 - q, hit by YES buyers at 1 - q or above. We
+    were one cent inside, so trades at exactly our price count. Block trades
+    never meet resting orders and are ignored.
+    """
+    total = 0.0
+    level = price_cents / 100 if side == "yes" else (100 - price_cents) / 100
+    for t in trades:
+        if t.get("is_block_trade"):
+            continue
+        when = pd.to_datetime(t.get("created_time"), utc=True, errors="coerce")
+        if pd.isna(when) or not start < when.to_pydatetime() <= end:
+            continue
+        taker = str(t.get("taker_outcome_side") or "").lower()
+        price = t.get("yes_price")
+        if price is None or not math.isfinite(float(price)):
+            continue
+        if side == "yes" and taker == "no" and float(price) <= level + 1e-9:
+            total += float(t.get("count") or 0)
+        if side == "no" and taker == "yes" and float(price) >= level - 1e-9:
+            total += float(t.get("count") or 0)
+    return total
+
+
+def shadow_score(events, now, fetch_trades):
+    """Fill counts for shadow quotes whose hour has ended."""
+    scored = {e["id"] for e in events if e.get("event") == "shadow_fill"}
+    due = [
+        e
+        for e in events
+        if e.get("event") == "shadow_quote"
+        and e["id"] not in scored
+        and e["expires_utc"] <= now.isoformat()
+    ]
+    out = []
+    by_ticker = {}
+    for e in due:
+        by_ticker.setdefault(e["ticker"], []).append(e)
+    for ticker, quotes in by_ticker.items():
+        start = min(datetime.fromisoformat(q["posted_utc"]) for q in quotes)
+        end = max(datetime.fromisoformat(q["expires_utc"]) for q in quotes)
+        try:
+            trades = fetch_trades(ticker, int(start.timestamp()), int(end.timestamp()))
+        except Exception:
+            continue  # try again next pass
+        for q in quotes:
+            through = contracts_through(
+                trades,
+                q["side"],
+                q["price_cents"],
+                datetime.fromisoformat(q["posted_utc"]),
+                datetime.fromisoformat(q["expires_utc"]),
+            )
+            out.append({"event": "shadow_fill", "id": q["id"], "through": through})
+    return out
+
+
+def shadow_settle(events, fetch_market):
+    """Market results for shadow quotes that would have filled."""
+    filled = {
+        e["id"]
+        for e in events
+        if e.get("event") == "shadow_fill" and float(e.get("through", 0)) >= 1
+    }
+    done = {e["ticker"] for e in events if e.get("event") == "shadow_result"}
+    tickers = {
+        e["ticker"]
+        for e in events
+        if e.get("event") == "shadow_quote" and e["id"] in filled
+    }
+    out = []
+    for ticker in sorted(tickers - done):
+        try:
+            market = fetch_market(ticker) or {}
+        except Exception:
+            continue
+        result = market.get("result")
+        if result in ("yes", "no"):
+            out.append({"event": "shadow_result", "ticker": ticker, "result": result})
+    return out
+
+
+def expected_fill(through, flow, size):
+    """Expected contracts filled, E[min(Binomial(through, flow), size)]: our
+    share of the contracts traded through our price, capped at our size."""
+    n = int(math.floor(through))
+    if n <= 0 or size <= 0:
+        return 0.0
+    if flow >= 1:
+        return float(min(n, size))
+    pmf = math.exp(n * math.log1p(-flow))  # P(X = 0)
+    below, total = 0.0, 0.0
+    for k in range(1, int(size) + 1):  # E = sum over k of P(X >= k)
+        below += pmf
+        total += max(0.0, 1.0 - below)
+        pmf *= (n - (k - 1)) / k * flow / (1 - flow)
+    return total
+
+
+def shadow_summary(events, flow=0.25):
+    """Shadow ledger results: first in line (every contract traded through
+    our price up to our size), and at the given flow share. Simulated."""
+    quotes = {e["id"]: e for e in events if e.get("event") == "shadow_quote"}
+    fills = {
+        e["id"]: float(e["through"]) for e in events if e.get("event") == "shadow_fill"
+    }
+    results = {
+        e["ticker"]: e["result"] for e in events if e.get("event") == "shadow_result"
+    }
+    rows = []
+    for qid, through in fills.items():
+        q = quotes.get(qid)
+        if q is None:
+            continue
+        size = int(q.get("contracts", 1))
+        result = results.get(q["ticker"])
+        won = None if result is None else float(result == q["side"])
+        rows.append(
+            {
+                "filled": through >= 1,
+                "first": float(min(math.floor(through), size)),
+                "expected": expected_fill(through, flow, size),
+                "pnl": None if won is None else won - q["price_cents"] / 100,
+            }
+        )
+    frame = pd.DataFrame(rows)
+    if frame.empty:
+        return {"quotes": len(quotes), "scored": 0}
+    settled = frame[frame.filled & frame.pnl.notna()]
+    out = {
+        "quotes": len(quotes),
+        "scored": len(frame),
+        "fill_rate": float(frame.filled.mean()),
+        "filled": int(frame.filled.sum()),
+        "settled_fills": len(settled),
+    }
+    if len(settled):
+        first = (settled.pnl * settled["first"]).sum()
+        out["contracts_first_in_line"] = float(settled["first"].sum())
+        out["cents_per_contract"] = 100 * float(first / settled["first"].sum())
+        out["dollars_first_in_line"] = round(float(first), 2)
+        if settled.expected.sum() > 0:
+            share = (settled.pnl * settled.expected).sum()
+            out[f"cents_per_contract_flow_{flow:g}"] = 100 * float(
+                share / settled.expected.sum()
+            )
+            out[f"dollars_flow_{flow:g}"] = round(float(share), 2)
+    return out
+
+
+def run_shadow(state_dir, now, public, markets=None):
+    path = state_dir / "shadow.jsonl"
+    events = load_events(path)
+    for e in shadow_score(events, now, public["fetch_trades"]):
+        write_event(path, e)
+    events = load_events(path)
+    for e in shadow_settle(events, public["fetch_market"]):
+        write_event(path, e)
+    if markets is None:
+        markets = universe(public["fetch_markets"], now)
+    for e in shadow_post(load_events(path), markets, now):
+        write_event(path, e)
+    return shadow_summary(load_events(path))
+
+
+# ------------------------------------------------------------------ live
+
+
+def guard(env, client):
+    for name, expected in REQUIRED.items():
+        if env.get(name) != expected:
+            raise TradingError(f"Unarmed spread maker: {name} must be {expected}")
+    if not P.ARM_MARKER.exists():
+        raise TradingError("Owner has not enabled the spread maker")
+    if not shared.dual_mode(env):
+        raise TradingError("Spread maker requires shared-account mode")
+    if client.env != "prod" or client.dry_run or not client.can_sign:
+        raise TradingError("Signed production execution client required")
+
+
+def armed(env):
+    return env.get("SPREAD_AUTO_ARM") == "YES" and P.ARM_MARKER.exists()
+
+
+def held_cost(positions, open_lots):
+    """Dollars at risk in held contracts, at the price paid.
+
+    ``open_lots`` (from the fill ledger) gives the price of each contract
+    still held. Where it does not match the exchange's position (for
+    example a fill not yet listed), every contract counts as $1.
+    """
+    total = 0.0
+    for ticker, qty in positions.items():
+        lots = open_lots.get(ticker, [])
+        net = sum(count if side == "yes" else -count for side, _, count in lots)
+        if abs(net - qty) < 1e-6:
+            total += sum(price * count for _, price, count in lots)
+        else:
+            total += abs(qty)
+    return round(total, 4)
+
+
+def desired_quotes(markets, positions):
+    """{(ticker, side): (price, contracts)} after the inventory cap.
+
+    A YES order is at most the room left before net YES reaches the cap
+    (positive net = YES held), a NO order likewise; a side with no room is
+    not quoted.
+    """
+    out = {}
+    for m in markets:
+        net = positions.get(m["ticker"], 0.0)
+        rooms = {
+            "yes": math.floor(P.MAX_NET_PER_MARKET - net + 1e-9),
+            "no": math.floor(P.MAX_NET_PER_MARKET + net + 1e-9),
+        }
+        for side, price in (("yes", m["yes_price"]), ("no", m["no_price"])):
+            size = int(min(P.CONTRACTS, rooms[side]))
+            if size >= 1:
+                out[(m["ticker"], side)] = (price, size)
+    return out
+
+
+def remaining_count(order, intent, fills):
+    """Contracts still resting on one of our orders: the exchange's
+    remaining count, else the order size less its listed fills."""
+    raw = order.get("remaining_count_fp", order.get("remaining_count"))
+    size = float(intent["count"])
+    if raw is None:
+        done = 0.0
+        for f in fills:
+            if str(f.get("order_id")) == str(order.get("order_id")):
+                try:
+                    done += float(f.get("count_fp", f.get("count")))
+                except (TypeError, ValueError) as error:
+                    raise TradingError("Unreadable spread fill count: HALT") from error
+        return max(0.0, size - done)
+    try:
+        left = float(raw)
+    except (TypeError, ValueError) as error:
+        raise TradingError("Unreadable spread resting count: HALT") from error
+    if not math.isfinite(left) or left < 0 or left > size + 1e-9:
+        raise TradingError("Spread resting count disagrees with journal: HALT")
+    return left
+
+
+def cancel_order(client, journal, order_id, ticker, reason, now, expected=None):
+    """Cancel one owned quote. Returns "canceled"; "moot" when the order had
+    already filled or expired (a signed read shows it is gone, or the
+    exchange cancelled nothing); or "partial" when the exchange cancelled
+    fewer contracts than ``expected`` were resting (or did not say how many):
+    some filled after the account was read."""
+    write_event(
+        journal,
+        {
+            "event": "cancel_intent",
+            "utc": now.isoformat(),
+            "order_id": order_id,
+            "ticker": ticker,
+            "reason": reason,
+        },
+    )
+    try:
+        result = client.cancel(order_id, ticker=ticker)
+    except Exception as error:
+        # A quote can fill or expire between our read and the cancel. Accept
+        # that only when a signed read shows the order is no longer resting.
+        if is_http_4xx(error) is not None:
+            still = [
+                o
+                for o in client.orders("resting", ticker=ticker)
+                if str(o.get("order_id")) == str(order_id)
+            ]
+            if not still:
+                write_event(
+                    journal,
+                    {
+                        "event": "cancel_moot",
+                        "utc": datetime.now(UTC).isoformat(),
+                        "order_id": order_id,
+                        "detail": str(error)[:200],
+                    },
+                )
+                return "moot"
+        raise TradingError("Cannot confirm spread cancellation: HALT") from error
+    raw = result.get("reduced_by") if isinstance(result, dict) else None
+    try:
+        reduced = float(raw)
+        if not math.isfinite(reduced):
+            reduced = None
+    except (TypeError, ValueError):
+        reduced = None
+    if reduced is not None and reduced <= 1e-9:
+        outcome = "moot"
+    elif expected is not None and (reduced is None or reduced < expected - 1e-9):
+        outcome = "partial"
+    else:
+        outcome = "canceled"
+    write_event(
+        journal,
+        {
+            "event": "cancel_moot" if outcome == "moot" else "cancel_accepted",
+            "utc": datetime.now(UTC).isoformat(),
+            "order_id": order_id,
+            "reduced_by": raw,
+            "expected": expected,
+            **({"detail": "reduced_by_zero"} if outcome == "moot" else {}),
+        },
+    )
+    return outcome
+
+
+def cancel_all_owned(client, journal, resting, reason, now):
+    for order in resting:
+        cancel_order(client, journal, order["order_id"], order["ticker"], reason, now)
+    return len(resting)
+
+
+def record_execution(journal, events, owned_orders, fills, settlements, tickers):
+    """Copy this bot's fills and settlements into its journal (for --status)."""
+    seen_fills = {e.get("fill_id") for e in events if e.get("event") == "fill"}
+    seen_settled = {
+        (e.get("ticker"), e.get("utc"))
+        for e in events
+        if e.get("event") == "settlement"
+    }
+    for fill in fills:
+        oid = str(fill.get("order_id"))
+        fid = fill.get("fill_id") or fill.get("trade_id")
+        if not fid or str(fid) in seen_fills or oid not in owned_orders:
+            continue
+        write_event(
+            journal,
+            {
+                "event": "fill",
+                "fill_id": str(fid),
+                "order_id": oid,
+                "utc": fill.get("created_time"),
+                "ticker": fill.get("ticker") or fill.get("market_ticker"),
+                **{
+                    key: fill[key]
+                    for key in (
+                        "side",
+                        "action",
+                        "outcome_side",
+                        "book_side",
+                        "count_fp",
+                        "count",
+                        "yes_price_dollars",
+                        "no_price_dollars",
+                        "fee_cost",
+                        "is_taker",
+                    )
+                    if fill.get(key) is not None
+                },
+            },
+        )
+        seen_fills.add(str(fid))
+    for item in settlements:
+        ticker = item.get("market_ticker") or item.get("ticker")
+        key = (ticker, str(item.get("settled_time", "")))
+        if ticker not in tickers or key in seen_settled:
+            continue
+        write_event(
+            journal,
+            {
+                "event": "settlement",
+                "ticker": ticker,
+                "utc": key[1],
+                "market_result": item.get("market_result"),
+                **nfl_policy.settlement_accounting(item),
+            },
+        )
+        seen_settled.add(key)
+
+
+def journal_ledger(events, now):
+    """The fill ledger from the journal's own copies only (no exchange reads)."""
+    return shared.spread_ledger(events, [], [], now)
+
+
+def is_http_4xx(error):
+    match = re.search(r"-> HTTP ([0-9]{3})", str(error))
+    return int(match.group(1)) if match and match.group(1).startswith("4") else None
+
+
+def find_order(client, ticker, client_order_id):
+    """Our order with this client id in any status, from signed reads."""
+    for status in ("resting", "executed", "canceled"):
+        for order in client.orders(status, ticker=ticker):
+            if order.get("client_order_id") == client_order_id:
+                return order
+    return None
+
+
+CLIENT_ID_PREFIX = "smm-spread-"  # NBA/NFL ids are smm-<uuid4>: never "smm-s..."
+
+
+def place_quote(
+    client, journal, market, side, price, now, require_shard, deadline=None, size=None
+):
+    """Journal, place, and record one post-only quote. Returns the outcome.
+
+    Nothing before the intent sends an order, so a failed shard check only
+    stops this pass's placements ("shard_check_failed"); from the intent on,
+    anything but a proven outcome is an unknown outcome.
+    """
+    order = Order(
+        ticker=market["ticker"],
+        side=side,
+        count=int(size or P.CONTRACTS),
+        price_cents=int(price),
+        expiration_ts=int(
+            (now + timedelta(minutes=P.ORDER_LIFETIME_MINUTES)).timestamp()
+        ),
+        post_only=True,
+        client_order_id=f"{CLIENT_ID_PREFIX}{uuid.uuid4()}",
+    )
+    cost = round(order.count * price / 100, 2)
+    try:
+        order.exchange_index = require_shard(client, order.ticker, cost)
+    except Exception as error:
+        if str(error).startswith("SHARD_UNFUNDED_"):
+            return "shard_unfunded"
+        if isinstance(error, TradingError) and "HALT" in str(error):
+            raise
+        return "shard_check_failed"  # a read failed; no order was sent
+    if out_of_time(deadline):
+        return "out_of_time"
+    write_event(
+        journal,
+        {
+            "event": "intent",
+            "utc": now.isoformat(),
+            "client_order_id": order.client_order_id,
+            "ticker": order.ticker,
+            "series": market["series"],
+            "event_ticker": market["event_ticker"],
+            "side": side,
+            "price_cents": int(price),
+            "count": order.count,
+            "cost": cost,
+            "spread": market["spread"],
+            "market_expiration_utc": market["expiration_utc"],
+            "strategy_version": P.STRATEGY_VERSION,
+        },
+    )
+    # From here on, anything but a proven outcome is an unknown outcome.
+    try:
+        try:
+            result = client.place(order)
+        except Exception as error:
+            status = is_http_4xx(error)
+            if status is None:
+                raise
+            # The exchange refused the request. Confirm with signed reads that
+            # no such order exists in any status before treating it as never
+            # placed.
+            found = find_order(client, order.ticker, order.client_order_id)
+            if found is None:
+                write_event(
+                    journal,
+                    {
+                        "event": "rejected_4xx",
+                        "utc": datetime.now(UTC).isoformat(),
+                        "client_order_id": order.client_order_id,
+                        "http_status": status,
+                        "evidence": shared.SPREAD_REJECTION_EVIDENCE,
+                        "detail": str(error)[:200],
+                    },
+                )
+                return "rejected"
+            result = {"order_id": found.get("order_id")}
+        if not isinstance(result, dict) or not result.get("order_id"):
+            raise TradingError("Spread placement returned no order id")
+    except Exception as error:
+        write_event(
+            journal,
+            {
+                "event": "unknown_outcome",
+                "utc": datetime.now(UTC).isoformat(),
+                "client_order_id": order.client_order_id,
+                "type": type(error).__name__,
+            },
+        )
+        raise TradingError(
+            "Ambiguous spread submission: all bots halt until the owner runs "
+            "setup_spread_maker.sh --reconcile"
+        ) from error
+    write_event(
+        journal,
+        {
+            "event": "accepted",
+            "utc": datetime.now(UTC).isoformat(),
+            "client_order_id": order.client_order_id,
+            "order_id": str(result["order_id"]),
+        },
+    )
+    return "accepted"
+
+
+def fresh_prices(public, ticker, own=()):
+    """Our quote prices from a fresh read of the book, without our own quotes."""
+    market = public.get("quote_market", public["fetch_market"])(ticker) or {}
+    if market.get("status") not in ("active", "open"):
+        return None
+    book = public.get("quote_orderbook", public["fetch_orderbook"])(ticker)
+    return quote_prices(*book_quote(book, own))
+
+
+# Set by SIGTERM (systemd's timeout): finish the order in flight, place no more.
+STOP = {"requested": False}
+PROCESS_START = time.monotonic()
+
+
+def _request_stop(signum, frame):
+    STOP["requested"] = True
+
+
+def out_of_time(deadline):
+    return STOP["requested"] or (deadline is not None and time.monotonic() > deadline)
+
+
+def pass_live(client, env, now, state_dir, public, require_shard=None, deadline=None):
+    """One live pass: (report for last_scan.json, eligible markets or None).
+
+    Any halt first cancels this bot's provably owned resting orders.
+    """
+    guard(env, client)
+    journal = state_dir / "journal.jsonl"
+    try:
+        return _pass_live(client, now, journal, public, require_shard, deadline)
+    except Exception as error:
+        if not transient(error):
+            try:
+                cancel_owned_on_kill(client, journal, reason="halt")
+            except Exception:
+                pass  # the original failure is what the owner needs to see
+        raise
+
+
+def transient(error):
+    """A read that timed out or was throttled: quotes stay (they expire on
+    the exchange within 65 minutes) and the next pass checks again. Any
+    other failure, including every ambiguous order, cancels them."""
+    if isinstance(error, OSError):
+        return True
+    return isinstance(error, TradingError) and bool(
+        re.search(r"-> HTTP (429|5[0-9][0-9])\b", str(error))
+    )
+
+
+def _pass_live(client, now, journal, public, require_shard, deadline):
+    require_shard = require_shard or shard_funding.require_funded_shard
+    events = load_events(journal)
+    intents, accepted, _ = records(events)
+    state, context = shared.state_for(client, "spread", now)
+    order_to_cid = {oid: cid for cid, oid in accepted.items()}
+    own_tickers = {i["ticker"] for i in intents.values()}
+    record_execution(
+        journal,
+        events,
+        set(order_to_cid),
+        state["fills"],
+        state["settlements"],
+        own_tickers,
+    )
+    report = Counter()
+    resting = [
+        {**o, "order_id": str(o["order_id"]), "ticker": o.get("ticker")}
+        for o in state["resting"]
+    ]
+    ledger = state["ledger"]
+    if ledger.get("unavailable"):
+        raise TradingError(f"Spread P&L unverifiable ({ledger['unavailable']})")
+    daily, total = ledger["daily"], ledger["cumulative"]
+    if daily <= -P.DAILY_LOSS_STOP + 1e-9 or total <= -P.CUMULATIVE_LOSS_STOP + 1e-9:
+        report["canceled"] = cancel_all_owned(
+            client, journal, resting, "loss_stop", now
+        )
+        return {
+            "decision": "spread_loss_stop",
+            "daily": daily,
+            "total": total,
+            **report,
+        }, None
+    if shared.account_loss_stop(context):
+        report["canceled"] = cancel_all_owned(
+            client, journal, resting, "account_loss_stop", now
+        )
+        return {"decision": "account_loss_stop", **report}, None
+    others = {
+        t for t, cohort in context["ownership"]["tickers"].items() if cohort != "spread"
+    }
+    resting_intents = []
+    own = {}
+    for order in resting:
+        intent = intents.get(order_to_cid.get(order["order_id"]))
+        if intent is None:
+            raise TradingError("Resting order missing from spread journal: HALT")
+        left = remaining_count(order, intent, state["fills"])
+        resting_intents.append((order, intent, left))
+        # Only what is still resting is in the book (after a partial fill).
+        own.setdefault(intent["ticker"], []).append(
+            (intent["side"], int(intent["price_cents"]), left)
+        )
+    unreadable = set()
+    markets = universe(
+        public["fetch_markets"],
+        now,
+        others,
+        own,
+        public.get("quote_orderbook", public["fetch_orderbook"]),
+        unreadable,
+    )
+    by_ticker = {m["ticker"]: m for m in markets}
+    positions = state["positions"]
+    wanted = desired_quotes(markets, positions)
+    # Cancel quotes that are stale, too old, or no longer wanted.
+    keep = {}
+    just_filled = set()
+    oldest = (now - timedelta(minutes=P.ORDER_LIFETIME_MINUTES - 5)).isoformat()
+    unseen = 0.0  # contracts that may have filled since the account read
+    for order, intent, left in resting_intents:
+        key = (intent["ticker"], intent["side"])
+        if intent["ticker"] in unreadable and key not in keep:
+            # Book unreadable this pass: leave the quote alone (it expires
+            # on the exchange); nothing new goes into that market.
+            keep[key] = (intent, left)
+            report["held_book_unreadable"] += 1
+            continue
+        price, size = wanted.get(key, (None, 0))
+        # Keep a quote at the right price whose remaining contracts still
+        # fit the inventory room (a partly filled order keeps its place in
+        # the queue and is not topped up).
+        if (
+            price == intent["price_cents"]
+            and 0 < left <= size + 1e-9
+            and intent["utc"] > oldest
+            and key not in keep
+        ):
+            keep[key] = (intent, left)
+            continue
+        outcome = cancel_order(
+            client,
+            journal,
+            order["order_id"],
+            intent["ticker"],
+            "requote",
+            now,
+            expected=left,
+        )
+        report["canceled"] += 1
+        if outcome in ("moot", "partial"):
+            # Some or all of it filled after the account read: positions are
+            # stale for this market, so leave it until the next pass reads
+            # them again, and count what may now be held.
+            just_filled.add(intent["ticker"])
+            unseen += left * int(intent["price_cents"]) / 100
+    # Exposure: kept resting quotes at cost plus held contracts at cost.
+    exposure = (
+        sum(left * int(i["price_cents"]) / 100 for i, left in keep.values())
+        + held_cost(positions, ledger["open"])
+        + unseen
+    )
+    today = now.astimezone(NY).date()
+    submitted_today = sum(
+        datetime.fromisoformat(i["utc"]).astimezone(NY).date() == today
+        for i in intents.values()
+    )
+    placed = 0
+    # Our quotes resting in each market (kept, then placed this pass), taken
+    # out of every fresh book read.
+    mine = {}
+    for (ticker, _), (intent, left) in keep.items():
+        mine.setdefault(ticker, []).append(
+            (intent["side"], int(intent["price_cents"]), left)
+        )
+    for (ticker, side), (price, size) in wanted.items():
+        if (ticker, side) in keep:
+            continue
+        if ticker in just_filled:
+            report["skip_just_filled"] += 1
+            continue
+        if out_of_time(deadline):
+            report["skip_out_of_time"] += 1
+            break
+        if placed >= P.MAX_ORDERS_PER_PASS:
+            report["skip_pass_cap"] += 1
+            break
+        if submitted_today + placed >= P.MAX_SUBMISSIONS_PER_DAY:
+            report["skip_daily_cap"] += 1
+            break
+        cost = size * price / 100
+        if exposure + cost > P.MAX_ACTIVE_COST + 1e-9:
+            report["skip_active_cap"] += 1
+            continue
+        try:
+            fresh = fresh_prices(public, ticker, mine.get(ticker, []))
+        except Exception:
+            fresh = None
+        if fresh is None or fresh[0 if side == "yes" else 1] != price:
+            report["skip_quote_moved"] += 1
+            continue
+        # The pass start time: expirations are then a little early, never late.
+        outcome = place_quote(
+            client,
+            journal,
+            by_ticker[ticker],
+            side,
+            price,
+            now,
+            require_shard,
+            deadline,
+            size,
+        )
+        report[outcome] += 1
+        if outcome in ("shard_unfunded", "shard_check_failed", "out_of_time"):
+            break
+        placed += 1
+        if outcome == "accepted":
+            exposure += cost
+            mine.setdefault(ticker, []).append((side, int(price), float(size)))
+    return {
+        "decision": "quoted",
+        "eligible_markets": len(markets),
+        "resting_kept": len(keep),
+        "placed": placed,
+        "exposure_dollars": round(exposure, 2),
+        "realized_today": daily,
+        "realized_total": total,
+        **report,
+    }, markets
+
+
+def cancel_owned_on_kill(client, journal, reason="kill"):
+    """Cancel every resting order this bot provably placed (by order id or
+    client id in its journal, or this bot's client-id prefix); leave every
+    other order alone. Works even when the journal cannot be read: then it
+    cancels by prefix and writes nothing to the damaged journal."""
+    try:
+        events = load_events(journal)
+    except TradingError:
+        events = None
+    ids = {str(e["order_id"]) for e in events or [] if e.get("event") == "accepted"}
+    cids = {e["client_order_id"] for e in events or [] if e.get("event") == "intent"}
+    now = datetime.now(UTC)
+    canceled, failed = 0, []
+    for item in client.orders("resting"):
+        cid = str(item.get("client_order_id") or "")
+        if (
+            str(item.get("order_id")) not in ids
+            and cid not in cids
+            and not cid.startswith(CLIENT_ID_PREFIX)
+        ):
+            continue
+        try:
+            if events is None:
+                client.cancel(item["order_id"], ticker=item["ticker"])
+            else:
+                cancel_order(
+                    client, journal, item["order_id"], item["ticker"], reason, now
+                )
+            canceled += 1
+        except Exception as error:  # one failure must not stop the rest
+            if is_http_4xx(error) is None and not isinstance(error, TradingError):
+                failed.append(type(error).__name__)
+            elif is_http_4xx(error) is None:
+                failed.append(str(error)[:80])
+    print(f"SPREAD MAKER {reason.upper()}: canceled {canceled} owned resting orders")
+    if failed:
+        raise TradingError(f"Could not cancel {len(failed)} spread orders: {failed}")
+    return canceled
+
+
+def reconcile(client, journal, now):
+    """Owner-run resolution of orders whose outcome the journal cannot prove.
+
+    Signed GET only. An order found with the client id in any status is
+    recorded as accepted; one absent from every status at least 10 minutes
+    after its intent is recorded as never placed. Anything newer is left
+    for a later run. Places and cancels nothing.
+    """
+    events = load_events(journal)
+    intents, accepted, refused = _intents(events)
+    summary = Counter()
+    pending = [i for c, i in intents.items() if c not in accepted and c not in refused]
+    for intent in sorted(pending, key=lambda i: i["utc"]):
+        cid = intent["client_order_id"]
+        found = find_order(client, intent["ticker"], cid)
+        if found is not None and not found.get("order_id"):
+            summary["found_without_order_id_check_by_hand"] += 1
+            continue
+        if found is not None:
+            write_event(
+                journal,
+                {
+                    "event": "accepted",
+                    "utc": now.isoformat(),
+                    "client_order_id": cid,
+                    "order_id": str(found["order_id"]),
+                    "reconciled": "owner_signed_lookup",
+                },
+            )
+            summary["found_on_exchange"] += 1
+            continue
+        age = int((now - datetime.fromisoformat(intent["utc"])).total_seconds())
+        if age < shared.SPREAD_ABSENT_MIN_AGE_SECONDS:
+            summary["too_recent_try_again_later"] += 1
+            continue
+        write_event(
+            journal,
+            {
+                "event": "reconciled_absent",
+                "utc": now.isoformat(),
+                "client_order_id": cid,
+                "evidence": shared.SPREAD_ABSENT_EVIDENCE,
+                "intent_age_seconds": age,
+            },
+        )
+        summary["never_placed"] += 1
+    try:
+        records(load_events(journal))
+        summary["bots_can_trade"] = True
+    except TradingError as error:
+        summary["bots_can_trade"] = False
+        summary["still_blocked_by"] = str(error)
+    return dict(summary)
+
+
+# ------------------------------------------------------------------ main
+
+
+def _quick(path):
+    """One public read with a single attempt: used while holding the account
+    lock, where a slow read must not eat into the other bots' time."""
+    return kalshi_api.get_json(path, {}, retries=1)
+
+
+def quote_market(ticker):
+    payload = _quick(f"/markets/{ticker}") or {}
+    return payload.get("market")
+
+
+def quote_orderbook(ticker):
+    payload = _quick(f"/markets/{ticker}/orderbook") or {}
+    book = payload.get("orderbook_fp")
+    return book if isinstance(book, dict) else None
+
+
+def public_api():
+    return {
+        "fetch_markets": kalshi_api.fetch_markets,
+        "fetch_market": kalshi_api.fetch_market,  # shadow results (any age)
+        "fetch_orderbook": kalshi_api.fetch_orderbook,
+        "fetch_trades": kalshi_api.fetch_trades,
+        "quote_market": quote_market,  # live quoting, under the lock
+        "quote_orderbook": quote_orderbook,
+    }
+
+
+def write_report(state_dir, report):
+    target = state_dir / "last_scan.json"
+    temporary = target.with_suffix(".json.tmp")
+    temporary.write_text(json.dumps(report, indent=2, default=str) + "\n")
+    temporary.chmod(0o600)
+    temporary.replace(target)
+
+
+def preflight(client, env, now, state_dir, public):
+    """Signed GET-only readiness check before arming. Never places or cancels.
+
+    Checks production settings (except this bot's arm switch), that the
+    spread journal reconciles, that all three bots' journals together own
+    every order and position in the account, that the fill ledger accounts
+    for every fill, and how many markets qualify right now. Prints counts
+    only: no balances, ids or prices.
+    """
+    failures = []
+    for name in ("KALSHI_ENV", "ALLOW_PRODUCTION_TRADING"):
+        if env.get(name) != REQUIRED[name]:
+            failures.append(f"{name} is not {REQUIRED[name]}")
+    if not shared.dual_mode(env):
+        failures.append("shared-account mode is off")
+    if client.env != "prod" or not client.can_sign:
+        failures.append("no signed production client")
+    if failures:
+        return {"ready": False, "failures": failures}
+    journal = state_dir / "journal.jsonl"
+    journal.touch(mode=0o600, exist_ok=True)
+    intents, accepted, refused = records(load_events(journal))
+    state, context = shared.state_for(client, "spread", now)
+    for sport in ("nba", "nfl"):
+        shared.state_for(client, sport, now)  # the other bots still reconcile
+    if state["ledger"].get("unavailable"):
+        return {"ready": False, "failures": [state["ledger"]["unavailable"]]}
+    others = {
+        t for t, cohort in context["ownership"]["tickers"].items() if cohort != "spread"
+    }
+    markets = universe(public["fetch_markets"], now, others)
+    return {
+        "ready": True,
+        "failures": [],
+        "armed": armed(env),
+        "spread_orders_journaled": len(intents),
+        "spread_resting": len(state["resting"]),
+        "spread_markets_held": len(state["positions"]),
+        "spread_fills": state["ledger"]["fills"],
+        "account_loss_stop": bool(shared.account_loss_stop(context)),
+        "eligible_markets_now": len(markets),
+    }
+
+
+def status(state_dir):
+    """Offline summary from this bot's own files. Live and shadow results are
+    reported separately and must never be added together."""
+    events = load_events(state_dir / "journal.jsonl")
+    count = Counter(e.get("event") for e in events)
+    print(
+        f"LIVE orders: {count['intent']} sent, {count['accepted']} accepted, "
+        f"{count['rejected_4xx'] + count['reconciled_absent']} never placed, "
+        f"{count['fill']} fills"
+    )
+    try:
+        ledger = journal_ledger(events, datetime.now(UTC))
+        print(
+            f"LIVE realized P&L (from fills): today ${ledger['daily']:+.2f}, "
+            f"total ${ledger['cumulative']:+.2f}; "
+            f"{len(ledger['settled'])} markets settled, "
+            f"{len(ledger['open'])} still held"
+        )
+    except TradingError as error:
+        print(f"LIVE realized P&L unavailable: {error}")
+    print(
+        "SHADOW (simulated, first in line unless flow-weighted):",
+        json.dumps(shadow_summary(load_events(state_dir / "shadow.jsonl"))),
+    )
+    last = state_dir / "last_scan.json"
+    if last.exists():
+        print("Last pass:", last.read_text())
+
+
+def prefetch(public):
+    """Read every series' open markets once, before taking the account lock,
+    so the other bots wait only for the signed part of a pass."""
+    listings = {}
+    for series in P.SERIES:
+        if STOP["requested"]:
+            break
+        try:
+            listings[series] = public["fetch_markets"](series, status="open") or []
+        except Exception:  # one bad series must not stop the others
+            continue
+    return {
+        **public,
+        "fetch_markets": lambda series, status="open": listings.get(series, []),
+    }
+
+
+def main():
+    parser = argparse.ArgumentParser()
+    mode = parser.add_mutually_exclusive_group(required=True)
+    for flag in (
+        "--shadow",
+        "--live",
+        "--auto",
+        "--status",
+        "--preflight",
+        "--reconcile",
+    ):
+        mode.add_argument(flag, action="store_true")
+    args = parser.parse_args()
+    state_dir = P.STATE
+    state_dir.mkdir(mode=0o700, parents=True, exist_ok=True)
+    if args.status:
+        status(state_dir)
+        return
+    journal = state_dir / "journal.jsonl"
+    owner_command = args.preflight or args.reconcile
+    with (state_dir / "lock").open("a+") as lock:
+        # Owner commands wait for a running pass; a timer pass never queues.
+        fcntl.flock(
+            lock, fcntl.LOCK_EX if owner_command else fcntl.LOCK_EX | fcntl.LOCK_NB
+        )
+        if owner_command:
+            public = prefetch(public_api()) if args.preflight else None
+            with production_lock.account_lock():
+                # Signed reads only: a dry-run client cannot send an order.
+                client = TradingClient(dry_run=True, env="prod")
+                now = datetime.now(UTC)
+                if args.preflight:
+                    result = preflight(client, os.environ, now, state_dir, public)
+                else:
+                    if not client.can_sign:
+                        raise TradingError("Reconcile needs signed production reads")
+                    result = reconcile(client, journal, now)
+            label = "PREFLIGHT" if args.preflight else "RECONCILE"
+            print(f"SPREAD {label}", json.dumps(result, sort_keys=True))
+            if args.preflight and not result["ready"]:
+                raise SystemExit(2)
+            return
+        signal.signal(signal.SIGTERM, _request_stop)
+        deadline = PROCESS_START + P.PASS_DEADLINE_SECONDS
+        live = args.live or (args.auto and armed(os.environ))
+        if live:
+            journal.touch(mode=0o600, exist_ok=True)
+        # lexists: even a broken link named KILL counts as a kill switch.
+        if os.path.lexists(state_dir / "KILL") and journal.exists():
+            # Cancels only; works even after the owner disarms the bot.
+            with production_lock.account_lock():
+                client = TradingClient(dry_run=False, env="prod")
+                if client.env != "prod" or not client.can_sign:
+                    raise TradingError("KILL needs signed production credentials")
+                cancel_owned_on_kill(client, journal)
+            return
+        started = datetime.now(UTC)
+        report = {"run_utc": started.isoformat(), "mode": "live" if live else "shadow"}
+        public = prefetch(public_api())
+        markets = None
+        if live:
+            try:
+                with production_lock.account_lock():
+                    client = TradingClient(dry_run=False, env="prod")
+                    report["live"], markets = pass_live(
+                        client,
+                        os.environ,
+                        datetime.now(UTC),
+                        state_dir,
+                        public,
+                        deadline=deadline,
+                    )
+            except Exception as error:
+                report["live"] = {"decision": "halt", "error": str(error)[:300]}
+                write_report(state_dir, report)
+                raise
+        # The shadow ledger needs no lock: public reads and its own file only.
+        report["shadow"] = run_shadow(state_dir, started, public, markets)
+        write_report(state_dir, report)
+        print("SPREAD MAKER", json.dumps(report, sort_keys=True, default=str))
+
+
+if __name__ == "__main__":
+    main()

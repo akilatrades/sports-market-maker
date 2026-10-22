@@ -2595,3 +2595,153 @@ one contract is held in that market: +3.60¢ (PF 1.30), $1,219 (−25%),
 daily sd $5.10 (−29%), worst day −$14.7. About the same profit per unit of
 risk as (A). Hold to settlement, with a per-market inventory cap as a risk
 control once sizes grow.
+
+## 2026-10-22: Spread maker pilot, shadow and small live (plan)
+
+*Written before the code. Requested by the owner on 22 October ("we need to
+seriously start building this spread bot ... push to live"); defaults
+chosen by the owner's "no preference" answers. Evidence: the strategy
+sweep above (family 7), simulated and in-sample.*
+
+**Strategy `spread-maker-v1`.** In the allowed series (below), for open
+markets whose expected expiration is 4 to 7 hours away and whose spread is
+8¢ or more: rest a YES bid one cent above the best YES bid and a NO bid one
+cent above the best NO bid, one contract each, post-only, each order
+expiring after 65 minutes; re-quote when the book moves. Hold fills to
+settlement. Do not quote a side once one contract of that side is held in
+the market (net).
+
+**Universe.** The 66 series that passed the 10% false-discovery check at
+8¢ (strategy sweep), minus `KXNBAPTS` and `KXNFLRECYDS` (traded by v5 and
+the NFL bot); never a ticker in another bot's journal; never a series that
+pays a maker fee on Kalshi's schedule.
+
+**Two modes, one worker** (`live/prod_spread_auto.py`):
+- **Shadow** (default, no orders): every 10 minutes, write the quotes it
+  would post on every eligible market (at most one per market and side per
+  hour, as in the backtest), then score them from Kalshi's public trade
+  prints and results with the backtest's fill rule.
+- **Live** (only with `SPREAD_AUTO_ARM=YES` and the owner-created marker
+  `/etc/market-maker-spread.enabled`): the same quotes as real orders,
+  within the caps below. The shadow ledger keeps running beside it, so live
+  fills can be compared with shadow fills on the same markets.
+
+**Risk limits (old → new, why).**
+- New, spread bot only: 1 contract per order; at most 1 net contract per
+  market and side; $25 of open exposure (resting orders plus held
+  contracts at cost); 20 orders per pass and 300 a day; a $5 daily and $15
+  total realized-loss stop of its own. Why: a pilot sized so the worst
+  plausible week costs less than v5's daily stop.
+- Account-wide realized-loss stops: −$20 a day and −$60 total, unchanged
+  in size, now counting the spread bot's settled markets as well as NBA
+  and NFL (old scope: NBA + NFL markets). Why: the owner chose one stop for
+  the whole $350 account.
+- NBA and NFL caps (`LIMITS`: $2,050 lifetime, $180 daily, $165 active)
+  unchanged and still computed from NBA and NFL orders only; the spread
+  bot's orders count against its own $25 instead. Total open exposure of
+  all three is therefore at most $190.
+- `live/shared_account_risk.py` learns a third cohort: the NBA and NFL
+  workers recognise the spread bot's orders, fills and positions (YES or
+  NO, net per market, never more than it ordered) instead of halting on
+  them, and still halt on anything unowned.
+
+**Failure handling.** Journal before every order and cancel. A placement
+the exchange rejects with an HTTP 4xx (for example a post-only order that
+would cross) is recorded as rejected only after a signed read confirms no
+order with that client id exists; any other failure is an unknown outcome
+that halts all three bots until the owner reconciles it, as today. A `KILL`
+file cancels the spread bot's resting orders.
+
+**What will be measured and when.**
+- **Shadow, after 2 weeks:** profit per filled contract from the shadow
+  ledger at flow share 0.25, with at least 300 fills. Pass: above zero.
+- **Live, after 300 filled contracts or 4 weeks, whichever comes first:**
+  live profit per filled contract (event-clustered t) and the live fill
+  rate against the shadow fill rate on the same markets. Continue if live
+  profit per contract is above zero; stop and review if the $15 total stop
+  is hit or live fills are less than half the shadow's. No size increase
+  before that review.
+
+## 2026-10-22: Spread maker pilot (implementation notes)
+
+*Added after the code, to record choices the plan above left open. Nothing
+in the plan's strategy, limits or pass/fail bars changed.*
+
+- **Prices come from the order book without our own quotes.** Once our
+  quotes rest, Kalshi's listed best bid and offer are often ours; pricing
+  off them would make the bot chase itself one cent at a time, and on an
+  8¢ market our own quotes would shrink the listed spread to 6¢ and switch
+  it off. For any market where the bot already rests quotes, it reads the
+  public order book and removes its own orders before applying the rule.
+  The backtest used other traders' prices only, so this is the faithful
+  version of the rule.
+- **Re-quoting.** A resting quote is cancelled and replaced when its price
+  is no longer the rule's price, or after 60 minutes (orders expire on the
+  exchange at 65). Quotes are pulled when a market drops out of the 4–7 hour
+  window, its spread falls below 8¢, or its book cannot be read. Each new
+  quote is checked against a fresh book read just before it is sent.
+- **Series.** The 64 series in `live/spread_policy.py` (the 66 minus
+  `KXNBAPTS` and `KXNFLRECYDS`), plus a block on every ticker prefix the
+  NBA and NFL bots trade.
+- **Shadow fill rule** (same as the backtest): a YES quote at p counts
+  contracts sold by takers at p or below during its hour; a NO quote at q
+  counts YES contracts bought at 1 − q or above. Block trades are ignored.
+  Shadow quotes ignore the live inventory cap, as the backtest did.
+- **Shared stops cut both ways.** Spread losses count toward the account's
+  −$20 daily and −$60 total stops, so a bad spread day can stop the NBA and
+  NFL bots too (and the reverse). The spread bot's own $5 and $15 stops
+  usually trigger first.
+- **Realized P&L comes from the bot's own fills**, not settlement records
+  (found by the independent review): Kalshi nets YES against NO, so a closed
+  pair (profitable or not) never reaches a settlement record. Fills are
+  matched first in, first out per market; a pair realizes when its second
+  leg fills, a held contract at settlement. This is the number both loss
+  stops use and the live result the pilot reports.
+- The private fills export and the public P&L page do not yet include the
+  spread bot; until they do, live spread results are on the server only
+  (`--status`).
+
+## 2026-10-22: Spread maker pilot, 5 contracts per order (plan amendment)
+
+*Written before the code change and before any live spread order. The
+owner chose 5 contracts per order on 22 October ("i want to do 5
+contracts") after seeing the sizing simulation below. Nothing else in the
+plan changes: same markets, quotes, window, failure handling and
+pass/fail bars.*
+
+**Limits (old → new).** Contracts per order 1 → 5. Net contracts per
+market and side 1 → 5 (an order shrinks so held plus resting never goes
+past 5). Open exposure $25 → $60. Own realized-loss stop −$5 → −$10 a day
+and −$15 → −$40 in total. Unchanged: 20 orders per pass, 300 a day, and
+the account stops (−$20 a day, −$60 in total, all three bots). Why: at 5
+contracts a $25 cap is full most of the time, and in the simulation the old
+stops would have paused the bot on about 14 ordinary days a year and could
+be reached by an ordinary drawdown (worst −$18). With these limits all three
+bots together can have at most $225 open on the $350 account (NBA $150, NFL
+$15, spread $60). A −$10 spread day leaves NBA $10 of the shared daily stop.
+
+**Sizing simulation (exploratory, simulated, in-sample; about 20
+variants: 1, 2, 5 and 10 contracts × flow share 1 and 0.25 × open caps).**
+Scan rows for the 64 pilot series, 8¢+ spreads, 4–7 hours before expected
+expiration, 24,768 two-sided market-hours, Sep 2025 – Aug 2026; fills =
+min(contracts traded through our price, order size), binomial at flow
+share 0.25; per-market net cap = order size; held to settlement.
+
+| Setup (flow share 0.25) | $/month | ¢/contract (t) | Worst day | Days ≤ −$5 | Worst drawdown |
+|---|---:|---:|---:|---:|---:|
+| 1 contract, $25 open | 53 | 7.2 (20.4) | −$4.0 | 0 | −$4.0 |
+| 5 contracts, $25 open | 136 | 6.7 (14.5) | −$11.7 | 11 | −$16.4 |
+| 5 contracts, $60 open | 185 | 6.5 (16.5) | −$15.8 | 14 | −$17.9 |
+| 5 contracts, no cap | 204 | 6.1 (16.9) | −$20.7 | 12 | −$20.7 |
+
+Caveats: the 64 series were selected on this same data (across all
+wide-spread markets the edge was 3.9¢ a contract, not 6–7¢), so expect
+less; months ranged from $3 to $353; fills come from trade prints. Larger
+orders earn a little less per contract (6.5¢ against 7.2¢), consistent
+with bigger orders filling more when the market moves against them.
+
+**What changes in measurement.** Live and shadow profit are reported per
+contract and in dollars at 5 contracts; the shadow ledger scores a
+5-contract quote as min(contracts traded through, 5) first in line and as
+the expected fill at flow share 0.25. The live review after 300 filled
+contracts or 4 weeks now comes sooner; its bars are unchanged.

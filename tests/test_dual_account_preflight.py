@@ -1,5 +1,6 @@
 """Preflight entrypoint must use the real signed GET-only client's API."""
 
+import contextlib
 import inspect
 import json
 
@@ -7,6 +8,34 @@ import pytest
 
 from live.account_dashboard import ReadOnlyClient
 from tools import dual_account_preflight as preflight
+
+
+@pytest.fixture(autouse=True)
+def no_server_lock(monkeypatch):
+    held = []
+
+    @contextlib.contextmanager
+    def lock():
+        held.append(True)
+        yield
+
+    monkeypatch.setattr(preflight, "account_lock", lock)
+    return held
+
+
+def test_preflight_reads_under_the_account_lock(monkeypatch, capsys, no_server_lock):
+    class FakeClient:
+        env = "prod"
+        can_sign = True
+
+    def fake_report(client, now):
+        assert no_server_lock == [True]  # taken before any read
+        return {"status": "SHARED_ACCOUNT_RECONCILED"}
+
+    monkeypatch.setattr(preflight, "ReadOnlyClient", FakeClient)
+    monkeypatch.setattr(preflight, "report", fake_report)
+    preflight.main()
+    assert no_server_lock == [True]
 
 
 def test_signed_readonly_client_constructor_accepts_no_keyword_arguments():

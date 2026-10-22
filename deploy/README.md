@@ -9,6 +9,7 @@ repository changes the server on its own.
 |---|---|
 | GitHub Actions | Tests, data refreshes, model projections, sportsbook lines, research jobs, the public dashboard |
 | DigitalOcean server (Ubuntu) | The funded NBA and NFL order workers (`live/prod_nba_auto.py`, `live/prod_nfl_auto.py`), each run by a systemd timer |
+| DigitalOcean server (Ubuntu) | The spread maker pilot (`live/prod_spread_auto.py`): shadow ledger, and live quotes only after the owner arms it. Setup and switches: [PROD_SPREAD_AUTO.md](PROD_SPREAD_AUTO.md) |
 | Kalshi | The exchange; the workers use a signed API key stored only on the server |
 | Private GitHub repo (`smm-private-data`, optional) | Hourly copy of the bots' live orders, fills and settlements from their journals, so they can be studied without the Kalshi key leaving the server. Setup: [PRIVATE_FILL_EXPORT.md](PRIVATE_FILL_EXPORT.md) |
 
@@ -37,6 +38,10 @@ action name to confirm):
 | `GO_LIVE` | Checks code, settings and the account, then switches both bots on |
 | `STOP` | Switches both bots off; resting orders expire at tip-off |
 | `STOP_AND_CANCEL` | Switches both bots off and cancels their resting orders |
+
+This workflow controls the NBA and NFL bots only. The spread maker pilot has
+its own owner script (`deploy/setup_spread_maker.sh --disarm`, `--cancel`,
+`--off`); the account loss stops apply to all three bots.
 
 Public logs show only pass/fail and on/off. Details:
 [GO_LIVE_BUTTON.md](GO_LIVE_BUTTON.md).

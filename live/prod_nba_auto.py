@@ -2055,8 +2055,11 @@ def main():
     )
     directory.mkdir(mode=0o700, parents=True, exist_ok=True)
     directory.chmod(0o700)
+    # Preflight takes the account lock too, so its GET-only reads never land
+    # in the middle of another bot's order (spread maker: an intent journaled
+    # but not yet answered would look unreconciled).
     with (
-        account_lock() if args.live else nullcontext(),
+        account_lock() if args.live or args.preflight else nullcontext(),
         (directory / "lock").open("a+") as lock,
     ):
         fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
