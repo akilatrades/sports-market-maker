@@ -387,6 +387,8 @@ SPREAD_INTENT_FIELDS = [
     "cost",
     "spread",
     "market_expiration_utc",
+    "event_start_utc",  # v2 (pregame only): the start the order respected
+    "expires_utc",
     "strategy_version",
 ]
 SPREAD_FILL_FIELDS = [
@@ -423,6 +425,7 @@ SPREAD_ORDER_COLUMNS = [
     "intent_utc",
     *[f for f in SPREAD_INTENT_FIELDS],
     "hours_before_expiration",
+    "minutes_before_start",
     "status",
     "accepted_utc",
     "reconciled",
@@ -559,6 +562,11 @@ def spread_tables(stream, now=None):
                 if _minutes(intent.get("utc"), intent.get("market_expiration_utc"))
                 != ""
                 else "",
+                "minutes_before_start": (
+                    round(_minutes(intent.get("utc"), intent.get("event_start_utc")), 1)
+                    if _minutes(intent.get("utc"), intent.get("event_start_utc")) != ""
+                    else ""
+                ),
                 "status": status.get(cid, ""),
                 "accepted_utc": accepted.get(cid, ""),
                 "reconciled": "yes" if cid in reconciled else "",

@@ -76,7 +76,11 @@ trades); recalibrating the model to Kalshi's lines (−22¢ per 100 orders); a
 second cent of price improvement (−17¢ per 100); the same NO rule on game
 winners; cancelling unfilled orders early (gave up 40–75% of the profit);
 hedging one-sided spread fills; two-sided quotes in economics and financial
-markets (+0.27¢, no edge). Details in the
+markets (+0.27¢, no edge). Live, the spread maker's first timing rule
+counted from Kalshi's expected expiration and on its first night quoted a
+college football game after kickoff; since 23 October it quotes only
+before a known start (simulated: quotes before the start made +9.9¢ a
+contract, quotes during the game +2.7¢). Details in the
 [research log](../RESEARCH_LOG.md) and the README's
 [table](../README.md#what-did-not-work).
 

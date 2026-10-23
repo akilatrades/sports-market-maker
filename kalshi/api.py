@@ -79,12 +79,12 @@ class RateLimiter:
 LIMITER = RateLimiter(10)
 
 
-def get_json(path, params, retries=6):
+def get_json(path, params, retries=6, timeout=30):
     url = f"{market_data_base_url()}{path}?{urllib.parse.urlencode(params)}"
     for attempt in range(retries):
         LIMITER.wait()
         try:
-            with urllib.request.urlopen(url, timeout=30) as response:
+            with urllib.request.urlopen(url, timeout=timeout) as response:
                 return json.load(response)
         except urllib.error.HTTPError as error:
             if error.code == 404:

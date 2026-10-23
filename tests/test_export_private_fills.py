@@ -603,7 +603,8 @@ def _spread_order(key, side, cents, utc, accepted=True):
             "cost": round(5 * cents / 100, 2),
             "spread": 12,
             "market_expiration_utc": "2026-10-22T23:00:00+00:00",
-            "strategy_version": "spread-maker-v1",
+            "event_start_utc": "2026-10-22T20:00:00+00:00",
+            "strategy_version": "spread-maker-v2-pregame",
         }
     ]
     if accepted:
@@ -700,6 +701,9 @@ def test_spread_orders_fills_and_realized_pnl(tmp_path):
     no = next(o for o in orders if o["side"] == "no")
     assert no["cancel_result"] == "already_filled_or_expired"
     assert no["filled_contracts"] == "5.0" and no["avg_fill_price"] == "0.49"
+    # v2 records the start each order respected.
+    assert {o["event_start_utc"] for o in orders} == {"2026-10-22T20:00:00+00:00"}
+    assert all(float(o["minutes_before_start"]) > 0 for o in orders)
     fills = rows(files["data/spread/fills/2026-10-22.csv"])
     assert {(f["side"], f["price"]) for f in fills} == {
         ("yes", "0.4100"),

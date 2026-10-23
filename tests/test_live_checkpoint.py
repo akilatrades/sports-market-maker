@@ -247,3 +247,26 @@ def test_report_labels_live_and_simulated(tmp_path):
     text = cp.report(tmp_path, NOW)
     assert "LIVE CHECKPOINT REPORT" in text and "SIMULATED (not added" in text
     assert "NBA (nba-no-v5" in text and "SPREAD MAKER" in text
+
+
+def test_spread_v2_is_judged_on_its_own_orders(tmp_path):
+    spread_export(tmp_path, n=4)
+    path = tmp_path / "data/spread/orders/2026-10-22.csv"
+    lines = path.read_text().splitlines()
+    lines[0] += ",strategy_version"
+    # Markets 0 and 1 were quoted under v1, 2 and 3 under v2.
+    lines[1:] = [
+        line + ("," + ("spread-maker-v1" if i < 4 else cp.SPREAD_VERSION))
+        for i, line in enumerate(lines[1:])
+    ]
+    path.write_text("\n".join(lines) + "\n")
+    summary = json.loads((tmp_path / "data/summary.json").read_text())
+    r = cp.spread_bot(tmp_path / "data/spread", NOW, summary)
+    assert r["orders"] == 4 and r["filled_contracts"] == 20
+    assert r["earlier_versions"] == {
+        "orders": 4,
+        "filled_contracts": 20.0,
+        "versions": ["spread-maker-v1"],
+    }
+    text = cp.report(tmp_path, NOW)
+    assert "earlier rules (spread-maker-v1)" in text and "not judged" in text

@@ -2804,3 +2804,59 @@ most about 0.44¢ a contract. The bot's maker-fee list
 (`live/spread_policy.py`, checked 22 October) did not include it. The owner
 chose to keep trading the series. The fees are subtracted in the bot's
 realized P&L, which its loss stops and the checkpoint use.
+
+## 2026-10-23: Spread maker v2, pregame only (plan amendment)
+
+*Written before the code is deployed. The owner paused the spread maker on
+the night of 22 October and approved this change ("Yes get it live
+again") after the exploratory split below. Strategy version
+`spread-maker-v2-pregame`.*
+
+**Why.** On its first night (22 October), v1 quoted a college football
+market about 33 minutes after kickoff, and esports orders posted minutes
+before a match rested into it. v1's 4–7-hour window counts from Kalshi's
+expected expiration, which for that football game was 6 hours after
+kickoff. A resting order in a live event is filled mostly when the game
+has moved against it.
+
+**New rules (v1 had none of these; limits and pass/fail bars unchanged).**
+- A market is quoted only when its event's scheduled start is known: the
+  time written in the event ticker (New York time, for example
+  `KXR6GAME-26OCT222000...` is 20:00), else the earliest start of a Kalshi
+  milestone tied to the event that falls within 12 hours before the
+  market's expected expiration. If both exist, the earlier counts.
+- Milestone starts are used only in passes where they match ticker times:
+  up to 3 events carrying a time are compared, at least one must match and
+  none may differ by more than 15 minutes.
+- A new quote needs the start at least 75 minutes away (its 65-minute life
+  plus 10 minutes), and its exchange expiry is capped at 10 minutes before
+  the start. Every resting quote is cancelled once the start is 10 minutes
+  away or less, including when its order book cannot be read and v1 orders
+  with no recorded start.
+- The shadow ledger follows the same rule.
+
+**Evidence (exploratory; SIMULATED, in-sample, first in line, one contract
+per order, the 64 pilot series, spreads of 8¢ or more; 5 variants and 2
+splits tried; `python -m research.spread_pregame_split`).**
+- Where the event ticker carries the start (30% of fills): orders resting
+  wholly before the start made +9.9¢ per contract (t 9.9, 2,285 fills, 85%
+  of those series' profit); orders across the start +5.1¢; in the game
+  +2.7¢ (t 2.3).
+- Every series, by hour: the last hour before the 4-hour cutoff, when
+  events often start, made +6.4¢; the hours before it +9.1¢ to +11.9¢.
+
+| Rule | Fills | ¢/contract (t) | Earlier / later half | Share of profit |
+|---|---:|---:|---:|---:|
+| All hours (v1) | 11,263 | +8.45 (21.5) | +9.1 / +7.8 | 100% |
+| Skip the last hour | 5,930 | +10.27 (18.2) | +10.9 / +9.6 | 64% |
+| Ticker start known, pregame only | 2,285 | +9.87 (9.9) | +12.2 / +7.5 | 24% |
+
+v2 lies between the last two rows: 24% of the simulated profit if
+milestones give no usable starts, up to roughly 64% if they cover the
+other series. The preflight reports which.
+
+**Measurement.** v2 is judged on its own orders (`research.live_checkpoint`
+filters by strategy version): 300 filled contracts or 4 weeks from its
+first order, with the same bars. v1's 27 orders and 13.4 filled contracts
+are reported apart and not judged. Exports gain each order's recorded
+start and minutes before it.

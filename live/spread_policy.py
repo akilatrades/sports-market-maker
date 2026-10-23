@@ -7,7 +7,9 @@ states the old value, the new value and why.
 
 from pathlib import Path
 
-STRATEGY_VERSION = "spread-maker-v1"
+# v2 (2026-10-23): pregame only. v1 could quote into a live event, because
+# its window counts from Kalshi's expected expiration, not the start.
+STRATEGY_VERSION = "spread-maker-v2-pregame"
 # The shared-risk cohort journal lives in STATE; the owner creates ARM_MARKER
 # to allow live orders.
 STATE = Path("/home/trader/prod-spread-auto")
@@ -31,6 +33,28 @@ ORDER_LIFETIME_MINUTES = 65  # orders expire on the exchange even if the bot sto
 # signed calls take at most about 80 s, inside systemd's 240 s limit.
 PASS_DEADLINE_SECONDS = 110
 SHADOW_REPOST_MINUTES = 60  # shadow: one quote per market and side per hour
+
+# Pregame only (RESEARCH_LOG.md, 2026-10-23, "Spread maker v2: pregame only").
+# New rules, no old values: v1 had no start-time check. A market is quoted
+# only when its event's start time is known (written in the event ticker, in
+# New York time, or from Kalshi's milestones) and at least MIN_LEAD_MINUTES
+# away, so a 65-minute order expires at least CANCEL_LEAD_MINUTES before the
+# start; any resting quote that close to the start is cancelled.
+MIN_LEAD_MINUTES = 75  # ORDER_LIFETIME_MINUTES + CANCEL_LEAD_MINUTES
+CANCEL_LEAD_MINUTES = 10
+# A milestone's start counts only if it falls within this many hours before
+# the market's expected expiration (a tournament's start, days earlier, does
+# not count).
+MILESTONE_WINDOW_HOURS = 12
+START_CACHE_MINUTES = 30  # milestone answers are reused for this long
+# Milestone starts are trusted only while they match the start written in
+# event tickers: up to MILESTONE_CHECKS such events are compared each pass
+# (cached as above), at least one must match and none may be further off
+# than MILESTONE_AGREE_MINUTES.
+MILESTONE_CHECKS = 3
+MILESTONE_AGREE_MINUTES = 15
+MAX_START_LOOKUPS_PER_PASS = 30
+START_LOOKUP_SECONDS = 45  # no milestone read after this, from process start
 
 # The 66 series that passed the 10% false-discovery check at 8c+ spreads in
 # the strategy sweep (RESEARCH_LOG.md, 2026-10-22), minus the series v5 and

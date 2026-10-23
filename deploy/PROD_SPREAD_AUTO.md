@@ -22,7 +22,17 @@ profit forecast.
   another bot holds. Series on Kalshi's maker-fee list are skipped;
   `KXNCAAFSPREAD` also turned out to pay a small maker fee, and the owner
   chose to keep it (fees count in realized P&L).
-- **When:** markets whose expected expiration is 4 to 7 hours away.
+- **When:** markets whose expected expiration is 4 to 7 hours away, and
+  **only before the event starts** (rules v2, `spread-maker-v2-pregame`,
+  from 23 October). The start time comes from the event ticker (many
+  tickers carry it, in New York time, e.g. `KXR6GAME-26OCT222000...` is
+  20:00) or else from Kalshi's public milestones. A market with no known
+  start is not quoted. A new quote needs the start at least 75 minutes away,
+  so its 65-minute life ends before the start; any resting quote is
+  cancelled 10 minutes before the start, even if the order book cannot be
+  read. v1 had no start check: its window counted only from Kalshi's
+  expected expiration, which for college football is 6 hours after kickoff,
+  so on 22 October it quoted into a live game.
 - **Quote:** YES bid at best YES bid + 1¢, NO bid at best NO bid + 1¢, up to
   5 contracts each, post-only (never takes liquidity), expiring on the exchange
   after 65 minutes. Prices come from the public order book with the bot's own
@@ -139,6 +149,34 @@ directly: that comparison is the main point of the pilot.
    This shows the timer, the arm and halt switches, live orders, fills and
    settled P&L, the shadow ledger's fill rate and profit per contract (at
    flow share 1 and 0.25), and the last pass.
+
+## Resuming with v2 (pregame only), after the 22 October pause
+
+1. Merge the v2 pull request and run **Deploy funded worker code →
+   DEPLOY_CODE**. The `KILL` file from `--cancel` stays in place, so the
+   bot keeps only cancelling.
+2. Check readiness (reads only):
+
+   ```bash
+   sudo bash /home/trader/sports-market-maker-prod-auto/deploy/setup_spread_maker.sh --preflight
+   ```
+
+   Look for `"ready": true` and the new `milestone_check`: of the events
+   compared, `within_15_minutes` should equal `events_compared` (Kalshi's
+   milestones then give the same start as the tickers).
+   `wide_markets_without_event_start` counts wide markets skipped because
+   no start is known. If `within_15_minutes` is lower, resume anyway (the
+   bot then ignores milestones on its own and quotes only events whose
+   ticker carries the start), but tell whoever maintains the code.
+3. Resume and watch the next pass:
+
+   ```bash
+   sudo bash /home/trader/sports-market-maker-prod-auto/deploy/setup_spread_maker.sh --resume
+   sudo bash /home/trader/sports-market-maker-prod-auto/deploy/setup_spread_maker.sh --status
+   ```
+
+   Each pass's report shows `event_starts` (milestone reads, whether they
+   were trusted) and `canceled_event_start`.
 
 ## After an "Ambiguous spread order" halt
 
