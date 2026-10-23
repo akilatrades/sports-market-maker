@@ -1,0 +1,36 @@
+name: Exchange price gaps (research)
+# Read-only research: one Odds API snapshot of US exchanges vs sportsbooks.
+# Spends Odds API credits (capped in the script); writes aggregates only.
+on:
+  push:
+    branches: [research/exchange-gaps]
+    paths:
+      - "research/exchange_gaps.py"
+      - ".github/workflows/exchange-gaps.yml"
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: repo-writes
+  cancel-in-progress: false
+jobs:
+  snapshot:
+    if: github.actor == 'akilatrades'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      ODDS_API_KEY: ${{ secrets.ODDS_API_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r requirements.txt
+      - run: python -m research.exchange_gaps
+      - name: Commit aggregates to the research branch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add outputs/exchange_gaps
+          git commit -m "Exchange gap snapshot (aggregates only)" || exit 0
+          git push origin HEAD:${{ github.ref_name }}

@@ -3438,3 +3438,25 @@ Scratch scripts, not committed.
 
 **Checkpoint, unchanged:** v3 is judged on its own orders, 300 filled
 contracts or 4 weeks.
+
+## 2026-10-23: Novig and ProphetX price check (exploratory)
+
+*Asked by the owner: is there an edge on Novig or ProphetX? Exploratory, one
+read-only snapshot; nothing here changes a live rule.*
+
+Both exchanges are CFTC-regulated and open in Texas; Novig charges no fee on
+pregame trades, ProphetX up to about 2% of net winnings. Neither publishes a
+free market-data feed, but The Odds API (the project's existing key) carries
+both in its `us_ex` region, with Kalshi and Polymarket US.
+
+`python -m research.exchange_gaps` (Actions, workflow "Exchange price gaps")
+pulls, for NBA games in the next 30 hours and NFL games in the next 100,
+moneylines, spreads, totals and the main player props from sportsbooks and
+exchanges, and reports, per exchange: how often taking its price beats the
+de-vigged consensus of two or more sportsbooks on the same line (by more than
+0, 2 and 5 points); how wide it is; and how many lines quoted on two or more
+exchanges could be bought on both sides for under $1. Aggregates only
+(`outputs/exchange_gaps/`). Limits: one moment in time, quoted prices without
+depth, fees not subtracted, and the sportsbook consensus is itself only an
+estimate of the fair price. A single snapshot can show whether gaps exist; it
+cannot show that they are tradeable or persistent.
