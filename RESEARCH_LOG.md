@@ -3262,3 +3262,50 @@ the $60 cap and 5-contract orders limit how many markets can be quoted at
 once. The later half is weaker (about 5–6¢ against 9–10¢). Live v3 would need
 the window, a fixed list of trusted milestone types and the per-series offset
 table, through a reviewed plan amendment.
+
+## 2026-10-23: Spread maker v3: quote from 24 hours, more start times, 2 contracts (plan amendment)
+
+*Written before the code change and before any v3 order. It applies the
+rule chosen by the pre-registered study above (24→4 hours, start sources
+S1+S2+S3). The owner chose smaller orders across more markets on 23 October
+("Smaller orders, more markets").*
+
+**Rules and limits (old → new).**
+- Window: 4–7 → **4–24 hours** before Kalshi's expected expiration
+  (`WINDOW_HOURS`). The pregame rule is unchanged: a new quote needs a known
+  start at least 85 minutes away, and every quote is cancelled 20 minutes
+  before it.
+- Start times, in order:
+  - the ticker's (unchanged);
+  - a Kalshi milestone of a **research-validated type**: baseball_game,
+    basketball_game, cricket_match, hockey_tournament and one_off_milestone.
+    Each matched ticker starts on 95% or more of at least 314 events. A
+    live observation of one of these starting more than 2 minutes after a
+    ticker time still revokes that type for 2 days. **esports_match is
+    never trusted.** Old rule: any type with 2 live matches and no late
+    observation in 2 days.
+  - New, for events with neither: **start = expected expiration − the
+    series' usual gap − 30 minutes**, from a fixed table of 35 series whose
+    gap varied by 30 minutes or less (median 3 hours for most games, 4 for
+    esports, 5 for broadcast-mention markets; `SERIES_START_OFFSET_HOURS`).
+- Contracts per order: **5 → 2**; net contracts per market side: **5 → 2**.
+  With $60 open (unchanged), about 2.5 times as many markets can be quoted
+  at once.
+- Milestone reads per pass: 30 → 60, because the longer window holds more
+  events. The 45-second read budget is unchanged.
+- Unchanged: $60 open, −$10 daily and −$40 total own loss stops, 20 orders
+  per pass, 300 submissions a day (the most likely limit to bind; watched,
+  not raised), 65-minute order lifetime, 8¢ minimum spread, the 64 series.
+
+**Evidence** (simulated, in-sample, one contract, first in line): 10,223
+pregame fills against v2's 1,152 on the same sampled markets; added fills
++8.50¢ a contract (t 12.92), +8.22¢ at flow share 0.25, positive in both
+halves (9.40¢ / 5.21¢). Live, the $60 cap and 2-contract orders bound how
+much of that appears.
+
+**Version and checkpoint.** Orders carry `spread-maker-v3-24h-starts`. v3 is
+judged on its own orders with the v2 bars: after 300 filled contracts or 4
+weeks from its first order, continue if live profit per contract is above
+zero, and stop and review if live fill share is below half the shadow's or
+the −$40 stop is hit. v1 and v2 are reported apart. Resting v2 quotes are
+managed like any other (kept or re-quoted) and stay measured under v2.
