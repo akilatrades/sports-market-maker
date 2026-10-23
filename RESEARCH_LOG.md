@@ -3156,3 +3156,65 @@ larger orders crowd out the best ones. 5 contracts at $250 a night is the
 next step, but its drawdowns reach the −$100 stop and $250 a night plus the
 other bots' $75 nearly fills the $350 account; it needs more capital or
 live evidence first. Not adopted.
+
+## 2026-10-23: Spread maker, more pregame fills: start times per series and earlier quoting (plan)
+
+*Written before the scan below runs; no data from it has been seen. The owner
+asked for many more spread maker fills (23 October) without going back to
+quoting during live events.*
+
+**Why.** v2 quotes only markets whose event start is known, at least 85
+minutes ahead, 4–7 hours before Kalshi's expected expiration. In the 64
+pilot series (simulated, in-sample, 8¢+ spreads, 4–7 hours), 7,839 of 11,263
+fills (70%, +8.8¢ a contract, all hours) were in 55 series whose event
+tickers carry no start time, so v2 skips them; only 24 series carry one.
+Live, 95 of v2's first 110 orders were CS2.
+
+**Question.** Can the spread maker quote more markets before their events
+start, by knowing more start times and by quoting earlier than 7 hours
+before expiry, while keeping a positive edge?
+
+**Data.** A new scan (`scan.yml`, window `24,4`, written to
+`outputs/scan_24h`): the 64 pilot series, up to 400 sampled settled markets
+each from the last 400 days, hourly quotes 24 to 4 hours before expected
+expiration, trade prints, and each event's Kalshi milestones and ticker
+start. Orders and fills as in the pilot's replay: both sides one cent inside
+spreads of 8¢ or more, one contract, first in line (flow share 1) and flow
+share 0.25, held to settlement, maker fee as in the sweep.
+
+**Start-time sources.**
+- *S1, ticker:* the time written in the event ticker (as v2).
+- *S2, milestone:* the earliest of the event's milestones that start within
+  12 hours before expiry (as v2 reads them live), by milestone type. A type
+  is used only if, on events that also have a ticker start, its start is
+  within 15 minutes before to 2 minutes after the ticker's in at least 95% of
+  at least 20 such events.
+- *S3, per-series offset:* for a series whose events have S1 or S2 starts,
+  the median of (expiry − start) if the middle half of that gap spans 30
+  minutes or less; then start = expiry − median − 30 minutes. Used only for
+  events without S1 or S2.
+
+**Pregame rule** (unchanged from v2): a quote counts if it was posted at
+least 85 minutes before the start; anything later, or with no start, is not
+quoted.
+
+**Variants (9 rules × 2 flow shares = 18 runs).** Windows 7→4 (today), 12→4
+and 24→4 hours before expiry × start sources S1 (today), S1+S2 and
+S1+S2+S3. The baseline is 7→4 with S1, which is v2.
+
+**Pass bar (judged once on this scan).** A variant may become v3 only if:
+1. it has at least 2× the baseline's pregame fills;
+2. the fills it adds beyond the baseline earn a positive profit per contract
+   with event-clustered t ≥ 2 at flow share 1, and are positive at flow share
+   0.25;
+3. those added fills are positive in both halves of the sample (by date);
+4. no single series supplies more than a quarter of the added profit.
+
+If several pass, the one with the most added fills is proposed as v3, with
+its start-time table and window, through a reviewed PR. If none pass, v2
+stays and the result is recorded here.
+
+**Known limits.** The 64 series were chosen on earlier data from these
+markets (in-sample); fills assume first in line; live, S2 and S3 need the
+same inputs in real time (the bot already reads milestones; S3 would ship as
+a table in the code).
