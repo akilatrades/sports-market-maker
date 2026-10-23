@@ -1,12 +1,17 @@
-"""Spread maker (spread-maker-v1): two-sided quotes one cent inside wide spreads.
+"""Spread maker (spread-maker-v3-24h-starts): two-sided quotes one cent
+inside wide spreads, before the event starts.
 
-Plan: RESEARCH_LOG.md, "2026-10-22: Spread maker pilot, shadow and small
-live (plan)". For open markets in the allowed series whose expected
-expiration is 4 to 7 hours away and whose spread is 8c or more, quote a YES
-bid one cent above the best YES bid and a NO bid one cent above the best NO
-bid, up to five contracts each, post-only, expiring after 65 minutes. Hold
-fills to settlement; an order shrinks so that held plus resting contracts on
-one side of a market never exceed the per-market cap.
+Plans: RESEARCH_LOG.md, "2026-10-22: Spread maker pilot" and, for v3,
+"2026-10-23: Spread maker v3" with its "changes after review". For open
+markets in the allowed series whose expected expiration is 4 to 24 hours
+away and whose spread is 8c or more, quote a YES bid one cent above the best
+YES bid and a NO bid one cent above the best NO bid, up to 5 contracts each
+(live/spread_policy.py), post-only, expiring after 65 minutes. Only events
+with a known start (ticker time, validated Kalshi milestone or per-series
+offset; the earliest wins) are quoted, a new quote needs the start 85 minutes
+away, and every quote is cancelled 20 minutes before it. Hold fills to
+settlement; an order shrinks so that held plus resting contracts on one side
+of a market never exceed the per-market cap.
 
 Modes (``--auto`` picks live only when armed, else shadow):
 - ``--shadow``: public data only. Writes the quotes it would post to
@@ -310,23 +315,111 @@ def recent_events(state_dir, now):
     } - {None}
 
 
+def _rotated(events, shift):
+    events = sorted(events)
+    if events:
+        k = shift % len(events)
+        events = events[k:] + events[:k]
+    return events
+
+
+def _read_order(timed, candidates, now, active=frozenset()):
+    """(event, expiry) pairs in the order their milestones are read:
+
+    1. events that may have quotes resting (with a ticker time, then without);
+    2. MILESTONE_CHECKS ticker-timed events, one per series, rotating (the
+       trust checks);
+    3. untimed events in offset series (a milestone can only move their
+       start earlier), then in MILESTONE_ONLY_SERIES (a milestone is their
+       only start), each group rotating every pass.
+
+    Untimed events in other series are never read: no trusted milestone
+    type has ever dated them."""
+    shift = int(now.timestamp() // 600)
+    first_checks, picks = _check_order(timed, now, active)
+    order = first_checks
+    order += [(e, candidates[e]) for e in sorted(candidates) if e in active]
+    order += picks[: P.MILESTONE_CHECKS]
+    for group in (P.SERIES_START_OFFSET_HOURS, P.MILESTONE_ONLY_SERIES):
+        rest = [
+            e for e in candidates if e not in active and e.split("-", 1)[0] in group
+        ]
+        order += [(e, candidates[e]) for e in _rotated(rest, shift)]
+    return order
+
+
+def _offset_checks(timed, now, raw):
+    """Series whose offset failed a live check in the last
+    OFFSET_SUSPEND_DAYS: {series: {event: first seen}}, this pass's
+    ticker-timed events included."""
+    since = (now - timedelta(days=P.OFFSET_SUSPEND_DAYS)).isoformat()
+    limit = (now + timedelta(minutes=5)).isoformat()
+    out = {}
+    for series, seen in raw.items() if isinstance(raw, dict) else ():
+        if isinstance(series, str) and isinstance(seen, dict):
+            kept = {
+                str(e): t
+                for e, t in seen.items()
+                if isinstance(t, str) and since <= t <= limit
+            }
+            if kept:
+                out[series] = kept
+    for event, expires in timed.items():
+        series = event.split("-", 1)[0]
+        gap = P.SERIES_START_OFFSET_HOURS.get(series)
+        if gap is None:
+            continue
+        estimate = expires - timedelta(hours=gap, minutes=P.START_OFFSET_MARGIN_MINUTES)
+        if estimate > ticker_start(event):
+            out.setdefault(series, {}).setdefault(event, now.isoformat())
+    return out
+
+
+def _clean_earliest(raw, now):
+    """The earliest-start memory {event: start}, dropping malformed entries
+    and starts more than two days past."""
+    out = {}
+    if not isinstance(raw, dict):
+        return out
+    old = now - timedelta(days=2)
+    for event, value in raw.items():
+        start = _utc(value) if isinstance(value, str) else None
+        if isinstance(event, str) and event and start is not None and start >= old:
+            out[event] = start
+    return out
+
+
 def prefetch_starts(
     listings, now, state_dir, fetch_milestones, deadline=None, active=frozenset()
 ):
-    """Milestone start times for events in the quoting window.
+    """Start times for events in the quoting window, beyond ticker times.
 
     - Events whose ticker carries a time: up to MILESTONE_CHECKS of them
-      (one per series, rotating) are compared with Kalshi's milestones. Each
-      comparison is remembered by milestone type for MILESTONE_TRUST_DAYS. A
-      milestone earlier than the ticker time also counts as that event's
-      start (the earlier start wins, which only ever quotes less).
-    - Events without a time get a milestone start only from milestone types
-      that have matched ticker times (MILESTONE_TRUST_MIN_MATCHES or more)
-      and were never later than a ticker time by more than
-      MILESTONE_LATE_MINUTES. Anything else has no known start and is not
-      quoted.
+      (one per series, rotating) and any with quotes resting are compared
+      with Kalshi's milestones. Each comparison is remembered by milestone
+      type for MILESTONE_TRUST_DAYS. A milestone earlier than the ticker time
+      also counts as that event's start (the earlier start wins, which only
+      ever quotes less). The series offsets never apply to them, but each
+      one checks its series' offset: if the offset estimate would come after
+      the ticker's start, the offset is suspended for OFFSET_SUSPEND_DAYS.
+    - Events without a time are dated by a milestone from
+      TRUSTED_MILESTONE_TYPES (validated on past events, and only while no
+      milestone of that type has been seen later than a ticker time by more
+      than MILESTONE_LATE_MINUTES in the last MILESTONE_TRUST_DAYS;
+      NEVER_TRUSTED_MILESTONE_TYPES never count) and, for a series in
+      SERIES_START_OFFSET_HOURS, by expected expiration - its gap - the
+      margin. The start is the earliest of these and of any other milestone
+      read for the event (of any type: it can only move a start earlier).
+      With neither a trusted milestone nor an offset, the event has no known
+      start and is not quoted. Only events in offset series and in
+      MILESTONE_ONLY_SERIES are read (_read_order has the order).
+    - The earliest start found for an event is remembered (two days), so a
+      start can move earlier but never later, even when Kalshi moves an
+      expiration later or a milestone cannot be read. The memory only lowers
+      a start found this pass; it never supplies one on its own.
+    - NO_START_SERIES are skipped: they are never quoted.
 
-    Answers are cached for START_CACHE_MINUTES; at most
+    Milestone answers are cached for START_CACHE_MINUTES; at most
     MAX_START_LOOKUPS_PER_PASS reads a pass and none after ``deadline``."""
     path = state_dir / "event_starts.json"
     try:
@@ -336,11 +429,15 @@ def prefetch_starts(
     except (OSError, ValueError):
         cache = {}
     candidates, timed = {}, {}
-    for markets in listings.values():
+    for series, markets in listings.items():
+        if series in P.NO_START_SERIES:
+            continue
         for m in markets:
             event = m.get("event_ticker")
             expires = _utc(m.get("expected_expiration_time"))
             if not event or expires is None:
+                continue
+            if event.split("-", 1)[0] in P.NO_START_SERIES:
                 continue
             # Up to the end of the window: events with resting quotes stay
             # refreshed until their quotes are gone.
@@ -391,16 +488,19 @@ def prefetch_starts(
         return found
 
     types = _clean_types(cache.get("types"), now)
-    first_checks, picks = _check_order(timed, now, active)
-    # Every event that may have quotes resting (the read budget bounds it),
-    # then a rotating few for trust.
-    checks = first_checks + picks[: P.MILESTONE_CHECKS]
-    for event, expires in checks:
-        found = read(event, expires)
-        if not found:
+    remembered = _clean_earliest(cache.get("earliest"), now)
+    suspended = _offset_checks(timed, now, cache.get("offset_late"))
+    found = {}
+    for event, expires in _read_order(timed, candidates, now, active):
+        hit = read(event, expires)
+        if hit is not None:
+            found[event] = hit
+    # Trust checks: every ticker-timed event read this pass.
+    for event in timed:
+        if not found.get(event):
             continue
         written = ticker_start(event)
-        for start, kind in found:
+        for start, kind in found[event]:
             if not kind:
                 continue  # a milestone without a type is never trusted
             gap = (start - written).total_seconds() / 60  # > 0: milestone later
@@ -409,7 +509,7 @@ def prefetch_starts(
                 entry["late"][event] = now.isoformat()
             elif gap >= -P.MILESTONE_AGREE_MINUTES:
                 entry["matched"][event] = now.isoformat()
-        earliest = min(start for start, _ in found)
+        earliest = min(start for start, _ in found[event])
         if earliest < written:
             starts[event] = earliest
     since = (now - timedelta(days=P.MILESTONE_TRUST_DAYS)).isoformat()
@@ -422,36 +522,78 @@ def prefetch_starts(
     }
     trusted = {
         kind
-        for kind, entry in types.items()
-        if len(entry["matched"]) >= P.MILESTONE_TRUST_MIN_MATCHES and not entry["late"]
+        for kind in P.TRUSTED_MILESTONE_TYPES - P.NEVER_TRUSTED_MILESTONE_TYPES
+        if not types.get(kind, {}).get("late")
     }
-    for event, expires in sorted(candidates.items()) if trusted else ():
-        found = read(event, expires)
-        usable = [start for start, kind in found or () if kind and kind in trusted]
-        if usable:
-            starts[event] = min(usable)
+    counts = Counter()
+    for event, expires in sorted(candidates.items()):
+        series = event.split("-", 1)[0]
+        milestones = found.get(event) or []
+        dated = [start for start, kind in milestones if kind and kind in trusted]
+        gap = None if series in suspended else P.SERIES_START_OFFSET_HOURS.get(series)
+        offset = (
+            None
+            if gap is None
+            else expires - timedelta(hours=gap, minutes=P.START_OFFSET_MARGIN_MINUTES)
+        )
+        if offset is not None:
+            dated.append(offset)
+        if not dated:
+            counts["no_start"] += 1
+            continue
+        # Any milestone, trusted or not, may move a dated start earlier.
+        start = min(dated + [start for start, _ in milestones])
+        starts[event] = start
+        counts["offset" if start == offset else "milestone"] += 1
+        if offset is not None and event not in found:
+            counts["offset_unread"] += 1
+    # The memory: a start may move earlier, never later.
+    for event in sorted(set(timed) | set(candidates)):
+        current = event_start(event, starts)
+        if current is None:
+            continue  # the memory never supplies a start on its own
+        earlier = remembered.get(event)
+        if earlier is not None and earlier < current:
+            starts[event] = earlier
+            counts["kept_earlier"] += 1
+        if event in starts:
+            remembered[event] = starts[event]
     old = (now - timedelta(days=2)).isoformat()
     cache = {
         k: v
         for k, v in cache.items()
-        if k != "types" and isinstance(v, dict) and str(v.get("checked", "")) >= old
+        if k not in ("types", "earliest", "offset_late")
+        and isinstance(v, dict)
+        and str(v.get("checked", "")) >= old
     }
     cache["types"] = {k: v for k, v in types.items() if v["matched"] or v["late"]}
+    cache["earliest"] = {e: t.isoformat() for e, t in sorted(remembered.items())}
+    cache["offset_late"] = suspended
     try:
         temporary = path.with_suffix(".json.tmp")
         temporary.write_text(json.dumps(cache, sort_keys=True))
         temporary.chmod(0o600)
         temporary.replace(path)
     except OSError:
-        pass  # the cache only saves reads
+        # The cache saves reads; for events already quoted, the live pass
+        # also keeps the earliest start recorded in the journal.
+        counts["cache_write_failed"] += 1
     return starts, {
         "events_without_ticker_time": len(candidates),
         "milestone_types_trusted": sorted(trusted),
         "milestone_types_late": sorted(k for k, v in types.items() if v["late"]),
         "milestone_reads": reads["done"],
         "milestone_read_failures": reads["failed"],
-        "with_milestone_start": sum(e in candidates for e in starts),
-        "earlier_than_ticker": sum(e in timed for e in starts),
+        "with_milestone_start": counts["milestone"],
+        "with_series_offset_start": counts["offset"],
+        "offset_dated_unread": counts["offset_unread"],
+        "without_start": counts["no_start"],
+        "kept_earlier_start": counts["kept_earlier"],
+        "offset_series_suspended": sorted(suspended),
+        "cache_write_failed": counts["cache_write_failed"],
+        "earlier_than_ticker": sum(
+            e in timed and starts[e] < ticker_start(e) for e in starts
+        ),
     }
 
 
@@ -469,6 +611,9 @@ def eligible_markets(
         if not ticker or excluded(ticker, other_tickers):
             continue
         if series in P.MAKER_FEE_SERIES or m.get("status") not in ("active", "open"):
+            continue
+        if series in P.NO_START_SERIES:
+            reasons["no_start_series"] += 1
             continue
         expires = pd.to_datetime(
             m.get("expected_expiration_time"), utc=True, errors="coerce"
@@ -664,7 +809,27 @@ def contracts_through(trades, side, price_cents, start, end):
     return total
 
 
-def shadow_score(events, now, fetch_trades):
+# The shadow ledger's reads (trade prints, then results) run after the live
+# pass and the live measurements: at most MAX_SHADOW_READS_PER_PASS of each
+# kind, none after SHADOW_DEADLINE_SECONDS from process start, each a single
+# attempt (two endpoints, 30 s each), in shuffled order so a market that
+# cannot be read never starves the rest. What is left waits a pass.
+MAX_SHADOW_READS_PER_PASS = 20
+SHADOW_DEADLINE_SECONDS = 150
+
+
+def _capped(keys, deadline, limit, order):
+    """``keys`` in shuffled (or ``order``) order, cut to ``limit``; iteration
+    stops once ``deadline`` passes or a stop is requested."""
+    keys = sorted(keys)
+    (order or random.shuffle)(keys)
+    for key in keys[: len(keys) if limit is None else limit]:
+        if out_of_time(deadline):
+            return
+        yield key
+
+
+def shadow_score(events, now, fetch_trades, deadline=None, limit=None, order=None):
     """Fill counts for shadow quotes whose hour has ended."""
     scored = {e["id"] for e in events if e.get("event") == "shadow_fill"}
     due = [
@@ -678,7 +843,8 @@ def shadow_score(events, now, fetch_trades):
     by_ticker = {}
     for e in due:
         by_ticker.setdefault(e["ticker"], []).append(e)
-    for ticker, quotes in by_ticker.items():
+    for ticker in _capped(by_ticker, deadline, limit, order):
+        quotes = by_ticker[ticker]
         start = min(datetime.fromisoformat(q["posted_utc"]) for q in quotes)
         end = max(datetime.fromisoformat(q["expires_utc"]) for q in quotes)
         try:
@@ -697,21 +863,27 @@ def shadow_score(events, now, fetch_trades):
     return out
 
 
-def shadow_settle(events, fetch_market):
-    """Market results for shadow quotes that would have filled."""
+def shadow_settle(
+    events, fetch_market, now=None, deadline=None, limit=None, order=None
+):
+    """Market results for shadow quotes that would have filled. With ``now``,
+    only markets past their expected expiration are read."""
     filled = {
         e["id"]
         for e in events
         if e.get("event") == "shadow_fill" and float(e.get("through", 0)) >= 1
     }
     done = {e["ticker"] for e in events if e.get("event") == "shadow_result"}
-    tickers = {
-        e["ticker"]
-        for e in events
-        if e.get("event") == "shadow_quote" and e["id"] in filled
-    }
+    expiry = {}
+    for e in events:
+        if e.get("event") == "shadow_quote" and e["id"] in filled:
+            when = str(e.get("market_expiration_utc") or "")
+            expiry[e["ticker"]] = min(expiry.get(e["ticker"], when), when)
+    if now is not None:
+        stamp = now.isoformat()
+        expiry = {t: w for t, w in expiry.items() if w <= stamp}
     out = []
-    for ticker in sorted(tickers - done):
+    for ticker in _capped(set(expiry) - done, deadline, limit, order):
         try:
             market = fetch_market(ticker) or {}
         except Exception:
@@ -790,13 +962,15 @@ def shadow_summary(events, flow=0.25):
     return out
 
 
-def run_shadow(state_dir, now, public, markets=None):
+def run_shadow(state_dir, now, public, markets=None, deadline=None):
     path = state_dir / "shadow.jsonl"
     events = load_events(path)
-    for e in shadow_score(events, now, public["fetch_trades"]):
+    trades = public.get("shadow_trades", public["fetch_trades"])
+    for e in shadow_score(events, now, trades, deadline, MAX_SHADOW_READS_PER_PASS):
         write_event(path, e)
     events = load_events(path)
-    for e in shadow_settle(events, public["fetch_market"]):
+    results = public.get("shadow_market", public["fetch_market"])
+    for e in shadow_settle(events, results, now, deadline, MAX_SHADOW_READS_PER_PASS):
         write_event(path, e)
     if markets is None:
         markets = universe(
@@ -1067,7 +1241,7 @@ def write_measurement(path, record):
     write_event(path, record)
 
 
-def _v2_orders(events):
+def _version_orders(events):
     """{client_order_id: intent} for this rule version, and order id -> cid."""
     intents = {
         e.get("client_order_id"): e
@@ -1164,7 +1338,7 @@ def record_markouts(state_dir, now, listings):
     if not journal.exists():
         return 0
     events = load_events(journal)
-    intents, cid_of = _v2_orders(events)
+    intents, cid_of = _version_orders(events)
     fills = _fills(events, cid_of)
     oldest = max(MARKOUT_HORIZONS) + MARKOUT_LATE_MINUTES + 10
     recent = {
@@ -1289,7 +1463,7 @@ def summarize_measurements(journal_events, measure_events, now=None):
     market in the PAIRED_WITHIN_MINUTES before it; looking only backwards, so
     a later fill caused by the price moving does not reclassify it).
     Standing: share of order checks in which the bot was outbid."""
-    intents, cid_of = _v2_orders(journal_events)
+    intents, cid_of = _version_orders(journal_events)
     fills = _fills(journal_events, cid_of)
     by_market = {}
     for fill, cid, *_ in fills:
@@ -1312,6 +1486,8 @@ def summarize_measurements(journal_events, measure_events, now=None):
     measured = set()
     for e in measure_events:
         if e.get("event") == "standing":
+            if e.get("strategy_version") != P.STRATEGY_VERSION:
+                continue  # each rule version is measured on its own orders
             for key in ("orders_checked", "outbid", "joined", "alone"):
                 stand[key] += int(e.get(key) or 0)
             continue
@@ -1648,6 +1824,33 @@ def order_start(intent, starts=None):
     return min(found) if found else None
 
 
+def with_recorded_starts(starts, intents, now):
+    """``starts`` with each event's start lowered to the earliest one recorded
+    with this bot's orders of the last two days: the journal is written
+    before every order, so this survives a lost or unwritable start cache.
+    It never supplies a start for an event that has none this pass."""
+    since = (now - timedelta(days=2)).isoformat()
+    recorded = {}
+    for intent in intents:
+        event = intent.get("event_ticker")
+        if not isinstance(event, str) or not event:
+            continue
+        if str(intent.get("utc", "")) < since:
+            continue
+        try:
+            when = datetime.fromisoformat(str(intent.get("event_start_utc")))
+        except ValueError:
+            continue
+        if when.tzinfo is not None:
+            recorded[event] = min(recorded.get(event, when), when)
+    out = dict(starts or {})
+    for event, when in recorded.items():
+        current = event_start(event, out)
+        if current is not None and when < current:
+            out[event] = when
+    return out
+
+
 def quote_expiry(now, market):
     """65 minutes, and never later than CANCEL_LEAD_MINUTES before the start."""
     expires = now + timedelta(minutes=P.ORDER_LIFETIME_MINUTES)
@@ -1908,7 +2111,7 @@ def _pass_live(client, now, journal, public, require_shard, deadline):
         )
     unreadable = set()
     reasons = Counter()
-    starts = public.get("event_starts")
+    starts = with_recorded_starts(public.get("event_starts"), intents.values(), now)
     seen_books = {}
     markets = universe(
         public["fetch_markets"],
@@ -1927,7 +2130,12 @@ def _pass_live(client, now, journal, public, require_shard, deadline):
             report.update({f"standing_{k}": v for k, v in counts.items()})
             write_measurement(
                 journal.parent / MEASURE_FILE,
-                {"event": "standing", "utc": now.isoformat(), **counts},
+                {
+                    "event": "standing",
+                    "utc": now.isoformat(),
+                    "strategy_version": P.STRATEGY_VERSION,
+                    **counts,
+                },
             )
     except Exception as error:
         report["standing_error"] = type(error).__name__
@@ -2196,6 +2404,16 @@ def fetch_milestones(event_ticker):
     )
 
 
+def shadow_market(ticker):
+    """A market's result for the shadow ledger: single attempts, live then
+    historical endpoint."""
+    for path in (f"/markets/{ticker}", f"/historical/markets/{ticker}"):
+        payload = _quick(path)
+        if payload and payload.get("market"):
+            return payload["market"]
+    return None
+
+
 def quote_market(ticker):
     payload = _quick(f"/markets/{ticker}") or {}
     return payload.get("market")
@@ -2214,6 +2432,8 @@ def public_api():
         "fetch_orderbook": kalshi_api.fetch_orderbook,
         "fetch_trades": kalshi_api.fetch_trades,
         "window_trades": window_trades,  # live fill share, one attempt per read
+        "shadow_trades": window_trades,  # shadow ledger, one attempt per read
+        "shadow_market": shadow_market,
         "fetch_milestones": fetch_milestones,  # event start times (v2)
         "quote_market": quote_market,  # live quoting, under the lock
         "quote_orderbook": quote_orderbook,
@@ -2398,6 +2618,8 @@ def prefetch(public):
     for series in P.SERIES:
         if STOP["requested"]:
             break
+        if series in P.NO_START_SERIES:
+            continue  # never quoted (a resting quote there is cancelled)
         try:
             listings[series] = public["fetch_markets"](series, status="open") or []
         except Exception:  # one bad series must not stop the others
@@ -2517,11 +2739,10 @@ def main():
                 report["live"] = {"decision": "halt", "error": str(error)[:300]}
                 write_report(state_dir, report)
                 raise
-        # The shadow ledger needs no lock: public reads and its own file only.
-        report["shadow"] = run_shadow(state_dir, started, public, markets)
         # Measurement only, after a completed live pass (which has just
-        # copied the exchange's fills into the journal); a failure here never
-        # affects trading.
+        # copied the exchange's fills into the journal) and before the shadow
+        # ledger, so the live numbers never wait behind it; a failure here
+        # never affects trading.
         if live:
             try:
                 report["markouts_recorded"] = record_markouts(
@@ -2542,6 +2763,22 @@ def main():
                 )
             except Exception as error:
                 report["live_windows_error"] = type(error).__name__
+        # The shadow ledger needs no lock: public reads and its own file only.
+        try:
+            report["shadow"] = run_shadow(
+                state_dir,
+                started,
+                public,
+                markets,
+                deadline=PROCESS_START + SHADOW_DEADLINE_SECONDS,
+            )
+        except Exception as error:
+            if not live:
+                raise
+            # Keep the live pass's report, then fail the unit visibly.
+            report["shadow_error"] = type(error).__name__
+            write_report(state_dir, report)
+            raise
         write_report(state_dir, report)
         print("SPREAD MAKER", json.dumps(report, sort_keys=True, default=str))
 

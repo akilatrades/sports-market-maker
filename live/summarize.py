@@ -255,7 +255,7 @@ def running_now():
             "hours_before_expiration": list(spread.WINDOW_HOURS),
             "min_lead_minutes": spread.MIN_LEAD_MINUTES,
             "cancel_lead_minutes": spread.CANCEL_LEAD_MINUTES,
-            "series": len(spread.SERIES),
+            "series": len(set(spread.SERIES) - spread.NO_START_SERIES),
             "max_open": spread.MAX_ACTIVE_COST,
             "daily_loss_stop": spread.DAILY_LOSS_STOP,
             "total_loss_stop": spread.CUMULATIVE_LOSS_STOP,

@@ -50,9 +50,10 @@ NBA_VERSIONS = ("nba-no-v5-one-contract-breadth", "nba-no-v6-three-contracts")
 NBA_VERSION = NBA_VERSIONS[-1]  # the bot's current rules
 NBA_BARS = {"settled_fills": 1900, "allowance_dollars": 5000.0, "days": 30}
 NBA_FEE_RESERVE = 1.10  # live/prod_nba_auto.py FEE_RESERVE
-# Spread rules v2 (pregame only, from 23 October) are judged on their own
-# orders; v1's first night is reported apart (RESEARCH_LOG.md, 2026-10-23).
-SPREAD_VERSION = "spread-maker-v2-pregame"
+# Each spread rule version is judged on its own orders, the current one (v3,
+# RESEARCH_LOG.md, 2026-10-23, "Spread maker v3") with the v2 bars; earlier
+# versions are reported apart.
+SPREAD_VERSION = "spread-maker-v3-24h-starts"
 SPREAD_BARS = {
     "filled_contracts": 300,
     "days": 28,
@@ -433,7 +434,7 @@ def report(data, now=None):
         lines += [
             f"SPREAD MAKER, earlier rules ({', '.join(earlier['versions'])}): "
             f"{earlier['orders']} orders, {earlier['filled_contracts']:g} contracts "
-            "filled; reported apart and not judged (v1 could quote into live events)",
+            "filled; reported apart and not judged (each rule version is judged on its own orders)",
             "",
         ]
     nfl = no_bot(data / "data" / "nfl", now)

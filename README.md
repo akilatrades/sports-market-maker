@@ -21,7 +21,7 @@ with real money under tight limits:
    fans backing a player, so NO tends to be a little underpriced. A stats
    model and sportsbook odds decide which lines to skip.
 2. **Spread maker.** A YES bid and a NO bid one cent inside wide spreads
-   (8¢ or more) in 64 series, mostly smaller sports and esports, quoted
+   (8¢ or more) in 61 series, mostly smaller sports and esports, quoted
    only before the event starts. When both fill, the pair pays $1 for less
    than $1; a one-sided fill is held to settlement.
 
@@ -170,12 +170,16 @@ Every pass, every bot
   until tip (NFL: 10 minutes to 2 hours before kickoff). Since NBA rules v5
   (21 October) an NBA order needs 0–15¢ of estimated edge after fees (NFL
   keeps 3¢); since v6 (23 October) it is three contracts.
-- **Spread orders.** Up to 5 contracts per order, at most 5 held or resting
-  per market side, $60 open, and the bot's own −$10 daily and −$40 total
-  loss stops. Pregame only since 23 October: on its first live night the
-  first version quoted a college football game after kickoff, so now a
-  quote needs a known start (from the event ticker, or Kalshi's milestones
-  where they have matched ticker times). A shadow ledger scores the same
+- **Spread orders.** Up to 5 contracts per order, at most 5 held or
+  resting per market side, $120 open, and the bot's own −$15 daily
+  and −$40 total loss stops. Pregame only since 23 October: on its first
+  live night the first version quoted a college football game after
+  kickoff, so now a quote needs a known start. Since v3 it quotes from 24
+  hours before expiry and dates events from the ticker or, failing that,
+  the earlier of a validated Kalshi milestone and a cautious per-series
+  estimate; in a pre-registered replay, tightened after review, that gave
+  6.5× the pregame fills at +9.0¢ a contract (simulated, in-sample). A
+  shadow ledger scores the same
   rule from public trade prints, so live and simulated fills can be
   compared on the same markets. [Pilot notes](deploy/PROD_SPREAD_AUTO.md)
 - **Risk.** Per-order, per-game, per-team, daily and lifetime caps; one

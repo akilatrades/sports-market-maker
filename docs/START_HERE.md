@@ -21,7 +21,7 @@ then a walkthrough with the owner.
   about 3¢ per contract. That replay assumed the bot was always first in
   line and used rules chosen on that same season, so it is optimistic.
 - **A second strategy.** The spread maker quotes both sides one cent
-  inside wide spreads (8¢ or more) in 64 smaller series, only before the
+  inside wide spreads (8¢ or more) in 61 smaller series, only before the
   event starts. A filled YES+NO pair pays $1 for less than $1; a
   one-sided fill is held to settlement.
 - **The current phase.** Since October 2026 three bots (NBA, NFL, spread)
@@ -116,10 +116,15 @@ likely data error, not a bargain.
 A third bot, the **spread maker pilot** ([`prod_spread_auto.py`](../live/prod_spread_auto.py),
 limits in [`spread_policy.py`](../live/spread_policy.py)), quotes both sides
 of wide-spread markets outside NBA and NFL props: up to 5 contracts per
-order and 5 per market side, $60 open, its own −$10 daily and −$40 total
-loss stops, and the account stops above. Since 23 October (rules v2) it
-quotes only before a known event start: a new quote needs the start at
-least 85 minutes away, and every quote is cancelled 20 minutes before it.
+order and 5 per market side, $120 open, its own −$15 daily and −$40 total
+loss stops, and the account stops above. It quotes only before a known
+event start (rules v2, then v3 from 23 October): a new quote needs the
+start at least 85 minutes away, and every quote is cancelled 20 minutes
+before it. v3 quotes from 24 hours before Kalshi's expected expiration and
+takes start times from the ticker or, failing that, the earlier of a
+validated Kalshi milestone and a cautious per-series gap before expiry; a
+start never moves later. It leaves out three daily financial series and
+can submit up to 1,500 orders a day.
 It places orders only after the owner arms it
 ([deploy/PROD_SPREAD_AUTO.md](../deploy/PROD_SPREAD_AUTO.md)).
 

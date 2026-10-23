@@ -1,0 +1,65 @@
+{
+ "note": "SIMULATED, in-sample, exploratory: v3 start rule after two reviews",
+ "series_gap_hours": {
+  "KXABAGAME": 3.0,
+  "KXAHLGAME": 3.0,
+  "KXBALGAME": 3.0,
+  "KXCODGAME": 4.0,
+  "KXCODTOTALMAPS": 4.0,
+  "KXCS2GAME": 4.0,
+  "KXDOTA2GAME": 4.0,
+  "KXIPLFOUR": 3.0,
+  "KXIPLSIX": 3.0,
+  "KXIPLTEAMTOTAL": 3.0,
+  "KXMLBF3": 3.0,
+  "KXMLBF5SPREAD": 3.0,
+  "KXNBAPTSLEADER": 6.0,
+  "KXNCAABMENTION": 5.0,
+  "KXNCAAHOCKEYGAME": 3.0,
+  "KXNCAAMB1HSPREAD": 3.0,
+  "KXNCAAMB1HTOTAL": 3.0,
+  "KXNCAAWBGAME": 3.0,
+  "KXNCAAWBSPREAD": 3.5,
+  "KXNCAAWBTOTAL": 3.5,
+  "KXNPBSPREAD": 4.0,
+  "KXNZNBLGAME": 3.0,
+  "KXOWGAME": 4.0,
+  "KXR6GAME": 4.0,
+  "KXRLGAME": 5.75,
+  "KXVTBGAME": 3.0,
+  "KXWBCF5SPREAD": 3.0,
+  "KXWBCGAME": 3.0,
+  "KXWBCSPREAD": 3.0,
+  "KXWNBA1QSPREAD": 3.0,
+  "KXWT20MATCH": 4.0
+ },
+ "milestone_only_series": [
+  "KXBIG3GAME"
+ ],
+ "live_check_trigger_events": {
+  "KXMLBF3": 2,
+  "KXRLGAME": 1
+ },
+ "estimates_checked_against_ticker_starts": 3798,
+ "estimates_cancelling_after_the_real_start": 1,
+ "fills": {
+  "fills": 7453,
+  "dollars": 667.83,
+  "events": 2077,
+  "cents_per_contract": 8.96,
+  "t_event_clustered": 11.79,
+  "earlier_half_cents": 10.06,
+  "later_half_cents": 5.94
+ },
+ "flow_0.25_median_fills": 6363,
+ "added_over_v2": {
+  "fills": 6366,
+  "dollars": 555.49,
+  "events": 1914,
+  "cents_per_contract": 8.73,
+  "t_event_clustered": 10.75,
+  "earlier_half_cents": 9.96,
+  "later_half_cents": 5.18
+ },
+ "v2_baseline_fills": 1152
+}

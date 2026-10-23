@@ -27,7 +27,8 @@ leaving the server.
   lifetime cap allows about 4,000 one-contract orders). If the bots ever
   get near that, raise `MemoryMax` before the export starts failing.
   The spread maker adds about 5 KB per order (about 75 MB at 10,000
-  orders, 210 MB at 40,000; it can submit up to 300 a day). Check
+  orders, 210 MB at 40,000). Since v3 it can submit up to 1,500 a day (300
+  before), which would reach 25,000 in about 17 days at the full rate. Check
   `orders` for `spread` in `data/summary.json` and raise `MemoryMax`
   before it passes about 25,000.
 - It also refuses a repository that is internal, archived, renamed or has

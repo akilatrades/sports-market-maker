@@ -1,6 +1,7 @@
 # Spread maker pilot (third bot)
 
-`live/prod_spread_auto.py`, strategy version `spread-maker-v1`. It posts a
+`live/prod_spread_auto.py`, strategy version `spread-maker-v3-24h-starts`
+(v1 from 22 October, v2 and v3 from 23 October). It posts a
 buy order of up to 5 contracts on **both sides** of markets where the gap between the best
 bid and the best offer (the *spread*) is 8¢ or more, one cent better than
 anyone else on each side. When both orders fill, the bot owns a YES and a NO
@@ -9,28 +10,55 @@ When only one fills, it holds that contract to settlement.
 
 Plan and pass/fail bars: `RESEARCH_LOG.md`, "2026-10-22: Spread maker pilot,
 shadow and small live (plan)", its implementation notes and the 5-contract
-amendment. The evidence is a
+amendment; for v3, "2026-10-23: Spread maker v3" and "Spread maker v3:
+changes after review". The evidence is a
 **simulated, in-sample** backtest (strategy sweep, family 7). The pilot exists
 to find out whether real fills look like the simulated ones; it is not a
 profit forecast.
 
 ## What it does
 
-- **Markets:** the 64 series in `live/spread_policy.py` (esports, smaller
-  basketball and hockey leagues, cricket, soccer side markets, UFC, motor
-  racing and others). Never an NBA or NFL player prop and never a market
-  another bot holds. Series on Kalshi's maker-fee list are skipped;
+- **Markets:** 61 of the 64 series in `live/spread_policy.py` (esports,
+  smaller basketball and hockey leagues, cricket, soccer side markets, UFC,
+  motor racing and others). Since v3 the Brent, S&P 500 and 10-year note
+  dailies (`NO_START_SERIES`) are never quoted: their "start" is a session
+  open while the futures trade overnight, so pregame protects nothing.
+  Never an NBA or NFL player prop and never a market another bot holds. Series on Kalshi's maker-fee list are skipped;
   `KXNCAAFSPREAD` also turned out to pay a small maker fee, and the owner
   chose to keep it (fees count in realized P&L).
-- **When:** markets whose expected expiration is 4 to 7 hours away, and
-  **only before the event starts** (rules v2, `spread-maker-v2-pregame`,
-  from 23 October). The start time comes from the event ticker (many
-  tickers carry it, in New York time, e.g. `KXR6GAME-26OCT222000...` is
-  20:00). For other events it uses Kalshi's public milestones, but only
-  milestone types (for example `basketball_game`) that have matched ticker
-  times on at least two events and were never later than them; a milestone
-  earlier than a ticker's time also moves that event's start earlier. A
-  market with no known start is not quoted. A new quote needs the start at
+- **When:** markets whose expected expiration is 4 to 24 hours away (v2:
+  4 to 7), and **only before the event starts** (pregame since v2). The
+  start time:
+  1. **Ticker time.** Many tickers carry it, in New York time (e.g.
+     `KXR6GAME-26OCT222000...` is 20:00). Such an event uses it, or a
+     Kalshi milestone if that is earlier, never the series gap below.
+  2. **Otherwise, the earlier of:**
+     - a Kalshi milestone of a type validated on past events
+       (`baseball_game`, `basketball_game`, `cricket_match`,
+       `hockey_tournament`), unless a milestone of that type was seen later
+       than a ticker time in the last 2 days (`esports_match` is never
+       trusted: it was late on half of past events);
+     - for the 31 series in `SERIES_START_OFFSET_HOURS`: expected expiration
+       minus the series' gap minus 30 minutes. The gap is the larger of the
+       median and the 99th percentile in the scan, rounded up to 15 minutes
+       (3 hours for most games, 4 for esports, 6 for `KXNBAPTSLEADER`).
+       Checked against 3,798 events whose ticker carries the real start,
+       this estimate would have cancelled quotes only after the real start
+       for 1 event (simulated, in-sample). If a ticker-timed event in the
+       same series shows a longer gap than the table plus 30 minutes, that
+       series' gap is not used for two days;
+     - any other milestone read for the event, of any type, when it is
+       earlier (it never dates an event by itself).
+  3. **Never later.** The earliest start found for an event is kept for two
+     days (`event_starts.json`, and for events already quoted also in the
+     journal), so a delayed expiration or a milestone that cannot be read
+     never moves it later.
+
+  A market with no known start is not quoted. Milestone reads (at most 60 a
+  pass, none after 45 seconds) go to events with quotes resting, then four
+  ticker-timed trust checks, then untimed events in series with a gap, then
+  `KXBIG3GAME`. Untimed events in other series are never read: no trusted
+  milestone type has ever dated them. A new quote needs the start at
   least 85 minutes away, so its 65-minute life ends 20 minutes before the
   start; any resting quote is cancelled 20 minutes before the start, even
   if the order book cannot be read. v1 had no start check: its window counted only from Kalshi's
@@ -60,19 +88,19 @@ directly: that comparison is the main point of the pilot.
 
 | Limit | Spread bot | Notes |
 |---|---:|---|
-| Contracts per order | up to 5 | Was 1 (owner's amendment, 22 October) |
-| Net contracts per market and side | 5 | Was 1 |
-| Open exposure (resting orders + held contracts, at cost) | $60 | Was $25 |
-| Orders per pass / per New York day | 20 / 300 | Cancelled orders still count |
-| Own realized-loss stop, per day / total | −$10 / −$40 | Was −$5 / −$15; cancels its quotes and stops |
+| Contracts per order | up to 5 | 1, then 5 (22 October); the first v3 draft had 2 |
+| Net contracts per market and side | 5 | 1, then 5; the first v3 draft had 2 |
+| Open exposure (resting orders + held contracts, at cost) | $120 | $25, then $60 until v3 |
+| Orders per pass / per New York day | 20 / 1,500 | Cancelled orders still count; 300 a day before v3 (each quote is re-posted at least hourly) |
+| Own realized-loss stop, per day / total | −$15 / −$40 | −$5 / −$15, then −$10 / −$40 until v3; cancels its quotes and stops |
 | Account realized-loss stop, per day / total | −$20 / −$100 | Shared with NBA and NFL; total was −$60 before 23 October |
 
 - The NBA and NFL caps ($165 open, $180 a day, $5,050 lifetime) are
   unchanged and do not include spread orders. All three bots together can
-  have at most $225 open (NBA $150, NFL $15, spread $60) on the $350 account.
+  have at most $285 open (NBA $150, NFL $15, spread $120) on the $350 account.
 - The account stops count realized losses of all three bots, so spread
-  losses can stop NBA and NFL for the day, and the reverse. A −$10 spread
-  day leaves NBA only $10 of the shared −$20 daily stop.
+  losses can stop NBA and NFL for the day, and the reverse. A −$15 spread
+  day leaves NBA only $5 of the shared −$20 daily stop.
 - **How spread P&L is counted.** Kalshi nets YES against NO, so when both
   quotes fill the pair closes at once and never appears in a settlement
   record. The bot (and the account stop) therefore count its P&L from its
@@ -84,7 +112,7 @@ directly: that comparison is the main point of the pilot.
   The journal keeps its own copy of every fill and settlement, so the count
   does not depend on how long Kalshi keeps listing old fills.
 - Worst plausible case: the $40 own stop is reached and every open position
-  then loses: about $40 + $60 = $100. In the (simulated, in-sample) sizing
+  then loses: about $40 + $120 = $160 (v2: $100). In the (simulated, in-sample) sizing
   test the worst day was −$16 and the worst drawdown −$18.
 
 ## Safety rules (same as the other bots)
@@ -104,7 +132,7 @@ directly: that comparison is the main point of the pilot.
 - A quote that turns out to have filled, fully or partly, just as the bot
   cancels it (the exchange cancels fewer contracts than were resting) is not
   replaced in that pass, and the possibly filled contracts count toward the
-  $60 cap, so the 5-contract cap per market side holds.
+  $120 cap, so the cap per market side (5 contracts) holds.
 - If a market's order book cannot be read, the bot leaves its quotes there
   alone (they expire on the exchange) and adds nothing new in that market.
 - No new order after 110 seconds from the start of a pass (waiting for the
@@ -182,10 +210,24 @@ directly: that comparison is the main point of the pilot.
    ```
 
    Each pass's report shows `event_starts` (milestone reads, the milestone
-   types trusted and any found late) and `canceled_event_start`. Expect
+   types trusted and any found late; since v3 also how many events were
+   dated by a milestone, by a series gap (and how many of those went
+   unread) or kept at an earlier start, how many had none, any series
+   whose gap is suspended, and `cache_write_failed`) and
+   `canceled_event_start`. Expect
    fewer quotes than v1: in the backtest, the v2 rule on events whose
    ticker carries the start kept about a sixth of v1's simulated profit,
    more where milestones are trusted.
+
+## Switching to v3
+
+Merge the v3 pull request and run **Deploy funded worker code →
+DEPLOY_CODE**. Nothing else: v2 quotes still resting have the same size
+and keep their place until their hourly refresh, when v3 quotes replace
+them. Then watch `--status` and the pass report: `event_starts` should show
+events dated by a series gap, and `skip_daily_cap` should stay at 0
+(`skip_active_cap` above 0 means the $120 cap is binding). v2 measurements still pending when v3
+starts are not completed: each rule version is judged on its own orders.
 
 ## After an "Ambiguous spread order" halt
 

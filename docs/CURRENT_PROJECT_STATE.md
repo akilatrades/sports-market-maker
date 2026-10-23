@@ -15,7 +15,7 @@ after $100 (−$60 before 23 October).
 |---|---|---|---|
 | NBA player props | `nba-no-v6-three-contracts`: three-contract post-only NO orders, one cent inside the spread, 2–6 hours before tip-off, resting until tip-off, 0–15¢ of estimated edge | 20 October (v5 from 21 October, v6 once deployed after 23 October) | [PROD_NBA_AUTO.md](../deploy/PROD_NBA_AUTO.md) |
 | NFL receiving yards | `nfl-no-v3-baseline-quote`: the same idea with smaller limits | 19 October | [PROD_NFL_AUTO.md](../deploy/PROD_NFL_AUTO.md) |
-| Spread maker | `spread-maker-v2-pregame`: YES and NO bids one cent inside 8¢+ spreads in 64 series, only before a known event start, up to 5 contracts, $60 open | 22 October (v2 from 23 October) | [PROD_SPREAD_AUTO.md](../deploy/PROD_SPREAD_AUTO.md) |
+| Spread maker | `spread-maker-v3-24h-starts`: YES and NO bids one cent inside 8¢+ spreads in 61 series, only before a known event start, from 24 hours before expiry, up to 5 contracts, $120 open | 22 October (v2 from 23 October, v3 once deployed) | [PROD_SPREAD_AUTO.md](../deploy/PROD_SPREAD_AUTO.md) |
 
 - **Deployed code:** the merge of pull request #80 (23 October), which
   includes #79. The owner deploys with **Deploy funded worker code →
@@ -44,7 +44,7 @@ Each bot is judged at a checkpoint written before it went live
 (`python -m research.live_checkpoint --data <private export>`):
 - **NBA v5 and v6 together:** 1,900 settled filled orders, the $5,000
   allowance or 30 days from the first v5 order.
-- **Spread maker v2:** 300 filled contracts or 4 weeks, on its own orders.
+- **Spread maker v3:** 300 filled contracts or 4 weeks, on its own orders.
 
 ## What is still unknown
 
@@ -76,6 +76,17 @@ Each bot is judged at a checkpoint written before it went live
   $2,000); NBA's own and the account-wide total loss stops move from −$60
   to −$100. A replay showed 6–7¢ spreads earned nothing pregame, so the
   spread maker stays at 8¢ ([research log](../RESEARCH_LOG.md)).
+- **23 October:** a pre-registered study of 64 series found that quoting
+  from 24 hours before expiry, with start times from validated Kalshi
+  milestone types and each series' usual timing, gives about 9× the
+  pregame fills (simulated, in-sample). It also found esports milestones
+  are often late, so they are never trusted. Spread maker v3 adopts it at
+  5 contracts a side with a $120 open cap and a −$15 daily stop, tightened after review: the earlier of milestone and
+  series estimate counts, estimates use the 99th-percentile gap, a start
+  never moves later, the Brent, S&P 500 and 10-year note dailies are left
+  out and the daily order cap is 1,500. Replayed, 6.5× v2's pregame fills
+  at +9.0¢ a contract; with each market side capped at 5 contracts, about
+  $4.60 a day against v2's $1.10 (simulated, in-sample, first in line).
 
 ## Where to look
 

@@ -3262,3 +3262,179 @@ the $60 cap and 5-contract orders limit how many markets can be quoted at
 once. The later half is weaker (about 5–6¢ against 9–10¢). Live v3 would need
 the window, a fixed list of trusted milestone types and the per-series offset
 table, through a reviewed plan amendment.
+
+## 2026-10-23: Spread maker v3: quote from 24 hours, more start times, 2 contracts (plan amendment)
+
+*Written before the code change and before any v3 order. It applies the
+rule chosen by the pre-registered study above (24→4 hours, start sources
+S1+S2+S3). The owner chose smaller orders across more markets on 23 October
+("Smaller orders, more markets").*
+
+**Rules and limits (old → new).**
+- Window: 4–7 → **4–24 hours** before Kalshi's expected expiration
+  (`WINDOW_HOURS`). The pregame rule is unchanged: a new quote needs a known
+  start at least 85 minutes away, and every quote is cancelled 20 minutes
+  before it.
+- Start times, in order:
+  - the ticker's (unchanged);
+  - a Kalshi milestone of a **research-validated type**: baseball_game,
+    basketball_game, cricket_match, hockey_tournament and one_off_milestone.
+    Each matched ticker starts on 95% or more of at least 314 events. A
+    live observation of one of these starting more than 2 minutes after a
+    ticker time still revokes that type for 2 days. **esports_match is
+    never trusted.** Old rule: any type with 2 live matches and no late
+    observation in 2 days.
+  - New, for events with neither: **start = expected expiration − the
+    series' usual gap − 30 minutes**, from a fixed table of 35 series whose
+    gap varied by 30 minutes or less (median 3 hours for most games, 4 for
+    esports, 5 for broadcast-mention markets; `SERIES_START_OFFSET_HOURS`).
+- Contracts per order: **5 → 2**; net contracts per market side: **5 → 2**.
+  With $60 open (unchanged), about 2.5 times as many markets can be quoted
+  at once.
+- Milestone reads per pass: 30 → 60, because the longer window holds more
+  events. The 45-second read budget is unchanged.
+- Unchanged: $60 open, −$10 daily and −$40 total own loss stops, 20 orders
+  per pass, 300 submissions a day (the most likely limit to bind; watched,
+  not raised), 65-minute order lifetime, 8¢ minimum spread, the 64 series.
+
+**Evidence** (simulated, in-sample, one contract, first in line): 10,223
+pregame fills against v2's 1,152 on the same sampled markets; added fills
++8.50¢ a contract (t 12.92), +8.22¢ at flow share 0.25, positive in both
+halves (9.40¢ / 5.21¢). Live, the $60 cap and 2-contract orders bound how
+much of that appears.
+
+**Version and checkpoint.** Orders carry `spread-maker-v3-24h-starts`. v3 is
+judged on its own orders with the v2 bars: after 300 filled contracts or 4
+weeks from its first order, continue if live profit per contract is above
+zero, and stop and review if live fill share is below half the shadow's or
+the −$40 stop is hit. v1 and v2 are reported apart. Resting v2 quotes are
+managed like any other (kept or re-quoted) and stay measured under v2.
+
+## 2026-10-23: Spread maker v3: changes after review (plan amendment)
+
+*Written after an independent review of the v3 code and before any v3
+order. The review found two ways v3 could quote into a live event and two
+operational limits; the owner chose the answers to the limits.*
+
+**Start times, tightened** (exploratory replay, simulated, in-sample;
+`python -m research.spread_start_window final`, one more variant on the same
+scan):
+- *The earlier estimate wins.* An event's start is the earliest of a trusted
+  milestone and the series estimate (before: the milestone won). On
+  ticker-timed events, 26 of 2,666 trusted-type milestones were more than 20
+  minutes late; 18 of those are in series with an estimate.
+- *one_off_milestone is no longer trusted:* its late cases (8 of 381, all
+  KXNCAABBGAME) are in a series without an estimate. Trusted types:
+  baseball_game, basketball_game, cricket_match, hockey_tournament.
+- *Series estimate = the larger of the median and the 99th-percentile gap
+  between start and expected expiration, rounded up to 15 minutes,* minus
+  30 minutes (before: the median). KXNBAPTSLEADER becomes 6 hours, KXRLGAME
+  5.75 and KXNCAAWB spreads and totals 3.5; 31 series in all.
+- *The earliest start ever seen for an event is kept* (`event_starts.json`),
+  so an expiration that Kalshi moves later during a delay cannot move a
+  start later.
+- *Brent, S&P 500 and 10-year note dailies (KXBRENTD, KXINXDUD, KXTNOTED)
+  are never quoted* (owner, 23 October): their "start" is a session open
+  while the futures trade overnight, so pregame protects nothing.
+
+Result of the tightened rule, 24→4 hours: 7,535 pregame fills (6.5× v2's
+1,152), +8.92¢ a contract (t 11.83), halves 10.07¢ / 5.87¢, 6,451 fills at
+flow share 0.25; the fills added over v2 earn +8.69¢ (t 10.74). Checked
+against the 3,798 events whose ticker carries the real start, the estimate
+(ignoring the ticker) would have cancelled quotes only after the real start
+for 1 event (0.03%).
+
+**Operations.**
+- Submissions per New York day: 300 → **1,500** (owner, 23 October). Every
+  quote is re-posted at least hourly; with about 30 markets quoted, 300
+  would run out by early morning. Money limits are unchanged.
+- Milestone reads go first to events without a series estimate, in a
+  rotating order.
+- The shadow ledger's trade and result reads are capped per pass and stop
+  at a deadline, and the live measurements (fill share, markouts) now run
+  before it.
+- Standing checks record their rule version, and summaries count only the
+  current version's. Measurements of v2 orders still pending when v3 starts
+  are not completed (v2 is reported apart and not judged).
+
+## 2026-10-23: Spread maker v3: changes after the second review (plan amendment)
+
+*A second independent review of the v3 code, before any v3 order, found no
+critical bug and two medium gaps. All changes below only ever move a start
+earlier or quote less; none changes a money limit. Exploratory, one more
+variant on the same scan (simulated, in-sample).*
+
+- *Reads are no longer wasted.* Untimed events in series without an offset
+  are read for milestones only in KXBIG3GAME, the one such series a trusted
+  type ever dated in the scan (35 of 35 events); 4,422 of 11,263 events
+  in the others (soccer, UFC, tennis, college football and similar) could
+  never be dated and used up the 60 reads a pass. Read order, which the
+  previous entry described wrongly: events with quotes resting, then four
+  ticker-timed trust checks, then untimed events in offset series, then
+  KXBIG3GAME, each group rotating.
+- *Any milestone moves a dated start earlier.* An untimed event that has a
+  trusted milestone or an offset takes the earliest of those and of any
+  other milestone read for it, of any type (as ticker-timed events already
+  did). A milestone of an untrusted type never dates an event by itself.
+- *Live check of the offsets.* A ticker-timed event in an offset series
+  whose expiry minus start exceeds the series gap plus 30 minutes (the
+  estimate would come after the real start) suspends that series' offset
+  for two days. In the scan this would have happened 3 times (KXMLBF3
+  twice, KXRLGAME once).
+- *The journal backs up the start memory.* A live pass also lowers each
+  event's start to the earliest recorded with this bot's orders of the
+  last two days, so a lost or unwritable `event_starts.json` cannot move
+  a quoted event's start later. A failed cache write is reported.
+- *A shadow-ledger failure* after a live pass still saves that pass's
+  report and then fails the unit visibly.
+- Known limit, unchanged: tickers whose team code starts with a digit (for
+  example 100T) are read as untimed, which costs quotes, not safety.
+
+Replay of the revised rule, 24→4 hours: 7,453 pregame fills (6.5× v2's
+1,152), +8.96¢ a contract (t 11.79), halves 10.06¢ / 5.94¢, 6,363 fills at
+flow share 0.25; added fills +8.73¢ (t 10.75). Estimates checked against
+3,798 ticker starts: 1 would have cancelled after the real start.
+
+## 2026-10-23: Spread maker v3: 5 contracts and higher caps (plan amendment)
+
+*The owner's choice, 23 October, before any v3 order: "5 per order, raise
+caps", after an exploratory size replay. Written before the code change.*
+
+**Correction.** The v3 replays above count every hourly quote's fill at
+full size, so a market could hold more than the cap per side. With the net
+cap enforced (a market side's held plus resting contracts never above it),
+over the scan's 339 days (simulated, in-sample, first in line; flow 0.25 in
+brackets):
+
+| Rule | $ a day | Worst day | Worst drawdown | Hours over $60 / $120 open |
+|---|---|---|---|---|
+| v2: 4–7 h, ticker starts, 5 / net 5 | 1.11 (0.86) | −10.11 | −17.00 | — |
+| v3: 2 / net 2 | 2.09 (1.60) | −3.89 | −7.00 | 3.1% / — |
+| v3: 2 / net 4 | 2.81 (2.16) | −4.79 | −8.06 | 4.4% / — |
+| v3: 3 / net 3 | 2.97 (2.20) | −6.97 | −10.74 | 7.2% / — |
+| v3: 3 / net 6 | 4.00 (2.99) | −8.32 | −12.00 | 10.8% / — |
+| v3: 5 / net 5 | 4.63 (3.26) | −12.56 | −18.17 | 20.6% / 4.5% |
+| v3: 10 / net 10 | 8.22 (5.38) | −26.21 | −37.79 | — |
+
+Seven size variants (plus the uncapped count), so the chosen one is
+somewhat flattered. Open exposure is a rough estimate (resting quotes plus
+net positions at the last price, held to expiry), and the replay does not
+apply the open cap, so profits above it are overstated where it binds.
+Scratch scripts, not committed.
+
+**Changes (old → new).**
+- Contracts per order: 2 → **5**; net per market side: 2 → **5** (v2's
+  values). Why: profit scales with contracts at the same ~9¢ edge.
+- Open exposure cap: $60 → **$120**. Why: at 5 contracts, $60 would bind in
+  about a fifth of quoting hours; $120 in about 4.5%. With NBA ($150) and
+  NFL ($15), the three bots can have $285 open.
+- Own daily loss stop: −$10 → **−$15**. Why: the worst replay day at 5/5 was
+  −$12.56 (no day below −$15), so −$10 would stop the bot on ordinary bad
+  days. A −$15 spread day leaves NBA $5 of the shared −$20 daily stop.
+- Unchanged: own total stop −$40 (worst replay drawdown −$18), account-wide
+  stops (−$20 a day, −$100 total), 1,500 orders a day, 20 a pass, 8¢ spreads.
+- Worst plausible case rises from about $40 + $60 = $100 to $40 + $120 =
+  $160: the total stop reached, then every open position lost.
+
+**Checkpoint, unchanged:** v3 is judged on its own orders, 300 filled
+contracts or 4 weeks.
