@@ -3309,3 +3309,50 @@ weeks from its first order, continue if live profit per contract is above
 zero, and stop and review if live fill share is below half the shadow's or
 the −$40 stop is hit. v1 and v2 are reported apart. Resting v2 quotes are
 managed like any other (kept or re-quoted) and stay measured under v2.
+
+## 2026-10-23: Spread maker v3: changes after review (plan amendment)
+
+*Written after an independent review of the v3 code and before any v3
+order. The review found two ways v3 could quote into a live event and two
+operational limits; the owner chose the answers to the limits.*
+
+**Start times, tightened** (exploratory replay, simulated, in-sample;
+`python -m research.spread_start_window final`, one more variant on the same
+scan):
+- *The earlier estimate wins.* An event's start is the earliest of a trusted
+  milestone and the series estimate (before: the milestone won). On
+  ticker-timed events, 26 of 2,666 trusted-type milestones were more than 20
+  minutes late; 18 of those are in series with an estimate.
+- *one_off_milestone is no longer trusted:* its late cases (8 of 381, all
+  KXNCAABBGAME) are in a series without an estimate. Trusted types:
+  baseball_game, basketball_game, cricket_match, hockey_tournament.
+- *Series estimate = the larger of the median and the 99th-percentile gap
+  between start and expected expiration, rounded up to 15 minutes,* minus
+  30 minutes (before: the median). KXNBAPTSLEADER becomes 6 hours, KXRLGAME
+  5.75 and KXNCAAWB spreads and totals 3.5; 31 series in all.
+- *The earliest start ever seen for an event is kept* (`event_starts.json`),
+  so an expiration that Kalshi moves later during a delay cannot move a
+  start later.
+- *Brent, S&P 500 and 10-year note dailies (KXBRENTD, KXINXDUD, KXTNOTED)
+  are never quoted* (owner, 23 October): their "start" is a session open
+  while the futures trade overnight, so pregame protects nothing.
+
+Result of the tightened rule, 24→4 hours: 7,535 pregame fills (6.5× v2's
+1,152), +8.92¢ a contract (t 11.83), halves 10.07¢ / 5.87¢, 6,451 fills at
+flow share 0.25; the fills added over v2 earn +8.69¢ (t 10.74). Checked
+against the 3,798 events whose ticker carries the real start, the estimate
+(ignoring the ticker) would have cancelled quotes only after the real start
+for 1 event (0.03%).
+
+**Operations.**
+- Submissions per New York day: 300 → **1,500** (owner, 23 October). Every
+  quote is re-posted at least hourly; with about 30 markets quoted, 300
+  would run out by early morning. Money limits are unchanged.
+- Milestone reads go first to events without a series estimate, in a
+  rotating order.
+- The shadow ledger's trade and result reads are capped per pass and stop
+  at a deadline, and the live measurements (fill share, markouts) now run
+  before it.
+- Standing checks record their rule version, and summaries count only the
+  current version's. Measurements of v2 orders still pending when v3 starts
+  are not completed (v2 is reported apart and not judged).
