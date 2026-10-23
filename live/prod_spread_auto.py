@@ -320,11 +320,13 @@ def prefetch_starts(
       comparison is remembered by milestone type for MILESTONE_TRUST_DAYS. A
       milestone earlier than the ticker time also counts as that event's
       start (the earlier start wins, which only ever quotes less).
-    - Events without a time get a milestone start only from milestone types
-      that have matched ticker times (MILESTONE_TRUST_MIN_MATCHES or more)
-      and were never later than a ticker time by more than
-      MILESTONE_LATE_MINUTES. Anything else has no known start and is not
-      quoted.
+    - Events without a time get a milestone start only from
+      TRUSTED_MILESTONE_TYPES (validated on past events), unless a type was
+      seen later than a ticker time by more than MILESTONE_LATE_MINUTES in
+      the last MILESTONE_TRUST_DAYS. NEVER_TRUSTED_MILESTONE_TYPES never
+      count. Failing that, a series in SERIES_START_OFFSET_HOURS gets
+      start = expected expiration - its usual gap - the margin. Anything
+      else has no known start and is not quoted.
 
     Answers are cached for START_CACHE_MINUTES; at most
     MAX_START_LOOKUPS_PER_PASS reads a pass and none after ``deadline``."""
@@ -422,14 +424,22 @@ def prefetch_starts(
     }
     trusted = {
         kind
-        for kind, entry in types.items()
-        if len(entry["matched"]) >= P.MILESTONE_TRUST_MIN_MATCHES and not entry["late"]
+        for kind in P.TRUSTED_MILESTONE_TYPES - P.NEVER_TRUSTED_MILESTONE_TYPES
+        if not types.get(kind, {}).get("late")
     }
-    for event, expires in sorted(candidates.items()) if trusted else ():
-        found = read(event, expires)
+    from_offset = 0
+    for event, expires in sorted(candidates.items()):
+        found = read(event, expires) if trusted else None
         usable = [start for start, kind in found or () if kind and kind in trusted]
         if usable:
             starts[event] = min(usable)
+            continue
+        gap = P.SERIES_START_OFFSET_HOURS.get(event.split("-", 1)[0])
+        if gap is not None:
+            starts[event] = expires - timedelta(
+                hours=gap, minutes=P.START_OFFSET_MARGIN_MINUTES
+            )
+            from_offset += 1
     old = (now - timedelta(days=2)).isoformat()
     cache = {
         k: v
@@ -450,7 +460,8 @@ def prefetch_starts(
         "milestone_types_late": sorted(k for k, v in types.items() if v["late"]),
         "milestone_reads": reads["done"],
         "milestone_read_failures": reads["failed"],
-        "with_milestone_start": sum(e in candidates for e in starts),
+        "with_milestone_start": sum(e in candidates for e in starts) - from_offset,
+        "with_series_offset_start": from_offset,
         "earlier_than_ticker": sum(e in timed for e in starts),
     }
 

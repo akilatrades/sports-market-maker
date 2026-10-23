@@ -305,3 +305,9 @@ def test_nba_v5_and_v6_are_judged_together_counting_orders(tmp_path):
     assert v5["orders"] == 1 and v5["settled_fills"] == 1
     text = cp.report(tmp_path, NOW)
     assert "judged together" in text and "nba-no-v6-three-contracts: 5 orders" in text
+
+
+def test_the_checkpoint_judges_the_spread_bots_current_rules():
+    from live import spread_policy
+
+    assert cp.SPREAD_VERSION == spread_policy.STRATEGY_VERSION  # no silent drift

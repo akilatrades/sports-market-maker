@@ -170,12 +170,14 @@ Every pass, every bot
   until tip (NFL: 10 minutes to 2 hours before kickoff). Since NBA rules v5
   (21 October) an NBA order needs 0–15¢ of estimated edge after fees (NFL
   keeps 3¢); since v6 (23 October) it is three contracts.
-- **Spread orders.** Up to 5 contracts per order, at most 5 held or resting
-  per market side, $60 open, and the bot's own −$10 daily and −$40 total
-  loss stops. Pregame only since 23 October: on its first live night the
-  first version quoted a college football game after kickoff, so now a
-  quote needs a known start (from the event ticker, or Kalshi's milestones
-  where they have matched ticker times). A shadow ledger scores the same
+- **Spread orders.** Up to 2 contracts per order (5 before v3), at most 2
+  held or resting per market side, $60 open, and the bot's own −$10 daily
+  and −$40 total loss stops. Pregame only since 23 October: on its first
+  live night the first version quoted a college football game after
+  kickoff, so now a quote needs a known start. Since v3 it quotes from 24
+  hours before expiry and finds starts from the event ticker, validated
+  Kalshi milestone types or the series' usual timing; in a pre-registered
+  replay that gave about 9× the pregame fills (simulated, in-sample). A shadow ledger scores the same
   rule from public trade prints, so live and simulated fills can be
   compared on the same markets. [Pilot notes](deploy/PROD_SPREAD_AUTO.md)
 - **Risk.** Per-order, per-game, per-team, daily and lifetime caps; one

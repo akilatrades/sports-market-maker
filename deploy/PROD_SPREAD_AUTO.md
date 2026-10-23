@@ -1,7 +1,8 @@
 # Spread maker pilot (third bot)
 
-`live/prod_spread_auto.py`, strategy version `spread-maker-v1`. It posts a
-buy order of up to 5 contracts on **both sides** of markets where the gap between the best
+`live/prod_spread_auto.py`, strategy version `spread-maker-v3-24h-starts`
+(v1 from 22 October, v2 and v3 from 23 October). It posts a
+buy order of up to 2 contracts on **both sides** of markets where the gap between the best
 bid and the best offer (the *spread*) is 8¢ or more, one cent better than
 anyone else on each side. When both orders fill, the bot owns a YES and a NO
 contract that together pay exactly $1 and cost less than $1: a locked profit.
@@ -22,14 +23,22 @@ profit forecast.
   another bot holds. Series on Kalshi's maker-fee list are skipped;
   `KXNCAAFSPREAD` also turned out to pay a small maker fee, and the owner
   chose to keep it (fees count in realized P&L).
-- **When:** markets whose expected expiration is 4 to 7 hours away, and
-  **only before the event starts** (rules v2, `spread-maker-v2-pregame`,
-  from 23 October). The start time comes from the event ticker (many
-  tickers carry it, in New York time, e.g. `KXR6GAME-26OCT222000...` is
-  20:00). For other events it uses Kalshi's public milestones, but only
-  milestone types (for example `basketball_game`) that have matched ticker
-  times on at least two events and were never later than them; a milestone
-  earlier than a ticker's time also moves that event's start earlier. A
+- **When:** markets whose expected expiration is 4 to 24 hours away (v2:
+  4 to 7), and **only before the event starts** (pregame since v2). The
+  start time comes from, in order:
+  1. the event ticker (many tickers carry it, in New York time, e.g.
+     `KXR6GAME-26OCT222000...` is 20:00);
+  2. Kalshi's public milestones of a type validated on past events
+     (`baseball_game`, `basketball_game`, `cricket_match`,
+     `hockey_tournament`, `one_off_milestone`), unless that type was seen
+     later than a ticker time in the last 2 days. `esports_match` is never
+     trusted: it was late on half of past events;
+  3. for the 35 series in `SERIES_START_OFFSET_HOURS`: expected expiration
+     minus the series' usual gap (3 hours for most games, 4 for esports)
+     minus 30 minutes.
+
+  A milestone earlier than a ticker's time also moves that event's start
+  earlier. A
   market with no known start is not quoted. A new quote needs the start at
   least 85 minutes away, so its 65-minute life ends 20 minutes before the
   start; any resting quote is cancelled 20 minutes before the start, even
@@ -37,11 +46,11 @@ profit forecast.
   expected expiration, which for college football is 6 hours after kickoff,
   so on 22 October it quoted into a live game.
 - **Quote:** YES bid at best YES bid + 1¢, NO bid at best NO bid + 1¢, up to
-  5 contracts each, post-only (never takes liquidity), expiring on the exchange
+  2 contracts each, post-only (never takes liquidity), expiring on the exchange
   after 65 minutes. Prices come from the public order book with the bot's own
   orders removed, so it never prices off itself.
 - **Inventory:** held plus resting contracts on one side of a market never
-  exceed 5. Holding 2 YES, its YES order is for 3; holding 5, it stops
+  exceed 2. Holding 1 YES, its YES order is for 1; holding 2, it stops
   quoting YES there (NO quotes, which close YES contracts, continue). A
   partly filled order keeps its place in the queue and is not topped up.
 - **Every 10 minutes** (minute 3, 13, 23, ...). Each pass also writes the
@@ -60,8 +69,8 @@ directly: that comparison is the main point of the pilot.
 
 | Limit | Spread bot | Notes |
 |---|---:|---|
-| Contracts per order | up to 5 | Was 1 (owner's amendment, 22 October) |
-| Net contracts per market and side | 5 | Was 1 |
+| Contracts per order | up to 2 | 1, then 5 (22 October), then 2 in v3 (23 October) |
+| Net contracts per market and side | 2 | 1, then 5, then 2 in v3 |
 | Open exposure (resting orders + held contracts, at cost) | $60 | Was $25 |
 | Orders per pass / per New York day | 20 / 300 | Cancelled orders still count |
 | Own realized-loss stop, per day / total | −$10 / −$40 | Was −$5 / −$15; cancels its quotes and stops |

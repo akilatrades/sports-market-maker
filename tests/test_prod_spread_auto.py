@@ -16,6 +16,23 @@ NOW = datetime(2026, 10, 22, 18, 0, tzinfo=UTC)
 TICKER = "KXDOTA2GAME-26OCT221800AB-A"
 
 
+# Tests that check the live limits themselves, rather than logic at a size.
+REAL_LIMIT_TESTS = {
+    "test_pilot_limits_are_the_owner_approved_ones",
+    "test_v3_quotes_two_contracts_a_side_and_caps_net_at_two",
+}
+
+
+@pytest.fixture(autouse=True)
+def logic_sized_at_five(request, monkeypatch):
+    """Most tests exercise inventory, pairing and partial-fill logic with v2's
+    5-contract orders; that logic does not depend on size. The live v3 values
+    (2 and 2) are pinned in REAL_LIMIT_TESTS."""
+    if request.node.originalname not in REAL_LIMIT_TESTS:
+        monkeypatch.setattr(P, "CONTRACTS", 5)
+        monkeypatch.setattr(P, "MAX_NET_PER_MARKET", 5)
+
+
 def market(ticker=TICKER, bid=0.40, ask=0.52, hours=5.0, status="active"):
     return {
         "ticker": ticker,
@@ -48,7 +65,7 @@ def test_eligible_markets_filters_window_series_and_other_bots():
         [
             market(),
             market("KXDOTA2GAME-26OCT221800XY-B", hours=3.0),
-            market("KXDOTA2GAME-26OCT221800XY-C", hours=8.0),
+            market("KXDOTA2GAME-26OCT221800XY-C", hours=P.WINDOW_HOURS[1] + 1),
             market("KXDOTA2GAME-26OCT221800XY-D", ask=0.45),
             market("KXDOTA2GAME-26OCT221800XY-E", status="closed"),
             market("KXDOTA2GAME-26OCT221800XY-F"),
@@ -690,8 +707,8 @@ def test_unarmed_auto_run_is_shadow_only(world, monkeypatch, tmp_path, capsys):
     monkeypatch.setattr("sys.argv", ["prod_spread_auto", "--auto"])
     soon = datetime.now(UTC) + timedelta(hours=5)
     world["quotes"][TICKER]["expected_expiration_time"] = soon.isoformat()
-    # Real clock here: TICKER's start comes from a milestone, trusted because
-    # milestones match the start written in another listed (narrow) market.
+    # Real clock here: TICKER's start comes from a milestone of a validated
+    # type (another listed, narrow market carries a ticker time to check).
     real_start = bot.ticker_start
     untimed = TICKER.rsplit("-", 1)[0]
     monkeypatch.setattr(
@@ -710,14 +727,13 @@ def test_unarmed_auto_run_is_shadow_only(world, monkeypatch, tmp_path, capsys):
             "milestones": [
                 {
                     "start_date": start.isoformat(),
-                    "type": "esports_game",
+                    "type": "basketball_game",
                     "primary_event_tickers": [event],
                 }
             ]
         }
 
     world["public"]["fetch_milestones"] = milestones
-    monkeypatch.setattr(P, "MILESTONE_TRUST_MIN_MATCHES", 1)  # one check market
     bot.main()
     report = json.loads((state / "last_scan.json").read_text())
     assert report["mode"] == "shadow" and "live" not in report
@@ -1054,15 +1070,32 @@ def test_shadow_scores_five_contracts():
 
 def test_pilot_limits_are_the_owner_approved_ones():
     # RESEARCH_LOG.md, 2026-10-22, "5 contracts per order" (old: 1, 1, $25,
-    # $5, $15). Change these only through a new, recorded amendment.
-    assert (P.CONTRACTS, P.MAX_NET_PER_MARKET) == (5, 5)
+    # $5, $15), then "Spread maker v3" (2026-10-23; v2: 5 and 5, 4-7 hours,
+    # 30 reads). Change these only through a new, recorded amendment.
+    assert P.STRATEGY_VERSION == "spread-maker-v3-24h-starts"
+    assert (P.CONTRACTS, P.MAX_NET_PER_MARKET) == (2, 2)
+    assert P.MAX_START_LOOKUPS_PER_PASS == 60
+    assert P.TRUSTED_MILESTONE_TYPES == {
+        "baseball_game",
+        "basketball_game",
+        "cricket_match",
+        "hockey_tournament",
+        "one_off_milestone",
+    }
+    assert "esports_match" in P.NEVER_TRUSTED_MILESTONE_TYPES
+    assert not P.TRUSTED_MILESTONE_TYPES & P.NEVER_TRUSTED_MILESTONE_TYPES
+    assert P.START_OFFSET_MARGIN_MINUTES == 30
+    assert len(P.SERIES_START_OFFSET_HOURS) == 35
+    assert set(P.SERIES_START_OFFSET_HOURS) <= set(P.SERIES)
+    assert P.SERIES_START_OFFSET_HOURS["KXCS2GAME"] == 4.0
+    assert P.SERIES_START_OFFSET_HOURS["KXNCAAWBGAME"] == 3.0
     assert (P.MAX_ACTIVE_COST, P.DAILY_LOSS_STOP, P.CUMULATIVE_LOSS_STOP) == (
         60,
         10,
         40,
     )
     assert (P.MAX_ORDERS_PER_PASS, P.MAX_SUBMISSIONS_PER_DAY) == (20, 300)
-    assert P.MIN_SPREAD_CENTS == 8 and P.WINDOW_HOURS == (4.0, 7.0)
+    assert P.MIN_SPREAD_CENTS == 8 and P.WINDOW_HOURS == (4.0, 24.0)
     # Account-wide total stop -$60 -> -$100 on 2026-10-23 ("NBA rules v6");
     # the spread maker's own limits above are unchanged, 8c spreads included.
     assert shared.ACCOUNT_LOSS_STOPS == {"daily": 20.0, "cumulative": 100.0}
@@ -1487,7 +1520,7 @@ def test_shadow_quotes_only_markets_open_for_new_orders(world):
     assert summary["quotes"] == 2
 
 
-def _milestones(calls, shift=timedelta(0), kind="esports_game"):
+def _milestones(calls, shift=timedelta(0), kind="basketball_game"):
     """Milestones that give the ticker's own start (plus ``shift``), or two
     hours from NOW for events without a time."""
 
@@ -1518,17 +1551,19 @@ def _listing(event, hours=5.0):
 def test_milestone_starts_are_cached_and_bounded(tmp_path, monkeypatch):
     monkeypatch.setattr(P, "MAX_START_LOOKUPS_PER_PASS", 4)
     listings = {
-        "KXCS2GAME": [_listing(f"KXCS2GAME-26OCT22E{i}") for i in range(3)],
+        # KXTESTGAME has no ticker times and no usual-gap entry: milestones only.
+        "KXTESTGAME": [_listing(f"KXTESTGAME-26OCT22E{i}") for i in range(3)],
         # Two series whose tickers carry the start: the checks.
         "KXDOTA2GAME": [market()],
         "KXR6GAME": [_listing("KXR6GAME-26OCT221900ABCD")],
     }
     calls = []
     starts, counts = bot.prefetch_starts(listings, NOW, tmp_path, _milestones(calls))
-    # Two checks (one per series) make the type trusted; two reads remain.
-    assert counts["milestone_types_trusted"] == ["esports_game"]
+    # Validated types are trusted without live matches; two checks, two reads.
+    assert "basketball_game" in counts["milestone_types_trusted"]
     assert len(calls) == 4 and counts["with_milestone_start"] == 2
     assert counts["events_without_ticker_time"] == 3
+    assert counts["with_series_offset_start"] == 0
     assert oct((tmp_path / "event_starts.json").stat().st_mode & 0o777) == "0o600"
     # Next pass: checks and two answers come from the cache; one read.
     starts, counts = bot.prefetch_starts(
@@ -1551,7 +1586,7 @@ def test_preflight_compares_milestones_with_ticker_times(world):
     assert check["largest_late_minutes"] == 5.0 and check["matched"] == 0
     public["fetch_milestones"] = _milestones([])
     check = bot.milestone_check(public, NOW)
-    assert check["matched"] == 1 and check["milestone_types"] == {"esports_game": 1}
+    assert check["matched"] == 1 and check["milestone_types"] == {"basketball_game": 1}
 
 
 def test_no_new_quote_within_85_minutes_of_the_start(world):
@@ -1575,33 +1610,39 @@ def test_milestones_later_than_ticker_times_are_not_used(tmp_path):
     listings = {
         "KXDOTA2GAME": [market()],
         "KXR6GAME": [_listing("KXR6GAME-26OCT221900ABCD")],
-        "KXCS2GAME": [_listing("KXCS2GAME-26OCT22E0")],
+        "KXTESTGAME": [_listing("KXTESTGAME-26OCT22E0")],
     }
-    # e.g. milestones that give the end, or a start 5 minutes late
+    # A validated type seen 5 minutes late on a ticker-timed event is revoked.
     late = _milestones([], shift=timedelta(minutes=5))
     starts, counts = bot.prefetch_starts(listings, NOW, tmp_path, late)
-    assert counts["milestone_types_trusted"] == [] and starts == {}
-    assert counts["milestone_types_late"] == ["esports_game"]
+    assert "basketball_game" not in counts["milestone_types_trusted"] and starts == {}
+    assert counts["milestone_types_late"] == ["basketball_game"]
     # Even once they match again, a late type stays distrusted for days.
     good = _milestones([])
     starts, counts = bot.prefetch_starts(
         listings, NOW + timedelta(hours=1), tmp_path, good
     )
-    assert counts["milestone_types_trusted"] == [] and starts == {}
+    assert "basketball_game" not in counts["milestone_types_trusted"] and starts == {}
 
 
-def test_one_matching_event_is_not_enough(tmp_path):
+def test_only_validated_types_count_and_esports_match_never(tmp_path):
     listings = {
         "KXDOTA2GAME": [market()],
-        "KXCS2GAME": [_listing("KXCS2GAME-26OCT22E0")],
+        "KXR6GAME": [_listing("KXR6GAME-26OCT221900ABCD")],
+        "KXTESTGAME": [_listing("KXTESTGAME-26OCT22E0")],
     }
-    starts, counts = bot.prefetch_starts(listings, NOW, tmp_path, _milestones([]))
-    assert counts["milestone_types_trusted"] == [] and starts == {}
-    # The same event checked again later does not count twice.
-    starts, counts = bot.prefetch_starts(
-        listings, NOW + timedelta(hours=1), tmp_path, _milestones([])
-    )
-    assert counts["milestone_types_trusted"] == []
+    for kind in ("esports_game", "esports_match", "football_game"):
+        folder = tmp_path / kind
+        folder.mkdir()
+        # Matching ticker times on every check does not make a type trusted.
+        for minutes in (0, 60, 120):
+            starts, counts = bot.prefetch_starts(
+                listings,
+                NOW + timedelta(minutes=minutes),
+                folder,
+                _milestones([], kind=kind),
+            )
+            assert kind not in counts["milestone_types_trusted"] and starts == {}
 
 
 def test_trust_is_per_milestone_type(tmp_path):
@@ -1609,11 +1650,12 @@ def test_trust_is_per_milestone_type(tmp_path):
         "KXDOTA2GAME": [market()],
         "KXR6GAME": [_listing("KXR6GAME-26OCT221900ABCD")],
         "KXNCAAFSPREAD": [_listing("KXNCAAFSPREAD-26OCT22LIBKENN")],
+        "KXTESTGAME": [_listing("KXTESTGAME-26OCT22E0")],
     }
 
     def fetch(event):
         timed = bot.ticker_start(event)
-        kind = "football_game" if timed is None else "esports_game"
+        kind = "football_game" if event.startswith("KXNCAAF") else "basketball_game"
         start = timed or NOW + timedelta(hours=2)
         return {
             "milestones": [
@@ -1626,8 +1668,8 @@ def test_trust_is_per_milestone_type(tmp_path):
         }
 
     starts, counts = bot.prefetch_starts(listings, NOW, tmp_path, fetch)
-    # Esports milestones matched; football ones never were: no football start.
-    assert counts["milestone_types_trusted"] == ["esports_game"]
+    # Basketball milestones are validated; football ones never were.
+    assert starts["KXTESTGAME-26OCT22E0"] == NOW + timedelta(hours=2)
     assert "KXNCAAFSPREAD-26OCT22LIBKENN" not in starts
 
 
@@ -1671,45 +1713,74 @@ def test_a_damaged_cache_is_ignored_and_rewritten(tmp_path):
     listings = {
         "KXDOTA2GAME": [market()],
         "KXR6GAME": [_listing("KXR6GAME-26OCT221900ABCD")],
-        "KXCS2GAME": [_listing("KXCS2GAME-26OCT22E0")],
+        "KXTESTGAME": [_listing("KXTESTGAME-26OCT22E0")],
     }
     event = TICKER.rsplit("-", 1)[0]
     bad = {
-        "types": {"esports_game": ["not", "a", "dict"], "": {"matched": {"x": "y"}}},
+        "types": {"basketball_game": ["not", "a", "dict"], "": {"matched": {"x": "y"}}},
         event: {
-            "milestones": [["not a date", "esports_game"]],
+            "milestones": [["not a date", "basketball_game"]],
             "checked": NOW.isoformat(),
         },
         "KXR6GAME-26OCT221900ABCD": {
             "milestones": [],
             "checked": (NOW + timedelta(days=30)).isoformat(),  # from the future
         },
-        "KXCS2GAME-26OCT22E0": "garbage",
+        "KXTESTGAME-26OCT22E0": "garbage",
     }
     path = tmp_path / "event_starts.json"
     path.write_text(json.dumps(bad))
     calls = []
     starts, counts = bot.prefetch_starts(listings, NOW, tmp_path, _milestones(calls))
-    # Every damaged entry was read again, and trust built from fresh reads.
+    # Every damaged entry was read again; trust records come from fresh reads.
     assert sorted(calls) == sorted(
-        [event, "KXR6GAME-26OCT221900ABCD", "KXCS2GAME-26OCT22E0"]
+        [event, "KXR6GAME-26OCT221900ABCD", "KXTESTGAME-26OCT22E0"]
     )
-    assert counts["milestone_types_trusted"] == ["esports_game"]
-    assert "KXCS2GAME-26OCT22E0" in starts
+    assert "basketball_game" in counts["milestone_types_trusted"]
+    assert "KXTESTGAME-26OCT22E0" in starts
     saved = json.loads(path.read_text())
-    assert set(saved["types"]) == {"esports_game"}
+    assert set(saved["types"]) == {"basketball_game"}
 
 
 def test_milestones_without_a_type_are_never_trusted(tmp_path):
     listings = {
         "KXDOTA2GAME": [market()],
         "KXR6GAME": [_listing("KXR6GAME-26OCT221900ABCD")],
-        "KXCS2GAME": [_listing("KXCS2GAME-26OCT22E0")],
+        "KXTESTGAME": [_listing("KXTESTGAME-26OCT22E0")],
     }
     starts, counts = bot.prefetch_starts(
         listings, NOW, tmp_path, _milestones([], kind="")
     )
-    assert counts["milestone_types_trusted"] == [] and starts == {}
+    assert starts == {}
+
+
+def test_series_offset_start_when_no_ticker_time_or_trusted_milestone(tmp_path):
+    expires = NOW + timedelta(hours=10)
+    listings = {
+        # CS2 without a ticker time and only an (untrusted) esports_match
+        # milestone: start = expiry - 4 h - 30 min.
+        "KXCS2GAME": [_listing("KXCS2GAME-26OCT22E0", hours=10.0)],
+        # NCAA women's basketball with a trusted milestone: the milestone wins.
+        "KXNCAAWBGAME": [_listing("KXNCAAWBGAME-26OCT22AB", hours=10.0)],
+    }
+
+    def fetch(event):
+        kind = "esports_match" if event.startswith("KXCS2") else "basketball_game"
+        return {
+            "milestones": [
+                {
+                    "start_date": (NOW + timedelta(hours=7)).isoformat(),
+                    "type": kind,
+                    "primary_event_tickers": [event],
+                }
+            ]
+        }
+
+    starts, counts = bot.prefetch_starts(listings, NOW, tmp_path, fetch)
+    assert starts["KXCS2GAME-26OCT22E0"] == expires - timedelta(hours=4, minutes=30)
+    assert starts["KXNCAAWBGAME-26OCT22AB"] == NOW + timedelta(hours=7)
+    assert counts["with_series_offset_start"] == 1
+    assert counts["with_milestone_start"] == 1
 
 
 def test_recent_events_are_those_with_orders_that_may_rest(world):
@@ -1877,3 +1948,16 @@ def test_summary_reports_clustered_t_and_gaps():
     assert s["fills_without_fee_record"] == 1
     # Too recent to have been measured: not counted as never measured.
     assert bot.summarize_measurements(journal, marks, NOW)["fills_never_measured"] == 0
+
+
+def test_v3_quotes_two_contracts_a_side_and_caps_net_at_two(world):
+    report, _ = run(world)
+    assert {(o.side, o.count) for o in world["exchange"].placed} == {
+        ("yes", 2),
+        ("no", 2),
+    }
+    # Two YES contracts held: no more YES room; NO may still offset them.
+    quotes = bot.desired_quotes(
+        [{"ticker": TICKER, "yes_price": 41, "no_price": 49}], {TICKER: 2.0}
+    )
+    assert quotes == {(TICKER, "no"): (49, 2)}
