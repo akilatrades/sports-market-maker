@@ -178,7 +178,7 @@ Every pass, every bot
   hours before expiry and dates events from the ticker or, failing that,
   the earlier of a validated Kalshi milestone and a cautious per-series
   estimate; in a pre-registered replay, tightened after review, that gave
-  6.5× the pregame fills at +8.9¢ a contract (simulated, in-sample). A
+  6.5× the pregame fills at +9.0¢ a contract (simulated, in-sample). A
   shadow ledger scores the same
   rule from public trade prints, so live and simulated fills can be
   compared on the same markets. [Pilot notes](deploy/PROD_SPREAD_AUTO.md)

@@ -43,15 +43,22 @@ profit forecast.
        median and the 99th percentile in the scan, rounded up to 15 minutes
        (3 hours for most games, 4 for esports, 6 for `KXNBAPTSLEADER`).
        Checked against 3,798 events whose ticker carries the real start,
-       this estimate alone would have cancelled quotes only after the real
-       start for 1 event (simulated, in-sample).
+       this estimate would have cancelled quotes only after the real start
+       for 1 event (simulated, in-sample). If a ticker-timed event in the
+       same series shows a longer gap than the table plus 30 minutes, that
+       series' gap is not used for two days;
+     - any other milestone read for the event, of any type, when it is
+       earlier (it never dates an event by itself).
   3. **Never later.** The earliest start found for an event is kept for two
-     days (`event_starts.json`), so a delayed expiration or a milestone that
-     cannot be read never moves it later.
+     days (`event_starts.json`, and for events already quoted also in the
+     journal), so a delayed expiration or a milestone that cannot be read
+     never moves it later.
 
   A market with no known start is not quoted. Milestone reads (at most 60 a
-  pass) go first to events whose series has no gap, so a slow pass costs
-  the fewest quotes. A new quote needs the start at
+  pass, none after 45 seconds) go to events with quotes resting, then four
+  ticker-timed trust checks, then untimed events in series with a gap, then
+  `KXBIG3GAME`. Untimed events in other series are never read: no trusted
+  milestone type has ever dated them. A new quote needs the start at
   least 85 minutes away, so its 65-minute life ends 20 minutes before the
   start; any resting quote is cancelled 20 minutes before the start, even
   if the order book cannot be read. v1 had no start check: its window counted only from Kalshi's
@@ -204,8 +211,10 @@ directly: that comparison is the main point of the pilot.
 
    Each pass's report shows `event_starts` (milestone reads, the milestone
    types trusted and any found late; since v3 also how many events were
-   dated by a milestone, by a series gap or kept at an earlier start, and
-   how many had none) and `canceled_event_start`. Expect
+   dated by a milestone, by a series gap (and how many of those went
+   unread) or kept at an earlier start, how many had none, any series
+   whose gap is suspended, and `cache_write_failed`) and
+   `canceled_event_start`. Expect
    fewer quotes than v1: in the backtest, the v2 rule on events whose
    ticker carries the start kept about a sixth of v1's simulated profit,
    more where milestones are trusted.

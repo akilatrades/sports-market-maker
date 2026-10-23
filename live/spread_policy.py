@@ -123,6 +123,16 @@ SERIES_START_OFFSET_HOURS = {
     "KXWNBA1QSPREAD": 3.0,
     "KXWT20MATCH": 4.0,
 }
+# Untimed events in series with no offset are read for milestones only in
+# these series: in the 2026-10-23 scan, no other such series ever had a
+# trusted-type milestone (4,422 of 11,263 events would only use up reads).
+# Second review, 2026-10-23 (before: every untimed event was read).
+MILESTONE_ONLY_SERIES = frozenset({"KXBIG3GAME"})
+# Live check of the offsets: when a ticker-timed event in an offset series
+# shows expiry - start larger than its gap + START_OFFSET_MARGIN_MINUTES (the
+# estimate would come after the real start), that series' offset is not used
+# for OFFSET_SUSPEND_DAYS. Second review, 2026-10-23 (before: no check).
+OFFSET_SUSPEND_DAYS = 2
 # Never quoted (owner, 2026-10-23): daily financial series whose "start" is a
 # session open while the underlying futures trade overnight, so a pregame
 # rule protects nothing. They stay in SERIES so the record shows the sweep.

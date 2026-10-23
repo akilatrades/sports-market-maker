@@ -315,24 +315,63 @@ def recent_events(state_dir, now):
     } - {None}
 
 
-def _read_order(candidates, now, active=frozenset()):
-    """Events without a ticker time, in the order their milestones are read:
-    first those without a series offset (a milestone is their only start),
-    then the rest; within each, events that may have quotes resting first,
-    then the others in an order that rotates every pass."""
+def _rotated(events, shift):
+    events = sorted(events)
+    if events:
+        k = shift % len(events)
+        events = events[k:] + events[:k]
+    return events
+
+
+def _read_order(timed, candidates, now, active=frozenset()):
+    """(event, expiry) pairs in the order their milestones are read:
+
+    1. events that may have quotes resting (with a ticker time, then without);
+    2. MILESTONE_CHECKS ticker-timed events, one per series, rotating (the
+       trust checks);
+    3. untimed events in offset series (a milestone can only move their
+       start earlier), then in MILESTONE_ONLY_SERIES (a milestone is their
+       only start), each group rotating every pass.
+
+    Untimed events in other series are never read: no trusted milestone
+    type has ever dated them."""
     shift = int(now.timestamp() // 600)
-    out = []
-    for has_offset in (False, True):
-        group = sorted(
-            e
-            for e in candidates
-            if (e.split("-", 1)[0] in P.SERIES_START_OFFSET_HOURS) == has_offset
-        )
-        rest = [e for e in group if e not in active]
-        if rest:
-            k = shift % len(rest)
-            rest = rest[k:] + rest[:k]
-        out += [e for e in group if e in active] + rest
+    first_checks, picks = _check_order(timed, now, active)
+    order = first_checks
+    order += [(e, candidates[e]) for e in sorted(candidates) if e in active]
+    order += picks[: P.MILESTONE_CHECKS]
+    for group in (P.SERIES_START_OFFSET_HOURS, P.MILESTONE_ONLY_SERIES):
+        rest = [
+            e for e in candidates if e not in active and e.split("-", 1)[0] in group
+        ]
+        order += [(e, candidates[e]) for e in _rotated(rest, shift)]
+    return order
+
+
+def _offset_checks(timed, now, raw):
+    """Series whose offset failed a live check in the last
+    OFFSET_SUSPEND_DAYS: {series: {event: first seen}}, this pass's
+    ticker-timed events included."""
+    since = (now - timedelta(days=P.OFFSET_SUSPEND_DAYS)).isoformat()
+    limit = (now + timedelta(minutes=5)).isoformat()
+    out = {}
+    for series, seen in raw.items() if isinstance(raw, dict) else ():
+        if isinstance(series, str) and isinstance(seen, dict):
+            kept = {
+                str(e): t
+                for e, t in seen.items()
+                if isinstance(t, str) and since <= t <= limit
+            }
+            if kept:
+                out[series] = kept
+    for event, expires in timed.items():
+        series = event.split("-", 1)[0]
+        gap = P.SERIES_START_OFFSET_HOURS.get(series)
+        if gap is None:
+            continue
+        estimate = expires - timedelta(hours=gap, minutes=P.START_OFFSET_MARGIN_MINUTES)
+        if estimate > ticker_start(event):
+            out.setdefault(series, {}).setdefault(event, now.isoformat())
     return out
 
 
@@ -356,18 +395,24 @@ def prefetch_starts(
     """Start times for events in the quoting window, beyond ticker times.
 
     - Events whose ticker carries a time: up to MILESTONE_CHECKS of them
-      (one per series, rotating) are compared with Kalshi's milestones. Each
-      comparison is remembered by milestone type for MILESTONE_TRUST_DAYS. A
-      milestone earlier than the ticker time also counts as that event's
-      start (the earlier start wins, which only ever quotes less). The series
-      offsets below never apply to them.
-    - Events without a time: the EARLIER of a milestone from
+      (one per series, rotating) and any with quotes resting are compared
+      with Kalshi's milestones. Each comparison is remembered by milestone
+      type for MILESTONE_TRUST_DAYS. A milestone earlier than the ticker time
+      also counts as that event's start (the earlier start wins, which only
+      ever quotes less). The series offsets never apply to them, but each
+      one checks its series' offset: if the offset estimate would come after
+      the ticker's start, the offset is suspended for OFFSET_SUSPEND_DAYS.
+    - Events without a time are dated by a milestone from
       TRUSTED_MILESTONE_TYPES (validated on past events, and only while no
       milestone of that type has been seen later than a ticker time by more
       than MILESTONE_LATE_MINUTES in the last MILESTONE_TRUST_DAYS;
       NEVER_TRUSTED_MILESTONE_TYPES never count) and, for a series in
-      SERIES_START_OFFSET_HOURS, expected expiration - its gap - the margin.
-      With neither, the event has no known start and is not quoted.
+      SERIES_START_OFFSET_HOURS, by expected expiration - its gap - the
+      margin. The start is the earliest of these and of any other milestone
+      read for the event (of any type: it can only move a start earlier).
+      With neither a trusted milestone nor an offset, the event has no known
+      start and is not quoted. Only events in offset series and in
+      MILESTONE_ONLY_SERIES are read (_read_order has the order).
     - The earliest start found for an event is remembered (two days), so a
       start can move earlier but never later, even when Kalshi moves an
       expiration later or a milestone cannot be read. The memory only lowers
@@ -375,8 +420,7 @@ def prefetch_starts(
     - NO_START_SERIES are skipped: they are never quoted.
 
     Milestone answers are cached for START_CACHE_MINUTES; at most
-    MAX_START_LOOKUPS_PER_PASS reads a pass and none after ``deadline``,
-    events without a series offset first."""
+    MAX_START_LOOKUPS_PER_PASS reads a pass and none after ``deadline``."""
     path = state_dir / "event_starts.json"
     try:
         cache = json.loads(path.read_text()) if path.exists() else {}
@@ -445,16 +489,18 @@ def prefetch_starts(
 
     types = _clean_types(cache.get("types"), now)
     remembered = _clean_earliest(cache.get("earliest"), now)
-    first_checks, picks = _check_order(timed, now, active)
-    # Every event that may have quotes resting (the read budget bounds it),
-    # then a rotating few for trust.
-    checks = first_checks + picks[: P.MILESTONE_CHECKS]
-    for event, expires in checks:
-        found = read(event, expires)
-        if not found:
+    suspended = _offset_checks(timed, now, cache.get("offset_late"))
+    found = {}
+    for event, expires in _read_order(timed, candidates, now, active):
+        hit = read(event, expires)
+        if hit is not None:
+            found[event] = hit
+    # Trust checks: every ticker-timed event read this pass.
+    for event in timed:
+        if not found.get(event):
             continue
         written = ticker_start(event)
-        for start, kind in found:
+        for start, kind in found[event]:
             if not kind:
                 continue  # a milestone without a type is never trusted
             gap = (start - written).total_seconds() / 60  # > 0: milestone later
@@ -463,7 +509,7 @@ def prefetch_starts(
                 entry["late"][event] = now.isoformat()
             elif gap >= -P.MILESTONE_AGREE_MINUTES:
                 entry["matched"][event] = now.isoformat()
-        earliest = min(start for start, _ in found)
+        earliest = min(start for start, _ in found[event])
         if earliest < written:
             starts[event] = earliest
     since = (now - timedelta(days=P.MILESTONE_TRUST_DAYS)).isoformat()
@@ -480,25 +526,27 @@ def prefetch_starts(
         if not types.get(kind, {}).get("late")
     }
     counts = Counter()
-    for event in _read_order(candidates, now, active):
-        expires = candidates[event]
-        found = read(event, expires) if trusted else None
-        usable = [start for start, kind in found or () if kind and kind in trusted]
-        milestone = min(usable) if usable else None
-        gap = P.SERIES_START_OFFSET_HOURS.get(event.split("-", 1)[0])
+    for event, expires in sorted(candidates.items()):
+        series = event.split("-", 1)[0]
+        milestones = found.get(event) or []
+        dated = [start for start, kind in milestones if kind and kind in trusted]
+        gap = None if series in suspended else P.SERIES_START_OFFSET_HOURS.get(series)
         offset = (
             None
             if gap is None
             else expires - timedelta(hours=gap, minutes=P.START_OFFSET_MARGIN_MINUTES)
         )
-        if milestone is None and offset is None:
+        if offset is not None:
+            dated.append(offset)
+        if not dated:
             counts["no_start"] += 1
             continue
-        if offset is None or (milestone is not None and milestone < offset):
-            starts[event], source = milestone, "milestone"
-        else:
-            starts[event], source = offset, "offset"
-        counts[source] += 1
+        # Any milestone, trusted or not, may move a dated start earlier.
+        start = min(dated + [start for start, _ in milestones])
+        starts[event] = start
+        counts["offset" if start == offset else "milestone"] += 1
+        if offset is not None and event not in found:
+            counts["offset_unread"] += 1
     # The memory: a start may move earlier, never later.
     for event in sorted(set(timed) | set(candidates)):
         current = event_start(event, starts)
@@ -514,19 +562,22 @@ def prefetch_starts(
     cache = {
         k: v
         for k, v in cache.items()
-        if k not in ("types", "earliest")
+        if k not in ("types", "earliest", "offset_late")
         and isinstance(v, dict)
         and str(v.get("checked", "")) >= old
     }
     cache["types"] = {k: v for k, v in types.items() if v["matched"] or v["late"]}
     cache["earliest"] = {e: t.isoformat() for e, t in sorted(remembered.items())}
+    cache["offset_late"] = suspended
     try:
         temporary = path.with_suffix(".json.tmp")
         temporary.write_text(json.dumps(cache, sort_keys=True))
         temporary.chmod(0o600)
         temporary.replace(path)
     except OSError:
-        pass  # the cache saves reads; the memory is lost only with it
+        # The cache saves reads; for events already quoted, the live pass
+        # also keeps the earliest start recorded in the journal.
+        counts["cache_write_failed"] += 1
     return starts, {
         "events_without_ticker_time": len(candidates),
         "milestone_types_trusted": sorted(trusted),
@@ -535,8 +586,11 @@ def prefetch_starts(
         "milestone_read_failures": reads["failed"],
         "with_milestone_start": counts["milestone"],
         "with_series_offset_start": counts["offset"],
+        "offset_dated_unread": counts["offset_unread"],
         "without_start": counts["no_start"],
         "kept_earlier_start": counts["kept_earlier"],
+        "offset_series_suspended": sorted(suspended),
+        "cache_write_failed": counts["cache_write_failed"],
         "earlier_than_ticker": sum(
             e in timed and starts[e] < ticker_start(e) for e in starts
         ),
@@ -1770,6 +1824,33 @@ def order_start(intent, starts=None):
     return min(found) if found else None
 
 
+def with_recorded_starts(starts, intents, now):
+    """``starts`` with each event's start lowered to the earliest one recorded
+    with this bot's orders of the last two days: the journal is written
+    before every order, so this survives a lost or unwritable start cache.
+    It never supplies a start for an event that has none this pass."""
+    since = (now - timedelta(days=2)).isoformat()
+    recorded = {}
+    for intent in intents:
+        event = intent.get("event_ticker")
+        if not isinstance(event, str) or not event:
+            continue
+        if str(intent.get("utc", "")) < since:
+            continue
+        try:
+            when = datetime.fromisoformat(str(intent.get("event_start_utc")))
+        except ValueError:
+            continue
+        if when.tzinfo is not None:
+            recorded[event] = min(recorded.get(event, when), when)
+    out = dict(starts or {})
+    for event, when in recorded.items():
+        current = event_start(event, out)
+        if current is not None and when < current:
+            out[event] = when
+    return out
+
+
 def quote_expiry(now, market):
     """65 minutes, and never later than CANCEL_LEAD_MINUTES before the start."""
     expires = now + timedelta(minutes=P.ORDER_LIFETIME_MINUTES)
@@ -2030,7 +2111,7 @@ def _pass_live(client, now, journal, public, require_shard, deadline):
         )
     unreadable = set()
     reasons = Counter()
-    starts = public.get("event_starts")
+    starts = with_recorded_starts(public.get("event_starts"), intents.values(), now)
     seen_books = {}
     markets = universe(
         public["fetch_markets"],
@@ -2694,7 +2775,10 @@ def main():
         except Exception as error:
             if not live:
                 raise
+            # Keep the live pass's report, then fail the unit visibly.
             report["shadow_error"] = type(error).__name__
+            write_report(state_dir, report)
+            raise
         write_report(state_dir, report)
         print("SPREAD MAKER", json.dumps(report, sort_keys=True, default=str))
 

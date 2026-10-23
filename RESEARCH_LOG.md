@@ -3356,3 +3356,41 @@ for 1 event (0.03%).
 - Standing checks record their rule version, and summaries count only the
   current version's. Measurements of v2 orders still pending when v3 starts
   are not completed (v2 is reported apart and not judged).
+
+## 2026-10-23: Spread maker v3: changes after the second review (plan amendment)
+
+*A second independent review of the v3 code, before any v3 order, found no
+critical bug and two medium gaps. All changes below only ever move a start
+earlier or quote less; none changes a money limit. Exploratory, one more
+variant on the same scan (simulated, in-sample).*
+
+- *Reads are no longer wasted.* Untimed events in series without an offset
+  are read for milestones only in KXBIG3GAME, the one such series a trusted
+  type ever dated in the scan (35 of 35 events); 4,422 of 11,263 events
+  in the others (soccer, UFC, tennis, college football and similar) could
+  never be dated and used up the 60 reads a pass. Read order, which the
+  previous entry described wrongly: events with quotes resting, then four
+  ticker-timed trust checks, then untimed events in offset series, then
+  KXBIG3GAME, each group rotating.
+- *Any milestone moves a dated start earlier.* An untimed event that has a
+  trusted milestone or an offset takes the earliest of those and of any
+  other milestone read for it, of any type (as ticker-timed events already
+  did). A milestone of an untrusted type never dates an event by itself.
+- *Live check of the offsets.* A ticker-timed event in an offset series
+  whose expiry minus start exceeds the series gap plus 30 minutes (the
+  estimate would come after the real start) suspends that series' offset
+  for two days. In the scan this would have happened 3 times (KXMLBF3
+  twice, KXRLGAME once).
+- *The journal backs up the start memory.* A live pass also lowers each
+  event's start to the earliest recorded with this bot's orders of the
+  last two days, so a lost or unwritable `event_starts.json` cannot move
+  a quoted event's start later. A failed cache write is reported.
+- *A shadow-ledger failure* after a live pass still saves that pass's
+  report and then fails the unit visibly.
+- Known limit, unchanged: tickers whose team code starts with a digit (for
+  example 100T) are read as untimed, which costs quotes, not safety.
+
+Replay of the revised rule, 24→4 hours: 7,453 pregame fills (6.5× v2's
+1,152), +8.96¢ a contract (t 11.79), halves 10.06¢ / 5.94¢, 6,363 fills at
+flow share 0.25; added fills +8.73¢ (t 10.75). Estimates checked against
+3,798 ticker starts: 1 would have cancelled after the real start.

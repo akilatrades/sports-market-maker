@@ -1,5 +1,5 @@
 {
- "note": "SIMULATED, in-sample, exploratory: v3 start rule after review",
+ "note": "SIMULATED, in-sample, exploratory: v3 start rule after two reviews",
  "series_gap_hours": {
   "KXABAGAME": 3.0,
   "KXAHLGAME": 3.0,
@@ -33,26 +33,33 @@
   "KXWNBA1QSPREAD": 3.0,
   "KXWT20MATCH": 4.0
  },
+ "milestone_only_series": [
+  "KXBIG3GAME"
+ ],
+ "live_check_trigger_events": {
+  "KXMLBF3": 2,
+  "KXRLGAME": 1
+ },
  "estimates_checked_against_ticker_starts": 3798,
  "estimates_cancelling_after_the_real_start": 1,
  "fills": {
-  "fills": 7535,
-  "dollars": 672.35,
-  "events": 2090,
-  "cents_per_contract": 8.92,
-  "t_event_clustered": 11.83,
-  "earlier_half_cents": 10.07,
-  "later_half_cents": 5.87
+  "fills": 7453,
+  "dollars": 667.83,
+  "events": 2077,
+  "cents_per_contract": 8.96,
+  "t_event_clustered": 11.79,
+  "earlier_half_cents": 10.06,
+  "later_half_cents": 5.94
  },
- "flow_0.25_median_fills": 6451,
+ "flow_0.25_median_fills": 6363,
  "added_over_v2": {
-  "fills": 6383,
-  "dollars": 554.83,
-  "events": 1917,
-  "cents_per_contract": 8.69,
-  "t_event_clustered": 10.74,
-  "earlier_half_cents": 9.94,
-  "later_half_cents": 5.11
+  "fills": 6366,
+  "dollars": 555.49,
+  "events": 1914,
+  "cents_per_contract": 8.73,
+  "t_event_clustered": 10.75,
+  "earlier_half_cents": 9.96,
+  "later_half_cents": 5.18
  },
  "v2_baseline_fills": 1152
 }

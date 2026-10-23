@@ -353,38 +353,68 @@ def final_offsets(e, by_type):
     return out
 
 
-def final_starts(e, by_type, offsets, use_ticker=True):
+def milestone_only_series(e, by_type, offsets, min_events=10):
+    """Series without an offset whose untimed events a FINAL_TYPES milestone
+    dated at least ``min_events`` times: the only ones worth reading."""
+    out = set()
+    untimed = e[e.s1.isna() & ~e.series.isin(set(offsets) | NO_START_SERIES)]
+    for series, g in untimed.groupby("series"):
+        dated = sum(
+            any(k in FINAL_TYPES for k in by_type.get(x, {})) for x in g.event_ticker
+        )
+        if dated >= min_events:
+            out.add(series)
+    return out
+
+
+def final_starts(e, by_type, offsets, readable, use_ticker=True):
     """Start per event under the final rule (optionally ignoring ticker times,
-    to test the estimates against them)."""
+    to test the estimates against them). As live: a ticker time, moved
+    earlier by any milestone; else, in offset or ``readable`` series, the
+    earliest of the trusted milestones and the offset, moved earlier by any
+    milestone."""
     out = {}
     for row in e.itertuples():
         if row.series in NO_START_SERIES:
             continue
+        found = by_type.get(row.event_ticker, {})
         if use_ticker and not np.isnan(row.s1):
-            out[row.event_ticker] = row.s1
+            out[row.event_ticker] = min([row.s1, *found.values()])
             continue
-        found = [
-            t for k, t in by_type.get(row.event_ticker, {}).items() if k in FINAL_TYPES
-        ]
+        if row.series not in offsets and row.series not in readable:
+            continue
+        dated = [t for k, t in found.items() if k in FINAL_TYPES]
         gap = offsets.get(row.series)
         if gap is not None and not np.isnan(row.expiry):
-            found.append(row.expiry - gap * 3600 - OFFSET_MARGIN)
-        if found:
-            out[row.event_ticker] = min(found)
+            dated.append(row.expiry - gap * 3600 - OFFSET_MARGIN)
+        if dated:
+            out[row.event_ticker] = min([*dated, *found.values()])
     return out
+
+
+def live_check_triggers(e, offsets):
+    """Ticker-timed events in offset series whose gap exceeds the table's
+    plus the margin (live, each suspends its series' offset for two days)."""
+    hits = []
+    for row in e[e.s1.notna() & e.series.isin(set(offsets))].itertuples():
+        gap = offsets[row.series] * 3600 + OFFSET_MARGIN
+        if not np.isnan(row.expiry) and row.expiry - row.s1 > gap:
+            hits.append(row.series)
+    return pd.Series(hits, dtype=object).value_counts().to_dict()
 
 
 def final_rule():
     r, e = load_rows(), load_events()
     by_type = milestone_by_type(e)
     offsets = final_offsets(e, by_type)
+    readable = milestone_only_series(e, by_type, offsets)
     # How often would an estimate (ignoring the ticker) cancel quotes only
     # after the real start? Cancel happens 20 minutes before the estimate.
-    estimate = final_starts(e, by_type, offsets, use_ticker=False)
+    estimate = final_starts(e, by_type, offsets, readable, use_ticker=False)
     truth = e[e.s1.notna()].set_index("event_ticker").s1
     both = [(estimate[k], truth[k]) for k in truth.index if k in estimate]
     late = sum(est - 20 * 60 > real for est, real in both)
-    known = final_starts(e, by_type, offsets)
+    known = final_starts(e, by_type, offsets, readable)
     base = fills(
         select(r, starts(e, ("S1",), by_type, trusted_types(e, by_type))[0], 7)
     )
@@ -393,8 +423,10 @@ def final_rule():
     cautious = [fills(q, 0.25, s) for s in range(DRAWS)]
     a1 = added(f1, base)
     result = {
-        "note": "SIMULATED, in-sample, exploratory: v3 start rule after review",
+        "note": "SIMULATED, in-sample, exploratory: v3 start rule after two reviews",
         "series_gap_hours": offsets,
+        "milestone_only_series": sorted(readable),
+        "live_check_trigger_events": live_check_triggers(e, offsets),
         "estimates_checked_against_ticker_starts": len(both),
         "estimates_cancelling_after_the_real_start": int(late),
         "fills": stats(f1),

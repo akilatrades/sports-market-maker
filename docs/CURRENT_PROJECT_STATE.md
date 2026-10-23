@@ -85,7 +85,7 @@ Each bot is judged at a checkpoint written before it went live
   series estimate counts, estimates use the 99th-percentile gap, a start
   never moves later, the Brent, S&P 500 and 10-year note dailies are left
   out and the daily order cap is 1,500. Replayed, 6.5× v2's pregame fills
-  at +8.9¢ a contract (simulated, in-sample).
+  at +9.0¢ a contract (simulated, in-sample).
 
 ## Where to look
 
