@@ -3218,3 +3218,47 @@ stays and the result is recorded here.
 markets (in-sample); fills assume first in line; live, S2 and S3 need the
 same inputs in real time (the bot already reads milestones; S3 would ship as
 a table in the code).
+
+## 2026-10-23: Spread maker, more pregame fills: results (pre-registered)
+
+*Plan: "2026-10-23: Spread maker, more pregame fills: start times per series
+and earlier quoting (plan)". Scan run 39964969563 (`outputs/scan_24h`), all 64
+pilot series, 11,263 sampled events, 10,883 with Kalshi milestones;
+`python -m research.spread_start_window`. Simulated, in-sample, one contract,
+8¢+ spreads; implementation detail not in the plan: S3 needs at least 10
+known starts in a series.*
+
+| Rule (hours before expiry, start sources) | Pregame fills | ¢ per contract (t) | Halves ¢ | Flow 0.25 fills | Added fills, ¢ (t) | Bar |
+|---|---:|---:|---:|---:|---:|---|
+| 7→4, S1 (v2, baseline) | 1,152 | 10.20 (7.26) | 10.85 / 8.99 | 1,020 | — | — |
+| 12→4, S1 | 2,403 | 8.94 (7.68) | 9.82 / 7.49 | 2,109 | 1,251, 7.77 (5.14) | pass |
+| 24→4, S1 | 4,328 | 8.70 (9.08) | 10.33 / 6.47 | 3,718 | 3,176, 8.15 (7.60) | pass |
+| 7→4, S1+S2 | 2,235 | 10.81 (10.85) | 11.44 / 8.70 | 1,987 | 1,083, 11.45 (8.07) | fail (under 2× fills) |
+| 12→4, S1+S2 | 4,985 | 9.42 (11.58) | 10.10 / 7.12 | 4,388 | 3,833, 9.18 (10.08) | pass |
+| 24→4, S1+S2 | 8,899 | 9.26 (13.40) | 10.34 / 6.16 | 7,639 | 7,747, 9.12 (12.44) | pass |
+| 7→4, S1+S2+S3 | 2,321 | 11.04 (11.34) | 11.75 / 8.61 | 2,066 | 1,169, 11.87 (8.74) | pass |
+| 12→4, S1+S2+S3 | 5,278 | 9.34 (11.85) | 10.03 / 6.89 | 4,641 | 4,126, 9.10 (10.39) | pass |
+| **24→4, S1+S2+S3** | **10,223** | **8.69 (13.84)** | 9.53 / 5.86 | 8,846 (8.22¢) | **9,071, 8.50 (12.92)** | **pass** |
+
+**Result.** The plan's choice, the passing rule with the most added fills, is
+24→4 hours with all three start sources: 8.9× the baseline's pregame fills,
+added fills +8.50¢ a contract (t 12.92), positive in both halves (9.40¢ /
+5.21¢), +8.22¢ at flow share 0.25, and no series over 12% of the added
+profit. Quoting earlier with ticker starts alone gives 3.8×.
+
+**Milestone types (S2 check, start within −15 to +2 minutes of the ticker's
+on ≥95% of ≥20 events).** Trusted: baseball_game (99.4% of 1,144),
+hockey_tournament (99.8% of 431), basketball_game (97.0% of 396), cricket_match
+(96.2% of 314), one_off_milestone (95.0% of 381). Not trusted:
+**esports_match (38% of 1,451)**: its start is later than the ticker's by more
+than 2 minutes in 51% of events (median +10 minutes, 90th percentile +60), so
+an esports event with no ticker start must never be quoted from its milestone.
+Live v2 trusts milestone types dynamically (two matches, never late in two
+days), which can briefly trust esports_match; v3 should block it.
+
+**Caveats.** In-sample (the 64 series were chosen on earlier data from these
+markets), first-in-line fills, one contract, and no open-exposure cap: live,
+the $60 cap and 5-contract orders limit how many markets can be quoted at
+once. The later half is weaker (about 5–6¢ against 9–10¢). Live v3 would need
+the window, a fixed list of trusted milestone types and the per-series offset
+table, through a reviewed plan amendment.

@@ -1,0 +1,558 @@
+{
+ "note": "SIMULATED, in-sample, pre-registered (RESEARCH_LOG.md, 2026-10-23); 1 contract, 8c+ spreads",
+ "scan": {
+  "order_rows": 224890,
+  "events": 11263,
+  "events_with_ticker_start": 4196,
+  "events_with_milestones": 10883,
+  "series": 64
+ },
+ "milestone_types": {
+  "basketball_game": {
+   "events": 396,
+   "share_agreeing": 0.97,
+   "trusted": true
+  },
+  "hockey_tournament": {
+   "events": 431,
+   "share_agreeing": 0.998,
+   "trusted": true
+  },
+  "hockey_match": {
+   "events": 1,
+   "share_agreeing": 0.0,
+   "trusted": false
+  },
+  "esports_match": {
+   "events": 1451,
+   "share_agreeing": 0.38,
+   "trusted": false
+  },
+  "cricket_match": {
+   "events": 314,
+   "share_agreeing": 0.962,
+   "trusted": true
+  },
+  "baseball_game": {
+   "events": 1144,
+   "share_agreeing": 0.994,
+   "trusted": true
+  },
+  "one_off_milestone": {
+   "events": 381,
+   "share_agreeing": 0.95,
+   "trusted": true
+  },
+  "baseball_tournament": {
+   "events": 8,
+   "share_agreeing": 1.0,
+   "trusted": false
+  }
+ },
+ "variants": {
+  "7->4 h, S1": {
+   "fills": 1152,
+   "dollars": 117.52,
+   "events": 550,
+   "cents_per_contract": 10.2,
+   "t_event_clustered": 7.26,
+   "earlier_half_cents": 10.85,
+   "later_half_cents": 8.99,
+   "flow_0.25_median": {
+    "fills": 1020,
+    "cents_per_contract": 9.75
+   }
+  },
+  "12->4 h, S1": {
+   "fills": 2403,
+   "dollars": 214.75,
+   "events": 841,
+   "cents_per_contract": 8.94,
+   "t_event_clustered": 7.68,
+   "earlier_half_cents": 9.82,
+   "later_half_cents": 7.49,
+   "flow_0.25_median": {
+    "fills": 2109,
+    "cents_per_contract": 8.44
+   },
+   "added_over_baseline": {
+    "fills": 1251,
+    "dollars": 97.23,
+    "events": 592,
+    "cents_per_contract": 7.77,
+    "t_event_clustered": 5.14,
+    "earlier_half_cents": 8.77,
+    "later_half_cents": 6.31,
+    "top_series_share_of_added_profit": 0.21275339500098406
+   },
+   "checks": {
+    "1 at least 2x the baseline's fills": true,
+    "2a added fills positive with t >= 2 (flow 1)": true,
+    "2b added fills positive at flow 0.25": true,
+    "3 added fills positive in both halves": true,
+    "4 no series over a quarter of added profit": true
+   },
+   "meets_bar": true
+  },
+  "24->4 h, S1": {
+   "fills": 4328,
+   "dollars": 376.4,
+   "events": 1186,
+   "cents_per_contract": 8.7,
+   "t_event_clustered": 9.08,
+   "earlier_half_cents": 10.33,
+   "later_half_cents": 6.47,
+   "flow_0.25_median": {
+    "fills": 3718,
+    "cents_per_contract": 8.1
+   },
+   "added_over_baseline": {
+    "fills": 3176,
+    "dollars": 258.88,
+    "events": 1013,
+    "cents_per_contract": 8.15,
+    "t_event_clustered": 7.6,
+    "earlier_half_cents": 10.11,
+    "later_half_cents": 5.77,
+    "top_series_share_of_added_profit": 0.20059487021013597
+   },
+   "checks": {
+    "1 at least 2x the baseline's fills": true,
+    "2a added fills positive with t >= 2 (flow 1)": true,
+    "2b added fills positive at flow 0.25": true,
+    "3 added fills positive in both halves": true,
+    "4 no series over a quarter of added profit": true
+   },
+   "meets_bar": true
+  },
+  "7->4 h, S1+S2": {
+   "fills": 2235,
+   "dollars": 241.5,
+   "events": 1074,
+   "cents_per_contract": 10.81,
+   "t_event_clustered": 10.85,
+   "earlier_half_cents": 11.44,
+   "later_half_cents": 8.7,
+   "flow_0.25_median": {
+    "fills": 1987,
+    "cents_per_contract": 10.41
+   },
+   "added_over_baseline": {
+    "fills": 1083,
+    "dollars": 123.98,
+    "events": 524,
+    "cents_per_contract": 11.45,
+    "t_event_clustered": 8.07,
+    "earlier_half_cents": 11.9,
+    "later_half_cents": 7.7,
+    "top_series_share_of_added_profit": 0.12169103121295931
+   },
+   "checks": {
+    "1 at least 2x the baseline's fills": false,
+    "2a added fills positive with t >= 2 (flow 1)": true,
+    "2b added fills positive at flow 0.25": true,
+    "3 added fills positive in both halves": true,
+    "4 no series over a quarter of added profit": true
+   },
+   "meets_bar": false
+  },
+  "12->4 h, S1+S2": {
+   "fills": 4985,
+   "dollars": 469.55,
+   "events": 1594,
+   "cents_per_contract": 9.42,
+   "t_event_clustered": 11.58,
+   "earlier_half_cents": 10.1,
+   "later_half_cents": 7.12,
+   "flow_0.25_median": {
+    "fills": 4388,
+    "cents_per_contract": 9.12
+   },
+   "added_over_baseline": {
+    "fills": 3833,
+    "dollars": 352.03,
+    "events": 1345,
+    "cents_per_contract": 9.18,
+    "t_event_clustered": 10.08,
+    "earlier_half_cents": 9.92,
+    "later_half_cents": 6.11,
+    "top_series_share_of_added_profit": 0.11632002683663199
+   },
+   "checks": {
+    "1 at least 2x the baseline's fills": true,
+    "2a added fills positive with t >= 2 (flow 1)": true,
+    "2b added fills positive at flow 0.25": true,
+    "3 added fills positive in both halves": true,
+    "4 no series over a quarter of added profit": true
+   },
+   "meets_bar": true
+  },
+  "24->4 h, S1+S2": {
+   "fills": 8899,
+   "dollars": 823.93,
+   "events": 2132,
+   "cents_per_contract": 9.26,
+   "t_event_clustered": 13.4,
+   "earlier_half_cents": 10.34,
+   "later_half_cents": 6.16,
+   "flow_0.25_median": {
+    "fills": 7639,
+    "cents_per_contract": 8.82
+   },
+   "added_over_baseline": {
+    "fills": 7747,
+    "dollars": 706.41,
+    "events": 1959,
+    "cents_per_contract": 9.12,
+    "t_event_clustered": 12.44,
+    "earlier_half_cents": 10.27,
+    "later_half_cents": 5.56,
+    "top_series_share_of_added_profit": 0.09116518735578492
+   },
+   "checks": {
+    "1 at least 2x the baseline's fills": true,
+    "2a added fills positive with t >= 2 (flow 1)": true,
+    "2b added fills positive at flow 0.25": true,
+    "3 added fills positive in both halves": true,
+    "4 no series over a quarter of added profit": true
+   },
+   "meets_bar": true
+  },
+  "7->4 h, S1+S2+S3": {
+   "fills": 2321,
+   "dollars": 256.3,
+   "events": 1130,
+   "cents_per_contract": 11.04,
+   "t_event_clustered": 11.34,
+   "earlier_half_cents": 11.75,
+   "later_half_cents": 8.61,
+   "flow_0.25_median": {
+    "fills": 2066,
+    "cents_per_contract": 10.81
+   },
+   "added_over_baseline": {
+    "fills": 1169,
+    "dollars": 138.78,
+    "events": 580,
+    "cents_per_contract": 11.87,
+    "t_event_clustered": 8.74,
+    "earlier_half_cents": 12.4,
+    "later_half_cents": 7.37,
+    "top_series_share_of_added_profit": 0.1074386065105654
+   },
+   "checks": {
+    "1 at least 2x the baseline's fills": true,
+    "2a added fills positive with t >= 2 (flow 1)": true,
+    "2b added fills positive at flow 0.25": true,
+    "3 added fills positive in both halves": true,
+    "4 no series over a quarter of added profit": true
+   },
+   "meets_bar": true
+  },
+  "12->4 h, S1+S2+S3": {
+   "fills": 5278,
+   "dollars": 493.02,
+   "events": 1703,
+   "cents_per_contract": 9.34,
+   "t_event_clustered": 11.85,
+   "earlier_half_cents": 10.03,
+   "later_half_cents": 6.89,
+   "flow_0.25_median": {
+    "fills": 4641,
+    "cents_per_contract": 9.12
+   },
+   "added_over_baseline": {
+    "fills": 4126,
+    "dollars": 375.5,
+    "events": 1454,
+    "cents_per_contract": 9.1,
+    "t_event_clustered": 10.39,
+    "earlier_half_cents": 9.85,
+    "later_half_cents": 5.79,
+    "top_series_share_of_added_profit": 0.10940211389809117
+   },
+   "checks": {
+    "1 at least 2x the baseline's fills": true,
+    "2a added fills positive with t >= 2 (flow 1)": true,
+    "2b added fills positive at flow 0.25": true,
+    "3 added fills positive in both halves": true,
+    "4 no series over a quarter of added profit": true
+   },
+   "meets_bar": true
+  },
+  "24->4 h, S1+S2+S3": {
+   "fills": 10223,
+   "dollars": 888.74,
+   "events": 2335,
+   "cents_per_contract": 8.69,
+   "t_event_clustered": 13.84,
+   "earlier_half_cents": 9.53,
+   "later_half_cents": 5.86,
+   "flow_0.25_median": {
+    "fills": 8846,
+    "cents_per_contract": 8.22
+   },
+   "added_over_baseline": {
+    "fills": 9071,
+    "dollars": 771.22,
+    "events": 2162,
+    "cents_per_contract": 8.5,
+    "t_event_clustered": 12.92,
+    "earlier_half_cents": 9.4,
+    "later_half_cents": 5.21,
+    "top_series_share_of_added_profit": 0.11910998158761446
+   },
+   "checks": {
+    "1 at least 2x the baseline's fills": true,
+    "2a added fills positive with t >= 2 (flow 1)": true,
+    "2b added fills positive at flow 0.25": true,
+    "3 added fills positive in both halves": true,
+    "4 no series over a quarter of added profit": true
+   },
+   "meets_bar": true
+  }
+ },
+ "series_offsets_hours": {
+  "KXABAGAME": {
+   "events": 137,
+   "median": 3.0,
+   "iqr": 0.0,
+   "usable": true
+  },
+  "KXAHLGAME": {
+   "events": 344,
+   "median": 3.0,
+   "iqr": 0.0,
+   "usable": true
+  },
+  "KXBALGAME": {
+   "events": 37,
+   "median": 3.0,
+   "iqr": 0.0,
+   "usable": true
+  },
+  "KXBIG3GAME": {
+   "events": 35,
+   "median": 3.0,
+   "iqr": 1.0,
+   "usable": false
+  },
+  "KXBOXING": {
+   "events": 17,
+   "median": 4.5,
+   "iqr": 4.5,
+   "usable": false
+  },
+  "KXBRENTD": {
+   "events": 116,
+   "median": 7.0,
+   "iqr": 0.0,
+   "usable": true
+  },
+  "KXCODGAME": {
+   "events": 143,
+   "median": 4.0,
+   "iqr": 0.0,
+   "usable": true
+  },
+  "KXCODTOTALMAPS": {
+   "events": 139,
+   "median": 4.0,
+   "iqr": 0.0,
+   "usable": true
+  },
+  "KXCS2GAME": {
+   "events": 313,
+   "median": 4.0,
+   "iqr": 0.0,
+   "usable": true
+  },
+  "KXCSGOGAME": {
+   "events": 53,
+   "median": 3.49,
+   "iqr": 0.99,
+   "usable": false
+  },
+  "KXDOTA2GAME": {
+   "events": 254,
+   "median": 4.0,
+   "iqr": 0.0,
+   "usable": true
+  },
+  "KXINXDUD": {
+   "events": 98,
+   "median": 9.5,
+   "iqr": 0.0,
+   "usable": true
+  },
+  "KXIPLFOUR": {
+   "events": 54,
+   "median": 3.0,
+   "iqr": 0.0,
+   "usable": true
+  },
+  "KXIPLSIX": {
+   "events": 54,
+   "median": 3.0,
+   "iqr": 0.0,
+   "usable": true
+  },
+  "KXIPLTEAMTOTAL": {
+   "events": 50,
+   "median": 3.0,
+   "iqr": 0.0,
+   "usable": true
+  },
+  "KXMLBF3": {
+   "events": 348,
+   "median": 3.0,
+   "iqr": 0.0,
+   "usable": true
+  },
+  "KXMLBF5SPREAD": {
+   "events": 377,
+   "median": 3.0,
+   "iqr": 0.0,
+   "usable": true
+  },
+  "KXNASCARRACE": {
+   "events": 4,
+   "median": 6.0,
+   "iqr": 0.25,
+   "usable": false
+  },
+  "KXNBAPTSLEADER": {
+   "events": 90,
+   "median": 3.0,
+   "iqr": 0.0,
+   "usable": true
+  },
+  "KXNCAABBGAME": {
+   "events": 398,
+   "median": 4.0,
+   "iqr": 1.0,
+   "usable": false
+  },
+  "KXNCAABMENTION": {
+   "events": 101,
+   "median": 5.0,
+   "iqr": 0.0,
+   "usable": true
+  },
+  "KXNCAAHOCKEYGAME": {
+   "events": 299,
+   "median": 3.0,
+   "iqr": 0.0,
+   "usable": true
+  },
+  "KXNCAAMB1HSPREAD": {
+   "events": 298,
+   "median": 3.0,
+   "iqr": 0.0,
+   "usable": true
+  },
+  "KXNCAAMB1HTOTAL": {
+   "events": 307,
+   "median": 3.0,
+   "iqr": 0.0,
+   "usable": true
+  },
+  "KXNCAAMENTION": {
+   "events": 27,
+   "median": 5.0,
+   "iqr": 0.0,
+   "usable": true
+  },
+  "KXNCAAWBGAME": {
+   "events": 374,
+   "median": 3.0,
+   "iqr": 0.0,
+   "usable": true
+  },
+  "KXNCAAWBSPREAD": {
+   "events": 60,
+   "median": 3.0,
+   "iqr": 0.12,
+   "usable": true
+  },
+  "KXNCAAWBTOTAL": {
+   "events": 60,
+   "median": 3.0,
+   "iqr": 0.12,
+   "usable": true
+  },
+  "KXNFLMENTION": {
+   "events": 32,
+   "median": 5.0,
+   "iqr": 0.0,
+   "usable": true
+  },
+  "KXNPBSPREAD": {
+   "events": 266,
+   "median": 4.0,
+   "iqr": 0.0,
+   "usable": true
+  },
+  "KXNZNBLGAME": {
+   "events": 100,
+   "median": 3.0,
+   "iqr": 0.0,
+   "usable": true
+  },
+  "KXOWGAME": {
+   "events": 274,
+   "median": 4.0,
+   "iqr": 0.0,
+   "usable": true
+  },
+  "KXR6GAME": {
+   "events": 271,
+   "median": 4.0,
+   "iqr": 0.0,
+   "usable": true
+  },
+  "KXRLGAME": {
+   "events": 94,
+   "median": 4.0,
+   "iqr": 0.0,
+   "usable": true
+  },
+  "KXVTBGAME": {
+   "events": 140,
+   "median": 3.0,
+   "iqr": 0.0,
+   "usable": true
+  },
+  "KXWBCF5SPREAD": {
+   "events": 42,
+   "median": 3.0,
+   "iqr": 0.0,
+   "usable": true
+  },
+  "KXWBCGAME": {
+   "events": 74,
+   "median": 3.0,
+   "iqr": 0.0,
+   "usable": true
+  },
+  "KXWBCSPREAD": {
+   "events": 48,
+   "median": 3.0,
+   "iqr": 0.0,
+   "usable": true
+  },
+  "KXWNBA1QSPREAD": {
+   "events": 194,
+   "median": 3.0,
+   "iqr": 0.0,
+   "usable": true
+  },
+  "KXWT20MATCH": {
+   "events": 280,
+   "median": 4.0,
+   "iqr": 0.0,
+   "usable": true
+  }
+ },
+ "proposed_v3": "24->4 h, S1+S2+S3"
+}
