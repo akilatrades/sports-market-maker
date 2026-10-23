@@ -194,8 +194,8 @@ def stats(f):
 
 
 def added(f, base):
-    key = ["ticker", "end_ts", "side"]
-    m = f.merge(base[key].assign(_b=1), on=key, how="left")
+    same_quote = ["ticker", "end_ts", "side"]
+    m = f.merge(base[same_quote].assign(_b=1), on=same_quote, how="left")
     return m[m._b.isna()].drop(columns="_b")
 
 
