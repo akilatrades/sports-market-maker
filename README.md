@@ -39,7 +39,8 @@ strict limits.
   series, quoting both sides one cent inside spreads of 5¢ or more made
   **+2.44¢ per contract** (76,694 simulated fills, in-sample), positive in
   both halves of the sample; 67 of 369 series survived a 10%
-  false-discovery-rate correction. The spread maker trades 64 of them.
+  false-discovery-rate correction. The spread maker trades 64 series that
+  passed the same check at 8¢+ spreads (66, less two the other bots trade).
 - **Live testing has started.** NFL and NBA bots have traded real money
   under fixed limits since 19–20 October 2026, and the spread maker since
   22 October. A signed NBA account audit on 21 October 2026 recorded
@@ -53,8 +54,8 @@ strict limits.
 - **What is unproven.** Whether live fills earn what the backtests say. The
   headline measurement is the **live fill share**: of the contracts that
   traded at our price while an order rested, how many we got (backtests
-  assume all of them). Each bot is judged at a checkpoint written down
-  before it went live.
+  assume all of them). The NBA and spread bots are each judged at a
+  checkpoint written down before they went live.
 
 ## A 10-minute tour
 
@@ -113,7 +114,8 @@ the last two from the [NBA audit](docs/NBA_AND_MARKET_AUDIT_2026-10-18.md)
 
 From the [strategy sweep](RESEARCH_LOG.md#2026-10-22-strategy-sweep-across-all-scanned-markets-with-profit-factor-results)
 and the [sizing amendment](RESEARCH_LOG.md#2026-10-22-spread-maker-pilot-5-contracts-per-order-plan-amendment).
-The first row assumes our order was first in line at its price.
+Rows 1–3 assume our order was first in line at its price; row 4 gives us
+25% of the contracts that traded at our price.
 
 ### Live: real exchange orders
 
@@ -129,8 +131,8 @@ contract counts are from the earlier 01:34 UTC reconciliation. Exact
 account amounts and order IDs are not published. Live NBA evidence:
 [audit run](https://github.com/akilatrades/sports-market-maker/actions/runs/39542054076),
 [review](docs/NBA_OVERNIGHT_AUDIT_2026-10-21.md). The spread maker went
-live on 22 October 2026 and has no published results yet; its realized P&L,
-counted from its own fills, appears on the dashboard.
+live on 22 October 2026 and is not in this table yet; the dashboard shows
+its realized P&L, counted from its own fills.
 
 The [dashboard](https://akilatrades.github.io/sports-market-maker/dashboard/)
 shows the latest verified settled P&L for each market and labels anything
@@ -196,7 +198,8 @@ The [research log](RESEARCH_LOG.md) is the core of the project.
   criteria, before they run. Results are appended without editing the plan.
   Exploratory work is labelled as such.
 - **Honest statistics.** Standard errors are clustered by game, because
-  props in the same game are correlated (variance inflation about 1.6×).
+  props in the same game are correlated (variance inflation about 1.6× on
+  the model-veto fills, 2.2× for the v5 rule's orders).
 - **Multiple comparisons.** A scan of 2,349 Kalshi series produced 80
   nominal passes out of about 4,700 comparisons. None of the seven
   candidates checked in detail survived a family-wise correction. The

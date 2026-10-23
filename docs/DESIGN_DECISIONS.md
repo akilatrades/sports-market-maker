@@ -25,9 +25,11 @@ observation than each fill is.*
   independent, and about 1,900 once same-game correlation is counted
   (2025–26 replay). That is why the NBA checkpoint is 1,900 settled fills,
   not a few hundred.
-- **The alternative.** Per-fill t-statistics. With the 2025–26 correlation
-  (a design effect of 2.18, from the v5 replay) they overstate t by about
-  1.5 times, enough to call a lucky month significant.
+- **The alternative.** Per-fill t-statistics. On the 20,641 model-veto
+  fills of 2025–26 the headline t is 9.7 if fills are treated as
+  independent and 6.1 clustered by game; for the v5 rule's orders the
+  variance is about 2.2 times the independent figure (design effect 2.18).
+  Enough to call a lucky month significant.
 
 ## 2. Treat backtest fills as optimistic, and measure the real share
 
@@ -38,18 +40,23 @@ in line; usually I am not.*
   already resting at the same price get filled first, and the trades that
   reach a resting order are disproportionately the ones that move against it
   (adverse selection).
-- **How.** Replays report the first-in-line case and a cautious case where
-  we get 25% of the qualifying volume (`flow_share` in
-  `research/fill_sizing_replay.py`). Live, the spread maker now measures it
-  directly: for every finished order it counts the contracts that traded at
-  or through its price while it rested, and compares them with what it
-  actually filled (`live/prod_spread_auto.py: score_live_windows,
-  fill_share`). NBA has the same measure as "volume-weighted capture"
-  ([forward protocol](FORWARD_VALIDATION.md)).
-- **What it changes.** If the live share is near 0.25, most of the
-  simulated edge per day disappears even if the edge per filled contract
-  survives. This share is the most decision-relevant live number in the
-  project.
+- **How.** Replays report the first-in-line case and a cautious case in
+  which each contract that trades at our price reaches us with probability
+  0.25 (`flow_share` in `research/fill_sizing_replay.py`). Live, the spread
+  maker now measures it directly: for every finished order it counts the
+  contracts that traded at or through its price while it rested, and
+  compares them with what it actually filled (`score_live_windows` and
+  `fill_share` in `live/prod_spread_auto.py`). NBA has a similar measure,
+  "volume-weighted capture" ([forward protocol](FORWARD_VALIDATION.md)).
+- **What it changes.** A live share of 1.0 would mean the first-in-line
+  backtest was right. The cautious replay does not mean a share of 0.25:
+  when many contracts trade through, a 25% share still fills most of a
+  5-contract order. So the bot reports what the cautious replay would have
+  filled on the same orders next to the live share. Below that benchmark,
+  even the cautious replay overstates fills; fewer fills mean
+  proportionally less profit per day, and the fills we do get may be the
+  worse ones (adverse selection). This is the most decision-relevant live
+  number in the project.
 - **The alternative.** Assuming every print is a fill: the classic way a
   market-making backtest looks great and trades badly.
 

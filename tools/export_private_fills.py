@@ -657,14 +657,15 @@ def live_fill_share(path, orders):
                 _number(e.get("through")) or 0.0,
             )
     filled = {o["order_ref"]: _number(o.get("filled_contracts")) or 0.0 for o in orders}
-    capacity = got = 0.0
+    capacity = got = cautious = 0.0
     traded = filled_when_traded = 0
     for order_ref, (size, through) in windows.items():
         room = min(through, size)
         mine = min(filled.get(order_ref, 0.0), size)
         capacity += room
         got += min(mine, room)
-        if through >= 1:
+        cautious += min(shadow_expected(through, 0.25, size), room)
+        if through > 0:
             traded += 1
             filled_when_traded += mine > 0
     return {
@@ -674,7 +675,11 @@ def live_fill_share(path, orders):
         "first_in_line_contracts": round(capacity, 2),
         "filled_contracts": round(got, 2),
         "fill_share": round(got / capacity, 3) if capacity else None,
-        "note": "1.0 = the backtest's first-in-line assumption; 0.25 = the cautious case",
+        "cautious_replay_share": round(cautious / capacity, 3) if capacity else None,
+        "note": (
+            "1.0 = the backtest's first-in-line assumption; cautious_replay_share = "
+            "what the flow-share-0.25 replay would have filled on these same windows"
+        ),
     }
 
 
@@ -932,8 +937,10 @@ markets and holds fills to settlement.
 - `data/summary.json` → `markets.spread.live_fill_share`: of the contracts
   that public trade prints show traded at or through each finished live
   order's price (up to its size), the share the bot actually got. The
-  backtest assumed 1.0 (first in line); 0.25 is the cautious case. This is
-  the measurement that says how much of the simulated edge is real.
+  backtest assumed 1.0 (first in line); `cautious_replay_share` is what the
+  cautious replay (each such contract reaching us with probability 0.25)
+  would have filled on the same windows. This is the measurement that says
+  how much of the simulated edge is real.
 - `data/summary.json` → `spread_shadow_simulated`: the shadow ledger's
   SIMULATED results (first in line, and at flow share 0.25). Compare it
   with the live numbers; never add the two together.

@@ -19,7 +19,9 @@ profit forecast.
 - **Markets:** the 64 series in `live/spread_policy.py` (esports, smaller
   basketball and hockey leagues, cricket, soccer side markets, UFC, motor
   racing and others). Never an NBA or NFL player prop and never a market
-  another bot holds. Series that pay a maker fee are skipped.
+  another bot holds. Series on Kalshi's maker-fee list are skipped;
+  `KXNCAAFSPREAD` also turned out to pay a small maker fee, and the owner
+  chose to keep it (fees count in realized P&L).
 - **When:** markets whose expected expiration is 4 to 7 hours away.
 - **Quote:** YES bid at best YES bid + 1¢, NO bid at best NO bid + 1¢, up to
   5 contracts each, post-only (never takes liquidity), expiring on the exchange

@@ -2746,27 +2746,59 @@ contract and in dollars at 5 contracts; the shadow ledger scores a
 the expected fill at flow share 0.25. The live review after 300 filled
 contracts or 4 weeks now comes sooner; its bars are unchanged.
 
-## 2026-10-22: Spread maker live fill share (measurement definition)
+## 2026-10-22: Spread maker live fill share (plan amendment)
 
-*Written before any live order window was scored. It defines how the
-pilot plan's "live fills against the shadow's" is computed; no strategy,
-limit or pass/fail bar changes.*
+*An amendment, written after the pilot went live (first orders 22:33 UTC)
+and before any live order window was scored. The plan compared the live
+fill rate with the shadow fill rate; this replaces that with a
+contract-weighted comparison on the live orders' own resting windows,
+because the shadow quotes and the live orders are not the same orders. The
+bar keeps its meaning (half of what first-in-line fills would have been).
+Revised after an independent review the same night; no strategy or limit
+changes.*
 
-- **Window.** Each accepted live order rests from its journal intent until
-  65 minutes later or its first cancel, whichever is sooner. It is scored
-  once, 5 minutes after the window ends.
+- **Window.** Each accepted live order rests from the exchange's
+  acceptance until 65 minutes after it was sent or until its cancel was
+  confirmed, whichever is sooner (the reply times are used when they fall
+  within 5 minutes of the pass that sent them; otherwise the pass's start
+  time). It is scored once, at least 5 minutes after the window ends, and
+  only right after a live pass has copied the exchange's fills into the
+  journal, so every scored window's fills are already there.
 - **Through.** Contracts in Kalshi's public trade prints, on the order's
-  ticker during its window, at or through its price on its side. First in
-  line, the order would have filled min(through, order size).
+  ticker during its window, at or through its price on its side (the
+  shadow ledger's rule). First in line, the order would have filled
+  min(through, order size).
 - **Live fill share** = Σ min(contracts we filled, min(through, size)) /
-  Σ min(through, size), over all scored orders. 1.0 is the backtest's
-  first-in-line assumption; 0.25 is the cautious case used in the
-  replays. Our own fills appear in the prints, so they count in both.
-  Also reported: orders scored, orders traded through, and how many of
-  those got any fill.
-- **How the bar is read.** "Live fills less than half the shadow's" at
-  the checkpoint means a live fill share below 0.5.
+  Σ min(through, size), over all scored orders, one row per order. 1.0 is
+  the backtest's first-in-line assumption. Our own fills appear in the
+  prints, so they count in both.
+- **Cautious benchmark.** The replays' cautious case gives each traded
+  contract a 0.25 chance of reaching us. That is not a fill share of 0.25:
+  with 86 contracts through (the sweep's median) a 5-contract order almost
+  surely fills. So the same formula is also computed with the replay's
+  expected fill, E[min(Binomial(through, 0.25), size)], in place of ours
+  (`cautious_replay_share`). A live share below it means even the cautious
+  replay overstated fills.
+- **How the bar is read.** "Live fills less than half the shadow's" at the
+  checkpoint means a live fill share below 0.5.
+- **Also reported:** orders scored, orders with any contract traded
+  through, and how many of those got any fill.
+- **Limits.** Scoring reads public prints only, one attempt per read, at
+  most 10 markets a pass in shuffled order, and stops 200 seconds after the
+  pass started; unscored windows wait for a later pass.
 - **Where.** `live/prod_spread_auto.py` (`live_windows`,
   `score_live_windows`, `fill_share`), the server's `--status`, the
   private export's `markets.spread.live_fill_share`, and
   `python -m research.live_checkpoint`, which applies the plan's bars.
+
+## 2026-10-22: Spread maker, a series that pays a maker fee (owner decision)
+
+*Operational record. No change to the code or the bars.*
+
+The plan says never to quote a series that pays a maker fee. The bot's
+own fills on 22 October showed that Kalshi charges one on `KXNCAAFSPREAD`
+(college football spreads): 0.0175 × contracts × price × (1 − price), at
+most about 0.44¢ a contract. The bot's maker-fee list
+(`live/spread_policy.py`, checked 22 October) did not include it. The owner
+chose to keep trading the series. The fees are subtracted in the bot's
+realized P&L, which its loss stops and the checkpoint use.

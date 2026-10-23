@@ -35,6 +35,7 @@ import fcntl
 import json
 import math
 import os
+import random
 import re
 import signal
 import time
@@ -487,11 +488,37 @@ def run_shadow(state_dir, now, public, markets=None):
 # order whose resting window has ended, count the contracts that public
 # trade prints show traded at or through its price during that window (the
 # same rule as the shadow ledger). Our share of those, up to the order's
-# size, is the fill share: 1.0 is the backtest's assumption, 0.25 the
-# cautious case. Public data only; the result is read with the journal's
-# fills and never added to profit.
+# size, is the fill share: 1.0 is the backtest's first-in-line assumption.
+# The cautious replay (each such contract reaches us with probability 0.25)
+# implies a higher share than 0.25 on large windows, so it is computed on
+# the same windows and reported next to it. Public data only; the result is
+# read with the journal's fills and never added to profit.
 WINDOW_SETTLE_MINUTES = 5  # let trade prints for a window arrive
-MAX_WINDOW_TICKERS_PER_PASS = 40
+MAX_WINDOW_TICKERS_PER_PASS = 10
+# Scoring runs after the live pass and stops 200 s after the process
+# started, well inside systemd's 240-second limit.
+SCORING_DEADLINE_SECONDS = 200
+CAUTIOUS_FLOW = 0.25
+_SAME_PASS = timedelta(minutes=5)
+
+
+def _first_times(events, kind, key):
+    """Earliest ``utc`` of each ``kind`` event, by ``key`` (one journal scan)."""
+    out = {}
+    for e in events:
+        if e.get("event") == kind and e.get(key) is not None and e.get("utc"):
+            when = datetime.fromisoformat(e["utc"])
+            k = str(e[key])
+            out[k] = min(out.get(k, when), when)
+    return out
+
+
+def _refine(first, later):
+    """The exchange reply's time when it plausibly belongs to the same
+    pass as ``first`` (the pass's start time), else ``first``."""
+    if later is not None and first <= later <= first + _SAME_PASS:
+        return later
+    return first
 
 
 def live_windows(events, scored, now):
@@ -510,15 +537,22 @@ def live_windows(events, scored, now):
             when = datetime.fromisoformat(e["utc"])
             oid = str(e["order_id"])
             canceled[oid] = min(canceled.get(oid, when), when)
+    accepted_at = _first_times(events, "accepted", "client_order_id")
+    replied_at = _first_times(events, "cancel_accepted", "order_id")
+    for oid, when in _first_times(events, "cancel_moot", "order_id").items():
+        replied_at[oid] = min(replied_at.get(oid, when), when)
     out = []
     for cid, oid in accepted.items():
         intent = intents.get(cid)
         if intent is None or cid in scored:
             continue
-        start = datetime.fromisoformat(intent["utc"])
-        end = start + timedelta(minutes=P.ORDER_LIFETIME_MINUTES)
+        sent = datetime.fromisoformat(intent["utc"])
+        # Intent and cancel-intent times are the pass's start; the exchange
+        # replies come later in the same pass and are closer to the truth.
+        start = _refine(sent, accepted_at.get(cid))
+        end = sent + timedelta(minutes=P.ORDER_LIFETIME_MINUTES)
         if oid in canceled:
-            end = min(end, canceled[oid])
+            end = min(end, _refine(canceled[oid], replied_at.get(oid)))
         if end > now - timedelta(minutes=WINDOW_SETTLE_MINUTES):
             continue
         out.append(
@@ -535,9 +569,15 @@ def live_windows(events, scored, now):
     return out
 
 
-def score_live_windows(state_dir, now, fetch_trades):
+def score_live_windows(state_dir, now, fetch_trades, deadline=None, order=None):
     """Write a ``live_window`` record to the shadow file for each finished
-    live order: contracts traded at or through its price while it rested."""
+    live order: contracts traded at or through its price while it rested.
+
+    Call it only after a live pass has copied the exchange's fills into the
+    journal, so every scored window's fills are already there. At most
+    ``MAX_WINDOW_TICKERS_PER_PASS`` markets a pass, in shuffled order (a
+    market whose prints cannot be read never starves the rest), and nothing
+    new once ``deadline`` passes or a stop is requested."""
     journal, shadow = state_dir / "journal.jsonl", state_dir / "shadow.jsonl"
     if not journal.exists():
         return 0
@@ -550,7 +590,11 @@ def score_live_windows(state_dir, now, fetch_trades):
     for w in live_windows(load_events(journal), scored, now):
         by_ticker.setdefault(w["ticker"], []).append(w)
     written = 0
-    for ticker in sorted(by_ticker)[:MAX_WINDOW_TICKERS_PER_PASS]:
+    tickers = sorted(by_ticker)
+    (order or random.shuffle)(tickers)
+    for ticker in tickers[:MAX_WINDOW_TICKERS_PER_PASS]:
+        if out_of_time(deadline):
+            break
         windows = by_ticker[ticker]
         start = min(w["start"] for w in windows)
         end = max(w["end"] for w in windows)
@@ -602,27 +646,34 @@ def fill_share(journal_events, shadow_events):
             ) + float(raw)
         except (TypeError, ValueError):
             continue
-    capacity = got = 0.0
-    orders = traded_through = filled_when_traded = 0
+    windows = {}
     for e in shadow_events:
-        if e.get("event") != "live_window":
-            continue
+        if e.get("event") == "live_window" and e.get("client_order_id"):
+            windows[e["client_order_id"]] = e  # one per order
+    capacity = got = cautious = 0.0
+    traded_through = filled_when_traded = 0
+    for cid, e in windows.items():
         size, through = float(e.get("size") or 0), float(e.get("through") or 0)
-        mine = min(filled.get(oid_of.get(e.get("client_order_id")), 0.0), size)
-        orders += 1
-        capacity += min(through, size)
-        got += min(mine, min(through, size)) if through else 0.0
-        if through >= 1:
+        mine = min(filled.get(oid_of.get(cid), 0.0), size)
+        room = min(through, size)
+        capacity += room
+        got += min(mine, room)
+        cautious += min(expected_fill(through, CAUTIOUS_FLOW, size), room)
+        if through > 0:
             traded_through += 1
             filled_when_traded += mine > 0
     return {
-        "orders_scored": orders,
+        "orders_scored": len(windows),
         "orders_traded_through": traded_through,
         "orders_filled_when_traded_through": filled_when_traded,
         "first_in_line_contracts": round(capacity, 2),
         "filled_contracts": round(got, 2),
         "fill_share": round(got / capacity, 3) if capacity else None,
-        "note": "1.0 = the backtest's first-in-line assumption; 0.25 = the cautious case",
+        "cautious_replay_share": round(cautious / capacity, 3) if capacity else None,
+        "note": (
+            "1.0 = the backtest's first-in-line assumption; cautious_replay_share = "
+            "what the flow-share-0.25 replay would have filled on these same windows"
+        ),
     }
 
 
@@ -1341,6 +1392,13 @@ def _quick(path):
     return kalshi_api.get_json(path, {}, retries=1)
 
 
+def window_trades(ticker, min_ts, max_ts):
+    """Trade prints for scoring live windows: single-attempt reads, so a
+    slow or throttled endpoint costs one try and the window waits a pass."""
+    rows = kalshi_api.trades(ticker, min_ts, max_ts, historical=False, retries=1)
+    return rows or kalshi_api.trades(ticker, min_ts, max_ts, historical=True, retries=1)
+
+
 def quote_market(ticker):
     payload = _quick(f"/markets/{ticker}") or {}
     return payload.get("market")
@@ -1358,6 +1416,7 @@ def public_api():
         "fetch_market": kalshi_api.fetch_market,  # shadow results (any age)
         "fetch_orderbook": kalshi_api.fetch_orderbook,
         "fetch_trades": kalshi_api.fetch_trades,
+        "window_trades": window_trades,  # live fill share, one attempt per read
         "quote_market": quote_market,  # live quoting, under the lock
         "quote_orderbook": quote_orderbook,
     }
@@ -1437,10 +1496,13 @@ def status(state_dir):
         print(f"LIVE realized P&L unavailable: {error}")
     shadow_events = load_events(state_dir / "shadow.jsonl")
     share = fill_share(events, shadow_events)
+    dash = "—"
     print(
-        f"LIVE fill share: {share['fill_share'] if share['fill_share'] is not None else '—'} "
+        f"LIVE fill share: {dash if share['fill_share'] is None else share['fill_share']} "
         f"of {share['first_in_line_contracts']:g} contracts traded at or through our "
-        f"price ({share['orders_scored']} finished orders scored; backtest assumed 1.0)"
+        f"price ({share['orders_scored']} finished orders scored; first in line = 1.0, "
+        f"cautious replay = "
+        f"{dash if share['cautious_replay_share'] is None else share['cautious_replay_share']})"
     )
     print(
         "SHADOW (simulated, first in line unless flow-weighted):",
@@ -1546,12 +1608,19 @@ def main():
                 raise
         # The shadow ledger needs no lock: public reads and its own file only.
         report["shadow"] = run_shadow(state_dir, started, public, markets)
-        try:  # measurement only: a failure here never affects trading
-            report["live_windows_scored"] = score_live_windows(
-                state_dir, started, public["fetch_trades"]
-            )
-        except Exception as error:
-            report["live_windows_error"] = type(error).__name__
+        # Measurement only, after a completed live pass (which has just
+        # copied the exchange's fills into the journal); a failure here never
+        # affects trading.
+        if live:
+            try:
+                report["live_windows_scored"] = score_live_windows(
+                    state_dir,
+                    started,
+                    public["window_trades"],
+                    deadline=PROCESS_START + SCORING_DEADLINE_SECONDS,
+                )
+            except Exception as error:
+                report["live_windows_error"] = type(error).__name__
         write_report(state_dir, report)
         print("SPREAD MAKER", json.dumps(report, sort_keys=True, default=str))
 

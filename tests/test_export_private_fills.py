@@ -781,6 +781,12 @@ def test_live_fill_share_joins_scored_windows_with_live_fills(tmp_path):
     share = summary["markets"]["spread"]["live_fill_share"]
     assert share["fill_share"] == 1.0 and share["first_in_line_contracts"] == 10
     assert share["orders_filled_when_traded_through"] == 2
+    # The cautious replay (flow share 0.25) on the same windows, scored with
+    # the bot's own rule.
+    from live.prod_spread_auto import expected_fill
+
+    cautious = expected_fill(8, 0.25, 5) + expected_fill(20, 0.25, 5)
+    assert share["cautious_replay_share"] == round(cautious / 10, 3)
     windows[1]["through"] = 0  # nothing reached the NO price: no capacity there
     shadow = write(tmp_path / "shadow.jsonl", SHADOW_EVENTS + windows)
     _, summary, _ = export.build_files(journals, shadow=shadow)

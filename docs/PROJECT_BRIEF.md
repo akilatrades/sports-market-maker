@@ -63,7 +63,7 @@ About the one verified NBA fill: it filled within 15 minutes, in the
 2–6-hour entry window, with positive estimated edge and several sportsbook
 observations. The NO midpoint later moved favourably,
 **but the executable NO bid did not improve** in the measured windows, and
-the order came from an older strategy generation. Evidence:
+the order came from an older or unknown strategy generation. Evidence:
 [audit 1](https://github.com/akilatrades/sports-market-maker/actions/runs/39541489414),
 [audit 2](https://github.com/akilatrades/sports-market-maker/actions/runs/39542054076),
 [execution review](NBA_OVERNIGHT_AUDIT_2026-10-21.md). The public dashboard
@@ -85,19 +85,22 @@ markets (+0.27¢, no edge). Details in the
 - **Fixed checkpoints, written before launch.** NBA v5: 1,900 settled fills,
   the $2,000 allowance or 30 days, whichever comes first; positive with a
   game-clustered t of 2 or more means the edge is real, −1 or less means
-  stop and review, and no earlier look counts. Spread maker:
+  stop and review. Spread maker:
   300 filled contracts or 4 weeks; continue if live profit per contract is
   above zero; stop and review at its −$40 total stop or if live fills are
   less than half of what first-in-line fills would have been.
 - **The headline number: live fill share.** For every finished live order,
   the contracts that traded at or through its price while it rested,
-  against the contracts it actually got. The backtests assume 1.0 and the
-  cautious case is 0.25. This decides whether the simulated edge survives,
-  so it is computed on every pass and reported in the private export.
+  against the contracts it actually got. The first-in-line backtest assumes
+  1.0; the report shows next to it what the cautious replay (25% of the
+  flow) would have filled on the same orders. This decides whether the
+  simulated edge survives, so it is computed after every live pass and
+  reported in the private export.
 - **One command grades both bots** against those bars from the private fills
   export: `python -m research.live_checkpoint --data <private export>`.
-  Before a checkpoint it reports progress only ("no conclusion yet"); it
-  prints, and writes nothing into this repository.
+  Before a checkpoint it reports progress only ("no conclusion yet"),
+  except that the spread maker's −$40 stop counts at any time. It prints,
+  and writes nothing into this repository.
 
 ## Engineering decisions worth reviewing
 
@@ -116,7 +119,8 @@ markets (+0.27¢, no edge). Details in the
 - **Profitability.** No live sample yet is large enough to identify an
   edge; unfilled and still-resting orders count in the denominator.
 - **Fill share and capacity.** Public prints are not fills. If the live
-  share is near 0.25, most of the simulated profit per day disappears.
+  share falls below what the cautious replay implies on the same orders,
+  even the cautious replay overstates profit per day.
 - **Selection.** Both strategies were chosen on 2025–26 data. The spread
   maker's 64 series were picked from the same scan they are judged on
   (about 6–7¢ simulated in those series against 3.9¢ across all wide

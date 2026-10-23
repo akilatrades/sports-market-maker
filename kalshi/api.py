@@ -169,7 +169,7 @@ def candles(ticker, start_ts, end_ts, period=60, historical=True):
     return rows
 
 
-def trades(ticker, min_ts, max_ts, historical=True):
+def trades(ticker, min_ts, max_ts, historical=True, retries=6):
     """Every trade print for a market between two Unix times."""
     path = "/historical/trades" if historical else "/markets/trades"
     rows, cursor = [], ""
@@ -178,7 +178,7 @@ def trades(ticker, min_ts, max_ts, historical=True):
         params["limit"] = 1000
         if cursor:
             params["cursor"] = cursor
-        page = get_json(path, params) or {}
+        page = get_json(path, params, retries=retries) or {}
         for t in page.get("trades", []):
             rows.append(
                 {

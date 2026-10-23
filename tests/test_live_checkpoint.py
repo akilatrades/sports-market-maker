@@ -152,7 +152,87 @@ def test_unresolved_spread_markets_are_excluded_not_guessed(tmp_path):
     )
     summary = json.loads((tmp_path / "data/summary.json").read_text())
     r = cp.spread_bot(tmp_path / "data/spread", NOW, summary)
-    assert r["open_markets_excluded"] == 1  # one market holds a lone YES, no result yet
+    # One market holds a lone YES with no result yet: left out, never guessed.
+    assert r["markets_with_held_contracts_excluded"] == 1
+    # Closed pairs count at once, even with no settlement record (Kalshi nets
+    # YES against NO): the other 39 markets.
+    assert r["resolved_markets"] == 39
+    assert r["cents_per_contract"] == pytest.approx(5.0)
+
+
+def test_spread_pairs_in_a_market_still_holding_contracts_count(tmp_path):
+    spread_export(tmp_path, n=1)
+    path = tmp_path / "data/spread/fills/2026-10-22.csv"
+    lines = path.read_text().splitlines()
+    # A third fill: 2 more YES at 41c, unpaired and unresolved.
+    lines.append(lines[1].replace("fs0yes", "fs0yes2").replace(",5,", ",2,"))
+    path.write_text("\n".join(lines) + "\n")
+    (tmp_path / "data/spread/settlements/2026-10-22.csv").write_text(
+        "ticker,market_result\n"
+    )
+    r = cp.spread_bot(tmp_path / "data/spread", NOW, {})
+    assert r["markets_with_held_contracts_excluded"] == 1
+    # The 5 closed pairs (10 contracts, +$0.50) count; the 2 held YES wait.
+    assert r["resolved_contracts"] == 10
+    assert r["net_profit_dollars"] == pytest.approx(0.5)
+
+
+def test_spread_fees_are_subtracted(tmp_path):
+    spread_export(tmp_path, n=1)
+    path = tmp_path / "data/spread/fills/2026-10-22.csv"
+    lines = path.read_text().splitlines()
+    lines[0] += ",fee"
+    lines[1:] = [line + ",0.0118" for line in lines[1:]]
+    path.write_text("\n".join(lines) + "\n")
+    r = cp.spread_bot(tmp_path / "data/spread", NOW, {})
+    # 5 pairs on 10 contracts: +$0.50 less two fills' fees.
+    assert r["cents_per_contract"] == pytest.approx(100 * (0.5 - 2 * 0.0118) / 10)
+
+
+def test_spread_total_stop_uses_the_bots_ledger(tmp_path):
+    spread_export(tmp_path, days_ago=2, n=2)
+    summary = json.loads((tmp_path / "data/summary.json").read_text())
+    summary["markets"]["spread"]["realized_pnl_dollars"] = -40.5
+    r = cp.spread_bot(tmp_path / "data/spread", NOW, summary)
+    # Before the checkpoint, and despite positive paired fills here.
+    _, verdict = cp.spread_verdict(r)
+    assert "total loss stop" in verdict
+
+
+def test_spread_checkpoint_without_a_fill_share_says_so(tmp_path):
+    spread_export(tmp_path, share=None)
+    summary = json.loads((tmp_path / "data/summary.json").read_text())
+    _, verdict = cp.spread_verdict(
+        cp.spread_bot(tmp_path / "data/spread", NOW, summary)
+    )
+    assert "fill share has not been measured" in verdict
+
+
+def test_nba_allowance_is_counted_as_the_bot_counts_it(tmp_path):
+    from live import prod_nba_auto
+
+    nba_export(tmp_path, games=2, days_ago=3)
+    path = tmp_path / "data/nba/orders/2026-10-22.csv"
+    lines = path.read_text().splitlines()
+    # An older-version order still counts against the bot's allowance.
+    lines.append(lines[1].replace(cp.NBA_VERSION, "nba-no-v4").replace("o0-0", "old"))
+    path.write_text("\n".join(lines) + "\n")
+    r = cp.no_bot(tmp_path / "data/nba", NOW, cp.NBA_VERSION)
+    assert r["orders"] == 6
+    assert r["allowance_used_dollars"] == pytest.approx(7 * prod_nba_auto.reserve(0.5))
+    assert cp._reserve(0.37) == prod_nba_auto.reserve(0.37)
+
+
+def test_nba_cases_the_plan_does_not_cover_are_left_to_the_owner():
+    base = {"settled_fills": 1900, "allowance_used_dollars": 0, "days": 31}
+    _, verdict = cp.nba_verdict(
+        {**base, "cents_per_contract": -0.5, "t_game_clustered": -0.4}
+    )
+    assert "do not cover" in verdict
+    _, verdict = cp.nba_verdict(
+        {**base, "cents_per_contract": 1.0, "t_game_clustered": None}
+    )
+    assert "cannot be computed" in verdict
 
 
 def test_report_refuses_data_inside_the_public_repo(tmp_path):
