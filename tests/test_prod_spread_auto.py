@@ -226,6 +226,9 @@ def world(monkeypatch, tmp_path):
         (folder / "journal.jsonl").write_text("")
     marker = tmp_path / "spread.enabled"
     marker.write_text("")
+    # Each live run is a fresh process; its deadlines count from import. In a
+    # long test session that clock would already be minutes old.
+    monkeypatch.setattr(bot, "PROCESS_START", time.monotonic())
     monkeypatch.setattr(shared, "ROOT", tmp_path)
     monkeypatch.setattr(shared, "dual_mode", lambda env: True)
     monkeypatch.setattr(P, "ARM_MARKER", marker)
