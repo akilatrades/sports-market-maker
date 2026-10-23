@@ -32,6 +32,7 @@ import csv
 import hashlib
 import io
 import json
+import math
 import os
 import re
 import sys
@@ -642,6 +643,50 @@ def shadow_expected(through, flow, size):
     return total
 
 
+def live_fill_share(path, orders):
+    """Our share of the contracts that public prints show traded at or
+    through each finished live order's price (up to its size): the live
+    measurement of the backtest's first-in-line assumption. The windows are
+    scored by the bot from public data into its shadow file; the fills are
+    this export's live order rows."""
+    windows = {}
+    stream, _ = events(path, {"live_window": {"client_order_id", "size", "through"}})
+    for _, e in stream:
+        if e.get("client_order_id"):
+            windows[ref(e["client_order_id"])] = (
+                _number(e.get("size")) or 0.0,
+                _number(e.get("through")) or 0.0,
+            )
+    filled = {o["order_ref"]: _number(o.get("filled_contracts")) or 0.0 for o in orders}
+    capacity = got = cautious = 0.0
+    scored = traded = filled_when_traded = 0
+    for order_ref, (size, through) in windows.items():
+        if not (math.isfinite(size) and math.isfinite(through)):
+            continue  # an unusable record is left out, never guessed
+        scored += 1
+        room = min(through, size)
+        mine = min(filled.get(order_ref, 0.0), size)
+        capacity += room
+        got += min(mine, room)
+        cautious += min(shadow_expected(through, 0.25, size), room)
+        if through > 0:
+            traded += 1
+            filled_when_traded += mine > 0
+    return {
+        "orders_scored": scored,
+        "orders_traded_through": traded,
+        "orders_filled_when_traded_through": filled_when_traded,
+        "first_in_line_contracts": round(capacity, 2),
+        "filled_contracts": round(got, 2),
+        "fill_share": round(got / capacity, 3) if capacity else None,
+        "cautious_replay_share": round(cautious / capacity, 3) if capacity else None,
+        "note": (
+            "1.0 = the backtest's first-in-line assumption; cautious_replay_share = "
+            "what the flow-share-0.25 replay would have filled on these same windows"
+        ),
+    }
+
+
 def shadow_summary(path, flow=0.25):
     """Counts and simulated profit of the spread maker's shadow ledger.
 
@@ -787,6 +832,15 @@ def build_files(journals, shadow=None):
                 else len(ledger.get("open", {})),
                 "by_strategy_version": versions,
             }
+            if shadow is not None and Path(shadow).exists():
+                try:
+                    summary["markets"][market]["live_fill_share"] = live_fill_share(
+                        Path(shadow), orders
+                    )
+                except Exception as error:
+                    summary["markets"][market]["live_fill_share"] = {
+                        "status": f"error_{type(error).__name__}"
+                    }
             continue
         try:
             stream, skipped = events(path)
@@ -884,6 +938,13 @@ markets and holds fills to settlement.
   live pass; while the bot is disarmed or stopped, later settlements show up
   only after its next live pass (`markets_still_held` in the summary counts
   what is still open).
+- `data/summary.json` → `markets.spread.live_fill_share`: of the contracts
+  that public trade prints show traded at or through each finished live
+  order's price (up to its size), the share the bot actually got. The
+  backtest assumed 1.0 (first in line); `cautious_replay_share` is what the
+  cautious replay (each such contract reaching us with probability 0.25)
+  would have filled on the same windows. This is the measurement that says
+  how much of the simulated edge is real.
 - `data/summary.json` → `spread_shadow_simulated`: the shadow ledger's
   SIMULATED results (first in line, and at flow share 0.25). Compare it
   with the live numbers; never add the two together.

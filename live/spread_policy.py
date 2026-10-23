@@ -112,7 +112,9 @@ EXCLUDED_PREFIXES = (
     "KXNFLANYTD-",
 )
 # Series with a maker multiplier on Kalshi's fee schedule (checked 2026-10-22).
-# None is in SERIES today; kept as a guard against a future edit.
+# None is in SERIES; kept as a guard against a future edit. KXNCAAFSPREAD,
+# which is in SERIES, turned out to pay a maker fee too (live fills, 22 Oct);
+# the owner chose to keep it (RESEARCH_LOG.md). Fees count in realized P&L.
 MAKER_FEE_SERIES = frozenset(
     {
         "KXINXY",

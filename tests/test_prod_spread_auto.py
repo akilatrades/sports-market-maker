@@ -1,6 +1,7 @@
 """Offline tests for the spread maker (live/prod_spread_auto.py). No network."""
 
 import json
+import time
 from datetime import UTC, datetime, timedelta
 
 import pytest
@@ -688,6 +689,8 @@ def test_unarmed_auto_run_is_shadow_only(world, monkeypatch, tmp_path, capsys):
     report = json.loads((state / "last_scan.json").read_text())
     assert report["mode"] == "shadow" and "live" not in report
     assert report["shadow"]["quotes"] == 2
+    # Live windows are scored only after a live pass has copied the fills.
+    assert "live_windows_scored" not in report and "live_windows_error" not in report
     assert not (state / "journal.jsonl").exists()
 
 
@@ -1100,3 +1103,178 @@ def test_one_balance_read_per_pass_and_orders_reserve_from_it():
     assert client.calls.count("/portfolio/balance") == 1
     with pytest.raises(TradingError, match="Invalid market ticker"):
         funding(client, "NBA-1", 1.0)
+
+
+def test_fill_share_scores_finished_windows_from_public_prints(world):
+    run(world)  # YES 5 @ 41c and NO 5 @ 49c rest from NOW
+    fill_placed(world, 0, 5, count=2)  # 2 of the YES fill
+    run(world, NOW + timedelta(minutes=10))  # copies the fill into the journal
+    at = (NOW + timedelta(minutes=30)).isoformat()
+    calls = []
+
+    def trades(ticker, start, end):
+        calls.append(ticker)
+        return [
+            # 8 contracts sold at 40c went through our 41c YES bid ...
+            {
+                "created_time": at,
+                "yes_price": 0.40,
+                "count": 8,
+                "taker_outcome_side": "no",
+            },
+            # ... nothing reached our NO bid (a YES offer at 51c).
+            {
+                "created_time": at,
+                "yes_price": 0.50,
+                "count": 3,
+                "taker_outcome_side": "yes",
+            },
+        ]
+
+    state = world["dir"]
+    # Windows still open (or too fresh) are not scored yet.
+    assert bot.score_live_windows(state, NOW + timedelta(minutes=60), trades) == 0
+    assert bot.score_live_windows(state, NOW + timedelta(minutes=71), trades) == 2
+    assert (
+        bot.score_live_windows(state, NOW + timedelta(minutes=90), trades) == 0
+    )  # once
+    assert calls == [TICKER]
+    share = bot.fill_share(journal(world), bot.load_events(state / "shadow.jsonl"))
+    # Up to 5 of the 8 were ours to take first in line; we got 2.
+    assert share["first_in_line_contracts"] == 5 and share["filled_contracts"] == 2
+    assert share["fill_share"] == 0.4 and share["orders_traded_through"] == 1
+
+
+def test_fill_share_reports_the_cautious_replay_on_the_same_windows():
+    events = [
+        {"event": "accepted", "client_order_id": "a", "order_id": "1"},
+        {"event": "accepted", "client_order_id": "b", "order_id": "2"},
+        {"event": "fill", "fill_id": "f1", "order_id": "1", "count_fp": "0.49"},
+        {"event": "fill", "fill_id": "f1", "order_id": "1", "count_fp": "0.49"},
+    ]
+    windows = [
+        {"event": "live_window", "client_order_id": "a", "size": 5, "through": 86},
+        {"event": "live_window", "client_order_id": "a", "size": 5, "through": 86},
+        {"event": "live_window", "client_order_id": "b", "size": 5, "through": 0.4},
+    ]
+    share = bot.fill_share(events, windows)
+    # One row per order and per fill; a fractional print still counts as
+    # traded through.
+    assert share["orders_scored"] == 2 and share["orders_traded_through"] == 2
+    assert share["filled_contracts"] == 0.49 and share["first_in_line_contracts"] == 5.4
+    # With 86 contracts through, a 25% flow share would almost surely have
+    # filled all 5: the cautious benchmark is far above 0.25.
+    assert share["cautious_replay_share"] > 0.9
+    assert share["fill_share"] == round(0.49 / 5.4, 3)
+
+
+def test_prints_without_a_usable_size_count_for_nothing():
+    at = (NOW + timedelta(minutes=1)).isoformat()
+    trades = [
+        {
+            "created_time": at,
+            "yes_price": 0.40,
+            "count": float("nan"),
+            "taker_outcome_side": "no",
+        },
+        {
+            "created_time": at,
+            "yes_price": 0.40,
+            "count": None,
+            "taker_outcome_side": "no",
+        },
+        {"created_time": at, "yes_price": 0.40, "count": 2, "taker_outcome_side": "no"},
+    ]
+    through = bot.contracts_through(trades, "yes", 41, NOW, NOW + timedelta(hours=1))
+    assert through == 2
+    # An older record with an unusable count is skipped, not a crash.
+    share = bot.fill_share(
+        [],
+        [
+            {
+                "event": "live_window",
+                "client_order_id": "x",
+                "size": 5,
+                "through": float("nan"),
+            }
+        ],
+    )
+    assert share["orders_scored"] == 0 and share["fill_share"] is None
+
+
+def test_scoring_stops_at_its_deadline(world):
+    run(world)
+    calls = []
+    late = bot.score_live_windows(
+        world["dir"],
+        NOW + timedelta(minutes=80),
+        lambda *a: calls.append(a) or [],
+        deadline=time.monotonic() - 1,
+    )
+    assert late == 0 and calls == []
+
+
+def test_window_times_use_the_exchange_replies_of_the_same_pass():
+    sent = NOW
+    events = [
+        {
+            "event": "intent",
+            "client_order_id": "a",
+            "utc": sent.isoformat(),
+            "ticker": TICKER,
+            "side": "yes",
+            "price_cents": 41,
+            "count": 5,
+        },
+        {
+            "event": "accepted",
+            "client_order_id": "a",
+            "order_id": "1",
+            "utc": (sent + timedelta(seconds=40)).isoformat(),
+        },
+        {
+            "event": "cancel_intent",
+            "order_id": "1",
+            "utc": (sent + timedelta(minutes=10)).isoformat(),
+        },
+        {
+            "event": "cancel_accepted",
+            "order_id": "1",
+            "utc": (sent + timedelta(minutes=11)).isoformat(),
+        },
+        # Accepted by the owner's reconcile much later: its time is not used.
+        {
+            "event": "intent",
+            "client_order_id": "b",
+            "utc": sent.isoformat(),
+            "ticker": TICKER,
+            "side": "no",
+            "price_cents": 49,
+            "count": 5,
+        },
+        {
+            "event": "accepted",
+            "client_order_id": "b",
+            "order_id": "2",
+            "utc": (sent + timedelta(hours=3)).isoformat(),
+            "reconciled": "owner_signed_lookup",
+        },
+    ]
+    windows = {
+        w["client_order_id"]: w
+        for w in bot.live_windows(events, set(), NOW + timedelta(hours=5))
+    }
+    assert windows["a"]["start"] == sent + timedelta(seconds=40)
+    assert windows["a"]["end"] == sent + timedelta(minutes=11)
+    assert windows["b"]["start"] == sent
+    assert windows["b"]["end"] == sent + timedelta(minutes=65)
+
+
+def test_a_cancelled_order_is_scored_only_up_to_its_cancel(world):
+    run(world)
+    world["quotes"][TICKER] = market(bid=0.42, ask=0.52)
+    run(world, NOW + timedelta(minutes=10))  # YES @ 41c cancelled, re-posted at 43c
+    windows = bot.live_windows(journal(world), set(), NOW + timedelta(minutes=200))
+    first_yes = next(w for w in windows if w["price_cents"] == 41)
+    assert first_yes["end"] == NOW + timedelta(minutes=10)
+    assert {w["price_cents"] for w in windows} == {41, 43, 49}
