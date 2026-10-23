@@ -335,10 +335,16 @@ def contracts_through(trades, side, price_cents, start, end):
         price = t.get("yes_price")
         if price is None or not math.isfinite(float(price)):
             continue
+        try:
+            count = float(t.get("count") or 0)
+        except (TypeError, ValueError):
+            continue
+        if not math.isfinite(count) or count <= 0:
+            continue  # a print without a usable size counts for nothing
         if side == "yes" and taker == "no" and float(price) <= level + 1e-9:
-            total += float(t.get("count") or 0)
+            total += count
         if side == "no" and taker == "yes" and float(price) >= level - 1e-9:
-            total += float(t.get("count") or 0)
+            total += count
     return total
 
 
@@ -495,9 +501,10 @@ def run_shadow(state_dir, now, public, markets=None):
 # read with the journal's fills and never added to profit.
 WINDOW_SETTLE_MINUTES = 5  # let trade prints for a window arrive
 MAX_WINDOW_TICKERS_PER_PASS = 10
-# Scoring runs after the live pass and stops 200 s after the process
-# started, well inside systemd's 240-second limit.
-SCORING_DEADLINE_SECONDS = 200
+# Scoring runs after the live pass and starts no new market 150 s after
+# the process started (lock waits included): one more market's reads (two
+# single attempts, 30 s timeout each) still end inside systemd's 240 s.
+SCORING_DEADLINE_SECONDS = 150
 CAUTIOUS_FLOW = 0.25
 _SAME_PASS = timedelta(minutes=5)
 
@@ -651,9 +658,15 @@ def fill_share(journal_events, shadow_events):
         if e.get("event") == "live_window" and e.get("client_order_id"):
             windows[e["client_order_id"]] = e  # one per order
     capacity = got = cautious = 0.0
-    traded_through = filled_when_traded = 0
+    scored = traded_through = filled_when_traded = 0
     for cid, e in windows.items():
-        size, through = float(e.get("size") or 0), float(e.get("through") or 0)
+        try:
+            size, through = float(e.get("size") or 0), float(e.get("through") or 0)
+        except (TypeError, ValueError):
+            continue
+        if not (math.isfinite(size) and math.isfinite(through)):
+            continue  # an unusable record is left out, never guessed
+        scored += 1
         mine = min(filled.get(oid_of.get(cid), 0.0), size)
         room = min(through, size)
         capacity += room
@@ -663,7 +676,7 @@ def fill_share(journal_events, shadow_events):
             traded_through += 1
             filled_when_traded += mine > 0
     return {
-        "orders_scored": len(windows),
+        "orders_scored": scored,
         "orders_traded_through": traded_through,
         "orders_filled_when_traded_through": filled_when_traded,
         "first_in_line_contracts": round(capacity, 2),

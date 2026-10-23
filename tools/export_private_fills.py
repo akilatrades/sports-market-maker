@@ -32,6 +32,7 @@ import csv
 import hashlib
 import io
 import json
+import math
 import os
 import re
 import sys
@@ -658,8 +659,11 @@ def live_fill_share(path, orders):
             )
     filled = {o["order_ref"]: _number(o.get("filled_contracts")) or 0.0 for o in orders}
     capacity = got = cautious = 0.0
-    traded = filled_when_traded = 0
+    scored = traded = filled_when_traded = 0
     for order_ref, (size, through) in windows.items():
+        if not (math.isfinite(size) and math.isfinite(through)):
+            continue  # an unusable record is left out, never guessed
+        scored += 1
         room = min(through, size)
         mine = min(filled.get(order_ref, 0.0), size)
         capacity += room
@@ -669,7 +673,7 @@ def live_fill_share(path, orders):
             traded += 1
             filled_when_traded += mine > 0
     return {
-        "orders_scored": len(windows),
+        "orders_scored": scored,
         "orders_traded_through": traded,
         "orders_filled_when_traded_through": filled_when_traded,
         "first_in_line_contracts": round(capacity, 2),

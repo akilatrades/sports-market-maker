@@ -2784,8 +2784,10 @@ changes.*
 - **Also reported:** orders scored, orders with any contract traded
   through, and how many of those got any fill.
 - **Limits.** Scoring reads public prints only, one attempt per read, at
-  most 10 markets a pass in shuffled order, and stops 200 seconds after the
-  pass started; unscored windows wait for a later pass.
+  most 10 markets a pass in shuffled order, and starts no new market 150
+  seconds after the worker started (waiting for the account lock
+  included); unscored windows wait for a later pass. A print without a
+  usable size counts for nothing.
 - **Where.** `live/prod_spread_auto.py` (`live_windows`,
   `score_live_windows`, `fill_share`), the server's `--status`, the
   private export's `markets.spread.live_fill_share`, and

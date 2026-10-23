@@ -1168,6 +1168,40 @@ def test_fill_share_reports_the_cautious_replay_on_the_same_windows():
     assert share["fill_share"] == round(0.49 / 5.4, 3)
 
 
+def test_prints_without_a_usable_size_count_for_nothing():
+    at = (NOW + timedelta(minutes=1)).isoformat()
+    trades = [
+        {
+            "created_time": at,
+            "yes_price": 0.40,
+            "count": float("nan"),
+            "taker_outcome_side": "no",
+        },
+        {
+            "created_time": at,
+            "yes_price": 0.40,
+            "count": None,
+            "taker_outcome_side": "no",
+        },
+        {"created_time": at, "yes_price": 0.40, "count": 2, "taker_outcome_side": "no"},
+    ]
+    through = bot.contracts_through(trades, "yes", 41, NOW, NOW + timedelta(hours=1))
+    assert through == 2
+    # An older record with an unusable count is skipped, not a crash.
+    share = bot.fill_share(
+        [],
+        [
+            {
+                "event": "live_window",
+                "client_order_id": "x",
+                "size": 5,
+                "through": float("nan"),
+            }
+        ],
+    )
+    assert share["orders_scored"] == 0 and share["fill_share"] is None
+
+
 def test_scoring_stops_at_its_deadline(world):
     run(world)
     calls = []

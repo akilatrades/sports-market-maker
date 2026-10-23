@@ -221,6 +221,7 @@ def test_nba_allowance_is_counted_as_the_bot_counts_it(tmp_path):
     assert r["orders"] == 6
     assert r["allowance_used_dollars"] == pytest.approx(7 * prod_nba_auto.reserve(0.5))
     assert cp._reserve(0.37) == prod_nba_auto.reserve(0.37)
+    assert cp.NBA_FEE_RESERVE == prod_nba_auto.FEE_RESERVE  # no silent drift
 
 
 def test_nba_cases_the_plan_does_not_cover_are_left_to_the_owner():
