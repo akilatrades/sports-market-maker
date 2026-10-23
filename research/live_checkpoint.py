@@ -41,6 +41,9 @@ ROOT = Path(__file__).resolve().parents[1]
 NBA_VERSION = "nba-no-v5-one-contract-breadth"
 NBA_BARS = {"settled_fills": 1900, "allowance_dollars": 2000.0, "days": 30}
 NBA_FEE_RESERVE = 1.10  # live/prod_nba_auto.py FEE_RESERVE
+# Spread rules v2 (pregame only, from 23 October) are judged on their own
+# orders; v1's first night is reported apart (RESEARCH_LOG.md, 2026-10-23).
+SPREAD_VERSION = "spread-maker-v2-pregame"
 SPREAD_BARS = {
     "filled_contracts": 300,
     "days": 28,
@@ -140,7 +143,7 @@ def no_bot(folder, now, version=None):
     }
 
 
-def spread_bot(folder, now, summary):
+def spread_bot(folder, now, summary, version=SPREAD_VERSION):
     """Spread maker: realized P&L per filled contract from its own fills,
     after fees (pairs at the second fill, held contracts at settlement),
     clustered by event, plus the measured fill share. Contracts still held
@@ -151,6 +154,33 @@ def spread_bot(folder, now, summary):
     )
     if orders.empty:
         return {"orders": 0}
+    earlier = {}
+    if version is not None and "strategy_version" in orders:
+        mine = orders.strategy_version.eq(version)
+        other = orders[~mine]
+        if len(other):
+            other_fills = (
+                fills[fills.order_ref.isin(other.order_ref)]
+                if not fills.empty
+                else fills
+            )
+            earlier = {
+                "orders": int(len(other)),
+                "filled_contracts": float(
+                    pd.to_numeric(other_fills.get("count"), errors="coerce").sum()
+                )
+                if not other_fills.empty
+                else 0.0,
+                "versions": sorted(
+                    other.strategy_version.dropna().astype(str).unique()
+                ),
+            }
+        orders = orders[mine]
+        fills = (
+            fills[fills.order_ref.isin(orders.order_ref)] if not fills.empty else fills
+        )
+        if orders.empty:
+            return {"orders": 0, "earlier_versions": earlier}
     orders["intent_utc"] = pd.to_datetime(orders.intent_utc, utc=True, errors="coerce")
     event_of = orders.drop_duplicates("ticker").set_index("ticker").event_ticker
     result = (
@@ -218,6 +248,7 @@ def spread_bot(folder, now, summary):
         "t_event_clustered": t,
         "events": events,
         "days": round(_days(orders.intent_utc.min(), now), 1),
+        "earlier_versions": earlier,
         "fill_share": share.get("fill_share"),
         "cautious_replay_share": share.get("cautious_replay_share"),
         "shadow_simulated": summary.get("spread_shadow_simulated"),
@@ -343,7 +374,7 @@ def report(data, now=None):
         first = (shadow.get("first_in_line") or {}).get("cents_per_contract")
         flow = (shadow.get("flow_share_0.25") or {}).get("cents_per_contract")
         lines += [
-            "SPREAD MAKER (spread-maker-v1)",
+            f"SPREAD MAKER ({SPREAD_VERSION})",
             f"  {spread['orders']} orders, {spread['filled_contracts']:g} contracts filled; "
             f"{spread['resolved_markets']} markets with realized P&L "
             f"({spread['markets_with_held_contracts_excluded']} with contracts still held, those left out), "
@@ -359,6 +390,14 @@ def report(data, now=None):
             f"{_fmt(flow, '+.2f', '¢')} at flow share 0.25",
             "  Progress: " + "; ".join(f"{k} {v}" for k, v in progress.items()),
             f"  {verdict}",
+            "",
+        ]
+    earlier = spread.get("earlier_versions") or {}
+    if earlier:
+        lines += [
+            f"SPREAD MAKER, earlier rules ({', '.join(earlier['versions'])}): "
+            f"{earlier['orders']} orders, {earlier['filled_contracts']:g} contracts "
+            "filled; reported apart and not judged (v1 could quote into live events)",
             "",
         ]
     nfl = no_bot(data / "data" / "nfl", now)

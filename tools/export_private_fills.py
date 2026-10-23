@@ -387,6 +387,8 @@ SPREAD_INTENT_FIELDS = [
     "cost",
     "spread",
     "market_expiration_utc",
+    "event_start_utc",  # v2 (pregame only): the start the order respected
+    "expires_utc",
     "strategy_version",
 ]
 SPREAD_FILL_FIELDS = [
@@ -423,6 +425,7 @@ SPREAD_ORDER_COLUMNS = [
     "intent_utc",
     *[f for f in SPREAD_INTENT_FIELDS],
     "hours_before_expiration",
+    "minutes_before_start",
     "status",
     "accepted_utc",
     "reconciled",
@@ -559,6 +562,11 @@ def spread_tables(stream, now=None):
                 if _minutes(intent.get("utc"), intent.get("market_expiration_utc"))
                 != ""
                 else "",
+                "minutes_before_start": (
+                    round(_minutes(intent.get("utc"), intent.get("event_start_utc")), 1)
+                    if _minutes(intent.get("utc"), intent.get("event_start_utc")) != ""
+                    else ""
+                ),
                 "status": status.get(cid, ""),
                 "accepted_utc": accepted.get(cid, ""),
                 "reconciled": "yes" if cid in reconciled else "",
@@ -658,6 +666,13 @@ def live_fill_share(path, orders):
                 _number(e.get("through")) or 0.0,
             )
     filled = {o["order_ref"]: _number(o.get("filled_contracts")) or 0.0 for o in orders}
+    # Each rule version is measured on its own orders: the latest one.
+    latest = max(orders, key=lambda o: o.get("intent_utc", ""), default={})
+    current = latest.get("strategy_version", "")
+    of_version = {
+        o["order_ref"] for o in orders if o.get("strategy_version") == current
+    }
+    windows = {k: v for k, v in windows.items() if k in of_version}
     capacity = got = cautious = 0.0
     scored = traded = filled_when_traded = 0
     for order_ref, (size, through) in windows.items():
@@ -680,6 +695,7 @@ def live_fill_share(path, orders):
         "filled_contracts": round(got, 2),
         "fill_share": round(got / capacity, 3) if capacity else None,
         "cautious_replay_share": round(cautious / capacity, 3) if capacity else None,
+        "strategy_version": current,
         "note": (
             "1.0 = the backtest's first-in-line assumption; cautious_replay_share = "
             "what the flow-share-0.25 replay would have filled on these same windows"

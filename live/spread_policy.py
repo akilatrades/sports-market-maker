@@ -7,7 +7,9 @@ states the old value, the new value and why.
 
 from pathlib import Path
 
-STRATEGY_VERSION = "spread-maker-v1"
+# v2 (2026-10-23): pregame only. v1 could quote into a live event, because
+# its window counts from Kalshi's expected expiration, not the start.
+STRATEGY_VERSION = "spread-maker-v2-pregame"
 # The shared-risk cohort journal lives in STATE; the owner creates ARM_MARKER
 # to allow live orders.
 STATE = Path("/home/trader/prod-spread-auto")
@@ -31,6 +33,36 @@ ORDER_LIFETIME_MINUTES = 65  # orders expire on the exchange even if the bot sto
 # signed calls take at most about 80 s, inside systemd's 240 s limit.
 PASS_DEADLINE_SECONDS = 110
 SHADOW_REPOST_MINUTES = 60  # shadow: one quote per market and side per hour
+
+# Pregame only (RESEARCH_LOG.md, 2026-10-23, "Spread maker v2: pregame only").
+# New rules, no old values: v1 had no start-time check. A market is quoted
+# only when its event's start time is known (written in the event ticker, in
+# New York time, or from Kalshi's milestones) and at least MIN_LEAD_MINUTES
+# away, so a 65-minute order expires at least CANCEL_LEAD_MINUTES before the
+# start; any resting quote that close to the start is cancelled.
+MIN_LEAD_MINUTES = 85  # ORDER_LIFETIME_MINUTES + CANCEL_LEAD_MINUTES
+# Twice the timer's 10 minutes, so a start learned or moved late is still
+# caught before the event.
+CANCEL_LEAD_MINUTES = 20
+# A milestone's start counts only if it falls within this many hours before
+# the market's expected expiration (a tournament's start, days earlier, does
+# not count).
+MILESTONE_WINDOW_HOURS = 12
+START_CACHE_MINUTES = 30  # milestone answers are reused for this long
+# Milestone starts are used for events without a ticker time only by
+# milestone type (e.g. basketball_game), and only for types that have
+# matched the time written in event tickers at least
+# MILESTONE_TRUST_MIN_MATCHES times (within MILESTONE_AGREE_MINUTES earlier,
+# MILESTONE_LATE_MINUTES later) and were never later than that in the last
+# MILESTONE_TRUST_DAYS. Up to MILESTONE_CHECKS ticker-timed events, one per
+# series, are compared each pass.
+MILESTONE_CHECKS = 4
+MILESTONE_AGREE_MINUTES = 15
+MILESTONE_LATE_MINUTES = 2
+MILESTONE_TRUST_MIN_MATCHES = 2
+MILESTONE_TRUST_DAYS = 2
+MAX_START_LOOKUPS_PER_PASS = 30
+START_LOOKUP_SECONDS = 45  # no milestone read after this, from process start
 
 # The 66 series that passed the 10% false-discovery check at 8c+ spreads in
 # the strategy sweep (RESEARCH_LOG.md, 2026-10-22), minus the series v5 and

@@ -12,7 +12,8 @@ from live import shared_account_risk as shared
 from live import spread_policy as P
 
 NOW = datetime(2026, 10, 22, 18, 0, tzinfo=UTC)
-TICKER = "KXDOTA2GAME-26OCT22AB-A"
+# Starts 18:00 New York time (22:00 UTC), four hours after NOW.
+TICKER = "KXDOTA2GAME-26OCT221800AB-A"
 
 
 def market(ticker=TICKER, bid=0.40, ask=0.52, hours=5.0, status="active"):
@@ -46,16 +47,16 @@ def test_eligible_markets_filters_window_series_and_other_bots():
     rows = bot.eligible_markets(
         [
             market(),
-            market("KXDOTA2GAME-X-B", hours=3.0),
-            market("KXDOTA2GAME-X-C", hours=8.0),
-            market("KXDOTA2GAME-X-D", ask=0.45),
-            market("KXDOTA2GAME-X-E", status="closed"),
-            market("KXDOTA2GAME-X-F"),
+            market("KXDOTA2GAME-26OCT221800XY-B", hours=3.0),
+            market("KXDOTA2GAME-26OCT221800XY-C", hours=8.0),
+            market("KXDOTA2GAME-26OCT221800XY-D", ask=0.45),
+            market("KXDOTA2GAME-26OCT221800XY-E", status="closed"),
+            market("KXDOTA2GAME-26OCT221800XY-F"),
             market("KXNBAPTS-26OCT22AB-P10"),
         ],
         "KXDOTA2GAME",
         NOW,
-        other_tickers={"KXDOTA2GAME-X-F"},
+        other_tickers={"KXDOTA2GAME-26OCT221800XY-F"},
     )
     assert [r["ticker"] for r in rows] == [TICKER]
     assert rows[0]["yes_price"] == 41 and rows[0]["no_price"] == 49
@@ -260,6 +261,7 @@ def world(monkeypatch, tmp_path):
         "fetch_market": lambda ticker: listed(ticker) if ticker in quotes else None,
         "fetch_orderbook": book,
         "fetch_trades": lambda ticker, a, b: [],
+        "fetch_milestones": lambda event: {"milestones": []},
     }
     return {
         "dir": tmp_path / "prod-spread-auto",
@@ -685,6 +687,34 @@ def test_unarmed_auto_run_is_shadow_only(world, monkeypatch, tmp_path, capsys):
     monkeypatch.setattr("sys.argv", ["prod_spread_auto", "--auto"])
     soon = datetime.now(UTC) + timedelta(hours=5)
     world["quotes"][TICKER]["expected_expiration_time"] = soon.isoformat()
+    # Real clock here: TICKER's start comes from a milestone, trusted because
+    # milestones match the start written in another listed (narrow) market.
+    real_start = bot.ticker_start
+    untimed = TICKER.rsplit("-", 1)[0]
+    monkeypatch.setattr(
+        bot, "ticker_start", lambda e: None if e == untimed else real_start(e)
+    )
+    check_start = (soon - timedelta(hours=2)).astimezone(bot.NY)
+    check = f"KXDOTA2GAME-{check_start:%y%b%d%H%M}".upper() + "CDEF"
+    world["quotes"][f"{check}-C"] = {
+        **market(f"{check}-C", bid=0.40, ask=0.45),  # too narrow to quote
+        "expected_expiration_time": soon.isoformat(),
+    }
+
+    def milestones(event):
+        start = bot.ticker_start(event) or soon - timedelta(hours=1)
+        return {
+            "milestones": [
+                {
+                    "start_date": start.isoformat(),
+                    "type": "esports_game",
+                    "primary_event_tickers": [event],
+                }
+            ]
+        }
+
+    world["public"]["fetch_milestones"] = milestones
+    monkeypatch.setattr(P, "MILESTONE_TRUST_MIN_MATCHES", 1)  # one check market
     bot.main()
     report = json.loads((state / "last_scan.json").read_text())
     assert report["mode"] == "shadow" and "live" not in report
@@ -1146,7 +1176,16 @@ def test_fill_share_scores_finished_windows_from_public_prints(world):
 
 
 def test_fill_share_reports_the_cautious_replay_on_the_same_windows():
+    v2 = P.STRATEGY_VERSION
     events = [
+        {"event": "intent", "client_order_id": "a", "strategy_version": v2},
+        {"event": "intent", "client_order_id": "b", "strategy_version": v2},
+        # A v1 order's window is not part of v2's measurement.
+        {
+            "event": "intent",
+            "client_order_id": "old",
+            "strategy_version": "spread-maker-v1",
+        },
         {"event": "accepted", "client_order_id": "a", "order_id": "1"},
         {"event": "accepted", "client_order_id": "b", "order_id": "2"},
         {"event": "fill", "fill_id": "f1", "order_id": "1", "count_fp": "0.49"},
@@ -1156,6 +1195,7 @@ def test_fill_share_reports_the_cautious_replay_on_the_same_windows():
         {"event": "live_window", "client_order_id": "a", "size": 5, "through": 86},
         {"event": "live_window", "client_order_id": "a", "size": 5, "through": 86},
         {"event": "live_window", "client_order_id": "b", "size": 5, "through": 0.4},
+        {"event": "live_window", "client_order_id": "old", "size": 5, "through": 50},
     ]
     share = bot.fill_share(events, windows)
     # One row per order and per fill; a fractional print still counts as
@@ -1219,6 +1259,7 @@ def test_window_times_use_the_exchange_replies_of_the_same_pass():
     events = [
         {
             "event": "intent",
+            "strategy_version": P.STRATEGY_VERSION,
             "client_order_id": "a",
             "utc": sent.isoformat(),
             "ticker": TICKER,
@@ -1245,6 +1286,7 @@ def test_window_times_use_the_exchange_replies_of_the_same_pass():
         # Accepted by the owner's reconcile much later: its time is not used.
         {
             "event": "intent",
+            "strategy_version": P.STRATEGY_VERSION,
             "client_order_id": "b",
             "utc": sent.isoformat(),
             "ticker": TICKER,
@@ -1278,3 +1320,386 @@ def test_a_cancelled_order_is_scored_only_up_to_its_cancel(world):
     first_yes = next(w for w in windows if w["price_cents"] == 41)
     assert first_yes["end"] == NOW + timedelta(minutes=10)
     assert {w["price_cents"] for w in windows} == {41, 43, 49}
+
+
+# ------------------------------------------------- v2: pregame only
+
+
+START = NOW + timedelta(hours=4)  # TICKER's start written in the ticker
+
+
+def test_start_times_come_from_the_ticker_in_new_york_time():
+    assert bot.ticker_start(TICKER.rsplit("-", 1)[0]) == START
+    assert bot.ticker_start("KXR6GAME-26OCT222000L5FAZE") == datetime(
+        2026, 10, 23, 0, 0, tzinfo=UTC
+    )
+    assert bot.ticker_start("KXAHLGAME-26JAN171900LEHCHA") == datetime(
+        2026, 1, 18, 0, 0, tzinfo=UTC
+    )  # winter: five hours behind UTC
+    for untimed in (
+        "KXCS2GAME-26MAR20ISGATRIX",
+        "KXINXDUD-26AUG10H1600",
+        "KXBRENTD-26JUL0117",
+        "KXNCAAFSPREAD-26OCT22LIBKENN",
+        "KXR6GAME-26OCT222560AB",  # not a time
+        "",
+        None,
+    ):
+        assert bot.ticker_start(untimed) is None
+
+
+def test_milestone_start_takes_the_game_not_the_tournament():
+    expires = NOW + timedelta(hours=6)
+    event = "KXCS2GAME-26OCT22ABCD"
+    payload = {
+        "milestones": [
+            # A tournament that began days ago is not this game's start.
+            {"start_date": "2026-10-19T12:00:00Z", "related_event_tickers": [event]},
+            {
+                "start_date": (NOW + timedelta(hours=3)).isoformat(),
+                "primary_event_tickers": [event],
+            },
+            {
+                "start_date": (NOW + timedelta(hours=2)).isoformat(),
+                "related_event_tickers": [event],
+            },
+            {
+                "start_date": (NOW + timedelta(hours=1)).isoformat(),
+                "primary_event_tickers": ["OTHER"],
+            },
+            {"start_date": "not a date", "primary_event_tickers": [event]},
+        ]
+    }
+    got = bot.milestone_start(event, expires, lambda e: payload)
+    assert got == NOW + timedelta(hours=2)
+    assert bot.milestone_start(event, expires, lambda e: None) is None
+    # Ticker and milestone both known: the earlier one counts.
+    timed = TICKER.rsplit("-", 1)[0]
+    assert bot.event_start(timed, {timed: START - timedelta(minutes=30)}) == (
+        START - timedelta(minutes=30)
+    )
+
+
+def test_markets_are_quoted_only_well_before_the_start():
+    assert P.MIN_LEAD_MINUTES == P.ORDER_LIFETIME_MINUTES + P.CANCEL_LEAD_MINUTES
+    reasons = bot.Counter()
+    untimed = market("KXCS2GAME-26OCT22ABCD-A")
+    rows = bot.eligible_markets(
+        [market(), untimed], "KXDOTA2GAME", NOW, reasons=reasons
+    )
+    assert [r["ticker"] for r in rows] == [TICKER] and rows[0]["postable"]
+    assert rows[0]["event_start_utc"] == START.isoformat()
+    assert reasons["no_event_start"] == 1  # no start known: never quoted
+    late = market(hours=9.0)  # expires five hours after the start
+    soon = START - timedelta(minutes=60)  # 60 minutes ahead: keep, add nothing
+    row = bot.eligible_markets([late], "KXDOTA2GAME", soon)
+    assert len(row) == 1 and not row[0]["postable"]
+    reasons = bot.Counter()
+    assert (
+        bot.eligible_markets(
+            [late], "KXDOTA2GAME", START - timedelta(minutes=5), reasons=reasons
+        )
+        == []
+    )
+    assert reasons["event_starting"] == 1
+
+
+def test_orders_expire_before_the_start_and_record_it(world):
+    run(world)
+    intents = [e for e in journal(world) if e["event"] == "intent"]
+    assert {i["event_start_utc"] for i in intents} == {START.isoformat()}
+    for order in world["exchange"].placed:
+        assert order.expiration_ts <= int(
+            (START - timedelta(minutes=P.CANCEL_LEAD_MINUTES)).timestamp()
+        )
+    # 65 minutes is the normal life; a start moved earlier caps it.
+    early = {"event_start_utc": (NOW + timedelta(minutes=40)).isoformat()}
+    assert bot.quote_expiry(NOW, early) == NOW + timedelta(minutes=20)
+    assert bot.quote_expiry(NOW, {}) == NOW + timedelta(minutes=65)
+
+
+def test_resting_quotes_are_cancelled_before_the_start(world):
+    world["quotes"][TICKER]["expected_expiration_time"] = (
+        START + timedelta(hours=5)
+    ).isoformat()
+    first = START - timedelta(hours=2)
+    run(world, first)
+    ex = world["exchange"]
+    assert len(ex.resting) == 2
+    # 70 minutes before the start: the quotes stay, nothing new is placed.
+    report, _ = run(world, START - timedelta(minutes=70))
+    assert report.get("canceled", 0) == 0 and len(ex.placed) == 2
+    assert report.get("skip_near_start", 0) == 0  # both sides still resting
+    # 8 minutes before: cancelled even though the order book cannot be read.
+    world["public"]["fetch_orderbook"] = lambda ticker: None
+    report, _ = run(world, START - timedelta(minutes=8))
+    assert report["canceled_event_start"] == 2 and ex.resting == []
+    assert {e["reason"] for e in journal(world) if e["event"] == "cancel_intent"} == {
+        "event_start"
+    }
+
+
+def test_a_start_moved_earlier_cancels_at_the_new_start(world):
+    run(world)
+    timed = TICKER.rsplit("-", 1)[0]
+    world["public"]["event_starts"] = {timed: NOW + timedelta(minutes=30)}
+    report, _ = run(world, NOW + timedelta(minutes=25))
+    assert report["canceled_event_start"] == 2
+
+
+def test_v1_orders_without_a_recorded_start_are_cancelled(world):
+    run(world)
+    path = world["dir"] / "journal.jsonl"
+    lines = []
+    for line in path.read_text().splitlines():
+        e = json.loads(line)
+        if e.get("event") == "intent":
+            e.pop("event_start_utc")
+            e["event_ticker"] = "KXDOTA2GAME-26OCT22AB"  # v1: no time known
+        lines.append(json.dumps(e, sort_keys=True))
+    path.write_text("\n".join(lines) + "\n")
+    report, _ = run(world, NOW + timedelta(minutes=10))
+    assert report["canceled_event_start"] == 2
+
+
+def test_shadow_quotes_only_markets_open_for_new_orders(world):
+    world["quotes"][TICKER]["expected_expiration_time"] = (
+        START + timedelta(hours=5)
+    ).isoformat()
+    soon = START - timedelta(minutes=60)
+    summary = bot.run_shadow(world["dir"], soon, world["public"])
+    assert summary["quotes"] == 0
+    summary = bot.run_shadow(world["dir"], START - timedelta(hours=2), world["public"])
+    assert summary["quotes"] == 2
+
+
+def _milestones(calls, shift=timedelta(0), kind="esports_game"):
+    """Milestones that give the ticker's own start (plus ``shift``), or two
+    hours from NOW for events without a time."""
+
+    def fetch(event):
+        calls.append(event)
+        start = bot.ticker_start(event)
+        start = NOW + timedelta(hours=2) if start is None else start + shift
+        return {
+            "milestones": [
+                {
+                    "start_date": start.isoformat(),
+                    "type": kind,
+                    "primary_event_tickers": [event],
+                }
+            ]
+        }
+
+    return fetch
+
+
+def _listing(event, hours=5.0):
+    return {
+        "event_ticker": event,
+        "expected_expiration_time": (NOW + timedelta(hours=hours)).isoformat(),
+    }
+
+
+def test_milestone_starts_are_cached_and_bounded(tmp_path, monkeypatch):
+    monkeypatch.setattr(P, "MAX_START_LOOKUPS_PER_PASS", 4)
+    listings = {
+        "KXCS2GAME": [_listing(f"KXCS2GAME-26OCT22E{i}") for i in range(3)],
+        # Two series whose tickers carry the start: the checks.
+        "KXDOTA2GAME": [market()],
+        "KXR6GAME": [_listing("KXR6GAME-26OCT221900ABCD")],
+    }
+    calls = []
+    starts, counts = bot.prefetch_starts(listings, NOW, tmp_path, _milestones(calls))
+    # Two checks (one per series) make the type trusted; two reads remain.
+    assert counts["milestone_types_trusted"] == ["esports_game"]
+    assert len(calls) == 4 and counts["with_milestone_start"] == 2
+    assert counts["events_without_ticker_time"] == 3
+    assert oct((tmp_path / "event_starts.json").stat().st_mode & 0o777) == "0o600"
+    # Next pass: checks and two answers come from the cache; one read.
+    starts, counts = bot.prefetch_starts(
+        listings, NOW + timedelta(minutes=10), tmp_path, _milestones(calls)
+    )
+    assert len(calls) == 5 and len(starts) == 3
+    # After its deadline a pass reads nothing new.
+    later = NOW + timedelta(hours=1)
+    _, counts = bot.prefetch_starts(
+        listings, later, tmp_path, _milestones(calls), deadline=time.monotonic() - 1
+    )
+    assert counts["milestone_reads"] == 0
+
+
+def test_preflight_compares_milestones_with_ticker_times(world):
+    public = bot.prefetch(world["public"])
+    public["fetch_milestones"] = _milestones([], shift=timedelta(minutes=5))
+    check = bot.milestone_check(public, NOW)
+    assert check["events_compared"] == 1 and check["later_than_ticker"] == 1
+    assert check["largest_late_minutes"] == 5.0 and check["matched"] == 0
+    public["fetch_milestones"] = _milestones([])
+    check = bot.milestone_check(public, NOW)
+    assert check["matched"] == 1 and check["milestone_types"] == {"esports_game": 1}
+
+
+def test_no_new_quote_within_85_minutes_of_the_start(world):
+    world["quotes"][TICKER]["expected_expiration_time"] = (
+        START + timedelta(hours=5)
+    ).isoformat()
+    run(world, START - timedelta(hours=2))
+    # The book moves 70 minutes before the start: the old quotes go and no
+    # new ones replace them (they could still be resting at the start).
+    world["quotes"][TICKER] = {
+        **world["quotes"][TICKER],
+        "yes_bid_dollars": "0.42",
+        "yes_ask_dollars": "0.54",
+    }
+    report, _ = run(world, START - timedelta(minutes=70))
+    assert report["canceled"] == 2 and report["skip_near_start"] == 2
+    assert len(world["exchange"].placed) == 2 and world["exchange"].resting == []
+
+
+def test_milestones_later_than_ticker_times_are_not_used(tmp_path):
+    listings = {
+        "KXDOTA2GAME": [market()],
+        "KXR6GAME": [_listing("KXR6GAME-26OCT221900ABCD")],
+        "KXCS2GAME": [_listing("KXCS2GAME-26OCT22E0")],
+    }
+    # e.g. milestones that give the end, or a start 5 minutes late
+    late = _milestones([], shift=timedelta(minutes=5))
+    starts, counts = bot.prefetch_starts(listings, NOW, tmp_path, late)
+    assert counts["milestone_types_trusted"] == [] and starts == {}
+    assert counts["milestone_types_late"] == ["esports_game"]
+    # Even once they match again, a late type stays distrusted for days.
+    good = _milestones([])
+    starts, counts = bot.prefetch_starts(
+        listings, NOW + timedelta(hours=1), tmp_path, good
+    )
+    assert counts["milestone_types_trusted"] == [] and starts == {}
+
+
+def test_one_matching_event_is_not_enough(tmp_path):
+    listings = {
+        "KXDOTA2GAME": [market()],
+        "KXCS2GAME": [_listing("KXCS2GAME-26OCT22E0")],
+    }
+    starts, counts = bot.prefetch_starts(listings, NOW, tmp_path, _milestones([]))
+    assert counts["milestone_types_trusted"] == [] and starts == {}
+    # The same event checked again later does not count twice.
+    starts, counts = bot.prefetch_starts(
+        listings, NOW + timedelta(hours=1), tmp_path, _milestones([])
+    )
+    assert counts["milestone_types_trusted"] == []
+
+
+def test_trust_is_per_milestone_type(tmp_path):
+    listings = {
+        "KXDOTA2GAME": [market()],
+        "KXR6GAME": [_listing("KXR6GAME-26OCT221900ABCD")],
+        "KXNCAAFSPREAD": [_listing("KXNCAAFSPREAD-26OCT22LIBKENN")],
+    }
+
+    def fetch(event):
+        timed = bot.ticker_start(event)
+        kind = "football_game" if timed is None else "esports_game"
+        start = timed or NOW + timedelta(hours=2)
+        return {
+            "milestones": [
+                {
+                    "start_date": start.isoformat(),
+                    "type": kind,
+                    "primary_event_tickers": [event],
+                }
+            ]
+        }
+
+    starts, counts = bot.prefetch_starts(listings, NOW, tmp_path, fetch)
+    # Esports milestones matched; football ones never were: no football start.
+    assert counts["milestone_types_trusted"] == ["esports_game"]
+    assert "KXNCAAFSPREAD-26OCT22LIBKENN" not in starts
+
+
+def test_an_earlier_milestone_moves_a_ticker_start_earlier(tmp_path):
+    listings = {"KXDOTA2GAME": [market()]}
+    early = _milestones([], shift=timedelta(minutes=-40))
+    starts, counts = bot.prefetch_starts(listings, NOW, tmp_path, early)
+    event = TICKER.rsplit("-", 1)[0]
+    assert starts[event] == START - timedelta(minutes=40)
+    assert bot.event_start(event, starts) == START - timedelta(minutes=40)
+    assert counts["earlier_than_ticker"] == 1
+
+
+def test_clock_change_times_take_the_earlier_instant():
+    # 02:30 does not exist in New York on 14 March 2027.
+    assert bot.ticker_start("KXR6GAME-27MAR140230ABCD") == datetime(
+        2027, 3, 14, 6, 30, tzinfo=UTC
+    )
+    # 01:30 happens twice on 7 November 2027: the first one.
+    assert bot.ticker_start("KXR6GAME-27NOV070130ABCD") == datetime(
+        2027, 11, 7, 5, 30, tzinfo=UTC
+    )
+
+
+def test_checks_pick_events_still_to_start_and_resting_ones_first():
+    timed = {
+        "KXAHLGAME-26OCT221200AAABBB": NOW,  # 16:00 UTC: already started
+        "KXAHLGAME-26OCT221700CCCDDD": NOW,  # 21:00 UTC: the next to start
+        "KXAHLGAME-26OCT221900EEEFFF": NOW,
+        "KXR6GAME-26OCT221900ABCD": NOW,
+    }
+    first, picks = bot._check_order(timed, NOW, active={"KXAHLGAME-26OCT221900EEEFFF"})
+    assert first == [("KXAHLGAME-26OCT221900EEEFFF", NOW)]
+    assert {e for e, _ in picks} == {
+        "KXAHLGAME-26OCT221700CCCDDD",
+        "KXR6GAME-26OCT221900ABCD",
+    }
+
+
+def test_a_damaged_cache_is_ignored_and_rewritten(tmp_path):
+    listings = {
+        "KXDOTA2GAME": [market()],
+        "KXR6GAME": [_listing("KXR6GAME-26OCT221900ABCD")],
+        "KXCS2GAME": [_listing("KXCS2GAME-26OCT22E0")],
+    }
+    event = TICKER.rsplit("-", 1)[0]
+    bad = {
+        "types": {"esports_game": ["not", "a", "dict"], "": {"matched": {"x": "y"}}},
+        event: {
+            "milestones": [["not a date", "esports_game"]],
+            "checked": NOW.isoformat(),
+        },
+        "KXR6GAME-26OCT221900ABCD": {
+            "milestones": [],
+            "checked": (NOW + timedelta(days=30)).isoformat(),  # from the future
+        },
+        "KXCS2GAME-26OCT22E0": "garbage",
+    }
+    path = tmp_path / "event_starts.json"
+    path.write_text(json.dumps(bad))
+    calls = []
+    starts, counts = bot.prefetch_starts(listings, NOW, tmp_path, _milestones(calls))
+    # Every damaged entry was read again, and trust built from fresh reads.
+    assert sorted(calls) == sorted(
+        [event, "KXR6GAME-26OCT221900ABCD", "KXCS2GAME-26OCT22E0"]
+    )
+    assert counts["milestone_types_trusted"] == ["esports_game"]
+    assert "KXCS2GAME-26OCT22E0" in starts
+    saved = json.loads(path.read_text())
+    assert set(saved["types"]) == {"esports_game"}
+
+
+def test_milestones_without_a_type_are_never_trusted(tmp_path):
+    listings = {
+        "KXDOTA2GAME": [market()],
+        "KXR6GAME": [_listing("KXR6GAME-26OCT221900ABCD")],
+        "KXCS2GAME": [_listing("KXCS2GAME-26OCT22E0")],
+    }
+    starts, counts = bot.prefetch_starts(
+        listings, NOW, tmp_path, _milestones([], kind="")
+    )
+    assert counts["milestone_types_trusted"] == [] and starts == {}
+
+
+def test_recent_events_are_those_with_orders_that_may_rest(world):
+    run(world)
+    event = TICKER.rsplit("-", 1)[0]
+    assert bot.recent_events(world["dir"], NOW + timedelta(minutes=30)) == {event}
+    assert bot.recent_events(world["dir"], NOW + timedelta(minutes=70)) == set()

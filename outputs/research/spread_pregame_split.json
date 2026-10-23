@@ -1,0 +1,150 @@
+{
+  "note": "SIMULATED, in-sample, first in line, 1 contract per order; exploratory",
+  "all": {
+    "fills": 11263,
+    "dollars": 951.93,
+    "share_of_profit": 1.0,
+    "events": 3964,
+    "cents_per_contract": 8.45,
+    "t_event_clustered": 21.48,
+    "earlier_half_cents": 9.1,
+    "later_half_cents": 7.81
+  },
+  "ticker_start_known": {
+    "share_of_fills": 0.304,
+    "pregame": {
+      "fills": 2285,
+      "dollars": 225.42,
+      "share_of_profit": 0.852,
+      "events": 995,
+      "cents_per_contract": 9.87,
+      "t_event_clustered": 9.93,
+      "earlier_half_cents": 12.24,
+      "later_half_cents": 7.52
+    },
+    "across_start": {
+      "fills": 342,
+      "dollars": 17.44,
+      "share_of_profit": 0.066,
+      "events": 190,
+      "cents_per_contract": 5.1,
+      "t_event_clustered": 3.11,
+      "earlier_half_cents": 4.23,
+      "later_half_cents": 5.87
+    },
+    "in_game": {
+      "fills": 797,
+      "dollars": 21.77,
+      "share_of_profit": 0.082,
+      "events": 483,
+      "cents_per_contract": 2.73,
+      "t_event_clustered": 2.3,
+      "earlier_half_cents": 1.15,
+      "later_half_cents": 4.14
+    }
+  },
+  "by_hour_before_cutoff": {
+    "0": {
+      "fills": 5333,
+      "dollars": 343.19,
+      "share_of_profit": 0.361,
+      "events": 2769,
+      "cents_per_contract": 6.44,
+      "t_event_clustered": 14.33,
+      "earlier_half_cents": 6.95,
+      "later_half_cents": 5.92
+    },
+    "1": {
+      "fills": 2881,
+      "dollars": 262.3,
+      "share_of_profit": 0.276,
+      "events": 1812,
+      "cents_per_contract": 9.1,
+      "t_event_clustered": 12.89,
+      "earlier_half_cents": 9.06,
+      "later_half_cents": 9.14
+    },
+    "2": {
+      "fills": 1980,
+      "dollars": 235.07,
+      "share_of_profit": 0.247,
+      "events": 1363,
+      "cents_per_contract": 11.87,
+      "t_event_clustered": 13.6,
+      "earlier_half_cents": 12.41,
+      "later_half_cents": 11.34
+    },
+    "3": {
+      "fills": 1069,
+      "dollars": 111.37,
+      "share_of_profit": 0.117,
+      "events": 780,
+      "cents_per_contract": 10.42,
+      "t_event_clustered": 8.34,
+      "earlier_half_cents": 12.85,
+      "later_half_cents": 8.03
+    }
+  },
+  "variants": {
+    "all hours (v1)": {
+      "fills": 11263,
+      "dollars": 951.93,
+      "share_of_profit": 1.0,
+      "events": 3964,
+      "cents_per_contract": 8.45,
+      "t_event_clustered": 21.48,
+      "earlier_half_cents": 9.1,
+      "later_half_cents": 7.81
+    },
+    "skip the last hour": {
+      "fills": 5930,
+      "dollars": 608.74,
+      "share_of_profit": 0.639,
+      "events": 2629,
+      "cents_per_contract": 10.27,
+      "t_event_clustered": 18.2,
+      "earlier_half_cents": 10.93,
+      "later_half_cents": 9.61
+    },
+    "skip the last hour and known in-game": {
+      "fills": 5864,
+      "dollars": 609.31,
+      "share_of_profit": 0.64,
+      "events": 2594,
+      "cents_per_contract": 10.39,
+      "t_event_clustered": 18.33,
+      "earlier_half_cents": 11.2,
+      "later_half_cents": 9.61
+    },
+    "ticker start known, pregame only": {
+      "fills": 2285,
+      "dollars": 225.42,
+      "share_of_profit": 0.237,
+      "events": 995,
+      "cents_per_contract": 9.87,
+      "t_event_clustered": 9.93,
+      "earlier_half_cents": 12.24,
+      "later_half_cents": 7.52
+    },
+    "ticker start known, v2 rule": {
+      "fills": 1474,
+      "dollars": 155.35,
+      "share_of_profit": 0.163,
+      "events": 752,
+      "cents_per_contract": 10.54,
+      "t_event_clustered": 8.67,
+      "earlier_half_cents": 12.49,
+      "later_half_cents": 8.6
+    },
+    "skip the last hour, no financial series": {
+      "fills": 5761,
+      "dollars": 592.64,
+      "share_of_profit": 0.623,
+      "events": 2562,
+      "cents_per_contract": 10.29,
+      "t_event_clustered": 17.86,
+      "earlier_half_cents": 11.11,
+      "later_half_cents": 9.47
+    }
+  }
+}
