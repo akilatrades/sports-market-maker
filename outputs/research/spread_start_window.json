@@ -92,7 +92,7 @@
     "3 added fills positive in both halves": true,
     "4 no series over a quarter of added profit": true
    },
-   "passes": true
+   "meets_bar": true
   },
   "24->4 h, S1": {
    "fills": 4328,
@@ -123,7 +123,7 @@
     "3 added fills positive in both halves": true,
     "4 no series over a quarter of added profit": true
    },
-   "passes": true
+   "meets_bar": true
   },
   "7->4 h, S1+S2": {
    "fills": 2235,
@@ -154,7 +154,7 @@
     "3 added fills positive in both halves": true,
     "4 no series over a quarter of added profit": true
    },
-   "passes": false
+   "meets_bar": false
   },
   "12->4 h, S1+S2": {
    "fills": 4985,
@@ -185,7 +185,7 @@
     "3 added fills positive in both halves": true,
     "4 no series over a quarter of added profit": true
    },
-   "passes": true
+   "meets_bar": true
   },
   "24->4 h, S1+S2": {
    "fills": 8899,
@@ -216,7 +216,7 @@
     "3 added fills positive in both halves": true,
     "4 no series over a quarter of added profit": true
    },
-   "passes": true
+   "meets_bar": true
   },
   "7->4 h, S1+S2+S3": {
    "fills": 2321,
@@ -247,7 +247,7 @@
     "3 added fills positive in both halves": true,
     "4 no series over a quarter of added profit": true
    },
-   "passes": true
+   "meets_bar": true
   },
   "12->4 h, S1+S2+S3": {
    "fills": 5278,
@@ -278,7 +278,7 @@
     "3 added fills positive in both halves": true,
     "4 no series over a quarter of added profit": true
    },
-   "passes": true
+   "meets_bar": true
   },
   "24->4 h, S1+S2+S3": {
    "fills": 10223,
@@ -309,7 +309,7 @@
     "3 added fills positive in both halves": true,
     "4 no series over a quarter of added profit": true
    },
-   "passes": true
+   "meets_bar": true
   }
  },
  "series_offsets_hours": {

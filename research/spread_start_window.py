@@ -272,7 +272,7 @@ def main():
                     "top_series_share_of_added_profit": top,
                 }
                 v["checks"] = checks
-                v["passes"] = all(checks.values())
+                v["meets_bar"] = all(checks.values())
             result["variants"][label] = v
     result["series_offsets_hours"] = {
         s: {
@@ -283,10 +283,10 @@ def main():
         }
         for s, o in sorted(offsets_seen.items())
     }
-    passing = [(k, v) for k, v in result["variants"].items() if v.get("passes")]
+    qualified = [(k, v) for k, v in result["variants"].items() if v.get("meets_bar")]
     result["proposed_v3"] = (
-        max(passing, key=lambda kv: kv[1]["added_over_baseline"]["fills"])[0]
-        if passing
+        max(qualified, key=lambda kv: kv[1]["added_over_baseline"]["fills"])[0]
+        if qualified
         else None
     )
     OUT.mkdir(parents=True, exist_ok=True)
@@ -306,7 +306,7 @@ def main():
             f"{v.get('earlier_half_cents', '—')} / {v.get('later_half_cents', '—')} | "
             f"{v['flow_0.25_median']['fills']:,} | {a.get('fills', '—')} | "
             f"{a.get('cents_per_contract', '—')} ({a.get('t_event_clustered', '—')}) | "
-            f"{'baseline (v2)' if 'passes' not in v else ('yes' if v['passes'] else 'no')} |"
+            f"{'baseline (v2)' if 'meets_bar' not in v else ('yes' if v['meets_bar'] else 'no')} |"
         )
     lines += ["", f"Proposed v3: {result['proposed_v3'] or 'none; v2 stays'}"]
     (OUT / "spread_start_window.md").write_text("\n".join(lines) + "\n")
