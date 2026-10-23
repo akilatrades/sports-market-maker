@@ -3460,3 +3460,30 @@ exchanges could be bought on both sides for under $1. Aggregates only
 depth, fees not subtracted, and the sportsbook consensus is itself only an
 estimate of the fair price. A single snapshot can show whether gaps exist; it
 cannot show that they are tradeable or persistent.
+
+### Results, snapshot 2026-10-23 21:13 UTC (exploratory, one moment in time)
+
+`outputs/exchange_gaps/snapshot_20261023T2113.json`; 336 Odds API credits.
+11 NBA games that night, 13 NFL games 2-3 days out. "Edge" = sportsbook
+consensus probability minus the exchange's price for that side (no fees).
+
+| | Lines | Width (both sides - 1) | Sides > 2 pts better than consensus | > 5 pts |
+|---|---:|---:|---:|---:|
+| Novig NBA | 1,939 (1,906 props) | 8.5% | 5.5% | 1.5% |
+| ProphetX NBA | 1,230 (1,197 props) | 4.8% | 5.3% | 2.1% |
+| Novig NFL | 1,798 (1,759 props) | 20.1% | 1.4% | 0% |
+| ProphetX NFL | 752 (713 props) | 7.5% | 0.7% | 0% |
+| Kalshi, Polymarket US, BetOpenly | game lines only in this feed | 0-1% | 0% | 0% |
+
+- **Wide books on props.** Taking a random Novig or ProphetX price costs
+  3-6 points on average; the props are thinly quoted, NFL especially (days
+  before kickoff). Wide books are where a resting-order maker earns, and
+  Novig charges makers nothing pregame.
+- **A minority of prices beat the consensus**: about 100 NBA sides on each
+  exchange by 2+ points, 28-36 by 5+. Unknown: depth behind each price,
+  whether the feed's exchange and sportsbook quotes are equally fresh, and
+  whether the consensus is right. The test is whether those prices beat the
+  closing line, measured over repeated snapshots.
+- **Cross-exchange locks are rare and small**: of 958 NBA lines on two or
+  more exchanges, 41 cost under $1 for both sides, 4 by more than 1 point,
+  the best 2.3 points; NFL 24, 5 and 2.0. Most vanish after fees.
