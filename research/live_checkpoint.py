@@ -8,9 +8,11 @@ public repository, so private data never lands here.
     python -m research.live_checkpoint --data ~/smm-private-data
 
 Pre-registered rules (RESEARCH_LOG.md):
-- NBA v5 ("How v5 will be judged"): settled profit per filled contract after
-  fees, game-clustered t. Checkpoint at 1,900 settled fills, the $2,000
-  allowance, or 30 days, whichever comes first. t >= 2 and positive: the
+- NBA v5 ("How v5 will be judged"), with v6 pooled in ("NBA rules v6": the
+  same selection at 3 contracts an order): settled profit per filled
+  contract after fees, game-clustered t. Checkpoint at 1,900 settled filled
+  orders, the $5,000 allowance ($2,000 before v6), or 30 days from the first
+  v5 order, whichever comes first. t >= 2 and positive: the
   edge is real at these settings; positive with t < 2: keep collecting;
   t <= -1: stop and review. (Not positive with t > -1 is not covered by the
   plan; the report says so and leaves it to the owner.) The allowance is
@@ -136,7 +138,18 @@ def no_bot(folder, now, version=None):
         for _, s in settled.iterrows()
         if float(contracts.get(s.ticker, 0.0)) > 0
     }
-    filled = pd.to_numeric(orders.filled_contracts, errors="coerce") > 0
+    # Filled orders from the same fills table the contracts come from.
+    filled_refs = (
+        set(
+            fills.loc[
+                (pd.to_numeric(fills["count"], errors="coerce") > 0)
+                & fills.ticker.isin(settled_tickers),
+                "order_ref",
+            ]
+        )
+        if not fills.empty
+        else set()
+    )
     return {
         "orders": len(orders),
         "accepted": int((orders.status == "accepted").sum()),
@@ -146,7 +159,7 @@ def no_bot(folder, now, version=None):
         "settled_markets": len(rows),
         # Filled orders whose market settled: one per order however many
         # contracts or pieces it filled in (the review's 1,900 bar).
-        "settled_fills": int((filled & orders.ticker.isin(settled_tickers)).sum()),
+        "settled_fills": len(filled_refs),
         "settled_contracts": float(sum(r[1] for r in rows)),
         "net_profit_dollars": round(float(sum(r[0] * r[1] for r in rows)), 2),
         "cents_per_contract": cents,

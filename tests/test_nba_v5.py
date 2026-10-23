@@ -501,3 +501,16 @@ def test_an_order_shrinks_to_the_room_a_cap_leaves(tmp_path, no_fees, monkeypatc
     client = Client()
     assert nba.pass_once(client, ARMED, several(5), NOW, tmp_path / "journal.jsonl")
     assert [o.count for o in client.posts] == [nba.MAX_CONTRACTS] * 2 + [1]
+
+
+def test_resting_v5_order_is_left_alone_and_v6_waits(tmp_path, exchange_offline):
+    journal = tmp_path / "journal.jsonl"
+    write_v4_order(journal, ticker="KXNBA-V5-OLD", count=1, cents=51)
+    rows = [json.loads(line) for line in journal.read_text().splitlines()]
+    rows[0]["strategy_version"] = "nba-no-v5-one-contract-breadth"
+    journal.write_text("".join(json.dumps(r) + "\n" for r in rows))
+    client = Exchange(resting=[{"order_id": "oid-v4", "ticker": "KXNBA-V5-OLD"}])
+    assert not nba.pass_once(client, ARMED, several(5), NOW, journal)
+    assert client.posts == [] and client.cancels == []
+    report = json.loads((tmp_path / "last_scan.json").read_text())
+    assert report["decision"] == "waiting_for_prior_version_orders"

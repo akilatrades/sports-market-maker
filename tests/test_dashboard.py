@@ -151,6 +151,9 @@ const r = {
 runningNow({running_now: r});
 const prop = nodes["prop-rules"].innerHTML, spread = nodes["spread-rules"].innerHTML;
 if (!prop.includes("1 contract, post-only NO") || !prop.includes("2–6 h before tip-off")) throw new Error(prop);
+runningNow({running_now: {...r, contracts_per_order: 3}});
+if (!nodes["prop-rules"].innerHTML.includes("Up to 3 contracts, post-only NO")) throw new Error("caps can shrink an order");
+runningNow({running_now: r});
 if (!spread.includes("New quotes 85+ min before; all cancelled 20 min before")) throw new Error(spread);
 if (!spread.includes("Up to 5 contracts a side, 65-minute expiry")) throw new Error(spread);
 const account = nodes["account-limits"].textContent;

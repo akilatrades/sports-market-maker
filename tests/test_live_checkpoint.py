@@ -295,6 +295,12 @@ def test_nba_v5_and_v6_are_judged_together_counting_orders(tmp_path):
     both = cp.no_bot(tmp_path / "data/nba", NOW, cp.NBA_VERSIONS)
     # Six filled orders, eight contracts: the bar counts orders.
     assert both["settled_fills"] == 6 and both["settled_contracts"] == 8
+    # A blank filled_contracts on the order does not hide its fills.
+    path = tmp_path / "data/nba/orders/2026-10-22.csv"
+    rows = path.read_text().splitlines()
+    rows[3] = rows[3].replace(",accepted,1,", ",accepted,,")
+    path.write_text("\n".join(rows) + "\n")
+    assert cp.no_bot(tmp_path / "data/nba", NOW, cp.NBA_VERSIONS)["settled_fills"] == 6
     v5 = cp.no_bot(tmp_path / "data/nba", NOW, cp.NBA_VERSIONS[0])
     assert v5["orders"] == 1 and v5["settled_fills"] == 1
     text = cp.report(tmp_path, NOW)

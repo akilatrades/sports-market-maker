@@ -336,7 +336,7 @@ function runningNow(s) {
   const prop = document.getElementById("prop-rules"), spread = document.getElementById("spread-rules"), account = document.getElementById("account-limits");
   prop.innerHTML = !r ? missing :
     row("Rules", r.nba_rules || "—") +
-    row("Order", `${plural(r.contracts_per_order, "contract")}, post-only NO`) +
+    row("Order", `${finite(r.contracts_per_order) && r.contracts_per_order > 1 ? "Up to " : ""}${plural(r.contracts_per_order, "contract")}, post-only NO`) +
     row("Estimated edge to post", span(r.entry_edge_cents, "¢")) +
     row("When", `${span(r.entry_hours_before_tip, " h")} before tip-off, resting until tip`) +
     row("Price range", span(r.price_band_cents, "¢")) +

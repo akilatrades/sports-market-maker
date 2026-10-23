@@ -3098,6 +3098,27 @@ bars, judged on v5 and v6 together because the selection rule is the same:
   unchanged. v5 and v6 are also reported separately. If v6's profit per
   contract is clearly below v5's, the owner reviews before the checkpoint.
 
+**Spread maker minimum spread, 8¢ → 6¢: not adopted (exploratory replay,
+simulated, in-sample, first in line, 1 contract; 2 variants plus one slice).**
+`research/spread_pregame_split.py` with the v2 rule (start known from the
+ticker, posted at least 85 minutes before it), 64 pilot series:
+
+| Minimum spread | Fills | ¢ per contract (t) | Simulated $ |
+|---|---:|---:|---:|
+| 8¢ (live) | 1,474 | +10.54 (8.67) | +155.35 |
+| 6¢ | 2,100 | +7.10 (7.13) | +149.07 |
+| 6–7¢ spreads alone | 626 | −1.00 (−0.67); later half −3.56 | −6.28 |
+
+The extra 42% of fills earned nothing: at 6–7¢ the two cents given up to
+bid inside, plus the drift after one side fills, take the whole gap. The
+owner kept 8¢. Other ways to more pregame fills (quoting earlier before the
+start, more series with known starts) need their own written test.
+
+## 2026-10-23: NBA v6 replays before go-live (exploratory)
+
+*Run after the plan amendment above and before any v6 order; the plan's
+text is unchanged.*
+
 **Replay of v5 against v6 (exploratory, simulated, in-sample; 3 rule sets ×
 2 flow shares; `python -m research.nba_v6_replay`).** The owner asked to see
 it before go-live. Live caps applied in placement order, loss stops per
@@ -3135,19 +3156,3 @@ larger orders crowd out the best ones. 5 contracts at $250 a night is the
 next step, but its drawdowns reach the −$100 stop and $250 a night plus the
 other bots' $75 nearly fills the $350 account; it needs more capital or
 live evidence first. Not adopted.
-
-**Spread maker minimum spread, 8¢ → 6¢: not adopted (exploratory replay,
-simulated, in-sample, first in line, 1 contract; 2 variants plus one slice).**
-`research/spread_pregame_split.py` with the v2 rule (start known from the
-ticker, posted at least 85 minutes before it), 64 pilot series:
-
-| Minimum spread | Fills | ¢ per contract (t) | Simulated $ |
-|---|---:|---:|---:|
-| 8¢ (live) | 1,474 | +10.54 (8.67) | +155.35 |
-| 6¢ | 2,100 | +7.10 (7.13) | +149.07 |
-| 6–7¢ spreads alone | 626 | −1.00 (−0.67); later half −3.56 | −6.28 |
-
-The extra 42% of fills earned nothing: at 6–7¢ the two cents given up to
-bid inside, plus the drift after one side fills, take the whole gap. The
-owner kept 8¢. Other ways to more pregame fills (quoting earlier before the
-start, more series with known starts) need their own written test.

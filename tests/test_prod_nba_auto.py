@@ -526,7 +526,7 @@ def test_game_and_team_budget_reasons_are_distinct():
     assert "nba_per_game_submissions" not in reasons
     assert "nba_game_order_count" not in reasons
 
-    # Just under the per-game cap, so a $2 order passes it (any cap size).
+    # Just under the per-game cap, so a $2 order no longer fits it.
     n = int(nba.MAX_GAME_COST // nba.reserve(5.5))
     game_filled = [_past_attempt(i, 20261020, "OTHER" + str(i), 5.5) for i in range(n)]
     reasons = nba.budget_blockers(game_filled, [], row, 2.0, NOW)
@@ -1171,3 +1171,50 @@ def test_v5_orders_resting_at_the_switch_are_drained_not_halted():
     resting = [{"order_id": "order-v5", "ticker": "KXNBA-V5"}]
     # Counted as a prior-version order (new orders wait), never a HALT.
     assert nba.legacy_resting_count([v5, v6], accepted, resting) == 1
+
+
+def test_fee_reserve_shrinks_a_cheap_order_instead_of_skipping_it():
+    from kalshi.trading import Order
+
+    calls = []
+
+    def one_cent_a_contract(ticker, price, count, cache):
+        calls.append(count)
+        return round(0.01 * count, 2), {"fee_type": "quadratic_with_maker_fees"}
+
+    def order(cents):
+        return Order(
+            ticker="KXNBAPTS-X",
+            side="no",
+            count=nba.MAX_CONTRACTS,
+            price_cents=cents,
+            expiration_ts=int(NOW.timestamp()) + 3600,
+        )
+
+    # 5c with a 1c fee: 3 and 2 contracts exceed the 10% reserve, 1 fits.
+    cheap = order(5)
+    fee, _, cost = nba.fit_fee_reserve(cheap, 0.05, {}, one_cent_a_contract)
+    assert (cheap.count, cost, fee) == (1, 0.05, 0.01) and calls == [3, 2, 1]
+    # Dearer orders keep their full size; fee-free series are never shrunk.
+    full = order(51)
+    assert nba.fit_fee_reserve(full, 0.51, {}, one_cent_a_contract)[2] == 1.53
+    assert full.count == 3
+    free = order(5)
+    nba.fit_fee_reserve(free, 0.05, {}, lambda *a: (0.0, {}))
+    assert free.count == 3
+
+
+def test_a_resting_three_contract_order_is_valid_and_four_is_not():
+    row = priced().iloc[0]
+    market = {"status": "active", "yes_bid_dollars": 0.40, "yes_ask_dollars": 0.50}
+    intent = {
+        "ticker": row.ticker,
+        "price_cents": 51,
+        "count": 3,
+        "probability_source": "sportsbook",
+    }
+    assert nba.resting_cancel_reason(row, intent, market, 0.0) is None
+    too_big = {**intent, "count": nba.MAX_CONTRACTS + 1}
+    assert (
+        nba.resting_cancel_reason(row, too_big, market, 0.0) == "invalid_original_order"
+    )

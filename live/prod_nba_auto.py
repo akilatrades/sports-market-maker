@@ -849,6 +849,25 @@ def select_candidates(frame, events, state, now, diagnostics=None, window=WINDOW
     return list(found.sort_values("edge", ascending=False).itertuples())
 
 
+def fit_fee_reserve(order, quoted, fee_cache, fee_bound_for):
+    """Shrink ``order`` until its cost plus the maker-fee bound fits the 10%
+    reserve, and return (fee_bound, fee_metadata, cost).
+
+    Where a series charges maker fees, the bound is at least 1c a contract, so
+    at 5-6c a multi-contract order can exceed the reserve while a smaller one
+    still fits. One contract is never shrunk further: the caller's own check
+    then decides.
+    """
+    while True:
+        cost = round(order.count * order.price_cents / 100, 2)
+        fee_bound, fee_metadata = fee_bound_for(
+            order.ticker, quoted, order.count, fee_cache
+        )
+        if order.count <= 1 or cost + fee_bound <= reserve(cost) + 1e-9:
+            return fee_bound, fee_metadata, cost
+        order.count -= 1
+
+
 def order_from_row(row, now, no_price=None):
     price = float(row.price) if no_price is None else float(no_price)
     if not math.isfinite(price):
@@ -1305,8 +1324,8 @@ def pass_once(client, env, frame, now, journal, *, dry=False):
             skipped["cash_balance"] += 1
             continue
         try:
-            fee_bound, fee_metadata = live_maker_fee_bound(
-                order.ticker, quoted, order.count, fee_cache
+            fee_bound, fee_metadata, cost = fit_fee_reserve(
+                order, quoted, fee_cache, live_maker_fee_bound
             )
             p_book = float(getattr(row, "p_book", float("nan")))
             p_yes = p_book if math.isfinite(p_book) else float(row.p_model)
