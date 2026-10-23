@@ -2908,7 +2908,10 @@ book *before* that pass's re-quotes.
   each resting order whose book was read (own orders taken out): is
   another bid on its side better (*outbid*: someone is ahead of it),
   equal (*joined*: behind it in time), or not (*alone*)? One line per pass
-  with the counts. No extra requests: the book is already read.
+  with the counts. No extra requests: the book is already read. An outbid
+  order is then re-quoted, so this is a rate per 10-minute pass (how often
+  someone got ahead within one pass), not per order; orders whose book
+  could not be read are not counted.
 - **Markouts.** For each fill, the market 10, 30 and 60 minutes later,
   read at the first pass after each horizon (at most 12 minutes late, else
   recorded as missed) from the public listing taken at the start of that
@@ -2930,7 +2933,9 @@ book *before* that pass's re-quotes.
   fill in the same market in the 60 minutes *before* it: a later opposite
   fill is often caused by the price moving, so looking ahead would bias the
   one-sided group toward fills that went badly). Late or missing readings
-  and readings after the start are counted apart. The bot writes the
+  and readings after the start are counted apart, as are fills that were
+  never measured (for example while the bot was disarmed) and fills
+  without a fee record (counted at fee 0). The bot writes the
   summary each pass (`measurements_summary.json`); `--status` and the
   private export show it.
 
@@ -2941,10 +2946,12 @@ maker's checkpoint (300 filled contracts or 4 weeks), not before.**
   fills observed before the start averages 0¢ or less, adverse moves are
   eating the edge. Then a separate written plan will test a faster cancel
   loop (checking markets with resting quotes every 1–2 minutes). The
-  30-minute adverse move, the all-fills figures and an event-clustered t
-  are reported with it; at 300 contracts this is a go/no-go reading, not a
-  significance test.
-- **Standing:** if the bot is outbid in more than half of at least 200
-  order checks and the live fill share is below 0.5, other traders are
-  usually ahead of it between passes; a separate written plan would then
-  test re-quoting faster in markets where it rests.
+  30-minute adverse move, the all-fills figures and event-clustered t
+  statistics (contract-weighted, computed in the summary) are reported
+  with it; at 300 contracts this is a go/no-go reading, not a significance
+  test.
+- **Standing:** if the bot is outbid in more than a quarter of at least
+  200 order checks (each check is one 10-minute pass) and the live fill
+  share is below 0.5, other traders often get ahead of it between passes;
+  a separate written plan would then test re-quoting faster in markets
+  where it rests.

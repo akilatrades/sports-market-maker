@@ -1825,3 +1825,41 @@ def test_a_torn_measurement_file_does_not_stop_measuring(world):
     summary = bot.write_measure_summary(state)
     assert summary["markouts"]["10m"]["one_sided_fills"] == 1
     assert json.loads((state / bot.MEASURE_SUMMARY).read_text()) == summary
+
+
+def test_summary_reports_clustered_t_and_gaps():
+    v2 = P.STRATEGY_VERSION
+    journal, marks = [], []
+    for i, move in enumerate((3.0, 5.0, -1.0, 4.0)):
+        cid, oid, fid = f"c{i}", f"o{i}", f"f{i}"
+        journal += [
+            {"event": "intent", "client_order_id": cid, "strategy_version": v2,
+             "ticker": f"KXCS2GAME-E{i}-A", "event_ticker": f"KXCS2GAME-E{i}",
+             "side": "yes", "price_cents": 41, "count": 5},
+            {"event": "accepted", "client_order_id": cid, "order_id": oid},
+            {"event": "fill", "fill_id": fid, "order_id": oid, "count_fp": "5.00",
+             "utc": NOW.isoformat(), **({} if i == 3 else {"fee_cost": "0.00"})},
+        ]  # fmt: skip
+        if i < 3:  # the last fill was never measured
+            marks.append(
+                {
+                    "event": "markout",
+                    "client_order_id": cid,
+                    "fill_id": fid,
+                    "horizon_minutes": 30,
+                    "minutes_before_start": 90,
+                    "contracts": 5,
+                    "adverse_move_cents": move - 4,
+                    "realized_spread_cents": move,
+                    "issue": None,
+                }  # fmt: skip
+            )
+    s = bot.summarize_measurements(journal, marks, NOW + timedelta(hours=2))
+    thirty = s["markouts"]["30m"]
+    assert thirty["one_sided_fills"] == 3
+    assert thirty["one_sided_realized_spread_cents"] == round(7 / 3, 2)
+    assert thirty["one_sided_realized_spread_t"] is not None
+    assert s["fills"] == 4 and s["fills_never_measured"] == 1
+    assert s["fills_without_fee_record"] == 1
+    # Too recent to have been measured: not counted as never measured.
+    assert bot.summarize_measurements(journal, marks, NOW)["fills_never_measured"] == 0

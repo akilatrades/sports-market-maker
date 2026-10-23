@@ -1108,8 +1108,9 @@ def _fills(events, cid_of):
         )
         if count is None or count <= 0 or _utc(e.get("utc")) is None:
             continue
-        fee = _number_or_none(e.get("fee_cost")) or 0.0
-        out.append((e, cid, count, 100 * fee / count))
+        fee = _number_or_none(e.get("fee_cost"))
+        # A fill without a fee record counts as fee 0 (counted in the summary).
+        out.append((e, cid, count, None if fee is None else 100 * fee / count))
     return out
 
 
@@ -1182,6 +1183,7 @@ def record_markouts(state_dir, now, listings):
     for fill, cid, count, fee in fills:
         if fill["fill_id"] not in recent:
             continue
+        fee = fee or 0.0
         intent = intents[cid]
         side, paid = intent.get("side"), int(intent.get("price_cents", 0))
         spread = _number_or_none(intent.get("spread"))
@@ -1262,7 +1264,24 @@ def standing(resting_intents, seen_books):
     return out
 
 
-def summarize_measurements(journal_events, measure_events):
+def _weighted_t(values, weights, clusters):
+    """Weighted mean and its t clustered by ``clusters`` (the formula of
+    research.fill_sizing_replay.clustered_mean_t)."""
+    total = sum(weights)
+    if total <= 0:
+        return None, None
+    mean = sum(w * v for v, w in zip(values, weights)) / total
+    groups = {}
+    for v, w, c in zip(values, weights, clusters):
+        groups[c] = groups.get(c, 0.0) + w * (v - mean)
+    g = len(groups)
+    if g < 2:
+        return round(mean, 2), None
+    se = math.sqrt(sum(x * x for x in groups.values()) * g / (g - 1)) / total
+    return round(mean, 2), (round(mean / se, 2) if se > 0 else None)
+
+
+def summarize_measurements(journal_events, measure_events, now=None):
     """The numbers the research plan reads, for --status and the export.
 
     Markouts by horizon, observed before the start, weighted by contracts:
@@ -1290,6 +1309,7 @@ def summarize_measurements(journal_events, measure_events):
         h: {"all": [], "one_sided": [], "issues": Counter()} for h in MARKOUT_HORIZONS
     }
     stand = Counter()
+    measured = set()
     for e in measure_events:
         if e.get("event") == "standing":
             for key in ("orders_checked", "outbid", "joined", "alone"):
@@ -1300,15 +1320,18 @@ def summarize_measurements(journal_events, measure_events):
             continue
         if e.get("client_order_id") not in intents:
             continue
+        measured.add(e.get("fill_id"))
         if e.get("issue"):
             rows[h]["issues"][e["issue"]] += 1
         elif (e.get("minutes_before_start") or 0) <= 0:
             rows[h]["issues"]["observed_after_start"] += 1
         elif e.get("adverse_move_cents") is not None:
+            intent = intents[e["client_order_id"]]
             row = (
                 float(e["contracts"]),
                 float(e["adverse_move_cents"]),
                 float(e["realized_spread_cents"]),
+                intent.get("event_ticker") or intent.get("ticker"),
             )
             rows[h]["all"].append(row)
             if e.get("fill_id") not in paired:
@@ -1318,17 +1341,31 @@ def summarize_measurements(journal_events, measure_events):
         total = sum(r[0] for r in values)
         return round(sum(r[0] * r[k] for r in values) / total, 2) if total else None
 
+    def t_of(values, k):
+        return _weighted_t(
+            [r[k] for r in values], [r[0] for r in values], [r[3] for r in values]
+        )[1]
+
     markouts = {}
     for h, v in rows.items():
         markouts[f"{h}m"] = {
             "one_sided_fills": len(v["one_sided"]),
             "one_sided_adverse_move_cents": weighted(v["one_sided"], 1),
+            "one_sided_adverse_move_t": t_of(v["one_sided"], 1),
             "one_sided_realized_spread_cents": weighted(v["one_sided"], 2),
+            "one_sided_realized_spread_t": t_of(v["one_sided"], 2),
             "all_fills": len(v["all"]),
             "all_adverse_move_cents": weighted(v["all"], 1),
             "all_realized_spread_cents": weighted(v["all"], 2),
             "not_used": dict(v["issues"]),
         }
+    oldest = max(MARKOUT_HORIZONS) + MARKOUT_LATE_MINUTES + 10
+    unmeasured = [
+        f
+        for f, *_ in fills
+        if f["fill_id"] not in measured
+        and (now is None or (now - _utc(f["utc"])).total_seconds() >= oldest * 60)
+    ]
     checked = stand["orders_checked"]
     return {
         "rules": P.STRATEGY_VERSION,
@@ -1336,9 +1373,13 @@ def summarize_measurements(journal_events, measure_events):
         "outbid_share": round(stand["outbid"] / checked, 3) if checked else None,
         "joined_share": round(stand["joined"] / checked, 3) if checked else None,
         "markouts": markouts,
+        "fills": len(fills),
+        "fills_never_measured": len(unmeasured),
+        "fills_without_fee_record": sum(1 for *_, fee in fills if fee is None),
         "note": "Live measurements, not P&L. Standing: at each pass, before "
         "requotes, the share of resting orders with a better bid ahead of them "
         "(outbid) or another order at their price behind them (joined). "
+        "Standing is a rate per 10-minute pass: an outbid order is re-quoted. "
         "Markouts: cents from the side bought, observed before the start, "
         "weighted by contracts; adverse move < 0 means the price moved against "
         "the fill; realized spread is after the fill's fee.",
@@ -1350,6 +1391,7 @@ def write_measure_summary(state_dir):
     summary = summarize_measurements(
         load_events(state_dir / "journal.jsonl"),
         iter_measurements(state_dir / MEASURE_FILE),
+        datetime.now(UTC),
     )
     target = state_dir / MEASURE_SUMMARY
     temporary = target.with_suffix(".json.tmp")
