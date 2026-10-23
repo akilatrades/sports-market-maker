@@ -1,5 +1,5 @@
 {
-  "run_utc": "2026-10-23T21:14+00:00",
+  "run_utc": "2026-10-23T21:48+00:00",
   "mode": "dry",
   "env": "prod",
   "rule": "no_seller_bookline",
@@ -9,17 +9,17 @@
   "pilot_day_cap": null,
   "pilot_total_cap": null,
   "bankroll": 250.0,
-  "injury_cancels": 0,
-  "candidates": 258,
+  "injury_cancels": 34,
+  "candidates": 214,
   "placed": 36,
-  "rejected": 91,
+  "rejected": 97,
   "rejections": {
-    "6 orders already in game 401909852": 32,
-    "6 orders already in game 401909096": 21,
-    "6 orders already in game 401909847": 17,
-    "6 orders already in game 401909850": 15,
-    "6 orders already in game 401909851": 4,
-    "6 orders already in game 401909849": 2
+    "6 orders already in game 401909852": 31,
+    "6 orders already in game 401909847": 26,
+    "6 orders already in game 401909096": 19,
+    "6 orders already in game 401909850": 17,
+    "6 orders already in game 401909849": 3,
+    "6 orders already in game 401909851": 1
   },
-  "open_exposure": 74.95
+  "open_exposure": 74.84
 }
