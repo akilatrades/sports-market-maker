@@ -168,11 +168,12 @@ directly: that comparison is the main point of the pilot.
    Kalshi's milestone start with the time in the ticker for up to 10
    events: `matched` is good, `later_than_ticker` is the dangerous case.
    `wide_markets_without_event_start` counts wide markets skipped because
-   no start is known. If `later_than_ticker` is above 0, resume anyway: the
-   bot distrusts a milestone type for two days after any such case and
-   then quotes only events whose ticker carries the start (or whose
-   milestone type matched elsewhere). Send the line to whoever maintains
-   the code.
+   no start is known. Preflight's comparisons are a report only: the bot
+   builds its own trust from up to 4 comparisons a pass and distrusts a
+   milestone type for two days after any milestone of that type is later
+   than a ticker's time. If preflight shows `later_than_ticker` above 0,
+   wait a pass, run it again and send the line to whoever maintains the
+   code before resuming.
 3. Resume and watch the next pass:
 
    ```bash

@@ -666,6 +666,13 @@ def live_fill_share(path, orders):
                 _number(e.get("through")) or 0.0,
             )
     filled = {o["order_ref"]: _number(o.get("filled_contracts")) or 0.0 for o in orders}
+    # Each rule version is measured on its own orders: the latest one.
+    latest = max(orders, key=lambda o: o.get("intent_utc", ""), default={})
+    current = latest.get("strategy_version", "")
+    of_version = {
+        o["order_ref"] for o in orders if o.get("strategy_version") == current
+    }
+    windows = {k: v for k, v in windows.items() if k in of_version}
     capacity = got = cautious = 0.0
     scored = traded = filled_when_traded = 0
     for order_ref, (size, through) in windows.items():
@@ -688,6 +695,7 @@ def live_fill_share(path, orders):
         "filled_contracts": round(got, 2),
         "fill_share": round(got / capacity, 3) if capacity else None,
         "cautious_replay_share": round(cautious / capacity, 3) if capacity else None,
+        "strategy_version": current,
         "note": (
             "1.0 = the backtest's first-in-line assumption; cautious_replay_share = "
             "what the flow-share-0.25 replay would have filled on these same windows"

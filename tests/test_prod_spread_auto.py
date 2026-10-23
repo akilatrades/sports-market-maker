@@ -1176,7 +1176,16 @@ def test_fill_share_scores_finished_windows_from_public_prints(world):
 
 
 def test_fill_share_reports_the_cautious_replay_on_the_same_windows():
+    v2 = P.STRATEGY_VERSION
     events = [
+        {"event": "intent", "client_order_id": "a", "strategy_version": v2},
+        {"event": "intent", "client_order_id": "b", "strategy_version": v2},
+        # A v1 order's window is not part of v2's measurement.
+        {
+            "event": "intent",
+            "client_order_id": "old",
+            "strategy_version": "spread-maker-v1",
+        },
         {"event": "accepted", "client_order_id": "a", "order_id": "1"},
         {"event": "accepted", "client_order_id": "b", "order_id": "2"},
         {"event": "fill", "fill_id": "f1", "order_id": "1", "count_fp": "0.49"},
@@ -1186,6 +1195,7 @@ def test_fill_share_reports_the_cautious_replay_on_the_same_windows():
         {"event": "live_window", "client_order_id": "a", "size": 5, "through": 86},
         {"event": "live_window", "client_order_id": "a", "size": 5, "through": 86},
         {"event": "live_window", "client_order_id": "b", "size": 5, "through": 0.4},
+        {"event": "live_window", "client_order_id": "old", "size": 5, "through": 50},
     ]
     share = bot.fill_share(events, windows)
     # One row per order and per fill; a fractional print still counts as
@@ -1626,3 +1636,70 @@ def test_clock_change_times_take_the_earlier_instant():
     assert bot.ticker_start("KXR6GAME-27NOV070130ABCD") == datetime(
         2027, 11, 7, 5, 30, tzinfo=UTC
     )
+
+
+def test_checks_pick_events_still_to_start_and_resting_ones_first():
+    timed = {
+        "KXAHLGAME-26OCT221200AAABBB": NOW,  # 16:00 UTC: already started
+        "KXAHLGAME-26OCT221700CCCDDD": NOW,  # 21:00 UTC: the next to start
+        "KXAHLGAME-26OCT221900EEEFFF": NOW,
+        "KXR6GAME-26OCT221900ABCD": NOW,
+    }
+    first, picks = bot._check_order(timed, NOW, active={"KXAHLGAME-26OCT221900EEEFFF"})
+    assert first == [("KXAHLGAME-26OCT221900EEEFFF", NOW)]
+    assert {e for e, _ in picks} == {
+        "KXAHLGAME-26OCT221700CCCDDD",
+        "KXR6GAME-26OCT221900ABCD",
+    }
+
+
+def test_a_damaged_cache_is_ignored_and_rewritten(tmp_path):
+    listings = {
+        "KXDOTA2GAME": [market()],
+        "KXR6GAME": [_listing("KXR6GAME-26OCT221900ABCD")],
+        "KXCS2GAME": [_listing("KXCS2GAME-26OCT22E0")],
+    }
+    event = TICKER.rsplit("-", 1)[0]
+    bad = {
+        "types": {"esports_game": ["not", "a", "dict"], "": {"matched": {"x": "y"}}},
+        event: {
+            "milestones": [["not a date", "esports_game"]],
+            "checked": NOW.isoformat(),
+        },
+        "KXR6GAME-26OCT221900ABCD": {
+            "milestones": [],
+            "checked": (NOW + timedelta(days=30)).isoformat(),  # from the future
+        },
+        "KXCS2GAME-26OCT22E0": "garbage",
+    }
+    path = tmp_path / "event_starts.json"
+    path.write_text(json.dumps(bad))
+    calls = []
+    starts, counts = bot.prefetch_starts(listings, NOW, tmp_path, _milestones(calls))
+    # Every damaged entry was read again, and trust built from fresh reads.
+    assert sorted(calls) == sorted(
+        [event, "KXR6GAME-26OCT221900ABCD", "KXCS2GAME-26OCT22E0"]
+    )
+    assert counts["milestone_types_trusted"] == ["esports_game"]
+    assert "KXCS2GAME-26OCT22E0" in starts
+    saved = json.loads(path.read_text())
+    assert set(saved["types"]) == {"esports_game"}
+
+
+def test_milestones_without_a_type_are_never_trusted(tmp_path):
+    listings = {
+        "KXDOTA2GAME": [market()],
+        "KXR6GAME": [_listing("KXR6GAME-26OCT221900ABCD")],
+        "KXCS2GAME": [_listing("KXCS2GAME-26OCT22E0")],
+    }
+    starts, counts = bot.prefetch_starts(
+        listings, NOW, tmp_path, _milestones([], kind="")
+    )
+    assert counts["milestone_types_trusted"] == [] and starts == {}
+
+
+def test_recent_events_are_those_with_orders_that_may_rest(world):
+    run(world)
+    event = TICKER.rsplit("-", 1)[0]
+    assert bot.recent_events(world["dir"], NOW + timedelta(minutes=30)) == {event}
+    assert bot.recent_events(world["dir"], NOW + timedelta(minutes=70)) == set()

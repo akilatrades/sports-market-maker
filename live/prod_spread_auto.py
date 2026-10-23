@@ -253,22 +253,66 @@ def event_start(event_ticker, starts=None):
     return min(found) if found else None
 
 
-def _check_order(timed, now):
-    """Events carrying a time, one per series, in an order that rotates every
-    pass, so each pass checks milestones in different series."""
+def _check_order(timed, now, active=frozenset()):
+    """Events carrying a time to compare with milestones: first those that
+    may have quotes resting (``active``), then one per series (the next to
+    start that has not started), in an order that rotates every pass."""
+    soon = now + timedelta(minutes=P.CANCEL_LEAD_MINUTES)
+    upcoming = {e: x for e, x in timed.items() if ticker_start(e) >= soon}
+    first_checks = [(e, upcoming[e]) for e in sorted(upcoming) if e in active]
     first = {}
-    for event, expires in sorted(timed.items()):
+    for event in sorted(upcoming):
+        if event in active:
+            continue
         series = event.split("-", 1)[0]
-        if series not in first or expires < first[series][1]:
-            first[series] = (event, expires)
-    picks = [first[s] for s in sorted(first)]
-    if not picks:
-        return []
-    shift = int(now.timestamp() // 600) % len(picks)
-    return picks[shift:] + picks[:shift]
+        if series not in first or ticker_start(event) < ticker_start(first[series]):
+            first[series] = event
+    picks = [(first[s], upcoming[first[s]]) for s in sorted(first)]
+    if picks:
+        shift = int(now.timestamp() // 600) % len(picks)
+        picks = picks[shift:] + picks[:shift]
+    return first_checks, picks
 
 
-def prefetch_starts(listings, now, state_dir, fetch_milestones, deadline=None):
+def _clean_types(raw, now):
+    """The trust record, keeping only well-formed entries with past times."""
+    out = {}
+    if not isinstance(raw, dict):
+        return out
+    limit = (now + timedelta(minutes=5)).isoformat()
+    for kind, entry in raw.items():
+        if not kind or not isinstance(kind, str) or not isinstance(entry, dict):
+            continue
+        clean = {}
+        for key in ("matched", "late"):
+            seen = entry.get(key)
+            clean[key] = {
+                str(e): t
+                for e, t in (seen.items() if isinstance(seen, dict) else ())
+                if isinstance(t, str) and t <= limit
+            }
+        out[kind] = clean
+    return out
+
+
+def recent_events(state_dir, now):
+    """Events of this bot's orders sent in the last ORDER_LIFETIME_MINUTES
+    (their quotes may still rest). Empty if the journal cannot be read."""
+    since = (now - timedelta(minutes=P.ORDER_LIFETIME_MINUTES)).isoformat()
+    try:
+        events = load_events(state_dir / "journal.jsonl")
+    except Exception:
+        return set()
+    return {
+        e.get("event_ticker")
+        for e in events
+        if e.get("event") == "intent" and str(e.get("utc", "")) >= since
+    } - {None}
+
+
+def prefetch_starts(
+    listings, now, state_dir, fetch_milestones, deadline=None, active=frozenset()
+):
     """Milestone start times for events in the quoting window.
 
     - Events whose ticker carries a time: up to MILESTONE_CHECKS of them
@@ -306,14 +350,32 @@ def prefetch_starts(listings, now, state_dir, fetch_milestones, deadline=None):
             group = timed if ticker_start(event) is not None else candidates
             group[event] = min(group.get(event, expires), expires)
     fresh = (now - timedelta(minutes=P.START_CACHE_MINUTES)).isoformat()
+    future = (now + timedelta(minutes=5)).isoformat()
     starts = {}
     reads = {"done": 0, "failed": 0}
 
+    def cached(hit):
+        """A well-formed, fresh cache entry as a (start, type) list, else None."""
+        if not isinstance(hit, dict):
+            return None
+        checked = str(hit.get("checked", ""))
+        if not fresh <= checked <= future:
+            return None
+        out = []
+        for pair in hit.get("milestones") or []:
+            if not (isinstance(pair, list) and len(pair) == 2):
+                return None
+            start = _utc(pair[0])
+            if start is None:
+                return None
+            out.append((start, str(pair[1] or "")))
+        return out
+
     def read(event, expires):
         """Cached (start, type) list, or None if not available this pass."""
-        hit = cache.get(event)
-        if isinstance(hit, dict) and str(hit.get("checked", "")) >= fresh:
-            return [(_utc(s), t) for s, t in hit.get("milestones") or []]
+        hit = cached(cache.get(event))
+        if hit is not None:
+            return hit
         if reads["done"] >= P.MAX_START_LOOKUPS_PER_PASS or out_of_time(deadline):
             return None
         reads["done"] += 1
@@ -328,13 +390,17 @@ def prefetch_starts(listings, now, state_dir, fetch_milestones, deadline=None):
         }
         return found
 
-    types = cache.get("types") if isinstance(cache.get("types"), dict) else {}
-    for event, expires in _check_order(timed, now)[: P.MILESTONE_CHECKS]:
+    types = _clean_types(cache.get("types"), now)
+    first_checks, picks = _check_order(timed, now, active)
+    checks = first_checks[: P.MILESTONE_CHECKS] + picks[: P.MILESTONE_CHECKS]
+    for event, expires in checks:
         found = read(event, expires)
         if not found:
             continue
         written = ticker_start(event)
         for start, kind in found:
+            if not kind:
+                continue  # a milestone without a type is never trusted
             gap = (start - written).total_seconds() / 60  # > 0: milestone later
             entry = types.setdefault(kind, {"matched": {}, "late": {}})
             if gap > P.MILESTONE_LATE_MINUTES:
@@ -345,16 +411,13 @@ def prefetch_starts(listings, now, state_dir, fetch_milestones, deadline=None):
         if earliest < written:
             starts[event] = earliest
     since = (now - timedelta(days=P.MILESTONE_TRUST_DAYS)).isoformat()
-    for kind in list(types):
-        entry = types[kind] if isinstance(types[kind], dict) else {}
-        types[kind] = {
-            key: {
-                e: t
-                for e, t in (entry.get(key) or {}).items()
-                if isinstance(entry.get(key), dict) and str(t) >= since
-            }
+    types = {
+        kind: {
+            key: {e: t for e, t in entry[key].items() if t >= since}
             for key in ("matched", "late")
         }
+        for kind, entry in types.items()
+    }
     trusted = {
         kind
         for kind, entry in types.items()
@@ -362,7 +425,7 @@ def prefetch_starts(listings, now, state_dir, fetch_milestones, deadline=None):
     }
     for event, expires in sorted(candidates.items()) if trusted else ():
         found = read(event, expires)
-        usable = [start for start, kind in found or () if kind in trusted]
+        usable = [start for start, kind in found or () if kind and kind in trusted]
         if usable:
             starts[event] = min(usable)
     old = (now - timedelta(days=2)).isoformat()
@@ -910,10 +973,19 @@ def fill_share(journal_events, shadow_events):
             ) + float(raw)
         except (TypeError, ValueError):
             continue
+    version = {
+        e.get("client_order_id"): e.get("strategy_version")
+        for e in journal_events
+        if e.get("event") == "intent"
+    }
     windows = {}
     for e in shadow_events:
-        if e.get("event") == "live_window" and e.get("client_order_id"):
-            windows[e["client_order_id"]] = e  # one per order
+        cid = e.get("client_order_id")
+        if e.get("event") != "live_window" or not cid:
+            continue
+        if version.get(cid) != P.STRATEGY_VERSION:
+            continue  # each rule version is measured on its own orders
+        windows[cid] = e  # one per order
     capacity = got = cautious = 0.0
     scored = traded_through = filled_when_traded = 0
     for cid, e in windows.items():
@@ -1816,7 +1888,7 @@ def preflight(client, env, now, state_dir, public):
     }
 
 
-def milestone_check(public, now, limit=10):
+def milestone_check(public, now, limit=10, deadline=None):
     """Compare Kalshi's milestone starts with the time written in event
     tickers, for up to ``limit`` events in the window (one per series first):
     a check, before arming, that milestones give the scheduled start. Counts
@@ -1832,11 +1904,13 @@ def milestone_check(public, now, limit=10):
                 continue
             if 0 <= (expires - now).total_seconds() / 3600 <= P.WINDOW_HOURS[1]:
                 timed[event] = min(timed.get(event, expires), expires)
-    picks = _check_order(timed, now)
+    _, picks = _check_order(timed, now)
     picks += [p for p in sorted(timed.items()) if p not in picks]
     out = Counter()
     late, kinds = [], Counter()
     for event, expires in picks[:limit]:
+        if out_of_time(deadline):
+            break
         out["events_compared"] += 1
         try:
             found = milestone_starts(event, expires, public["fetch_milestones"])
@@ -1933,6 +2007,7 @@ def with_starts(public, now, state_dir, report=None):
             state_dir,
             public["fetch_milestones"],
             deadline=PROCESS_START + P.START_LOOKUP_SECONDS,
+            active=recent_events(state_dir, now),
         )
     except Exception as error:
         starts, counts = {}, {"error": type(error).__name__}
@@ -1974,7 +2049,9 @@ def main():
                 public = with_starts(public, datetime.now(UTC), state_dir)
                 try:
                     public["milestone_check"] = milestone_check(
-                        public, datetime.now(UTC)
+                        public,
+                        datetime.now(UTC),
+                        deadline=PROCESS_START + 2 * P.START_LOOKUP_SECONDS,
                     )
                 except Exception as error:
                     public["milestone_check"] = {"error": type(error).__name__}
