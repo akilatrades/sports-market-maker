@@ -20,15 +20,16 @@ TICKER = "KXDOTA2GAME-26OCT221800AB-A"
 # Tests that check the live limits themselves, rather than logic at a size.
 REAL_LIMIT_TESTS = {
     "test_pilot_limits_are_the_owner_approved_ones",
-    "test_v3_quotes_two_contracts_a_side_and_caps_net_at_two",
+    "test_v3_quotes_five_contracts_a_side_and_caps_net_at_five",
 }
 
 
 @pytest.fixture(autouse=True)
 def logic_sized_at_five(request, monkeypatch):
-    """Most tests exercise inventory, pairing and partial-fill logic with v2's
-    5-contract orders; that logic does not depend on size. The live v3 values
-    (2 and 2) are pinned in REAL_LIMIT_TESTS."""
+    """Inventory, pairing and partial-fill tests are written for 5-contract
+    orders (v2's size, and v3's again since "5 contracts and higher caps");
+    they pin it so a later size change does not silently change them. The
+    live values are pinned in REAL_LIMIT_TESTS."""
     if request.node.originalname not in REAL_LIMIT_TESTS:
         monkeypatch.setattr(P, "CONTRACTS", 5)
         monkeypatch.setattr(P, "MAX_NET_PER_MARKET", 5)
@@ -1087,11 +1088,12 @@ def test_shadow_scores_five_contracts():
 def test_pilot_limits_are_the_owner_approved_ones():
     # RESEARCH_LOG.md, 2026-10-22, "5 contracts per order" (old: 1, 1, $25,
     # $5, $15), then "Spread maker v3" (2026-10-23; v2: 5 and 5, 4-7 hours,
-    # 30 reads, 300 submissions a day) and its "changes after review" (first
-    # draft: one_off_milestone trusted, 35 median offsets). Change these only
-    # through a new, recorded amendment.
+    # 30 reads, 300 submissions a day), its "changes after review" (first
+    # draft: one_off_milestone trusted, 35 median offsets) and "5 contracts
+    # and higher caps" (first v3 draft: 2 and 2, $60 open, -$10 a day).
+    # Change these only through a new, recorded amendment.
     assert P.STRATEGY_VERSION == "spread-maker-v3-24h-starts"
-    assert (P.CONTRACTS, P.MAX_NET_PER_MARKET) == (2, 2)
+    assert (P.CONTRACTS, P.MAX_NET_PER_MARKET) == (5, 5)
     assert P.MAX_START_LOOKUPS_PER_PASS == 60
     assert P.TRUSTED_MILESTONE_TYPES == {
         "baseball_game",
@@ -1121,8 +1123,8 @@ def test_pilot_limits_are_the_owner_approved_ones():
     assert P.OFFSET_SUSPEND_DAYS == 2
     assert not P.NO_START_SERIES & set(P.SERIES_START_OFFSET_HOURS)
     assert (P.MAX_ACTIVE_COST, P.DAILY_LOSS_STOP, P.CUMULATIVE_LOSS_STOP) == (
-        60,
-        10,
+        120,
+        15,
         40,
     )
     assert (P.MAX_ORDERS_PER_PASS, P.MAX_SUBMISSIONS_PER_DAY) == (20, 1500)
@@ -1992,17 +1994,17 @@ def test_summary_reports_clustered_t_and_gaps():
     assert bot.summarize_measurements(journal, marks, NOW)["fills_never_measured"] == 0
 
 
-def test_v3_quotes_two_contracts_a_side_and_caps_net_at_two(world):
+def test_v3_quotes_five_contracts_a_side_and_caps_net_at_five(world):
     report, _ = run(world)
     assert {(o.side, o.count) for o in world["exchange"].placed} == {
-        ("yes", 2),
-        ("no", 2),
+        ("yes", 5),
+        ("no", 5),
     }
-    # Two YES contracts held: no more YES room; NO may still offset them.
+    # Five YES contracts held: no more YES room; NO may still offset them.
     quotes = bot.desired_quotes(
-        [{"ticker": TICKER, "yes_price": 41, "no_price": 49}], {TICKER: 2.0}
+        [{"ticker": TICKER, "yes_price": 41, "no_price": 49}], {TICKER: 5.0}
     )
-    assert quotes == {(TICKER, "no"): (49, 2)}
+    assert quotes == {(TICKER, "no"): (49, 5)}
 
 
 # ------------------------------------------- v3: changes after review
@@ -2297,24 +2299,36 @@ def test_an_offset_dated_quote_is_cancelled_20_minutes_before_the_start(world):
     assert report["canceled_event_start"] == 2 and world["exchange"].resting == []
 
 
-def test_v3_replaces_resting_five_contract_v2_orders(world, monkeypatch):
+def test_resting_v2_orders_are_kept_then_refreshed_as_v3(world, monkeypatch):
+    world["quotes"][TICKER]["expected_expiration_time"] = (
+        NOW + timedelta(hours=8)
+    ).isoformat()  # still in the window an hour later
     monkeypatch.setattr(P, "STRATEGY_VERSION", "spread-maker-v2-pregame")
     run(world)  # v2: 5 contracts a side
-    assert {o.count for o in world["exchange"].placed} == {5}
     monkeypatch.setattr(P, "STRATEGY_VERSION", "spread-maker-v3-24h-starts")
+    # Same price and size under v3: the v2 quotes keep their queue place...
+    report, _ = run(world, NOW + timedelta(minutes=10))
+    assert report.get("canceled", 0) == 0 and len(world["exchange"].placed) == 2
+    # ...until their hourly refresh, when v3 quotes replace them.
+    report, _ = run(world, NOW + timedelta(minutes=61))
+    assert report["canceled"] == 2 and len(world["exchange"].placed) == 4
+    versions = [e["strategy_version"] for e in journal(world) if e["event"] == "intent"]
+    assert (
+        versions == ["spread-maker-v2-pregame"] * 2 + ["spread-maker-v3-24h-starts"] * 2
+    )
+
+
+def test_smaller_caps_replace_larger_resting_orders(world, monkeypatch):
+    run(world)  # 5 contracts a side
     monkeypatch.setattr(P, "CONTRACTS", 2)
     monkeypatch.setattr(P, "MAX_NET_PER_MARKET", 2)
     report, _ = run(world, NOW + timedelta(minutes=10))
-    # Five resting contracts no longer fit the 2-contract cap: both go, and
+    # Five resting contracts no longer fit a 2-contract cap: both go, and
     # 2-contract quotes replace them at the same prices.
     assert report["canceled"] == 2
     assert [(o.side, o.count) for o in world["exchange"].placed[2:]] == [
         ("yes", 2),
         ("no", 2),
-    ]
-    assert sorted(o["remaining_count_fp"] for o in world["exchange"].resting) == [
-        "2.00",
-        "2.00",
     ]
 
 

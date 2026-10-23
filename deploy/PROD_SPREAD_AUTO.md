@@ -2,7 +2,7 @@
 
 `live/prod_spread_auto.py`, strategy version `spread-maker-v3-24h-starts`
 (v1 from 22 October, v2 and v3 from 23 October). It posts a
-buy order of up to 2 contracts on **both sides** of markets where the gap between the best
+buy order of up to 5 contracts on **both sides** of markets where the gap between the best
 bid and the best offer (the *spread*) is 8¢ or more, one cent better than
 anyone else on each side. When both orders fill, the bot owns a YES and a NO
 contract that together pay exactly $1 and cost less than $1: a locked profit.
@@ -65,11 +65,11 @@ profit forecast.
   expected expiration, which for college football is 6 hours after kickoff,
   so on 22 October it quoted into a live game.
 - **Quote:** YES bid at best YES bid + 1¢, NO bid at best NO bid + 1¢, up to
-  2 contracts each, post-only (never takes liquidity), expiring on the exchange
+  5 contracts each, post-only (never takes liquidity), expiring on the exchange
   after 65 minutes. Prices come from the public order book with the bot's own
   orders removed, so it never prices off itself.
 - **Inventory:** held plus resting contracts on one side of a market never
-  exceed 2. Holding 1 YES, its YES order is for 1; holding 2, it stops
+  exceed 5. Holding 2 YES, its YES order is for 3; holding 5, it stops
   quoting YES there (NO quotes, which close YES contracts, continue). A
   partly filled order keeps its place in the queue and is not topped up.
 - **Every 10 minutes** (minute 3, 13, 23, ...). Each pass also writes the
@@ -88,19 +88,19 @@ directly: that comparison is the main point of the pilot.
 
 | Limit | Spread bot | Notes |
 |---|---:|---|
-| Contracts per order | up to 2 | 1, then 5 (22 October), then 2 in v3 (23 October) |
-| Net contracts per market and side | 2 | 1, then 5, then 2 in v3 |
-| Open exposure (resting orders + held contracts, at cost) | $60 | Was $25 |
+| Contracts per order | up to 5 | 1, then 5 (22 October); the first v3 draft had 2 |
+| Net contracts per market and side | 5 | 1, then 5; the first v3 draft had 2 |
+| Open exposure (resting orders + held contracts, at cost) | $120 | $25, then $60 until v3 |
 | Orders per pass / per New York day | 20 / 1,500 | Cancelled orders still count; 300 a day before v3 (each quote is re-posted at least hourly) |
-| Own realized-loss stop, per day / total | −$10 / −$40 | Was −$5 / −$15; cancels its quotes and stops |
+| Own realized-loss stop, per day / total | −$15 / −$40 | −$5 / −$15, then −$10 / −$40 until v3; cancels its quotes and stops |
 | Account realized-loss stop, per day / total | −$20 / −$100 | Shared with NBA and NFL; total was −$60 before 23 October |
 
 - The NBA and NFL caps ($165 open, $180 a day, $5,050 lifetime) are
   unchanged and do not include spread orders. All three bots together can
-  have at most $225 open (NBA $150, NFL $15, spread $60) on the $350 account.
+  have at most $285 open (NBA $150, NFL $15, spread $120) on the $350 account.
 - The account stops count realized losses of all three bots, so spread
-  losses can stop NBA and NFL for the day, and the reverse. A −$10 spread
-  day leaves NBA only $10 of the shared −$20 daily stop.
+  losses can stop NBA and NFL for the day, and the reverse. A −$15 spread
+  day leaves NBA only $5 of the shared −$20 daily stop.
 - **How spread P&L is counted.** Kalshi nets YES against NO, so when both
   quotes fill the pair closes at once and never appears in a settlement
   record. The bot (and the account stop) therefore count its P&L from its
@@ -112,7 +112,7 @@ directly: that comparison is the main point of the pilot.
   The journal keeps its own copy of every fill and settlement, so the count
   does not depend on how long Kalshi keeps listing old fills.
 - Worst plausible case: the $40 own stop is reached and every open position
-  then loses: about $40 + $60 = $100. In the (simulated, in-sample) sizing
+  then loses: about $40 + $120 = $160 (v2: $100). In the (simulated, in-sample) sizing
   test the worst day was −$16 and the worst drawdown −$18.
 
 ## Safety rules (same as the other bots)
@@ -132,7 +132,7 @@ directly: that comparison is the main point of the pilot.
 - A quote that turns out to have filled, fully or partly, just as the bot
   cancels it (the exchange cancels fewer contracts than were resting) is not
   replaced in that pass, and the possibly filled contracts count toward the
-  $60 cap, so the cap per market side (2 contracts) holds.
+  $120 cap, so the cap per market side (5 contracts) holds.
 - If a market's order book cannot be read, the bot leaves its quotes there
   alone (they expire on the exchange) and adds nothing new in that market.
 - No new order after 110 seconds from the start of a pass (waiting for the
@@ -222,11 +222,11 @@ directly: that comparison is the main point of the pilot.
 ## Switching to v3
 
 Merge the v3 pull request and run **Deploy funded worker code →
-DEPLOY_CODE**. Nothing else: on its first v3 pass the bot cancels the
-5-contract v2 quotes still resting (they no longer fit the 2-contract cap)
-and re-posts them at 2 contracts. Then watch `--status` and the pass report:
-`event_starts` should show events dated by a series gap, and
-`skip_daily_cap` should stay at 0. v2 measurements still pending when v3
+DEPLOY_CODE**. Nothing else: v2 quotes still resting have the same size
+and keep their place until their hourly refresh, when v3 quotes replace
+them. Then watch `--status` and the pass report: `event_starts` should show
+events dated by a series gap, and `skip_daily_cap` should stay at 0
+(`skip_active_cap` above 0 means the $120 cap is binding). v2 measurements still pending when v3
 starts are not completed: each rule version is judged on its own orders.
 
 ## After an "Ambiguous spread order" halt

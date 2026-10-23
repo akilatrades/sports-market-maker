@@ -170,8 +170,8 @@ Every pass, every bot
   until tip (NFL: 10 minutes to 2 hours before kickoff). Since NBA rules v5
   (21 October) an NBA order needs 0–15¢ of estimated edge after fees (NFL
   keeps 3¢); since v6 (23 October) it is three contracts.
-- **Spread orders.** Up to 2 contracts per order (5 before v3), at most 2
-  held or resting per market side, $60 open, and the bot's own −$10 daily
+- **Spread orders.** Up to 5 contracts per order, at most 5 held or
+  resting per market side, $120 open, and the bot's own −$15 daily
   and −$40 total loss stops. Pregame only since 23 October: on its first
   live night the first version quoted a college football game after
   kickoff, so now a quote needs a known start. Since v3 it quotes from 24

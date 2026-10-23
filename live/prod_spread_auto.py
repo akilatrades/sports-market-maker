@@ -5,7 +5,7 @@ Plans: RESEARCH_LOG.md, "2026-10-22: Spread maker pilot" and, for v3,
 "2026-10-23: Spread maker v3" with its "changes after review". For open
 markets in the allowed series whose expected expiration is 4 to 24 hours
 away and whose spread is 8c or more, quote a YES bid one cent above the best
-YES bid and a NO bid one cent above the best NO bid, up to 2 contracts each
+YES bid and a NO bid one cent above the best NO bid, up to 5 contracts each
 (live/spread_policy.py), post-only, expiring after 65 minutes. Only events
 with a known start (ticker time, validated Kalshi milestone or per-series
 offset; the earliest wins) are quoted, a new quote needs the start 85 minutes

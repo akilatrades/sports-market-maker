@@ -11,8 +11,8 @@ from pathlib import Path
 # its window counts from Kalshi's expected expiration, not the start.
 # v3 (2026-10-23, RESEARCH_LOG.md "Spread maker v3"): quotes from 24 hours
 # before expiry, more start times (validated milestone types, per-series
-# offsets), 2 contracts an order; tightened after review the same day
-# ("Spread maker v3: changes after review").
+# offsets), tightened after two reviews the same day, then 5 contracts an
+# order with a $120 open cap ("5 contracts and higher caps").
 STRATEGY_VERSION = "spread-maker-v3-24h-starts"
 # The shared-risk cohort journal lives in STATE; the owner creates ARM_MARKER
 # to allow live orders.
@@ -24,11 +24,12 @@ WINDOW_HOURS = (4.0, 24.0)  # hours before the market's expected expiration (v2:
 PRICE_RANGE_CENTS = (2, 98)  # both of our quotes must lie inside this range
 # Sizes and stops: owner's 5-contract amendment (RESEARCH_LOG.md, 2026-10-22,
 # "5 contracts per order"; old values 1 contract, 1 net, $25, $5, $15), then
-# v3's smaller orders across more markets (2026-10-23; v2: 5 and 5).
-CONTRACTS = 2  # largest order; it shrinks to stay inside MAX_NET_PER_MARKET
-MAX_NET_PER_MARKET = 2  # held plus resting on one side of a market, contracts
-MAX_ACTIVE_COST = 60.00  # resting orders plus held contracts at cost, dollars
-DAILY_LOSS_STOP = 10.00  # own realized loss, New York day, dollars
+# v3 "5 contracts and higher caps" (2026-10-23; the first v3 draft had 2 and
+# 2, $60 and $10; v2: 5, 5, $60, $10).
+CONTRACTS = 5  # largest order; it shrinks to stay inside MAX_NET_PER_MARKET
+MAX_NET_PER_MARKET = 5  # held plus resting on one side of a market, contracts
+MAX_ACTIVE_COST = 120.00  # resting orders plus held contracts at cost, dollars
+DAILY_LOSS_STOP = 15.00  # own realized loss, New York day, dollars
 CUMULATIVE_LOSS_STOP = 40.00  # own realized loss since launch, dollars
 MAX_ORDERS_PER_PASS = 20
 # v3: 1,500 (owner, 2026-10-23; v1-v2: 300). Each quote is re-posted at

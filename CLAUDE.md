@@ -17,7 +17,7 @@ file is the short version for an AI helping them.
 - Three bots trade one small real-money account from a private server: NBA
   and NFL (live since 19–20 October 2026) and the spread maker (live since
   22 October; rules v3 from 23 October: pregame only, quoting from 24
-  hours before expiry, 2 contracts a side), which rests YES and NO bids one
+  hours before expiry, 5 contracts a side), which rests YES and NO bids one
   cent inside 8¢+ spreads in 61 other series. **You cannot
   see the server, the account or its private journals**; only the public
   files here. Questions

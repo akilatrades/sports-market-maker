@@ -3394,3 +3394,47 @@ Replay of the revised rule, 24→4 hours: 7,453 pregame fills (6.5× v2's
 1,152), +8.96¢ a contract (t 11.79), halves 10.06¢ / 5.94¢, 6,363 fills at
 flow share 0.25; added fills +8.73¢ (t 10.75). Estimates checked against
 3,798 ticker starts: 1 would have cancelled after the real start.
+
+## 2026-10-23: Spread maker v3: 5 contracts and higher caps (plan amendment)
+
+*The owner's choice, 23 October, before any v3 order: "5 per order, raise
+caps", after an exploratory size replay. Written before the code change.*
+
+**Correction.** The v3 replays above count every hourly quote's fill at
+full size, so a market could hold more than the cap per side. With the net
+cap enforced (a market side's held plus resting contracts never above it),
+over the scan's 339 days (simulated, in-sample, first in line; flow 0.25 in
+brackets):
+
+| Rule | $ a day | Worst day | Worst drawdown | Hours over $60 / $120 open |
+|---|---|---|---|---|
+| v2: 4–7 h, ticker starts, 5 / net 5 | 1.11 (0.86) | −10.11 | −17.00 | — |
+| v3: 2 / net 2 | 2.09 (1.60) | −3.89 | −7.00 | 3.1% / — |
+| v3: 2 / net 4 | 2.81 (2.16) | −4.79 | −8.06 | 4.4% / — |
+| v3: 3 / net 3 | 2.97 (2.20) | −6.97 | −10.74 | 7.2% / — |
+| v3: 3 / net 6 | 4.00 (2.99) | −8.32 | −12.00 | 10.8% / — |
+| v3: 5 / net 5 | 4.63 (3.26) | −12.56 | −18.17 | 20.6% / 4.5% |
+| v3: 10 / net 10 | 8.22 (5.38) | −26.21 | −37.79 | — |
+
+Seven size variants (plus the uncapped count), so the chosen one is
+somewhat flattered. Open exposure is a rough estimate (resting quotes plus
+net positions at the last price, held to expiry), and the replay does not
+apply the open cap, so profits above it are overstated where it binds.
+Scratch scripts, not committed.
+
+**Changes (old → new).**
+- Contracts per order: 2 → **5**; net per market side: 2 → **5** (v2's
+  values). Why: profit scales with contracts at the same ~9¢ edge.
+- Open exposure cap: $60 → **$120**. Why: at 5 contracts, $60 would bind in
+  about a fifth of quoting hours; $120 in about 4.5%. With NBA ($150) and
+  NFL ($15), the three bots can have $285 open.
+- Own daily loss stop: −$10 → **−$15**. Why: the worst replay day at 5/5 was
+  −$12.56 (no day below −$15), so −$10 would stop the bot on ordinary bad
+  days. A −$15 spread day leaves NBA $5 of the shared −$20 daily stop.
+- Unchanged: own total stop −$40 (worst replay drawdown −$18), account-wide
+  stops (−$20 a day, −$100 total), 1,500 orders a day, 20 a pass, 8¢ spreads.
+- Worst plausible case rises from about $40 + $60 = $100 to $40 + $120 =
+  $160: the total stop reached, then every open position lost.
+
+**Checkpoint, unchanged:** v3 is judged on its own orders, 300 filled
+contracts or 4 weeks.
