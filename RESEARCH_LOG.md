@@ -3117,6 +3117,25 @@ lowest-edge orders are dropped first: fewer separate orders (1,619 against
 of 20 cautious draws). These are the season's first weeks, which were weak
 (2.2¢ against 3.9¢ over the whole season); fills are optimistic.
 
+**Larger sizes, whole season (exploratory, simulated, in-sample; 4 rule
+sets × 2 flow shares, no lifetime allowance, −$20/−$100 stops).** Asked by
+the owner ("can we push it even more?"); first in line / cautious median of
+20 draws:
+
+| Setup | Season P&L | First 30 nights | ¢ per contract | Worst night | Max drawdown | Daily stops |
+|---|---:|---:|---:|---:|---:|---:|
+| 3 contracts, $50/game, $150/night (v6) | $954 / $847 | $13 / $9 | 3.9 | −$24 | −$70 / −$79 | 2 |
+| 5 contracts, $75/game, $150/night | $955 / $833 | $35 / $31 | 3.6 | −$35 | −$97 / −$99 | 8 |
+| 5 contracts, $75/game, $250/night | $1,469 / $1,285 | $45 / $41 | 3.9 | −$39 | −$90 / −$106 | 10–11 |
+| 10 contracts, $150/game, $250/night | $1,244 / $1,224 | $33 / $35 | 3.1 | −$66 | −$143 / −$147 | 21–24 |
+
+The nightly cap, not the order size, limits profit: 5 contracts at $150 a
+night earns no more than 3, and 10 contracts earns less than 5 because the
+larger orders crowd out the best ones. 5 contracts at $250 a night is the
+next step, but its drawdowns reach the −$100 stop and $250 a night plus the
+other bots' $75 nearly fills the $350 account; it needs more capital or
+live evidence first. Not adopted.
+
 **Spread maker minimum spread, 8¢ → 6¢: not adopted (exploratory replay,
 simulated, in-sample, first in line, 1 contract; 2 variants plus one slice).**
 `research/spread_pregame_split.py` with the v2 rule (start known from the
