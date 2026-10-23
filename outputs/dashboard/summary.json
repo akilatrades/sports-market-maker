@@ -1,5 +1,5 @@
 {
- "updated_utc": "2026-10-23T15:32+00:00",
+ "updated_utc": "2026-10-23T16:05+00:00",
  "paper": {
   "ledgers": [
    {
@@ -791,22 +791,22 @@
   "account_total_loss_stop": 100.0,
   "daily_loss_stop": 20.0,
   "total_loss_stop": 100.0,
-  "odds_snapshot_utc": "2026-10-23T15:15+00:00",
+  "odds_snapshot_utc": "2026-10-23T15:57+00:00",
   "trade_prints_through": "2026-10-22",
   "spread": {
-   "rules": "spread-maker-v2-pregame",
+   "rules": "spread-maker-v3-24h-starts",
    "contracts_per_order": 5,
    "max_net_per_market_side": 5,
    "min_spread_cents": 8,
    "hours_before_expiration": [
     4.0,
-    7.0
+    24.0
    ],
    "min_lead_minutes": 85,
    "cancel_lead_minutes": 20,
-   "series": 64,
-   "max_open": 60.0,
-   "daily_loss_stop": 10.0,
+   "series": 61,
+   "max_open": 120.0,
+   "daily_loss_stop": 15.0,
    "total_loss_stop": 40.0,
    "order_lifetime_minutes": 65
   }
