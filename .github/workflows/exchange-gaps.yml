@@ -1,12 +1,12 @@
 name: Exchange price gaps (research)
-# Read-only research: one Odds API snapshot of US exchanges vs sportsbooks.
-# Spends Odds API credits (capped in the script); writes aggregates only.
+# Read-only research (RESEARCH_LOG.md, 2026-10-23, Novig and ProphetX forward
+# study): hourly from 15:15 to 02:15 UTC until 1 November 2026. Spends Odds
+# API credits (capped in the script); commits aggregates only. Per-line state
+# stays in an Actions cache, never in the repository.
 on:
-  push:
-    branches: [research/exchange-gaps]
-    paths:
-      - "research/exchange_gaps.py"
-      - ".github/workflows/exchange-gaps.yml"
+  schedule:
+    - cron: "15 15-23 * * *"
+    - cron: "15 0-2 * * *"
   workflow_dispatch:
 permissions:
   contents: write
@@ -15,7 +15,7 @@ concurrency:
   cancel-in-progress: false
 jobs:
   snapshot:
-    if: github.actor == 'akilatrades'
+    if: github.repository == 'akilatrades/sports-market-maker' && (github.event_name == 'schedule' || github.actor == 'akilatrades')
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
@@ -26,11 +26,23 @@ jobs:
         with:
           python-version: "3.12"
       - run: pip install -r requirements.txt
+      - uses: actions/cache/restore@v4
+        with:
+          path: state/exchange_gaps
+          key: exchange-gaps-${{ github.run_id }}
+          restore-keys: exchange-gaps-
       - run: python -m research.exchange_gaps
-      - name: Commit aggregates to the research branch
+      - uses: actions/cache/save@v4
+        if: always()
+        with:
+          path: state/exchange_gaps
+          key: exchange-gaps-${{ github.run_id }}
+      - name: Commit aggregates
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add outputs/exchange_gaps
-          git commit -m "Exchange gap snapshot (aggregates only)" || exit 0
-          git push origin HEAD:${{ github.ref_name }}
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m "Exchange gap study (aggregates only)"
+          git pull --rebase -X theirs
+          git push

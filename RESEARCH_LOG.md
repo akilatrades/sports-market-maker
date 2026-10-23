@@ -3487,3 +3487,30 @@ consensus probability minus the exchange's price for that side (no fees).
 - **Cross-exchange locks are rare and small**: of 958 NBA lines on two or
   more exchanges, 41 cost under $1 for both sides, 4 by more than 1 point,
   the best 2.3 points; NFL 24, 5 and 2.0. Most vanish after fees.
+
+### Forward study: do the flagged prices beat the close? (plan, written before any data)
+
+**Question.** When a Novig or ProphetX price is 2+ points better than the
+sportsbook consensus, is it really a good price? Measured by closing line
+value (CLV): the consensus probability of the same side shortly before the
+game, minus the price that would have been paid. Results are never needed:
+CLV is the standard, faster test, and a price that beats the close beats it
+whatever the score.
+
+**Method** (`research/exchange_gaps.py`, workflow "Exchange price gaps",
+hourly 15:15-02:15 UTC from 24 October to 1 November 2026). Runs at 15:15
+and 19:15 UTC flag every exchange side 2+ points better than the consensus of
+two or more sportsbooks, for games starting more than 75 minutes later.
+Every run takes one closing snapshot of each game starting in the next 75
+minutes and scores that game's flags. Reported by exchange and edge bucket
+(2-5 points, 5+): flags, games, edge at the flag, mean CLV, share of flags
+with positive CLV. Credits: about 15,000 a month on the 100K plan; a run stops
+below 20,000 remaining. Per-line state stays in an Actions cache; only
+aggregates are committed.
+
+**Bar** (one look, on 1 November): an exchange and bucket passes if mean CLV
+is above +1 point with a game-clustered t of 2 or more, over at least 30
+games. Variants: 2 exchanges x 2 buckets = 4, so a single pass at t ≈ 2 is
+weak evidence. Passing means the prices were good, not that enough money sat
+behind them: the feed shows no depth. A pass leads to a small manual test of
+fills on the passing exchange, nothing automatic.
