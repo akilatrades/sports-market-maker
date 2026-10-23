@@ -392,7 +392,9 @@ def prefetch_starts(
 
     types = _clean_types(cache.get("types"), now)
     first_checks, picks = _check_order(timed, now, active)
-    checks = first_checks[: P.MILESTONE_CHECKS] + picks[: P.MILESTONE_CHECKS]
+    # Every event that may have quotes resting (the read budget bounds it),
+    # then a rotating few for trust.
+    checks = first_checks + picks[: P.MILESTONE_CHECKS]
     for event, expires in checks:
         found = read(event, expires)
         if not found:
