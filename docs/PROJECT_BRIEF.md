@@ -85,8 +85,9 @@ contract, quotes during the game +2.7¢). Details in the
 
 ## What is being measured now
 
-- **Fixed checkpoints, written before launch.** NBA v5: 1,900 settled fills,
-  the $2,000 allowance or 30 days, whichever comes first; positive with a
+- **Fixed checkpoints, written before launch.** NBA v5 and v6 together
+  (v6 trades 3 contracts an order from 23 October): 1,900 settled filled
+  orders, the $5,000 allowance or 30 days, whichever comes first; positive with a
   game-clustered t of 2 or more counts as evidence of an edge, −1 or less
   means stop and review. At live fill rates 30 days likely brings 500 to
   1,100 fills (expected t about 1 to 1.5 for a 3¢ edge), so "keep

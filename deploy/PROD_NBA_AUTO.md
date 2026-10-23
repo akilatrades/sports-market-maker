@@ -1,7 +1,7 @@
 # NBA production worker
 
 The funded NBA bot: `live/prod_nba_auto.py`, strategy version
-`nba-no-v5-one-contract-breadth`. It runs on the DigitalOcean
+`nba-no-v6-three-contracts` (v5's rules at 3 contracts an order). It runs on the DigitalOcean
 server as a systemd timer, shares one Kalshi account with the NFL bot, and
 is a bounded experiment, not a profitability guarantee. Background: the
 [research audit](../docs/NBA_AND_MARKET_AUDIT_2026-10-18.md). Code merged on
@@ -49,21 +49,21 @@ before each order.
 ## Execution policy
 
 - Points, rebounds, assists and threes; passive NO entries only. Up to three new orders per scan, each charged to every limit before the next is considered, and one lifetime submission per ticker. No market orders or automatic exits.
-- Current limits (v5, owner-approved on October 21, 2026, to collect fills faster on a $250 account; see RESEARCH_LOG.md "NBA rules v5"). Amounts include the 10% reserve:
+- Current limits (v6, owner-approved on October 23, 2026: v5's rules at 3 contracts an order; see RESEARCH_LOG.md "NBA rules v6"; v5 values in brackets). Amounts include the 10% reserve:
 
   | Limit | NBA | Shared with NFL |
   |---|---:|---:|
-  | Contracts per order | 1 | — |
+  | Contracts per order | 3 (1) | — |
   | Cost per order | $4 | — |
   | Orders per game | 40 | — |
-  | Per game | $25 | — |
+  | Per game | $50 ($25) | — |
   | Per team, per New York day | $25 | — |
   | New orders per scan | 3 | — |
   | Open (active) orders and positions | $150 | $165 |
   | Submitted per New York day | $150 | $180 |
-  | Submitted, lifetime | $2,000 | $2,050 |
+  | Submitted, lifetime | $5,000 ($2,000) | $5,050 ($2,050) |
   | Realized-loss stop, per day | −$20 | −$20 |
-  | Realized-loss stop, cumulative | −$60 | −$60 |
+  | Realized-loss stop, cumulative | −$100 (−$60) | −$100 (−$60), all three bots |
 
   The shared stops count settled NBA and NFL markets together, so losses from either bot stop both. Settlements arrive after games end, so a day's losses mostly block the next day's orders.
 
@@ -92,6 +92,10 @@ Each scan must finish inside the server's 4-minute limit (`TimeoutStartSec=240`)
 - records each resting order's queue position at most every 10 minutes.
 
 `last_scan.json` reports `pass_seconds` and `orders_placed_this_pass`. If `pass_seconds` regularly approaches 150, investigate before the next deploy.
+
+## Deploying v6, and rolling back
+
+The same rules as for v5 below apply to v6: deploy when no NBA order is resting (any v5 order still resting is left to expire and new v6 orders wait for it), and before rolling back to v5 with v6 orders resting, run **STOP_AND_CANCEL** first, because v5 does not recognise v6.
 
 ## Deploying v5, and rolling back
 
@@ -122,4 +126,4 @@ The private account dashboard shows one market's journal at a time, chosen by `A
 
 Actual fills are identified by exchange ID and record cost, fees and maker/taker status. Resting orders have repeated queue observations. For each actual fill, the price movement 5, 15 and 60 minutes later is recorded ("markouts": the midpoint and the price you could actually sell at); missing windows are marked missing. Markouts are not realized profit. Settlements normalize dollar costs/fees and cent revenue, using append-only corrections.
 
-For v5 the review checkpoint is when the $2,000 allowance runs out or 1,900 settled fills, whichever comes first, and in any case at 30 days (RESEARCH_LOG.md, "NBA rules v5"). In the 2025–26 replay (`python -m research.fill_sizing_replay`) the v5 limits reach about 1,900 filled orders over about 51 game nights, when the $2,000 lifetime allowance runs out; the bot then stops placing new orders until the owner raises it. (The v4 limits reached about 480 over 37 nights.) Fewer live fills than the replay would mean fewer filled orders by that point. No automatic reset or capital increase is implemented. Count independent games as well as fill records.
+For v5 and v6, judged together, the review checkpoint is 1,900 settled filled orders or the $5,000 allowance, whichever comes first, and in any case 30 days after the first v5 order (RESEARCH_LOG.md, "NBA rules v6"; for v5 alone it was $2,000). In the 2025–26 replay (`python -m research.fill_sizing_replay`) the v5 limits reach about 1,900 filled orders over about 51 game nights, when the $2,000 lifetime allowance runs out; the bot then stops placing new orders until the owner raises it. (The v4 limits reached about 480 over 37 nights.) Fewer live fills than the replay would mean fewer filled orders by that point. No automatic reset or capital increase is implemented. Count independent games as well as fill records.

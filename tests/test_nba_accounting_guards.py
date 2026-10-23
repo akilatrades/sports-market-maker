@@ -116,18 +116,19 @@ def test_realized_loss_daily_stop_and_deduplicated_snapshot():
 
 def test_realized_loss_cumulative_stop_and_ignore_nfl():
     yesterday = NOW - timedelta(days=1)
-    assert nba.MAX_REALIZED_CUMULATIVE_LOSS == 60
-    settlements = [settled(f"KXNBA-{i}", -6, yesterday) for i in range(10)]
+    # -$100 since NBA rules v6 (RESEARCH_LOG.md, 2026-10-23; was -$60).
+    assert nba.MAX_REALIZED_CUMULATIVE_LOSS == 100
+    settlements = [settled(f"KXNBA-{i}", -10, yesterday) for i in range(10)]
     settlements.append(settled("KXNFL-UNRELATED", -500))
     report = nba.nba_realized_pnl(
         settlements, {s["market_ticker"] for s in settlements[:-1]}, NOW
     )
     assert report["daily_realized_pnl_dollars"] == 0
-    assert report["cumulative_realized_pnl_dollars"] == -60
+    assert report["cumulative_realized_pnl_dollars"] == -100
     assert report["loss_stop"] is True
     fewer = settlements[:9] + settlements[-1:]
     report = nba.nba_realized_pnl(fewer, {s["market_ticker"] for s in fewer[:-1]}, NOW)
-    assert report["cumulative_realized_pnl_dollars"] == -54
+    assert report["cumulative_realized_pnl_dollars"] == -90
     assert report["loss_stop"] is False
 
 

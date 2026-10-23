@@ -79,7 +79,7 @@ def test_sports_share_one_combined_lifetime_daily_and_active_budget():
     active = {"client-nfl-a", "client-nba-b"}
     baseline = shared.room(owner, active, 3, NOW)
     assert all(baseline.values())
-    assert shared.LIMITS == {"lifetime": 2050.0, "daily": 180.0, "active": 165.0}
+    assert shared.LIMITS == {"lifetime": 5050.0, "daily": 180.0, "active": 165.0}
     expensive = {"nfl": [*pair("nfl", "a", 90.0)], "nba": pair("nba", "b", 60.0)}
     owner = shared.ownership(expensive)
     checks = shared.room(owner, active, 2, NOW)
@@ -96,7 +96,9 @@ def test_cumulative_spend_never_resets_when_an_order_settles():
     from live.nfl_policy import reserve
 
     assert sum(reserve(x["cost"]) for x in owner["attempts"]) == 4.4
-    assert not shared.room(owner, none_active, 1900, NOW)["shared_lifetime"]
+    assert not shared.room(owner, none_active, shared.LIMITS["lifetime"], NOW)[
+        "shared_lifetime"
+    ]
 
 
 def test_daily_risk_uses_new_york_rollover():
@@ -109,7 +111,9 @@ def test_daily_risk_uses_new_york_rollover():
     )
     # The older trade remains in lifetime exposure even on a new date.
     assert shared.room(owner, set(), 10, NOW)["shared_daily"]
-    assert not shared.room(owner, set(), 1900, NOW)["shared_lifetime"]
+    assert not shared.room(owner, set(), shared.LIMITS["lifetime"], NOW)[
+        "shared_lifetime"
+    ]
 
 
 def test_missing_private_journal_is_not_an_empty_cohort(monkeypatch, tmp_path):
@@ -242,12 +246,15 @@ def test_account_loss_stop_counts_nba_and_nfl_together():
 def test_account_cumulative_stop_spans_days():
     owned = {f"KXNBA-{i}" for i in range(10)}
     earlier = NOW - timedelta(days=2)
-    rows = [_settled(f"KXNBA-{i}", -6, earlier) for i in range(10)]
+    # The total stop is -$100 (RESEARCH_LOG.md, 2026-10-23; it was -$60).
+    rows = [_settled(f"KXNBA-{i}", -10, earlier) for i in range(10)]
     report = shared.account_realized_pnl(rows, owned, NOW)
     assert report["daily_realized_pnl_dollars"] == 0
-    assert report["cumulative_realized_pnl_dollars"] == -60
+    assert report["cumulative_realized_pnl_dollars"] == -100
     assert report["loss_stop"] is True
     assert shared.account_realized_pnl(rows[:9], owned, NOW)["loss_stop"] is False
+    sixty = [_settled(f"KXNBA-{i}", -6, earlier) for i in range(10)]
+    assert shared.account_realized_pnl(sixty, owned, NOW)["loss_stop"] is False
 
 
 def test_account_pnl_fails_closed_on_incomplete_settlement():

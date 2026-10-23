@@ -1060,7 +1060,9 @@ def test_pilot_limits_are_the_owner_approved_ones():
     )
     assert (P.MAX_ORDERS_PER_PASS, P.MAX_SUBMISSIONS_PER_DAY) == (20, 300)
     assert P.MIN_SPREAD_CENTS == 8 and P.WINDOW_HOURS == (4.0, 7.0)
-    assert shared.ACCOUNT_LOSS_STOPS == {"daily": 20.0, "cumulative": 60.0}
+    # Account-wide total stop -$60 -> -$100 on 2026-10-23 ("NBA rules v6");
+    # the spread maker's own limits above are unchanged, 8c spreads included.
+    assert shared.ACCOUNT_LOSS_STOPS == {"daily": 20.0, "cumulative": 100.0}
 
 
 def test_a_partial_fill_just_before_a_requote_cancel_never_breaks_the_cap(world):

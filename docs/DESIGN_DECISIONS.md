@@ -142,7 +142,7 @@ fees ate it.*
 - **How.** Confirmatory tests get a research-log entry with the question,
   method and pass/fail bar before they run; everything else is labelled
   exploratory, and the number of variants is reported. Live checkpoints are
-  fixed in advance (NBA v5: 1,900 settled fills, the $2,000 allowance or 30
+  fixed in advance (NBA v5 and v6: 1,900 settled filled orders, the $5,000 allowance or 30
   days; spread maker: 300 filled contracts or 4 weeks).
   `python -m research.live_checkpoint --data <private export>` grades each
   bot against its own pre-written verdict rules.

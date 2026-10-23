@@ -93,22 +93,22 @@ code is right.
 
 | Limit | NBA ([`prod_nba_auto.py`](../live/prod_nba_auto.py)) | NFL ([`nfl_policy.py`](../live/nfl_policy.py)) |
 |---|---:|---:|
-| Contracts per order | 1 | 5 |
+| Contracts per order | 3 | 5 |
 | Cost per order | $4 | $3 |
 | Orders per game | 40 | 2 |
-| Cost per game | $25 | $3 |
+| Cost per game | $50 | $3 |
 | Cost per team | $25 per day | $3 (lifetime) |
 | Open orders at once | $150 | $15 |
 | New orders per day | $150 | $30 |
 | New orders per scan | 3 | 1 |
 | Edge needed to post | 0¢ to 15¢ | 3¢ to 15¢ |
 | Price range | 5–95¢ | 10–90¢ |
-| Lifetime orders placed | $2,000 | $50 |
+| Lifetime orders placed | $5,000 | $50 |
 
 NBA and NFL together ([`shared_account_risk.py`](../live/shared_account_risk.py)):
-at most $165 open, $180 placed per day and $2,050 placed in total. All
+at most $165 open, $180 placed per day and $5,050 placed in total. All
 three bots, including the spread maker, stop for the day after $20 of
-realized account losses and for good after $60 (the spread maker's losses
+realized account losses and for good after $100 (the spread maker's losses
 are counted from its own fills). Dollar
 limits include a 10% cushion for fees. An edge above 15¢ is treated as a
 likely data error, not a bargain.

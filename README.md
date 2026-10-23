@@ -168,8 +168,8 @@ Every pass, every bot
 - **Prop orders.** Post-only NO orders (they rest on the book, never trade
   immediately) one cent inside the spread, 2–6 hours before tip-off, resting
   until tip (NFL: 10 minutes to 2 hours before kickoff). Since NBA rules v5
-  (21 October) an NBA order is one contract and needs 0–15¢ of estimated
-  edge after fees (NFL keeps 3¢).
+  (21 October) an NBA order needs 0–15¢ of estimated edge after fees (NFL
+  keeps 3¢); since v6 (23 October) it is three contracts.
 - **Spread orders.** Up to 5 contracts per order, at most 5 held or resting
   per market side, $60 open, and the bot's own −$10 daily and −$40 total
   loss stops. Pregame only since 23 October: on its first live night the
@@ -179,7 +179,7 @@ Every pass, every bot
   rule from public trade prints, so live and simulated fills can be
   compared on the same markets. [Pilot notes](deploy/PROD_SPREAD_AUTO.md)
 - **Risk.** Per-order, per-game, per-team, daily and lifetime caps; one
-  account-wide loss stop (−$20 a day, −$60 total) over all three bots;
+  account-wide loss stop (−$20 a day, −$100 total) over all three bots;
   injury and roster checks; a kill switch limited to the bots' own orders.
   [Current limits](docs/START_HERE.md#current-live-limits)
 - **Measurement.** Queue position, live fill share, realized P&L per order,

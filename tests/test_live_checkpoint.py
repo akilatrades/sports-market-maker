@@ -270,3 +270,32 @@ def test_spread_v2_is_judged_on_its_own_orders(tmp_path):
     }
     text = cp.report(tmp_path, NOW)
     assert "earlier rules (spread-maker-v1)" in text and "not judged" in text
+
+
+def test_nba_v5_and_v6_are_judged_together_counting_orders(tmp_path):
+    nba_export(tmp_path, games=2, days_ago=3)
+    for kind in ("orders", "fills"):
+        path = tmp_path / f"data/nba/{kind}/2026-10-22.csv"
+        rows = path.read_text().splitlines()
+        if kind == "orders":
+            rows[1] = rows[1].replace(cp.NBA_VERSION, cp.NBA_VERSIONS[0])
+            rows[2] = rows[2].replace(",1,", ",3,")  # a v6 order filled 3 contracts
+        else:
+            rows[2] = rows[2].replace(",1", ",3")
+        path.write_text("\n".join(rows) + "\n")
+    assert cp.NBA_VERSIONS == (
+        "nba-no-v5-one-contract-breadth",
+        "nba-no-v6-three-contracts",
+    )
+    assert cp.NBA_BARS == {
+        "settled_fills": 1900,
+        "allowance_dollars": 5000.0,
+        "days": 30,
+    }
+    both = cp.no_bot(tmp_path / "data/nba", NOW, cp.NBA_VERSIONS)
+    # Six filled orders, eight contracts: the bar counts orders.
+    assert both["settled_fills"] == 6 and both["settled_contracts"] == 8
+    v5 = cp.no_bot(tmp_path / "data/nba", NOW, cp.NBA_VERSIONS[0])
+    assert v5["orders"] == 1 and v5["settled_fills"] == 1
+    text = cp.report(tmp_path, NOW)
+    assert "judged together" in text and "nba-no-v6-three-contracts: 5 orders" in text

@@ -9,11 +9,11 @@ Three bots trade one small real-money Kalshi account from a private
 DigitalOcean server. They share one set of account-wide caps and loss stops
 ([`shared_account_risk.py`](../live/shared_account_risk.py)): across all
 three, trading stops for the day after $20 of realized losses and for good
-after $60.
+after $100 (−$60 before 23 October).
 
 | Bot | Rules | Live since | Details |
 |---|---|---|---|
-| NBA player props | `nba-no-v5-one-contract-breadth`: one-contract post-only NO orders, one cent inside the spread, 2–6 hours before tip-off, resting until tip-off, 0–15¢ of estimated edge | 20 October (v5 from 21 October) | [PROD_NBA_AUTO.md](../deploy/PROD_NBA_AUTO.md) |
+| NBA player props | `nba-no-v6-three-contracts`: three-contract post-only NO orders, one cent inside the spread, 2–6 hours before tip-off, resting until tip-off, 0–15¢ of estimated edge | 20 October (v5 from 21 October, v6 once deployed after 23 October) | [PROD_NBA_AUTO.md](../deploy/PROD_NBA_AUTO.md) |
 | NFL receiving yards | `nfl-no-v3-baseline-quote`: the same idea with smaller limits | 19 October | [PROD_NFL_AUTO.md](../deploy/PROD_NFL_AUTO.md) |
 | Spread maker | `spread-maker-v2-pregame`: YES and NO bids one cent inside 8¢+ spreads in 64 series, only before a known event start, up to 5 contracts, $60 open | 22 October (v2 from 23 October) | [PROD_SPREAD_AUTO.md](../deploy/PROD_SPREAD_AUTO.md) |
 
@@ -42,7 +42,8 @@ it says nothing yet about profitability.
 
 Each bot is judged at a checkpoint written before it went live
 (`python -m research.live_checkpoint --data <private export>`):
-- **NBA v5:** 1,900 settled fills, the $2,000 allowance or 30 days.
+- **NBA v5 and v6 together:** 1,900 settled filled orders, the $5,000
+  allowance or 30 days from the first v5 order.
 - **Spread maker v2:** 300 filled contracts or 4 weeks, on its own orders.
 
 ## What is still unknown
@@ -70,6 +71,11 @@ Each bot is judged at a checkpoint written before it went live
   quoted a college football game after kickoff, because its window counted
   from Kalshi's expected expiration. I paused it; v2 quotes only before a
   known start (PR #80), after three rounds of independent review.
+- **23 October:** at the owner's request, NBA rules v6 trade 3 contracts an
+  order (was 1), with $50 per game (was $25) and a $5,000 allowance (was
+  $2,000); NBA's own and the account-wide total loss stops move from −$60
+  to −$100. A replay showed 6–7¢ spreads earned nothing pregame, so the
+  spread maker stays at 8¢ ([research log](../RESEARCH_LOG.md)).
 
 ## Where to look
 

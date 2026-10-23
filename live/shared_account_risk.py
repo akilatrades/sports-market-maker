@@ -22,14 +22,16 @@ from kalshi.trading import TradingError
 from live.reconciled_attempts import rejected_client_ids
 
 ROOT = Path("/home/trader")
-# Cross-sport caps: NBA v5 ($2,000 lifetime, $150 daily, $150 active) plus NFL's own
-# unchanged limits ($50 lifetime, $30 daily, $15 active).
-LIMITS = {"lifetime": 2050.0, "daily": 180.0, "active": 165.0}
+# Cross-sport caps: NBA v6 ($5,000 lifetime, $150 daily, $150 active) plus NFL's own
+# unchanged limits ($50 lifetime, $30 daily, $15 active). Lifetime was $2,050
+# before 2026-10-23 (RESEARCH_LOG.md, "NBA rules v6").
+LIMITS = {"lifetime": 5050.0, "daily": 180.0, "active": 165.0}
 LOCAL_DAY = ZoneInfo("America/New_York")
 # Realized-loss stops for the WHOLE account (NBA + NFL + spread maker settled
 # markets together; the spread maker joined on 2026-10-22, sizes unchanged).
-# Each bot's own limits still apply on top of these.
-ACCOUNT_LOSS_STOPS = {"daily": 20.0, "cumulative": 60.0}
+# Each bot's own limits still apply on top of these. The total stop was -$60
+# before 2026-10-23 (RESEARCH_LOG.md, "NBA rules v6").
+ACCOUNT_LOSS_STOPS = {"daily": 20.0, "cumulative": 100.0}
 REQUIRED_COHORTS = ("nfl", "nba")
 SPREAD = "spread"
 CAPPED_COHORTS = ("nfl", "nba")  # cohorts counted against LIMITS

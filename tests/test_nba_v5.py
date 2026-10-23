@@ -1,4 +1,6 @@
-"""NBA v5: one contract, 0c edge floor, 5-95c, up to three orders per scan."""
+"""NBA v5 rules, kept by v6 at three contracts an order: 0c edge floor, 5-95c,
+up to three orders per scan. Caps below are sized from the bot's real order
+size, so these tests hold at any MAX_CONTRACTS."""
 
 import json
 from datetime import timedelta
@@ -42,9 +44,17 @@ class Client:
         return 5.0
 
     def place(self, order):
-        assert order.post_only and order.count == 1
+        # Full size, or smaller when a cap leaves less room (never larger).
+        assert order.post_only and 1 <= order.count <= nba.MAX_CONTRACTS
         self.posts.append(order)
         return {"order_id": f"oid-{len(self.posts)}"}
+
+
+def two_orders():
+    """Dollars that fit two of the test's full-size 51c orders and less than one
+    more contract, so a third order cannot shrink to fit either."""
+    full = nba.reserve(round(nba.MAX_CONTRACTS * 0.51, 2))
+    return round(2 * full + 0.5 * nba.reserve(0.51), 2)
 
 
 def several(n):
@@ -80,7 +90,7 @@ def test_one_scan_places_at_most_three_orders(tmp_path, no_fees):
     accepted = [e for e in events if e["event"] == "accepted"]
     assert len(intents) == len(accepted) == 3
     assert {e["strategy_version"] for e in intents} == {nba.STRATEGY_VERSION}
-    assert all(e["count"] == 1 for e in intents)
+    assert all(e["count"] == nba.MAX_CONTRACTS for e in intents)
     report = json.loads((tmp_path / "last_scan.json").read_text())
     assert report["decision"] == "accepted" and report["attempts"] == 3
 
@@ -88,8 +98,8 @@ def test_one_scan_places_at_most_three_orders(tmp_path, no_fees):
 def test_caps_are_rechecked_after_each_order_in_the_same_scan(
     tmp_path, no_fees, monkeypatch
 ):
-    # Each 51c order reserves $0.561; a $1.20 game cap fits two, not three.
-    monkeypatch.setattr(nba, "MAX_GAME_COST", 1.20)
+    # A game cap sized for two of these orders fits two, not three.
+    monkeypatch.setattr(nba, "MAX_GAME_COST", two_orders())
     client = Client()
     journal = tmp_path / "journal.jsonl"
     assert nba.pass_once(client, ARMED, several(5), NOW, journal)
@@ -99,7 +109,7 @@ def test_caps_are_rechecked_after_each_order_in_the_same_scan(
 
 
 def test_cash_is_rechecked_after_each_order_in_the_same_scan(tmp_path, no_fees):
-    client = Client(balance=1.20)  # enough reserve for two orders
+    client = Client(balance=two_orders())  # enough reserve for two orders
     journal = tmp_path / "journal.jsonl"
     assert nba.pass_once(client, ARMED, several(5), NOW, journal)
     assert len(client.posts) == 2
@@ -153,7 +163,7 @@ def test_new_price_band_is_5_to_95_cents():
     row["tip_utc"] = pd.Timestamp(NOW + timedelta(hours=4))
     for price in (0.05, 0.95):
         order, _ = nba.order_from_row(row, NOW, no_price=price)
-        assert order.count == 1
+        assert order.count == nba.MAX_CONTRACTS
     for price in (0.04, 0.96):
         with pytest.raises(TradingError, match="5c–95c"):
             nba.order_from_row(row, NOW, no_price=price)
@@ -270,17 +280,17 @@ def test_ambiguous_second_order_halts_this_and_the_next_pass(tmp_path, no_fees):
 @pytest.mark.parametrize(
     "name, value, reason",
     [
-        ("MAX_TEAM_COST", 1.20, "risk_nba_per_team_submissions"),
-        ("MAX_DAILY_COST", 1.20, "risk_nba_daily_submissions"),
-        ("MAX_ACTIVE_COST", 1.20, "risk_nba_active_exposure"),
-        ("MAX_GROSS_COST", 1.20, "risk_nba_lifetime_submissions"),
+        ("MAX_TEAM_COST", "two orders", "risk_nba_per_team_submissions"),
+        ("MAX_DAILY_COST", "two orders", "risk_nba_daily_submissions"),
+        ("MAX_ACTIVE_COST", "two orders", "risk_nba_active_exposure"),
+        ("MAX_GROSS_COST", "two orders", "risk_nba_lifetime_submissions"),
         ("MAX_GAME_ORDERS", 2, "risk_nba_game_order_count"),
     ],
 )
 def test_every_nba_cap_binds_within_one_pass(
     tmp_path, no_fees, monkeypatch, name, value, reason
 ):
-    monkeypatch.setattr(nba, name, value)
+    monkeypatch.setattr(nba, name, two_orders() if value == "two orders" else value)
     client = Client()
     assert nba.pass_once(client, ARMED, several(5), NOW, tmp_path / "journal.jsonl")
     assert len(client.posts) == 2
@@ -309,7 +319,7 @@ def test_account_wide_caps_bind_within_one_pass(tmp_path, no_fees, monkeypatch):
     monkeypatch.setattr(shared, "dual_mode", lambda env: True)
     monkeypatch.setattr(shared, "state_for", fake_state_for)
     for key in ("active", "daily", "lifetime"):
-        monkeypatch.setitem(shared.LIMITS, key, 1.20)
+        monkeypatch.setitem(shared.LIMITS, key, two_orders())
         journal.write_text("")
         client = Client()
         assert nba.pass_once(client, ARMED, several(5), NOW, journal)
@@ -480,3 +490,14 @@ def test_scan_skips_recently_observed_resting_queue(
     assert nba.pass_once(client, ARMED, frame, NOW, journal)
     assert client.cancels == [] and len(client.posts) == 3
     assert client.queue_reads.count("oid-v5") == resting_reads
+
+
+def test_an_order_shrinks_to_the_room_a_cap_leaves(tmp_path, no_fees, monkeypatch):
+    # Room for two full orders plus one contract: the third order goes out at
+    # one contract, the fourth finds no room.
+    full = nba.reserve(round(nba.MAX_CONTRACTS * 0.51, 2))
+    monkeypatch.setattr(nba, "MAX_DAILY_COST", round(2 * full + nba.reserve(0.51), 2))
+    monkeypatch.setattr(nba, "MAX_NEW_ORDERS_PER_PASS", 5)
+    client = Client()
+    assert nba.pass_once(client, ARMED, several(5), NOW, tmp_path / "journal.jsonl")
+    assert [o.count for o in client.posts] == [nba.MAX_CONTRACTS] * 2 + [1]
