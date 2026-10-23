@@ -228,4 +228,12 @@ the account lock).
 - **Public dashboard:** a "Spread maker / realized P&L" card (aggregate only)
   from the live P&L feed. After a release that changes the feed, restart it:
   `sudo systemctl restart market-maker-live-pnl.service`.
+- **Queue position and markouts** (measurement only, from 23 October):
+  after each live pass the bot reads how many contracts rest ahead of up to
+  10 of its open orders (signed reads, outside the account lock), and
+  records how the price moved 10, 30 and 60 minutes after each fill, from
+  the side bought. `--status` prints both; the private export adds
+  `first_queue_ahead`/`last_queue_ahead` per order, `markout_*m_cents` per
+  fill and `markets.spread.queue_and_markouts` in the summary. How the
+  readings will be used is written in `RESEARCH_LOG.md` (2026-10-23).
 - On the server: `--status`. Never mix live and shadow results.

@@ -1703,3 +1703,108 @@ def test_recent_events_are_those_with_orders_that_may_rest(world):
     event = TICKER.rsplit("-", 1)[0]
     assert bot.recent_events(world["dir"], NOW + timedelta(minutes=30)) == {event}
     assert bot.recent_events(world["dir"], NOW + timedelta(minutes=70)) == set()
+
+
+# ------------------------------------- queue position and markouts (measurement)
+
+
+def _listing_at(bid, ask):
+    return {"KXDOTA2GAME": [{**market(), "yes_bid_dollars": f"{bid:.2f}",
+                             "yes_ask_dollars": f"{ask:.2f}"}]}  # fmt: skip
+
+
+def test_markouts_are_read_from_the_side_bought(world):
+    run(world)  # YES 5 @ 41c (order 0) and NO 5 @ 49c (order 1)
+    fill_placed(world, 0, 5)  # YES fills at NOW + 5 min
+    fill_placed(world, 1, 5)  # NO fills at NOW + 5 min
+    run(world, NOW + timedelta(minutes=10))  # copies the fills into the journal
+    state = world["dir"]
+    listing = _listing_at(0.44, 0.52)  # midpoint 48c
+    assert bot.record_markouts(state, NOW + timedelta(minutes=14), listing) == 0
+    assert bot.record_markouts(state, NOW + timedelta(minutes=20), listing) == 2
+    marks = [
+        e for e in bot.load_events(state / "shadow.jsonl") if e["event"] == "markout"
+    ]
+    by_side = {m["side"]: m for m in marks}
+    # YES bought at 41: midpoint 48 is +7, the YES bid 44 is +3.
+    assert (
+        by_side["yes"]["mid_move_cents"] == 7 and by_side["yes"]["exit_move_cents"] == 3
+    )
+    # NO bought at 49: the NO midpoint 52 is +3, the NO bid 48 is -1.
+    assert (
+        by_side["no"]["mid_move_cents"] == 3 and by_side["no"]["exit_move_cents"] == -1
+    )
+    assert {m["horizon_minutes"] for m in marks} == {10}
+    # Each horizon once; a late pass records the miss instead of a price.
+    assert bot.record_markouts(state, NOW + timedelta(minutes=20), listing) == 0
+    assert bot.record_markouts(state, NOW + timedelta(minutes=40), {}) == 2
+    late = [
+        e for e in bot.load_events(state / "shadow.jsonl") if e["event"] == "markout"
+    ]
+    assert {e["issue"] for e in late if e["horizon_minutes"] == 30} == {
+        "quote_unavailable"
+    }
+    assert bot.record_markouts(state, NOW + timedelta(minutes=80), listing) == 2
+    sixty = [e for e in bot.load_events(state / "shadow.jsonl")
+             if e["event"] == "markout" and e["horizon_minutes"] == 60]  # fmt: skip
+    assert {e["issue"] for e in sixty} == {"missed_observation_window"}
+    summary = bot.queue_markout_summary(
+        bot.load_events(state / "journal.jsonl"),
+        bot.load_events(state / "shadow.jsonl"),
+    )
+    assert summary["markouts"]["10m"] == {
+        "fills": 2,
+        "mid_move_cents": 5.0,
+        "exit_move_cents": 1.0,
+    }
+
+
+class QueueReader:
+    def __init__(self, answers):
+        self.answers, self.calls = answers, []
+
+    def queue_position(self, order_id):
+        self.calls.append(order_id)
+        answer = self.answers.get(order_id, 0.0)
+        if isinstance(answer, Exception):
+            raise answer
+        return answer
+
+
+def test_queue_readings_cover_orders_that_may_still_rest(world, monkeypatch):
+    run(world)  # oid-1 (YES) and oid-2 (NO)
+    fill_placed(world, 0, 5)  # oid-1 fully filled: no reading needed
+    run(world, NOW + timedelta(minutes=10))
+    reader = QueueReader({"oid-2": 3.0})
+    state = world["dir"]
+    assert bot.record_queue(state, NOW + timedelta(minutes=10), reader) == 1
+    assert reader.calls == ["oid-2"]
+    reader = QueueReader({"oid-2": TradingError("GET queue -> HTTP 429 Too Many")})
+    bot.record_queue(state, NOW + timedelta(minutes=20), reader)
+    readings = [
+        e for e in bot.load_events(state / "shadow.jsonl") if e["event"] == "queue"
+    ]
+    assert [(r["ahead"], r["issue"]) for r in readings] == [
+        (3.0, None),
+        (None, "HTTP_429"),
+    ]
+    # Older than an order's life, or past the deadline: no reads.
+    assert bot.record_queue(state, NOW + timedelta(minutes=70), QueueReader({})) == 0
+    assert (
+        bot.record_queue(
+            state,
+            NOW + timedelta(minutes=30),
+            QueueReader({}),
+            deadline=time.monotonic() - 1,
+        )
+        == 0
+    )
+    monkeypatch.setattr(bot, "MAX_QUEUE_READS_PER_PASS", 0)
+    assert bot.record_queue(state, NOW + timedelta(minutes=30), QueueReader({})) == 0
+    summary = bot.queue_markout_summary(
+        bot.load_events(state / "journal.jsonl"),
+        bot.load_events(state / "shadow.jsonl"),
+    )
+    assert summary["orders_with_queue_reading"] == 1
+    assert summary["first_in_line_share"] == 0.0
+    assert summary["median_ahead_at_first_reading"] == 3.0

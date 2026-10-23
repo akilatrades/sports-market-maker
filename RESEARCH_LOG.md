@@ -2882,3 +2882,45 @@ first order, with the same bars. v1's 27 orders and 13.4 filled contracts
 are reported apart and not judged; the shadow ledger's simulated summary
 still pools both versions. Exports gain each order's recorded start and
 minutes before it.
+
+## 2026-10-23: Spread maker queue position and markouts (measurement plan)
+
+*Written before the code and before any reading. The owner asked for it on
+23 October after asking how the bot could be first in line and what its
+10-minute update cycle costs. Measurement only: no change to the rules,
+limits or pass/fail bars.*
+
+**Questions.** (1) Is the spread maker usually first in line at its price?
+(2) Are its fills picked off: does the price move against a fill soon after
+it, as it would if stale quotes are being hit by better-informed traders?
+
+**Method.**
+- **Queue position.** After each live pass, outside the account lock, a
+  signed read of Kalshi's queue position (contracts resting ahead at the
+  same price) for this bot's orders that may still rest, newest first, at
+  most 10 a pass and within the scoring time limit. Each reading is stored
+  with the order; a failed read is stored as an issue, never retried in
+  the same pass.
+- **Markouts.** For each fill, the market's price 10, 30 and 60 minutes
+  later, read at the first pass after each horizon (at most 12 minutes
+  late, else recorded as missed) from the public listing taken at that
+  pass. Recorded from the side bought: the midpoint move (midpoint now
+  minus the price paid) and the exit move (best bid on that side now minus
+  the price paid), in cents; positive is good for the bot. Fees are not
+  included. The listing includes the bot's own resting quotes, which sit
+  one cent inside each side, so the midpoint is close to the market's.
+- Both are stored in the bot's measurement file (beside the live fill
+  share), shown by `--status`, and exported (per order: first and last
+  queue reading; per fill: the three markouts; summary averages), counted
+  for v2 orders only.
+
+**How the readings will be used (decided now).**
+- **Picked off:** if, over at least 100 one-sided fills, the average
+  30-minute midpoint markout is −3¢ or worse with an event-clustered t of
+  −2 or below, stale quotes are being hit. Then a separate written plan
+  will test a faster cancel loop (checking markets with resting quotes
+  every 1–2 minutes). Otherwise nothing changes.
+- **Queue:** if fewer than half of first readings show nothing ahead, the
+  bot is usually not first in line; together with a live fill share below
+  0.5 that would argue for keeping still-best orders longer instead of
+  refreshing them hourly, again under its own written plan.

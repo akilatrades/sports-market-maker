@@ -797,3 +797,40 @@ def test_live_fill_share_joins_scored_windows_with_live_fills(tmp_path):
     assert (
         summary["markets"]["spread"]["live_fill_share"]["first_in_line_contracts"] == 5
     )
+
+
+def test_spread_queue_and_markouts_are_exported_by_reference(tmp_path):
+    journals = {
+        "nba": write(tmp_path / "nba.jsonl", NBA_EVENTS),
+        "nfl": write(tmp_path / "nfl.jsonl", NFL_EVENTS),
+        "spread": write(tmp_path / "spread.jsonl", SPREAD_EVENTS),
+    }
+    measured = [
+        {"event": "queue", "client_order_id": "smm-spread-a", "order_id": "exchange-spread-a",
+         "ahead": 0.0, "utc": "2026-10-22T20:10:00+00:00"},
+        {"event": "queue", "client_order_id": "smm-spread-a", "order_id": "exchange-spread-a",
+         "ahead": 4.0, "utc": "2026-10-22T20:20:00+00:00"},
+        {"event": "markout", "fill_id": "exchange-fill-a", "client_order_id": "smm-spread-a",
+         "horizon_minutes": 10, "mid_move_cents": -2.5, "exit_move_cents": -6},
+        {"event": "markout", "fill_id": "exchange-fill-a", "client_order_id": "smm-spread-a",
+         "horizon_minutes": 30, "mid_move_cents": None, "exit_move_cents": None,
+         "issue": "quote_unavailable"},
+    ]  # fmt: skip
+    shadow = write(tmp_path / "shadow.jsonl", SHADOW_EVENTS + measured)
+    files, summary, _ = export.build_files(journals, shadow=shadow)
+    orders = rows(files["data/spread/orders/2026-10-22.csv"])
+    a = next(o for o in orders if o["order_ref"] == export.ref("smm-spread-a"))
+    assert (a["first_queue_ahead"], a["last_queue_ahead"]) == ("0.0", "4.0")
+    fills = rows(files["data/spread/fills/2026-10-22.csv"])
+    f = next(x for x in fills if x["fill_ref"] == export.ref("exchange-fill-a"))
+    assert f["markout_10m_cents"] == "-2.5" and f["markout_30m_cents"] == ""
+    qm = summary["markets"]["spread"]["queue_and_markouts"]
+    assert qm["orders_with_queue_reading"] == 1 and qm["first_in_line_share"] == 1.0
+    assert qm["markouts"]["10m"] == {
+        "fills": 1,
+        "mid_move_cents": -2.5,
+        "exit_move_cents": -6.0,
+    }
+    assert qm["markouts"]["30m"]["fills"] == 0
+    # Exchange ids never reach the export.
+    assert "exchange-spread-a" not in "".join(files.values())

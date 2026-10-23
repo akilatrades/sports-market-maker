@@ -426,6 +426,8 @@ SPREAD_ORDER_COLUMNS = [
     *[f for f in SPREAD_INTENT_FIELDS],
     "hours_before_expiration",
     "minutes_before_start",
+    "first_queue_ahead",  # contracts ahead at the same price (measurement)
+    "last_queue_ahead",
     "status",
     "accepted_utc",
     "reconciled",
@@ -454,6 +456,9 @@ SPREAD_FILL_COLUMNS = [
     "is_taker",
     "price_cents",
     "spread",
+    "markout_10m_cents",  # midpoint move from the side bought (+ is good)
+    "markout_30m_cents",
+    "markout_60m_cents",
 ]
 SPREAD_SETTLEMENT_COLUMNS = [
     "market",
@@ -651,6 +656,56 @@ def shadow_expected(through, flow, size):
     return total
 
 
+def queue_and_markouts(path):
+    """Queue readings and post-fill markouts the spread maker writes into its
+    measurement file (RESEARCH_LOG.md, 2026-10-23): per order ref the first
+    and last contracts ahead; per fill ref the midpoint move in cents at 10,
+    30 and 60 minutes; and summary averages. Measurements, not P&L."""
+    keep = {
+        "queue": {"client_order_id", "ahead", "utc"},
+        "markout": {"fill_id", "client_order_id", "horizon_minutes",
+                    "mid_move_cents", "exit_move_cents"},
+    }  # fmt: skip
+    queue, marks = {}, {}
+    stream, _ = events(path, keep)
+    for kind, e in stream:
+        if kind == "queue" and e.get("client_order_id"):
+            ahead = _number(e.get("ahead"))
+            if ahead is not None and math.isfinite(ahead):
+                queue.setdefault(ref(e["client_order_id"]), []).append(ahead)
+        elif kind == "markout" and e.get("fill_id"):
+            mid = _number(e.get("mid_move_cents"))
+            if mid is not None and math.isfinite(mid):
+                exit_ = _number(e.get("exit_move_cents"))
+                marks.setdefault(ref(e["fill_id"]), {})[e.get("horizon_minutes")] = (
+                    mid,
+                    exit_,
+                )
+    firsts = [v[0] for v in queue.values()]
+    summary = {
+        "orders_with_queue_reading": len(firsts),
+        "first_in_line_share": round(sum(v == 0 for v in firsts) / len(firsts), 3)
+        if firsts
+        else None,
+        "markouts": {},
+        "note": "Queue: contracts ahead at the same price at the first reading. "
+        "Markouts: cents from the side bought, + is good, fees not included.",
+    }
+    for horizon in (10, 30, 60):
+        got = [m[horizon] for m in marks.values() if horizon in m]
+        exits = [x for _, x in got if x is not None]
+        summary["markouts"][f"{horizon}m"] = {
+            "fills": len(got),
+            "mid_move_cents": round(sum(m for m, _ in got) / len(got), 2)
+            if got
+            else None,
+            "exit_move_cents": round(sum(exits) / len(exits), 2) if exits else None,
+        }
+    per_order = {k: (v[0], v[-1]) for k, v in queue.items()}
+    per_fill = {k: {h: m for h, (m, _) in v.items()} for k, v in marks.items()}
+    return per_order, per_fill, summary
+
+
 def live_fill_share(path, orders):
     """Our share of the contracts that public prints show traded at or
     through each finished live order's price (up to its size): the live
@@ -801,6 +856,22 @@ def build_files(journals, shadow=None):
                 # Only a complete read may remove files it no longer writes
                 # (never the last good pnl_by_day.csv on a bad ledger).
                 complete.add(market)
+            measured = None
+            if shadow is not None and Path(shadow).exists():
+                try:
+                    measured = queue_and_markouts(Path(shadow))
+                except Exception as error:
+                    measured = error
+            if isinstance(measured, tuple):
+                per_order, per_fill, _ = measured
+                for o in orders:
+                    first, last = per_order.get(o["order_ref"], ("", ""))
+                    o["first_queue_ahead"], o["last_queue_ahead"] = first, last
+                for f in fills:
+                    for horizon in (10, 30, 60):
+                        f[f"markout_{horizon}m_cents"] = per_fill.get(
+                            f["fill_ref"], {}
+                        ).get(horizon, "")
             for name, columns, rows, when in (
                 ("orders", SPREAD_ORDER_COLUMNS, orders, "intent_utc"),
                 ("fills", SPREAD_FILL_COLUMNS, fills, "fill_utc"),
@@ -848,6 +919,12 @@ def build_files(journals, shadow=None):
                 else len(ledger.get("open", {})),
                 "by_strategy_version": versions,
             }
+            if isinstance(measured, tuple):
+                summary["markets"][market]["queue_and_markouts"] = measured[2]
+            elif measured is not None:
+                summary["markets"][market]["queue_and_markouts"] = {
+                    "status": f"error_{type(measured).__name__}"
+                }
             if shadow is not None and Path(shadow).exists():
                 try:
                     summary["markets"][market]["live_fill_share"] = live_fill_share(
@@ -961,6 +1038,11 @@ markets and holds fills to settlement.
   cautious replay (each such contract reaching us with probability 0.25)
   would have filled on the same windows. This is the measurement that says
   how much of the simulated edge is real.
+- `data/summary.json` → `markets.spread.queue_and_markouts`: how often the
+  bot's orders were first in line at their price (first queue reading),
+  and the average price move after its fills at 10, 30 and 60 minutes, in
+  cents from the side bought (+ is good, fees not included). Per order:
+  `first_queue_ahead`, `last_queue_ahead`; per fill: `markout_*m_cents`.
 - `data/summary.json` → `spread_shadow_simulated`: the shadow ledger's
   SIMULATED results (first in line, and at flow share 0.25). Compare it
   with the live numbers; never add the two together.

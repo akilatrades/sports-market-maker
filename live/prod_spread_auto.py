@@ -1021,6 +1021,210 @@ def fill_share(journal_events, shadow_events):
     }
 
 
+# ------------------------------------- queue position and markouts (measurement)
+# RESEARCH_LOG.md, 2026-10-23, "Spread maker queue position and markouts".
+# Is the bot first in line at its price, and does the price move against its
+# fills soon after (stale quotes picked off)? Read-only; stored in the
+# measurement file beside the live fill share; never used for trading.
+MARKOUT_HORIZONS = (10, 30, 60)  # minutes after each fill
+MARKOUT_LATE_MINUTES = 12  # observed at the first pass after the horizon
+MAX_QUEUE_READS_PER_PASS = 10
+
+
+def _v2_orders(events):
+    """{client_order_id: intent} for this rule version, and order id -> cid."""
+    intents = {
+        e.get("client_order_id"): e
+        for e in events
+        if e.get("event") == "intent"
+        and e.get("strategy_version") == P.STRATEGY_VERSION
+    }
+    cid_of = {
+        str(e.get("order_id")): e.get("client_order_id")
+        for e in events
+        if e.get("event") == "accepted"
+        and e.get("order_id")
+        and e.get("client_order_id") in intents
+    }
+    return intents, cid_of
+
+
+def record_markouts(state_dir, now, listings):
+    """Price moves after this bot's fills, from the side bought, in cents
+    (positive is good for the bot), at MARKOUT_HORIZONS minutes, read from
+    the public listing taken at this pass. Returns the number written."""
+    journal, shadow = state_dir / "journal.jsonl", state_dir / "shadow.jsonl"
+    if not journal.exists():
+        return 0
+    events = load_events(journal)
+    intents, cid_of = _v2_orders(events)
+    done = {
+        (e.get("fill_id"), e.get("horizon_minutes"))
+        for e in load_events(shadow)
+        if e.get("event") == "markout"
+    }
+    quotes = {
+        m.get("ticker"): m for markets in (listings or {}).values() for m in markets
+    }
+    written, seen = 0, set()
+    for fill in events:
+        fid = fill.get("fill_id")
+        if fill.get("event") != "fill" or not fid or fid in seen:
+            continue
+        seen.add(fid)
+        intent = intents.get(cid_of.get(str(fill.get("order_id"))))
+        when = _utc(fill.get("utc"))
+        if intent is None or when is None:
+            continue
+        side, paid = intent.get("side"), int(intent.get("price_cents", 0))
+        age = (now - when).total_seconds() / 60
+        for horizon in MARKOUT_HORIZONS:
+            if (fid, horizon) in done or age < horizon:
+                continue
+            record = {
+                "event": "markout",
+                "fill_id": fid,
+                "client_order_id": intent.get("client_order_id"),
+                "ticker": intent.get("ticker"),
+                "side": side,
+                "price_cents": paid,
+                "horizon_minutes": horizon,
+                "observed_after_minutes": round(age, 1),
+                "utc": now.isoformat(),
+                "mid_move_cents": None,
+                "exit_move_cents": None,
+                "issue": None,
+            }
+            quote = quotes.get(intent.get("ticker"))
+            bid = _cents((quote or {}).get("yes_bid_dollars"))
+            ask = _cents((quote or {}).get("yes_ask_dollars"))
+            if age > horizon + MARKOUT_LATE_MINUTES:
+                record["issue"] = "missed_observation_window"
+            elif quote is None:
+                record["issue"] = "quote_unavailable"
+            elif bid is None or ask is None or not 0 < bid < ask < 100:
+                record["issue"] = "invalid_quote"
+            elif side == "yes":
+                record["mid_move_cents"] = (bid + ask) / 2 - paid
+                record["exit_move_cents"] = bid - paid
+            else:
+                record["mid_move_cents"] = 100 - (bid + ask) / 2 - paid
+                record["exit_move_cents"] = 100 - ask - paid
+            write_event(shadow, record)
+            written += 1
+    return written
+
+
+def record_queue(state_dir, now, client, deadline=None):
+    """Queue position (contracts ahead at the same price) of this bot's
+    orders that may still rest, newest first, at most
+    MAX_QUEUE_READS_PER_PASS, none after ``deadline``. Signed reads only.
+    Returns the number of readings written."""
+    journal, shadow = state_dir / "journal.jsonl", state_dir / "shadow.jsonl"
+    if not journal.exists():
+        return 0
+    events = load_events(journal)
+    intents, cid_of = _v2_orders(events)
+    gone = {
+        str(e.get("order_id"))
+        for e in events
+        if e.get("event") in ("cancel_accepted", "cancel_moot") and e.get("order_id")
+    }
+    filled = Counter()
+    for e in events:
+        if e.get("event") == "fill":
+            raw = e.get("count_fp") if e.get("count_fp") is not None else e.get("count")
+            try:
+                filled[str(e.get("order_id"))] += float(raw)
+            except (TypeError, ValueError):
+                continue
+    since = (now - timedelta(minutes=P.ORDER_LIFETIME_MINUTES)).isoformat()
+    live_orders = sorted(
+        (
+            (intents[cid]["utc"], oid, cid)
+            for oid, cid in cid_of.items()
+            if str(intents[cid].get("utc", "")) >= since
+            and oid not in gone
+            and filled[oid] < float(intents[cid].get("count", 0)) - 1e-9
+        ),
+        reverse=True,
+    )
+    written = 0
+    for _, oid, cid in live_orders[:MAX_QUEUE_READS_PER_PASS]:
+        if out_of_time(deadline):
+            break
+        try:
+            ahead = client.queue_position(oid)
+            if ahead is not None and (not math.isfinite(ahead) or ahead < 0):
+                ahead = None
+            issue = None if ahead is not None else "missing_or_invalid_queue_field"
+        except Exception as error:
+            match = re.search(r"-> HTTP ([0-9]{3})", str(error))
+            ahead, issue = (
+                None,
+                f"HTTP_{match.group(1)}" if match else type(error).__name__,
+            )
+        write_event(
+            shadow,
+            {
+                "event": "queue",
+                "utc": now.isoformat(),
+                "client_order_id": cid,
+                "order_id": oid,
+                "ticker": intents[cid].get("ticker"),
+                "ahead": ahead,
+                "issue": issue,
+            },
+        )
+        written += 1
+    return written
+
+
+def queue_markout_summary(journal_events, shadow_events):
+    """Averages for --status: first queue reading per order, and markouts by
+    horizon (cents, from the side bought; fees not included)."""
+    intents, _ = _v2_orders(journal_events)
+    first = {}
+    for e in shadow_events:
+        cid = e.get("client_order_id")
+        if e.get("event") == "queue" and cid in intents and e.get("ahead") is not None:
+            first.setdefault(cid, float(e["ahead"]))
+    moves = {h: [] for h in MARKOUT_HORIZONS}
+    for e in shadow_events:
+        if (
+            e.get("event") == "markout"
+            and e.get("client_order_id") in intents
+            and e.get("mid_move_cents") is not None
+            and e.get("horizon_minutes") in moves
+        ):
+            moves[e["horizon_minutes"]].append(
+                (float(e["mid_move_cents"]), float(e["exit_move_cents"]))
+            )
+    return {
+        "orders_with_queue_reading": len(first),
+        "first_in_line_share": round(
+            sum(v == 0 for v in first.values()) / len(first), 3
+        )
+        if first
+        else None,
+        "median_ahead_at_first_reading": float(pd.Series(list(first.values())).median())
+        if first
+        else None,
+        "markouts": {
+            f"{h}m": {
+                "fills": len(v),
+                "mid_move_cents": round(sum(m for m, _ in v) / len(v), 2)
+                if v
+                else None,
+                "exit_move_cents": round(sum(x for _, x in v) / len(v), 2)
+                if v
+                else None,
+            }
+            for h, v in moves.items()
+        },
+    }
+
+
 # ------------------------------------------------------------------ live
 
 
@@ -1972,6 +2176,20 @@ def status(state_dir):
         f"cautious replay = "
         f"{dash if share['cautious_replay_share'] is None else share['cautious_replay_share']})"
     )
+    qm = queue_markout_summary(events, shadow_events)
+    print(
+        f"LIVE queue: {qm['orders_with_queue_reading']} orders read; first in line "
+        f"at the first reading: {dash if qm['first_in_line_share'] is None else qm['first_in_line_share']}; "
+        f"median contracts ahead: {dash if qm['median_ahead_at_first_reading'] is None else qm['median_ahead_at_first_reading']}"
+    )
+    parts = []
+    for horizon, m in qm["markouts"].items():
+        mid = dash if m["mid_move_cents"] is None else f"{m['mid_move_cents']:+.2f}"
+        parts.append(f"{horizon} {mid} mid ({m['fills']} fills)")
+    print(
+        "LIVE markouts (cents from the side bought, + is good, fees not included): "
+        + "; ".join(parts)
+    )
     print(
         "SHADOW (simulated, first in line unless flow-weighted):",
         json.dumps(shadow_summary(shadow_events)),
@@ -2113,6 +2331,23 @@ def main():
         # copied the exchange's fills into the journal); a failure here never
         # affects trading.
         if live:
+            try:
+                report["markouts_recorded"] = record_markouts(
+                    state_dir, started, public.get("listings")
+                )
+            except Exception as error:
+                report["markouts_error"] = type(error).__name__
+            try:
+                # Signed reads only, after the account lock is released.
+                reader = TradingClient(dry_run=True, env="prod")
+                report["queue_readings"] = record_queue(
+                    state_dir,
+                    started,
+                    reader,
+                    deadline=PROCESS_START + SCORING_DEADLINE_SECONDS,
+                )
+            except Exception as error:
+                report["queue_error"] = type(error).__name__
             try:
                 report["live_windows_scored"] = score_live_windows(
                     state_dir,
