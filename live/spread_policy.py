@@ -40,19 +40,27 @@ SHADOW_REPOST_MINUTES = 60  # shadow: one quote per market and side per hour
 # New York time, or from Kalshi's milestones) and at least MIN_LEAD_MINUTES
 # away, so a 65-minute order expires at least CANCEL_LEAD_MINUTES before the
 # start; any resting quote that close to the start is cancelled.
-MIN_LEAD_MINUTES = 75  # ORDER_LIFETIME_MINUTES + CANCEL_LEAD_MINUTES
-CANCEL_LEAD_MINUTES = 10
+MIN_LEAD_MINUTES = 85  # ORDER_LIFETIME_MINUTES + CANCEL_LEAD_MINUTES
+# Twice the timer's 10 minutes, so a start learned or moved late is still
+# caught before the event.
+CANCEL_LEAD_MINUTES = 20
 # A milestone's start counts only if it falls within this many hours before
 # the market's expected expiration (a tournament's start, days earlier, does
 # not count).
 MILESTONE_WINDOW_HOURS = 12
 START_CACHE_MINUTES = 30  # milestone answers are reused for this long
-# Milestone starts are trusted only while they match the start written in
-# event tickers: up to MILESTONE_CHECKS such events are compared each pass
-# (cached as above), at least one must match and none may be further off
-# than MILESTONE_AGREE_MINUTES.
-MILESTONE_CHECKS = 3
+# Milestone starts are used for events without a ticker time only by
+# milestone type (e.g. basketball_game), and only for types that have
+# matched the time written in event tickers at least
+# MILESTONE_TRUST_MIN_MATCHES times (within MILESTONE_AGREE_MINUTES earlier,
+# MILESTONE_LATE_MINUTES later) and were never later than that in the last
+# MILESTONE_TRUST_DAYS. Up to MILESTONE_CHECKS ticker-timed events, one per
+# series, are compared each pass.
+MILESTONE_CHECKS = 4
 MILESTONE_AGREE_MINUTES = 15
+MILESTONE_LATE_MINUTES = 2
+MILESTONE_TRUST_MIN_MATCHES = 2
+MILESTONE_TRUST_DAYS = 2
 MAX_START_LOOKUPS_PER_PASS = 30
 START_LOOKUP_SECONDS = 45  # no milestone read after this, from process start
 

@@ -181,8 +181,9 @@ Kalshi quotes ─► edge after fees ─► filters ─► risk checks ─► po
   expiration with spreads of 8¢ or more, it posts post-only YES and NO bids
   one cent inside, priced from the order book with its own orders removed.
   Pregame only (since 23 October): a new quote needs the event's start time
-  (from the event ticker or Kalshi's milestones) at least 75 minutes away,
-  and every quote is gone 10 minutes before the start.
+  (from the event ticker, or Kalshi's milestones where they have matched
+  ticker times) at least 85 minutes away, and every quote is gone 20
+  minutes before the start.
   Up to 5 contracts per order, at most 5 held or resting per market side,
   $60 open, and its own −$10 daily and −$40 total loss stops, inside the
   account-wide stops. A shadow ledger scores the same rule from public trade

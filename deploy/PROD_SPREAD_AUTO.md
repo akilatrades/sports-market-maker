@@ -26,11 +26,14 @@ profit forecast.
   **only before the event starts** (rules v2, `spread-maker-v2-pregame`,
   from 23 October). The start time comes from the event ticker (many
   tickers carry it, in New York time, e.g. `KXR6GAME-26OCT222000...` is
-  20:00) or else from Kalshi's public milestones. A market with no known
-  start is not quoted. A new quote needs the start at least 75 minutes away,
-  so its 65-minute life ends before the start; any resting quote is
-  cancelled 10 minutes before the start, even if the order book cannot be
-  read. v1 had no start check: its window counted only from Kalshi's
+  20:00). For other events it uses Kalshi's public milestones, but only
+  milestone types (for example `basketball_game`) that have matched ticker
+  times on at least two events and were never later than them; a milestone
+  earlier than a ticker's time also moves that event's start earlier. A
+  market with no known start is not quoted. A new quote needs the start at
+  least 85 minutes away, so its 65-minute life ends 20 minutes before the
+  start; any resting quote is cancelled 20 minutes before the start, even
+  if the order book cannot be read. v1 had no start check: its window counted only from Kalshi's
   expected expiration, which for college football is 6 hours after kickoff,
   so on 22 October it quoted into a live game.
 - **Quote:** YES bid at best YES bid + 1¢, NO bid at best NO bid + 1¢, up to
@@ -161,13 +164,15 @@ directly: that comparison is the main point of the pilot.
    sudo bash /home/trader/sports-market-maker-prod-auto/deploy/setup_spread_maker.sh --preflight
    ```
 
-   Look for `"ready": true` and the new `milestone_check`: of the events
-   compared, `within_15_minutes` should equal `events_compared` (Kalshi's
-   milestones then give the same start as the tickers).
+   Look for `"ready": true` and the new `milestone_check`, which compares
+   Kalshi's milestone start with the time in the ticker for up to 10
+   events: `matched` is good, `later_than_ticker` is the dangerous case.
    `wide_markets_without_event_start` counts wide markets skipped because
-   no start is known. If `within_15_minutes` is lower, resume anyway (the
-   bot then ignores milestones on its own and quotes only events whose
-   ticker carries the start), but tell whoever maintains the code.
+   no start is known. If `later_than_ticker` is above 0, resume anyway: the
+   bot distrusts a milestone type for two days after any such case and
+   then quotes only events whose ticker carries the start (or whose
+   milestone type matched elsewhere). Send the line to whoever maintains
+   the code.
 3. Resume and watch the next pass:
 
    ```bash
@@ -175,8 +180,11 @@ directly: that comparison is the main point of the pilot.
    sudo bash /home/trader/sports-market-maker-prod-auto/deploy/setup_spread_maker.sh --status
    ```
 
-   Each pass's report shows `event_starts` (milestone reads, whether they
-   were trusted) and `canceled_event_start`.
+   Each pass's report shows `event_starts` (milestone reads, the milestone
+   types trusted and any found late) and `canceled_event_start`. Expect
+   fewer quotes than v1: in the backtest, the v2 rule on events whose
+   ticker carries the start kept about a sixth of v1's simulated profit,
+   more where milestones are trusted.
 
 ## After an "Ambiguous spread order" halt
 

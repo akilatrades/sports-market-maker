@@ -109,6 +109,15 @@ def report(r):
                 f[(f.k >= 1) & ~f.phase.isin(["in_game", "across_start"])], base
             ),
             "ticker start known, pregame only": stats(f[f.phase == "pregame"], base),
+            # The live v2 rule: posted at least MIN_LEAD_MINUTES before the
+            # start (the scan's order rests from end_ts).
+            "ticker start known, v2 rule": stats(
+                f[
+                    f.start_ts.notna()
+                    & (f.start_ts - f.end_ts >= 60 * P.MIN_LEAD_MINUTES)
+                ],
+                base,
+            ),
             "skip the last hour, no financial series": stats(
                 f[(f.k >= 1) & ~f.series.isin(FINANCIAL)], base
             ),
