@@ -20,9 +20,13 @@ then a walkthrough with the owner.
 - **The evidence.** In a replay of the 2025–26 NBA season the rule earned
   about 3¢ per contract. That replay assumed the bot was always first in
   line and used rules chosen on that same season, so it is optimistic.
-- **The current phase.** Since October 2026 the bots trade real money
-  under small, fixed limits. The goal is to find out whether real fills
-  earn what the replay says. Nothing is proven yet.
+- **A second strategy.** The spread maker quotes both sides one cent
+  inside wide spreads (8¢ or more) in 64 smaller series, only before the
+  event starts. A filled YES+NO pair pays $1 for less than $1; a
+  one-sided fill is held to settlement.
+- **The current phase.** Since October 2026 three bots (NBA, NFL, spread)
+  trade real money under small, fixed limits. The goal is to find out
+  whether real fills earn what the replays say. Nothing is proven yet.
 
 ## Reading order (about an hour)
 
@@ -74,7 +78,7 @@ smaller limits; its orders start 10 minutes to 2 hours before kickoff.
 | Place | What runs there | Who controls it |
 |---|---|---|
 | GitHub Actions (public) | Data refreshes, projections, sportsbook lines, tests, dry-run order logs, the dashboard | Scheduled jobs; server actions are owner-only |
-| DigitalOcean server (private) | The two funded workers (NBA and NFL) on timers, the Kalshi key, the live P&L feed | Owner only, through the Go live / Stop and Deploy buttons |
+| DigitalOcean server (private) | The three funded workers (NBA, NFL, spread maker) on timers, the Kalshi key, the live P&L feed, the hourly private fills export | Owner only, through the Go live / Stop and Deploy buttons and the spread maker's setup script |
 | Kalshi | The account, orders and settlement | Owner only |
 
 Merging code does **not** change the live bots by itself. The owner
@@ -101,9 +105,11 @@ code is right.
 | Price range | 5–95¢ | 10–90¢ |
 | Lifetime orders placed | $2,000 | $50 |
 
-Across both bots ([`shared_account_risk.py`](../live/shared_account_risk.py)):
-at most $165 open, $180 placed per day and $2,050 placed in total. Both bots
-stop for the day after $20 of settled losses and for good after $60. Dollar
+NBA and NFL together ([`shared_account_risk.py`](../live/shared_account_risk.py)):
+at most $165 open, $180 placed per day and $2,050 placed in total. All
+three bots, including the spread maker, stop for the day after $20 of
+realized account losses and for good after $60 (the spread maker's losses
+are counted from its own fills). Dollar
 limits include a 10% cushion for fees. An edge above 15¢ is treated as a
 likely data error, not a bargain.
 
@@ -111,7 +117,10 @@ A third bot, the **spread maker pilot** ([`prod_spread_auto.py`](../live/prod_sp
 limits in [`spread_policy.py`](../live/spread_policy.py)), quotes both sides
 of wide-spread markets outside NBA and NFL props: up to 5 contracts per
 order and 5 per market side, $60 open, its own −$10 daily and −$40 total
-loss stops, and the account stops above. It places orders only after the owner arms it
+loss stops, and the account stops above. Since 23 October (rules v2) it
+quotes only before a known event start: a new quote needs the start at
+least 85 minutes away, and every quote is cancelled 20 minutes before it.
+It places orders only after the owner arms it
 ([deploy/PROD_SPREAD_AUTO.md](../deploy/PROD_SPREAD_AUTO.md)).
 
 ## Repository map

@@ -873,11 +873,20 @@ def test_a_broken_link_named_kill_still_halts(world, monkeypatch, tmp_path):
     assert world["exchange"].resting == [] and len(world["exchange"].canceled) == 2
 
 
-def test_status_reports_live_and_shadow_apart(world, capsys):
+def test_status_reports_live_and_shadow_apart(world, capsys, monkeypatch):
     run(world)
     fill_placed(world, 0, 5)  # YES 41c
     fill_placed(world, 1, 6)  # NO 49c: five locked pairs, 5 x 10c
     run(world, NOW + timedelta(minutes=10))
+
+    class Clock(datetime):
+        """status() reads the real clock; "today" must be the fills' day."""
+
+        @classmethod
+        def now(cls, tz=None):
+            return NOW + timedelta(minutes=20)
+
+    monkeypatch.setattr(bot, "datetime", Clock)
     bot.status(world["dir"])
     out = capsys.readouterr().out
     assert "LIVE realized P&L (from fills): today $+0.50" in out

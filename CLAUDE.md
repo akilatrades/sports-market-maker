@@ -13,9 +13,12 @@ file is the short version for an AI helping them.
   the exact line) or, failing that, the project's stat model. An NBA order
   (rules v5) is one contract, needs 0¢ to 15¢ of estimated edge, goes one cent
   inside the spread 2–6 hours before tip-off, and rests until tip-off.
-- Two bots (NBA and NFL) trade a small real-money account from a private
-  server, live since 19–20 October 2026. **You cannot see the server, the
-  account or its private journals**; only the public files here. Questions
+- Three bots trade one small real-money account from a private server: NBA
+  and NFL (live since 19–20 October 2026) and the spread maker (live since
+  22 October; rules v2, pregame only, from 23 October), which rests YES
+  and NO bids one cent inside 8¢+ spreads in 64 other series. **You cannot
+  see the server, the account or its private journals**; only the public
+  files here. Questions
   about live results go to the owner. If the owner has added the private
   repo `akilatrades/smm-private-data` to the session, it holds an hourly
   export of live orders, fills and settlements
@@ -77,6 +80,7 @@ python -m research.scaling                 # bankroll replays
 
 - `live/prod_nba_auto.py`: the NBA bot; its limits are the `MAX_*` constants
   near the top. `live/prod_nfl_auto.py` and `live/nfl_policy.py`: NFL.
+  `live/prod_spread_auto.py` and `live/spread_policy.py`: the spread maker.
   `live/shared_account_risk.py`: account-wide caps and loss stops.
 - `kalshi/`: fees, fills, statistics, sportsbook consensus, signed client.
   `markets/nba/`, `markets/nfl/`: stat models. `research/`: backtests.
