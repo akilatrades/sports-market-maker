@@ -1024,11 +1024,46 @@ def fill_share(journal_events, shadow_events):
 # ------------------------------------- queue position and markouts (measurement)
 # RESEARCH_LOG.md, 2026-10-23, "Spread maker queue position and markouts".
 # Is the bot first in line at its price, and does the price move against its
-# fills soon after (stale quotes picked off)? Read-only; stored in the
-# measurement file beside the live fill share; never used for trading.
+# fills soon after (stale quotes picked off)? Read-only. Stored in their own
+# file (read only by --status and the export) and summarised each pass into
+# MEASURE_SUMMARY; never used for trading.
+MEASURE_FILE = "measurements.jsonl"
+MEASURE_SUMMARY = "measurements_summary.json"
 MARKOUT_HORIZONS = (10, 30, 60)  # minutes after each fill
 MARKOUT_LATE_MINUTES = 12  # observed at the first pass after the horizon
-MAX_QUEUE_READS_PER_PASS = 10
+PAIRED_WITHIN_MINUTES = 60  # an opposite fill this close makes a fill "paired"
+MAX_QUEUE_READS_PER_PASS = 6
+MAX_QUEUE_READS_PER_ORDER = 3
+QUEUE_READ_PAUSE_SECONDS = 0.3  # the API key is shared with the NBA and NFL bots
+QUEUE_READ_TIMEOUT_SECONDS = 5
+
+
+def load_measurements(path):
+    """The measurement file, skipping any line that is not a JSON object (a
+    torn last line after a crash must not stop the measurements)."""
+    if not path.exists():
+        return []
+    out = []
+    for line in path.read_text(errors="replace").splitlines():
+        try:
+            record = json.loads(line)
+        except ValueError:
+            continue
+        if isinstance(record, dict):
+            out.append(record)
+    return out
+
+
+def write_measurement(path, record):
+    """Append one record, first ending a torn last line if there is one."""
+    if path.exists() and path.stat().st_size:
+        with path.open("rb") as f:
+            f.seek(-1, os.SEEK_END)
+            torn = f.read(1) != b"\n"
+        if torn:
+            with path.open("a", encoding="utf-8") as f:
+                f.write("\n")
+    write_event(path, record)
 
 
 def _v2_orders(events):
@@ -1049,110 +1084,179 @@ def _v2_orders(events):
     return intents, cid_of
 
 
-def record_markouts(state_dir, now, listings):
-    """Price moves after this bot's fills, from the side bought, in cents
-    (positive is good for the bot), at MARKOUT_HORIZONS minutes, read from
-    the public listing taken at this pass. Returns the number written."""
-    journal, shadow = state_dir / "journal.jsonl", state_dir / "shadow.jsonl"
-    if not journal.exists():
-        return 0
-    events = load_events(journal)
-    intents, cid_of = _v2_orders(events)
-    done = {
-        (e.get("fill_id"), e.get("horizon_minutes"))
-        for e in load_events(shadow)
-        if e.get("event") == "markout"
-    }
-    quotes = {
-        m.get("ticker"): m for markets in (listings or {}).values() for m in markets
-    }
-    written, seen = 0, set()
-    for fill in events:
-        fid = fill.get("fill_id")
-        if fill.get("event") != "fill" or not fid or fid in seen:
+def _fills(events, cid_of):
+    """This rule version's fills, one per fill id: (fill, cid, contracts)."""
+    out, seen = [], set()
+    for e in events:
+        fid = e.get("fill_id")
+        cid = cid_of.get(str(e.get("order_id")))
+        if e.get("event") != "fill" or not fid or fid in seen or cid is None:
             continue
         seen.add(fid)
-        intent = intents.get(cid_of.get(str(fill.get("order_id"))))
-        when = _utc(fill.get("utc"))
-        if intent is None or when is None:
+        raw = e.get("count_fp") if e.get("count_fp") is not None else e.get("count")
+        try:
+            count = float(raw)
+        except (TypeError, ValueError):
             continue
-        side, paid = intent.get("side"), int(intent.get("price_cents", 0))
-        age = (now - when).total_seconds() / 60
-        for horizon in MARKOUT_HORIZONS:
-            if (fid, horizon) in done or age < horizon:
-                continue
-            record = {
-                "event": "markout",
-                "fill_id": fid,
-                "client_order_id": intent.get("client_order_id"),
-                "ticker": intent.get("ticker"),
-                "side": side,
-                "price_cents": paid,
-                "horizon_minutes": horizon,
-                "observed_after_minutes": round(age, 1),
-                "utc": now.isoformat(),
-                "mid_move_cents": None,
-                "exit_move_cents": None,
-                "issue": None,
-            }
-            quote = quotes.get(intent.get("ticker"))
-            bid = _cents((quote or {}).get("yes_bid_dollars"))
-            ask = _cents((quote or {}).get("yes_ask_dollars"))
-            if age > horizon + MARKOUT_LATE_MINUTES:
-                record["issue"] = "missed_observation_window"
-            elif quote is None:
-                record["issue"] = "quote_unavailable"
-            elif bid is None or ask is None or not 0 < bid < ask < 100:
-                record["issue"] = "invalid_quote"
-            elif side == "yes":
-                record["mid_move_cents"] = (bid + ask) / 2 - paid
-                record["exit_move_cents"] = bid - paid
-            else:
-                record["mid_move_cents"] = 100 - (bid + ask) / 2 - paid
-                record["exit_move_cents"] = 100 - ask - paid
-            write_event(shadow, record)
-            written += 1
-    return written
+        if math.isfinite(count) and count > 0 and _utc(e.get("utc")) is not None:
+            out.append((e, cid, count))
+    return out
 
 
-def record_queue(state_dir, now, client, deadline=None):
-    """Queue position (contracts ahead at the same price) of this bot's
-    orders that may still rest, newest first, at most
-    MAX_QUEUE_READS_PER_PASS, none after ``deadline``. Signed reads only.
-    Returns the number of readings written."""
-    journal, shadow = state_dir / "journal.jsonl", state_dir / "shadow.jsonl"
-    if not journal.exists():
-        return 0
-    events = load_events(journal)
-    intents, cid_of = _v2_orders(events)
+def _may_rest(events, intents, cid_of, now):
+    """Orders of this version that may still rest: [(sent, order id, cid)]."""
     gone = {
         str(e.get("order_id"))
         for e in events
         if e.get("event") in ("cancel_accepted", "cancel_moot") and e.get("order_id")
     }
     filled = Counter()
-    for e in events:
-        if e.get("event") == "fill":
-            raw = e.get("count_fp") if e.get("count_fp") is not None else e.get("count")
-            try:
-                filled[str(e.get("order_id"))] += float(raw)
-            except (TypeError, ValueError):
-                continue
+    for fill, cid, count in _fills(events, cid_of):
+        filled[str(fill.get("order_id"))] += count
     since = (now - timedelta(minutes=P.ORDER_LIFETIME_MINUTES)).isoformat()
-    live_orders = sorted(
+    return [
+        (str(intents[cid].get("utc", "")), oid, cid)
+        for oid, cid in cid_of.items()
+        if str(intents[cid].get("utc", "")) >= since
+        and oid not in gone
+        and filled[oid] < float(intents[cid].get("count", 0)) - 1e-9
+    ]
+
+
+def _best_bid(quote, side):
+    """Best bid on one side of a listing, in cents (YES bid, or 100 - YES ask)."""
+    bid = _cents((quote or {}).get("yes_bid_dollars"))
+    ask = _cents((quote or {}).get("yes_ask_dollars"))
+    if bid is None or ask is None or not 0 < bid < ask < 100:
+        return None, None, None
+    return (bid if side == "yes" else 100 - ask), bid, ask
+
+
+def record_markouts(state_dir, now, listings):
+    """Price after each fill, from the side bought, in cents, at
+    MARKOUT_HORIZONS minutes, from the public listing taken at this pass:
+
+    - ``adverse_move_cents``: the side's midpoint now minus its midpoint when
+      the quote was posted (negative: the price moved against the fill);
+    - ``realized_spread_cents``: the midpoint now minus the price paid (it
+      includes the half-spread earned at entry);
+    - ``exit_move_cents``: the side's best bid now minus the price paid, left
+      empty when that best bid is the bot's own resting quote.
+
+    Returns the number of records written."""
+    journal, path = state_dir / "journal.jsonl", state_dir / MEASURE_FILE
+    if not journal.exists():
+        return 0
+    events = load_events(journal)
+    intents, cid_of = _v2_orders(events)
+    done = {
+        (e.get("fill_id"), e.get("horizon_minutes"))
+        for e in load_measurements(path)
+        if e.get("event") == "markout"
+    }
+    quotes = {m.get("ticker"): m for ms in (listings or {}).values() for m in ms}
+    own = {
+        (intents[cid]["ticker"], intents[cid]["side"], int(intents[cid]["price_cents"]))
+        for _, _, cid in _may_rest(events, intents, cid_of, now)
+    }
+    written = 0
+    for fill, cid, count in _fills(events, cid_of):
+        intent = intents[cid]
+        side, paid = intent.get("side"), int(intent.get("price_cents", 0))
+        spread = _number_or_none(intent.get("spread"))
+        start = _utc(intent.get("event_start_utc"))
+        age = (now - _utc(fill.get("utc"))).total_seconds() / 60
+        for horizon in MARKOUT_HORIZONS:
+            if (fill["fill_id"], horizon) in done or age < horizon:
+                continue
+            record = {
+                "event": "markout",
+                "fill_id": fill["fill_id"],
+                "client_order_id": cid,
+                "ticker": intent.get("ticker"),
+                "side": side,
+                "price_cents": paid,
+                "contracts": count,
+                "spread_cents": spread,
+                "horizon_minutes": horizon,
+                "observed_after_minutes": round(age, 1),
+                "minutes_before_start": None
+                if start is None
+                else round((start - now).total_seconds() / 60, 1),
+                "utc": now.isoformat(),
+                "adverse_move_cents": None,
+                "realized_spread_cents": None,
+                "exit_move_cents": None,
+                "exit_is_own_quote": False,
+                "issue": None,
+            }
+            quote = quotes.get(intent.get("ticker"))
+            best, bid, ask = _best_bid(quote, side)
+            if age > horizon + MARKOUT_LATE_MINUTES:
+                record["issue"] = "missed_observation_window"
+            elif quote is None:
+                record["issue"] = "quote_unavailable"
+            elif best is None:
+                record["issue"] = "invalid_quote"
+            else:
+                mid = (bid + ask) / 2 if side == "yes" else 100 - (bid + ask) / 2
+                record["realized_spread_cents"] = mid - paid
+                if spread is not None:
+                    # Posted one cent above the best bid of a quote this wide.
+                    record["adverse_move_cents"] = mid - (paid - 1 + spread / 2)
+                if (intent.get("ticker"), side, best) in own:
+                    record["exit_is_own_quote"] = True
+                else:
+                    record["exit_move_cents"] = best - paid
+            write_measurement(path, record)
+            written += 1
+    return written
+
+
+def _number_or_none(value):
+    try:
+        number = float(value)
+    except (TypeError, ValueError):
+        return None
+    return number if math.isfinite(number) else None
+
+
+def record_queue(state_dir, now, client, listings=None, deadline=None, pause=None):
+    """Kalshi's queue position (contracts to be matched before ours) for up
+    to MAX_QUEUE_READS_PER_PASS orders that may still rest and were placed
+    in an earlier pass (an order placed this pass is alone at its new price),
+    least-read first, at most MAX_QUEUE_READS_PER_ORDER times each. Each
+    reading also records whether the public listing shows a better bid on
+    that side ("outbid"). Stops at the first throttled, server or network
+    error, so the shared API key is left alone. Signed GETs only."""
+    journal, path = state_dir / "journal.jsonl", state_dir / MEASURE_FILE
+    if not journal.exists():
+        return 0
+    events = load_events(journal)
+    intents, cid_of = _v2_orders(events)
+    reads = Counter(
+        e.get("client_order_id")
+        for e in load_measurements(path)
+        if e.get("event") == "queue"
+    )
+    quotes = {m.get("ticker"): m for ms in (listings or {}).values() for m in ms}
+    this_pass = now.isoformat()
+    candidates = sorted(
         (
-            (intents[cid]["utc"], oid, cid)
-            for oid, cid in cid_of.items()
-            if str(intents[cid].get("utc", "")) >= since
-            and oid not in gone
-            and filled[oid] < float(intents[cid].get("count", 0)) - 1e-9
-        ),
-        reverse=True,
+            (reads[cid], -datetime.fromisoformat(sent).timestamp(), oid, cid)
+            for sent, oid, cid in _may_rest(events, intents, cid_of, now)
+            if sent < this_pass and reads[cid] < MAX_QUEUE_READS_PER_ORDER
+        )
     )
     written = 0
-    for _, oid, cid in live_orders[:MAX_QUEUE_READS_PER_PASS]:
+    for i, (_, _, oid, cid) in enumerate(candidates[:MAX_QUEUE_READS_PER_PASS]):
         if out_of_time(deadline):
             break
+        if i:
+            (pause or time.sleep)(QUEUE_READ_PAUSE_SECONDS)
+        intent = intents[cid]
+        best, _, _ = _best_bid(quotes.get(intent.get("ticker")), intent.get("side"))
+        stop = False
         try:
             ahead = client.queue_position(oid)
             if ahead is not None and (not math.isfinite(ahead) or ahead < 0):
@@ -1160,69 +1264,141 @@ def record_queue(state_dir, now, client, deadline=None):
             issue = None if ahead is not None else "missing_or_invalid_queue_field"
         except Exception as error:
             match = re.search(r"-> HTTP ([0-9]{3})", str(error))
-            ahead, issue = (
-                None,
-                f"HTTP_{match.group(1)}" if match else type(error).__name__,
+            ahead = None
+            issue = f"HTTP_{match.group(1)}" if match else type(error).__name__
+            # Throttling, server trouble or a network failure: stop reading.
+            stop = isinstance(error, OSError) or bool(
+                match and (match.group(1) == "429" or match.group(1).startswith("5"))
             )
-        write_event(
-            shadow,
+        write_measurement(
+            path,
             {
                 "event": "queue",
                 "utc": now.isoformat(),
                 "client_order_id": cid,
-                "order_id": oid,
-                "ticker": intents[cid].get("ticker"),
+                "ticker": intent.get("ticker"),
+                "side": intent.get("side"),
+                "price_cents": int(intent.get("price_cents", 0)),
+                "minutes_since_sent": round(
+                    (now - datetime.fromisoformat(intent["utc"])).total_seconds() / 60,
+                    1,
+                ),
                 "ahead": ahead,
+                "outbid": None if best is None else best > int(intent["price_cents"]),
                 "issue": issue,
             },
         )
         written += 1
+        if stop:
+            break
     return written
 
 
-def queue_markout_summary(journal_events, shadow_events):
-    """Averages for --status: first queue reading per order, and markouts by
-    horizon (cents, from the side bought; fees not included)."""
-    intents, _ = _v2_orders(journal_events)
+def summarize_measurements(journal_events, measure_events):
+    """The numbers the research plan reads, for --status and the export:
+    one-sided fills observed before the start, contract-weighted, by horizon;
+    and each order's first queue reading. Paired fills (an opposite-side fill
+    in the same market within PAIRED_WITHIN_MINUTES) are counted apart: their
+    midpoints move together and cancel."""
+    intents, cid_of = _v2_orders(journal_events)
+    fills = _fills(journal_events, cid_of)
+    by_market = {}
+    for fill, cid, _ in fills:
+        by_market.setdefault(intents[cid]["ticker"], []).append(
+            (intents[cid]["side"], _utc(fill["utc"]))
+        )
+    paired = set()
+    window = timedelta(minutes=PAIRED_WITHIN_MINUTES)
+    for fill, cid, _ in fills:
+        side, when = intents[cid]["side"], _utc(fill["utc"])
+        if any(
+            s != side and abs(w - when) <= window
+            for s, w in by_market[intents[cid]["ticker"]]
+        ):
+            paired.add(fill["fill_id"])
+    horizons = {
+        h: {"one_sided": [], "paired": 0, "issues": Counter()} for h in MARKOUT_HORIZONS
+    }
+    for e in measure_events:
+        h = e.get("horizon_minutes")
+        if (
+            e.get("event") != "markout"
+            or h not in horizons
+            or e.get("client_order_id") not in intents
+        ):
+            continue
+        if e.get("issue"):
+            horizons[h]["issues"][e["issue"]] += 1
+        elif (e.get("minutes_before_start") or 0) <= 0:
+            horizons[h]["issues"]["observed_after_start"] += 1
+        elif e.get("fill_id") in paired:
+            horizons[h]["paired"] += 1
+        elif e.get("adverse_move_cents") is not None:
+            horizons[h]["one_sided"].append(
+                (float(e["contracts"]), float(e["adverse_move_cents"]),
+                 float(e["realized_spread_cents"]))
+            )  # fmt: skip
+
+    def weighted(rows, k):
+        total = sum(r[0] for r in rows)
+        return round(sum(r[0] * r[k] for r in rows) / total, 2) if total else None
+
+    markouts = {
+        f"{h}m": {
+            "one_sided_fills": len(v["one_sided"]),
+            "one_sided_contracts": round(sum(r[0] for r in v["one_sided"]), 2),
+            "adverse_move_cents": weighted(v["one_sided"], 1),
+            "realized_spread_cents": weighted(v["one_sided"], 2),
+            "paired_fills": v["paired"],
+            "not_used": dict(v["issues"]),
+        }
+        for h, v in horizons.items()
+    }
     first = {}
-    for e in shadow_events:
+    for e in measure_events:
         cid = e.get("client_order_id")
         if e.get("event") == "queue" and cid in intents and e.get("ahead") is not None:
-            first.setdefault(cid, float(e["ahead"]))
-    moves = {h: [] for h in MARKOUT_HORIZONS}
-    for e in shadow_events:
-        if (
-            e.get("event") == "markout"
-            and e.get("client_order_id") in intents
-            and e.get("mid_move_cents") is not None
-            and e.get("horizon_minutes") in moves
-        ):
-            moves[e["horizon_minutes"]].append(
-                (float(e["mid_move_cents"]), float(e["exit_move_cents"]))
-            )
+            first.setdefault(cid, e)
+    readings = list(first.values())
     return {
-        "orders_with_queue_reading": len(first),
-        "first_in_line_share": round(
-            sum(v == 0 for v in first.values()) / len(first), 3
+        "rules": P.STRATEGY_VERSION,
+        "orders_with_queue_reading": len(readings),
+        "nothing_ahead_share": round(
+            sum(r["ahead"] == 0 for r in readings) / len(readings), 3
         )
-        if first
+        if readings
         else None,
-        "median_ahead_at_first_reading": float(pd.Series(list(first.values())).median())
-        if first
+        "outbid_share": round(
+            sum(bool(r.get("outbid")) for r in readings) / len(readings), 3
+        )
+        if readings
         else None,
-        "markouts": {
-            f"{h}m": {
-                "fills": len(v),
-                "mid_move_cents": round(sum(m for m, _ in v) / len(v), 2)
-                if v
-                else None,
-                "exit_move_cents": round(sum(x for _, x in v) / len(v), 2)
-                if v
-                else None,
-            }
-            for h, v in moves.items()
-        },
+        "median_ahead": float(pd.Series([r["ahead"] for r in readings]).median())
+        if readings
+        else None,
+        "failed_queue_reads": sum(
+            1 for e in measure_events if e.get("event") == "queue" and e.get("issue")
+        ),
+        "markouts": markouts,
+        "note": "Live measurements, not P&L. Markouts: cents from the side "
+        "bought, one-sided fills observed before the start, contract-weighted, "
+        "fees not included; adverse move < 0 means the price moved against the "
+        "fill. Queue: first reading of orders at least one pass old.",
     }
+
+
+def write_measure_summary(state_dir):
+    """Recompute and save the summary (atomic); returns it."""
+    summary = summarize_measurements(
+        load_events(state_dir / "journal.jsonl"),
+        load_measurements(state_dir / MEASURE_FILE),
+    )
+    target = state_dir / MEASURE_SUMMARY
+    temporary = target.with_suffix(".json.tmp")
+    temporary.write_text(json.dumps(summary, indent=2, sort_keys=True) + "\n")
+    temporary.chmod(0o600)
+    temporary.replace(target)
+    return summary
 
 
 # ------------------------------------------------------------------ live
@@ -2176,19 +2352,23 @@ def status(state_dir):
         f"cautious replay = "
         f"{dash if share['cautious_replay_share'] is None else share['cautious_replay_share']})"
     )
-    qm = queue_markout_summary(events, shadow_events)
+    qm = summarize_measurements(events, load_measurements(state_dir / MEASURE_FILE))
+
+    def show(value, spec="+.2f"):
+        return dash if value is None else f"{value:{spec}}"
+
     print(
-        f"LIVE queue: {qm['orders_with_queue_reading']} orders read; first in line "
-        f"at the first reading: {dash if qm['first_in_line_share'] is None else qm['first_in_line_share']}; "
-        f"median contracts ahead: {dash if qm['median_ahead_at_first_reading'] is None else qm['median_ahead_at_first_reading']}"
+        f"LIVE queue: {qm['orders_with_queue_reading']} orders read; nothing ahead "
+        f"at the first reading: {show(qm['nothing_ahead_share'], '.2f')}; outbid: "
+        f"{show(qm['outbid_share'], '.2f')}; median ahead: {show(qm['median_ahead'], 'g')}"
     )
-    parts = []
-    for horizon, m in qm["markouts"].items():
-        mid = dash if m["mid_move_cents"] is None else f"{m['mid_move_cents']:+.2f}"
-        parts.append(f"{horizon} {mid} mid ({m['fills']} fills)")
     print(
-        "LIVE markouts (cents from the side bought, + is good, fees not included): "
-        + "; ".join(parts)
+        "LIVE markouts (one-sided fills before the start, cents, < 0 = moved "
+        "against the fill): "
+        + "; ".join(
+            f"{h} {show(m['adverse_move_cents'])} ({m['one_sided_fills']} fills)"
+            for h, m in qm["markouts"].items()
+        )
     )
     print(
         "SHADOW (simulated, first in line unless flow-weighted):",
@@ -2338,16 +2518,24 @@ def main():
             except Exception as error:
                 report["markouts_error"] = type(error).__name__
             try:
-                # Signed reads only, after the account lock is released.
-                reader = TradingClient(dry_run=True, env="prod")
+                # Signed GETs only (the client refuses anything else), after
+                # the account lock is released, with a short timeout.
+                reader = prod_nba_auto.ReadOnlyClient(
+                    dry_run=True, env="prod", timeout=QUEUE_READ_TIMEOUT_SECONDS
+                )
                 report["queue_readings"] = record_queue(
                     state_dir,
                     started,
                     reader,
+                    listings=public.get("listings"),
                     deadline=PROCESS_START + SCORING_DEADLINE_SECONDS,
                 )
             except Exception as error:
                 report["queue_error"] = type(error).__name__
+            try:
+                write_measure_summary(state_dir)
+            except Exception as error:
+                report["measure_summary_error"] = type(error).__name__
             try:
                 report["live_windows_scored"] = score_live_windows(
                     state_dir,

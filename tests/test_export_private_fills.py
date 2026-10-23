@@ -805,32 +805,30 @@ def test_spread_queue_and_markouts_are_exported_by_reference(tmp_path):
         "nfl": write(tmp_path / "nfl.jsonl", NFL_EVENTS),
         "spread": write(tmp_path / "spread.jsonl", SPREAD_EVENTS),
     }
+    shadow = write(tmp_path / "shadow.jsonl", SHADOW_EVENTS)
     measured = [
-        {"event": "queue", "client_order_id": "smm-spread-a", "order_id": "exchange-spread-a",
-         "ahead": 0.0, "utc": "2026-10-22T20:10:00+00:00"},
-        {"event": "queue", "client_order_id": "smm-spread-a", "order_id": "exchange-spread-a",
-         "ahead": 4.0, "utc": "2026-10-22T20:20:00+00:00"},
+        {"event": "queue", "client_order_id": "smm-spread-a", "ahead": 0.0,
+         "outbid": False, "utc": "2026-10-22T20:10:00+00:00"},
+        {"event": "queue", "client_order_id": "smm-spread-a", "ahead": 4.0,
+         "outbid": True, "utc": "2026-10-22T20:20:00+00:00"},
         {"event": "markout", "fill_id": "exchange-fill-a", "client_order_id": "smm-spread-a",
-         "horizon_minutes": 10, "mid_move_cents": -2.5, "exit_move_cents": -6},
+         "horizon_minutes": 10, "adverse_move_cents": -2.5, "realized_spread_cents": 2.5},
         {"event": "markout", "fill_id": "exchange-fill-a", "client_order_id": "smm-spread-a",
-         "horizon_minutes": 30, "mid_move_cents": None, "exit_move_cents": None,
-         "issue": "quote_unavailable"},
+         "horizon_minutes": 30, "adverse_move_cents": None, "issue": "quote_unavailable"},
     ]  # fmt: skip
-    shadow = write(tmp_path / "shadow.jsonl", SHADOW_EVENTS + measured)
+    path = write(tmp_path / "measurements.jsonl", measured, tail='{"eve')  # torn line
+    assert path.name == "measurements.jsonl"
+    bot_summary = {"rules": "spread-maker-v2-pregame", "orders_with_queue_reading": 1}
+    (tmp_path / "measurements_summary.json").write_text(json.dumps(bot_summary))
     files, summary, _ = export.build_files(journals, shadow=shadow)
     orders = rows(files["data/spread/orders/2026-10-22.csv"])
     a = next(o for o in orders if o["order_ref"] == export.ref("smm-spread-a"))
     assert (a["first_queue_ahead"], a["last_queue_ahead"]) == ("0.0", "4.0")
+    assert a["outbid_at_first_reading"] == "False"
     fills = rows(files["data/spread/fills/2026-10-22.csv"])
     f = next(x for x in fills if x["fill_ref"] == export.ref("exchange-fill-a"))
     assert f["markout_10m_cents"] == "-2.5" and f["markout_30m_cents"] == ""
-    qm = summary["markets"]["spread"]["queue_and_markouts"]
-    assert qm["orders_with_queue_reading"] == 1 and qm["first_in_line_share"] == 1.0
-    assert qm["markouts"]["10m"] == {
-        "fills": 1,
-        "mid_move_cents": -2.5,
-        "exit_move_cents": -6.0,
-    }
-    assert qm["markouts"]["30m"]["fills"] == 0
+    # The summary is the bot's own, copied as written.
+    assert summary["markets"]["spread"]["queue_and_markouts"] == bot_summary
     # Exchange ids never reach the export.
     assert "exchange-spread-a" not in "".join(files.values())
