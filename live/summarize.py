@@ -222,7 +222,7 @@ def running_now():
     freshness. No account data."""
     from live import prod_nba_auto as nba
     from live import spread_policy as spread
-    from live.shared_account_risk import LIMITS
+    from live.shared_account_risk import ACCOUNT_LOSS_STOPS, LIMITS
 
     odds = None
     books = Path("outputs/books/nba_latest.csv")
@@ -241,6 +241,8 @@ def running_now():
         "nba_max_game": nba.MAX_GAME_COST,
         "nba_max_lifetime": nba.MAX_GROSS_COST,
         "account_max_open": LIMITS["active"],
+        "account_daily_loss_stop": ACCOUNT_LOSS_STOPS["daily"],
+        "account_total_loss_stop": ACCOUNT_LOSS_STOPS["cumulative"],
         "daily_loss_stop": nba.MAX_REALIZED_DAILY_LOSS,
         "total_loss_stop": nba.MAX_REALIZED_CUMULATIVE_LOSS,
         "odds_snapshot_utc": odds,
@@ -251,6 +253,8 @@ def running_now():
             "max_net_per_market_side": spread.MAX_NET_PER_MARKET,
             "min_spread_cents": spread.MIN_SPREAD_CENTS,
             "hours_before_expiration": list(spread.WINDOW_HOURS),
+            "min_lead_minutes": spread.MIN_LEAD_MINUTES,
+            "cancel_lead_minutes": spread.CANCEL_LEAD_MINUTES,
             "series": len(spread.SERIES),
             "max_open": spread.MAX_ACTIVE_COST,
             "daily_loss_stop": spread.DAILY_LOSS_STOP,

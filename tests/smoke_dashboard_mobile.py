@@ -49,8 +49,8 @@ def main():
                     assert page.locator("#study-chart svg").count() == 1
                     page.screenshot(path=str(screenshots / f"research-{width}.png"))
                     if width == 1440:
-                        page.locator("#methodology").screenshot(
-                            path=str(screenshots / "research-methodology.png")
+                        page.locator("#strategies").screenshot(
+                            path=str(screenshots / "research-strategies.png")
                         )
                         page.locator("#research-section").screenshot(
                             path=str(screenshots / "research-evidence.png")
@@ -107,11 +107,7 @@ def main():
                     )
                     assert not errors, f"{width}px: JS errors after resize: {errors}"
 
-                    # Expanding sections and jumping to lower anchors must work.
-                    page.locator("details.quick-guide summary").click()
-                    assert page.locator("details.quick-guide").evaluate(
-                        "(el) => el.open"
-                    )
+                    # Jumping to lower anchors must work.
                     page.locator('a[href="#research-section"]').click()
                     assert page.evaluate("location.hash") == "#research-section"
                     # Diagnostics are optional when no suitable research

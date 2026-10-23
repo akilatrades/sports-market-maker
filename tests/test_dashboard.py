@@ -33,22 +33,38 @@ def test_dashboard_has_unique_essential_sections_and_education():
     parser.feed(page)
     assert len(parser.ids) == len(set(parser.ids))
     for section in (
-        "overview",
-        "forward",
         "production-pnl",
         "live-pnl-grid",
-        "risk",
+        "checkpoints",
+        "strategies",
+        "prop-maker",
+        "prop-rules",
+        "spread-maker",
+        "spread-metrics",
+        "spread-rules",
         "research-section",
-        "methodology",
+        "scan",
+        "risk",
+        "account-limits",
         "study-chart",
-        "hero-metrics",
-        "forward-view",
-        "system-view",
-        "live",
     ):
         assert section in parser.ids
-    for label in ("Exchange-confirmed", "Volume capture", "NFL", "NBA"):
+    for label in ("Exchange-confirmed", "NFL", "NBA", "Spread maker", "in-sample"):
         assert label.lower() in page.lower()
+    # Panels that could never fill in, or repeated others, stay removed, and
+    # the page never reads research-runner P&L as if it were live.
+    for retired in ("hero-metrics", "forward-view", "system-view", "exchange-watch"):
+        assert retired not in parser.ids
+    for field in ("realized_total", "s.live", "live_nfl", "forward_validation"):
+        assert field not in page
+    # The P&L note keeps every exclusion the live feed declares.
+    for caveat in (
+        "unrealized positions",
+        "non-settlement exits",
+        "credits",
+        "archived",
+    ):
+        assert caveat in page
 
 
 def test_dashboard_inline_javascript_parses(tmp_path):
@@ -68,10 +84,11 @@ def test_dashboard_inline_javascript_parses(tmp_path):
     assert result.returncode == 0, result.stderr
 
 
-def test_overview_never_invents_live_profit_when_no_exchange_data(tmp_path):
+def _run_dashboard_js(tmp_path, exercise):
+    """Run the dashboard script up to its first fetch, then ``exercise``."""
     if not shutil.which("node"):
         pytest.skip("Node.js is not installed in this environment")
-    harness = tmp_path / "smoke.cjs"
+    harness = tmp_path / "harness.cjs"
     harness.write_text(
         """
 const fs = require("fs");
@@ -80,47 +97,88 @@ const html = fs.readFileSync(process.argv[2], "utf8");
 const source = html.match(/<script>([\\s\\S]*?)<\\/script>/)[1];
 const bootstrap = source.split('fetch("../outputs/dashboard/summary.json"')[0];
 const nodes = {};
-const document = {
-  getElementById(id) {
-    return nodes[id] || (nodes[id] = {innerHTML: "", style: {}});
-  }
-};
-const exercise = `
-overview({live: {}, live_nfl: {}, limits: {max_open: 150}});
-if (!nodes["hero-metrics"].innerHTML.includes("—") ||
-    !nodes["forward-view"].innerHTML.includes("Not started")) {
-  throw new Error("Missing data was not represented honestly");
-}
-overview({live: {mode: "dry", realized_total: 9}, live_nfl: {realized_total: 7}});
-if (nodes["hero-metrics"].innerHTML.includes("$9.00") ||
-    nodes["hero-metrics"].innerHTML.includes("$16.00")) {
-  throw new Error("Research or separate-market totals became NBA live performance");
-}
-overview({
-  live: {forward_validation: {
-    status: "collecting", eligible_real_orders: 8,
-    settled_buy_fill_events: 2, elapsed_days: 3,
-    capture_volume_weighted: 0.32, qualifying_contracts: 25,
-    settled_contracts: 3, cents_per_settled_contract: -2.5
-  }},
-  live_nfl: {},
-  limits: {max_open: 150, max_order: 5, max_per_game: 25}
-});
-if (!nodes["hero-metrics"].innerHTML.includes("32%") ||
-    !nodes["forward-view"].innerHTML.includes("2 / 1,900")) {
-  throw new Error("Forward evidence not displayed correctly");
-}
-`;
-vm.runInNewContext(bootstrap + exercise, {document, nodes, console});
+const document = {getElementById(id) { return nodes[id] || (nodes[id] = {innerHTML: "", style: {}, textContent: ""}); }};
+vm.runInNewContext(bootstrap + fs.readFileSync(process.argv[3], "utf8"), {document, nodes, console});
 """
     )
+    script = tmp_path / "exercise.js"
+    script.write_text(exercise)
     result = subprocess.run(
-        ["node", str(harness), str(DASHBOARD)],
+        ["node", str(harness), str(DASHBOARD), str(script)],
         capture_output=True,
         text=True,
         check=False,
     )
     assert result.returncode == 0, result.stderr
+
+
+def test_checkpoints_count_days_and_never_claim_progress_they_cannot_see(tmp_path):
+    _run_dashboard_js(
+        tmp_path,
+        """
+const html = () => nodes["checkpoints"].innerHTML;
+checkpoints(new Date("2026-10-20T12:00:00Z"));
+if ((html().match(/Not started/g) || []).length !== 2) throw new Error("future start shown as running");
+checkpoints(new Date("2026-10-25T12:00:00Z"));
+if (!html().includes("Day 5 of 30") || !html().includes("Day 3 of 28")) throw new Error(html());
+checkpoints(new Date("2027-01-01T00:00:00Z"));
+if (!html().includes("Review due (30 days)") || !html().includes('aria-valuenow="28"')) throw new Error(html());
+// Only elapsed days: no fill counts or P&L, which the public page cannot verify.
+if (/[+−-]\\$|so far|contracts filled|P&amp;L/.test(html())) throw new Error("checkpoint invented progress");
+""",
+    )
+
+
+def test_rules_panels_fill_from_code_and_admit_missing_data(tmp_path):
+    _run_dashboard_js(
+        tmp_path,
+        """
+runningNow({});
+for (const id of ["prop-rules", "spread-rules"]) {
+  if (!nodes[id].innerHTML.includes("Rules not in this snapshot")) throw new Error(id + " hid missing rules");
+}
+if (nodes["account-limits"].textContent) throw new Error("account stops invented");
+const r = {
+  nba_rules: "nba-no-v5", contracts_per_order: 1, entry_edge_cents: [0, 15],
+  entry_hours_before_tip: [2, 6], price_band_cents: [5, 95], nba_max_open: 150,
+  nba_max_daily: 150, nba_max_game: 25, nba_max_lifetime: 2000, account_max_open: 165,
+  account_daily_loss_stop: 20, account_total_loss_stop: 60,
+  spread: {rules: "spread-maker-v2-pregame", contracts_per_order: 5, max_net_per_market_side: 5,
+    min_spread_cents: 8, hours_before_expiration: [4, 7], min_lead_minutes: 85,
+    cancel_lead_minutes: 20, series: 64, max_open: 60, daily_loss_stop: 10,
+    total_loss_stop: 40, order_lifetime_minutes: 65}
+};
+runningNow({running_now: r});
+const prop = nodes["prop-rules"].innerHTML, spread = nodes["spread-rules"].innerHTML;
+if (!prop.includes("1 contract, post-only NO") || !prop.includes("2–6 h before tip-off")) throw new Error(prop);
+if (!spread.includes("New quotes 85+ min before; all cancelled 20 min before")) throw new Error(spread);
+if (!spread.includes("Up to 5 contracts a side, 65-minute expiry")) throw new Error(spread);
+const account = nodes["account-limits"].textContent;
+if (!account.includes("after $20") || !account.includes("after $60")) throw new Error("account stops missing");
+// The $165 cap covers NBA and NFL only; the spread maker has its own.
+if (!account.includes("NBA and NFL share a $165 cap") || !account.includes("spread maker has its own $60")) throw new Error(account);
+// An older summary without the v2 start margins still says what the rule is.
+delete r.spread.min_lead_minutes;
+runningNow({running_now: r});
+if (!nodes["spread-rules"].innerHTML.includes("Only before a known start")) throw new Error("v2 rule not stated");
+delete r.spread.order_lifetime_minutes; delete r.spread.daily_loss_stop;
+runningNow({running_now: r});
+const partial = nodes["spread-rules"].innerHTML;
+if (/undefined|NaN|−—|short expiry/.test(partial)) throw new Error(partial);
+""",
+    )
+
+
+def test_running_now_publishes_v2_start_margins_and_account_stops():
+    from live import spread_policy
+    from live.shared_account_risk import ACCOUNT_LOSS_STOPS
+    from live.summarize import running_now
+
+    r = running_now()
+    assert r["spread"]["min_lead_minutes"] == spread_policy.MIN_LEAD_MINUTES
+    assert r["spread"]["cancel_lead_minutes"] == spread_policy.CANCEL_LEAD_MINUTES
+    assert r["account_daily_loss_stop"] == ACCOUNT_LOSS_STOPS["daily"]
+    assert r["account_total_loss_stop"] == ACCOUNT_LOSS_STOPS["cumulative"]
 
 
 def test_live_summary_uses_published_validation_not_fake_zeros(tmp_path):
@@ -202,6 +260,9 @@ spreadSection({});
 if (!nodes["spread-metrics"].innerHTML.includes("not in this snapshot")) throw new Error("missing research not declared");
 spreadSection({spread_research: {all: {cents: 2.44, fills: 76694, profit_factor: 1.22}, later: {cents: 1.7, t: 7.8}}, running_now: {spread: {contracts_per_order: 5, max_open: 60}}});
 if (!nodes["spread-metrics"].innerHTML.includes("+2.44")) throw new Error("research not shown");
+if (nodes["spread-metrics"].innerHTML.includes("both halves")) throw new Error("both halves claimed without the earlier half");
+spreadSection({spread_research: {all: {cents: 2.44, fills: 76694, profit_factor: 1.22}, earlier: {cents: 3.07}, later: {cents: 1.7, t: 7.8}}});
+if (!nodes["spread-metrics"].innerHTML.includes("positive in both halves")) throw new Error("both halves not shown");
 `;
 vm.runInNewContext(bootstrap + exercise, {document, nodes, console});
 """
