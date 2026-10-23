@@ -8,11 +8,23 @@ on:
         description: "Comma-separated series to scan (empty = every unscanned series)"
         required: false
         default: ""
+      window:
+        description: "Hours before expected expiration to scan. 24,4 also records event start times and writes outputs/scan_24h (RESEARCH_LOG.md, 2026-10-23)"
+        type: choice
+        default: "7,4"
+        options:
+          - "7,4"
+          - "24,4"
 permissions:
   contents: write
 concurrency:
   group: scan
   cancel-in-progress: false
+# Choice inputs only, mapped to fixed values: nothing user-typed reaches a shell.
+env:
+  SCAN_WINDOW: ${{ inputs.window || '7,4' }}
+  SCAN_OUT: ${{ inputs.window == '24,4' && 'outputs/scan_24h' || 'outputs/scan' }}
+  SCAN_STARTS: ${{ inputs.window == '24,4' && '--starts' || '' }}
 jobs:
   list:
     runs-on: ubuntu-latest
@@ -28,11 +40,11 @@ jobs:
       - name: List eligible series
         env:
           SELECTED_SERIES: ${{ inputs.series }}
-        run: python -m research.scan_markets list --skip-done --series "$SELECTED_SERIES"
+        run: python -m research.scan_markets list --skip-done --series "$SELECTED_SERIES" --window "$SCAN_WINDOW" --out "$SCAN_OUT"
       - uses: actions/upload-artifact@v4
         with:
           name: scan-series
-          path: outputs/scan/series.json
+          path: ${{ env.SCAN_OUT }}/series.json
   scan:
     needs: list
     runs-on: ubuntu-latest
@@ -51,15 +63,16 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           name: scan-series
-          path: outputs/scan
-      - run: python -m research.scan_markets scan --shard ${{ matrix.shard }} --shards 20 --minutes 300 --sample 400
+          path: ${{ env.SCAN_OUT }}
+      - run: python -m research.scan_markets scan --shard ${{ matrix.shard }} --shards 20 --minutes 300 --sample 400 --window "$SCAN_WINDOW" --out "$SCAN_OUT" $SCAN_STARTS
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: scan-${{ matrix.shard }}
           path: |
-            outputs/scan/scan_*.json
-            outputs/scan/orders_*.csv.gz
+            ${{ env.SCAN_OUT }}/scan_*.json
+            ${{ env.SCAN_OUT }}/orders_*.csv.gz
+            ${{ env.SCAN_OUT }}/events_*.csv.gz
           if-no-files-found: ignore
   commit:
     needs: [list, scan]
@@ -74,16 +87,16 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           pattern: scan-*
-          path: outputs/scan
+          path: ${{ env.SCAN_OUT }}
           merge-multiple: true
-      - run: python -m research.scan_markets report
+      - run: python -m research.scan_markets report --out "$SCAN_OUT"
       - name: Commit
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          rm -f outputs/scan/scan_*.json
-          git add -A outputs/scan
+          rm -f "$SCAN_OUT"/scan_*.json
+          git add -A "$SCAN_OUT"
           if git diff --cached --quiet; then exit 0; fi
-          git commit -m "Market scan results (all categories)"
+          git commit -m "Market scan results ($SCAN_OUT, window $SCAN_WINDOW)"
           git pull --rebase -X theirs
           git push
