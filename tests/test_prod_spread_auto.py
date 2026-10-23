@@ -1712,3 +1712,163 @@ def test_recent_events_are_those_with_orders_that_may_rest(world):
     event = TICKER.rsplit("-", 1)[0]
     assert bot.recent_events(world["dir"], NOW + timedelta(minutes=30)) == {event}
     assert bot.recent_events(world["dir"], NOW + timedelta(minutes=70)) == set()
+
+
+# ------------------------------------------- standing and markouts (measurement)
+
+
+def _listing_at(bid, ask):
+    return {"KXDOTA2GAME": [{**market(), "yes_bid_dollars": f"{bid:.2f}",
+                             "yes_ask_dollars": f"{ask:.2f}"}]}  # fmt: skip
+
+
+def _measures(state):
+    return bot.load_measurements(state / bot.MEASURE_FILE)
+
+
+def _summary(state):
+    return bot.summarize_measurements(
+        bot.load_events(state / "journal.jsonl"),
+        bot.iter_measurements(state / bot.MEASURE_FILE),
+    )
+
+
+def test_markouts_of_a_one_sided_fill(world):
+    run(world)  # YES 5 @ 41c and NO 5 @ 49c in a 40-52c market (spread 12)
+    order = fill_placed(world, 0, 5)  # the YES fills at NOW + 5 min
+    world["exchange"].fills_[-1]["fee_cost"] = "0.0500"  # 1c a contract
+    run(world, NOW + timedelta(minutes=10))  # copies the fill into the journal
+    assert order.side == "yes"
+    state = world["dir"]
+    listing = _listing_at(0.44, 0.52)  # YES midpoint now 48c
+    assert bot.record_markouts(state, NOW + timedelta(minutes=14), listing) == 0
+    assert bot.record_markouts(state, NOW + timedelta(minutes=20), listing) == 1
+    m = next(e for e in _measures(state) if e["event"] == "markout")
+    # Posted at 41 when the YES midpoint was 46: +2 since; paid 41 and 1c fee.
+    assert m["adverse_move_cents"] == 2 and m["realized_spread_cents"] == 6
+    assert m["exit_move_cents"] == 3 and not m["exit_is_own_quote"]
+    assert m["contracts"] == 5 and m["minutes_before_start"] > 0
+    # Each horizon once; a late pass records the miss instead of a price.
+    assert bot.record_markouts(state, NOW + timedelta(minutes=20), listing) == 0
+    assert bot.record_markouts(state, NOW + timedelta(minutes=40), {}) == 1
+    assert bot.record_markouts(state, NOW + timedelta(minutes=80), listing) == 1
+    issues = {
+        e["horizon_minutes"]: e["issue"]
+        for e in _measures(state)
+        if e["event"] == "markout"
+    }
+    assert issues == {
+        10: None,
+        30: "quote_unavailable",
+        60: "missed_observation_window",
+    }
+    ten = _summary(state)["markouts"]["10m"]
+    assert ten["one_sided_fills"] == 1 and ten["one_sided_adverse_move_cents"] == 2.0
+    assert ten["one_sided_realized_spread_cents"] == 6.0 and ten["all_fills"] == 1
+    assert _summary(state)["markouts"]["30m"]["not_used"] == {"quote_unavailable": 1}
+
+
+def test_pairing_looks_only_backwards(world):
+    run(world)
+    fill_placed(world, 0, 5)  # YES at NOW + 5
+    fill_placed(world, 1, 30, count=2)  # 2 of the NO at NOW + 30: the rest rests
+    run(world, NOW + timedelta(minutes=35))
+    state = world["dir"]
+    bot.record_markouts(state, NOW + timedelta(minutes=40), _listing_at(0.44, 0.51))
+    marks = _summary(state)["markouts"]
+    # The YES filled first: one-sided (its 30-minute reading). The NO came
+    # after it: paired (its 10-minute reading).
+    assert marks["30m"]["one_sided_fills"] == 1 and marks["30m"]["all_fills"] == 1
+    assert marks["10m"]["one_sided_fills"] == 0 and marks["10m"]["all_fills"] == 1
+    # The NO's best bid was our own resting 49c: its exit price says nothing.
+    no = next(e for e in _measures(state) if e.get("side") == "no")
+    assert no["exit_is_own_quote"] and no["exit_move_cents"] is None
+
+
+def test_readings_after_the_start_are_not_used():
+    journal = [
+        {"event": "intent", "client_order_id": "a", "strategy_version": P.STRATEGY_VERSION,
+         "ticker": TICKER, "side": "yes", "price_cents": 41, "count": 5},
+        {"event": "accepted", "client_order_id": "a", "order_id": "1"},
+        {"event": "fill", "fill_id": "f", "order_id": "1", "count_fp": "5.00",
+         "utc": NOW.isoformat()},
+    ]  # fmt: skip
+    marks = [
+        {"event": "markout", "client_order_id": "a", "fill_id": "f", "horizon_minutes": 60,
+         "minutes_before_start": -5, "adverse_move_cents": -9, "realized_spread_cents": -3,
+         "contracts": 5, "issue": None},
+    ]  # fmt: skip
+    sixty = bot.summarize_measurements(journal, marks)["markouts"]["60m"]
+    assert sixty["one_sided_fills"] == 0 and sixty["all_fills"] == 0
+    assert sixty["not_used"] == {"observed_after_start": 1}
+
+
+def test_standing_is_checked_before_requotes(world):
+    run(world)  # YES 41 and NO 49 rest
+    state = world["dir"]
+    # Someone bids 42 for YES (ahead of us) and joins our NO at 49.
+    world["quotes"][TICKER] = {**world["quotes"][TICKER], "yes_bid_dollars": "0.42",
+                               "yes_ask_dollars": "0.51"}  # fmt: skip
+    report, _ = run(world, NOW + timedelta(minutes=10))
+    assert report["standing_orders_checked"] == 2
+    assert report["standing_outbid"] == 1 and report["standing_joined"] == 1
+    (event,) = [e for e in _measures(state) if e["event"] == "standing"]
+    assert event["outbid"] == 1 and event["joined"] == 1
+    summary = _summary(state)
+    assert summary["standing_checks"] == 2 and summary["outbid_share"] == 0.5
+
+
+def test_a_torn_measurement_file_does_not_stop_measuring(world):
+    run(world)
+    fill_placed(world, 0, 5)
+    run(world, NOW + timedelta(minutes=10))
+    state = world["dir"]
+    (state / bot.MEASURE_FILE).write_text(
+        '{"event": "standing", "orders_checked": 2}\n{"eve'
+    )
+    assert (
+        bot.record_markouts(state, NOW + timedelta(minutes=20), _listing_at(0.44, 0.52))
+        == 1
+    )
+    assert [e["event"] for e in _measures(state)] == ["standing", "markout"]
+    summary = bot.write_measure_summary(state)
+    assert summary["markouts"]["10m"]["one_sided_fills"] == 1
+    assert json.loads((state / bot.MEASURE_SUMMARY).read_text()) == summary
+
+
+def test_summary_reports_clustered_t_and_gaps():
+    v2 = P.STRATEGY_VERSION
+    journal, marks = [], []
+    for i, move in enumerate((3.0, 5.0, -1.0, 4.0)):
+        cid, oid, fid = f"c{i}", f"o{i}", f"f{i}"
+        journal += [
+            {"event": "intent", "client_order_id": cid, "strategy_version": v2,
+             "ticker": f"KXCS2GAME-E{i}-A", "event_ticker": f"KXCS2GAME-E{i}",
+             "side": "yes", "price_cents": 41, "count": 5},
+            {"event": "accepted", "client_order_id": cid, "order_id": oid},
+            {"event": "fill", "fill_id": fid, "order_id": oid, "count_fp": "5.00",
+             "utc": NOW.isoformat(), **({} if i == 3 else {"fee_cost": "0.00"})},
+        ]  # fmt: skip
+        if i < 3:  # the last fill was never measured
+            marks.append(
+                {
+                    "event": "markout",
+                    "client_order_id": cid,
+                    "fill_id": fid,
+                    "horizon_minutes": 30,
+                    "minutes_before_start": 90,
+                    "contracts": 5,
+                    "adverse_move_cents": move - 4,
+                    "realized_spread_cents": move,
+                    "issue": None,
+                }  # fmt: skip
+            )
+    s = bot.summarize_measurements(journal, marks, NOW + timedelta(hours=2))
+    thirty = s["markouts"]["30m"]
+    assert thirty["one_sided_fills"] == 3
+    assert thirty["one_sided_realized_spread_cents"] == round(7 / 3, 2)
+    assert thirty["one_sided_realized_spread_t"] is not None
+    assert s["fills"] == 4 and s["fills_never_measured"] == 1
+    assert s["fills_without_fee_record"] == 1
+    # Too recent to have been measured: not counted as never measured.
+    assert bot.summarize_measurements(journal, marks, NOW)["fills_never_measured"] == 0

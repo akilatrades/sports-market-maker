@@ -454,6 +454,9 @@ SPREAD_FILL_COLUMNS = [
     "is_taker",
     "price_cents",
     "spread",
+    "markout_10m_cents",  # adverse move of the side bought (< 0: against it)
+    "markout_30m_cents",
+    "markout_60m_cents",
 ]
 SPREAD_SETTLEMENT_COLUMNS = [
     "market",
@@ -651,6 +654,26 @@ def shadow_expected(through, flow, size):
     return total
 
 
+def fill_markouts(path):
+    """Per fill ref, the adverse move in cents at 10, 30 and 60 minutes from
+    the spread maker's ``measurements.jsonl`` (RESEARCH_LOG.md 2026-10-23):
+    measurements, not P&L. The summary is the bot's own
+    ``measurements_summary.json`` (one calculation, used by --status too)."""
+    marks = {}
+    with Path(path).open("r", encoding="utf-8", errors="replace") as f:
+        for line in f:
+            try:
+                e = json.loads(line)
+            except ValueError:
+                continue  # a torn line after a crash
+            if not isinstance(e, dict) or e.get("event") != "markout":
+                continue
+            move = _number(e.get("adverse_move_cents"))
+            if e.get("fill_id") and move is not None and math.isfinite(move):
+                marks.setdefault(ref(e["fill_id"]), {})[e.get("horizon_minutes")] = move
+    return marks
+
+
 def live_fill_share(path, orders):
     """Our share of the contracts that public prints show traded at or
     through each finished live order's price (up to its size): the live
@@ -801,6 +824,22 @@ def build_files(journals, shadow=None):
                 # Only a complete read may remove files it no longer writes
                 # (never the last good pnl_by_day.csv on a bad ledger).
                 complete.add(market)
+            measured = None
+            measure_path = (
+                Path(shadow).with_name("measurements.jsonl") if shadow else None
+            )
+            if measure_path is not None and measure_path.exists():
+                try:
+                    measured = fill_markouts(measure_path)
+                except Exception as error:
+                    measured = error
+            if isinstance(measured, dict):
+                per_fill = measured
+                for f in fills:
+                    for horizon in (10, 30, 60):
+                        f[f"markout_{horizon}m_cents"] = per_fill.get(
+                            f["fill_ref"], {}
+                        ).get(horizon, "")
             for name, columns, rows, when in (
                 ("orders", SPREAD_ORDER_COLUMNS, orders, "intent_utc"),
                 ("fills", SPREAD_FILL_COLUMNS, fills, "fill_utc"),
@@ -848,6 +887,22 @@ def build_files(journals, shadow=None):
                 else len(ledger.get("open", {})),
                 "by_strategy_version": versions,
             }
+            summary_path = (
+                Path(shadow).with_name("measurements_summary.json") if shadow else None
+            )
+            if summary_path is not None and summary_path.exists():
+                try:
+                    summary["markets"][market]["queue_and_markouts"] = json.loads(
+                        summary_path.read_text()
+                    )
+                except (OSError, ValueError) as error:
+                    summary["markets"][market]["queue_and_markouts"] = {
+                        "status": f"error_{type(error).__name__}"
+                    }
+            elif isinstance(measured, Exception):
+                summary["markets"][market]["queue_and_markouts"] = {
+                    "status": f"error_{type(measured).__name__}"
+                }
             if shadow is not None and Path(shadow).exists():
                 try:
                     summary["markets"][market]["live_fill_share"] = live_fill_share(
@@ -961,6 +1016,13 @@ markets and holds fills to settlement.
   cautious replay (each such contract reaching us with probability 0.25)
   would have filled on the same windows. This is the measurement that says
   how much of the simulated edge is real.
+- `data/summary.json` → `markets.spread.queue_and_markouts`: the bot's own
+  summary: how often another bid was ahead of its resting quotes at the
+  start of a pass (outbid) or at the same price behind them (joined), and
+  the price after its fills observed before the start, at 10, 30 and 60
+  minutes, for all fills and for one-sided ones (adverse move: < 0 means
+  the price moved against the fill; realized spread after fees;
+  contract-weighted). Per fill: `markout_*m_cents` (adverse move).
 - `data/summary.json` → `spread_shadow_simulated`: the shadow ledger's
   SIMULATED results (first in line, and at flow share 0.25). Compare it
   with the live numbers; never add the two together.

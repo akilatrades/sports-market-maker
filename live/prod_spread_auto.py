@@ -550,6 +550,7 @@ def universe(
     unreadable=None,
     starts=None,
     reasons=None,
+    seen_books=None,
 ):
     """Eligible markets, widest spread first.
 
@@ -579,6 +580,8 @@ def universe(
                         unreadable.add(ticker)
                     continue
                 bid, ask = book_quote(book, own[ticker])
+                if seen_books is not None:
+                    seen_books[ticker] = (bid, ask)  # our own orders taken out
                 m = {
                     **m,
                     "yes_bid_dollars": _dollars(bid, 0),
@@ -1019,6 +1022,383 @@ def fill_share(journal_events, shadow_events):
             "what the flow-share-0.25 replay would have filled on these same windows"
         ),
     }
+
+
+# ------------------------------------------- standing and markouts (measurement)
+# RESEARCH_LOG.md, 2026-10-23, "Spread maker queue position and markouts".
+# Is the bot at the front at its price, and does the price move against its
+# fills soon after (stale quotes picked off)? Read-only. Stored in their own
+# file and summarised each pass into MEASURE_SUMMARY; never used for trading.
+MEASURE_FILE = "measurements.jsonl"
+MEASURE_SUMMARY = "measurements_summary.json"
+MARKOUT_HORIZONS = (10, 30, 60)  # minutes after each fill
+MARKOUT_LATE_MINUTES = 12  # observed at the first pass after the horizon
+PAIRED_WITHIN_MINUTES = 60  # an earlier opposite fill this close: "paired"
+
+
+def iter_measurements(path):
+    """The measurement file, one record at a time, skipping any line that is
+    not a JSON object (a torn last line after a crash must not stop it)."""
+    if not path.exists():
+        return
+    with path.open("r", encoding="utf-8", errors="replace") as f:
+        for line in f:
+            try:
+                record = json.loads(line)
+            except ValueError:
+                continue
+            if isinstance(record, dict):
+                yield record
+
+
+def load_measurements(path):
+    return list(iter_measurements(path))
+
+
+def write_measurement(path, record):
+    """Append one record, first ending a torn last line if there is one."""
+    if path.exists() and path.stat().st_size:
+        with path.open("rb") as f:
+            f.seek(-1, os.SEEK_END)
+            torn = f.read(1) != b"\n"
+        if torn:
+            with path.open("a", encoding="utf-8") as f:
+                f.write("\n")
+    write_event(path, record)
+
+
+def _v2_orders(events):
+    """{client_order_id: intent} for this rule version, and order id -> cid."""
+    intents = {
+        e.get("client_order_id"): e
+        for e in events
+        if e.get("event") == "intent"
+        and e.get("strategy_version") == P.STRATEGY_VERSION
+    }
+    cid_of = {
+        str(e.get("order_id")): e.get("client_order_id")
+        for e in events
+        if e.get("event") == "accepted"
+        and e.get("order_id")
+        and e.get("client_order_id") in intents
+    }
+    return intents, cid_of
+
+
+def _number_or_none(value):
+    try:
+        number = float(value)
+    except (TypeError, ValueError):
+        return None
+    return number if math.isfinite(number) else None
+
+
+def _fills(events, cid_of):
+    """This rule version's fills, once per fill id: (fill, cid, contracts,
+    fee in cents per contract)."""
+    out, seen = [], set()
+    for e in events:
+        fid = e.get("fill_id")
+        cid = cid_of.get(str(e.get("order_id")))
+        if e.get("event") != "fill" or not fid or fid in seen or cid is None:
+            continue
+        seen.add(fid)
+        count = _number_or_none(
+            e.get("count_fp") if e.get("count_fp") is not None else e.get("count")
+        )
+        if count is None or count <= 0 or _utc(e.get("utc")) is None:
+            continue
+        fee = _number_or_none(e.get("fee_cost"))
+        # A fill without a fee record counts as fee 0 (counted in the summary).
+        out.append((e, cid, count, None if fee is None else 100 * fee / count))
+    return out
+
+
+def _resting_at(events, intents, cid_of, at):
+    """(ticker, side, price) of this version's orders that were resting at
+    ``at``: placed before it, not cancelled or fully filled before it."""
+    stamp = at.isoformat()
+    gone = set()
+    for e in events:
+        if e.get("event") in ("cancel_accepted", "cancel_moot") and e.get("order_id"):
+            when = _utc(e.get("utc"))
+            if when is not None and when < at:
+                gone.add(str(e["order_id"]))
+    filled = Counter()
+    for fill, _, count, _ in _fills(events, cid_of):
+        if _utc(fill["utc"]) < at:
+            filled[str(fill.get("order_id"))] += count
+    since = (at - timedelta(minutes=P.ORDER_LIFETIME_MINUTES)).isoformat()
+    return {
+        (intents[cid]["ticker"], intents[cid]["side"], int(intents[cid]["price_cents"]))
+        for oid, cid in cid_of.items()
+        if since <= str(intents[cid].get("utc", "")) < stamp
+        and oid not in gone
+        and filled[oid] < float(intents[cid].get("count", 0)) - 1e-9
+    }
+
+
+def _best_bid(quote, side):
+    """(best bid on one side, YES bid, YES ask) of a listing, in cents."""
+    bid = _cents((quote or {}).get("yes_bid_dollars"))
+    ask = _cents((quote or {}).get("yes_ask_dollars"))
+    if bid is None or ask is None or not 0 < bid < ask < 100:
+        return None, None, None
+    return (bid if side == "yes" else 100 - ask), bid, ask
+
+
+def record_markouts(state_dir, now, listings):
+    """Price after each fill, from the side bought, in cents, at
+    MARKOUT_HORIZONS minutes, from the public listing taken at the start of
+    this pass (``now``):
+
+    - ``adverse_move_cents``: the side's midpoint then minus its midpoint
+      when the quote was posted (< 0: the price moved against the fill);
+    - ``realized_spread_cents``: the midpoint then minus the price paid and
+      the fee per contract (it includes the half-spread earned at entry);
+    - ``exit_move_cents``: the side's best bid then minus the price paid,
+      left empty when that best bid was the bot's own resting quote.
+
+    Returns the number of records written."""
+    journal, path = state_dir / "journal.jsonl", state_dir / MEASURE_FILE
+    if not journal.exists():
+        return 0
+    events = load_events(journal)
+    intents, cid_of = _v2_orders(events)
+    fills = _fills(events, cid_of)
+    oldest = max(MARKOUT_HORIZONS) + MARKOUT_LATE_MINUTES + 10
+    recent = {
+        f["fill_id"]
+        for f, *_ in fills
+        if (now - _utc(f["utc"])).total_seconds() < oldest * 60
+    }
+    done = {
+        (e.get("fill_id"), e.get("horizon_minutes"))
+        for e in iter_measurements(path)
+        if e.get("event") == "markout" and e.get("fill_id") in recent
+    }
+    quotes = {m.get("ticker"): m for ms in (listings or {}).values() for m in ms}
+    own = _resting_at(events, intents, cid_of, now)
+    written = 0
+    for fill, cid, count, fee in fills:
+        if fill["fill_id"] not in recent:
+            continue
+        fee = fee or 0.0
+        intent = intents[cid]
+        side, paid = intent.get("side"), int(intent.get("price_cents", 0))
+        spread = _number_or_none(intent.get("spread"))
+        start = _utc(intent.get("event_start_utc"))
+        age = (now - _utc(fill["utc"])).total_seconds() / 60
+        for horizon in MARKOUT_HORIZONS:
+            if (fill["fill_id"], horizon) in done or age < horizon:
+                continue
+            record = {
+                "event": "markout",
+                "fill_id": fill["fill_id"],
+                "client_order_id": cid,
+                "ticker": intent.get("ticker"),
+                "side": side,
+                "price_cents": paid,
+                "contracts": count,
+                "fee_cents_per_contract": round(fee, 4),
+                "spread_cents": spread,
+                "horizon_minutes": horizon,
+                "observed_after_minutes": round(age, 1),
+                "minutes_before_start": None
+                if start is None
+                else round((start - now).total_seconds() / 60, 1),
+                "utc": now.isoformat(),
+                "adverse_move_cents": None,
+                "realized_spread_cents": None,
+                "exit_move_cents": None,
+                "exit_is_own_quote": False,
+                "issue": None,
+            }
+            quote = quotes.get(intent.get("ticker"))
+            best, bid, ask = _best_bid(quote, side)
+            if age > horizon + MARKOUT_LATE_MINUTES:
+                record["issue"] = "missed_observation_window"
+            elif quote is None:
+                record["issue"] = "quote_unavailable"
+            elif best is None:
+                record["issue"] = "invalid_quote"
+            else:
+                mid = (bid + ask) / 2 if side == "yes" else 100 - (bid + ask) / 2
+                record["realized_spread_cents"] = round(mid - paid - fee, 4)
+                if spread is not None:
+                    # Posted one cent above the best bid of a quote this wide.
+                    record["adverse_move_cents"] = mid - (paid - 1 + spread / 2)
+                if (intent.get("ticker"), side, best) in own:
+                    record["exit_is_own_quote"] = True
+                else:
+                    record["exit_move_cents"] = best - paid
+            write_measurement(path, record)
+            written += 1
+    return written
+
+
+def standing(resting_intents, seen_books):
+    """At the start of a pass, before any requote: for each of this version's
+    resting orders whose book was read (our own orders taken out), is another
+    bid on its side better (outbid: someone is ahead), equal (joined: behind
+    us in time), or worse (alone at the front)? Returns counts."""
+    out = Counter()
+    for _, intent, _ in resting_intents:
+        if intent.get("strategy_version") != P.STRATEGY_VERSION:
+            continue
+        book = seen_books.get(intent.get("ticker"))
+        if book is None:
+            continue
+        bid, ask = book
+        other = (
+            bid if intent.get("side") == "yes" else (None if ask is None else 100 - ask)
+        )
+        price = int(intent["price_cents"])
+        out["orders_checked"] += 1
+        if other is not None and other > price:
+            out["outbid"] += 1
+        elif other is not None and other == price:
+            out["joined"] += 1
+        else:
+            out["alone"] += 1
+    return out
+
+
+def _weighted_t(values, weights, clusters):
+    """Weighted mean and its t clustered by ``clusters`` (the formula of
+    research.fill_sizing_replay.clustered_mean_t)."""
+    total = sum(weights)
+    if total <= 0:
+        return None, None
+    mean = sum(w * v for v, w in zip(values, weights)) / total
+    groups = {}
+    for v, w, c in zip(values, weights, clusters):
+        groups[c] = groups.get(c, 0.0) + w * (v - mean)
+    g = len(groups)
+    if g < 2:
+        return round(mean, 2), None
+    se = math.sqrt(sum(x * x for x in groups.values()) * g / (g - 1)) / total
+    return round(mean, 2), (round(mean / se, 2) if se > 0 else None)
+
+
+def summarize_measurements(journal_events, measure_events, now=None):
+    """The numbers the research plan reads, for --status and the export.
+
+    Markouts by horizon, observed before the start, weighted by contracts:
+    for all fills, and for one-sided fills (no opposite-side fill in the same
+    market in the PAIRED_WITHIN_MINUTES before it; looking only backwards, so
+    a later fill caused by the price moving does not reclassify it).
+    Standing: share of order checks in which the bot was outbid."""
+    intents, cid_of = _v2_orders(journal_events)
+    fills = _fills(journal_events, cid_of)
+    by_market = {}
+    for fill, cid, *_ in fills:
+        by_market.setdefault(intents[cid]["ticker"], []).append(
+            (intents[cid]["side"], _utc(fill["utc"]))
+        )
+    paired = set()
+    window = timedelta(minutes=PAIRED_WITHIN_MINUTES)
+    for fill, cid, *_ in fills:
+        side, when = intents[cid]["side"], _utc(fill["utc"])
+        if any(
+            s != side and timedelta(0) <= when - w <= window
+            for s, w in by_market[intents[cid]["ticker"]]
+        ):
+            paired.add(fill["fill_id"])
+    rows = {
+        h: {"all": [], "one_sided": [], "issues": Counter()} for h in MARKOUT_HORIZONS
+    }
+    stand = Counter()
+    measured = set()
+    for e in measure_events:
+        if e.get("event") == "standing":
+            for key in ("orders_checked", "outbid", "joined", "alone"):
+                stand[key] += int(e.get(key) or 0)
+            continue
+        h = e.get("horizon_minutes")
+        if e.get("event") != "markout" or h not in rows:
+            continue
+        if e.get("client_order_id") not in intents:
+            continue
+        measured.add(e.get("fill_id"))
+        if e.get("issue"):
+            rows[h]["issues"][e["issue"]] += 1
+        elif (e.get("minutes_before_start") or 0) <= 0:
+            rows[h]["issues"]["observed_after_start"] += 1
+        elif e.get("adverse_move_cents") is not None:
+            intent = intents[e["client_order_id"]]
+            row = (
+                float(e["contracts"]),
+                float(e["adverse_move_cents"]),
+                float(e["realized_spread_cents"]),
+                intent.get("event_ticker") or intent.get("ticker"),
+            )
+            rows[h]["all"].append(row)
+            if e.get("fill_id") not in paired:
+                rows[h]["one_sided"].append(row)
+
+    def weighted(values, k):
+        total = sum(r[0] for r in values)
+        return round(sum(r[0] * r[k] for r in values) / total, 2) if total else None
+
+    def t_of(values, k):
+        return _weighted_t(
+            [r[k] for r in values], [r[0] for r in values], [r[3] for r in values]
+        )[1]
+
+    markouts = {}
+    for h, v in rows.items():
+        markouts[f"{h}m"] = {
+            "one_sided_fills": len(v["one_sided"]),
+            "one_sided_adverse_move_cents": weighted(v["one_sided"], 1),
+            "one_sided_adverse_move_t": t_of(v["one_sided"], 1),
+            "one_sided_realized_spread_cents": weighted(v["one_sided"], 2),
+            "one_sided_realized_spread_t": t_of(v["one_sided"], 2),
+            "all_fills": len(v["all"]),
+            "all_adverse_move_cents": weighted(v["all"], 1),
+            "all_realized_spread_cents": weighted(v["all"], 2),
+            "not_used": dict(v["issues"]),
+        }
+    oldest = max(MARKOUT_HORIZONS) + MARKOUT_LATE_MINUTES + 10
+    unmeasured = [
+        f
+        for f, *_ in fills
+        if f["fill_id"] not in measured
+        and (now is None or (now - _utc(f["utc"])).total_seconds() >= oldest * 60)
+    ]
+    checked = stand["orders_checked"]
+    return {
+        "rules": P.STRATEGY_VERSION,
+        "standing_checks": checked,
+        "outbid_share": round(stand["outbid"] / checked, 3) if checked else None,
+        "joined_share": round(stand["joined"] / checked, 3) if checked else None,
+        "markouts": markouts,
+        "fills": len(fills),
+        "fills_never_measured": len(unmeasured),
+        "fills_without_fee_record": sum(1 for *_, fee in fills if fee is None),
+        "note": "Live measurements, not P&L. Standing: at each pass, before "
+        "requotes, the share of resting orders with a better bid ahead of them "
+        "(outbid) or another order at their price behind them (joined). "
+        "Standing is a rate per 10-minute pass: an outbid order is re-quoted. "
+        "Markouts: cents from the side bought, observed before the start, "
+        "weighted by contracts; adverse move < 0 means the price moved against "
+        "the fill; realized spread is after the fill's fee.",
+    }
+
+
+def write_measure_summary(state_dir):
+    """Recompute and save the summary (atomic, streaming the file); returns it."""
+    summary = summarize_measurements(
+        load_events(state_dir / "journal.jsonl"),
+        iter_measurements(state_dir / MEASURE_FILE),
+        datetime.now(UTC),
+    )
+    target = state_dir / MEASURE_SUMMARY
+    temporary = target.with_suffix(".json.tmp")
+    temporary.write_text(json.dumps(summary, indent=2, sort_keys=True) + "\n")
+    temporary.chmod(0o600)
+    temporary.replace(target)
+    return summary
 
 
 # ------------------------------------------------------------------ live
@@ -1529,6 +1909,7 @@ def _pass_live(client, now, journal, public, require_shard, deadline):
     unreadable = set()
     reasons = Counter()
     starts = public.get("event_starts")
+    seen_books = {}
     markets = universe(
         public["fetch_markets"],
         now,
@@ -1538,7 +1919,18 @@ def _pass_live(client, now, journal, public, require_shard, deadline):
         unreadable,
         starts,
         reasons,
+        seen_books,
     )
+    try:  # measurement only: whether anyone got ahead of our resting quotes
+        counts = standing(resting_intents, seen_books)
+        if counts:
+            report.update({f"standing_{k}": v for k, v in counts.items()})
+            write_measurement(
+                journal.parent / MEASURE_FILE,
+                {"event": "standing", "utc": now.isoformat(), **counts},
+            )
+    except Exception as error:
+        report["standing_error"] = type(error).__name__
     by_ticker = {m["ticker"]: m for m in markets}
     positions = state["positions"]
     wanted = desired_quotes(markets, positions)
@@ -1972,6 +2364,24 @@ def status(state_dir):
         f"cautious replay = "
         f"{dash if share['cautious_replay_share'] is None else share['cautious_replay_share']})"
     )
+    qm = summarize_measurements(events, iter_measurements(state_dir / MEASURE_FILE))
+
+    def show(value, spec="+.2f"):
+        return dash if value is None else f"{value:{spec}}"
+
+    print(
+        f"LIVE standing: {qm['standing_checks']} resting-order checks; outbid "
+        f"{show(qm['outbid_share'], '.2f')}, joined {show(qm['joined_share'], '.2f')}"
+    )
+    print(
+        "LIVE markouts (one-sided fills before the start, cents, < 0 = moved "
+        "against the fill): "
+        + "; ".join(
+            f"{h} {show(m['one_sided_adverse_move_cents'])} "
+            f"({m['one_sided_fills']} fills)"
+            for h, m in qm["markouts"].items()
+        )
+    )
     print(
         "SHADOW (simulated, first in line unless flow-weighted):",
         json.dumps(shadow_summary(shadow_events)),
@@ -2113,6 +2523,16 @@ def main():
         # copied the exchange's fills into the journal); a failure here never
         # affects trading.
         if live:
+            try:
+                report["markouts_recorded"] = record_markouts(
+                    state_dir, started, public.get("listings")
+                )
+            except Exception as error:
+                report["markouts_error"] = type(error).__name__
+            try:
+                write_measure_summary(state_dir)
+            except Exception as error:
+                report["measure_summary_error"] = type(error).__name__
             try:
                 report["live_windows_scored"] = score_live_windows(
                     state_dir,
