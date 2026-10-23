@@ -17,7 +17,7 @@ If the candidate is unique on both sides, the tool queries public Polymarket US 
 
 ## Schedule and outputs
 
-GitHub Actions `cross-exchange-watch.yml` runs **every four hours**, and can be run manually. The catalog is queried for each league's tag ID and `SPORTS_MARKET_TYPE_PROP`; if the API returns an empty result, the dashboard explicitly labels that coverage **unverified**, not 'there are no props on the exchange'. It writes:
+GitHub Actions `cross-exchange-watch.yml` runs **every four hours**, and can be run manually. The catalog is queried for each league's tag ID and `SPORTS_MARKET_TYPE_PROP`; if the API returns an empty result, the output flags it (`polymarket_us_catalog_empty`, `pagination_complete`) so the coverage reads as **unverified**, not 'there are no props on the exchange'. It writes:
 - `outputs/cross_exchange/latest.json`: most recent coverage and up to 30 candidate matches for investigation.
 - `outputs/cross_exchange/history.jsonl`: the most recent 42 scan summaries (about one week), retaining incomplete-coverage flags.
 

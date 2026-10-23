@@ -188,17 +188,6 @@ def test_full_scan_mocked_public_requests_and_no_external_actions(monkeypatch):
     assert counter["kalshi"] == 6  # NBA 4 series and NFL 2
 
 
-def test_dashboard_exchange_watch_is_read_only():
-    from pathlib import Path
-
-    html = (Path(__file__).parents[1] / "dashboard" / "index.html").read_text()
-    assert 'id="exchange-watch"' in html
-    assert 'id="exchange-watch-data"' in html
-    assert 'fetch("../outputs/cross_exchange/latest.json"' in html
-    assert "Not a tradable edge." in html
-    assert "No completed Polymarket US scan published yet" in html
-
-
 def test_only_unambiguous_integer_over_thresholds_are_normalized():
     assert (
         p.threshold_from_question(

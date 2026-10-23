@@ -42,7 +42,7 @@ def test_dashboard_nav_and_data_mounts_exist():
     mounted = set(re.findall(r'document.getElementById\("([^"]+)"\)', html))
     assert mounted <= tags.ids
     assert "Live account P&L feed unavailable or not configured" in html
-    assert "Not a real-time feed of the account." in html
+    assert "live results refresh separately" in html
 
 
 def test_dashboard_inline_javascript_parses(tmp_path):
