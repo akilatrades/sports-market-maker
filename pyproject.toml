@@ -4,7 +4,7 @@ version = "0.1.0"
 description = "Maker strategies for Kalshi sports markets: resting NO orders on player props and two-sided quotes in wide spreads, with live risk controls and pre-registered research"
 requires-python = ">=3.11"
 license = {text = "MIT"}
-authors = [{name = "Akila Juan"}]
+authors = [{name = "akilatrades"}]
 keywords = ["prediction-markets", "kalshi", "market-making", "player-props", "nba", "nfl", "python"]
 
 [tool.pytest.ini_options]
