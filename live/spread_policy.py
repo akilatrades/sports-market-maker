@@ -11,7 +11,8 @@ from pathlib import Path
 # its window counts from Kalshi's expected expiration, not the start.
 # v3 (2026-10-23, RESEARCH_LOG.md "Spread maker v3"): quotes from 24 hours
 # before expiry, more start times (validated milestone types, per-series
-# offsets), 2 contracts an order.
+# offsets), 2 contracts an order; tightened after review the same day
+# ("Spread maker v3: changes after review").
 STRATEGY_VERSION = "spread-maker-v3-24h-starts"
 # The shared-risk cohort journal lives in STATE; the owner creates ARM_MARKER
 # to allow live orders.
@@ -30,7 +31,9 @@ MAX_ACTIVE_COST = 60.00  # resting orders plus held contracts at cost, dollars
 DAILY_LOSS_STOP = 10.00  # own realized loss, New York day, dollars
 CUMULATIVE_LOSS_STOP = 40.00  # own realized loss since launch, dollars
 MAX_ORDERS_PER_PASS = 20
-MAX_SUBMISSIONS_PER_DAY = 300
+# v3: 1,500 (owner, 2026-10-23; v1-v2: 300). Each quote is re-posted at
+# least hourly, so 300 would run out by early morning with ~30 markets quoted.
+MAX_SUBMISSIONS_PER_DAY = 1500
 ORDER_LIFETIME_MINUTES = 65  # orders expire on the exchange even if the bot stops
 # No new order after this many seconds from process start (lock waits count).
 # Checked again just before each order is journaled; from there one order's
@@ -61,6 +64,8 @@ START_CACHE_MINUTES = 30  # milestone answers are reused for this long
 # to MILESTONE_CHECKS ticker-timed events (one per series) are compared each
 # pass, and a type seen later than a ticker time is distrusted for
 # MILESTONE_TRUST_DAYS. esports_match was late on 51% of events: never trusted.
+# one_off_milestone was dropped after review: its late cases (8 of 381, all
+# KXNCAABBGAME) are in a series without an offset below to catch them.
 # (v2 trusted any type after 2 live matches.)
 MILESTONE_CHECKS = 4
 MILESTONE_AGREE_MINUTES = 15
@@ -72,52 +77,56 @@ TRUSTED_MILESTONE_TYPES = frozenset(
         "basketball_game",
         "cricket_match",
         "hockey_tournament",
-        "one_off_milestone",
     }
 )
 NEVER_TRUSTED_MILESTONE_TYPES = frozenset({"esports_match"})
-# Events with neither a ticker time nor a trusted milestone: start = expected
-# expiration - the series' usual gap - START_OFFSET_MARGIN_MINUTES. Medians of
-# (expiry - start) in the 2026-10-23 scan, for series whose middle half of
-# gaps spanned 30 minutes or less.
+# Offset start: expected expiration - the series' gap - START_OFFSET_MARGIN_MINUTES.
+# An event without a ticker time takes the EARLIER of this and any trusted
+# milestone, and the earliest start ever seen for it is kept. Gaps are the
+# larger of the median and the 99th percentile of (expiry - start) in the
+# 2026-10-23 scan, rounded up to 15 minutes, for series whose middle half of
+# gaps spanned 30 minutes or less (research.spread_start_window final;
+# outputs/research/spread_v3_final.json). The first v3 draft used medians
+# (KXNBAPTSLEADER 3.0, KXRLGAME 4.0, KXNCAAWBSPREAD/TOTAL 3.0) and also
+# listed KXBRENTD, KXINXDUD, KXNCAAMENTION and KXNFLMENTION.
 START_OFFSET_MARGIN_MINUTES = 30
 SERIES_START_OFFSET_HOURS = {
-    "KXABAGAME": 3.0,  # 137 events
-    "KXAHLGAME": 3.0,  # 344 events
-    "KXBALGAME": 3.0,  # 37 events
-    "KXBRENTD": 7.0,  # 116 events
-    "KXCODGAME": 4.0,  # 143 events
-    "KXCODTOTALMAPS": 4.0,  # 139 events
-    "KXCS2GAME": 4.0,  # 313 events
-    "KXDOTA2GAME": 4.0,  # 254 events
-    "KXINXDUD": 9.5,  # 98 events
-    "KXIPLFOUR": 3.0,  # 54 events
-    "KXIPLSIX": 3.0,  # 54 events
-    "KXIPLTEAMTOTAL": 3.0,  # 50 events
-    "KXMLBF3": 3.0,  # 348 events
-    "KXMLBF5SPREAD": 3.0,  # 377 events
-    "KXNBAPTSLEADER": 3.0,  # 90 events
-    "KXNCAABMENTION": 5.0,  # 101 events
-    "KXNCAAHOCKEYGAME": 3.0,  # 299 events
-    "KXNCAAMB1HSPREAD": 3.0,  # 298 events
-    "KXNCAAMB1HTOTAL": 3.0,  # 307 events
-    "KXNCAAMENTION": 5.0,  # 27 events
-    "KXNCAAWBGAME": 3.0,  # 374 events
-    "KXNCAAWBSPREAD": 3.0,  # 60 events
-    "KXNCAAWBTOTAL": 3.0,  # 60 events
-    "KXNFLMENTION": 5.0,  # 32 events
-    "KXNPBSPREAD": 4.0,  # 266 events
-    "KXNZNBLGAME": 3.0,  # 100 events
-    "KXOWGAME": 4.0,  # 274 events
-    "KXR6GAME": 4.0,  # 271 events
-    "KXRLGAME": 4.0,  # 94 events
-    "KXVTBGAME": 3.0,  # 140 events
-    "KXWBCF5SPREAD": 3.0,  # 42 events
-    "KXWBCGAME": 3.0,  # 74 events
-    "KXWBCSPREAD": 3.0,  # 48 events
-    "KXWNBA1QSPREAD": 3.0,  # 194 events
-    "KXWT20MATCH": 4.0,  # 280 events
+    "KXABAGAME": 3.0,
+    "KXAHLGAME": 3.0,
+    "KXBALGAME": 3.0,
+    "KXCODGAME": 4.0,
+    "KXCODTOTALMAPS": 4.0,
+    "KXCS2GAME": 4.0,
+    "KXDOTA2GAME": 4.0,
+    "KXIPLFOUR": 3.0,
+    "KXIPLSIX": 3.0,
+    "KXIPLTEAMTOTAL": 3.0,
+    "KXMLBF3": 3.0,
+    "KXMLBF5SPREAD": 3.0,
+    "KXNBAPTSLEADER": 6.0,
+    "KXNCAABMENTION": 5.0,
+    "KXNCAAHOCKEYGAME": 3.0,
+    "KXNCAAMB1HSPREAD": 3.0,
+    "KXNCAAMB1HTOTAL": 3.0,
+    "KXNCAAWBGAME": 3.0,
+    "KXNCAAWBSPREAD": 3.5,
+    "KXNCAAWBTOTAL": 3.5,
+    "KXNPBSPREAD": 4.0,
+    "KXNZNBLGAME": 3.0,
+    "KXOWGAME": 4.0,
+    "KXR6GAME": 4.0,
+    "KXRLGAME": 5.75,
+    "KXVTBGAME": 3.0,
+    "KXWBCF5SPREAD": 3.0,
+    "KXWBCGAME": 3.0,
+    "KXWBCSPREAD": 3.0,
+    "KXWNBA1QSPREAD": 3.0,
+    "KXWT20MATCH": 4.0,
 }
+# Never quoted (owner, 2026-10-23): daily financial series whose "start" is a
+# session open while the underlying futures trade overnight, so a pregame
+# rule protects nothing. They stay in SERIES so the record shows the sweep.
+NO_START_SERIES = frozenset({"KXBRENTD", "KXINXDUD", "KXTNOTED"})
 MAX_START_LOOKUPS_PER_PASS = 60  # v2: 30; the 24-hour window holds more events
 START_LOOKUP_SECONDS = 45  # no milestone read after this, from process start
 

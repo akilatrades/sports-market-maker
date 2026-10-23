@@ -15,7 +15,7 @@ after $100 (−$60 before 23 October).
 |---|---|---|---|
 | NBA player props | `nba-no-v6-three-contracts`: three-contract post-only NO orders, one cent inside the spread, 2–6 hours before tip-off, resting until tip-off, 0–15¢ of estimated edge | 20 October (v5 from 21 October, v6 once deployed after 23 October) | [PROD_NBA_AUTO.md](../deploy/PROD_NBA_AUTO.md) |
 | NFL receiving yards | `nfl-no-v3-baseline-quote`: the same idea with smaller limits | 19 October | [PROD_NFL_AUTO.md](../deploy/PROD_NFL_AUTO.md) |
-| Spread maker | `spread-maker-v3-24h-starts`: YES and NO bids one cent inside 8¢+ spreads in 64 series, only before a known event start, from 24 hours before expiry, up to 2 contracts, $60 open | 22 October (v2 from 23 October, v3 once deployed) | [PROD_SPREAD_AUTO.md](../deploy/PROD_SPREAD_AUTO.md) |
+| Spread maker | `spread-maker-v3-24h-starts`: YES and NO bids one cent inside 8¢+ spreads in 61 series, only before a known event start, from 24 hours before expiry, up to 2 contracts, $60 open | 22 October (v2 from 23 October, v3 once deployed) | [PROD_SPREAD_AUTO.md](../deploy/PROD_SPREAD_AUTO.md) |
 
 - **Deployed code:** the merge of pull request #80 (23 October), which
   includes #79. The owner deploys with **Deploy funded worker code →
@@ -79,9 +79,13 @@ Each bot is judged at a checkpoint written before it went live
 - **23 October:** a pre-registered study of 64 series found that quoting
   from 24 hours before expiry, with start times from validated Kalshi
   milestone types and each series' usual timing, gives about 9× the
-  pregame fills (simulated, in-sample). Spread maker v3 adopts it at 2
-  contracts a side. It also found esports milestones are often late, so
-  they are never trusted.
+  pregame fills (simulated, in-sample). It also found esports milestones
+  are often late, so they are never trusted. Spread maker v3 adopts it at
+  2 contracts a side, tightened after review: the earlier of milestone and
+  series estimate counts, estimates use the 99th-percentile gap, a start
+  never moves later, the Brent, S&P 500 and 10-year note dailies are left
+  out and the daily order cap is 1,500. Replayed, 6.5× v2's pregame fills
+  at +8.9¢ a contract (simulated, in-sample).
 
 ## Where to look
 

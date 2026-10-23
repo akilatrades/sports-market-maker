@@ -374,9 +374,10 @@ def tables(market, stream):
 
 
 # --- the spread maker ------------------------------------------------------------
-# It buys YES or NO (up to 5 contracts) and holds to settlement; a YES+NO pair
-# in one market closes at once, so its realized P&L comes from its fills (the
-# same ledger its loss stops use), not from settlement records.
+# It buys YES or NO (up to 2 contracts since v3; 5 before) and holds to
+# settlement; a YES+NO pair in one market closes at once, so its realized P&L
+# comes from its fills (the same ledger its loss stops use), not from
+# settlement records.
 SPREAD_INTENT_FIELDS = [
     "ticker",
     "series",
@@ -991,8 +992,8 @@ These are LIVE results; never mix them with replays or simulations.
 
 ## Spread maker (`data/spread/`)
 
-The third bot quotes BOTH sides (YES and NO, up to 5 contracts) of wide-spread
-markets and holds fills to settlement.
+The third bot quotes BOTH sides (YES and NO, up to 2 contracts; 5 before v3)
+of wide-spread markets and holds fills to settlement.
 
 - `orders/<day>.csv`: one row per order: side, price, contracts, the
   market's spread and series, hours before expected expiration, status

@@ -21,7 +21,7 @@ with real money under tight limits:
    fans backing a player, so NO tends to be a little underpriced. A stats
    model and sportsbook odds decide which lines to skip.
 2. **Spread maker.** A YES bid and a NO bid one cent inside wide spreads
-   (8¢ or more) in 64 series, mostly smaller sports and esports, quoted
+   (8¢ or more) in 61 series, mostly smaller sports and esports, quoted
    only before the event starts. When both fill, the pair pays $1 for less
    than $1; a one-sided fill is held to settlement.
 
@@ -175,9 +175,11 @@ Every pass, every bot
   and −$40 total loss stops. Pregame only since 23 October: on its first
   live night the first version quoted a college football game after
   kickoff, so now a quote needs a known start. Since v3 it quotes from 24
-  hours before expiry and finds starts from the event ticker, validated
-  Kalshi milestone types or the series' usual timing; in a pre-registered
-  replay that gave about 9× the pregame fills (simulated, in-sample). A shadow ledger scores the same
+  hours before expiry and dates events from the ticker or, failing that,
+  the earlier of a validated Kalshi milestone and a cautious per-series
+  estimate; in a pre-registered replay, tightened after review, that gave
+  6.5× the pregame fills at +8.9¢ a contract (simulated, in-sample). A
+  shadow ledger scores the same
   rule from public trade prints, so live and simulated fills can be
   compared on the same markets. [Pilot notes](deploy/PROD_SPREAD_AUTO.md)
 - **Risk.** Per-order, per-game, per-team, daily and lifetime caps; one

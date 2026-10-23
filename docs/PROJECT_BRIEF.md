@@ -18,7 +18,7 @@ backtest? Two places looked promising, so there are two strategies.
 
 | | 1. Prop NO maker | 2. Spread maker |
 |---|---|---|
-| Markets | NBA and NFL player props ("25+ points?") | 64 series with wide spreads: esports, smaller leagues, cricket, soccer side markets and others |
+| Markets | NBA and NFL player props ("25+ points?") | 61 series with wide spreads: esports, smaller leagues, cricket, soccer side markets and others |
 | Who overpays | Fans buying YES on their player at the ask | Impatient traders who cross a spread of 8¢ or more |
 | Order | One-sided: a NO bid one cent inside the spread | Two-sided: a YES bid and a NO bid, each one cent inside |
 | How it earns | NO wins more often than its price implies | A filled YES+NO pair pays $1 for less than $1; a one-sided fill is held to settlement |
