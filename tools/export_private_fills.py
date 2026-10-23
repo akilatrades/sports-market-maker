@@ -426,9 +426,6 @@ SPREAD_ORDER_COLUMNS = [
     *[f for f in SPREAD_INTENT_FIELDS],
     "hours_before_expiration",
     "minutes_before_start",
-    "first_queue_ahead",  # contracts to be matched first (measurement)
-    "last_queue_ahead",
-    "outbid_at_first_reading",
     "status",
     "accepted_utc",
     "reconciled",
@@ -657,39 +654,24 @@ def shadow_expected(through, flow, size):
     return total
 
 
-def queue_and_markouts(path):
-    """The spread maker's queue readings and post-fill markouts (its
-    ``measurements.jsonl``, RESEARCH_LOG.md 2026-10-23): per order ref the
-    first and last contracts ahead and whether it was outbid at the first
-    reading; per fill ref the adverse move in cents at 10, 30 and 60 minutes.
-    Measurements, not P&L. The summary itself is the bot's own
+def fill_markouts(path):
+    """Per fill ref, the adverse move in cents at 10, 30 and 60 minutes from
+    the spread maker's ``measurements.jsonl`` (RESEARCH_LOG.md 2026-10-23):
+    measurements, not P&L. The summary is the bot's own
     ``measurements_summary.json`` (one calculation, used by --status too)."""
-    queue, marks = {}, {}
+    marks = {}
     with Path(path).open("r", encoding="utf-8", errors="replace") as f:
         for line in f:
             try:
                 e = json.loads(line)
             except ValueError:
                 continue  # a torn line after a crash
-            if not isinstance(e, dict):
+            if not isinstance(e, dict) or e.get("event") != "markout":
                 continue
-            if e.get("event") == "queue" and e.get("client_order_id"):
-                ahead = _number(e.get("ahead"))
-                if ahead is not None and math.isfinite(ahead):
-                    queue.setdefault(ref(e["client_order_id"]), []).append(
-                        (ahead, e.get("outbid"))
-                    )
-            elif e.get("event") == "markout" and e.get("fill_id"):
-                move = _number(e.get("adverse_move_cents"))
-                if move is not None and math.isfinite(move):
-                    marks.setdefault(ref(e["fill_id"]), {})[
-                        e.get("horizon_minutes")
-                    ] = move
-    per_order = {
-        k: (v[0][0], v[-1][0], "" if v[0][1] is None else bool(v[0][1]))
-        for k, v in queue.items()
-    }
-    return per_order, marks
+            move = _number(e.get("adverse_move_cents"))
+            if e.get("fill_id") and move is not None and math.isfinite(move):
+                marks.setdefault(ref(e["fill_id"]), {})[e.get("horizon_minutes")] = move
+    return marks
 
 
 def live_fill_share(path, orders):
@@ -848,15 +830,11 @@ def build_files(journals, shadow=None):
             )
             if measure_path is not None and measure_path.exists():
                 try:
-                    measured = queue_and_markouts(measure_path)
+                    measured = fill_markouts(measure_path)
                 except Exception as error:
                     measured = error
-            if isinstance(measured, tuple):
-                per_order, per_fill = measured
-                for o in orders:
-                    first, last, outbid = per_order.get(o["order_ref"], ("", "", ""))
-                    o["first_queue_ahead"], o["last_queue_ahead"] = first, last
-                    o["outbid_at_first_reading"] = outbid
+            if isinstance(measured, dict):
+                per_fill = measured
                 for f in fills:
                     for horizon in (10, 30, 60):
                         f[f"markout_{horizon}m_cents"] = per_fill.get(
@@ -1039,12 +1017,12 @@ markets and holds fills to settlement.
   would have filled on the same windows. This is the measurement that says
   how much of the simulated edge is real.
 - `data/summary.json` → `markets.spread.queue_and_markouts`: the bot's own
-  summary of its queue readings (share of orders with nothing ahead, and
-  outbid, at the first reading) and of the price after its one-sided fills
-  observed before the start, at 10, 30 and 60 minutes (adverse move: < 0
-  means the price moved against the fill; contract-weighted; fees not
-  included). Per order: `first_queue_ahead`, `last_queue_ahead`,
-  `outbid_at_first_reading`; per fill: `markout_*m_cents` (adverse move).
+  summary: how often another bid was ahead of its resting quotes at the
+  start of a pass (outbid) or at the same price behind them (joined), and
+  the price after its fills observed before the start, at 10, 30 and 60
+  minutes, for all fills and for one-sided ones (adverse move: < 0 means
+  the price moved against the fill; realized spread after fees;
+  contract-weighted). Per fill: `markout_*m_cents` (adverse move).
 - `data/summary.json` → `spread_shadow_simulated`: the shadow ledger's
   SIMULATED results (first in line, and at flow share 0.25). Compare it
   with the live numbers; never add the two together.

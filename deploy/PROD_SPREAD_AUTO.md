@@ -228,13 +228,13 @@ the account lock).
 - **Public dashboard:** a "Spread maker / realized P&L" card (aggregate only)
   from the live P&L feed. After a release that changes the feed, restart it:
   `sudo systemctl restart market-maker-live-pnl.service`.
-- **Queue position and markouts** (measurement only, from 23 October):
-  after each live pass the bot reads how many contracts Kalshi will match
-  before up to 6 of its older open orders (signed GETs, outside the
-  account lock, gently paced), and records how the price moved 10, 30 and
-  60 minutes after each fill, from the side bought. Both go to
-  `measurements.jsonl`, summarised each pass in `measurements_summary.json`.
-  `--status` prints the summary; the private export adds per-order queue
-  readings, per-fill markouts and the summary. How the readings will be
-  used is written in `RESEARCH_LOG.md` (2026-10-23), once, at the checkpoint.
+- **Standing and markouts** (measurement only, from 23 October): at the
+  start of each live pass, before re-quoting, the bot notes whether another
+  bid had got ahead of its resting quotes (outbid) or joined them; and it
+  records how the price moved 10, 30 and 60 minutes after each fill, from
+  the side bought. No extra requests. Both go to `measurements.jsonl`,
+  summarised each pass in `measurements_summary.json`. `--status` prints
+  the summary; the private export adds per-fill markouts and the summary.
+  How the readings will be used is written in `RESEARCH_LOG.md`
+  (2026-10-23), once, at the checkpoint.
 - On the server: `--status`. Never mix live and shadow results.

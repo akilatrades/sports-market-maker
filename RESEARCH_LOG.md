@@ -2885,62 +2885,66 @@ minutes before it.
 
 ## 2026-10-23: Spread maker queue position and markouts (measurement plan)
 
-*Written before the code and before any reading; revised after an
+*Written before the code and before any reading; revised twice after
 independent review, still before any reading. The owner asked for it on 23
 October after asking how the bot could be first in line and what its
 10-minute update cycle costs. Measurement only: no change to the rules,
 limits or pass/fail bars. v2 orders only.*
 
-**Questions.** (1) Is the spread maker usually first in line at its price?
-(2) Are its fills picked off: does the price move against a fill soon after
-it, as it would if stale quotes are being hit by better-informed traders?
+**Questions.** (1) How often does another trader get ahead of the spread
+maker's quotes between its passes? (2) Are its fills picked off: does the
+price move against a fill soon after it, as it would if stale quotes are
+being hit by better-informed traders?
+
+**Why not Kalshi's queue position.** The bot re-quotes, at the start of each
+pass, any order that another bid has matched or beaten (it prices from the
+order book with its own orders taken out). An order that survives a pass is
+therefore alone at the best price, so reading its queue position would say
+"nothing ahead" by construction. The useful reading is the state of the
+book *before* that pass's re-quotes.
 
 **Method.**
-- **Queue position.** After each live pass, outside the account lock, a
-  signed read (a client that refuses anything but GET, 5-second timeout)
-  of Kalshi's queue position for orders that may still rest and were placed
-  in an earlier pass: an order placed in the current pass sits alone at a
-  new price, so reading it would say "first in line" by construction. Up
-  to 6 reads a pass, least-read orders first, at most 3 readings an order,
-  0.3 seconds apart, stopping at the first throttled, server or network
-  error (the API key is shared with the NBA and NFL bots). Kalshi defines
-  the number as the contracts to be matched before the order; it is stored
-  as reported. Each reading also stores whether the public listing at that
-  pass shows a better bid on the order's side (outbid).
+- **Standing.** At the start of each live pass, before any re-quote, for
+  each resting order whose book was read (own orders taken out): is
+  another bid on its side better (*outbid*: someone is ahead of it),
+  equal (*joined*: behind it in time), or not (*alone*)? One line per pass
+  with the counts. No extra requests: the book is already read.
 - **Markouts.** For each fill, the market 10, 30 and 60 minutes later,
   read at the first pass after each horizon (at most 12 minutes late, else
-  recorded as missed) from that pass's public listing, from the side
-  bought, in cents:
+  recorded as missed) from the public listing taken at the start of that
+  pass, from the side bought, in cents:
   - *adverse move*: the side's midpoint then minus its midpoint when the
     quote was posted (the quote sat one cent above the best bid of the
     recorded spread); below 0 means the price moved against the fill;
-  - *realized spread*: the midpoint then minus the price paid (it includes
-    the half-spread earned at entry);
+  - *realized spread*: the midpoint then minus the price paid and the
+    fill's own fee per contract (it includes the half-spread earned at
+    entry);
   - *exit move*: the side's best bid then minus the price paid, left empty
-    when that best bid is the bot's own resting quote.
+    when that best bid was the bot's own quote resting at the start of the
+    pass.
   The listing includes the bot's own quotes, one cent inside each side, so
   a midpoint is within half a cent of the market's. Each record stores the
   contracts filled and the minutes to the event's start.
-- **What is summarised.** One-sided fills only (no opposite-side fill in
-  the same market within 60 minutes: a pair's midpoint moves cancel),
-  observed before the event starts, weighted by contracts; paired fills,
-  late or missing readings and readings after the start are counted apart.
-  Queue: the first reading of each order. The bot writes the summary each
-  pass (`measurements_summary.json`); `--status` and the private export
-  show it.
+- **What is summarised.** Readings taken before the event starts, weighted
+  by contracts, for all fills and for one-sided fills (no opposite-side
+  fill in the same market in the 60 minutes *before* it: a later opposite
+  fill is often caused by the price moving, so looking ahead would bias the
+  one-sided group toward fills that went badly). Late or missing readings
+  and readings after the start are counted apart. The bot writes the
+  summary each pass (`measurements_summary.json`); `--status` and the
+  private export show it.
 
 **How the readings will be used (decided now), once, at the spread
 maker's checkpoint (300 filled contracts or 4 weeks), not before.**
 `--status` is for watching the bot, not for deciding.
-- **Picked off:** if the 30-minute realized spread on one-sided fills
-  observed before the start averages +0.5¢ or less (fees are at most about
-  0.4¢ a contract), adverse moves are eating the edge. Then a separate
-  written plan will test a faster cancel loop (checking markets with
-  resting quotes every 1–2 minutes). The 30-minute adverse move and its
-  event-clustered t are reported with it; at 300 contracts this is a
-  go/no-go reading, not a significance test.
-- **Queue:** if fewer than half of first readings show nothing ahead, or
-  more than half show the order outbid, and the live fill share is below
-  0.5, the bot is usually not at the front; a separate written plan would
-  then test keeping still-best orders longer instead of refreshing them
-  hourly.
+- **Picked off:** if the 30-minute realized spread after fees on one-sided
+  fills observed before the start averages 0¢ or less, adverse moves are
+  eating the edge. Then a separate written plan will test a faster cancel
+  loop (checking markets with resting quotes every 1–2 minutes). The
+  30-minute adverse move, the all-fills figures and an event-clustered t
+  are reported with it; at 300 contracts this is a go/no-go reading, not a
+  significance test.
+- **Standing:** if the bot is outbid in more than half of at least 200
+  order checks and the live fill share is below 0.5, other traders are
+  usually ahead of it between passes; a separate written plan would then
+  test re-quoting faster in markets where it rests.

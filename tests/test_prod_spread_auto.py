@@ -1705,7 +1705,7 @@ def test_recent_events_are_those_with_orders_that_may_rest(world):
     assert bot.recent_events(world["dir"], NOW + timedelta(minutes=70)) == set()
 
 
-# ------------------------------------- queue position and markouts (measurement)
+# ------------------------------------------- standing and markouts (measurement)
 
 
 def _listing_at(bid, ask):
@@ -1719,51 +1719,61 @@ def _measures(state):
 
 def _summary(state):
     return bot.summarize_measurements(
-        bot.load_events(state / "journal.jsonl"), _measures(state)
+        bot.load_events(state / "journal.jsonl"),
+        bot.iter_measurements(state / bot.MEASURE_FILE),
     )
 
 
 def test_markouts_of_a_one_sided_fill(world):
     run(world)  # YES 5 @ 41c and NO 5 @ 49c in a 40-52c market (spread 12)
-    fill_placed(world, 0, 5)  # the YES fills at NOW + 5 min
+    order = fill_placed(world, 0, 5)  # the YES fills at NOW + 5 min
+    world["exchange"].fills_[-1]["fee_cost"] = "0.0500"  # 1c a contract
     run(world, NOW + timedelta(minutes=10))  # copies the fill into the journal
+    assert order.side == "yes"
     state = world["dir"]
     listing = _listing_at(0.44, 0.52)  # YES midpoint now 48c
     assert bot.record_markouts(state, NOW + timedelta(minutes=14), listing) == 0
     assert bot.record_markouts(state, NOW + timedelta(minutes=20), listing) == 1
-    (m,) = _measures(state)
-    # Posted at 41 when the YES midpoint was 46: +2 since; paid 41: +7.
-    assert m["adverse_move_cents"] == 2 and m["realized_spread_cents"] == 7
+    m = next(e for e in _measures(state) if e["event"] == "markout")
+    # Posted at 41 when the YES midpoint was 46: +2 since; paid 41 and 1c fee.
+    assert m["adverse_move_cents"] == 2 and m["realized_spread_cents"] == 6
     assert m["exit_move_cents"] == 3 and not m["exit_is_own_quote"]
     assert m["contracts"] == 5 and m["minutes_before_start"] > 0
     # Each horizon once; a late pass records the miss instead of a price.
     assert bot.record_markouts(state, NOW + timedelta(minutes=20), listing) == 0
     assert bot.record_markouts(state, NOW + timedelta(minutes=40), {}) == 1
     assert bot.record_markouts(state, NOW + timedelta(minutes=80), listing) == 1
-    issues = {e["horizon_minutes"]: e["issue"] for e in _measures(state)}
+    issues = {
+        e["horizon_minutes"]: e["issue"]
+        for e in _measures(state)
+        if e["event"] == "markout"
+    }
     assert issues == {
         10: None,
         30: "quote_unavailable",
         60: "missed_observation_window",
     }
     ten = _summary(state)["markouts"]["10m"]
-    assert ten["one_sided_fills"] == 1 and ten["adverse_move_cents"] == 2.0
-    assert ten["realized_spread_cents"] == 7.0
+    assert ten["one_sided_fills"] == 1 and ten["one_sided_adverse_move_cents"] == 2.0
+    assert ten["one_sided_realized_spread_cents"] == 6.0 and ten["all_fills"] == 1
     assert _summary(state)["markouts"]["30m"]["not_used"] == {"quote_unavailable": 1}
 
 
-def test_paired_fills_and_own_quotes_are_kept_apart(world):
+def test_pairing_looks_only_backwards(world):
     run(world)
-    fill_placed(world, 0, 5)  # YES fills
-    fill_placed(world, 1, 5, count=2)  # 2 of the NO fill: the rest still rests
-    run(world, NOW + timedelta(minutes=10))
+    fill_placed(world, 0, 5)  # YES at NOW + 5
+    fill_placed(world, 1, 30, count=2)  # 2 of the NO at NOW + 30: the rest rests
+    run(world, NOW + timedelta(minutes=35))
     state = world["dir"]
-    # The NO bid now is our own resting 49c: its exit price says nothing.
-    bot.record_markouts(state, NOW + timedelta(minutes=20), _listing_at(0.44, 0.51))
-    no = next(e for e in _measures(state) if e["side"] == "no")
+    bot.record_markouts(state, NOW + timedelta(minutes=40), _listing_at(0.44, 0.51))
+    marks = _summary(state)["markouts"]
+    # The YES filled first: one-sided (its 30-minute reading). The NO came
+    # after it: paired (its 10-minute reading).
+    assert marks["30m"]["one_sided_fills"] == 1 and marks["30m"]["all_fills"] == 1
+    assert marks["10m"]["one_sided_fills"] == 0 and marks["10m"]["all_fills"] == 1
+    # The NO's best bid was our own resting 49c: its exit price says nothing.
+    no = next(e for e in _measures(state) if e.get("side") == "no")
     assert no["exit_is_own_quote"] and no["exit_move_cents"] is None
-    ten = _summary(state)["markouts"]["10m"]
-    assert ten["paired_fills"] == 2 and ten["one_sided_fills"] == 0
 
 
 def test_readings_after_the_start_are_not_used():
@@ -1780,67 +1790,23 @@ def test_readings_after_the_start_are_not_used():
          "contracts": 5, "issue": None},
     ]  # fmt: skip
     sixty = bot.summarize_measurements(journal, marks)["markouts"]["60m"]
-    assert sixty["one_sided_fills"] == 0
+    assert sixty["one_sided_fills"] == 0 and sixty["all_fills"] == 0
     assert sixty["not_used"] == {"observed_after_start": 1}
 
 
-class QueueReader:
-    def __init__(self, answers):
-        self.answers, self.calls = answers, []
-
-    def queue_position(self, order_id):
-        self.calls.append(order_id)
-        answer = self.answers.get(order_id, 0.0)
-        if isinstance(answer, Exception):
-            raise answer
-        return answer
-
-
-def test_queue_reads_skip_this_passs_orders_and_stay_gentle(world, monkeypatch):
-    run(world)  # oid-1 (YES 41) and oid-2 (NO 49), sent at NOW
+def test_standing_is_checked_before_requotes(world):
+    run(world)  # YES 41 and NO 49 rest
     state = world["dir"]
-    # Orders placed in this pass are alone at their new price: not read.
-    assert bot.record_queue(state, NOW, QueueReader({})) == 0
-    pauses = []
-    reader = QueueReader({"oid-1": 0.0, "oid-2": 3.0})
-    later = NOW + timedelta(minutes=10)
-    listing = _listing_at(0.42, 0.52)  # a 42c YES bid now beats our 41c
-    n = bot.record_queue(state, later, reader, listings=listing, pause=pauses.append)
-    assert n == 2 and pauses == [bot.QUEUE_READ_PAUSE_SECONDS]
-    by_order = {e["price_cents"]: e for e in _measures(state)}
-    assert by_order[41]["outbid"] is True and by_order[49]["outbid"] is False
-    assert by_order[49]["ahead"] == 3.0
-    # At most three readings an order.
-    for minutes in (20, 30):
-        bot.record_queue(
-            state, NOW + timedelta(minutes=minutes), reader, pause=pauses.append
-        )
-    assert bot.record_queue(state, NOW + timedelta(minutes=40), reader) == 0
+    # Someone bids 42 for YES (ahead of us) and joins our NO at 49.
+    world["quotes"][TICKER] = {**world["quotes"][TICKER], "yes_bid_dollars": "0.42",
+                               "yes_ask_dollars": "0.51"}  # fmt: skip
+    report, _ = run(world, NOW + timedelta(minutes=10))
+    assert report["standing_orders_checked"] == 2
+    assert report["standing_outbid"] == 1 and report["standing_joined"] == 1
+    (event,) = [e for e in _measures(state) if e["event"] == "standing"]
+    assert event["outbid"] == 1 and event["joined"] == 1
     summary = _summary(state)
-    assert summary["orders_with_queue_reading"] == 2
-    assert summary["nothing_ahead_share"] == 0.5 and summary["outbid_share"] == 0.5
-
-
-def test_queue_reads_stop_at_throttling(world):
-    run(world)
-    reader = QueueReader({"oid-1": TradingError("GET queue -> HTTP 429 Too Many"),
-                          "oid-2": TradingError("GET queue -> HTTP 429 Too Many")})  # fmt: skip
-    state = world["dir"]
-    assert (
-        bot.record_queue(state, NOW + timedelta(minutes=10), reader, pause=lambda s: 0)
-        == 1
-    )
-    assert len(reader.calls) == 1
-    assert _measures(state)[0]["issue"] == "HTTP_429"
-    assert (
-        bot.record_queue(
-            state,
-            NOW + timedelta(minutes=10),
-            QueueReader({}),
-            deadline=time.monotonic() - 1,
-        )
-        == 0
-    )
+    assert summary["standing_checks"] == 2 and summary["outbid_share"] == 0.5
 
 
 def test_a_torn_measurement_file_does_not_stop_measuring(world):
@@ -1849,13 +1815,13 @@ def test_a_torn_measurement_file_does_not_stop_measuring(world):
     run(world, NOW + timedelta(minutes=10))
     state = world["dir"]
     (state / bot.MEASURE_FILE).write_text(
-        '{"event": "queue", "client_order_id": "x"}\n{"eve'
+        '{"event": "standing", "orders_checked": 2}\n{"eve'
     )
     assert (
         bot.record_markouts(state, NOW + timedelta(minutes=20), _listing_at(0.44, 0.52))
         == 1
     )
-    assert [e["event"] for e in _measures(state)] == ["queue", "markout"]
+    assert [e["event"] for e in _measures(state)] == ["standing", "markout"]
     summary = bot.write_measure_summary(state)
     assert summary["markouts"]["10m"]["one_sided_fills"] == 1
     assert json.loads((state / bot.MEASURE_SUMMARY).read_text()) == summary
