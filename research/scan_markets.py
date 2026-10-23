@@ -9,6 +9,12 @@ the 7-to-3-hour window, simulate resting "no" and "yes" orders, and write
 outputs/scan/scan_<shard>.json plus the order-level rows.
 Stage ``report``: merge the shards into outputs/scan/results.json.
 
+``--window HI,LO`` scans another pre-expiration window (default 7,4) and
+``--out`` writes elsewhere, so a new window never overwrites outputs/scan.
+``--starts`` also records each sampled event's Kalshi milestone start times
+and the start written in its ticker, in events_<series>.csv.gz (RESEARCH_LOG.md,
+2026-10-23, spread maker start times and earlier quoting).
+
 Prices are only used as the pre-registered test describes. Prints counts.
 """
 
@@ -34,6 +40,7 @@ SAMPLE = 1200
 MIN_PAGE_VOLUME = 20000
 LOOKBACK_DAYS = 400
 WINDOW = (7, 4)  # hours before expected expiration for order placement
+STARTS = False  # record event start times (milestones and ticker)
 TICK = 0.01
 FEE_SHARE = 0.25
 
@@ -179,6 +186,53 @@ def fetch_all(function, jobs, workers=8):
     return results, failed
 
 
+def parse_window(text):
+    """'HI,LO' hours before expected expiration, e.g. '24,4'."""
+    hi, lo = (int(part) for part in str(text).split(","))
+    if not 1 <= lo < hi <= 48:
+        raise ValueError(f"window must satisfy 1 <= LO < HI <= 48: {text}")
+    return hi, lo
+
+
+def milestones_for(event):
+    """Kalshi milestones tied to one event: [{start, end, type}] (public read)."""
+    payload = get_json("/milestones", {"related_event_ticker": event, "limit": 100})
+    out = []
+    for m in (payload or {}).get("milestones") or []:
+        tickers = set(m.get("primary_event_tickers") or []) | set(
+            m.get("related_event_tickers") or []
+        )
+        if event in tickers and m.get("start_date"):
+            out.append(
+                {
+                    "start": m.get("start_date"),
+                    "end": m.get("end_date"),
+                    "type": m.get("type") or "",
+                }
+            )
+    return out
+
+
+def event_rows(m):
+    """One row per sampled event: latest expiry, ticker start, milestones."""
+    from live.prod_spread_auto import ticker_start
+
+    expiry = m.groupby("event_ticker").expiry.max()
+    got, failed = fetch_all(milestones_for, {e: (e,) for e in expiry.index})
+    rows = []
+    for event, when in expiry.items():
+        start = ticker_start(event)
+        rows.append(
+            {
+                "event_ticker": event,
+                "expiry": when.isoformat(),
+                "ticker_start": start.isoformat() if start else None,
+                "milestones": json.dumps(got.get(event)) if event in got else None,
+            }
+        )
+    return pd.DataFrame(rows), failed
+
+
 def resting_orders(c, side):
     """One resting order per candle; price, yes level, improved flag."""
     q = c.copy()
@@ -270,7 +324,16 @@ def scan_series(series):
             ((m.expiry - to_utc(m.close_time)).dt.total_seconds() / 3600).median()
         ),
         "seconds": round(time.monotonic() - t0),
+        "window_hours": list(WINDOW),
     }
+    if STARTS:
+        events, failed_m = event_rows(m)
+        events.to_csv(OUT / f"events_{series}.csv.gz", index=False)
+        result["events"] = len(events)
+        result["events_with_milestones"] = int(
+            events.milestones.map(lambda x: bool(x and json.loads(x))).sum()
+        )
+        result["failed_milestone_requests"] = failed_m
     rows = []
     for side in ["no", "yes"]:
         o = resting_orders(c, side).reset_index(drop=True)
@@ -278,6 +341,8 @@ def scan_series(series):
         o["result"] = o.ticker.map(info.result)
         o["event_ticker"] = o.ticker.map(info.event_ticker)
         o["date"] = o.ticker.map(info.expiry).dt.date
+        expiry_ts = o.ticker.map(info.expiry).map(lambda x: int(x.timestamp()))
+        o["hours_before_expiry"] = (expiry_ts - o.end_ts) / 3600
         o["won"] = np.where(o.side == o.result, 1.0, 0.0)
         o["pnl"] = o.won - o.price - maker_fee(o.price, FEE_SHARE)
         f = o[o.traded >= 1]
@@ -387,8 +452,8 @@ def write_table(rows):
     )
 
 
-def main():
-    global SAMPLE
+def main(argv=None):
+    global SAMPLE, WINDOW, OUT, STARTS
     parser = argparse.ArgumentParser()
     parser.add_argument("stage", choices=["list", "scan", "report"])
     parser.add_argument("--shard", type=int, default=0)
@@ -397,8 +462,16 @@ def main():
     parser.add_argument("--sample", type=int, default=SAMPLE)
     parser.add_argument("--skip-done", action="store_true")
     parser.add_argument("--series", default="", help="comma-separated series to scan")
-    args = parser.parse_args()
+    parser.add_argument("--window", type=parse_window, default=WINDOW)
+    parser.add_argument(
+        "--out", default="", help="output folder (default outputs/scan)"
+    )
+    parser.add_argument("--starts", action="store_true", help="record event starts")
+    args = parser.parse_args(argv)
     SAMPLE = args.sample
+    WINDOW, STARTS = tuple(args.window), args.starts
+    if args.out:
+        OUT = Path(args.out)
     OUT.mkdir(parents=True, exist_ok=True)
     if args.stage == "list":
         list_stage(args.skip_done, [t for t in args.series.split(",") if t.strip()])
