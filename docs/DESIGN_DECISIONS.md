@@ -38,10 +38,12 @@ in line; usually I am not.*
 
 - **Why.** Historical fills come from public trade prints. Other orders
   already resting at the same price get filled first, and the trades that
-  reach a resting order are disproportionately the ones that move against it
-  (adverse selection).
+  reach a resting order can be the ones that move against it (adverse
+  selection). In the NBA replay the fills were in fact favourable (filled
+  orders beat unfilled ones by +2.0¢, t 3.0), but the replay has no queue,
+  so it cannot show what happens behind other orders.
 - **How.** Replays report the first-in-line case and a cautious case in
-  which each contract that trades at our price reaches us with probability
+  which each contract that trades at my price reaches my order with probability
   0.25 (`flow_share` in `research/fill_sizing_replay.py`). Live, the spread
   maker now measures it directly: for every finished order it counts the
   contracts that traded at or through its price while it rested, and
@@ -54,7 +56,7 @@ in line; usually I am not.*
   5-contract order. So the bot reports what the cautious replay would have
   filled on the same orders next to the live share. Below that benchmark,
   even the cautious replay overstates fills; fewer fills mean
-  proportionally less profit per day, and the fills we do get may be the
+  proportionally less profit per day, and the fills I do get may be the
   worse ones (adverse selection). This is the most decision-relevant live
   number in the project.
 - **The alternative.** Assuming every print is a fill: the classic way a
@@ -89,7 +91,8 @@ fees ate it.*
   Holding with a per-market inventory cap: +3.60¢, about the same profit per
   unit of risk as holding everything, with 29% less daily volatility.
 - **How.** At most 5 contracts held or resting on one side of a market;
-  orders shrink to fit (`live/spread_policy.py`, `desired_quotes`).
+  orders shrink to fit (`MAX_NET_PER_MARKET` in `live/spread_policy.py`;
+  `desired_quotes` in `live/prod_spread_auto.py`).
 - **The alternative.** Hedging feels safer but turns a +3.9¢ strategy into
   roughly break-even.
 
@@ -103,9 +106,9 @@ fees ate it.*
   positive in both halves of the sample (+3.07¢ and +1.70¢), and the top 10
   series supplied only 15% of the profit, so it is not one lucky market.
 - **What it does not fix.** The 64 series the spread maker trades were
-  chosen on the same data, so their simulated edge (about 6–7¢ at 8¢+
-  spreads) is biased upward; across all wide-spread markets it was about
-  3.9¢. Expect live results nearer the lower number. Every confirmatory test
+  chosen on the same data, so their simulated edge (+8.5¢ at 8¢+ spreads,
+  first in line) is biased upward; across all 8¢+ spreads it was +3.9¢.
+  Expect live results nearer the lower number. Every confirmatory test
   is written into the research log before it runs, and every variant tried
   is counted.
 - **The alternative.** Picking the best-looking series from a scan and
@@ -164,8 +167,8 @@ moved against it.*
 - **How.** v2 needs a known start, from the event ticker or from Kalshi's
   milestones (trusted by milestone type, and only after they have matched
   ticker times and never been late). A new quote needs the start at least
-  85 minutes away, each order expires on the exchange 20 minutes before
-  the start, and every resting quote is cancelled then
+  85 minutes away, each order's 65-minute exchange expiry is capped at 20
+  minutes before the start, and every resting quote is cancelled then
   (`live/prod_spread_auto.py`: `ticker_start`, `prefetch_starts`,
   `order_start`).
 - **The cost.** With ticker times alone, v2 keeps about a sixth of v1's

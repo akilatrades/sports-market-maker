@@ -105,9 +105,11 @@ code is right.
 | Price range | 5–95¢ | 10–90¢ |
 | Lifetime orders placed | $2,000 | $50 |
 
-Across both bots ([`shared_account_risk.py`](../live/shared_account_risk.py)):
-at most $165 open, $180 placed per day and $2,050 placed in total. Both bots
-stop for the day after $20 of settled losses and for good after $60. Dollar
+NBA and NFL together ([`shared_account_risk.py`](../live/shared_account_risk.py)):
+at most $165 open, $180 placed per day and $2,050 placed in total. All
+three bots, including the spread maker, stop for the day after $20 of
+realized account losses and for good after $60 (the spread maker's losses
+are counted from its own fills). Dollar
 limits include a 10% cushion for fees. An edge above 15¢ is treated as a
 likely data error, not a bargain.
 

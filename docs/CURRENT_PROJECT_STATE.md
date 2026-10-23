@@ -65,11 +65,11 @@ Each bot is judged at a checkpoint written before it went live
   private fills export and the dashboard; Kalshi balance reads retry on
   rate limits.
 - **22–23 October:** live fill share and the checkpoint report (PR #79); a
-  one-page case study, design decisions and a 10-minute tour.
-- **23 October:** on its first night the spread maker quoted a college
-  football game after kickoff, because its window counted from Kalshi's
-  expected expiration. The owner paused it; v2 quotes only before a known
-  start (PR #80), after three rounds of independent review.
+  one-page case study, design decisions and a reading guide.
+- **22–23 October (overnight):** on its first night the spread maker
+  quoted a college football game after kickoff, because its window counted
+  from Kalshi's expected expiration. I paused it; v2 quotes only before a
+  known start (PR #80), after three rounds of independent review.
 
 ## Where to look
 

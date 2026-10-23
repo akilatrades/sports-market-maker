@@ -6,16 +6,24 @@ I built this to answer one question: **can a small automated trader make
 money on Kalshi sports markets by only ever resting orders on the book,
 after fees and real fills, not just in a backtest?**
 
-It runs two strategies with real money under tight limits:
+**What I built:** in Python, a signed Kalshi trading client, three bots
+that share one risk engine (exchange reconciliation, loss stops, kill
+switches), stat models and a sportsbook feed, about 800 offline tests, and
+a research log where every confirmatory test is written down before it
+runs. **Outcome so far:** the live order handling works; profit is not yet
+proven.
+
+It runs two strategies, as three bots (NBA, NFL, spread) on one account,
+with real money under tight limits:
 
 1. **Prop NO maker.** Resting **NO** orders on player props ("Will this
    player score 25+ points?"). The people buying YES at the ask are mostly
    fans backing a player, so NO tends to be a little underpriced. A stats
    model and sportsbook odds decide which lines to skip.
 2. **Spread maker.** A YES bid and a NO bid one cent inside wide spreads
-   (8¢ or more) in 64 smaller series, quoted only before the event starts.
-   When both fill, the pair pays $1 for less than $1; a one-sided fill is
-   held to settlement.
+   (8¢ or more) in 64 series, mostly smaller sports and esports, quoted
+   only before the event starts. When both fill, the pair pays $1 for less
+   than $1; a one-sided fill is held to settlement.
 
 Every number here is labelled **simulated**, **in-sample** or **live**,
 and live and simulated results are never added together.
@@ -41,15 +49,16 @@ and live and simulated results are never added together.
 - **The same idea, generalised, became a second strategy.** Across
   Kalshi's scanned series, quoting both sides one cent inside 5¢+ spreads
   made **+2.44¢ per contract** over 76,694 simulated fills, positive in
-  both halves of the data; 67 of 369 series survived a 10% false-discovery
-  correction. The spread maker trades 64 series that passed the same check
-  at 8¢+ spreads (66, less two the other bots trade). (Simulated,
-  in-sample.)
+  both halves of the data, and 67 of 369 series still passed after
+  correcting for how many series I tested (a 10% false-discovery-rate
+  check). The spread maker trades 64 of the series that passed at 8¢+
+  spreads. (Simulated, in-sample.)
 - **It is live, and small on purpose.** The NBA and NFL bots have traded
   real money since 19–20 October 2026 and the spread maker since 22
   October. A signed NBA account audit on 21 October recorded
-  nine accepted orders, one filled order and one positively settled market. That proves
-  the plumbing works; it is **not a statistically established edge**.
+  nine accepted orders, one filled order and one positively settled market.
+  That proves the plumbing works; it is **not a statistically established
+  edge**.
 - **What I am measuring now.** Whether live fills earn what the backtests
   say. The headline number is the **live fill share**: of the contracts
   that traded at my price while an order rested, how many I actually got
@@ -58,13 +67,18 @@ and live and simulated results are never added together.
 
 ## How to read this repo
 
-| You have | Read |
-|---|---|
-| 2 minutes | This page down to [Results](#results) |
-| 10 minutes | The [case study](docs/PROJECT_BRIEF.md), then the [design decisions](docs/DESIGN_DECISIONS.md) |
-| A quant's eye | The [design decisions](docs/DESIGN_DECISIONS.md), a plan written before its results ([spread maker pilot](RESEARCH_LOG.md#2026-10-22-spread-maker-pilot-shadow-and-small-live-plan), [NBA v5](RESEARCH_LOG.md#2026-10-21-nba-rules-v5-more-orders-for-faster-evidence-plan)), and what happened on the [first live night](RESEARCH_LOG.md#2026-10-23-spread-maker-v2-pregame-only-plan-amendment) |
-| An engineer's eye | [`live/shared_account_risk.py`](live/shared_account_risk.py) (three bots, one account, halt on anything unexplained), `desired_quotes` and `book_quote` in [`live/prod_spread_auto.py`](live/prod_spread_auto.py), and [`research/live_checkpoint.py`](research/live_checkpoint.py) |
-| Live numbers | The [dashboard](https://akilatrades.github.io/sports-market-maker/dashboard/) (verified settlements only) |
+- **Five minutes:** this page down to [Results](#results), then the
+  [case study](docs/PROJECT_BRIEF.md).
+- **More time, or a quant's or engineer's eye:** the reading paths in the
+  [docs index](docs/README.md#pick-your-path).
+- **Live numbers:** the [dashboard](https://akilatrades.github.io/sports-market-maker/dashboard/)
+  (verified settlements only).
+
+A few terms: *de-vigged* odds have the bookmaker's built-in margin removed;
+*profit factor* is winning dollars divided by losing dollars; *t* is a
+t-statistic, here always computed with games or events as the unit
+(*game-* or *event-clustered*), because results within one game move
+together.
 
 ## Results
 
@@ -97,11 +111,12 @@ the last two from the [NBA audit](docs/NBA_AND_MARKET_AUDIT_2026-10-18.md)
 | Both sides one cent inside 5¢+ spreads, all scanned series | 76,694 | +2.44 (event-clustered t 15.9) | 1.22 | Earlier half +3.07, later half +1.70; about 70% of the profit from filled pairs |
 | 8¢+ spreads, hold every fill to settlement | | +3.91 | 1.33 | One-sided fills averaged +5.0¢ held |
 | 8¢+ spreads, sell one-sided fills back at the market | | +0.22 | 1.03 | The same fills averaged −4.6¢ sold: hedging pays the spread |
-| The 64 pilot series, events whose ticker gives the start: quotes resting wholly before it | 2,285 | +9.87 | | Quotes resting during the game made +2.7¢ |
+| The 64 pilot series, all hours (the first live rule) | 11,263 | +8.45 (t 21.5) | | Same series and window |
+| The same series, events whose ticker gives the start: quotes resting wholly before it | 2,285 | +9.87 | | Quotes resting during the game made +2.7¢ |
 
 Rows 1–3 come from the
 [strategy sweep](RESEARCH_LOG.md#2026-10-22-strategy-sweep-across-all-scanned-markets-with-profit-factor-results),
-row 4 from the [pregame split](RESEARCH_LOG.md#2026-10-23-spread-maker-v2-pregame-only-plan-amendment).
+rows 4–5 from the [pregame split](RESEARCH_LOG.md#2026-10-23-spread-maker-v2-pregame-only-plan-amendment).
 All assume my order was first in line at its price, and the 64 series were
 chosen on this same data, so expect less live.
 
@@ -154,9 +169,7 @@ Every pass, every bot
   immediately) one cent inside the spread, 2–6 hours before tip-off, resting
   until tip (NFL: 10 minutes to 2 hours before kickoff). Since NBA rules v5
   (21 October) an NBA order is one contract and needs 0–15¢ of estimated
-  edge after fees (NFL keeps 3¢). The live rule that lets orders rest until
-  tip-off is not yet independently verified on a live order; the first
-  verified NBA fill came from an earlier rule version.
+  edge after fees (NFL keeps 3¢).
 - **Spread orders.** Up to 5 contracts per order, at most 5 held or resting
   per market side, $60 open, and the bot's own −$10 daily and −$40 total
   loss stops. Pregame only since 23 October: on its first live night the
@@ -183,9 +196,10 @@ The [research log](RESEARCH_LOG.md) is the core of the project.
   without editing the plan. Everything else is labelled exploratory, and I
   report how many variants I tried.
 - **Statistics that respect the data.** Props in the same game move
-  together, so standard errors are clustered by game (variance inflation
-  about 1.6× on the model-veto fills, 2.2× for the v5 rule's orders); the
-  spread maker clusters by event.
+  together, so standard errors are clustered by game; the spread maker
+  clusters by event. Clustering cuts the model-veto t from
+  9.7 to 6.1; for the v5 rule's orders the variance is 2.2 times the
+  independent figure.
 - **Multiple comparisons.** A scan of 2,349 Kalshi series produced 80
   nominal passes out of about 4,700 comparisons, and none of the seven
   candidates I checked in detail survived a family-wise correction. The
@@ -211,7 +225,7 @@ The [research log](RESEARCH_LOG.md) is the core of the project.
 | Game-winner markets on the same rule | Flat to negative across sports |
 | Cancelling unfilled orders after 30–120 minutes | Gave up 40–75% of the profit per order |
 | Ranking orders by fill probability or edge per unit of risk | Not robust across halves of the season |
-| Copying the NO rule to other sports (forward paper test) | Mostly negative: NFL yards −8.9¢, UFC −9.1¢, ITF tennis about 0 |
+| Copying the NO rule to other sports (forward paper test, small samples) | Mixed: NFL yards −8.9¢, UFC −9.1¢, ITF tennis about 0, Champions League corners +29¢ on 24 fills |
 | Hedging one-sided spread fills | Turned +3.9¢ into +0.2¢ |
 | Spread quotes timed from Kalshi's expected expiration | Quoted into a live game on the first night; replaced by a start-time rule |
 
@@ -255,17 +269,20 @@ No credentials are stored in this repository.
   informative than what is known hours before tip-off, so the NBA backtest
   is likely optimistic.
 - The spread maker's 64 series were picked from the same scan they are
-  judged on (about 6–7¢ simulated in those series against 3.9¢ across all
-  wide spreads), and the pregame-only rule keeps a smaller share of that
-  simulated profit.
+  judged on (+8.5¢ simulated in those series against +3.9¢ across all 8¢+
+  spreads, both first in line), and the pregame-only rule keeps a smaller
+  share of that simulated profit.
+- The NBA rule that lets orders rest until tip-off is
+  not yet independently verified on a live order; the first verified NBA
+  fill came from an earlier rule version.
 - Live results so far are a small pilot. Profitability and capacity are
   unproven.
 
 ## About
 
-Research and engineering were done with AI
-assistance; I set the questions, the rules and the risk limits, and every
-conclusion is checked against timestamped market and account data. Nothing
+I used AI assistance for research and engineering; I set the questions,
+the rules and the risk limits, and every conclusion is checked against
+timestamped market and account data. Nothing
 here is investment advice or a claim of future returns.
 
 **License:** MIT. NBA data from sportsdataverse hoopR, NFL data from
