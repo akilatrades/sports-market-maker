@@ -27,6 +27,12 @@ no positions as empirical evidence. Keep the rule set frozen through the
 observation window; record any unavoidable fixes as deviations with a new
 version and separately labeled subsequent cohort.
 
+**Deviation, 23 October 2026 (NBA v6).** The owner raised NBA orders from 1
+to 3 contracts mid-window. v6 keeps v5's selection and pricing, so the NBA
+checkpoint judges v5 and v6 together from the first v5 order, counting
+settled filled orders (not contracts), and also reports each version apart
+(RESEARCH_LOG.md, "NBA rules v6").
+
 ## Pre-registered checkpoint
 
 For each market/version cohort separately, review when **both** (a) at least

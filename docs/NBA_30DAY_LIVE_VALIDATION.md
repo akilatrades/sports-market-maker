@@ -9,7 +9,9 @@ judged as its own group, so each rule version (v4
 `nba-no-v4-smaller-orders-edge3-baseline`, then v5
 `nba-no-v5-one-contract-breadth`) gets its own 30 days from its first
 accepted order. The v5 evaluation plan is in RESEARCH_LOG.md ("NBA rules
-v5").
+v5"). From 23 October v6 trades the same selection at 3 contracts an
+order; v5 and v6 are judged together from the first v5 order and also
+reported apart (RESEARCH_LOG.md, "NBA rules v6").
 
 **Purpose:** determine whether the historically simulated NBA NO-bookline return
 survives real maker queue priority, current player roles, actual fees and settlement.

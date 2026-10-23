@@ -8,9 +8,11 @@ public repository, so private data never lands here.
     python -m research.live_checkpoint --data ~/smm-private-data
 
 Pre-registered rules (RESEARCH_LOG.md):
-- NBA v5 ("How v5 will be judged"): settled profit per filled contract after
-  fees, game-clustered t. Checkpoint at 1,900 settled fills, the $2,000
-  allowance, or 30 days, whichever comes first. t >= 2 and positive: the
+- NBA v5 ("How v5 will be judged"), with v6 pooled in ("NBA rules v6": the
+  same selection at 3 contracts an order): settled profit per filled
+  contract after fees, game-clustered t. Checkpoint at 1,900 settled filled
+  orders, the $5,000 allowance ($2,000 before v6), or 30 days from the first
+  v5 order, whichever comes first. t >= 2 and positive: the
   edge is real at these settings; positive with t < 2: keep collecting;
   t <= -1: stop and review. (Not positive with t > -1 is not covered by the
   plan; the report says so and leaves it to the owner.) The allowance is
@@ -38,8 +40,15 @@ import pandas as pd
 from research.fill_sizing_replay import clustered_mean_t
 
 ROOT = Path(__file__).resolve().parents[1]
-NBA_VERSION = "nba-no-v5-one-contract-breadth"
-NBA_BARS = {"settled_fills": 1900, "allowance_dollars": 2000.0, "days": 30}
+# NBA review (RESEARCH_LOG.md, 2026-10-23, "NBA rules v6"): v6 keeps v5's
+# selection and pricing and only trades 3 contracts an order, so v5 and v6 are
+# judged together from the first v5 order and also reported apart. The bar
+# counts settled filled ORDERS (at one contract an order, v5's fills and
+# contracts were the same); the allowance bar follows the allowance
+# ($2,000 -> $5,000).
+NBA_VERSIONS = ("nba-no-v5-one-contract-breadth", "nba-no-v6-three-contracts")
+NBA_VERSION = NBA_VERSIONS[-1]  # the bot's current rules
+NBA_BARS = {"settled_fills": 1900, "allowance_dollars": 5000.0, "days": 30}
 NBA_FEE_RESERVE = 1.10  # live/prod_nba_auto.py FEE_RESERVE
 # Spread rules v2 (pregame only, from 23 October) are judged on their own
 # orders; v1's first night is reported apart (RESEARCH_LOG.md, 2026-10-23).
@@ -94,7 +103,8 @@ def no_bot(folder, now, version=None):
     costs = pd.to_numeric(orders.cost, errors="coerce").dropna()
     allowance = round(float(sum(_reserve(c) for c in costs if c >= 0)), 2)
     if version is not None:
-        orders = orders[orders.strategy_version == version]
+        wanted = {version} if isinstance(version, str) else set(version)
+        orders = orders[orders.strategy_version.isin(wanted)]
         if orders.empty:
             return {"orders": 0}
         fills = (
@@ -123,6 +133,23 @@ def no_bot(folder, now, version=None):
             continue
         rows.append((float(s.net_profit_dollars) / n, n, game.get(s.ticker)))
     cents, t, games = _stats(*zip(*rows)) if rows else (None, None, 0)
+    settled_tickers = {
+        s.ticker
+        for _, s in settled.iterrows()
+        if float(contracts.get(s.ticker, 0.0)) > 0
+    }
+    # Filled orders from the same fills table the contracts come from.
+    filled_refs = (
+        set(
+            fills.loc[
+                (pd.to_numeric(fills["count"], errors="coerce") > 0)
+                & fills.ticker.isin(settled_tickers),
+                "order_ref",
+            ]
+        )
+        if not fills.empty
+        else set()
+    )
     return {
         "orders": len(orders),
         "accepted": int((orders.status == "accepted").sum()),
@@ -130,9 +157,9 @@ def no_bot(folder, now, version=None):
             (pd.to_numeric(orders.filled_contracts, errors="coerce") > 0).sum()
         ),
         "settled_markets": len(rows),
-        # One-contract orders: settled filled contracts = settled fills, and
-        # a fill split into pieces still counts once in total.
-        "settled_fills": round(float(sum(r[1] for r in rows)), 2),
+        # Filled orders whose market settled: one per order however many
+        # contracts or pieces it filled in (the review's 1,900 bar).
+        "settled_fills": len(filled_refs),
         "settled_contracts": float(sum(r[1] for r in rows)),
         "net_profit_dollars": round(float(sum(r[0] * r[1] for r in rows)), 2),
         "cents_per_contract": cents,
@@ -257,7 +284,7 @@ def spread_bot(folder, now, summary, version=SPREAD_VERSION):
 
 def nba_verdict(r):
     progress = {
-        "settled fills": f"{r['settled_fills']:,g} / {NBA_BARS['settled_fills']:,}",
+        "settled filled orders": f"{r['settled_fills']:,g} / {NBA_BARS['settled_fills']:,}",
         "allowance": f"${r['allowance_used_dollars']:,.0f} / ${NBA_BARS['allowance_dollars']:,.0f}",
         "days": f"{r['days']} / {NBA_BARS['days']}",
     }
@@ -351,22 +378,31 @@ def report(data, now=None):
     summary = json.loads(summary_path.read_text()) if summary_path.exists() else {}
     lines = [
         f"LIVE CHECKPOINT REPORT (real orders only) · data through "
-        f"{max((m.get('data_through_utc') or '') for m in summary.get('markets', {}).values()) or 'unknown'}",
+        f"{max((m.get('data_through_utc') or '' for m in summary.get('markets', {}).values()), default='') or 'unknown'}",
         "",
     ]
-    nba = no_bot(data / "data" / "nba", now, NBA_VERSION)
+    nba = no_bot(data / "data" / "nba", now, NBA_VERSIONS)
     if nba.get("orders"):
         progress, verdict = nba_verdict(nba)
         lines += [
-            f"NBA ({NBA_VERSION})",
+            f"NBA ({' + '.join(NBA_VERSIONS)}, judged together)",
             f"  {nba['orders']} orders, {nba['filled_orders']} filled; {nba['settled_markets']} settled markets, "
             f"{nba['settled_contracts']:g} contracts, {nba['games']} games",
             f"  Settled P&L {_money(nba['net_profit_dollars'])}; {_fmt(nba['cents_per_contract'], '+.2f', '¢')} per contract, "
             f"t {_fmt(nba['t_game_clustered'], '.2f')} (game-clustered)",
             "  Progress: " + "; ".join(f"{k} {v}" for k, v in progress.items()),
             f"  {verdict}",
-            "",
         ]
+        for version in NBA_VERSIONS:
+            part = no_bot(data / "data" / "nba", now, version)
+            if part.get("orders"):
+                lines.append(
+                    f"  {version}: {part['orders']} orders, {part['settled_fills']} settled "
+                    f"filled orders, {part['settled_contracts']:g} contracts, settled P&L "
+                    f"{_money(part['net_profit_dollars'])}, "
+                    f"{_fmt(part['cents_per_contract'], '+.2f', '¢')} per contract"
+                )
+        lines.append("")
     spread = spread_bot(data / "data" / "spread", now, summary)
     if spread.get("orders"):
         progress, verdict = spread_verdict(spread)

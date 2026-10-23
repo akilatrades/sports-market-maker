@@ -1,0 +1,94 @@
+{
+ "note": "SIMULATED, in-sample, exploratory; 2025-26 NBA NO orders",
+ "rules": {
+  "v5: 1 contract": {
+   "flow share 1 (first in line)": {
+    "nights traded": 51,
+    "filled orders": 1884,
+    "contracts filled": 1884,
+    "cents per contract": 2.22,
+    "t (game-clustered)": 1.41,
+    "P&L $": 41.78,
+    "worst night $": -7.56,
+    "max drawdown $": -10.02,
+    "nights the daily stop fired": 0,
+    "total stop hit on night": null,
+    "allowance used up by night": 49
+   },
+   "flow share 0.25 (median of 20 draws)": {
+    "nights traded": 51.0,
+    "filled orders": 1775.5,
+    "contracts filled": 1775.5,
+    "cents per contract": 2.21,
+    "t (game-clustered)": 1.38,
+    "P&L $": 39.2,
+    "worst night $": -7.56,
+    "max drawdown $": -9.41,
+    "nights the daily stop fired": 0.0,
+    "allowance used up by night": 49.0,
+    "P&L $, 10th percentile": 33.4,
+    "max drawdown $, worst draw": -10.5,
+    "share of draws hitting the total stop": 0.0
+   }
+  },
+  "v6: 3 contracts": {
+   "flow share 1 (first in line)": {
+    "nights traded": 53,
+    "filled orders": 1619,
+    "contracts filled": 4713,
+    "cents per contract": 3.55,
+    "t (game-clustered)": 2.22,
+    "P&L $": 167.27,
+    "worst night $": -23.37,
+    "max drawdown $": -38.66,
+    "nights the daily stop fired": 1,
+    "total stop hit on night": null,
+    "allowance used up by night": 53
+   },
+   "flow share 0.25 (median of 20 draws)": {
+    "nights traded": 53.0,
+    "filled orders": 1515.0,
+    "contracts filled": 4233.0,
+    "cents per contract": 3.44,
+    "t (game-clustered)": 2.12,
+    "P&L $": 146.45,
+    "worst night $": -24.38,
+    "max drawdown $": -36.37,
+    "nights the daily stop fired": 1.0,
+    "allowance used up by night": 53.0,
+    "P&L $, 10th percentile": 135.28,
+    "max drawdown $, worst draw": -41.73,
+    "share of draws hitting the total stop": 0.0
+   }
+  },
+  "v6 without the lifetime allowance": {
+   "flow share 1 (first in line)": {
+    "nights traded": 181,
+    "filled orders": 8408,
+    "contracts filled": 24536,
+    "cents per contract": 3.89,
+    "t (game-clustered)": 5.56,
+    "P&L $": 953.69,
+    "worst night $": -23.37,
+    "max drawdown $": -69.89,
+    "nights the daily stop fired": 2,
+    "total stop hit on night": null,
+    "allowance used up by night": null
+   },
+   "flow share 0.25 (median of 20 draws)": {
+    "nights traded": 181.0,
+    "filled orders": 7938.5,
+    "contracts filled": 22641.0,
+    "cents per contract": 3.75,
+    "t (game-clustered)": 5.22,
+    "P&L $": 847.28,
+    "worst night $": -24.38,
+    "max drawdown $": -78.54,
+    "nights the daily stop fired": 2.0,
+    "P&L $, 10th percentile": 833.06,
+    "max drawdown $, worst draw": -81.56,
+    "share of draws hitting the total stop": 0.0
+   }
+  }
+ }
+}

@@ -28,7 +28,7 @@ from live.nfl_policy import settlement_accounting
 from live.nba_inputs import MODEL_VERSION
 from live.reconciled_attempts import rejected_client_ids
 
-STRATEGY_VERSION = "nba-no-v5-one-contract-breadth"
+STRATEGY_VERSION = "nba-no-v6-three-contracts"
 # Earlier versions whose resting orders are left untouched to expire while
 # new orders wait (see legacy_resting_count); any other version HALTs.
 PRIOR_VERSIONS = frozenset(
@@ -36,23 +36,24 @@ PRIOR_VERSIONS = frozenset(
         "nba-no-v2-opening-audit",
         "nba-no-v3-long-resting-throughput",
         "nba-no-v4-smaller-orders-edge3-baseline",
+        "nba-no-v5-one-contract-breadth",
     }
 )
 
-# Owner-approved v5 sizing for a $250 account (2026-10-21, RESEARCH_LOG.md
-# "NBA rules v5"): many one-contract orders so the edge can be measured on
-# about 1,900 fills. Pricing is unchanged. Submitted cost is charged to the
-# daily and lifetime allowances even when an order expires unfilled; the
-# realized-loss stops below are the binding money limit (-$60 total is 24% of
-# the account).
-MAX_GROSS_COST = 2000.0  # lifetime submitted allowance (pauses for review)
+# Owner-approved v6 sizing (2026-10-23, RESEARCH_LOG.md "NBA rules v6"):
+# v5's orders (many separate orders, about 1,900 fills to measure the edge)
+# at 3 contracts each. Selection and pricing are unchanged. Submitted cost is
+# charged to the daily and lifetime allowances even when an order expires
+# unfilled; the realized-loss stops below are the binding money limit.
+# Old (v5) values: 1 contract, $25 per game, $2,000 lifetime, -$60 total.
+MAX_GROSS_COST = 5000.0  # lifetime submitted allowance (pauses for review)
 MAX_ORDER_COST = 4.0
 MAX_ACTIVE_COST = 150.0  # orders rest until their games end, so ~ one day
-MAX_GAME_COST = 25.0
+MAX_GAME_COST = 50.0
 MAX_TEAM_COST = 25.0  # per team per New York day
 MAX_DAILY_COST = 150.0
 MAX_GAME_ORDERS = 40
-MAX_CONTRACTS = 1  # one contract per order: more separate fills, same cash
+MAX_CONTRACTS = 3  # contracts per order (v5: 1)
 MAX_NEW_ORDERS_PER_PASS = 3
 PRICE_BAND_CENTS = (5, 95)  # NO price, inclusive
 # systemd stops a pass after TimeoutStartSec=240. A stop between an order's
@@ -69,7 +70,7 @@ OFFICIAL_REPORT_SECONDS = 20
 OFFICIAL_REPORT_MAX_AGE_MINUTES = 60
 # P&L circuit breakers: no new orders after these realized losses.
 MAX_REALIZED_DAILY_LOSS = 20.0
-MAX_REALIZED_CUMULATIVE_LOSS = 60.0
+MAX_REALIZED_CUMULATIVE_LOSS = 100.0  # v5: 60
 FEE_RESERVE = 1.10
 WINDOW = (2.0, 6.0)  # NEW orders still start 2–6 hours before tip
 # ALREADY-ACCEPTED orders may rest until the verified scheduled tip.
@@ -735,8 +736,8 @@ def record_markouts(journal, frame, now):
 EXTRA_MAKER_TICK = 0.0  # historical baseline already improves one tick
 MIN_EDGE_AFTER_IMPROVEMENT = 0.03
 # New entries and resting orders use the SAME after-fee edge floor, so an
-# order is never placed on terms that the next scan would cancel it for. v5
-# accepts any non-negative edge (v4 required 3c); the 15c outlier cap stays.
+# order is never placed on terms that the next scan would cancel it for. Since
+# v5 any non-negative edge is accepted (v4 required 3c); the 15c outlier cap stays.
 ENTRY_MIN_NET_EDGE = 0.0
 RESTING_MIN_NET_EDGE = ENTRY_MIN_NET_EDGE
 
@@ -846,6 +847,25 @@ def select_candidates(frame, events, state, now, diagnostics=None, window=WINDOW
     if found.empty:
         return []
     return list(found.sort_values("edge", ascending=False).itertuples())
+
+
+def fit_fee_reserve(order, quoted, fee_cache, fee_bound_for):
+    """Shrink ``order`` until its cost plus the maker-fee bound fits the 10%
+    reserve, and return (fee_bound, fee_metadata, cost).
+
+    Where a series charges maker fees, the bound is at least 1c a contract, so
+    at 5-6c a multi-contract order can exceed the reserve while a smaller one
+    still fits. One contract is never shrunk further: the caller's own check
+    then decides.
+    """
+    while True:
+        cost = round(order.count * order.price_cents / 100, 2)
+        fee_bound, fee_metadata = fee_bound_for(
+            order.ticker, quoted, order.count, fee_cache
+        )
+        if order.count <= 1 or cost + fee_bound <= reserve(cost) + 1e-9:
+            return fee_bound, fee_metadata, cost
+        order.count -= 1
 
 
 def order_from_row(row, now, no_price=None):
@@ -1304,8 +1324,8 @@ def pass_once(client, env, frame, now, journal, *, dry=False):
             skipped["cash_balance"] += 1
             continue
         try:
-            fee_bound, fee_metadata = live_maker_fee_bound(
-                order.ticker, quoted, order.count, fee_cache
+            fee_bound, fee_metadata, cost = fit_fee_reserve(
+                order, quoted, fee_cache, live_maker_fee_bound
             )
             p_book = float(getattr(row, "p_book", float("nan")))
             p_yes = p_book if math.isfinite(p_book) else float(row.p_model)

@@ -316,7 +316,7 @@ const plural = (n, word) => finite(n) ? `${n} ${word}${n === 1 ? "" : "s"}` : "�
 
 // Checkpoints written down before each bot went live (RESEARCH_LOG.md).
 const CHECKPOINTS = [
-  {name: "NBA props, rules v5", since: "2026-10-21", label: "21 Oct 2026", days: 30, bar: "1,900 settled fills, the $2,000 test allowance or 30 days"},
+  {name: "NBA props, rules v5–v6", since: "2026-10-21", label: "21 Oct 2026", days: 30, bar: "1,900 settled filled orders, the $5,000 test allowance or 30 days"},
   {name: "Spread maker, rules v2", since: "2026-10-23", label: "23 Oct 2026", days: 28, bar: "300 filled contracts or 4 weeks"},
 ];
 function checkpoints(now = new Date()) {
@@ -336,7 +336,7 @@ function runningNow(s) {
   const prop = document.getElementById("prop-rules"), spread = document.getElementById("spread-rules"), account = document.getElementById("account-limits");
   prop.innerHTML = !r ? missing :
     row("Rules", r.nba_rules || "—") +
-    row("Order", `${plural(r.contracts_per_order, "contract")}, post-only NO`) +
+    row("Order", `${finite(r.contracts_per_order) && r.contracts_per_order > 1 ? "Up to " : ""}${plural(r.contracts_per_order, "contract")}, post-only NO`) +
     row("Estimated edge to post", span(r.entry_edge_cents, "¢")) +
     row("When", `${span(r.entry_hours_before_tip, " h")} before tip-off, resting until tip`) +
     row("Price range", span(r.price_band_cents, "¢")) +

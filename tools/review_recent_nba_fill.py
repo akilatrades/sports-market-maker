@@ -29,6 +29,7 @@ FILLED_STATES = {
 GENERATIONS = {
     "nba-no-v4-smaller-orders-edge3-baseline": "baseline_v4",
     "nba-no-v5-one-contract-breadth": "breadth_v5",
+    "nba-no-v6-three-contracts": "three_contracts_v6",
 }
 
 

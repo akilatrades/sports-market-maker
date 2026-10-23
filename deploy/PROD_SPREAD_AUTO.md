@@ -65,9 +65,9 @@ directly: that comparison is the main point of the pilot.
 | Open exposure (resting orders + held contracts, at cost) | $60 | Was $25 |
 | Orders per pass / per New York day | 20 / 300 | Cancelled orders still count |
 | Own realized-loss stop, per day / total | −$10 / −$40 | Was −$5 / −$15; cancels its quotes and stops |
-| Account realized-loss stop, per day / total | −$20 / −$60 | Shared with NBA and NFL |
+| Account realized-loss stop, per day / total | −$20 / −$100 | Shared with NBA and NFL; total was −$60 before 23 October |
 
-- The NBA and NFL caps ($165 open, $180 a day, $2,050 lifetime) are
+- The NBA and NFL caps ($165 open, $180 a day, $5,050 lifetime) are
   unchanged and do not include spread orders. All three bots together can
   have at most $225 open (NBA $150, NFL $15, spread $60) on the $350 account.
 - The account stops count realized losses of all three bots, so spread

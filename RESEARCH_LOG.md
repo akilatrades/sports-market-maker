@@ -3046,3 +3046,113 @@ maker's checkpoint (300 filled contracts or 4 weeks), not before.**
   share is below 0.5, other traders often get ahead of it between passes;
   a separate written plan would then test re-quoting faster in markets
   where it rests.
+
+## 2026-10-23: NBA rules v6, three contracts per order, and −$100 total stops (plan amendment)
+
+*Written before the code change and before any v6 order. On 23 October
+the owner chose more risk on the strategy with the most live volume ("we
+have to put on risk"): 3 contracts per NBA order, a −$100 account-wide
+total stop, and a smaller minimum spread for the spread maker. The last
+was dropped after the replay below; the owner chose to keep 8¢.*
+
+**Limits (old → new).**
+- NBA contracts per order: 1 → 3 (`MAX_CONTRACTS`). Order selection,
+  pricing, the 0–15¢ edge band, the 2–6 hour window and every veto are
+  unchanged; only size changes.
+- NBA per-game submissions: $25 → $50 (`MAX_GAME_COST`). At 3× the
+  v5 orders of 21–22 October, 3 of 13 games would have passed $25 and 1
+  would have passed $50.
+- NBA lifetime submitted allowance: $2,000 → $5,000 (`MAX_GROSS_COST`),
+  and the shared lifetime cap $2,050 → $5,050 (NBA plus NFL's $50). At 3×,
+  $2,000 would last about 18 nights.
+- NBA's own total realized-loss stop: −$60 → −$100
+  (`MAX_REALIZED_CUMULATIVE_LOSS`). The owner raised the account-wide
+  stop to give room for 3× swings, and NBA's own stop must move with it,
+  otherwise NBA alone still stops at −$60.
+- Account-wide total realized-loss stop (all three bots): −$60 → −$100
+  (`ACCOUNT_LOSS_STOPS["cumulative"]`).
+- Unchanged: the −$20 daily stops (NBA's and the account's), NBA's $150
+  open and $150 daily caps, the $25 per-team cap, $4 per order, 40 orders
+  per game, NFL, and every spread maker limit. At 3×, v5's busiest night
+  (21 October, 11 games) would have reserved $145 of the $150 daily cap, so
+  that cap now limits the largest slates. All bots together can still have
+  at most $225 open on the $350 account.
+
+**Why.** Live v5 so far (78 settled fills, 21–22 October, live): +4.3¢ per
+contract, t 0.77 clustered by game. Public trade prints show a median of
+over 300 contracts traded at or through the price of each filled order
+while it rested, and 88% had at least 5, so trading volume does not limit
+a 3-contract order; the caps do. In the 2025–26 replay (simulated,
+in-sample) profit per contract barely changes between 1 and 10 contracts
+per order (3.61¢ and 3.64¢ at flow share 0.25), and the worst drawdown
+grows about $20 per contract of order size, which −$100 covers at 3.
+
+**Version and checkpoint.** New orders carry `nba-no-v6-three-contracts`;
+v5 joins the prior versions whose resting orders are left to expire (new
+orders wait for them, as in earlier transitions). The NBA review keeps its
+bars, judged on v5 and v6 together because the selection rule is the same:
+- **1,900 settled filled orders** (counted as orders, not contracts; at one
+  contract per order the two were the same), **the $5,000 allowance** (was
+  $2,000) or **30 days from the first v5 order**, whichever comes first;
+- profit per contract, after fees, with t clustered by game; verdict rules
+  unchanged. v5 and v6 are also reported separately. If v6's profit per
+  contract is clearly below v5's, the owner reviews before the checkpoint.
+
+**Spread maker minimum spread, 8¢ → 6¢: not adopted (exploratory replay,
+simulated, in-sample, first in line, 1 contract; 2 variants plus one slice).**
+`research/spread_pregame_split.py` with the v2 rule (start known from the
+ticker, posted at least 85 minutes before it), 64 pilot series:
+
+| Minimum spread | Fills | ¢ per contract (t) | Simulated $ |
+|---|---:|---:|---:|
+| 8¢ (live) | 1,474 | +10.54 (8.67) | +155.35 |
+| 6¢ | 2,100 | +7.10 (7.13) | +149.07 |
+| 6–7¢ spreads alone | 626 | −1.00 (−0.67); later half −3.56 | −6.28 |
+
+The extra 42% of fills earned nothing: at 6–7¢ the two cents given up to
+bid inside, plus the drift after one side fills, take the whole gap. The
+owner kept 8¢. Other ways to more pregame fills (quoting earlier before the
+start, more series with known starts) need their own written test.
+
+## 2026-10-23: NBA v6 replays before go-live (exploratory)
+
+*Run after the plan amendment above and before any v6 order; the plan's
+text is unchanged.*
+
+**Replay of v5 against v6 (exploratory, simulated, in-sample; 3 rule sets ×
+2 flow shares; `python -m research.nba_v6_replay`).** The owner asked to see
+it before go-live. Live caps applied in placement order, loss stops per
+night; cautious = flow share 0.25, median of 20 draws.
+
+| Rules | P&L | ¢ per contract (t) | Filled orders / contracts | Worst night | Max drawdown | Daily stops |
+|---|---:|---:|---:|---:|---:|---:|
+| v5, until $2,000 is placed (49 nights) | +$41.78 | 2.22 (1.41) | 1,884 / 1,884 | −$7.56 | −$10.02 | 0 |
+| v6, until $5,000 is placed (53 nights) | +$167.27 | 3.55 (2.22) | 1,619 / 4,713 | −$23.37 | −$38.66 | 1 |
+| v6, cautious | +$146.45 | 3.44 (2.12) | 1,515 / 4,233 | −$24.38 | −$36.37 | 1 |
+| v6, whole season, no allowance | +$953.69 | 3.89 (5.56) | 8,408 / 24,536 | −$23.37 | −$69.89 | 2 |
+| v6, whole season, cautious | +$847.28 | 3.75 (5.22) | 7,938 / 22,641 | −$24.38 | −$78.54 | 2 |
+
+At three contracts the $150 nightly and $50 per-game caps bind, so the
+lowest-edge orders are dropped first: fewer separate orders (1,619 against
+1,884) but more profit per contract. The −$100 total stop was never hit (0
+of 20 cautious draws). These are the season's first weeks, which were weak
+(2.2¢ against 3.9¢ over the whole season); fills are optimistic.
+
+**Larger sizes, whole season (exploratory, simulated, in-sample; 4 rule
+sets × 2 flow shares, no lifetime allowance, −$20/−$100 stops).** Asked by
+the owner ("can we push it even more?"); first in line / cautious median of
+20 draws:
+
+| Setup | Season P&L | First 30 nights | ¢ per contract | Worst night | Max drawdown | Daily stops |
+|---|---:|---:|---:|---:|---:|---:|
+| 3 contracts, $50/game, $150/night (v6) | $954 / $847 | $13 / $9 | 3.9 | −$24 | −$70 / −$79 | 2 |
+| 5 contracts, $75/game, $150/night | $955 / $833 | $35 / $31 | 3.6 | −$35 | −$97 / −$99 | 8 |
+| 5 contracts, $75/game, $250/night | $1,469 / $1,285 | $45 / $41 | 3.9 | −$39 | −$90 / −$106 | 10–11 |
+| 10 contracts, $150/game, $250/night | $1,244 / $1,224 | $33 / $35 | 3.1 | −$66 | −$143 / −$147 | 21–24 |
+
+The nightly cap, not the order size, limits profit: 5 contracts at $150 a
+night earns no more than 3, and 10 contracts earns less than 5 because the
+larger orders crowd out the best ones. 5 contracts at $250 a night is the
+next step, but its drawdowns reach the −$100 stop and $250 a night plus the
+other bots' $75 nearly fills the $350 account; it needs more capital or
+live evidence first. Not adopted.

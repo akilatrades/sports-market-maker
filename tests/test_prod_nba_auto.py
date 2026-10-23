@@ -104,23 +104,29 @@ def test_nba_baseline_retains_no_side_and_passive_price():
     assert order.post_only
     assert order.body()["side"] == "ask"
     assert 0 < cost <= nba.MAX_ORDER_COST
+    # v6: three contracts an order, charged at three times the price.
+    assert order.count == nba.MAX_CONTRACTS == 3
+    assert cost == pytest.approx(round(3 * quote, 2))
 
 
 def test_separate_risk_caps_and_state():
     assert str(nba.STATE).endswith("prod-nba-auto")
-    assert nba.STRATEGY_VERSION == "nba-no-v5-one-contract-breadth"
-    assert nba.MAX_GROSS_COST == 2000
+    # RESEARCH_LOG.md, 2026-10-23, "NBA rules v6" (v5: 1 contract, $25 a
+    # game, $2,000 lifetime, -$60 total). Change only through a new amendment.
+    assert nba.STRATEGY_VERSION == "nba-no-v6-three-contracts"
+    assert "nba-no-v5-one-contract-breadth" in nba.PRIOR_VERSIONS
+    assert nba.MAX_GROSS_COST == 5000
     assert nba.MAX_ACTIVE_COST == 150
     assert nba.MAX_ORDER_COST == 4
-    assert nba.MAX_GAME_COST == 25
+    assert nba.MAX_GAME_COST == 50
     assert nba.MAX_TEAM_COST == 25
     assert nba.MAX_DAILY_COST == 150
     assert nba.MAX_GAME_ORDERS == 40
-    assert nba.MAX_CONTRACTS == 1
+    assert nba.MAX_CONTRACTS == 3
     assert nba.MAX_NEW_ORDERS_PER_PASS == 3
     assert nba.PRICE_BAND_CENTS == (5, 95)
     assert nba.MAX_REALIZED_DAILY_LOSS == 20
-    assert nba.MAX_REALIZED_CUMULATIVE_LOSS == 60
+    assert nba.MAX_REALIZED_CUMULATIVE_LOSS == 100
     assert nba.WINDOW == (2.0, 6.0)
 
 
@@ -520,7 +526,9 @@ def test_game_and_team_budget_reasons_are_distinct():
     assert "nba_per_game_submissions" not in reasons
     assert "nba_game_order_count" not in reasons
 
-    game_filled = [_past_attempt(i, 20261020, "OTHER" + str(i), 5.5) for i in range(4)]
+    # Just under the per-game cap, so a $2 order no longer fits it.
+    n = int(nba.MAX_GAME_COST // nba.reserve(5.5))
+    game_filled = [_past_attempt(i, 20261020, "OTHER" + str(i), 5.5) for i in range(n)]
     reasons = nba.budget_blockers(game_filled, [], row, 2.0, NOW)
     assert "nba_per_game_submissions" in reasons
     assert "nba_per_team_submissions" not in reasons
@@ -536,7 +544,8 @@ def test_order_count_and_remaining_submission_allowance_still_bind():
     assert "nba_game_order_count" in reasons
     assert "nba_per_game_submissions" not in reasons
 
-    many_games = [_past_attempt(i, i + 100, "OTHER" + str(i), 4.0) for i in range(500)]
+    n = int(nba.MAX_GROSS_COST // nba.reserve(4.0)) + 1  # just past the allowance
+    many_games = [_past_attempt(i, i + 100, "OTHER" + str(i), 4.0) for i in range(n)]
     for a in many_games:
         a["utc"] = (NOW - timedelta(days=7)).isoformat()
     reasons = nba.budget_blockers(many_games, [], row, 0.5, NOW)
@@ -553,7 +562,7 @@ def test_active_and_shared_risk_limits_cannot_be_overridden():
     import live.shared_account_risk as shared_risk
 
     # These caps remain independent, even when the NBA cohort enlarges.
-    assert shared_risk.LIMITS == {"lifetime": 2050, "daily": 180, "active": 165}
+    assert shared_risk.LIMITS == {"lifetime": 5050, "daily": 180, "active": 165}
 
 
 def test_v3_guard_drains_known_v2_and_rejects_unowned_resting_orders():
@@ -1132,3 +1141,80 @@ def test_unverifiable_account_pnl_still_lets_cancels_run(monkeypatch, tmp_path):
     monkeypatch.setattr(nba, "cancel_invalid_resting", lambda *args: 0)
     with pytest.raises(TradingError, match="unverifiable"):
         nba.pass_once(client, ARMED, priced(), NOW, journal)  # then: no new orders
+
+
+def test_v6_three_contracts_fit_every_per_order_and_per_game_cap():
+    # The dearest allowed NO price still fits $4 an order at 3 contracts.
+    high = nba.PRICE_BAND_CENTS[1] / 100
+    assert nba.reserve(round(nba.MAX_CONTRACTS * high, 2)) <= nba.MAX_ORDER_COST
+    row = SimpleNamespace(game_id=20261020, team="LAL")
+    # $45 already in this game (other teams): a $3 order fits under $50, a $6 one does not.
+    game = [_past_attempt(i, 20261020, "OTHER" + str(i), 4.5) for i in range(9)]
+    assert "nba_per_game_submissions" not in nba.budget_blockers(
+        game, [], row, 3.0, NOW
+    )
+    assert "nba_per_game_submissions" in nba.budget_blockers(game, [], row, 6.0, NOW)
+
+
+def test_v5_orders_resting_at_the_switch_are_drained_not_halted():
+    v5 = {
+        "client_order_id": "v5",
+        "ticker": "KXNBA-V5",
+        "strategy_version": "nba-no-v5-one-contract-breadth",
+    }
+    v6 = {
+        "client_order_id": "v6",
+        "ticker": "KXNBA-V6",
+        "strategy_version": nba.STRATEGY_VERSION,
+    }
+    accepted = {"v5": {"order_id": "order-v5"}, "v6": {"order_id": "order-v6"}}
+    resting = [{"order_id": "order-v5", "ticker": "KXNBA-V5"}]
+    # Counted as a prior-version order (new orders wait), never a HALT.
+    assert nba.legacy_resting_count([v5, v6], accepted, resting) == 1
+
+
+def test_fee_reserve_shrinks_a_cheap_order_instead_of_skipping_it():
+    from kalshi.trading import Order
+
+    calls = []
+
+    def one_cent_a_contract(ticker, price, count, cache):
+        calls.append(count)
+        return round(0.01 * count, 2), {"fee_type": "quadratic_with_maker_fees"}
+
+    def order(cents):
+        return Order(
+            ticker="KXNBAPTS-X",
+            side="no",
+            count=nba.MAX_CONTRACTS,
+            price_cents=cents,
+            expiration_ts=int(NOW.timestamp()) + 3600,
+        )
+
+    # 5c with a 1c fee: 3 and 2 contracts exceed the 10% reserve, 1 fits.
+    cheap = order(5)
+    fee, _, cost = nba.fit_fee_reserve(cheap, 0.05, {}, one_cent_a_contract)
+    assert (cheap.count, cost, fee) == (1, 0.05, 0.01) and calls == [3, 2, 1]
+    # Dearer orders keep their full size; fee-free series are never shrunk.
+    full = order(51)
+    assert nba.fit_fee_reserve(full, 0.51, {}, one_cent_a_contract)[2] == 1.53
+    assert full.count == 3
+    free = order(5)
+    nba.fit_fee_reserve(free, 0.05, {}, lambda *a: (0.0, {}))
+    assert free.count == 3
+
+
+def test_a_resting_three_contract_order_is_valid_and_four_is_not():
+    row = priced().iloc[0]
+    market = {"status": "active", "yes_bid_dollars": 0.40, "yes_ask_dollars": 0.50}
+    intent = {
+        "ticker": row.ticker,
+        "price_cents": 51,
+        "count": 3,
+        "probability_source": "sportsbook",
+    }
+    assert nba.resting_cancel_reason(row, intent, market, 0.0) is None
+    too_big = {**intent, "count": nba.MAX_CONTRACTS + 1}
+    assert (
+        nba.resting_cancel_reason(row, too_big, market, 0.0) == "invalid_original_order"
+    )

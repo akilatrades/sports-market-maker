@@ -11,8 +11,9 @@ file is the short version for an AI helping them.
   because the people buying YES at the ask are mostly fans backing a player.
 - Fair probability comes from sportsbook odds (de-vigged, at least two books on
   the exact line) or, failing that, the project's stat model. An NBA order
-  (rules v5) is one contract, needs 0¢ to 15¢ of estimated edge, goes one cent
-  inside the spread 2–6 hours before tip-off, and rests until tip-off.
+  (rules v6, from 23 October) is three contracts, needs 0¢ to 15¢ of
+  estimated edge, goes one cent inside the spread 2–6 hours before tip-off,
+  and rests until tip-off.
 - Three bots trade one small real-money account from a private server: NBA
   and NFL (live since 19–20 October 2026) and the spread maker (live since
   22 October; rules v2, pregame only, from 23 October), which rests YES

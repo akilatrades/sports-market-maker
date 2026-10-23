@@ -62,7 +62,10 @@ def test_append_only_reconciliation_is_accepted_but_its_cost_is_not_recycled():
     assert len(owner["attempts"]) == 1
     assert owner["rejected_by_sport"]["nba"] == {CID}
     assert shared.room(owner, set(), 2.0, NOW)["shared_lifetime"]
-    assert shared.room(owner, set(), 1900.0, NOW)["shared_lifetime"] is False
+    assert (
+        shared.room(owner, set(), shared.LIMITS["lifetime"], NOW)["shared_lifetime"]
+        is False
+    )
     state = {
         "resting": [],
         "held": [],
