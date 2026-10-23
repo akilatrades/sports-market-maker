@@ -3046,3 +3046,70 @@ maker's checkpoint (300 filled contracts or 4 weeks), not before.**
   share is below 0.5, other traders often get ahead of it between passes;
   a separate written plan would then test re-quoting faster in markets
   where it rests.
+
+## 2026-10-23: NBA rules v6, three contracts per order, and −$100 total stops (plan amendment)
+
+*Written before the code change and before any v6 order. On 23 October
+the owner chose more risk on the strategy with the most live volume ("we
+have to put on risk"): 3 contracts per NBA order, a −$100 account-wide
+total stop, and a smaller minimum spread for the spread maker. The last
+was dropped after the replay below; the owner chose to keep 8¢.*
+
+**Limits (old → new).**
+- NBA contracts per order: 1 → 3 (`MAX_CONTRACTS`). Order selection,
+  pricing, the 0–15¢ edge band, the 2–6 hour window and every veto are
+  unchanged; only size changes.
+- NBA per-game submissions: $25 → $50 (`MAX_GAME_COST`). At 3× the
+  v5 orders of 21–22 October, 3 of 13 games would have passed $25 and 1
+  would have passed $50.
+- NBA lifetime submitted allowance: $2,000 → $5,000 (`MAX_GROSS_COST`),
+  and the shared lifetime cap $2,050 → $5,050 (NBA plus NFL's $50). At 3×,
+  $2,000 would last about 18 nights.
+- NBA's own total realized-loss stop: −$60 → −$100
+  (`MAX_REALIZED_CUMULATIVE_LOSS`). The owner raised the account-wide
+  stop to give room for 3× swings, and NBA's own stop must move with it,
+  otherwise NBA alone still stops at −$60.
+- Account-wide total realized-loss stop (all three bots): −$60 → −$100
+  (`ACCOUNT_LOSS_STOPS["cumulative"]`).
+- Unchanged: the −$20 daily stops (NBA's and the account's), NBA's $150
+  open and $150 daily caps, the $25 per-team cap, $4 per order, 40 orders
+  per game, NFL, and every spread maker limit. At 3×, v5's busiest night
+  (21 October, 11 games) would have reserved $145 of the $150 daily cap, so
+  that cap now limits the largest slates. All bots together can still have
+  at most $225 open on the $350 account.
+
+**Why.** Live v5 so far (78 settled fills, 21–22 October, live): +4.3¢ per
+contract, t 0.77 clustered by game. Public trade prints show a median of
+over 300 contracts traded at or through the price of each filled order
+while it rested, and 88% had at least 5, so trading volume does not limit
+a 3-contract order; the caps do. In the 2025–26 replay (simulated,
+in-sample) profit per contract barely changes between 1 and 10 contracts
+per order (3.61¢ and 3.64¢ at flow share 0.25), and the worst drawdown
+grows about $20 per contract of order size, which −$100 covers at 3.
+
+**Version and checkpoint.** New orders carry `nba-no-v6-three-contracts`;
+v5 joins the prior versions whose resting orders are left to expire (new
+orders wait for them, as in earlier transitions). The NBA review keeps its
+bars, judged on v5 and v6 together because the selection rule is the same:
+- **1,900 settled filled orders** (counted as orders, not contracts; at one
+  contract per order the two were the same), **the $5,000 allowance** (was
+  $2,000) or **30 days from the first v5 order**, whichever comes first;
+- profit per contract, after fees, with t clustered by game; verdict rules
+  unchanged. v5 and v6 are also reported separately. If v6's profit per
+  contract is clearly below v5's, the owner reviews before the checkpoint.
+
+**Spread maker minimum spread, 8¢ → 6¢: not adopted (exploratory replay,
+simulated, in-sample, first in line, 1 contract; 2 variants plus one slice).**
+`research/spread_pregame_split.py` with the v2 rule (start known from the
+ticker, posted at least 85 minutes before it), 64 pilot series:
+
+| Minimum spread | Fills | ¢ per contract (t) | Simulated $ |
+|---|---:|---:|---:|
+| 8¢ (live) | 1,474 | +10.54 (8.67) | +155.35 |
+| 6¢ | 2,100 | +7.10 (7.13) | +149.07 |
+| 6–7¢ spreads alone | 626 | −1.00 (−0.67); later half −3.56 | −6.28 |
+
+The extra 42% of fills earned nothing: at 6–7¢ the two cents given up to
+bid inside, plus the drift after one side fills, take the whole gap. The
+owner kept 8¢. Other ways to more pregame fills (quoting earlier before the
+start, more series with known starts) need their own written test.
