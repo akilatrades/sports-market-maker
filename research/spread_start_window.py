@@ -284,11 +284,11 @@ def main():
         for s, o in sorted(offsets_seen.items())
     }
     qualified = [(k, v) for k, v in result["variants"].items() if v.get("meets_bar")]
-    result["proposed_v3"] = (
-        max(qualified, key=lambda kv: kv[1]["added_over_baseline"]["fills"])[0]
-        if qualified
-        else None
-    )
+    most = -1
+    result["proposed_v3"] = None
+    for label, v in qualified:  # the qualifying rule with the most added fills
+        if v["added_over_baseline"]["fills"] > most:
+            most, result["proposed_v3"] = v["added_over_baseline"]["fills"], label
     OUT.mkdir(parents=True, exist_ok=True)
     (OUT / "spread_start_window.json").write_text(
         json.dumps(result, indent=1, default=lambda o: o.item()) + "\n"
