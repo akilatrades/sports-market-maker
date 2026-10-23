@@ -1,5 +1,5 @@
 {
- "updated_utc": "2026-10-23T13:12+00:00",
+ "updated_utc": "2026-10-23T13:38+00:00",
  "paper": {
   "ledgers": [
    {
@@ -766,8 +766,8 @@
   "max_orders_per_game": 6
  },
  "running_now": {
-  "nba_rules": "nba-no-v5-one-contract-breadth",
-  "contracts_per_order": 1,
+  "nba_rules": "nba-no-v6-three-contracts",
+  "contracts_per_order": 3,
   "entry_edge_cents": [
    0,
    15
@@ -782,13 +782,13 @@
   ],
   "nba_max_open": 150.0,
   "nba_max_daily": 150.0,
-  "nba_max_game": 25.0,
-  "nba_max_lifetime": 2000.0,
+  "nba_max_game": 50.0,
+  "nba_max_lifetime": 5000.0,
   "account_max_open": 165.0,
   "account_daily_loss_stop": 20.0,
-  "account_total_loss_stop": 60.0,
+  "account_total_loss_stop": 100.0,
   "daily_loss_stop": 20.0,
-  "total_loss_stop": 60.0,
+  "total_loss_stop": 100.0,
   "odds_snapshot_utc": "2026-10-23T12:57+00:00",
   "trade_prints_through": "2026-10-22",
   "spread": {
