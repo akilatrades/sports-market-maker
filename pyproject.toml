@@ -1,7 +1,7 @@
 [project]
 name = "sports-market-maker"
 version = "0.1.0"
-description = "Market making in Kalshi sports markets: resting orders against retail flow, with sport models as filters"
+description = "Maker strategies for Kalshi sports markets: resting NO orders on player props and two-sided quotes in wide spreads, with live risk controls and pre-registered research"
 requires-python = ">=3.11"
 license = {text = "MIT"}
 authors = [{name = "Akila Juan"}]

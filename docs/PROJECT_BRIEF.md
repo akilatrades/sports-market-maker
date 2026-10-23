@@ -1,6 +1,6 @@
 # Sports Market Maker — case study
 
-**Python · prediction-market research · execution engineering · risk controls**
+**Akila Juan · Python · prediction-market research · execution engineering · risk controls**
 
 [Dashboard](https://akilatrades.github.io/sports-market-maker/dashboard/) ·
 [Source code](https://github.com/akilatrades/sports-market-maker) ·
@@ -22,7 +22,7 @@ backtest? Two places looked promising, so there are two strategies.
 | Who overpays | Fans buying YES on their player at the ask | Impatient traders who cross a spread of 8¢ or more |
 | Order | One-sided: a NO bid one cent inside the spread | Two-sided: a YES bid and a NO bid, each one cent inside |
 | How it earns | NO wins more often than its price implies | A filled YES+NO pair pays $1 for less than $1; a one-sided fill is held to settlement |
-| Live since | 19–20 October 2026 | 22 October 2026 |
+| Live since | 19–20 October 2026 | 22 October 2026 (pregame-only rules from 23 October) |
 
 The prop strategy is **directional, one-sided liquidity provision**, not a
 delta-neutral market maker. The spread maker is closer to classic market
@@ -57,7 +57,7 @@ hedging, for the reason in [design decision 4](DESIGN_DECISIONS.md#4-hold-to-set
 | Two-sided quotes in 5¢+ spreads, all Kalshi | Simulated, in-sample | +2.44¢ per contract (76,694 fills, event-clustered t 15.9); positive in both halves (+3.07¢, +1.70¢); 67 of 369 series survive a 10% false-discovery correction | A wide-spread market's few prints decide its fills |
 | Holding vs hedging those fills (8¢+) | Simulated, in-sample | Hold +3.91¢; sell back at market +0.22¢ | Exploratory, two extra variants |
 | Signed NBA live audit, **21 Oct 2026 UTC** | Live | 9 accepted orders, 1 fully filled maker order, 1 reconciled **positive** settled market | Tiny; not a fill rate, proven edge or income |
-| Spread maker, from 22 Oct 2026 | Live | Running; realized P&L on the [dashboard](https://akilatrades.github.io/sports-market-maker/dashboard/) | Too early to mean anything |
+| Spread maker, from 22 Oct 2026 | Live | Running (v2, pregame only, from 23 Oct); realized P&L on the [dashboard](https://akilatrades.github.io/sports-market-maker/dashboard/) | Too early to mean anything |
 
 About the one verified NBA fill: it filled within 15 minutes, in the
 2–6-hour entry window, with positive estimated edge and several sportsbook
@@ -89,8 +89,8 @@ contract, quotes during the game +2.7¢). Details in the
 - **Fixed checkpoints, written before launch.** NBA v5: 1,900 settled fills,
   the $2,000 allowance or 30 days, whichever comes first; positive with a
   game-clustered t of 2 or more means the edge is real, −1 or less means
-  stop and review. Spread maker:
-  300 filled contracts or 4 weeks; continue if live profit per contract is
+  stop and review. Spread maker (v2 judged on its own orders, from 23
+  October): 300 filled contracts or 4 weeks; continue if live profit per contract is
   above zero; stop and review at its −$40 total stop or if live fills are
   less than half of what first-in-line fills would have been.
 - **The headline number: live fill share.** For every finished live order,
@@ -110,7 +110,7 @@ contract, quotes during the game +2.7¢). Details in the
 
 | Concern | Where to inspect |
 |---|---|
-| Seven design decisions, with evidence and alternatives | [Design decisions](DESIGN_DECISIONS.md) |
+| Eight design decisions, with evidence and alternatives | [Design decisions](DESIGN_DECISIONS.md) |
 | Model inputs and freshness | [NBA projections](../live/nba_projections.py), [input checks](../live/nba_inputs.py), [pregame context](../live/nba_pregame_context.py) |
 | Posting, verifying and cancelling quotes | [NBA worker](../live/prod_nba_auto.py), [spread worker](../live/prod_spread_auto.py), [Kalshi client](../kalshi/trading.py) |
 | Ownership, fills, fees, settlement, loss stops | [Shared account risk](../live/shared_account_risk.py), [tests](../tests/test_shared_account_risk.py), [spread tests](../tests/test_shared_account_spread.py) |
@@ -133,10 +133,21 @@ contract, quotes during the game +2.7¢). Details in the
   before tip-off; live coverage of lineups and projected minutes is still
   being measured.
 
-**Why it matters for trading roles:** the hard part was not predicting NBA
-statistics. It was connecting pricing uncertainty to market
-microstructure, live API execution and operational controls, and keeping
-an honest loop from simulated fills to exchange-confirmed results.
+## What I would do next
+
+- **Ladder pricing for the NBA lines v5 skips** (79% of rungs have no
+  two-book sportsbook line; a fitted ladder made +4.6¢ against +2.3¢ on the
+  same rungs, simulated, not yet significant): a paper test first.
+- **Shorter spread orders,** so the spread maker can quote closer to the
+  start without resting into it, tested on minute-level prints before any
+  change.
+- **Size only after the checkpoints,** never before.
+
+**What I take from it:** the hard part was not predicting NBA statistics.
+It was connecting pricing uncertainty to market microstructure, live API
+execution and operational controls, and keeping an honest loop from
+simulated fills to exchange-confirmed results, including the night the
+live market showed me a rule I had to change.
 
 *Research and software development used AI assistance; the repository
 keeps the tests, experiment logs and evidence sources for review.*

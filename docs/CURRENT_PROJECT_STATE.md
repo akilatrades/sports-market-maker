@@ -1,32 +1,31 @@
 # Current project state
 
-*Updated 21 October 2026. Earlier running notes, up to 19 October, are kept
+*Updated 23 October 2026. Earlier running notes, up to 19 October, are kept
 unchanged in [PROJECT_STATE_NOTES_2026-10-19.md](PROJECT_STATE_NOTES_2026-10-19.md).*
 
 ## What is live
 
-- **Two funded bots trade real money on Kalshi** from a DigitalOcean
-  server: one for NBA player props and one for NFL player props. Both were
-  switched on with the owner-only [Go live / Stop button](../deploy/GO_LIVE_BUTTON.md)
-  and share one small account.
-- **Deployed code:** the commit from pull request #63 (21 October). It
-  added account-wide loss stops, a 15-minute hold when input downloads fail
-  for connection reasons, and a fix for the NFL sportsbook file format.
-- **NBA rules** (`nba-no-v5-one-contract-breadth` in the code since 21
-  October; live once deployed): post-only NO orders of one contract, one
-  cent inside the spread, started 2–6 hours before tip-off and resting until
-  tip-off, with zero to 15¢ of estimated edge. v4 (2 contracts, 3¢ minimum)
-  ran before it. [Details and limits](../deploy/PROD_NBA_AUTO.md).
-- **NFL rules** (`nfl-no-v3-baseline-quote`): the same idea with smaller
-  limits. [Details](../deploy/PROD_NFL_AUTO.md).
-- **Risk limits** are in the code and summarized in
-  [START_HERE.md](START_HERE.md#current-live-limits). Across both bots the
-  account stops for the day after $20 of settled losses and for good after
-  $60.
-- **Retired:** the older research runner (`market-maker.timer`) is
-  disabled on the server, and `live/nba_trade.py` refuses to send live
-  orders to the production exchange. Its dry-run order logs are still
-  published from GitHub Actions.
+Three bots trade one small real-money Kalshi account from a private
+DigitalOcean server. They share one set of account-wide caps and loss stops
+([`shared_account_risk.py`](../live/shared_account_risk.py)): across all
+three, trading stops for the day after $20 of realized losses and for good
+after $60.
+
+| Bot | Rules | Live since | Details |
+|---|---|---|---|
+| NBA player props | `nba-no-v5-one-contract-breadth`: one-contract post-only NO orders, one cent inside the spread, 2–6 hours before tip-off, resting until tip-off, 0–15¢ of estimated edge | 20 October (v5 from 21 October) | [PROD_NBA_AUTO.md](../deploy/PROD_NBA_AUTO.md) |
+| NFL receiving yards | `nfl-no-v3-baseline-quote`: the same idea with smaller limits | 19 October | [PROD_NFL_AUTO.md](../deploy/PROD_NFL_AUTO.md) |
+| Spread maker | `spread-maker-v2-pregame`: YES and NO bids one cent inside 8¢+ spreads in 64 series, only before a known event start, up to 5 contracts, $60 open | 22 October (v2 from 23 October) | [PROD_SPREAD_AUTO.md](../deploy/PROD_SPREAD_AUTO.md) |
+
+- **Deployed code:** the merge of pull request #80 (23 October), which
+  includes #79. The owner deploys with **Deploy funded worker code →
+  DEPLOY_CODE**; merging alone changes nothing on the server.
+- **Limits** come from the code and are summarized in
+  [START_HERE.md](START_HERE.md#current-live-limits).
+- **Retired:** the older research runner (`market-maker.timer`) is disabled
+  on the server, and `live/nba_trade.py` refuses to send live orders to the
+  production exchange. Its dry-run order logs are still published from
+  GitHub Actions.
 
 ## What the evidence shows so far
 
@@ -35,33 +34,42 @@ unchanged in [PROJECT_STATE_NOTES_2026-10-19.md](PROJECT_STATE_NOTES_2026-10-19.
 | NFL receiving yards | 10 | 4 | 4 | −$0.69 | 19 Oct |
 | NBA player props | 9 | 1 | 1 | Positive (amount private) | 21 Oct |
 
-This is operational evidence that ordering, reconciliation and settlement
-work. It says nothing yet about profitability. Live results are judged by
-the [forward-validation rules](FORWARD_VALIDATION.md): a review after 30
-days and 500 settled fills.
+These are the last signed, published reconciliations. Later live results
+are on the [dashboard](https://akilatrades.github.io/sports-market-maker/dashboard/)
+(verified settlements only) and in the owner's private fills export. This
+is operational evidence that ordering, reconciliation and settlement work;
+it says nothing yet about profitability.
+
+Each bot is judged at a checkpoint written before it went live
+(`python -m research.live_checkpoint --data <private export>`):
+- **NBA v5:** 1,900 settled fills, the $2,000 allowance or 30 days.
+- **Spread maker v2:** 300 filled contracts or 4 weeks, on its own orders.
 
 ## What is still unknown
 
-1. **Live fill rate.** The replay assumes the bot is always first in line
-   at its price. Real queue position will cut fills; by how much is the
-   main open question.
-2. **Out-of-sample edge.** The rules were chosen on the 2025–26 season.
-   The 2026–27 season is the real test.
-3. **Capacity.** How large the orders can get before fills thin out and
-   other traders react.
+1. **Live fill share.** The replays assume the bot is always first in line
+   at its price. The spread maker now measures its real share after every
+   live pass; the NBA bot measures volume-weighted capture.
+2. **Out-of-sample edge.** The rules were chosen on 2025–26 data. The
+   2026–27 season is the real test.
+3. **Capacity.** How large orders can get before fills thin out.
+4. **How many spread markets v2 can quote.** It needs a known start; with
+   start times from event tickers alone it keeps about a sixth of v1's
+   simulated profit. Kalshi's milestone start times, trusted by type, add
+   more; how many is being measured.
 
 ## Recent changes
 
-- **20–21 October:** NBA v4 rules (rest until tip-off, one-cent
-  improvement only); the Go live / Stop button; limits sized for the small
-  account; account-wide loss stops; the connection-only input hold; the
-  NFL sportsbook file fix.
-- **21 October:** repository access hardening (server workflows are
-  owner-only, manual and run only from `main`; their jobs name the
-  `funded-droplet` environment that the server secrets move into), a
-  full-history secret scan (clean), retired legacy server workflows
-  removed, and new [start-here](START_HERE.md),
-  [contributing](../CONTRIBUTING.md) and [security](../SECURITY.md) guides.
+- **22 October:** the spread maker pilot went live (5 contracts per order,
+  $60 open, its own −$10 daily and −$40 total stops); it joined the
+  private fills export and the dashboard; Kalshi balance reads retry on
+  rate limits.
+- **22–23 October:** live fill share and the checkpoint report (PR #79); a
+  one-page case study, design decisions and a 10-minute tour.
+- **23 October:** on its first night the spread maker quoted a college
+  football game after kickoff, because its window counted from Kalshi's
+  expected expiration. The owner paused it; v2 quotes only before a known
+  start (PR #80), after three rounds of independent review.
 
 ## Where to look
 

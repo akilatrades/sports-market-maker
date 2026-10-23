@@ -1,6 +1,6 @@
 # Design decisions I would defend
 
-Seven choices that shape what this project's numbers mean. Each has the
+Eight choices that shape what this project's numbers mean. Each has the
 decision, why, the evidence (with its tier: simulated, in-sample or live),
 the alternative and what it would have cost, and where it lives in the code.
 The one-sentence version under each heading is the short answer.
@@ -145,3 +145,32 @@ fees ate it.*
   bot against its own pre-written verdict rules.
 - **The alternative.** Choosing the evaluation after seeing the data, which
   turns almost any strategy into a success story.
+
+## 8. Quote only before the event starts
+
+*A resting order in a live game is filled mostly when the game has just
+moved against it.*
+
+- **What happened.** The spread maker's first rule quoted markets 4–7
+  hours before Kalshi's expected expiration. For college football that
+  time is 6 hours after kickoff, so on its first live night (22 October)
+  it quoted a game 33 minutes after kickoff, and esports orders posted
+  minutes before a match rested into it.
+- **Evidence (simulated, in-sample, first in line).** In series whose
+  event ticker carries the start, quotes resting wholly before the start
+  made +9.9¢ per contract (t 9.9); quotes resting during the game made
+  +2.7¢ (t 2.3). Across all 64 series, the last hour before the cutoff,
+  when events often start, made +6.4¢ against +9¢ to +12¢ earlier.
+- **How.** v2 needs a known start, from the event ticker or from Kalshi's
+  milestones (trusted by milestone type, and only after they have matched
+  ticker times and never been late). A new quote needs the start at least
+  85 minutes away, each order expires on the exchange 20 minutes before
+  the start, and every resting quote is cancelled then
+  (`live/prod_spread_auto.py`: `ticker_start`, `prefetch_starts`,
+  `order_start`).
+- **The cost.** With ticker times alone, v2 keeps about a sixth of v1's
+  simulated profit, at a higher +10.5¢ per contract. Most of what it drops
+  came from the hours that paid least and that the backtest models worst.
+- **The alternative.** Quoting through the game, which would need a bot
+  that reacts in seconds rather than every 10 minutes, and even in the
+  backtest barely paid.
