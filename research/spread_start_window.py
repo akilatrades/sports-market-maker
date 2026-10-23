@@ -290,7 +290,9 @@ def main():
         else None
     )
     OUT.mkdir(parents=True, exist_ok=True)
-    (OUT / "spread_start_window.json").write_text(json.dumps(result, indent=1) + "\n")
+    (OUT / "spread_start_window.json").write_text(
+        json.dumps(result, indent=1, default=lambda o: o.item()) + "\n"
+    )
     lines = [
         "# Spread maker: start times and earlier quoting (SIMULATED, in-sample, pre-registered)",
         "",
