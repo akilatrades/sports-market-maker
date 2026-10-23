@@ -1,6 +1,6 @@
 # Sports Market Maker — case study
 
-**Akila Juan · Python · prediction-market research · execution engineering · risk controls**
+**Python · prediction-market research · execution engineering · risk controls**
 
 [Dashboard](https://akilatrades.github.io/sports-market-maker/dashboard/) ·
 [Source code](https://github.com/akilatrades/sports-market-maker) ·

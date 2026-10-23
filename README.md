@@ -263,7 +263,7 @@ No credentials are stored in this repository.
 
 ## About
 
-Built by Akila Juan. Research and engineering were done with AI
+Research and engineering were done with AI
 assistance; I set the questions, the rules and the risk limits, and every
 conclusion is checked against timestamped market and account data. Nothing
 here is investment advice or a claim of future returns.
