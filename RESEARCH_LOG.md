@@ -3098,6 +3098,25 @@ bars, judged on v5 and v6 together because the selection rule is the same:
   unchanged. v5 and v6 are also reported separately. If v6's profit per
   contract is clearly below v5's, the owner reviews before the checkpoint.
 
+**Replay of v5 against v6 (exploratory, simulated, in-sample; 3 rule sets ×
+2 flow shares; `python -m research.nba_v6_replay`).** The owner asked to see
+it before go-live. Live caps applied in placement order, loss stops per
+night; cautious = flow share 0.25, median of 20 draws.
+
+| Rules | P&L | ¢ per contract (t) | Filled orders / contracts | Worst night | Max drawdown | Daily stops |
+|---|---:|---:|---:|---:|---:|---:|
+| v5, until $2,000 is placed (49 nights) | +$41.78 | 2.22 (1.41) | 1,884 / 1,884 | −$7.56 | −$10.02 | 0 |
+| v6, until $5,000 is placed (53 nights) | +$167.27 | 3.55 (2.22) | 1,619 / 4,713 | −$23.37 | −$38.66 | 1 |
+| v6, cautious | +$146.45 | 3.44 (2.12) | 1,515 / 4,233 | −$24.38 | −$36.37 | 1 |
+| v6, whole season, no allowance | +$953.69 | 3.89 (5.56) | 8,408 / 24,536 | −$23.37 | −$69.89 | 2 |
+| v6, whole season, cautious | +$847.28 | 3.75 (5.22) | 7,938 / 22,641 | −$24.38 | −$78.54 | 2 |
+
+At three contracts the $150 nightly and $50 per-game caps bind, so the
+lowest-edge orders are dropped first: fewer separate orders (1,619 against
+1,884) but more profit per contract. The −$100 total stop was never hit (0
+of 20 cautious draws). These are the season's first weeks, which were weak
+(2.2¢ against 3.9¢ over the whole season); fills are optimistic.
+
 **Spread maker minimum spread, 8¢ → 6¢: not adopted (exploratory replay,
 simulated, in-sample, first in line, 1 contract; 2 variants plus one slice).**
 `research/spread_pregame_split.py` with the v2 rule (start known from the
