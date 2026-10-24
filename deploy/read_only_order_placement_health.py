@@ -60,6 +60,47 @@ def numerical_counts(data):
     return dict(list(sorted(result.items()))[:35])
 
 
+
+def classify_recent_failure(sport):
+    """Return only a whitelisted error class from local systemd logs.
+
+    Never print actual traces, account ids, tickers, prices, or secrets.
+    This is a read-only local journal lookup; no exchange API is called.
+    """
+    unit=f"market-maker-prod-{sport}-auto.service"
+    try:
+        process=subprocess.run(
+            ["journalctl", "-u", unit, "--since", "25 minutes ago",
+             "--no-pager", "-o", "cat", "-n", "300"],
+            text=True, capture_output=True, timeout=12, check=False)
+        if process.returncode!=0:
+            return {"log_access":"denied_or_unavailable"}
+        text=process.stdout.lower()
+        signatures=[
+            ("unowned fill on pilot market", "manual_or_unowned_fill"),
+            ("foreign fill in an owned nba market", "manual_or_unowned_fill"),
+            ("unowned or wrong-side account position", "unowned_or_wrong_side_position"),
+            ("held inventory exceeds accepted intent", "held_inventory_mismatch"),
+            ("unowned resting order", "unowned_resting_order"),
+            ("foreign resting", "unowned_resting_order"),
+            ("unreconciled shared active capacity", "shared_capacity_reconciliation"),
+            ("spread fill direction disagrees with journal", "spread_fill_mismatch"),
+            ("spread fill price disagrees with journal", "spread_fill_mismatch"),
+            ("unaccountable spread settlement", "settlement_mismatch"),
+            ("spread settlement disagrees with its fills", "settlement_mismatch"),
+            ("ambiguous production order", "unreconciled_ambiguous_order"),
+            ("unreconciled production submission", "unreconciled_submission"),
+            ("position appeared for reconciled rejected order", "position_after_rejection"),
+            ("unowned", "other_unowned_activity"),
+        ]
+        found=[label for needle,label in signatures if needle in text]
+        return {"log_access":"ok",
+                "recognized_failure_categories":sorted(set(found)),
+                "trading_error_observed":"tradingerror" in text,
+                "last_25m_lookback":True}
+    except (OSError,subprocess.TimeoutExpired):
+        return {"log_access":"unavailable"}
+
 def local_report(sport):
     root = Path("/home/trader") / f"prod-{sport}-auto"
     result = {
@@ -146,6 +187,7 @@ def main():
             print("SYSTEMD_" + suffix.upper() + "=" +
                   json.dumps(show_systemd(unit), sort_keys=True))
         print("LOCAL_STATE=" + json.dumps(local_report(sport), sort_keys=True))
+        print("FAILURE_CLASS=" + json.dumps(classify_recent_failure(sport), sort_keys=True))
     print("SPREAD_MARKER_PRESENT=" +
           str(Path("/etc/market-maker-spread.enabled").exists()).lower())
 
