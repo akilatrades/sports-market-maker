@@ -27,11 +27,37 @@
 | Sat 7:30 PM | Peyton Watson | YES 2+ assists | 58¢ | 70% | 10¢ | 8 | $4.78 | paper |
 | Sat 7:30 PM | Ryan Rollins | YES 15+ points | 49¢ | 61% | 10¢ | 9 | $4.57 | paper |
 | Sat 7:30 PM | VJ Edgecombe | YES 4+ assists | 44¢ | 73% | 27¢ | 10 | $4.58 | paper |
+| Sat 8:00 PM | Alex Sarr | YES 4+ assists | 15¢ | 27% | 11¢ | 31 | $4.93 | paper |
+| Sat 8:00 PM | De'Aaron Fox | YES 6+ assists | 50¢ | 59% | 7¢ | 9 | $4.66 | paper |
 | Sat 8:00 PM | Devin Vassell | YES 6+ rebounds | 20¢ | 38% | 17¢ | 23 | $4.86 | paper |
+| Sat 8:00 PM | Devin Vassell | YES 4+ assists | 19¢ | 32% | 12¢ | 25 | $5.02 | paper |
+| Sat 8:00 PM | Dylan Harper | NO 4+ assists | 42¢ | 53% | 9¢ | 11 | $4.81 | paper |
 | Sat 8:00 PM | Josh Giddey | YES 2+ threes | 41¢ | 55% | 12¢ | 11 | $4.70 | paper |
+| Sat 8:00 PM | Julian Champagnie | YES 10+ points | 45¢ | 53% | 7¢ | 10 | $4.68 | paper |
+| Sat 8:00 PM | Matas Buzelis | YES 3+ threes | 28¢ | 36% | 6¢ | 17 | $5.00 | paper |
 | Sat 8:00 PM | Naji Marshall | NO 2+ threes | 63¢ | 76% | 12¢ | 7 | $4.53 | paper |
+| Sat 8:00 PM | Naji Marshall | NO 6+ rebounds | 59¢ | 70% | 9¢ | 8 | $4.86 | paper |
+| Sat 8:00 PM | Norman Powell | NO 15+ points | 22¢ | 30% | 7¢ | 21 | $4.88 | paper |
+| Sat 8:00 PM | Norman Powell | NO 3+ threes | 49¢ | 57% | 6¢ | 9 | $4.57 | paper |
+| Sat 8:00 PM | Tre Jones | YES 10+ points | 51¢ | 83% | 31¢ | 9 | $4.75 | paper |
 | Sat 8:30 PM | Aaron Wiggins | NO 15+ points | 68¢ | 94% | 25¢ | 7 | $4.87 | paper |
 | Sat 8:30 PM | Alperen Sengun | YES 20+ points | 52¢ | 65% | 11¢ | 9 | $4.84 | paper |
 | Sat 8:30 PM | Jabari Smith Jr. | YES 15+ points | 49¢ | 66% | 16¢ | 9 | $4.57 | paper |
+| Sat 8:30 PM | Jabari Smith Jr. | YES 3+ threes | 36¢ | 47% | 10¢ | 13 | $4.89 | paper |
+| Sat 8:30 PM | Jabari Smith Jr. | YES 6+ rebounds | 59¢ | 68% | 7¢ | 8 | $4.86 | paper |
 | Sat 8:30 PM | Jalen Johnson | NO 10+ rebounds | 53¢ | 70% | 15¢ | 8 | $4.38 | paper |
+| Sat 8:30 PM | Jalen Johnson | NO 20+ points | 49¢ | 57% | 6¢ | 9 | $4.57 | paper |
 | Sat 8:30 PM | Kevin Durant | YES 6+ rebounds | 43¢ | 56% | 11¢ | 11 | $4.92 | paper |
+| Sat 8:30 PM | Kevin Durant | YES 25+ points | 46¢ | 56% | 8¢ | 10 | $4.78 | paper |
+| Sat 9:00 PM | DeMar DeRozan | YES 4+ assists | 38¢ | 65% | 25¢ | 12 | $4.76 | paper |
+| Sat 9:00 PM | DeMar DeRozan | YES 15+ points | 56¢ | 68% | 10¢ | 8 | $4.62 | paper |
+| Sat 9:00 PM | Dejounte Murray | YES 6+ assists | 52¢ | 61% | 8¢ | 9 | $4.84 | paper |
+| Sat 9:00 PM | Derik Queen | YES 8+ rebounds | 46¢ | 60% | 13¢ | 10 | $4.78 | paper |
+| Sat 9:00 PM | Jamal Murray | NO 8+ assists | 62¢ | 69% | 6¢ | 7 | $4.46 | paper |
+| Sat 9:00 PM | Jeremiah Fears | YES 10+ points | 64¢ | 85% | 20¢ | 7 | $4.60 | paper |
+| Sat 9:00 PM | Jeremiah Fears | YES 2+ assists | 67¢ | 87% | 19¢ | 7 | $4.80 | paper |
+| Sat 9:00 PM | Trey Murphy III | YES 3+ threes | 43¢ | 55% | 10¢ | 11 | $4.92 | paper |
+| Sat 10:00 PM | Collin Gillespie | YES 4+ rebounds | 38¢ | 47% | 7¢ | 12 | $4.76 | paper |
+| Sat 10:00 PM | Dillon Brooks | YES 4+ rebounds | 51¢ | 64% | 12¢ | 9 | $4.75 | paper |
+| Sat 10:00 PM | Dillon Brooks | YES 2+ threes | 58¢ | 65% | 5¢ | 8 | $4.78 | paper |
+| Sat 10:00 PM | Jalen Green | NO 4+ assists | 47¢ | 57% | 9¢ | 10 | $4.88 | paper |
