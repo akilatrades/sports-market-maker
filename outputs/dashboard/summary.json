@@ -1,5 +1,5 @@
 {
- "updated_utc": "2026-10-24T19:50+00:00",
+ "updated_utc": "2026-10-24T20:14+00:00",
  "paper": {
   "ledgers": [
    {
@@ -774,7 +774,7 @@
   "90": 4
  },
  "live": {
-  "run_utc": "2026-10-24T19:50+00:00",
+  "run_utc": "2026-10-24T20:14+00:00",
   "mode": "dry",
   "env": "prod",
   "rule": "no_seller_bookline",
@@ -784,22 +784,22 @@
   "pilot_day_cap": null,
   "pilot_total_cap": null,
   "bankroll": 250.0,
-  "injury_cancels": 0,
-  "candidates": 166,
+  "injury_cancels": 9,
+  "candidates": 159,
   "placed": 34,
-  "rejected": 103,
+  "rejected": 119,
   "rejections": {
-   "6 orders already in game 401909856": 35,
+   "6 orders already in game 401909856": 30,
    "6 orders already in game 401909859": 26,
-   "6 orders already in game 401909854": 23,
-   "6 orders already in game 401909857": 17,
-   "6 orders already in game 401909858": 2
+   "6 orders already in game 401909860": 22,
+   "6 orders already in game 401909854": 22,
+   "6 orders already in game 401909857": 19
   },
-  "open_exposure": 74.87,
+  "open_exposure": 75.0,
   "orders_by_status": {
-   "rejected": 5388,
-   "dry": 707,
-   "cancelled": 397
+   "rejected": 5507,
+   "dry": 732,
+   "cancelled": 406
   },
   "dollars_resting": 0.0
  },
@@ -859,7 +859,7 @@
   "account_total_loss_stop": 100.0,
   "daily_loss_stop": 20.0,
   "total_loss_stop": 100.0,
-  "odds_snapshot_utc": "2026-10-24T19:45+00:00",
+  "odds_snapshot_utc": "2026-10-24T20:02+00:00",
   "trade_prints_through": "2026-10-23",
   "spread": {
    "rules": "spread-maker-v3-24h-starts",
