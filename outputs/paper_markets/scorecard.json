@@ -1,14 +1,14 @@
 {
   "KXITFMATCH": {
-    "orders": 846,
+    "orders": 868,
     "vetoed": 0,
     "open": 33,
-    "fill_rate": 0.7060270602706027,
-    "fills_settled": 574,
-    "bankroll": 402.04,
-    "cents_per_contract": 0.09,
-    "t": 0.1,
-    "profit_dollars": -97.96
+    "fill_rate": 0.7077844311377246,
+    "fills_settled": 591,
+    "bankroll": 404.18,
+    "cents_per_contract": 0.17,
+    "t": 0.2,
+    "profit_dollars": -95.82
   },
   "KXNASCARRACE": {
     "orders": 105,
@@ -24,18 +24,18 @@
   "KXLIGAMXSPREAD": {
     "orders": 149,
     "vetoed": 0,
-    "open": 4,
-    "fill_rate": 0.6,
-    "fills_settled": 87,
-    "bankroll": 468.8,
-    "cents_per_contract": -6.69,
-    "t": -0.92,
-    "profit_dollars": -31.2
+    "open": 0,
+    "fill_rate": 0.610738255033557,
+    "fills_settled": 91,
+    "bankroll": 471.11,
+    "cents_per_contract": -5.88,
+    "t": -0.84,
+    "profit_dollars": -28.89
   },
   "KXLALIGASPREAD": {
-    "orders": 67,
+    "orders": 71,
     "vetoed": 0,
-    "open": 0,
+    "open": 4,
     "fill_rate": 0.43283582089552236,
     "fills_settled": 29,
     "bankroll": 496.68,
@@ -119,13 +119,13 @@
   "KXNBA3D": {
     "orders": 45,
     "vetoed": 0,
-    "open": 5,
-    "fill_rate": 0.625,
-    "fills_settled": 25,
-    "bankroll": 512.73,
-    "cents_per_contract": 8.55,
-    "t": 4.14,
-    "profit_dollars": 12.73
+    "open": 0,
+    "fill_rate": 0.6666666666666666,
+    "fills_settled": 30,
+    "bankroll": 505.32,
+    "cents_per_contract": 2.19,
+    "t": 0.34,
+    "profit_dollars": 5.32
   },
   "KXNASCARTOP10": {
     "orders": 110,
@@ -160,15 +160,15 @@
     "vetoed_settled": 431
   },
   "KXITFMATCH+no30": {
-    "orders": 627,
+    "orders": 647,
     "vetoed": 0,
-    "open": 28,
-    "fill_rate": 0.7462437395659433,
-    "fills_settled": 447,
-    "bankroll": 513.1,
-    "cents_per_contract": -0.03,
-    "t": -0.02,
-    "profit_dollars": 13.1
+    "open": 31,
+    "fill_rate": 0.75,
+    "fills_settled": 462,
+    "bankroll": 524.87,
+    "cents_per_contract": 0.12,
+    "t": 0.1,
+    "profit_dollars": 24.87
   },
-  "updated_utc": "2026-10-24T03:27+00:00"
+  "updated_utc": "2026-10-24T06:30+00:00"
 }
