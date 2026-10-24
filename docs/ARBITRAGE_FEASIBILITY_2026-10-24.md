@@ -23,7 +23,7 @@ spread bots are left unchanged. Read-only research consumes public APIs.
 
 `python -m research.arb_ladder_probe` scans five public Kalshi numeric player
 threshold series, grouping only markets with the exact same series, event and
-player. It checks neighbouring strikes. If a lower threshold is implied by a
+player. It checks all lower/higher strike pairs. If a lower threshold is implied by a
 higher threshold, the *conditional* payoff floor of YES(lower) + NO(higher) is
 $1, provided the exchange's actual resolution rules support that relationship.
 
@@ -45,7 +45,7 @@ an artifact. It has read permissions only and uses no account credentials.
 ## Pre-registered experiment
 
 1. **Coverage (first 48 hours):** Count all matching threshold groups,
-   adjacent pairs checked and API failures. If coverage is near zero,
+   ordered pairs checked and API failures. If coverage is near zero,
    fix mapping before drawing a profitability conclusion.
 2. **Market observation (14 days):** Capture every positive list-price pair
    and depth-confirmed candidate as a timestamped observation. Deduplicate
