@@ -89,7 +89,10 @@ def ladder_candidates(markets, series):
     candidates.sort(
         key=lambda row: row["gross_cents_per_pair_at_list_quotes"], reverse=True
     )
-    return candidates, {"eligible_markets": eligible, "adjacent_pairs_checked": comparisons}
+    return candidates, {
+        "eligible_markets": eligible,
+        "adjacent_pairs_checked": comparisons,
+    }
 
 
 def best_bid(book, side):
@@ -196,18 +199,14 @@ def run(fetch_markets, fetch_orderbook, series=SERIES, max_book_queries=80):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument(
-        "--out", default="outputs/arbitrage/kalshi_ladders_latest.json"
-    )
+    parser.add_argument("--out", default="outputs/arbitrage/kalshi_ladders_latest.json")
     parser.add_argument("--max-book-queries", type=int, default=MAX_BOOK_QUERIES)
     args = parser.parse_args()
     if args.max_book_queries < 0:
         parser.error("max-book-queries must be nonnegative")
     from kalshi.api import fetch_markets, fetch_orderbook
 
-    report = run(
-        fetch_markets, fetch_orderbook, max_book_queries=args.max_book_queries
-    )
+    report = run(fetch_markets, fetch_orderbook, max_book_queries=args.max_book_queries)
     output = Path(args.out)
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n")
