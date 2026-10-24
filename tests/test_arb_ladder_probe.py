@@ -26,7 +26,7 @@ def sample_pair():
 
 def test_adjacent_strikes_and_same_player_event_only():
     candidates, coverage = probe.ladder_candidates(sample_pair(), "KXNBAPTS")
-    assert coverage == {"eligible_markets": 2, "adjacent_pairs_checked": 1}
+    assert coverage == {"eligible_markets": 2, "ordered_pairs_checked": 1}
     assert len(candidates) == 1
     assert candidates[0]["gross_cents_per_pair_at_list_quotes"] == 5.0
     assert candidates[0]["buy_yes_ticker"] == "LOW"
