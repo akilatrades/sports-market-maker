@@ -1,5 +1,5 @@
 {
- "updated_utc": "2026-10-24T13:29+00:00",
+ "updated_utc": "2026-10-24T15:19+00:00",
  "paper": {
   "ledgers": [
    {
@@ -750,7 +750,7 @@
   "90": 4
  },
  "live": {
-  "run_utc": "2026-10-24T04:46+00:00",
+  "run_utc": "2026-10-24T15:19+00:00",
   "mode": "dry",
   "env": "prod",
   "rule": "no_seller_bookline",
@@ -760,7 +760,7 @@
   "pilot_day_cap": null,
   "pilot_total_cap": null,
   "bankroll": 250.0,
-  "injury_cancels": 0,
+  "injury_cancels": 10,
   "candidates": 0,
   "placed": 0,
   "rejected": 0,
@@ -768,8 +768,8 @@
   "open_exposure": 0.0,
   "orders_by_status": {
    "rejected": 4651,
-   "dry": 579,
-   "cancelled": 355
+   "dry": 569,
+   "cancelled": 365
   },
   "dollars_resting": 0.0
  },
