@@ -40,3 +40,5 @@ jobs:
       - name: Remove temporary SSH identity
         if: always()
         run: rm -f ~/.ssh/smm_diag
+
+# Owner requested a fresh read-only reconciliation check after manual Kalshi cash-outs.
