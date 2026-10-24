@@ -37,6 +37,19 @@ def test_adjacent_strikes_and_same_player_event_only():
     assert not probe.ladder_candidates([sample_pair()[0], other], "KXNBAPTS")[0]
 
 
+def test_nonadjacent_ladder_mispricing_is_not_missed():
+    markets = [
+        market("LOW", 9.5, "0.20", "0.60"),
+        market("MID", 19.5, "0.35", "0.50"),
+        market("HIGH", 29.5, "0.45", "0.30"),
+    ]
+    candidates, coverage = probe.ladder_candidates(markets, "KXNBAPTS")
+    assert coverage["ordered_pairs_checked"] == 3
+    assert [(r["buy_yes_ticker"], r["buy_no_ticker"]) for r in candidates] == [
+        ("LOW", "HIGH")
+    ]
+
+
 def test_book_depth_taker_fees_and_no_claim_of_executable_arbitrage():
     candidate = probe.ladder_candidates(sample_pair(), "KXNBAPTS")[0][0]
     result = probe.check_depth(
