@@ -37,7 +37,7 @@ def player(market):
 
 
 def ladder_candidates(markets, series):
-    """Group by series/event/player, skip ambiguous duplicate strikes."""
+    """Check all ordered strike pairs within strict series/event/player groups."""
     groups = defaultdict(list)
     eligible = 0
     for market in markets:
@@ -57,41 +57,41 @@ def ladder_candidates(markets, series):
         items.sort(key=lambda item: item[0])
         if len(items) < 2 or len(set(s for s, _ in items)) != len(items):
             continue
-        for (lower, lm), (higher, hm) in zip(items, items[1:]):
-            if lower >= higher:
-                continue
-            comparisons += 1
-            no_bid_low = number(lm.get("no_bid_dollars"))
-            yes_bid_high = number(hm.get("yes_bid_dollars"))
-            if (
-                no_bid_low is None
-                or yes_bid_high is None
-                or not 0 < no_bid_low < 1
-                or not 0 < yes_bid_high < 1
-            ):
-                continue
-            # Pair gross payout lower bound is $1, assuming correct rules.
-            gross = no_bid_low + yes_bid_high - 1
-            if gross > 0:
-                candidates.append(
-                    {
-                        "series": series,
-                        "event_ticker": event,
-                        "player": name,
-                        "lower_strike": str(lower),
-                        "higher_strike": str(higher),
-                        "buy_yes_ticker": lm["ticker"],
-                        "buy_no_ticker": hm["ticker"],
-                        "gross_cents_per_pair_at_list_quotes": float(100 * gross),
-                    }
-                )
+        for index, (lower, lm) in enumerate(items):
+            for higher, hm in items[index + 1 :]:
+                if lower >= higher:
+                    continue
+                comparisons += 1
+                no_bid_low = number(lm.get("no_bid_dollars"))
+                yes_bid_high = number(hm.get("yes_bid_dollars"))
+                if (
+                    no_bid_low is None
+                    or yes_bid_high is None
+                    or not 0 < no_bid_low < 1
+                    or not 0 < yes_bid_high < 1
+                ):
+                    continue
+                gross = no_bid_low + yes_bid_high - 1
+                if gross > 0:
+                    candidates.append(
+                        {
+                            "series": series,
+                            "event_ticker": event,
+                            "player": name,
+                            "lower_strike": str(lower),
+                            "higher_strike": str(higher),
+                            "buy_yes_ticker": lm["ticker"],
+                            "buy_no_ticker": hm["ticker"],
+                            "gross_cents_per_pair_at_list_quotes": float(100 * gross),
+                        }
+                    )
 
     candidates.sort(
         key=lambda row: row["gross_cents_per_pair_at_list_quotes"], reverse=True
     )
     return candidates, {
         "eligible_markets": eligible,
-        "adjacent_pairs_checked": comparisons,
+        "ordered_pairs_checked": comparisons,
     }
 
 
