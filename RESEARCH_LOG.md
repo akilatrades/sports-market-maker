@@ -3438,3 +3438,79 @@ Scratch scripts, not committed.
 
 **Checkpoint, unchanged:** v3 is judged on its own orders, 300 filled
 contracts or 4 weeks.
+
+## 2026-10-23: Novig and ProphetX price check (exploratory)
+
+*Asked by the owner: is there an edge on Novig or ProphetX? Exploratory, one
+read-only snapshot; nothing here changes a live rule.*
+
+Both exchanges are CFTC-regulated and open in Texas; Novig charges no fee on
+pregame trades, ProphetX up to about 2% of net winnings. Neither publishes a
+free market-data feed, but The Odds API (the project's existing key) carries
+both in its `us_ex` region, with Kalshi and Polymarket US.
+
+`python -m research.exchange_gaps` (Actions, workflow "Exchange price gaps")
+pulls, for NBA games in the next 30 hours and NFL games in the next 100,
+moneylines, spreads, totals and the main player props from sportsbooks and
+exchanges, and reports, per exchange: how often taking its price beats the
+de-vigged consensus of two or more sportsbooks on the same line (by more than
+0, 2 and 5 points); how wide it is; and how many lines quoted on two or more
+exchanges could be bought on both sides for under $1. Aggregates only
+(`outputs/exchange_gaps/`). Limits: one moment in time, quoted prices without
+depth, fees not subtracted, and the sportsbook consensus is itself only an
+estimate of the fair price. A single snapshot can show whether gaps exist; it
+cannot show that they are tradeable or persistent.
+
+### Results, snapshot 2026-10-23 21:13 UTC (exploratory, one moment in time)
+
+`outputs/exchange_gaps/snapshot_20261023T2113.json`; 336 Odds API credits.
+11 NBA games that night, 13 NFL games 2-3 days out. "Edge" = sportsbook
+consensus probability minus the exchange's price for that side (no fees).
+
+| | Lines | Width (both sides - 1) | Sides > 2 pts better than consensus | > 5 pts |
+|---|---:|---:|---:|---:|
+| Novig NBA | 1,939 (1,906 props) | 8.5% | 5.5% | 1.5% |
+| ProphetX NBA | 1,230 (1,197 props) | 4.8% | 5.3% | 2.1% |
+| Novig NFL | 1,798 (1,759 props) | 20.1% | 1.4% | 0% |
+| ProphetX NFL | 752 (713 props) | 7.5% | 0.7% | 0% |
+| Kalshi, Polymarket US, BetOpenly | game lines only in this feed | 0-1% | 0% | 0% |
+
+- **Wide books on props.** Taking a random Novig or ProphetX price costs
+  3-6 points on average; the props are thinly quoted, NFL especially (days
+  before kickoff). Wide books are where a resting-order maker earns, and
+  Novig charges makers nothing pregame.
+- **A minority of prices beat the consensus**: about 100 NBA sides on each
+  exchange by 2+ points, 28-36 by 5+. Unknown: depth behind each price,
+  whether the feed's exchange and sportsbook quotes are equally fresh, and
+  whether the consensus is right. The test is whether those prices beat the
+  closing line, measured over repeated snapshots.
+- **Cross-exchange locks are rare and small**: of 958 NBA lines on two or
+  more exchanges, 41 cost under $1 for both sides, 4 by more than 1 point,
+  the best 2.3 points; NFL 24, 5 and 2.0. Most vanish after fees.
+
+### Forward study: do the flagged prices beat the close? (plan, written before any data)
+
+**Question.** When a Novig or ProphetX price is 2+ points better than the
+sportsbook consensus, is it really a good price? Measured by closing line
+value (CLV): the consensus probability of the same side shortly before the
+game, minus the price that would have been paid. Results are never needed:
+CLV is the standard, faster test, and a price that beats the close beats it
+whatever the score.
+
+**Method** (`research/exchange_gaps.py`, workflow "Exchange price gaps",
+hourly 15:15-02:15 UTC from 24 October to 1 November 2026). Runs at 15:15
+and 19:15 UTC flag every exchange side 2+ points better than the consensus of
+two or more sportsbooks, for games starting more than 75 minutes later.
+Every run takes one closing snapshot of each game starting in the next 75
+minutes and scores that game's flags. Reported by exchange and edge bucket
+(2-5 points, 5+): flags, games, edge at the flag, mean CLV, share of flags
+with positive CLV. Credits: about 15,000 a month on the 100K plan; a run stops
+below 20,000 remaining. Per-line state stays in an Actions cache; only
+aggregates are committed.
+
+**Bar** (one look, on 1 November): an exchange and bucket passes if mean CLV
+is above +1 point with a game-clustered t of 2 or more, over at least 30
+games. Variants: 2 exchanges x 2 buckets = 4, so a single pass at t ≈ 2 is
+weak evidence. Passing means the prices were good, not that enough money sat
+behind them: the feed shows no depth. A pass leads to a small manual test of
+fills on the passing exchange, nothing automatic.

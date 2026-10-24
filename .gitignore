@@ -44,3 +44,6 @@ journal.jsonl
 
 # Screenshots written by the dashboard smoke tests
 /test-artifacts/
+
+# Research state kept in Actions caches (licensed odds), never committed
+state/
