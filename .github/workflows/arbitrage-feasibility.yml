@@ -1,0 +1,36 @@
+name: Read-only arbitrage feasibility
+on:
+  pull_request:
+    paths:
+      - "research/arb_ladder_probe.py"
+      - "tests/test_arb_ladder_probe.py"
+      - ".github/workflows/arbitrage-feasibility.yml"
+  workflow_dispatch:
+  schedule:
+    - cron: "17 */4 * * *"
+permissions:
+  contents: read
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      KALSHI_ENV: prod
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r requirements.txt
+      - name: Verify read-only probe arithmetic
+        run: pytest -q tests/test_arb_ladder_probe.py
+      - name: Check public books without placing orders
+        run: python -m research.arb_ladder_probe
+      - name: Preserve timestamped feasibility snapshot
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: read-only-arb-feasibility
+          path: outputs/arbitrage/kalshi_ladders_latest.json
+          if-no-files-found: ignore
+          retention-days: 14
