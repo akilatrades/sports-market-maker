@@ -1,0 +1,42 @@
+name: Read-only funded order blocker diagnostics
+# Only runs on an owner push that changes THIS diagnostic workflow.
+# Reads local status and scan decisions; never sends a trading API request,
+# changes account settings, or starts/stops any service.
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/read-only-order-health.yml']
+permissions:
+  contents: read
+jobs:
+  inspect:
+    if: github.actor == 'akilatrades'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    environment: funded-droplet
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check pinned, owner-approved SSH connection
+        env:
+          DROPLET_HOST: ${{ secrets.DROPLET_HOST }}
+          DROPLET_USER: ${{ secrets.DROPLET_USER }}
+          DROPLET_SSH_KEY: ${{ secrets.DROPLET_SSH_KEY }}
+          DROPLET_KNOWN_HOSTS: ${{ secrets.DROPLET_KNOWN_HOSTS }}
+        run: |
+          set -euo pipefail
+          [[ "$DROPLET_USER" == trader ]]
+          test -n "$DROPLET_HOST"
+          [[ "$DROPLET_KNOWN_HOSTS" == *ssh-ed25519* ]]
+          umask 077
+          mkdir -p ~/.ssh
+          printf '%s\n' "$DROPLET_SSH_KEY" > ~/.ssh/smm_diag
+          printf '%s\n' "$DROPLET_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/smm_diag ~/.ssh/known_hosts
+          ssh-keygen -y -f ~/.ssh/smm_diag > /dev/null
+          ssh -T -o BatchMode=yes -o IdentitiesOnly=yes \
+            -o StrictHostKeyChecking=yes -o ConnectTimeout=12 \
+            -i ~/.ssh/smm_diag "$DROPLET_USER@$DROPLET_HOST" \
+            'python3 -' < deploy/read_only_order_placement_health.py
+      - name: Remove temporary SSH identity
+        if: always()
+        run: rm -f ~/.ssh/smm_diag
