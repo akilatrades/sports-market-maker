@@ -208,10 +208,16 @@ def spread_ledger(events, fills, settlements, now):
     for fid, row in external.items():
         if fid in rows:
             raise TradingError("External fill overlaps bot fill identity: HALT")
-        rows[fid] = {"when": _when(row["when"], "external close"), "fid": fid,
-                     "ticker": row["ticker"], "side": row["side"],
-                     "price": float(row["price"]), "count": float(row["count"]),
-                     "fee": float(row["fee"]), "external_close": True}
+        rows[fid] = {
+            "when": _when(row["when"], "external close"),
+            "fid": fid,
+            "ticker": row["ticker"],
+            "side": row["side"],
+            "price": float(row["price"]),
+            "count": float(row["count"]),
+            "fee": float(row["fee"]),
+            "external_close": True,
+        }
     settlement_times = {}
     for item in [*journal_settlements, *settlements]:
         ticker = item.get("market_ticker") or item.get("ticker")
@@ -224,8 +230,13 @@ def spread_ledger(events, fills, settlements, now):
         left = row["count"]
         if row.get("external_close"):
             available = sum(q for side, _, q in queue if side != row["side"])
-            if available + 1e-8 < left or (row["ticker"] in settlement_times and row["when"] >= settlement_times[row["ticker"]]):
-                raise TradingError("External close would open or exceed held risk: HALT")
+            if available + 1e-8 < left or (
+                row["ticker"] in settlement_times
+                and row["when"] >= settlement_times[row["ticker"]]
+            ):
+                raise TradingError(
+                    "External close would open or exceed held risk: HALT"
+                )
         if row["fee"]:
             realized.append((row["when"], -row["fee"]))
         while left > 1e-9 and queue and queue[0][0] != row["side"]:
@@ -598,15 +609,26 @@ def state_for(client, sport, now):
         if (
             ticker in owner["tickers"]
             and str(fill.get("order_id")) not in owner["orders"]
-            and not (owner["tickers"].get(ticker) == SPREAD and external_closes.recognized(fill, approvals))
+            and not (
+                owner["tickers"].get(ticker) == SPREAD
+                and external_closes.recognized(fill, approvals)
+            )
         ):
             raise TradingError("Unowned fill on pilot market: HALT")
     if approvals:
         external_ledger = spread_ledger(events[SPREAD], fills, settlements, now)
-        expected_positions = {t: sum(q if side == "yes" else -q for side, _, q in lots) for t, lots in external_ledger["open"].items()}
+        expected_positions = {
+            t: sum(q if side == "yes" else -q for side, _, q in lots)
+            for t, lots in external_ledger["open"].items()
+        }
         actual_positions = classified[SPREAD]["positions"]
-        if any(abs(expected_positions.get(t, 0) - actual_positions.get(t, 0)) > 1e-6 for t in set(expected_positions) | set(actual_positions)):
-            raise TradingError("External-close ledger disagrees with signed positions: HALT")
+        if any(
+            abs(expected_positions.get(t, 0) - actual_positions.get(t, 0)) > 1e-6
+            for t in set(expected_positions) | set(actual_positions)
+        ):
+            raise TradingError(
+                "External-close ledger disagrees with signed positions: HALT"
+            )
     settled = {
         r.get("market_ticker") or r.get("ticker")
         for r in settlements
