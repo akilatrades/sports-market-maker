@@ -6,6 +6,7 @@ private env files, or writes. Print whitelisted status codes and counters
 only. Avoid revealing orders, balances, positions, secrets, or tickers in
 public GitHub Actions logs.
 """
+
 import json
 import os
 import subprocess
@@ -17,16 +18,32 @@ from pathlib import Path
 def show_systemd(unit):
     try:
         call = subprocess.run(
-            ["systemctl", "show", unit, "--no-pager", "--property",
-             "LoadState,ActiveState,SubState,Result,ExecMainStatus,LastTriggerUSec,NextElapseUSecRealtime"],
-            capture_output=True, text=True, timeout=8, check=False,
+            [
+                "systemctl",
+                "show",
+                unit,
+                "--no-pager",
+                "--property",
+                "LoadState,ActiveState,SubState,Result,ExecMainStatus,LastTriggerUSec,NextElapseUSecRealtime",
+            ],
+            capture_output=True,
+            text=True,
+            timeout=8,
+            check=False,
         )
         values = {}
         for line in call.stdout.splitlines():
             if "=" in line:
                 k, v = line.split("=", 1)
-                if k in ("LoadState", "ActiveState", "SubState", "Result",
-                         "ExecMainStatus", "LastTriggerUSec", "NextElapseUSecRealtime"):
+                if k in (
+                    "LoadState",
+                    "ActiveState",
+                    "SubState",
+                    "Result",
+                    "ExecMainStatus",
+                    "LastTriggerUSec",
+                    "NextElapseUSecRealtime",
+                ):
                     values[k] = v[:90]
         return values or {"state": "unknown"}
     except (OSError, subprocess.TimeoutExpired):
@@ -60,26 +77,42 @@ def numerical_counts(data):
     return dict(list(sorted(result.items()))[:35])
 
 
-
 def classify_recent_failure(sport):
     """Return only a whitelisted error class from local systemd logs.
 
     Never print actual traces, account ids, tickers, prices, or secrets.
     This is a read-only local journal lookup; no exchange API is called.
     """
-    unit=f"market-maker-prod-{sport}-auto.service"
+    unit = f"market-maker-prod-{sport}-auto.service"
     try:
-        process=subprocess.run(
-            ["journalctl", "-u", unit, "--since", "25 minutes ago",
-             "--no-pager", "-o", "cat", "-n", "300"],
-            text=True, capture_output=True, timeout=12, check=False)
-        if process.returncode!=0:
-            return {"log_access":"denied_or_unavailable"}
-        text=process.stdout.lower()
-        signatures=[
+        process = subprocess.run(
+            [
+                "journalctl",
+                "-u",
+                unit,
+                "--since",
+                "25 minutes ago",
+                "--no-pager",
+                "-o",
+                "cat",
+                "-n",
+                "300",
+            ],
+            text=True,
+            capture_output=True,
+            timeout=12,
+            check=False,
+        )
+        if process.returncode != 0:
+            return {"log_access": "denied_or_unavailable"}
+        text = process.stdout.lower()
+        signatures = [
             ("unowned fill on pilot market", "manual_or_unowned_fill"),
             ("foreign fill in an owned nba market", "manual_or_unowned_fill"),
-            ("unowned or wrong-side account position", "unowned_or_wrong_side_position"),
+            (
+                "unowned or wrong-side account position",
+                "unowned_or_wrong_side_position",
+            ),
             ("held inventory exceeds accepted intent", "held_inventory_mismatch"),
             ("unowned resting order", "unowned_resting_order"),
             ("foreign resting", "unowned_resting_order"),
@@ -90,16 +123,22 @@ def classify_recent_failure(sport):
             ("spread settlement disagrees with its fills", "settlement_mismatch"),
             ("ambiguous production order", "unreconciled_ambiguous_order"),
             ("unreconciled production submission", "unreconciled_submission"),
-            ("position appeared for reconciled rejected order", "position_after_rejection"),
+            (
+                "position appeared for reconciled rejected order",
+                "position_after_rejection",
+            ),
             ("unowned", "other_unowned_activity"),
         ]
-        found=[label for needle,label in signatures if needle in text]
-        return {"log_access":"ok",
-                "recognized_failure_categories":sorted(set(found)),
-                "trading_error_observed":"tradingerror" in text,
-                "last_25m_lookback":True}
-    except (OSError,subprocess.TimeoutExpired):
-        return {"log_access":"unavailable"}
+        found = [label for needle, label in signatures if needle in text]
+        return {
+            "log_access": "ok",
+            "recognized_failure_categories": sorted(set(found)),
+            "trading_error_observed": "tradingerror" in text,
+            "last_25m_lookback": True,
+        }
+    except (OSError, subprocess.TimeoutExpired):
+        return {"log_access": "unavailable"}
+
 
 def local_report(sport):
     root = Path("/home/trader") / f"prod-{sport}-auto"
@@ -118,9 +157,13 @@ def local_report(sport):
             decision = scan.get("decision")
             if isinstance(decision, str):
                 result["scan_decision"] = decision[:75]
-            for k in ("candidate_count", "orders_placed_this_pass",
-                      "resting_order_count", "legacy_prior_version_resting_orders",
-                      "gross_reserved"):
+            for k in (
+                "candidate_count",
+                "orders_placed_this_pass",
+                "resting_order_count",
+                "legacy_prior_version_resting_orders",
+                "gross_reserved",
+            ):
                 if k in scan and type(scan[k]) in (int, float):
                     result[k] = scan[k]
             for key in ("selection_funnel", "skipped", "filters", "skip_reasons"):
@@ -144,7 +187,8 @@ def local_report(sport):
                     )
                     result["halt_category"] = next(
                         (name for needle, name in categories if needle in error),
-                        "other")
+                        "other",
+                    )
         except (OSError, ValueError, TypeError):
             result["scan_status"] = "unreadable"
     else:
@@ -161,9 +205,16 @@ def local_report(sport):
                 except ValueError:
                     continue
                 kind = event.get("event")
-                if kind not in ("intent", "accepted", "unknown_outcome",
-                                "rejected_4xx", "fill", "canceled", "cancel",
-                                "reconciled_absent"):
+                if kind not in (
+                    "intent",
+                    "accepted",
+                    "unknown_outcome",
+                    "rejected_4xx",
+                    "fill",
+                    "canceled",
+                    "cancel",
+                    "reconciled_absent",
+                ):
                     continue
                 summary[kind] += 1
                 _, age = safe_time(event.get("utc"))
@@ -184,12 +235,21 @@ def main():
         print("COHORT=" + sport)
         for suffix in ("timer", "service"):
             unit = f"market-maker-prod-{sport}-auto.{suffix}"
-            print("SYSTEMD_" + suffix.upper() + "=" +
-                  json.dumps(show_systemd(unit), sort_keys=True))
+            print(
+                "SYSTEMD_"
+                + suffix.upper()
+                + "="
+                + json.dumps(show_systemd(unit), sort_keys=True)
+            )
         print("LOCAL_STATE=" + json.dumps(local_report(sport), sort_keys=True))
-        print("FAILURE_CLASS=" + json.dumps(classify_recent_failure(sport), sort_keys=True))
-    print("SPREAD_MARKER_PRESENT=" +
-          str(Path("/etc/market-maker-spread.enabled").exists()).lower())
+        print(
+            "FAILURE_CLASS="
+            + json.dumps(classify_recent_failure(sport), sort_keys=True)
+        )
+    print(
+        "SPREAD_MARKER_PRESENT="
+        + str(Path("/etc/market-maker-spread.enabled").exists()).lower()
+    )
 
 
 if __name__ == "__main__":

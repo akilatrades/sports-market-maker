@@ -1,21 +1,24 @@
 name: Read-only funded order blocker diagnostics
-# Only runs on an owner push that changes THIS diagnostic workflow.
+# Manual, owner-only diagnostic from trusted main; no trading or service writes.
 # Reads local status and scan decisions; never sends a trading API request,
 # changes account settings, or starts/stops any service.
 on:
-  push:
-    branches: [main]
-    paths: ['.github/workflows/read-only-order-health.yml']
+  workflow_dispatch:
 permissions:
   contents: read
 jobs:
   inspect:
-    if: github.actor == 'akilatrades'
+    if: >-
+      github.ref == 'refs/heads/main' && github.actor == 'akilatrades' &&
+      github.triggering_actor == 'akilatrades'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     environment: funded-droplet
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: main
+          persist-credentials: false
       - name: Check pinned, owner-approved SSH connection
         env:
           DROPLET_HOST: ${{ secrets.DROPLET_HOST }}
