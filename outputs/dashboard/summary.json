@@ -1,5 +1,5 @@
 {
- "updated_utc": "2026-10-25T16:21+00:00",
+ "updated_utc": "2026-10-25T16:56+00:00",
  "paper": {
   "ledgers": [
    {
@@ -865,7 +865,7 @@
   "dollars_resting": 0.0
  },
  "live_nfl": {
-  "run_utc": "2026-10-25T16:18+00:00",
+  "run_utc": "2026-10-25T16:55+00:00",
   "mode": "dry",
   "env": "prod",
   "rule": "no_seller_bookline",
@@ -876,18 +876,18 @@
   "pilot_total_cap": null,
   "bankroll": 250.0,
   "injury_cancels": 0,
-  "candidates": 126,
+  "candidates": 106,
   "placed": 18,
-  "rejected": 108,
+  "rejected": 88,
   "rejections": {
-   "6 orders already in game 26OCT25DENARI": 43,
-   "6 orders already in game 26OCT25GBDET": 39,
-   "6 orders already in game 26OCT25LARLV": 26
+   "6 orders already in game 26OCT25GBDET": 34,
+   "6 orders already in game 26OCT25DENARI": 34,
+   "6 orders already in game 26OCT25LARLV": 20
   },
-  "open_exposure": 38.92,
+  "open_exposure": 37.08,
   "orders_by_status": {
-   "rejected": 1904,
-   "dry": 509
+   "rejected": 1992,
+   "dry": 527
   },
   "dollars_resting": 0.0
  },
@@ -924,7 +924,7 @@
   "account_total_loss_stop": 100.0,
   "daily_loss_stop": 20.0,
   "total_loss_stop": 100.0,
-  "odds_snapshot_utc": "2026-10-25T15:52+00:00",
+  "odds_snapshot_utc": "2026-10-25T16:53+00:00",
   "trade_prints_through": "2026-10-24",
   "spread": {
    "rules": "spread-maker-v3-24h-starts",
