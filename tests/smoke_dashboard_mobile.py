@@ -1,10 +1,7 @@
-"""Smoke test the published dashboard in a mobile-sized Chromium viewport.
+"""Browser checks for the spread-only page, including truthful failure states."""
 
-Run explicitly after installing Playwright/Chromium; not part of regular pytest.
-"""
-
-import json
 import threading
+from datetime import UTC, datetime, timedelta
 from functools import partial
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -12,15 +9,31 @@ from pathlib import Path
 from playwright.sync_api import sync_playwright
 
 
+def snapshot(age=0, profit=17.0486):
+    return {
+        "schema_version": 1,
+        "refresh_type": "signed_live_account_settlements_30s",
+        "as_of_utc": (datetime.now(UTC) - timedelta(seconds=age)).isoformat(),
+        "markets": {
+            "spread": {
+                "status": "verified_fill_ledger",
+                "realized_profit_dollars": profit,
+                "filled_contracts": 102.59,
+                "settled_markets": 21,
+            },
+            "nba": {"settled_profit_dollars": 999},
+        },
+        "account": {"settled_profit_dollars": 888},
+    }
+
+
 def main():
     repo = Path(__file__).resolve().parents[1]
     screenshots = repo / "test-artifacts"
     screenshots.mkdir(exist_ok=True)
-    expected = json.loads((repo / "outputs/dashboard/summary.json").read_text())
     handler = partial(SimpleHTTPRequestHandler, directory=str(repo))
     server = ThreadingHTTPServer(("127.0.0.1", 0), handler)
-    thread = threading.Thread(target=server.serve_forever, daemon=True)
-    thread.start()
+    threading.Thread(target=server.serve_forever, daemon=True).start()
     try:
         with sync_playwright() as playwright:
             browser = playwright.chromium.launch(headless=True)
@@ -35,90 +48,75 @@ def main():
                     page = context.new_page()
                     errors = []
                     page.on("pageerror", lambda error: errors.append(str(error)))
-                    url = f"http://127.0.0.1:{server.server_port}/dashboard/"
-                    page.goto(url, wait_until="domcontentloaded")
-                    page.wait_for_function(
-                        "() => !document.querySelector('#stamp').textContent.includes('Loading')",
-                        timeout=15000,
+                    state = {"data": snapshot(), "fail": False}
+                    context.route(
+                        "**/live-pnl-source.json",
+                        lambda route: route.fulfill(
+                            json={"api_url": "https://feed.example/v1/pnl"}
+                        ),
                     )
-                    assert not errors, f"{width}px: JS errors: {errors}"
-                    expected_edge = expected["research"]["bookline"]["veto"]["cents"]
-                    assert page.locator("#lead-edge").inner_text() == (
-                        f"+{expected_edge:.2f}¢"
+
+                    def feed(route):
+                        if state["fail"]:
+                            route.abort("failed")
+                        else:
+                            route.fulfill(json=state["data"])
+
+                    context.route("https://feed.example/v1/pnl", feed)
+                    page.goto(
+                        f"http://127.0.0.1:{server.server_port}/dashboard/",
+                        wait_until="networkidle",
                     )
-                    assert page.locator("#study-chart svg").count() == 1
-                    page.screenshot(path=str(screenshots / f"research-{width}.png"))
-                    if width == 1440:
-                        page.locator("#strategies").screenshot(
-                            path=str(screenshots / "research-strategies.png")
-                        )
-                        page.locator("#research-section").screenshot(
-                            path=str(screenshots / "research-evidence.png")
-                        )
+                    assert page.locator("#spread-pnl").inner_text() == "+$17.05"
+                    assert page.locator("#contracts").inner_text() == "102.59"
+                    assert page.locator("#settled").inner_text() == "21"
+                    assert "999" not in page.locator("body").inner_text()
+                    assert "888" not in page.locator("body").inner_text()
+                    assert "NBA" not in page.locator("body").inner_text()
+                    assert not errors, errors
                     metrics = page.evaluate(
-                        """() => ({
-                          page: document.documentElement.clientWidth,
-                          widest: document.documentElement.scrollWidth,
-                          height: document.documentElement.scrollHeight,
-                          navOverflow: getComputedStyle(
-                            document.querySelector('.toplinks')
-                          ).overflowX
-                        })"""
+                        """() => ({page: document.documentElement.clientWidth,
+                        widest: document.documentElement.scrollWidth})"""
                     )
-                    assert metrics["widest"] <= metrics["page"] + 2, (
-                        f"{width}px: horizontal page overflow: {metrics}"
+                    assert metrics["widest"] <= metrics["page"] + 1, metrics
+                    page.screenshot(
+                        path=str(screenshots / f"spread-{width}.png"), full_page=True
                     )
-                    if width <= 700:
-                        assert metrics["navOverflow"] == "auto"
-                        # The old #heat element was removed from the
-                        # dashboard; validate the *actual* horizontal
-                        # scroll regions, including the navigation.
-                        for selector in (".toplinks", ".scroll"):
-                            for region in page.locator(selector).all():
-                                if not region.is_visible():
-                                    continue
-                                action = region.evaluate(
-                                    "(el) => getComputedStyle(el).touchAction"
-                                )
-                                assert action == "auto", (
-                                    f"{width}px: {selector} traps vertical swipes: "
-                                    f"{action}"
-                                )
-                    assert metrics["height"] > 1200, (
-                        f"{width}px: unexpectedly short page; data failed to render"
-                    )
+                    page.locator("#method summary").click()
+                    assert page.locator("#method").evaluate("el => el.open")
+                    assert "reconciled manual exits" in page.locator(
+                        "#method"
+                    ).inner_text()
+                    page.evaluate("window.__noReload = true")
+                    page.set_viewport_size({"width": width, "height": 620})
+                    assert page.evaluate("window.__noReload") is True
+                    page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
+                    assert page.evaluate("window.scrollY") > 0
 
-                    # A phone's URL bar changing height must NOT reload the page
-                    # or jump the user back to the top.
-                    page.evaluate(
-                        "() => { window.__scrollMarker = true; window.scrollTo({top: 650, behavior: 'instant'}); }"
-                    )
-                    before = page.evaluate("window.scrollY")
-                    assert before >= 200, f"{width}px: page did not scroll"
-                    page.set_viewport_size({"width": width, "height": 680})
-                    page.wait_for_timeout(700)
-                    after = page.evaluate(
-                        "() => ({y: window.scrollY, marker: window.__scrollMarker})"
-                    )
-                    assert after["marker"] is True, f"{width}px: page reloaded"
-                    assert abs(after["y"] - before) < 90, (
-                        f"{width}px: scroll jumped on height-only resize: "
-                        f"{before} -> {after['y']}"
-                    )
-                    assert not errors, f"{width}px: JS errors after resize: {errors}"
+                    def update(data=None, fail=False):
+                        state.update(data=data, fail=fail)
+                        page.locator("#refresh").click()
+                        page.wait_for_function(
+                            "!document.getElementById('refresh').disabled"
+                        )
 
-                    # Jumping to lower anchors must work.
-                    page.locator('a[href="#research-section"]').click()
-                    assert page.evaluate("location.hash") == "#research-section"
-                    # Diagnostics are optional when no suitable research
-                    # snapshot is published. Only exercise a rendered panel.
-                    visible_panels = page.locator("details.diagnostics:visible")
-                    if visible_panels.count():
-                        panel = visible_panels.first
-                        panel.locator("summary").click()
-                        assert panel.evaluate("(el) => el.open")
-                    assert not errors, f"{width}px: errors after expanding diagnostics"
-                    print(f"PASS {width}px: scroll, no reload, nav, JS and overflow")
+                    update(snapshot(profit=-1.23))
+                    assert page.locator("#spread-pnl").inner_text() == "−$1.23"
+                    assert "negative" in page.locator("#spread-pnl").get_attribute(
+                        "class"
+                    )
+                    update(snapshot(age=100))
+                    assert page.locator("#spread-pnl").inner_text() == "—"
+                    assert page.locator("#feed-status").inner_text() == "Update delayed"
+                    update(snapshot())
+                    update(fail=True)
+                    assert page.locator("#spread-pnl").inner_text() == "—"
+                    assert page.locator("#contracts").inner_text() == "—"
+                    assert "unavailable" in page.locator("#feed-status").inner_text()
+                    update(snapshot(profit=0))
+                    assert page.locator("#spread-pnl").inner_text() == "$0.00"
+                    assert not errors, errors
+                    print(f"PASS {width}px: layout, scrolling, data, failure, recovery")
                     context.close()
             finally:
                 browser.close()

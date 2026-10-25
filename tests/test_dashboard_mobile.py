@@ -1,72 +1,47 @@
-"""Keep the dashboard usable on phones and preserve its evidence labels."""
+"""Static page integrity; real phone scrolling is covered by the browser smoke."""
 
-import re
-import shutil
-import subprocess
 from html.parser import HTMLParser
 from pathlib import Path
 
-DASHBOARD = Path(__file__).resolve().parents[1] / "dashboard" / "index.html"
+ROOT = Path(__file__).resolve().parents[1]
 
 
 class Tags(HTMLParser):
     def __init__(self):
         super().__init__()
-        self.ids = set()
-        self.nav_targets = []
+        self.ids = []
+        self.anchors = []
 
     def handle_starttag(self, tag, attrs):
         values = dict(attrs)
         if "id" in values:
-            self.ids.add(values["id"])
+            self.ids.append(values["id"])
         if tag == "a" and values.get("href", "").startswith("#"):
-            self.nav_targets.append(values["href"][1:])
+            self.anchors.append(values["href"][1:])
 
 
-def test_dashboard_mobile_scroll_does_not_reload():
-    html = DASHBOARD.read_text()
-    assert "location.reload(" not in html
-    assert "const nextWidth = document.documentElement.clientWidth" in html
-    assert "if (Math.abs(nextWidth - pageWidth) < 2) return" in html
-    assert "renderCharts(latestDashboard.s)" in html
-    assert re.search(r"overflow-x:\s*auto", html)
-    assert re.search(r"touch-action:\s*pan-x pan-y", html)
-    assert 'id="live-pnl-grid"' in html
-
-
-def test_dashboard_nav_and_data_mounts_exist():
-    html = DASHBOARD.read_text()
+def test_spread_page_has_unique_accessible_mounts():
+    source = (ROOT / "dashboard/index.html").read_text()
     tags = Tags()
-    tags.feed(html)
-    assert all(anchor in tags.ids for anchor in tags.nav_targets)
-    mounted = set(re.findall(r'document.getElementById\("([^"]+)"\)', html))
-    assert mounted <= tags.ids
-    assert "Live account P&L feed unavailable or not configured" in html
-    assert "live results refresh separately" in html
+    tags.feed(source)
+    assert len(tags.ids) == len(set(tags.ids))
+    assert set(tags.anchors) <= set(tags.ids)
+    assert {"spread-pnl", "feed-status", "contracts", "settled", "updated"} <= set(
+        tags.ids
+    )
+    assert 'name="viewport"' in source
+    assert '<html lang="en">' in source
+    assert 'src="spread.js"' in source
 
 
-def test_dashboard_inline_javascript_parses(tmp_path):
-    node = shutil.which("node")
-    if node is None:
-        return  # Browsers can still parse this; CI includes Node.
-    html = DASHBOARD.read_text()
-    scripts = re.findall(r"<script>(.*?)</script>", html, flags=re.S)
-    assert len(scripts) == 1
-    js = tmp_path / "dashboard.js"
-    js.write_text(scripts[0])
-    subprocess.run([node, "--check", str(js)], check=True)
-
-
-def test_only_verified_nfl_and_nba_production_pnl_is_displayed():
-    html = DASHBOARD.read_text()
-    assert 'id="production-pnl"' in html
-    assert 'id="live-pnl-grid"' in html
-    assert '"../outputs/dashboard/production_pnl.json"' in html
-    assert "NFL / settled P&amp;L" in html
-    assert "NBA / settled P&amp;L" in html
-    assert 'id="paper"' not in html
-    assert 'id="strategy-summary"' not in html
-    assert 'id="cumulative"' not in html
-    assert 'id="scenario-impact"' not in html
-    assert 'id="profit-scenarios"' not in html
-    assert "DEMO_REFERENCE" not in html
+def test_page_shows_only_spread_strategy_and_no_invented_chart():
+    source = (ROOT / "dashboard/index.html").read_text()
+    for retired in ("prop-maker", "research-section", "study-chart", "checkpoints"):
+        assert f'id="{retired}"' not in source
+    assert "NBA" not in source and "NFL" not in source
+    assert "Net realized P&amp;L" in source
+    assert "reconciled manual exits" in source
+    assert "Open positions" in source
+    assert "across strategy versions" in source
+    assert "Small sample" in source
+    assert "location.reload(" not in (ROOT / "dashboard/spread.js").read_text()
