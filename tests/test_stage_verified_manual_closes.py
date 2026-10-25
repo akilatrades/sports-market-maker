@@ -62,5 +62,10 @@ def test_existing_trader_needs_no_privilege_escalation(monkeypatch):
     assert stage.trader_command("git", "status") == ["git", "status"]
     monkeypatch.setattr(stage.os, "geteuid", lambda: 0)
     assert stage.trader_command("git", "status") == [
-        "runuser", "-u", "trader", "--", "git", "status"
+        "runuser",
+        "-u",
+        "trader",
+        "--",
+        "git",
+        "status",
     ]
