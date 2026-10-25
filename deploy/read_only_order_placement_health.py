@@ -9,6 +9,7 @@ public GitHub Actions logs.
 
 import json
 import os
+import shutil
 import subprocess
 from collections import Counter
 from datetime import datetime, timezone
@@ -229,8 +230,33 @@ def local_report(sport):
     return result
 
 
+def research_observer_access():
+    """Report access flags only; never read credentials or change services."""
+    paths = {
+        "funded_environment_readable": "/etc/market-maker-prod-auto.env",
+        "nba_environment_readable": "/etc/market-maker-prod-nba-auto.env",
+        "spread_journal_readable": "/home/trader/prod-spread-auto/journal.jsonl",
+        "spread_start_cache_readable": "/home/trader/prod-spread-auto/event_starts.json",
+    }
+    result = {key: os.access(path, os.R_OK) for key, path in paths.items()}
+    result["home_writable"] = os.access("/home/trader", os.W_OK)
+    result["cron_available"] = shutil.which("crontab") is not None
+    if result["cron_available"]:
+        check = subprocess.run(
+            ["crontab", "-l"], capture_output=True, text=True, timeout=5
+        )
+        result["cron_accessible"] = check.returncode == 0 or (
+            check.returncode == 1 and "no crontab for" in check.stderr.lower()
+        )
+    result["production_python_present"] = Path(
+        "/home/trader/sports-market-maker-prod-auto/.venv/bin/python"
+    ).exists()
+    return result
+
+
 def main():
     print("health_utc=" + datetime.now(timezone.utc).isoformat())
+    print("RESEARCH_OBSERVER_ACCESS=" + json.dumps(research_observer_access()))
     for sport in ("nba", "nfl", "spread"):
         print("COHORT=" + sport)
         for suffix in ("timer", "service"):
