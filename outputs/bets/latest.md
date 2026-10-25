@@ -39,6 +39,10 @@
 | Sun 7:30 PM | Cade Cunningham | NO 10+ assists | 52¢ | 72% | 18¢ | 9 | $4.84 | paper |
 | Sun 7:30 PM | Cade Cunningham | NO 6+ rebounds | 50¢ | 62% | 10¢ | 9 | $4.66 | paper |
 | Sun 7:30 PM | Tyrese Maxey | NO 6+ assists | 49¢ | 60% | 9¢ | 6 | $3.05 | paper |
+| Sun 9:00 PM | De'Andre Hunter | NO 2+ assists | 47¢ | 58% | 9¢ | 10 | $4.88 | paper |
 | Sun 9:00 PM | Domantas Sabonis | NO 8+ assists | 61¢ | 76% | 13¢ | 7 | $4.39 | paper |
+| Sun 9:00 PM | Domantas Sabonis | NO 14+ rebounds | 48¢ | 55% | 6¢ | 9 | $4.48 | paper |
 | Sun 9:00 PM | Jaylen Wells | YES 10+ points | 61¢ | 72% | 9¢ | 7 | $4.39 | paper |
+| Sun 9:00 PM | Precious Achiuwa | YES 15+ points | 21¢ | 49% | 26¢ | 22 | $4.88 | paper |
 | Sun 9:00 PM | Zach LaVine | NO 4+ rebounds | 54¢ | 67% | 11¢ | 8 | $4.46 | paper |
+| Sun 9:00 PM | Zach LaVine | NO 4+ assists | 66¢ | 73% | 5¢ | 7 | $4.73 | paper |
