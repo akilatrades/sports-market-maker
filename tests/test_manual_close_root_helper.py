@@ -26,9 +26,7 @@ def test_helper_rejects_service_starts_without_calling_systemctl(monkeypatch):
 
 def test_code_update_rejects_service_and_strategy_changes():
     root_apply.allowed_diff(["live/shared_account_risk.py"])
-    for path in (
-        "live/spread_policy.py", "requirements.txt", "deploy/example.service"
-    ):
+    for path in ("live/spread_policy.py", "requirements.txt", "deploy/example.service"):
         with pytest.raises(ValueError):
             root_apply.allowed_diff([path])
 
