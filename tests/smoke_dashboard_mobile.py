@@ -84,14 +84,15 @@ def main():
                     )
                     page.locator("#method summary").click()
                     assert page.locator("#method").evaluate("el => el.open")
-                    assert "reconciled manual exits" in page.locator(
-                        "#method"
-                    ).inner_text()
+                    assert (
+                        "reconciled manual exits"
+                        in page.locator("#method").inner_text()
+                    )
                     page.evaluate("window.__noReload = true")
                     page.set_viewport_size({"width": width, "height": 620})
                     assert page.evaluate("window.__noReload") is True
                     page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
-                    assert page.evaluate("window.scrollY") > 0
+                    page.wait_for_function("window.scrollY > 0")
 
                     def update(data=None, fail=False):
                         state.update(data=data, fail=fail)

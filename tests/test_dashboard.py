@@ -8,6 +8,7 @@ from live.summarize import live_status
 ROOT = Path(__file__).resolve().parents[1]
 DASHBOARD = ROOT / "dashboard" / "index.html"
 
+
 def test_running_now_publishes_v2_start_margins_and_account_stops():
     from live import spread_policy
     from live.shared_account_risk import ACCOUNT_LOSS_STOPS
@@ -18,6 +19,7 @@ def test_running_now_publishes_v2_start_margins_and_account_stops():
     assert r["spread"]["cancel_lead_minutes"] == spread_policy.CANCEL_LEAD_MINUTES
     assert r["account_daily_loss_stop"] == ACCOUNT_LOSS_STOPS["daily"]
     assert r["account_total_loss_stop"] == ACCOUNT_LOSS_STOPS["cumulative"]
+
 
 def test_live_summary_uses_published_validation_not_fake_zeros(tmp_path):
     assert "forward_validation" not in live_status(tmp_path)
@@ -31,11 +33,13 @@ def test_live_summary_uses_published_validation_not_fake_zeros(tmp_path):
     (tmp_path / "forward_validation.json").write_text(json.dumps(expected))
     assert live_status(tmp_path)["forward_validation"] == expected
 
+
 def test_invalid_validation_file_is_declared_not_silently_successful(tmp_path):
     (tmp_path / "forward_validation.json").write_text("{invalid")
     output = live_status(tmp_path)
     assert "forward_validation" not in output
     assert output.get("forward_validation_error")
+
 
 def test_public_profit_file_contains_only_verified_market_aggregates():
     data = json.loads((ROOT / "outputs/dashboard/production_pnl.json").read_text())
