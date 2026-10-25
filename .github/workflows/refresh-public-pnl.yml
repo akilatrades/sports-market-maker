@@ -1,0 +1,45 @@
+name: Refresh public PnL reporting only
+# Manual report-server maintenance. Never starts, stops or edits trading workers.
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: public-pnl-reporting-refresh
+  cancel-in-progress: false
+jobs:
+  refresh:
+    if: >-
+      github.ref == 'refs/heads/main' && github.actor == 'akilatrades' &&
+      github.triggering_actor == 'akilatrades'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    environment: funded-droplet
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Refresh only the read-only report process over verified SSH
+        env:
+          DROPLET_HOST: ${{ secrets.DROPLET_HOST }}
+          DROPLET_USER: ${{ secrets.DROPLET_USER }}
+          DROPLET_SSH_KEY: ${{ secrets.DROPLET_SSH_KEY }}
+          DROPLET_KNOWN_HOSTS: ${{ secrets.DROPLET_KNOWN_HOSTS }}
+        run: |
+          set -euo pipefail
+          [[ "$DROPLET_USER" == trader ]]
+          test -n "$DROPLET_HOST"
+          [[ "$DROPLET_KNOWN_HOSTS" == *ssh-ed25519* ]]
+          umask 077
+          mkdir -p ~/.ssh
+          printf '%s\n' "$DROPLET_SSH_KEY" > ~/.ssh/smm_pnl
+          printf '%s\n' "$DROPLET_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/smm_pnl ~/.ssh/known_hosts
+          ssh-keygen -y -f ~/.ssh/smm_pnl > /dev/null
+          ssh -T -o BatchMode=yes -o IdentitiesOnly=yes \
+            -o StrictHostKeyChecking=yes -o ConnectTimeout=12 \
+            -i ~/.ssh/smm_pnl "$DROPLET_USER@$DROPLET_HOST" \
+            'python3 -I -' < deploy/refresh_public_pnl.py
+      - name: Remove temporary SSH identity
+        if: always()
+        run: rm -f ~/.ssh/smm_pnl
