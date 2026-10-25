@@ -146,6 +146,13 @@ def build_plan(snapshot, now, confirmation):
     }
 
 
+def quiet_capture(client, root):
+    snapshot = capture(client, root)
+    if snapshot["resting_orders"]:
+        raise TradingError("Resting orders must be absent before repair")
+    return snapshot
+
+
 def require_paused():
     for sport in ("nba", "nfl", "spread"):
         for kind in ("timer", "service"):
@@ -220,7 +227,7 @@ def main():
                 raise TradingError("Signed-read credentials unavailable")
             with account_lock():
                 require_paused()
-                snapshot = capture(client, args.root)
+                snapshot = quiet_capture(client, args.root)
                 plan = build_plan(snapshot, datetime.now(UTC), confirmation)
                 write_private(
                     args.evidence_dir
@@ -232,8 +239,10 @@ def main():
                     plan,
                 )
                 append_verified(args.root, plan, args.evidence_dir)
-                journals, hashes = read_journals(args.root)
-                after = {**snapshot, "journals": journals, "journal_sha256": hashes}
+                after = quiet_capture(client, args.root)
+                write_private(
+                    args.evidence_dir / ("post-snapshot-" + uuid.uuid4().hex + ".json"), after
+                )
                 verified = build_plan(after, datetime.now(UTC), confirmation)
                 if verified["events_to_append"]:
                     raise TradingError("Repair not idempotent")

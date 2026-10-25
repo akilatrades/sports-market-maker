@@ -98,3 +98,11 @@ def test_reconciliation_client_rejects_all_writes_without_network():
         client._request("POST", "/portfolio/orders", body={})
     with pytest.raises(TradingError, match="GETs only"):
         client._request("GET", "/unapproved")
+
+
+def test_repair_capture_rejects_even_owned_resting_orders(monkeypatch):
+    evidence, _ = snapshot()
+    evidence["resting_orders"] = [{"order_id": "otherwise-owned"}]
+    monkeypatch.setattr(repair, "capture", lambda *args: evidence)
+    with pytest.raises(TradingError, match="Resting orders"):
+        repair.quiet_capture(object(), object())
