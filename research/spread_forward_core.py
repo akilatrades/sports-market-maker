@@ -48,9 +48,7 @@ def digest(value):
 
 
 def orders_from_journal(events):
-    intents = {
-        e["client_order_id"]: e for e in events if e.get("event") == "intent"
-    }
+    intents = {e["client_order_id"]: e for e in events if e.get("event") == "intent"}
     accepted = {}
     for event in events:
         if event.get("event") != "accepted":
@@ -172,7 +170,7 @@ def consume(levels, quantity, multiplier=ONE, slippage=ZERO):
         if not take:
             continue
         executed = max(ZERO, price - slippage)
-        fee = (Decimal("0.07") * multiplier * take * executed * (1 - executed))
+        fee = Decimal("0.07") * multiplier * take * executed * (1 - executed)
         fee = fee.quantize(Decimal("0.01"), rounding=ROUND_CEILING)
         proceeds += take * executed
         fees += fee
@@ -204,9 +202,7 @@ def replay(fills, samples=(), outcomes=None, slippage=ZERO):
         seen[fid] = fill
         timeline.append((instant(fill["at"]), 0, fid, "entry", fill))
     for sample in samples:
-        timeline.append(
-            (instant(sample["at"]), 1, sample["id"], "checkpoint", sample)
-        )
+        timeline.append((instant(sample["at"]), 1, sample["id"], "checkpoint", sample))
     lots = defaultdict(list)
     pnl = defaultdict(Decimal)
     sales = []
@@ -235,11 +231,17 @@ def replay(fills, samples=(), outcomes=None, slippage=ZERO):
                     queue.pop(0)
             if left:
                 queue.append(
-                    {"fid": row["fid"], "side": row["side"], "left": left, "price": price}
+                    {
+                        "fid": row["fid"],
+                        "side": row["side"],
+                        "left": left,
+                        "price": price,
+                    }
                 )
             continue
         if not row.get("valid") or row.get("fee_type") not in (
-            "quadratic", "quadratic_with_maker_fees"
+            "quadratic",
+            "quadratic_with_maker_fees",
         ):
             invalid.add(ticker)
             continue
@@ -279,7 +281,9 @@ def replay(fills, samples=(), outcomes=None, slippage=ZERO):
         outcome = outcomes.get(ticker)
         if outcome is None:
             if queue:
-                unresolved[ticker] = [dict(x, left=str(x["left"]), price=str(x["price"])) for x in queue]
+                unresolved[ticker] = [
+                    dict(x, left=str(x["left"]), price=str(x["price"])) for x in queue
+                ]
             continue
         yes = amount(outcome["yes_payout"])
         if yes > 1:
