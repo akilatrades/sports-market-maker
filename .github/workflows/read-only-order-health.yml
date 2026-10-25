@@ -10,7 +10,9 @@ permissions:
   contents: read
 jobs:
   inspect:
-    if: github.actor == 'akilatrades'
+    if: >-
+      github.ref == 'refs/heads/main' && github.actor == 'akilatrades' &&
+      github.triggering_actor == 'akilatrades'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     environment: funded-droplet
