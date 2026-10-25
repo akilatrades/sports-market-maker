@@ -17,14 +17,14 @@ import urllib.request
 from pathlib import Path
 
 BASE = "0500b006d5d223bb2accef32ca265f931c98fcbe"
-SOURCE = "d35c2a5dfb3fd1926af0e9b432efed4e3f2f273e"
+SOURCE = "b8c22efad885ce70280fe230be192331421e6615"
 ROOT = Path("/home/trader/sports-market-maker-prod-auto")
 PYTHON = ROOT / ".venv/bin/python"
 HASHES = {
     "live/shared_account_risk.py": "d89f074a92f7d9266b70e4127acc8fa5f9f5a2423a7d4fce99e1566bddbbb07f",
     "live/external_spread_closes.py": "e5631858d653cc151b5c858856ef27e7978639a3e484f03845469b806be51318",
     "tools/account_reconciliation_snapshot.py": "211ac1f328c1629f7a31b4d2dd99010dfcb4740c54923df47b81f5f8713bc013",
-    "tools/reconcile_external_spread_closes.py": "6202bb824c4861d1c12c72397cef2190312c437c198822de1ae0e0d7aaa28abc",
+    "tools/reconcile_external_spread_closes.py": "6497251472835d353d0293e7d7bd4a4cdee9f394d37eb4d099e537e1f4a23579",
 }
 
 CHILD = """
