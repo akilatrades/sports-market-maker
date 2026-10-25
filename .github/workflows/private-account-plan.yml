@@ -1,0 +1,66 @@
+name: Private account reconciliation dry run
+on:
+  workflow_dispatch:
+    inputs:
+      expected_net:
+        description: Previously reconciled spread net, dollars (aggregate only)
+        required: true
+        type: string
+      expected_fees:
+        description: Previously verified manual-close fees, dollars (aggregate only)
+        required: true
+        type: string
+      expected_count:
+        description: Number of owner-reviewed manual fills
+        required: true
+        type: string
+permissions:
+  contents: read
+concurrency:
+  group: private-account-reconciliation-dry-run
+  cancel-in-progress: false
+jobs:
+  plan:
+    if: >-
+      github.ref == 'refs/heads/main' && github.actor == 'akilatrades' &&
+      github.triggering_actor == 'akilatrades'
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    environment: funded-droplet
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          persist-credentials: false
+      - name: Read-only plan through the existing trader SSH connection
+        env:
+          DROPLET_HOST: ${{ secrets.DROPLET_HOST }}
+          DROPLET_USER: ${{ secrets.DROPLET_USER }}
+          DROPLET_SSH_KEY: ${{ secrets.DROPLET_SSH_KEY }}
+          DROPLET_KNOWN_HOSTS: ${{ secrets.DROPLET_KNOWN_HOSTS }}
+          EXPECTED_NET: ${{ inputs.expected_net }}
+          EXPECTED_FEES: ${{ inputs.expected_fees }}
+          EXPECTED_COUNT: ${{ inputs.expected_count }}
+        run: |
+          set -euo pipefail
+          [[ "$DROPLET_USER" == trader ]]
+          test -n "$DROPLET_HOST"
+          test -n "$DROPLET_SSH_KEY"
+          [[ "$DROPLET_KNOWN_HOSTS" == *ssh-ed25519* ]]
+          [[ "$EXPECTED_NET" =~ ^-?[0-9]+([.][0-9]{1,8})?$ ]]
+          [[ "$EXPECTED_FEES" =~ ^[0-9]+([.][0-9]{1,8})?$ ]]
+          [[ "$EXPECTED_COUNT" =~ ^[1-9][0-9]{0,2}$ ]]
+          umask 077
+          mkdir -p ~/.ssh
+          printf '%s\n' "$DROPLET_SSH_KEY" > ~/.ssh/reconciliation_read
+          printf '%s\n' "$DROPLET_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/reconciliation_read ~/.ssh/known_hosts
+          ssh-keygen -y -f ~/.ssh/reconciliation_read >/dev/null
+          ssh -T -o BatchMode=yes -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes \
+            -o ConnectTimeout=12 -i ~/.ssh/reconciliation_read \
+            "$DROPLET_USER@$DROPLET_HOST" \
+            "python3 -I - --expected-net $EXPECTED_NET --expected-fees $EXPECTED_FEES --expected-count $EXPECTED_COUNT" \
+            < tools/stage_verified_manual_closes.py
+      - name: Remove temporary SSH identity
+        if: always()
+        run: rm -f ~/.ssh/reconciliation_read
