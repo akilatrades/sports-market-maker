@@ -69,7 +69,9 @@ def capture(client, root, now=None):
     orders = pages(client, "/portfolio/orders", status="resting")
     positions = pages(client, "/portfolio/positions")
     _, after_hashes = read_journals(root)
-    canonical = lambda rows: sorted(json.dumps(row, sort_keys=True) for row in rows)
+    def canonical(rows):
+        return sorted(json.dumps(row, sort_keys=True) for row in rows)
+
     if hashes != after_hashes or canonical(positions) != canonical(before_positions) or canonical(orders) != canonical(before_orders):
         raise ReconciliationError("Account or journal changed during capture")
     return {"schema_version": 1, "source": "signed_exchange_gets", "started_utc": started.isoformat(),
