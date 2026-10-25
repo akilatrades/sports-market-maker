@@ -2,6 +2,16 @@ name: Private account reconciliation dry run
 on:
   workflow_dispatch:
     inputs:
+      action:
+        description: Plan only, or prepare a reviewed helper without executing it
+        required: true
+        type: choice
+        default: plan
+        options: [plan, prepare]
+      case_stage:
+        description: Existing verified private stage directory (prepare only)
+        required: false
+        type: string
       expected_net:
         description: Previously reconciled spread net, dollars (aggregate only)
         required: true
@@ -38,6 +48,8 @@ jobs:
           DROPLET_USER: ${{ secrets.DROPLET_USER }}
           DROPLET_SSH_KEY: ${{ secrets.DROPLET_SSH_KEY }}
           DROPLET_KNOWN_HOSTS: ${{ secrets.DROPLET_KNOWN_HOSTS }}
+          REQUESTED_ACTION: ${{ inputs.action }}
+          CASE_STAGE: ${{ inputs.case_stage }}
           EXPECTED_NET: ${{ inputs.expected_net }}
           EXPECTED_FEES: ${{ inputs.expected_fees }}
           EXPECTED_COUNT: ${{ inputs.expected_count }}
@@ -56,11 +68,22 @@ jobs:
           printf '%s\n' "$DROPLET_KNOWN_HOSTS" > ~/.ssh/known_hosts
           chmod 600 ~/.ssh/reconciliation_read ~/.ssh/known_hosts
           ssh-keygen -y -f ~/.ssh/reconciliation_read >/dev/null
-          ssh -T -o BatchMode=yes -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes \
-            -o ConnectTimeout=12 -i ~/.ssh/reconciliation_read \
-            "$DROPLET_USER@$DROPLET_HOST" \
-            "python3 -I - --expected-net $EXPECTED_NET --expected-fees $EXPECTED_FEES --expected-count $EXPECTED_COUNT" \
-            < tools/stage_verified_manual_closes.py
+          ssh_args=(-T -o BatchMode=yes -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes
+            -o ConnectTimeout=12 -i ~/.ssh/reconciliation_read)
+          case "$REQUESTED_ACTION" in
+            plan)
+              ssh "${ssh_args[@]}" "$DROPLET_USER@$DROPLET_HOST" \
+                "python3 -I - --expected-net $EXPECTED_NET --expected-fees $EXPECTED_FEES --expected-count $EXPECTED_COUNT" \
+                < tools/stage_verified_manual_closes.py ;;
+            prepare)
+              [[ "$CASE_STAGE" =~ ^/home/trader/recon-stage[.][a-zA-Z0-9_]+$ ]]
+              [[ "$GITHUB_SHA" =~ ^[0-9a-f]{40}$ ]]
+              HELPER_HASH=$(sha256sum deploy/apply_verified_manual_closes.py | cut -d ' ' -f1)
+              ssh "${ssh_args[@]}" "$DROPLET_USER@$DROPLET_HOST" \
+                "python3 -I - --stage $CASE_STAGE --commit $GITHUB_SHA --sha256 $HELPER_HASH" \
+                < tools/prepare_manual_close_root.py ;;
+            *) exit 1 ;;
+          esac
       - name: Remove temporary SSH identity
         if: always()
         run: rm -f ~/.ssh/reconciliation_read
