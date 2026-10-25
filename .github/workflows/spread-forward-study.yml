@@ -1,0 +1,81 @@
+name: Spread forward study recorder
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: Read-only observer action; never controls trading workers
+        type: choice
+        required: true
+        default: status
+        options: [status, start, stop]
+  schedule:
+    - cron: '43 * * * *'
+permissions:
+  contents: read
+concurrency:
+  group: spread-forward-recorder-control
+  cancel-in-progress: false
+jobs:
+  observer:
+    if: >-
+      github.repository == 'akilatrades/sports-market-maker' &&
+      github.ref == 'refs/heads/main' &&
+      (github.event_name == 'schedule' ||
+       (github.actor == 'akilatrades' && github.triggering_actor == 'akilatrades'))
+    runs-on: ubuntu-latest
+    timeout-minutes: 14
+    environment: funded-droplet
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+      - name: Install or inspect isolated observer over pinned SSH
+        env:
+          DROPLET_HOST: ${{ secrets.DROPLET_HOST }}
+          DROPLET_USER: ${{ secrets.DROPLET_USER }}
+          DROPLET_SSH_KEY: ${{ secrets.DROPLET_SSH_KEY }}
+          DROPLET_KNOWN_HOSTS: ${{ secrets.DROPLET_KNOWN_HOSTS }}
+          ACTION: ${{ inputs.action || 'status' }}
+          REVISION: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          [[ "$DROPLET_USER" == trader ]]
+          [[ "$DROPLET_KNOWN_HOSTS" == *ssh-ed25519* ]]
+          [[ "$REVISION" =~ ^[0-9a-f]{40}$ ]]
+          [[ "$ACTION" == start || "$ACTION" == status || "$ACTION" == stop ]]
+          test -n "$DROPLET_HOST"
+          umask 077
+          mkdir -p ~/.ssh
+          printf '%s\n' "$DROPLET_SSH_KEY" > ~/.ssh/smm_forward
+          printf '%s\n' "$DROPLET_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          ssh-keygen -y -f ~/.ssh/smm_forward > /dev/null
+          remote="$DROPLET_USER@$DROPLET_HOST"
+          ssh_args=(-T -o BatchMode=yes -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes -o ConnectTimeout=12 -i ~/.ssh/smm_forward)
+          if [[ "$ACTION" == start ]]; then
+            # Only research files go to a new trader-owned release directory.
+            # No production checkout, service, timer, journal, or arm marker changes.
+            tar -czf /tmp/spread-forward-code.tgz research/spread_forward_*.py deploy/spread_forward_control.py
+            ssh "${ssh_args[@]}" "$remote" "umask 077; mkdir -p /home/trader/spread-forward-study/releases/$REVISION; tar -xzf - -C /home/trader/spread-forward-study/releases/$REVISION" < /tmp/spread-forward-code.tgz
+            ssh "${ssh_args[@]}" "$remote" "umask 077; touch /home/trader/spread-forward-study/releases/$REVISION/research/__init__.py; ln -sfn releases/$REVISION /home/trader/spread-forward-study/code; /home/trader/sports-market-maker-prod-auto/.venv/bin/python /home/trader/spread-forward-study/code/deploy/spread_forward_control.py start"
+            # Allow the first complete universe survey before starting the clock.
+            for attempt in {1..60}; do
+              sleep 10
+              result=$(ssh "${ssh_args[@]}" "$remote" '/home/trader/sports-market-maker-prod-auto/.venv/bin/python /home/trader/spread-forward-study/code/deploy/spread_forward_control.py status')
+              printf '%s\n' "$result"
+              if [[ "$result" == *'"state": "recording"'* ]]; then
+                exit 0
+              fi
+              if [[ "$result" == *'"state": "recording_error"'* ]]; then
+                exit 1
+              fi
+            done
+            exit 1
+          else
+            ssh "${ssh_args[@]}" "$remote" "/home/trader/sports-market-maker-prod-auto/.venv/bin/python /home/trader/spread-forward-study/code/deploy/spread_forward_control.py $ACTION"
+            if [[ "$ACTION" == status ]]; then
+              ssh "${ssh_args[@]}" "$remote" 'cd /home/trader/spread-forward-study/code && /home/trader/sports-market-maker-prod-auto/.venv/bin/python -c '\''from research.spread_forward_recorder import HOME, status, instant, now; h=status(HOME); assert h.get("state") == "complete" or (h.get("state") in ("recording", "settlement_followup") and h["heartbeat_age_seconds"] < 180 and (now()-instant(h["last_success"])).total_seconds() < 180 and (now()-instant(h["last_survey"])).total_seconds() < 1800), "observer_health_check_failed"'\'''
+            fi
+          fi
+      - name: Remove temporary SSH identity
+        if: always()
+        run: rm -f ~/.ssh/smm_forward /tmp/spread-forward-code.tgz
