@@ -7,7 +7,12 @@ import os
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
-READ_PATHS = {"/portfolio/orders": "orders", "/portfolio/positions": "market_positions", "/portfolio/fills": "fills", "/portfolio/settlements": "settlements"}
+READ_PATHS = {
+    "/portfolio/orders": "orders",
+    "/portfolio/positions": "market_positions",
+    "/portfolio/fills": "fills",
+    "/portfolio/settlements": "settlements",
+}
 
 
 class ReconciliationError(ValueError):
@@ -22,7 +27,9 @@ def instant(value):
 
 
 def digest(value):
-    return hashlib.sha256(json.dumps(value, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
+    return hashlib.sha256(
+        json.dumps(value, sort_keys=True, separators=(",", ":")).encode()
+    ).hexdigest()
 
 
 def read_journals(root):
@@ -41,9 +48,15 @@ def read_journals(root):
 def pages(client, path, **params):
     rows, seen, cursor = [], set(), ""
     for _ in range(100):
-        data = client._request("GET", path, {**params, "limit": 200, **({"cursor": cursor} if cursor else {})})
+        data = client._request(
+            "GET",
+            path,
+            {**params, "limit": 200, **({"cursor": cursor} if cursor else {})},
+        )
         batch = data.get(READ_PATHS[path])
-        if not isinstance(batch, list) or any(not isinstance(row, dict) for row in batch):
+        if not isinstance(batch, list) or any(
+            not isinstance(row, dict) for row in batch
+        ):
             raise ReconciliationError("Incomplete account listing")
         rows.extend(batch)
         cursor = data.get("cursor") or ""
@@ -58,7 +71,9 @@ def pages(client, path, **params):
 def capture(client, root, now=None):
     started = now or datetime.now(UTC)
     events, hashes = read_journals(root)
-    intents = [e for rows in events.values() for e in rows if e.get("event") == "intent"]
+    intents = [
+        e for rows in events.values() for e in rows if e.get("event") == "intent"
+    ]
     if not intents:
         raise ReconciliationError("No production intents")
     since = min(instant(e["utc"]) for e in intents) - timedelta(minutes=1)
@@ -69,27 +84,52 @@ def capture(client, root, now=None):
     orders = pages(client, "/portfolio/orders", status="resting")
     positions = pages(client, "/portfolio/positions")
     _, after_hashes = read_journals(root)
+
     def canonical(rows):
         return sorted(json.dumps(row, sort_keys=True) for row in rows)
 
-    if hashes != after_hashes or canonical(positions) != canonical(before_positions) or canonical(orders) != canonical(before_orders):
+    if (
+        hashes != after_hashes
+        or canonical(positions) != canonical(before_positions)
+        or canonical(orders) != canonical(before_orders)
+    ):
         raise ReconciliationError("Account or journal changed during capture")
-    return {"schema_version": 1, "source": "signed_exchange_gets", "started_utc": started.isoformat(),
-            "finished_utc": (now or datetime.now(UTC)).isoformat(), "history_since_utc": since.isoformat(),
-            "journal_sha256": hashes, "journals": events, "positions": positions,
-            "resting_orders": orders, "fills": fills, "settlements": settlements,
-            "complete_pagination": True, "stable_capture": True, "trading_actions": 0}
+    return {
+        "schema_version": 1,
+        "source": "signed_exchange_gets",
+        "started_utc": started.isoformat(),
+        "finished_utc": (now or datetime.now(UTC)).isoformat(),
+        "history_since_utc": since.isoformat(),
+        "journal_sha256": hashes,
+        "journals": events,
+        "positions": positions,
+        "resting_orders": orders,
+        "fills": fills,
+        "settlements": settlements,
+        "complete_pagination": True,
+        "stable_capture": True,
+        "trading_actions": 0,
+    }
 
 
 def plan(snapshot, now):
-    if snapshot.get("source") != "signed_exchange_gets" or snapshot.get("complete_pagination") is not True or snapshot.get("stable_capture") is not True:
+    if (
+        snapshot.get("source") != "signed_exchange_gets"
+        or snapshot.get("complete_pagination") is not True
+        or snapshot.get("stable_capture") is not True
+    ):
         raise ReconciliationError("Complete stable signed capture required")
-    started, finished = instant(snapshot["started_utc"]), instant(snapshot["finished_utc"])
-    if not started <= finished <= now or (now-started).total_seconds() > 300:
+    started, finished = (
+        instant(snapshot["started_utc"]),
+        instant(snapshot["finished_utc"]),
+    )
+    if not started <= finished <= now or (now - started).total_seconds() > 300:
         raise ReconciliationError("Stale or invalid capture")
     owned_orders, owned_tickers = {}, {}
     for cohort, events in snapshot["journals"].items():
-        intents = {e["client_order_id"]: e for e in events if e.get("event") == "intent"}
+        intents = {
+            e["client_order_id"]: e for e in events if e.get("event") == "intent"
+        }
         for event in events:
             if event.get("event") != "accepted":
                 continue
@@ -115,18 +155,37 @@ def plan(snapshot, now):
         seen[fid] = digest(fill)
         if oid in owned_orders:
             continue
-        record = {"fill_id": fid, "order_id": oid, "ticker": ticker, "fill_sha256": digest(fill),
-                  "raw_fill": fill, "classification": "unrecognized_fill_requires_review"}
+        record = {
+            "fill_id": fid,
+            "order_id": oid,
+            "ticker": ticker,
+            "fill_sha256": digest(fill),
+            "raw_fill": fill,
+            "classification": "unrecognized_fill_requires_review",
+        }
         (candidates if ticker in owned_tickers else unrelated).append(record)
-    return {"snapshot_sha256": digest(snapshot), "status": "review_required",
-            "candidate_external_fills": candidates, "other_external_fills": unrelated,
-            "unowned_resting_orders": [r for r in snapshot["resting_orders"] if str(r.get("order_id")) not in owned_orders],
-            "positions_verified": False, "economic_replay_verified": False,
-            "safe_to_resume": False, "journal_changes": 0, "trading_actions": 0}
+    return {
+        "snapshot_sha256": digest(snapshot),
+        "status": "review_required",
+        "candidate_external_fills": candidates,
+        "other_external_fills": unrelated,
+        "unowned_resting_orders": [
+            r
+            for r in snapshot["resting_orders"]
+            if str(r.get("order_id")) not in owned_orders
+        ],
+        "positions_verified": False,
+        "economic_replay_verified": False,
+        "safe_to_resume": False,
+        "journal_changes": 0,
+        "trading_actions": 0,
+    }
 
 
 def write_private(path, data):
-    fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL | getattr(os, "O_NOFOLLOW", 0), 0o600)
+    fd = os.open(
+        path, os.O_WRONLY | os.O_CREAT | os.O_EXCL | getattr(os, "O_NOFOLLOW", 0), 0o600
+    )
     with os.fdopen(fd, "w") as handle:
         json.dump(data, handle, indent=2, allow_nan=False)
         handle.write("\n")
@@ -160,9 +219,26 @@ def main():
                 raise ReconciliationError("Snapshot required")
             result = plan(json.loads(args.snapshot.read_text()), datetime.now(UTC))
         write_private(args.out, result)
-        print(json.dumps({"status": "private_report_written", "trading_actions": 0, "journal_changes": 0, "safe_to_resume": False}))
+        print(
+            json.dumps(
+                {
+                    "status": "private_report_written",
+                    "trading_actions": 0,
+                    "journal_changes": 0,
+                    "safe_to_resume": False,
+                }
+            )
+        )
     except Exception as error:
-        print(json.dumps({"status": "unavailable", "reason_class": type(error).__name__, "safe_to_resume": False}))
+        print(
+            json.dumps(
+                {
+                    "status": "unavailable",
+                    "reason_class": type(error).__name__,
+                    "safe_to_resume": False,
+                }
+            )
+        )
         raise SystemExit(1) from None
 
 
