@@ -27,7 +27,7 @@ HASHES = {
     "tools/reconcile_external_spread_closes.py": "6202bb824c4861d1c12c72397cef2190312c437c198822de1ae0e0d7aaa28abc",
 }
 
-CHILD = '''
+CHILD = """
 import json, sys
 from pathlib import Path
 from live import external_spread_closes as ext
@@ -46,7 +46,7 @@ confirmation={"normalized_fill_sha256":[ext.fingerprint(ext.normalize(i["raw_fil
               "expected_spread_net":cfg["net"],"manual_close_fees":cfg["fees"],
               "original_snapshot_sha256":ext.fingerprint(snapshot)}
 write_private(Path(cfg["stage"])/"confirmation.json",confirmation)
-'''
+"""
 
 
 def git(*args):
@@ -78,7 +78,16 @@ def main():
             raise ValueError("Owner console required")
         if git("rev-parse", "HEAD").decode().strip() != BASE:
             raise ValueError("Unexpected deployed revision")
-        if git("status", "--porcelain", "--untracked-files=all", "--", "live", "kalshi", "markets", "tools").strip():
+        if git(
+            "status",
+            "--porcelain",
+            "--untracked-files=all",
+            "--",
+            "live",
+            "kalshi",
+            "markets",
+            "tools",
+        ).strip():
             raise ValueError("Production code must be unchanged")
         evidence = list(Path("/home/trader").glob("recon-readonly.*/review.json"))
         if len(evidence) != 1 or not evidence[0].with_name("snapshot.json").is_file():
@@ -100,27 +109,79 @@ def main():
         identity = pwd.getpwnam("trader")
         for path in [stage, *stage.rglob("*")]:
             os.chown(path, identity.pw_uid, identity.pw_gid, follow_symlinks=False)
-        config = {"stage": str(stage), "evidence": str(evidence[0].parent),
-                  "net": args.expected_net, "fees": args.expected_fees, "count": args.expected_count}
-        environment = {"PATH": "/usr/sbin:/usr/bin:/sbin:/bin", "PYTHONPATH": str(stage),
-                       "PYTHONNOUSERSITE": "1", "OPENBLAS_NUM_THREADS": "1", "OMP_NUM_THREADS": "1"}
-        log_fd = os.open(stage / "stage.log", os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+        config = {
+            "stage": str(stage),
+            "evidence": str(evidence[0].parent),
+            "net": args.expected_net,
+            "fees": args.expected_fees,
+            "count": args.expected_count,
+        }
+        environment = {
+            "PATH": "/usr/sbin:/usr/bin:/sbin:/bin",
+            "PYTHONPATH": str(stage),
+            "PYTHONNOUSERSITE": "1",
+            "OPENBLAS_NUM_THREADS": "1",
+            "OMP_NUM_THREADS": "1",
+        }
+        log_fd = os.open(
+            stage / "stage.log", os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600
+        )
         with os.fdopen(log_fd, "wb") as log:
-            subprocess.run(["runuser", "-u", "trader", "--", str(PYTHON), "-c", CHILD],
-                           input=json.dumps(config).encode(), cwd=stage, env=environment,
-                           stdout=log, stderr=log, check=True)
-            subprocess.run(["runuser", "-u", "trader", "--", str(PYTHON), "-m",
-                            "tools.reconcile_external_spread_closes", "plan",
-                            "--snapshot", str(evidence[0].with_name("snapshot.json")),
-                            "--confirmation", str(stage / "confirmation.json"),
-                            "--evidence-dir", str(stage / "evidence")],
-                           cwd=stage, env=environment, stdout=log, stderr=log, check=True)
-        print(json.dumps({"status": "STAGED_PLAN_VERIFIED", "stage": str(stage),
-                          "production_changes": 0, "journal_changes": 0, "trading_actions": 0}))
+            subprocess.run(
+                ["runuser", "-u", "trader", "--", str(PYTHON), "-c", CHILD],
+                input=json.dumps(config).encode(),
+                cwd=stage,
+                env=environment,
+                stdout=log,
+                stderr=log,
+                check=True,
+            )
+            subprocess.run(
+                [
+                    "runuser",
+                    "-u",
+                    "trader",
+                    "--",
+                    str(PYTHON),
+                    "-m",
+                    "tools.reconcile_external_spread_closes",
+                    "plan",
+                    "--snapshot",
+                    str(evidence[0].with_name("snapshot.json")),
+                    "--confirmation",
+                    str(stage / "confirmation.json"),
+                    "--evidence-dir",
+                    str(stage / "evidence"),
+                ],
+                cwd=stage,
+                env=environment,
+                stdout=log,
+                stderr=log,
+                check=True,
+            )
+        print(
+            json.dumps(
+                {
+                    "status": "STAGED_PLAN_VERIFIED",
+                    "stage": str(stage),
+                    "production_changes": 0,
+                    "journal_changes": 0,
+                    "trading_actions": 0,
+                }
+            )
+        )
     except Exception as error:
-        print(json.dumps({"status": "STAGING_HALTED", "reason_class": type(error).__name__,
-                          "stage": str(stage) if stage else None, "production_changes": 0,
-                          "reason": str(error) if isinstance(error, ValueError) else None}))
+        print(
+            json.dumps(
+                {
+                    "status": "STAGING_HALTED",
+                    "reason_class": type(error).__name__,
+                    "stage": str(stage) if stage else None,
+                    "production_changes": 0,
+                    "reason": str(error) if isinstance(error, ValueError) else None,
+                }
+            )
+        )
         raise SystemExit(1) from None
 
 
