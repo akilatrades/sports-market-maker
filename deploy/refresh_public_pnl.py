@@ -41,7 +41,9 @@ def service():
         text=True,
         timeout=8,
     )
-    return dict(line.split("=", 1) for line in result.stdout.splitlines() if "=" in line)
+    return dict(
+        line.split("=", 1) for line in result.stdout.splitlines() if "=" in line
+    )
 
 
 def validate(state, pid, owner, expected_owner, command, handled):
@@ -89,7 +91,9 @@ def main():
     deadline = time.monotonic() + 90
     while time.monotonic() < deadline:
         current = service()
-        if current.get("ActiveState") == "active" and current.get("MainPID") != str(pid):
+        if current.get("ActiveState") == "active" and current.get("MainPID") != str(
+            pid
+        ):
             try:
                 with urlopen("http://127.0.0.1:8766/v1/pnl", timeout=5) as response:
                     report = json.load(response)
@@ -118,5 +122,6 @@ if __name__ == "__main__":
     try:
         main()
     except Exception as error:
-        print(f"Reporting refresh did not verify: {type(error).__name__}")
+        reason = str(error) if isinstance(error, RuntimeError) else type(error).__name__
+        print(f"Reporting refresh did not verify: {reason}")
         raise SystemExit(1) from None
