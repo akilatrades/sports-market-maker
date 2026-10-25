@@ -798,7 +798,7 @@ def run(home):
                 cohort_orders=len(owned),
                 fills=len({f["fid"] for f in fills}),
                 fill_events=len({f["event_ticker"] for f in fills}),
-                open_markets=len(actual["open_lots"]),
+                fifo_markets_before_settlement=len(actual["open_lots"]),
                 contaminated_markets=len(contaminated),
                 valid_checkpoints=counts["valid"],
                 invalid_checkpoints=counts["invalid"],

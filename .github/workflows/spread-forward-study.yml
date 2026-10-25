@@ -20,8 +20,7 @@ jobs:
     if: >-
       github.repository == 'akilatrades/sports-market-maker' &&
       github.ref == 'refs/heads/main' &&
-      (github.event_name == 'schedule' ||
-       (github.actor == 'akilatrades' && github.triggering_actor == 'akilatrades'))
+      github.actor == 'akilatrades' && github.triggering_actor == 'akilatrades'
     runs-on: ubuntu-latest
     timeout-minutes: 14
     environment: funded-droplet
