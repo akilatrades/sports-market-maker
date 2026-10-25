@@ -34,12 +34,12 @@ def test_recruiter_readme_does_not_say_nba_never_started():
     assert "not a statistically" in text.lower()
 
 
-def test_public_dashboard_leads_with_caveated_case_study():
+def test_public_dashboard_focuses_on_actual_spread_results_with_sample_context():
     html = (ROOT / "dashboard" / "index.html").read_text(encoding="utf-8")
-    assert "Read the case study" in html
-    assert "docs/PROJECT_BRIEF.md" in html
-    assert "Historical replay is not live profit." in html
-    assert "directional passive-NO execution" in html
+    assert "Net realized P&amp;L" in html
+    assert "https://github.com/akilatrades/sports-market-maker" in html
+    assert "Small sample. Profitability is still being evaluated." in html
+    assert "reconciled manual exits and reported fees" in html
 
 
 def test_case_study_does_not_blend_simulation_with_exchange_settlements():
