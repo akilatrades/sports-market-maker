@@ -241,7 +241,8 @@ def main():
                 append_verified(args.root, plan, args.evidence_dir)
                 after = quiet_capture(client, args.root)
                 write_private(
-                    args.evidence_dir / ("post-snapshot-" + uuid.uuid4().hex + ".json"), after
+                    args.evidence_dir / ("post-snapshot-" + uuid.uuid4().hex + ".json"),
+                    after,
                 )
                 verified = build_plan(after, datetime.now(UTC), confirmation)
                 if verified["events_to_append"]:
