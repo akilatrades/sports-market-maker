@@ -801,7 +801,25 @@ def _csv(columns, rows):
     return out.getvalue()
 
 
-def build_files(journals, shadow=None):
+FORWARD_EXPORT = Path("/home/trader/spread-forward-study/export.json")
+
+
+def forward_study_file(path):
+    """Read a bounded observer artifact; credentials and raw journals stay out."""
+    if path.stat().st_size > 10_000_000:
+        raise ExportError("forward_study_export_too_large")
+    value = json.loads(path.read_text())
+    if not isinstance(value, dict) or value.get("protocol") != "spread-forward-30d-v1":
+        raise ExportError("forward_study_protocol_unknown")
+    allowed = ("protocol", "generated_at", "manifest", "report", "fills", "checkpoints")
+    clean = {key: value[key] for key in allowed if key in value}
+    health = path.with_name("health.json")
+    if health.exists() and health.stat().st_size < 20_000:
+        clean["health"] = json.loads(health.read_text())
+    return json.dumps(clean, sort_keys=True) + "\n"
+
+
+def build_files(journals, shadow=None, forward=FORWARD_EXPORT):
     """({path in the private repo: text}, summary, markets read completely).
 
     The summary is stamped with the newest journal event, not the clock, so
@@ -963,6 +981,12 @@ def build_files(journals, shadow=None):
             summary["spread_shadow_simulated"] = {
                 "status": f"error_{type(error).__name__}"
             }
+    if forward.exists():
+        try:
+            files["research/forward-study/latest.json"] = forward_study_file(forward)
+            summary["forward_study_export"] = "ok"
+        except (OSError, ValueError, ExportError, TypeError) as error:
+            summary["forward_study_export"] = "error_" + type(error).__name__
     files["data/summary.json"] = json.dumps(summary, indent=2, sort_keys=True) + "\n"
     files["README.md"] = README
     return files, summary, complete
