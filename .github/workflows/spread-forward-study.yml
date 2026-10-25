@@ -8,8 +8,6 @@ on:
         required: true
         default: status
         options: [status, start, stop]
-  schedule:
-    - cron: '43 * * * *'
 permissions:
   contents: read
 concurrency:
@@ -34,7 +32,7 @@ jobs:
           DROPLET_USER: ${{ secrets.DROPLET_USER }}
           DROPLET_SSH_KEY: ${{ secrets.DROPLET_SSH_KEY }}
           DROPLET_KNOWN_HOSTS: ${{ secrets.DROPLET_KNOWN_HOSTS }}
-          ACTION: ${{ inputs.action || 'status' }}
+          ACTION: ${{ inputs.action }}
           REVISION: ${{ github.sha }}
         run: |
           set -euo pipefail
@@ -52,8 +50,9 @@ jobs:
           ssh_args=(-T -o BatchMode=yes -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes -o ConnectTimeout=12 -i ~/.ssh/smm_forward)
           if [[ "$ACTION" == start ]]; then
             # Only research files go to a new trader-owned release directory.
-            # No production checkout, service, timer, journal, or arm marker changes.
-            tar -czf /tmp/spread-forward-code.tgz research/spread_forward_*.py deploy/spread_forward_control.py
+            # Trading workers, services, timers, journals and markers are untouched.
+            # Only the existing private exporter receives its reviewed read hook.
+            tar -czf /tmp/spread-forward-code.tgz research/spread_forward_*.py deploy/spread_forward_control.py tools/export_private_fills.py
             ssh "${ssh_args[@]}" "$remote" "umask 077; mkdir -p /home/trader/spread-forward-study/releases/$REVISION; tar -xzf - -C /home/trader/spread-forward-study/releases/$REVISION" < /tmp/spread-forward-code.tgz
             ssh "${ssh_args[@]}" "$remote" "umask 077; touch /home/trader/spread-forward-study/releases/$REVISION/research/__init__.py; ln -sfn releases/$REVISION /home/trader/spread-forward-study/code; /home/trader/sports-market-maker-prod-auto/.venv/bin/python /home/trader/spread-forward-study/code/deploy/spread_forward_control.py start"
             # Allow the first complete universe survey before starting the clock.

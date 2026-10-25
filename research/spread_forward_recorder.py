@@ -448,10 +448,39 @@ def survey(home, stop):
             if store.meta("manifest"):
                 from research.spread_forward_report import report
 
-                write_json(home / "report.json", report(store))
+                result = report(store)
+                write_json(home / "report.json", result)
+                write_export(home, store, result)
         except Exception as error:
             store.fault("survey", error)
         stop.wait(max(1, 600 - (now() - began).total_seconds()))
+
+
+def research_refs(value):
+    """Hash exchange references before the existing private export sees them."""
+    if isinstance(value, list):
+        return [research_refs(item) for item in value]
+    if isinstance(value, dict):
+        return {
+            key: digest(item) if key in ("fid", "oid") else research_refs(item)
+            for key, item in value.items()
+        }
+    return value
+
+
+def write_export(home, store, result):
+    manifest = store.meta("manifest")
+    value = research_refs(
+        {
+            "protocol": PROTOCOL,
+            "generated_at": now().isoformat(),
+            "manifest": manifest,
+            "report": result,
+            "fills": store.values("fill"),
+            "checkpoints": store.values("checkpoint"),
+        }
+    )
+    write_json(home / "export.json", value)
 
 
 def cohort(orders, manifest):

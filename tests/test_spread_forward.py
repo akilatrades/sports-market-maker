@@ -398,3 +398,52 @@ def test_offline_start_and_restart_preserve_frozen_manifest(tmp_path, monkeypatc
     (home / "STOP").unlink()
     recorder.run(home)
     assert Store(home / "evidence.sqlite3").meta("manifest") == first
+
+
+def test_research_export_hashes_nested_exchange_references():
+    from research.spread_forward_recorder import research_refs
+
+    original = {"fills": [{"fid": "secret-fill", "oid": "secret-order"}], "pnl": "1.25"}
+    clean = research_refs(original)
+    assert clean["pnl"] == "1.25"
+    assert len(clean["fills"][0]["fid"]) == 64
+    assert "secret" not in str(clean)
+    assert original["fills"][0]["fid"] == "secret-fill"
+
+
+def test_private_export_filters_extra_fields_and_rejects_unknown_protocol(tmp_path):
+    import json
+    from tools.export_private_fills import ExportError, forward_study_file
+
+    path = tmp_path / "export.json"
+    path.write_text(
+        json.dumps(
+            {
+                "protocol": "spread-forward-30d-v1",
+                "report": {},
+                "TOKEN": "not-exportable",
+            }
+        )
+    )
+    result = forward_study_file(path)
+    assert "TOKEN" not in result
+    path.write_text("[]")
+    with pytest.raises(ExportError):
+        forward_study_file(path)
+
+
+def test_export_installer_preserves_unreviewed_code(tmp_path):
+    from deploy.spread_forward_control import install_export
+
+    source, target, backup = [
+        tmp_path / name for name in ("source", "target", "backup")
+    ]
+    source.write_text("new")
+    target.write_text("unexpected")
+    with pytest.raises(SystemExit, match="reviewed baseline"):
+        install_export(source, target, backup)
+    assert target.read_text() == "unexpected"
+    assert not backup.exists()
+    target.write_text("new")
+    install_export(source, target, backup)
+    assert target.read_text() == "new"

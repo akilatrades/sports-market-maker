@@ -87,11 +87,17 @@ is compressed SQLite with WAL/full synchronous writes, private file permissions
 and a 2 GB limit. The recorder has only allowlisted production GET routes, refuses
 redirects, never executes the credential file, and exposes no place/cancel method.
 Its own user-cron entry handles restarts. A lock prevents duplicate processes.
-An hourly owner-scoped GitHub workflow reads aggregate health over host-pinned
-SSH. Research stops at the disk limit or the follow-up deadline without touching
+The existing hourly private export includes the study report, hashed fill/order
+references, checkpoints and current health at `research/forward-study/latest.json`
+in `akilatrades/smm-private-data`. Its existing token remains in its existing
+service. Only its reviewed data-export module receives a bounded read hook;
+installation checks the previous file hash and saves a private backup. Server
+control remains owner-triggered on main over host-pinned SSH. Research stops at
+the disk limit or the follow-up deadline without touching
 funded workers. Raw account evidence is never uploaded to the public repository
-or public Actions artifacts. Server storage is persistent but is not an offsite
-backup; loss of evidence invalidates the affected cohort.
+or public Actions artifacts. Full raw evidence remains on the server; the private
+export preserves derived research evidence, not a complete database backup.
+Loss of required evidence invalidates the affected cohort.
 
 Private outputs: `manifest.json`, `evidence.sqlite3`, `health.json`, `report.json`.
 Start/status/stop actions operate only on this recorder. Restarting preserves the
