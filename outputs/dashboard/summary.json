@@ -1,5 +1,5 @@
 {
- "updated_utc": "2026-10-25T01:39+00:00",
+ "updated_utc": "2026-10-25T02:10+00:00",
  "paper": {
   "ledgers": [
    {
@@ -774,7 +774,7 @@
   "90": 4
  },
  "live": {
-  "run_utc": "2026-10-25T01:39+00:00",
+  "run_utc": "2026-10-25T02:10+00:00",
   "mode": "dry",
   "env": "prod",
   "rule": "no_seller_bookline",
@@ -853,7 +853,7 @@
   "account_total_loss_stop": 100.0,
   "daily_loss_stop": 20.0,
   "total_loss_stop": 100.0,
-  "odds_snapshot_utc": "2026-10-25T01:19+00:00",
+  "odds_snapshot_utc": "2026-10-25T01:53+00:00",
   "trade_prints_through": "2026-10-23",
   "spread": {
    "rules": "spread-maker-v3-24h-starts",
