@@ -1,0 +1,33 @@
+name: Offline manual-close formatting
+on:
+  push:
+    branches: [fix/verified-manual-spread-closes]
+    paths: [.github/workflows/manual-close-format-temporary.yml]
+permissions:
+  contents: read
+jobs:
+  format:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install -r requirements.txt ruff==0.11.13
+      - run: ruff format live/shared_account_risk.py live/external_spread_closes.py tools/account_reconciliation_snapshot.py tools/reconcile_external_spread_closes.py tests/test_external_spread_closes.py tests/test_reconcile_external_spread_closes.py
+      - run: ruff check --fix live/shared_account_risk.py live/external_spread_closes.py tools/account_reconciliation_snapshot.py tools/reconcile_external_spread_closes.py tests/test_external_spread_closes.py tests/test_reconcile_external_spread_closes.py
+      - run: pytest -q tests/test_external_spread_closes.py tests/test_reconcile_external_spread_closes.py tests/test_shared_account_spread.py tests/test_shared_account_risk.py tests/test_prod_spread_auto.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: formatted-manual-close-source
+          path: |
+            live/shared_account_risk.py
+            live/external_spread_closes.py
+            tools/account_reconciliation_snapshot.py
+            tools/reconcile_external_spread_closes.py
+            tests/test_external_spread_closes.py
+            tests/test_reconcile_external_spread_closes.py
+          retention-days: 2
