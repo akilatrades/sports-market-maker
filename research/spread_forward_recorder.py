@@ -751,6 +751,11 @@ def run(home):
                 }
                 store.meta("manifest", manifest)
                 write_json(home / "manifest.json", manifest)
+                from research.spread_forward_report import report
+
+                result = report(store)
+                write_json(home / "report.json", result)
+                write_export(home, store, result)
             owned = cohort(orders, manifest)
             for oid, intent in owned.items():
                 store.put("cohort_order", oid, dict(intent, order_id=oid))
@@ -839,8 +844,12 @@ def run(home):
         except Exception as error:
             store.fault("fast_loop", error)
             old = store.meta("last_health_success") or {}
+            waiting = (
+                type(error) is EvidenceError
+                and str(error) == "waiting_for_complete_universe_survey"
+            )
             health.update(
-                state="recording_error" if manifest else "warming_up",
+                state="warming_up" if waiting else "recording_error",
                 error_class=type(error).__name__,
                 error_code=str(error) if type(error) is EvidenceError else None,
                 last_success=old.get("last_success"),
@@ -860,7 +869,19 @@ def main():
     if args.action == "status":
         print("SPREAD_FORWARD_HEALTH=" + canonical(status(HOME)))
     else:
-        run(HOME)
+        try:
+            run(HOME)
+        except Exception as error:
+            write_json(
+                HOME / "health.json",
+                {
+                    "at": now().isoformat(),
+                    "state": "recording_error",
+                    "error_class": type(error).__name__,
+                    "error_code": str(error) if type(error) is EvidenceError else None,
+                },
+            )
+            raise SystemExit(1) from None
 
 
 if __name__ == "__main__":
