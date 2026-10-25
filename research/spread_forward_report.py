@@ -11,7 +11,7 @@ def report(store):
     fills = store.values("fill")
     orders = store.values("cohort_order")
     samples = store.values("checkpoint")
-    snapshots = store.values("account_snapshot")
+    snapshots = store.iter_values("account_snapshot")
     outcomes, settlement_errors = {}, set()
     open_before_settlement = replay(fills)["open_lots"]
     revenues = {}
