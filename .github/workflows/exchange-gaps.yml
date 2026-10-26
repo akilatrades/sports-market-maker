@@ -1,0 +1,48 @@
+name: Exchange price gaps (research)
+# Read-only research (RESEARCH_LOG.md, 2026-10-23, Novig and ProphetX forward
+# study): hourly from 15:15 to 02:15 UTC until 1 November 2026. Spends Odds
+# API credits (capped in the script); commits aggregates only. Per-line state
+# stays in an Actions cache, never in the repository.
+on:
+  schedule:
+    - cron: "15 15-23 * * *"
+    - cron: "15 0-2 * * *"
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: repo-writes
+  cancel-in-progress: false
+jobs:
+  snapshot:
+    if: github.repository == 'akilatrades/sports-market-maker' && (github.event_name == 'schedule' || github.actor == 'akilatrades')
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      ODDS_API_KEY: ${{ secrets.ODDS_API_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r requirements.txt
+      - uses: actions/cache/restore@v4
+        with:
+          path: state/exchange_gaps
+          key: exchange-gaps-${{ github.run_id }}
+          restore-keys: exchange-gaps-
+      - run: python -m research.exchange_gaps
+      - uses: actions/cache/save@v4
+        if: always()
+        with:
+          path: state/exchange_gaps
+          key: exchange-gaps-${{ github.run_id }}
+      - name: Commit aggregates
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add outputs/exchange_gaps
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m "Exchange gap study (aggregates only)"
+          git pull --rebase -X theirs
+          git push
