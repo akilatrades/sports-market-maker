@@ -15,4 +15,4 @@ It goes to real money only after the test in RESEARCH_LOG.md is met.
 | t | -0.23 |
 | bankroll | 447.2 |
 | players who sat | 0 |
-| updated utc | 2026-10-26T16:22+00:00 |
+| updated utc | 2026-10-26T22:50+00:00 |
