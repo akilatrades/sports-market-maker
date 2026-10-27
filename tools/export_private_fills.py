@@ -419,6 +419,11 @@ KEEP_SPREAD = {
     "cancel_moot": {"utc", "order_id"},
     "fill": set(SPREAD_FILL_FIELDS),
     "settlement": {"ticker", "utc", "market_result", "revenue_dollars"},
+    # Preserve the complete signed payload internally: its fingerprint is
+    # checked by the deployed ledger. Raw evidence never enters an export.
+    "external_close": {
+        "utc", "reason", "evidence", "fill_sha256", "snapshot_sha256", "fill"
+    },
 }
 SPREAD_ORDER_COLUMNS = [
     "market",
@@ -467,6 +472,10 @@ SPREAD_SETTLEMENT_COLUMNS = [
     "revenue_dollars",
 ]
 SPREAD_PNL_COLUMNS = ["market", "day", "realized_pnl_dollars", "cumulative_dollars"]
+SPREAD_EXTERNAL_CLOSE_COLUMNS = [
+    "market", "fill_ref", "order_ref", "ticker", "closed_utc", "side",
+    "count", "price", "fee", "source",
+]
 
 
 def spread_tables(stream, now=None):
@@ -478,11 +487,12 @@ def spread_tables(stream, now=None):
     disarmed or stopped, later fills and settlements appear here only after
     its next live pass. Each event is held once (memory grows with orders).
     """
-    from live.shared_account_risk import spread_ledger
+    from live import shared_account_risk as accounting
 
     intents, status, accepted, reconciled, acceptances = {}, {}, {}, set(), []
     client_of, cancel, cancel_done, fills, settlements = {}, {}, {}, {}, {}
     latest = None
+    external = []
     for kind, e in stream:
         e["event"] = kind  # the ledger reads these same records
         stamp = _time(e.get("utc"))
@@ -509,6 +519,8 @@ def spread_tables(stream, now=None):
             status[cid] = "unknown_outcome"
         elif kind == "settlement" and e.get("ticker"):
             settlements[e["ticker"]] = e
+        elif kind == "external_close":
+            external.append(e)
         elif kind == "cancel_intent" and oid:
             cancel[oid] = e
         elif kind == "cancel_accepted" and oid:
@@ -530,8 +542,26 @@ def spread_tables(stream, now=None):
             *acceptances,
             *(f for per_order in fills.values() for f in per_order.values()),
             *settlements.values(),
+            *external,
         ]
-        ledger = spread_ledger(records, [], [], now or latest or datetime.now(UTC))
+        as_of = now or latest or datetime.now(UTC)
+        # Older releases do not recognize manual closes. Never silently use
+        # such a ledger when this evidence is present.
+        if external and not hasattr(accounting, "external_closes"):
+            raise ExportError("external_close_ledger_unavailable")
+        ledger = accounting.spread_ledger(records, [], [], as_of)
+        if external:
+            approved = accounting.external_closes.approved(records, [], as_of)
+            ledger["external_close_rows"] = [
+                {
+                    "market": "spread", "fill_ref": ref(row["fid"]),
+                    "order_ref": ref(row["oid"]), "ticker": row["ticker"],
+                    "closed_utc": row["when"], "side": row["side"],
+                    "count": row["count"], "price": row["price"], "fee": row["fee"],
+                    "source": "owner_verified_manual_cashout",
+                }
+                for row in approved.values()
+            ]
     except Exception as error:  # report it; never invent a number
         ledger = {"unavailable": str(error)[:120]}
     order_of = {cid: oid for oid, cid in client_of.items()}
@@ -840,8 +870,7 @@ def build_files(journals, shadow=None, forward=FORWARD_EXPORT):
                 summary["markets"][market] = {"status": f"error_{type(error).__name__}"}
                 continue
             if not ledger.get("unavailable"):
-                # Only a complete read may remove files it no longer writes
-                # (never the last good pnl_by_day.csv on a bad ledger).
+                # Only a complete accounting read may remove obsolete files.
                 complete.add(market)
             measured = None
             measure_path = (
@@ -863,14 +892,19 @@ def build_files(journals, shadow=None, forward=FORWARD_EXPORT):
                 ("orders", SPREAD_ORDER_COLUMNS, orders, "intent_utc"),
                 ("fills", SPREAD_FILL_COLUMNS, fills, "fill_utc"),
                 ("settlements", SPREAD_SETTLEMENT_COLUMNS, settlements, "settled_utc"),
+                (
+                    "external_closes", SPREAD_EXTERNAL_CLOSE_COLUMNS,
+                    ledger.get("external_close_rows", []), "closed_utc",
+                ),
             ):
                 by_day = {}
                 for row in rows:
                     by_day.setdefault(_day(row.get(when)), []).append(row)
                 for day, day_rows in by_day.items():
                     files[f"data/spread/{name}/{day}.csv"] = _csv(columns, day_rows)
-            if pnl:
-                files["data/spread/pnl_by_day.csv"] = _csv(SPREAD_PNL_COLUMNS, pnl)
+            # A header-only file means no current economics are available;
+            # retaining an old nonempty file would misrepresent freshness.
+            files["data/spread/pnl_by_day.csv"] = _csv(SPREAD_PNL_COLUMNS, pnl)
             versions = {}
             for o in orders:
                 v = versions.setdefault(
@@ -898,6 +932,10 @@ def build_files(journals, shadow=None, forward=FORWARD_EXPORT):
                 "realized_pnl_dollars": None
                 if ledger.get("unavailable")
                 else round(ledger["cumulative"], 2),
+                "realized_pnl_status": "unavailable"
+                if ledger.get("unavailable") else "verified",
+                "verified_external_close_fills": None
+                if ledger.get("unavailable") else len(ledger.get("external_close_rows", [])),
                 "realized_pnl_note": ledger.get("unavailable")
                 or "From the bot's own fills: a YES+NO pair counts when its second "
                 "leg fills, a held contract when its market settles (fees included).",
@@ -1308,3 +1346,4 @@ def main(argv=None):
 
 if __name__ == "__main__":
     main()
+
