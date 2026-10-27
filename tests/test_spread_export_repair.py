@@ -10,7 +10,12 @@ from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import patch
 
-from deploy.repair_spread_export import digest, install_candidate, verify_accounting
+from deploy.repair_spread_export import (
+    digest,
+    install_candidate,
+    read_accounting_records,
+    verify_accounting,
+)
 from tools import export_private_fills as export
 
 STAMP = "2026-10-27T12:00:00+00:00"
@@ -172,6 +177,15 @@ class ExportRepairTests(unittest.TestCase):
         target.symlink_to(source)
         with self.assertRaisesRegex(ValueError, "symlink"):
             install_candidate(source, target, backup)
+
+    def test_journal_preflight_preserves_evidence_and_rejects_incomplete_reads(self):
+        with self.path.open("a") as journal:
+            journal.write(json.dumps({"event": "survey", "large": "unused"}) + "\n")
+        self.assertEqual(read_accounting_records(self.path), [CLOSE])
+        with self.path.open("a") as journal:
+            journal.write('{"event":')
+        with self.assertRaisesRegex(ValueError, "incomplete_retry"):
+            read_accounting_records(self.path)
 
 
 if __name__ == "__main__":

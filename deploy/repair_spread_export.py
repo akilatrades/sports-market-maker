@@ -78,6 +78,22 @@ def verify_accounting(candidate, records):
         raise ValueError("external_close_export_mismatch")
 
 
+def read_accounting_records(path):
+    """Keep raw accounting evidence without loading bulky survey records."""
+    keep = {"intent", "accepted", "fill", "settlement", "external_close"}
+    records = []
+    with path.open() as journal:
+        for line in journal:
+            if not line.endswith("\n"):
+                raise ValueError("journal_read_incomplete_retry_later")
+            if not line.strip():
+                continue
+            event = json.loads(line)
+            if event.get("event") in keep:
+                records.append(event)
+    return records
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("action", choices=("check", "apply"))
@@ -121,10 +137,8 @@ def main():
     spec = importlib.util.spec_from_file_location("candidate_private_export", source)
     candidate = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(candidate)
-    raw = Path("/home/trader/prod-spread-auto/journal.jsonl").read_text()
-    if raw and not raw.endswith("\n"):
-        raise ValueError("journal_read_incomplete_retry_later")
-    verify_accounting(candidate, [json.loads(line) for line in raw.splitlines()])
+    journal = Path("/home/trader/prod-spread-auto/journal.jsonl")
+    verify_accounting(candidate, read_accounting_records(journal))
     if args.action == "apply":
         install_candidate(
             source, target, STUDY / "exporter-before-accounting-repair.py"

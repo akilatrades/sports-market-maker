@@ -184,8 +184,7 @@ def main():
     # Private input produces private output; never write into a git checkout.
     output_parent = args.out.parent.resolve()
     if any(
-        (parent / ".git").exists()
-        for parent in (output_parent, *output_parent.parents)
+        (parent / ".git").exists() for parent in (output_parent, *output_parent.parents)
     ):
         raise SystemExit("refuse_private_output_inside_git_checkout")
     result = review(json.loads(args.input.read_text()), datetime.now(UTC))
