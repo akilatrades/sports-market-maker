@@ -1,0 +1,52 @@
+name: Repair spread private export only
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: funded-droplet-code-release
+  cancel-in-progress: false
+jobs:
+  repair:
+    if: >-
+      github.repository == 'akilatrades/sports-market-maker' &&
+      github.ref == 'refs/heads/main' && github.actor == 'akilatrades' &&
+      github.triggering_actor == 'akilatrades'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment: funded-droplet
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+      - name: Verify and replace only the private reporting module
+        env:
+          DROPLET_HOST: ${{ secrets.DROPLET_HOST }}
+          DROPLET_USER: ${{ secrets.DROPLET_USER }}
+          DROPLET_SSH_KEY: ${{ secrets.DROPLET_SSH_KEY }}
+          DROPLET_KNOWN_HOSTS: ${{ secrets.DROPLET_KNOWN_HOSTS }}
+          REVISION: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          [[ "$DROPLET_USER" == trader ]]
+          [[ "$DROPLET_KNOWN_HOSTS" == *ssh-ed25519* ]]
+          [[ "$REVISION" =~ ^[0-9a-f]{40}$ ]]
+          test -n "$DROPLET_HOST"
+          umask 077
+          mkdir -p ~/.ssh
+          printf '%s\n' "$DROPLET_SSH_KEY" > ~/.ssh/smm_export_repair
+          printf '%s\n' "$DROPLET_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          ssh-keygen -y -f ~/.ssh/smm_export_repair > /dev/null
+          remote="$DROPLET_USER@$DROPLET_HOST"
+          ssh_args=(-T -o BatchMode=yes -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes -o ConnectTimeout=12 -i ~/.ssh/smm_export_repair)
+          release="/home/trader/spread-export-repair/$REVISION"
+          tar -czf /tmp/spread-export-repair.tgz tools/export_private_fills.py deploy/repair_spread_export.py
+          ssh "${ssh_args[@]}" "$remote" "umask 077; mkdir -p '$release'; tar -xzf - -C '$release'" < /tmp/spread-export-repair.tgz
+          python="/home/trader/sports-market-maker-prod-auto/.venv/bin/python"
+          ssh "${ssh_args[@]}" "$remote" "$python '$release/deploy/repair_spread_export.py' check"
+          ssh "${ssh_args[@]}" "$remote" "$python '$release/deploy/repair_spread_export.py' apply"
+          # The existing hourly exporter publishes the next private snapshot.
+          # No worker, timer, order, credential, policy or observer is changed.
+      - name: Remove temporary SSH identity
+        if: always()
+        run: rm -f ~/.ssh/smm_export_repair /tmp/spread-export-repair.tgz
