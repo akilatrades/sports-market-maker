@@ -1,7 +1,7 @@
 {
   "model_side": {
-    "orders": 199,
-    "resting_or_awaiting_result": 0,
+    "orders": 233,
+    "resting_or_awaiting_result": 34,
     "fill_rate": 0.2964824120603015,
     "fills_settled": 59,
     "bankroll": 499.69,
@@ -10,8 +10,8 @@
     "profit_dollars": -0.31
   },
   "no_seller": {
-    "orders": 200,
-    "resting_or_awaiting_result": 0,
+    "orders": 233,
+    "resting_or_awaiting_result": 33,
     "fill_rate": 0.52,
     "fills_settled": 104,
     "bankroll": 490.16,
@@ -20,9 +20,9 @@
     "profit_dollars": -9.84
   },
   "no_seller_late": {
-    "orders": 197,
-    "resting_or_awaiting_result": 0,
-    "fill_rate": 0.4619289340101523,
+    "orders": 230,
+    "resting_or_awaiting_result": 8,
+    "fill_rate": 0.4099099099099099,
     "fills_settled": 91,
     "bankroll": 488.7,
     "cents_per_contract": -1.06,
@@ -30,8 +30,8 @@
     "profit_dollars": -11.3
   },
   "no_seller_edge_sized": {
-    "orders": 136,
-    "resting_or_awaiting_result": 0,
+    "orders": 159,
+    "resting_or_awaiting_result": 23,
     "fill_rate": 0.47794117647058826,
     "fills_settled": 65,
     "bankroll": 570.59,
@@ -40,8 +40,8 @@
     "profit_dollars": 70.59
   },
   "no_seller_veto2": {
-    "orders": 200,
-    "resting_or_awaiting_result": 0,
+    "orders": 233,
+    "resting_or_awaiting_result": 33,
     "fill_rate": 0.52,
     "fills_settled": 104,
     "bankroll": 490.16,
@@ -50,8 +50,8 @@
     "profit_dollars": -9.84
   },
   "no_seller_stat_veto": {
-    "orders": 200,
-    "resting_or_awaiting_result": 0,
+    "orders": 233,
+    "resting_or_awaiting_result": 33,
     "fill_rate": 0.52,
     "fills_settled": 104,
     "bankroll": 490.16,
@@ -60,8 +60,8 @@
     "profit_dollars": -9.84
   },
   "no_seller_bookline": {
-    "orders": 203,
-    "resting_or_awaiting_result": 0,
+    "orders": 238,
+    "resting_or_awaiting_result": 35,
     "fill_rate": 0.5467980295566502,
     "fills_settled": 111,
     "bankroll": 446.04,
@@ -69,5 +69,5 @@
     "t": -1.02,
     "profit_dollars": -53.96
   },
-  "updated_utc": "2026-10-26T22:50+00:00"
+  "updated_utc": "2026-10-27T00:41+00:00"
 }
