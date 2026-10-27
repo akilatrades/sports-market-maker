@@ -1,28 +1,38 @@
-# Bet card, 2026-10-26
+# Bet card, 2026-10-27
 
-**Unproven rule.** In 2025-26 it broke even in the regular season and made its money in the playoffs, a finding made after the fact (see RESEARCH_LOG.md). Regular-season positions are paper only. Paper bankroll: $447.20.
+**Unproven rule.** In 2025-26 it broke even in the regular season and made its money in the playoffs, a finding made after the fact (see RESEARCH_LOG.md). Regular-season positions are paper only. Paper bankroll: $503.48.
 
 | Tip-off (ET) | Player | Bet | Price | Model | Edge | Contracts | Risk | Mode |
 |---|---|---|---:|---:|---:|---:|---:|---|
-| Mon 9:00 PM | Ace Bailey | YES 15+ points | 34¢ | 58% | 22¢ | 13 | $4.63 | paper |
-| Mon 9:00 PM | Ace Bailey | YES 2+ threes | 48¢ | 68% | 19¢ | 9 | $4.48 | paper |
-| Mon 9:00 PM | Ace Bailey | YES 6+ rebounds | 37¢ | 46% | 7¢ | 12 | $4.64 | paper |
-| Mon 9:00 PM | Cedric Coward | YES 3+ threes | 23¢ | 29% | 5¢ | 19 | $4.61 | paper |
-| Mon 9:00 PM | Jaren Jackson Jr. | YES 20+ points | 40¢ | 59% | 17¢ | 11 | $4.59 | paper |
-| Mon 9:00 PM | Jaylen Wells | YES 15+ points | 33¢ | 47% | 13¢ | 13 | $4.50 | paper |
-| Mon 9:00 PM | Keyonte George | NO 8+ assists | 58¢ | 75% | 15¢ | 7 | $4.18 | paper |
-| Mon 9:00 PM | Keyonte George | YES 20+ points | 53¢ | 63% | 8¢ | 8 | $4.38 | paper |
-| Mon 9:00 PM | Keyonte George | NO 4+ rebounds | 51¢ | 60% | 8¢ | 8 | $4.22 | paper |
-| Mon 9:00 PM | Ty Jerome | NO 25+ points | 47¢ | 56% | 7¢ | 9 | $4.39 | paper |
-| Mon 9:00 PM | Zach Edey | YES 6+ rebounds | 78¢ | 86% | 7¢ | 5 | $3.97 | paper |
-| Mon 10:00 PM | Aaron Gordon | YES 2+ assists | 67¢ | 77% | 8¢ | 6 | $4.12 | paper |
-| Mon 10:00 PM | De'Anthony Melton | YES 4+ rebounds | 29¢ | 40% | 9¢ | 15 | $4.57 | paper |
-| Mon 10:00 PM | De'Anthony Melton | YES 2+ threes | 39¢ | 47% | 6¢ | 11 | $4.48 | paper |
-| Mon 10:00 PM | DeMar DeRozan | YES 4+ assists | 36¢ | 51% | 13¢ | 12 | $4.52 | paper |
-| Mon 10:00 PM | DeMar DeRozan | YES 20+ points | 17¢ | 27% | 9¢ | 26 | $4.68 | paper |
-| Mon 10:00 PM | DeMar DeRozan | NO 1+ threes | 56¢ | 65% | 7¢ | 7 | $4.05 | paper |
-| Mon 10:00 PM | Jamal Murray | YES 20+ points | 67¢ | 75% | 7¢ | 6 | $4.12 | paper |
-| Mon 10:00 PM | Nikola Jokić | YES 14+ assists | 14¢ | 21% | 6¢ | 31 | $4.61 | paper |
-| Mon 10:00 PM | Stephen Curry | NO 25+ points | 49¢ | 68% | 17¢ | 9 | $4.57 | paper |
-| Mon 10:00 PM | Stephen Curry | NO 6+ assists | 72¢ | 82% | 9¢ | 6 | $4.41 | paper |
-| Mon 10:00 PM | Stephen Curry | NO 5+ threes | 65¢ | 73% | 7¢ | 6 | $4.00 | paper |
+| Tue 7:30 PM | Day'Ron Sharpe | NO 2+ assists | 29¢ | 52% | 21¢ | 17 | $5.18 | paper |
+| Tue 7:30 PM | Day'Ron Sharpe | NO 8+ rebounds | 49¢ | 70% | 19¢ | 10 | $5.08 | paper |
+| Tue 7:30 PM | Day'Ron Sharpe | NO 10+ points | 52¢ | 61% | 7¢ | 9 | $4.84 | paper |
+| Tue 7:30 PM | Egor Dëmin | NO 4+ assists | 58¢ | 73% | 13¢ | 8 | $4.78 | paper |
+| Tue 7:30 PM | Egor Dëmin | NO 4+ rebounds | 62¢ | 72% | 8¢ | 8 | $5.10 | paper |
+| Tue 7:30 PM | Jayson Tatum | NO 25+ points | 43¢ | 63% | 18¢ | 11 | $4.92 | paper |
+| Tue 7:30 PM | Julius Randle | NO 6+ assists | 60¢ | 89% | 28¢ | 8 | $4.94 | paper |
+| Tue 7:30 PM | Julius Randle | NO 20+ points | 52¢ | 74% | 21¢ | 9 | $4.84 | paper |
+| Tue 7:30 PM | Michael Porter Jr. | NO 25+ points | 66¢ | 83% | 16¢ | 7 | $4.73 | paper |
+| Tue 7:30 PM | Michael Porter Jr. | NO 6+ rebounds | 50¢ | 62% | 10¢ | 10 | $5.18 | paper |
+| Tue 7:30 PM | Mitchell Robinson | NO 8+ rebounds | 55¢ | 70% | 14¢ | 9 | $5.11 | paper |
+| Tue 7:30 PM | Paul George | NO 3+ threes | 41¢ | 53% | 10¢ | 12 | $5.13 | paper |
+| Tue 8:00 PM | Cade Cunningham | NO 6+ rebounds | 57¢ | 68% | 9¢ | 8 | $4.70 | paper |
+| Tue 8:00 PM | Cade Cunningham | NO 25+ points | 58¢ | 67% | 7¢ | 8 | $4.78 | paper |
+| Tue 8:00 PM | Devin Vassell | YES 4+ assists | 24¢ | 34% | 9¢ | 20 | $5.06 | paper |
+| Tue 8:00 PM | Devin Vassell | YES 6+ rebounds | 23¢ | 32% | 8¢ | 21 | $5.10 | paper |
+| Tue 8:00 PM | Domantas Sabonis | NO 6+ assists | 40¢ | 65% | 24¢ | 12 | $5.01 | paper |
+| Tue 8:00 PM | Domantas Sabonis | NO 14+ rebounds | 59¢ | 67% | 7¢ | 8 | $4.86 | paper |
+| Tue 8:00 PM | Jalen Brunson | NO 6+ assists | 47¢ | 60% | 11¢ | 10 | $4.88 | paper |
+| Tue 8:00 PM | John Collins | NO 6+ rebounds | 30¢ | 42% | 11¢ | 16 | $5.04 | paper |
+| Tue 8:00 PM | Julian Champagnie | YES 3+ threes | 37¢ | 47% | 9¢ | 13 | $5.03 | paper |
+| Tue 8:00 PM | Julian Champagnie | YES 15+ points | 18¢ | 25% | 6¢ | 2 | $0.39 | paper |
+| Tue 8:00 PM | Karl-Anthony Towns | NO 12+ rebounds | 48¢ | 66% | 16¢ | 10 | $4.98 | paper |
+| Tue 8:00 PM | Karl-Anthony Towns | NO 20+ points | 54¢ | 69% | 14¢ | 9 | $5.02 | paper |
+| Tue 8:00 PM | Karl-Anthony Towns | YES 4+ assists | 41¢ | 54% | 11¢ | 12 | $5.13 | paper |
+| Tue 8:00 PM | Karl-Anthony Towns | NO 2+ threes | 60¢ | 70% | 8¢ | 8 | $4.94 | paper |
+| Tue 8:00 PM | Miles McBride | NO 10+ points | 69¢ | 84% | 14¢ | 7 | $4.94 | paper |
+| Tue 8:00 PM | Stephon Castle | NO 6+ assists | 39¢ | 50% | 9¢ | 12 | $4.88 | paper |
+| Tue 8:00 PM | Stephon Castle | NO 6+ rebounds | 58¢ | 68% | 8¢ | 8 | $4.78 | paper |
+| Tue 8:00 PM | Victor Wembanyama | NO 12+ rebounds | 55¢ | 68% | 11¢ | 9 | $5.11 | paper |
+| Tue 8:00 PM | Victor Wembanyama | NO 30+ points | 67¢ | 75% | 7¢ | 2 | $1.38 | paper |
+| Tue 8:00 PM | Zach LaVine | NO 3+ threes | 49¢ | 61% | 10¢ | 10 | $5.08 | paper |
