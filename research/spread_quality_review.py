@@ -34,9 +34,7 @@ def review(data, as_of):
         if not checkpoint.get("valid") or instant(checkpoint["at"]) > as_of:
             continue
         levels = copy.deepcopy(checkpoint["external_book"])
-        for lot in sorted(
-            checkpoint["lots"], key=lambda x: (x["fill_at"], x["fid"])
-        ):
+        for lot in sorted(checkpoint["lots"], key=lambda x: (x["fill_at"], x["fid"])):
             fill = by_id.get(lot["fid"])
             if fill is None:
                 raise ValueError("unknown_checkpoint_fill")
@@ -59,20 +57,28 @@ def review(data, as_of):
             # Unfilled units retain unknown economics; never value them at zero.
             full = D(sale["remaining"]) == 0
             net = (
-                D(sale["proceeds"]) - D(sale["fee_estimate"])
-                - sold * D(fill["price"]) - D(fill["fee"]) * sold / original
+                D(sale["proceeds"])
+                - D(sale["fee_estimate"])
+                - sold * D(fill["price"])
+                - D(fill["fee"]) * sold / original
             )
             evidence[key] = {
-                "fill_ref": fill["fid"], "event": fill["event_ticker"],
-                "ticker": fill["ticker"], "horizon_seconds": horizon,
+                "fill_ref": fill["fid"],
+                "event": fill["event_ticker"],
+                "ticker": fill["ticker"],
+                "horizon_seconds": horizon,
                 "remaining_actual": str(quantity),
                 "best_external_bid": str(best) if best is not None else None,
-                "entry_price": fill["price"], "full_depth": full,
+                "entry_price": fill["price"],
+                "full_depth": full,
                 "modeled_exit_pnl": str(net) if full and quantity else None,
-                "sold_quantity": str(sold), "unfilled_quantity": sale["remaining"],
+                "sold_quantity": str(sold),
+                "unfilled_quantity": sale["remaining"],
             }
     due = [
-        (f["fid"], h) for f in fills for h in HORIZONS
+        (f["fid"], h)
+        for f in fills
+        for h in HORIZONS
         if (as_of - instant(f["at"])).total_seconds() > h + MAX_LATE
     ]
     valid = sum(key in evidence for key in due)
@@ -82,14 +88,15 @@ def review(data, as_of):
         observed = [r for r in rows if r["horizon_seconds"] == h]
         complete = [r for r in observed if r["modeled_exit_pnl"] is not None]
         horizon_report[str(h)] = {
-            "due": sum(key[1] == h for key in due), "valid": len(observed),
+            "due": sum(key[1] == h for key in due),
+            "valid": len(observed),
             "full_position_exits": len(complete),
             "positive_after_estimated_fees": sum(
                 D(r["modeled_exit_pnl"]) > 0 for r in complete
             ),
-            "modeled_pnl_full_positions_only": str(sum(
-                (D(r["modeled_exit_pnl"]) for r in complete), D(0)
-            )),
+            "modeled_pnl_full_positions_only": str(
+                sum((D(r["modeled_exit_pnl"]) for r in complete), D(0))
+            ),
         }
     # A scaled inventory can change FIFO netting. Refuse this simple sensitivity
     # when a market has multiple fills; do not pretend to model those paths.
@@ -118,11 +125,18 @@ def review(data, as_of):
                 capped[event] += pnl * fraction
             else:
                 pending_cost += retained
-            allocations.append({"event": event, "fill_ref": fill["fid"],
-                                "retained_cost": str(retained)})
+            allocations.append(
+                {
+                    "event": event,
+                    "fill_ref": fill["fid"],
+                    "retained_cost": str(retained),
+                }
+            )
         risk = {
-            "status": "fixed_fill_sensitivity_only", "event_budget": str(EVENT_BUDGET),
-            "resolved_events": len(actual), "pending_entry_cost": str(pending_cost),
+            "status": "fixed_fill_sensitivity_only",
+            "event_budget": str(EVENT_BUDGET),
+            "resolved_events": len(actual),
+            "pending_entry_cost": str(pending_cost),
             "actual_resolved_pnl": str(sum(actual.values(), D(0))),
             "scaled_resolved_pnl": str(sum(capped.values(), D(0))),
             "allocations": allocations,
@@ -141,11 +155,16 @@ def review(data, as_of):
     }
     return {
         "review_version": "spread-quality-review-v1",
-        "source_generated_at": data["generated_at"], "as_of": as_of.isoformat(),
+        "source_generated_at": data["generated_at"],
+        "as_of": as_of.isoformat(),
         "study_manifest": data["manifest"],
-        "coverage": {"due": len(due), "valid": valid,
-                     "ratio": valid / len(due) if due else None},
-        "exit_diagnostics": horizon_report, "checkpoint_details": rows,
+        "coverage": {
+            "due": len(due),
+            "valid": valid,
+            "ratio": valid / len(due) if due else None,
+        },
+        "exit_diagnostics": horizon_report,
+        "checkpoint_details": rows,
         "event_budget_sensitivity": risk,
         "matched_exit_comparison": {"hold": str(hold), "exits": exits},
         "entry_filter_test": {
@@ -163,11 +182,15 @@ def main():
     parser.add_argument("--out", type=Path, required=True)
     args = parser.parse_args()
     # Private input produces private output; never write into a git checkout.
-    if any((parent / ".git").exists() for parent in (args.out.parent, *args.out.parents)):
+    output_parent = args.out.parent.resolve()
+    if any(
+        (parent / ".git").exists()
+        for parent in (output_parent, *output_parent.parents)
+    ):
         raise SystemExit("refuse_private_output_inside_git_checkout")
     result = review(json.loads(args.input.read_text()), datetime.now(UTC))
-    args.out.parent.mkdir(parents=True, exist_ok=True)
     os.umask(0o077)
+    args.out.parent.mkdir(parents=True, exist_ok=True)
     if args.out.is_symlink():
         raise SystemExit("refuse_symlink_output")
     args.out.write_text(json.dumps(result, indent=2, sort_keys=True) + "\n")

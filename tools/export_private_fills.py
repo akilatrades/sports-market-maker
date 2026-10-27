@@ -422,7 +422,12 @@ KEEP_SPREAD = {
     # Preserve the complete signed payload internally: its fingerprint is
     # checked by the deployed ledger. Raw evidence never enters an export.
     "external_close": {
-        "utc", "reason", "evidence", "fill_sha256", "snapshot_sha256", "fill"
+        "utc",
+        "reason",
+        "evidence",
+        "fill_sha256",
+        "snapshot_sha256",
+        "fill",
     },
 }
 SPREAD_ORDER_COLUMNS = [
@@ -473,8 +478,16 @@ SPREAD_SETTLEMENT_COLUMNS = [
 ]
 SPREAD_PNL_COLUMNS = ["market", "day", "realized_pnl_dollars", "cumulative_dollars"]
 SPREAD_EXTERNAL_CLOSE_COLUMNS = [
-    "market", "fill_ref", "order_ref", "ticker", "closed_utc", "side",
-    "count", "price", "fee", "source",
+    "market",
+    "fill_ref",
+    "order_ref",
+    "ticker",
+    "closed_utc",
+    "side",
+    "count",
+    "price",
+    "fee",
+    "source",
 ]
 
 
@@ -554,10 +567,15 @@ def spread_tables(stream, now=None):
             approved = accounting.external_closes.approved(records, [], as_of)
             ledger["external_close_rows"] = [
                 {
-                    "market": "spread", "fill_ref": ref(row["fid"]),
-                    "order_ref": ref(row["oid"]), "ticker": row["ticker"],
-                    "closed_utc": row["when"], "side": row["side"],
-                    "count": row["count"], "price": row["price"], "fee": row["fee"],
+                    "market": "spread",
+                    "fill_ref": ref(row["fid"]),
+                    "order_ref": ref(row["oid"]),
+                    "ticker": row["ticker"],
+                    "closed_utc": row["when"],
+                    "side": row["side"],
+                    "count": row["count"],
+                    "price": row["price"],
+                    "fee": row["fee"],
                     "source": "owner_verified_manual_cashout",
                 }
                 for row in approved.values()
@@ -893,8 +911,10 @@ def build_files(journals, shadow=None, forward=FORWARD_EXPORT):
                 ("fills", SPREAD_FILL_COLUMNS, fills, "fill_utc"),
                 ("settlements", SPREAD_SETTLEMENT_COLUMNS, settlements, "settled_utc"),
                 (
-                    "external_closes", SPREAD_EXTERNAL_CLOSE_COLUMNS,
-                    ledger.get("external_close_rows", []), "closed_utc",
+                    "external_closes",
+                    SPREAD_EXTERNAL_CLOSE_COLUMNS,
+                    ledger.get("external_close_rows", []),
+                    "closed_utc",
                 ),
             ):
                 by_day = {}
@@ -933,9 +953,11 @@ def build_files(journals, shadow=None, forward=FORWARD_EXPORT):
                 if ledger.get("unavailable")
                 else round(ledger["cumulative"], 2),
                 "realized_pnl_status": "unavailable"
-                if ledger.get("unavailable") else "verified",
+                if ledger.get("unavailable")
+                else "verified",
                 "verified_external_close_fills": None
-                if ledger.get("unavailable") else len(ledger.get("external_close_rows", [])),
+                if ledger.get("unavailable")
+                else len(ledger.get("external_close_rows", [])),
                 "realized_pnl_note": ledger.get("unavailable")
                 or "From the bot's own fills: a YES+NO pair counts when its second "
                 "leg fills, a held contract when its market settles (fees included).",
@@ -1063,6 +1085,9 @@ wide-spread markets and holds fills to settlement.
   cancel request and result (`canceled`, `partial` = some filled first,
   `already_filled_or_expired`), filled contracts, average fill price, fees.
 - `fills/<day>.csv`: one row per fill, with the side bought and its price.
+- `external_closes/<day>.csv`: owner-verified manual cashouts, validated by
+  the existing production ledger. References are hashed; raw signed evidence
+  remains on the server. These closes are included in realized P&L.
 - `settlements/<day>.csv`: the market result and revenue Kalshi reported.
 - `pnl_by_day.csv`: REALIZED P&L by Eastern day from the bot's own fills
   (the calculation its loss stops use): a YES+NO pair counts when its second
@@ -1072,6 +1097,9 @@ wide-spread markets and holds fills to settlement.
   live pass; while the bot is disarmed or stopped, later settlements show up
   only after its next live pass (`markets_still_held` in the summary counts
   what is still open).
+  If `realized_pnl_status` is `unavailable`, the total is null and this CSV
+  contains only its header. Missing accounting is never reported as zero or
+  replaced with an older total.
 - `data/summary.json` → `markets.spread.live_fill_share`: of the contracts
   that public trade prints show traded at or through each finished live
   order's price (up to its size), the share the bot actually got. The
@@ -1346,4 +1374,3 @@ def main(argv=None):
 
 if __name__ == "__main__":
     main()
-

@@ -7,6 +7,7 @@ import json
 import os
 import subprocess
 import sys
+import tempfile
 from datetime import datetime
 from pathlib import Path
 
@@ -33,10 +34,14 @@ def install_candidate(source, target, backup, expected_old=OLD_EXPORT):
     if not backup.exists():
         backup.write_bytes(old)
         backup.chmod(0o600)
-    temporary = target.with_name(".export_private_fills.repair.tmp")
+    fd, name = tempfile.mkstemp(prefix=".export-repair-", dir=target.parent)
+    temporary = Path(name)
     try:
-        temporary.write_bytes(new)
-        temporary.chmod(target.stat().st_mode & 0o777)
+        with os.fdopen(fd, "wb") as handle:
+            os.fchmod(handle.fileno(), target.stat().st_mode & 0o777)
+            handle.write(new)
+            handle.flush()
+            os.fsync(handle.fileno())
         os.replace(temporary, target)
     finally:
         temporary.unlink(missing_ok=True)
@@ -48,13 +53,19 @@ def verify_accounting(candidate, records):
 
     if not hasattr(accounting, "external_closes"):
         raise ValueError("deployed_manual_close_ledger_required")
-    as_of = max(datetime.fromisoformat(e["utc"].replace("Z", "+00:00"))
-                for e in records if e.get("utc"))
+    as_of = max(
+        datetime.fromisoformat(e["utc"].replace("Z", "+00:00"))
+        for e in records
+        if e.get("utc")
+    )
     direct = accounting.spread_ledger(records, [], [], as_of)
     stream = [
-        (e["event"], {k: v for k, v in e.items()
-                      if k in candidate.KEEP_SPREAD[e["event"]]})
-        for e in records if e.get("event") in candidate.KEEP_SPREAD
+        (
+            e["event"],
+            {k: v for k, v in e.items() if k in candidate.KEEP_SPREAD[e["event"]]},
+        )
+        for e in records
+        if e.get("event") in candidate.KEEP_SPREAD
     ]
     exported = candidate.spread_tables(stream, now=as_of)[4]
     if exported.get("unavailable"):
@@ -84,13 +95,28 @@ def main():
     if revision != REVISION:
         raise ValueError("production_revision_changed")
     subprocess.run(
-        ["git", "-C", str(PRODUCTION), "diff", "--quiet", "HEAD", "--", "live", "kalshi"],
+        [
+            "git",
+            "-C",
+            str(PRODUCTION),
+            "diff",
+            "--quiet",
+            "HEAD",
+            "--",
+            "live",
+            "kalshi",
+        ],
         check=True,
     )
+    print("PRODUCTION_REVISION_UNCHANGED=PASS")
     source = Path(__file__).resolve().parents[1] / "tools/export_private_fills.py"
     target = PRODUCTION / "tools/export_private_fills.py"
-    if target.read_bytes() != source.read_bytes() and digest(target.read_bytes()) != OLD_EXPORT:
+    if (
+        target.read_bytes() != source.read_bytes()
+        and digest(target.read_bytes()) != OLD_EXPORT
+    ):
         raise ValueError("unexpected_exporter_baseline")
+    print("EXPORTER_BASELINE=PASS")
     sys.path.insert(0, str(PRODUCTION))
     spec = importlib.util.spec_from_file_location("candidate_private_export", source)
     candidate = importlib.util.module_from_spec(spec)
@@ -100,7 +126,9 @@ def main():
         raise ValueError("journal_read_incomplete_retry_later")
     verify_accounting(candidate, [json.loads(line) for line in raw.splitlines()])
     if args.action == "apply":
-        install_candidate(source, target, STUDY / "exporter-before-accounting-repair.py")
+        install_candidate(
+            source, target, STUDY / "exporter-before-accounting-repair.py"
+        )
     if manifest.read_bytes() != frozen:
         raise ValueError("study_manifest_changed")
     print("EXPORT_ACCOUNTING_MATCH=PASS")

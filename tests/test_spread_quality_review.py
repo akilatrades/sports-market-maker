@@ -73,7 +73,9 @@ class QualityReviewTests(unittest.TestCase):
     def test_late_and_future_observations_are_not_coverage(self):
         f = fill()
         late = study([f], [sample([f], lag=61)])
-        self.assertEqual(review(late, NOW + timedelta(seconds=70))["coverage"]["valid"], 0)
+        self.assertEqual(
+            review(late, NOW + timedelta(seconds=70))["coverage"]["valid"], 0
+        )
         future = study([f], [sample([f])])
         self.assertEqual(review(future, NOW)["checkpoint_details"], [])
 
@@ -85,7 +87,9 @@ class QualityReviewTests(unittest.TestCase):
         row = result["checkpoint_details"][0]
         self.assertEqual(Decimal(row["modeled_exit_pnl"]), Decimal("0.24"))
         self.assertEqual(data, original)
-        self.assertEqual(result["entry_filter_test"]["status"], "not_testable_from_this_export")
+        self.assertEqual(
+            result["entry_filter_test"]["status"], "not_testable_from_this_export"
+        )
 
     def test_partial_depth_never_becomes_a_full_position_profit(self):
         f = fill()
@@ -104,7 +108,10 @@ class QualityReviewTests(unittest.TestCase):
         self.assertEqual(rows["a"]["sold_quantity"], "2")
         self.assertEqual(rows["b"]["sold_quantity"], "0")
         self.assertIsNone(rows["b"]["modeled_exit_pnl"])
-        self.assertEqual(result["event_budget_sensitivity"]["status"], "unsupported_multiple_fills_in_market")
+        self.assertEqual(
+            result["event_budget_sensitivity"]["status"],
+            "unsupported_multiple_fills_in_market",
+        )
 
     def test_repeated_evidence_and_invalid_accounting_are_rejected(self):
         f = fill()
@@ -117,7 +124,10 @@ class QualityReviewTests(unittest.TestCase):
         invalid["report"]["invalid_markets"] = ["MARKET"]
         cases.append((invalid, "invalid_study_accounting"))
         for data, message in cases:
-            with self.subTest(message=message), self.assertRaisesRegex(ValueError, message):
+            with (
+                self.subTest(message=message),
+                self.assertRaisesRegex(ValueError, message),
+            ):
                 review(data, NOW + timedelta(seconds=61))
 
     def test_event_budget_is_chronological_fee_inclusive_and_not_recycled(self):
@@ -134,9 +144,9 @@ class QualityReviewTests(unittest.TestCase):
 
     def test_exit_comparison_excludes_unsettled_hold_baseline(self):
         data = study([fill()], resolved={"MARKET": "-0.80"})
-        data["report"]["shadow_scenarios_by_slippage_cents"]["2"]["resolved_pnl"].update(
-            {"MARKET": "0.10", "UNSETTLED": "100"}
-        )
+        data["report"]["shadow_scenarios_by_slippage_cents"]["2"][
+            "resolved_pnl"
+        ].update({"MARKET": "0.10", "UNSETTLED": "100"})
         comparison = review(data, NOW)["matched_exit_comparison"]
         self.assertEqual(comparison, {"hold": "-0.80", "exits": {"2": "0.10"}})
 
