@@ -13,7 +13,8 @@ on:
 permissions:
   contents: write
 concurrency:
-  group: repo-writes
+  # Dedicated group prevents unrelated output jobs replacing pending refreshes.
+  group: nba-projections
   cancel-in-progress: false
 jobs:
   project:
@@ -48,5 +49,8 @@ jobs:
           git add -A outputs/projections outputs/paper outputs/bets outputs/paper_maker outputs/dashboard outputs/nba_entry_study outputs/nba_model_diagnostics
           if git diff --cached --quiet; then exit 0; fi
           git commit -m "Projections"
-          git pull --rebase -X theirs
-          git push
+          for attempt in 1 2 3 4 5; do
+            if git pull --rebase && git push; then exit 0; fi
+            sleep $((attempt * 5))
+          done
+          exit 1

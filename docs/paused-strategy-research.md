@@ -95,6 +95,9 @@ public NBA data and projections, execute that recorder, then produce independent
 errors across all resolved opportunities, filled opportunities and unfilled
 opportunities. Compare the model with the entry market and fresh two-book
 consensus, with coverage explicit and uncertainty grouped by game.
+Projection refreshes use their own concurrency group so unrelated repository
+output jobs cannot replace a pending NBA run. Output pushes retry clean rebases;
+conflicts are surfaced rather than silently overwriting research state.
 
 Audit projection/book age, scheduled-tip agreement, injury flags, lineup
 confirmation and minutes provenance. A recent projection timestamp does not

@@ -30,12 +30,21 @@ def main():
         raise ValueError("funded_spread_pause_required")
     frozen = (STUDY / "manifest.json").read_bytes()
     manifest = json.loads(frozen)
-    if manifest["start"] != "2026-10-25T21:47:54.024216+00:00" or manifest["end"] != "2026-11-24T21:47:54.024216+00:00":
+    if (
+        manifest["start"] != "2026-10-25T21:47:54.024216+00:00"
+        or manifest["end"] != "2026-11-24T21:47:54.024216+00:00"
+    ):
         raise ValueError("unexpected_frozen_window")
-    frozen_sources = {p: hashlib.sha256(p.read_bytes()).hexdigest() for p in (STUDY / "code/research").glob("spread_forward*.py")}
+    frozen_sources = {
+        p: hashlib.sha256(p.read_bytes()).hexdigest()
+        for p in (STUDY / "code/research").glob("spread_forward*.py")
+    }
     if not frozen_sources:
         raise ValueError("original_observer_missing")
-    if digest({p.name: h for p, h in frozen_sources.items()}) != "72d4d3951bbbf0de89c018c62e530ecc635e85e03c0d6240dc09d0ceee32800a":
+    if (
+        digest({p.name: h for p, h in frozen_sources.items()})
+        != "72d4d3951bbbf0de89c018c62e530ecc635e85e03c0d6240dc09d0ceee32800a"
+    ):
         raise ValueError("original_observer_identity_changed")
     source = Path(__file__).resolve().parents[1]
     HOME.mkdir(mode=0o700, parents=True, exist_ok=True)
@@ -43,21 +52,37 @@ def main():
         raise ValueError("paper_study_stopped")
     active = HOME / "code"
     if active.exists():
-        if any((active / "research" / name).read_bytes() != (source / "research" / name).read_bytes() for name in FILES):
+        if any(
+            (active / "research" / name).read_bytes()
+            != (source / "research" / name).read_bytes()
+            for name in FILES
+        ):
             raise ValueError("new_paper_study_version_required")
     elif (HOME / "manifest.json").exists():
         raise ValueError("paper_release_missing")
     else:
         active.symlink_to(source, target_is_directory=True)
     prior = subprocess.run(["crontab", "-l"], text=True, capture_output=True)
-    if prior.returncode not in (0, 1) or (prior.returncode == 1 and "no crontab for" not in prior.stderr.lower()):
+    if prior.returncode not in (0, 1) or (
+        prior.returncode == 1 and "no crontab for" not in prior.stderr.lower()
+    ):
         raise ValueError("crontab_read_failed")
-    install_candidate(source / "tools/export_private_fills.py", PRODUCTION / "tools/export_private_fills.py", HOME / "exporter-before-paper.py", expected_old=EXPORT_BASE)
+    install_candidate(
+        source / "tools/export_private_fills.py",
+        PRODUCTION / "tools/export_private_fills.py",
+        HOME / "exporter-before-paper.py",
+        expected_old=EXPORT_BASE,
+    )
     python = PRODUCTION / ".venv/bin/python"
     command = f"* * * * * cd {active} && {python} -m research.spread_paper_recorder > /dev/null 2>&1"
-    subprocess.run(["crontab", "-"], input=cron(prior.stdout, command), text=True, check=True)
+    subprocess.run(
+        ["crontab", "-"], input=cron(prior.stdout, command), text=True, check=True
+    )
     cycle()
-    if (STUDY / "manifest.json").read_bytes() != frozen or any(hashlib.sha256(p.read_bytes()).hexdigest() != h for p, h in frozen_sources.items()):
+    if (STUDY / "manifest.json").read_bytes() != frozen or any(
+        hashlib.sha256(p.read_bytes()).hexdigest() != h
+        for p, h in frozen_sources.items()
+    ):
         raise ValueError("original_study_changed")
     if not stop.is_file():
         raise ValueError("funded_pause_changed")
@@ -66,7 +91,9 @@ def main():
     print("FUNDED_SPREAD_REMAINS_HALTED=PASS")
     print("FROZEN_STUDY_UNCHANGED=PASS")
     if health["state"] == "error":
-        print("PAPER_ERROR=" + str(health.get("error_code") or health.get("error_class")))
+        print(
+            "PAPER_ERROR=" + str(health.get("error_code") or health.get("error_class"))
+        )
         raise ValueError("paper_recorder_unhealthy")
     report = json.loads((HOME / "reconciliation.json").read_text())["report"]
     print("CASH_RECONCILIATION=" + report["status"])

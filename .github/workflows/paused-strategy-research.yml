@@ -54,7 +54,7 @@ jobs:
     permissions:
       contents: write
     concurrency:
-      group: repo-writes
+      group: nba-projections
       cancel-in-progress: false
     steps:
       - uses: actions/checkout@v4
@@ -85,5 +85,8 @@ jobs:
           git add outputs/books outputs/projections outputs/paper outputs/paper_maker outputs/bets outputs/nba_entry_study outputs/nba_model_diagnostics
           if git diff --cached --quiet; then exit 0; fi
           git commit -m "Refresh NBA paper evidence and input diagnostics"
-          git pull --rebase
-          git push
+          for attempt in 1 2 3 4 5; do
+            if git pull --rebase && git push; then exit 0; fi
+            sleep $((attempt * 5))
+          done
+          exit 1

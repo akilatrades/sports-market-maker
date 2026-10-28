@@ -861,7 +861,11 @@ def paused_research_file(path, protocol):
     value = json.loads(path.read_text())
     if not isinstance(value, dict) or value.get("protocol") != protocol:
         raise ExportError("paused_research_protocol_unknown")
-    clean = {k: value[k] for k in ("protocol", "generated_at", "manifest", "report") if k in value}
+    clean = {
+        k: value[k]
+        for k in ("protocol", "generated_at", "manifest", "report")
+        if k in value
+    }
     health = path.with_name("health.json")
     if health.exists() and health.stat().st_size < 20_000:
         clean["health"] = json.loads(health.read_text())
@@ -1089,12 +1093,18 @@ def build_files(journals, shadow=None, forward=FORWARD_EXPORT, entry=ENTRY_EXPOR
             summary["entry_quality_export"] = "error_" + type(error).__name__
     for name, filename, protocol in (
         ("spread-paper", "export.json", "spread-paper-execution-v1"),
-        ("spread-reconciliation", "reconciliation.json", "spread-cash-reconciliation-v1"),
+        (
+            "spread-reconciliation",
+            "reconciliation.json",
+            "spread-cash-reconciliation-v1",
+        ),
     ):
         path = PAPER_HOME / filename
         if path.exists():
             try:
-                files[f"research/{name}/latest.json"] = paused_research_file(path, protocol)
+                files[f"research/{name}/latest.json"] = paused_research_file(
+                    path, protocol
+                )
                 summary[name + "_export"] = "ok"
             except (OSError, ValueError, ExportError, TypeError, KeyError) as error:
                 summary[name + "_export"] = "error_" + type(error).__name__
