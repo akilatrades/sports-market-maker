@@ -850,6 +850,20 @@ def _csv(columns, rows):
 
 
 FORWARD_EXPORT = Path("/home/trader/spread-forward-study/export.json")
+ENTRY_EXPORT = Path("/home/trader/spread-entry-quality/export.json")
+
+
+def entry_quality_file(path):
+    if path.stat().st_size > 10_000_000:
+        raise ExportError("entry_quality_export_too_large")
+    value = json.loads(path.read_text())
+    if not isinstance(value, dict) or value.get("protocol") != "spread-entry-quality-v1":
+        raise ExportError("entry_quality_protocol_unknown")
+    clean = {key: value[key] for key in ("protocol", "generated_at", "manifest", "report")}
+    health = path.with_name("health.json")
+    if health.exists() and health.stat().st_size < 20_000:
+        clean["health"] = json.loads(health.read_text())
+    return json.dumps(clean, sort_keys=True) + "\n"
 
 
 def forward_study_file(path):
@@ -867,7 +881,7 @@ def forward_study_file(path):
     return json.dumps(clean, sort_keys=True) + "\n"
 
 
-def build_files(journals, shadow=None, forward=FORWARD_EXPORT):
+def build_files(journals, shadow=None, forward=FORWARD_EXPORT, entry=ENTRY_EXPORT):
     """({path in the private repo: text}, summary, markets read completely).
 
     The summary is stamped with the newest journal event, not the clock, so
@@ -1047,6 +1061,12 @@ def build_files(journals, shadow=None, forward=FORWARD_EXPORT):
             summary["forward_study_export"] = "ok"
         except (OSError, ValueError, ExportError, TypeError) as error:
             summary["forward_study_export"] = "error_" + type(error).__name__
+    if entry.exists():
+        try:
+            files["research/entry-quality/latest.json"] = entry_quality_file(entry)
+            summary["entry_quality_export"] = "ok"
+        except (OSError, ValueError, ExportError, TypeError, KeyError) as error:
+            summary["entry_quality_export"] = "error_" + type(error).__name__
     files["data/summary.json"] = json.dumps(summary, indent=2, sort_keys=True) + "\n"
     files["README.md"] = README
     return files, summary, complete
