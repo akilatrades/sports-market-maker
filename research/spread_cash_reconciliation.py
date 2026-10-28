@@ -62,7 +62,7 @@ def reconciliation(events, raw_fills, settlements, positions, at):
                 if normalize_fill(approvals[fid], intent) != fill:
                     raise EvidenceError("approved_close_disagrees_with_signed_fill")
                 lots = replay(fills)["open_lots"].get(ticker, [])
-                room = sum((amount(l["left"]) for l in lots if l["side"] != fill["side"]), Decimal(0))
+                room = sum((amount(lot["left"]) for lot in lots if lot["side"] != fill["side"]), Decimal(0))
                 if amount(fill["quantity"]) > room:
                     raise EvidenceError("external_close_would_open_risk")
             else:
@@ -101,10 +101,10 @@ def reconciliation(events, raw_fills, settlements, positions, at):
         # Realized pairs are not included in replay's resolved map while a lot remains.
         cash = -sum((amount(f["quantity"]) * amount(f["price"]) + amount(f["fee"]) for f in fs), Decimal(0))
         total_quantity = sum((amount(f["quantity"]) for f in fs), Decimal(0))
-        unpaired = sum((amount(l["left"]) for l in lots), Decimal(0))
+        unpaired = sum((amount(lot["left"]) for lot in lots), Decimal(0))
         cash += (total_quantity - unpaired) / 2  # each opposite-side pair pays $1
-        cost = sum((amount(l["left"]) * amount(l["price"]) for l in lots), Decimal(0))
-        net = sum((amount(l["left"]) * (1 if l["side"] == "yes" else -1) for l in lots), Decimal(0))
+        cost = sum((amount(lot["left"]) * amount(lot["price"]) for lot in lots), Decimal(0))
+        net = sum((amount(lot["left"]) * (1 if lot["side"] == "yes" else -1) for lot in lots), Decimal(0))
         status, revenue, result = "open", None, None
         if ticker in settled:
             s = settled[ticker]
@@ -117,13 +117,13 @@ def reconciliation(events, raw_fills, settlements, positions, at):
                 if held.get(ticker, Decimal(0)) != 0:
                     raise EvidenceError("settled_position_not_flat")
                 if result in ("yes", "no"):
-                    payout = sum((amount(l["left"]) for l in lots if l["side"] == result), Decimal(0))
+                    payout = sum((amount(lot["left"]) for lot in lots if lot["side"] == result), Decimal(0))
                     if abs(revenue - payout) > Decimal("0.005"):
                         raise EvidenceError("binary_cash_credit_mismatch")
                     status = "settled_binary_cash_verified"
                 elif result == "scalar":
                     for side in ("yes", "no"):
-                        expected_count = sum((amount(l["left"]) for l in lots if l["side"] == side), Decimal(0))
+                        expected_count = sum((amount(lot["left"]) for lot in lots if lot["side"] == side), Decimal(0))
                         if amount(s[side + "_count_fp"]) != expected_count:
                             raise EvidenceError("scalar_position_quantity_mismatch")
                     if revenue > unpaired:

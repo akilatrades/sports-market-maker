@@ -193,15 +193,19 @@ def cycle(home=HOME, get=public_get):
             if cash_status != "reconciled":
                 result["review_gate"]["status"] = "not_ready"
                 result["review_gate"]["reasons"].append("live_cash_reconciliation_requires_review")
-            if now() >= instant(manifest["drain_end"]): health["state"] = "complete"
-            elif now() >= instant(manifest["end"]): health["state"] = "settlement_followup"
+            if now() >= instant(manifest["drain_end"]):
+                health["state"] = "complete"
+            elif now() >= instant(manifest["end"]):
+                health["state"] = "settlement_followup"
             health.update(last_success=now().isoformat(), cash_status=cash_status, opportunities=len(rows) * 2, active_markets=len(active), scan_reasons=dict(reasons))
             write_json(home / "export.json", {"protocol": study.PROTOCOL, "generated_at": now().isoformat(), "manifest": {k: v for k, v in manifest.items() if k != "excluded_prior_events"}, "report": result})
         except Exception as error:
             health.update(state="error", error_class=type(error).__name__, error_code=str(error) if type(error) is EvidenceError else None)
         finally:
-            if store: store.db.close()
-            if source: source.close()
+            if store:
+                store.db.close()
+            if source:
+                source.close()
         write_json(home / "health.json", health)
 
 

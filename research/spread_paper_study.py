@@ -195,14 +195,22 @@ def report(rows, books, at, end, start=None):
         for game in matched:
             periods["first_half" if game_start[game] < split else "second_half"].append(primary[game])
     reasons = []
-    if at < instant(end): reasons.append("enrollment_not_finished")
-    if len(matched) < 30: reasons.append("fewer_than_30_independent_complete_games")
-    if score["pending_or_unknown_games"]: reasons.append("unresolved_evidence")
-    if coverage is not None and coverage < .95: reasons.append("checkpoint_coverage_below_95_percent")
-    if not score["game_mean_95_interval"] or score["game_mean_95_interval"][0] <= 0: reasons.append("positive_edge_not_established")
-    if not ci or ci[0] <= 0: reasons.append("improvement_over_baseline_not_established")
-    if score["without_best_three_games"] <= 0: reasons.append("results_depend_on_best_games")
-    if not split or any(len(v) < 10 or sum(v) <= 0 for v in periods.values()): reasons.append("positive_results_across_calendar_halves_not_established")
+    if at < instant(end):
+        reasons.append("enrollment_not_finished")
+    if len(matched) < 30:
+        reasons.append("fewer_than_30_independent_complete_games")
+    if score["pending_or_unknown_games"]:
+        reasons.append("unresolved_evidence")
+    if coverage is not None and coverage < .95:
+        reasons.append("checkpoint_coverage_below_95_percent")
+    if not score["game_mean_95_interval"] or score["game_mean_95_interval"][0] <= 0:
+        reasons.append("positive_edge_not_established")
+    if not ci or ci[0] <= 0:
+        reasons.append("improvement_over_baseline_not_established")
+    if score["without_best_three_games"] <= 0:
+        reasons.append("results_depend_on_best_games")
+    if not split or any(len(v) < 10 or sum(v) <= 0 for v in periods.values()):
+        reasons.append("positive_results_across_calendar_halves_not_established")
     return {
         "opportunities": len(rows) * 2, "games": len({r["game"] for r in rows}),
         "comparisons": comparisons,
