@@ -1,0 +1,92 @@
+name: Start paused strategy research
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: funded-droplet-code-release
+  cancel-in-progress: false
+jobs:
+  spread-paper:
+    if: >-
+      github.repository == 'akilatrades/sports-market-maker' &&
+      github.ref == 'refs/heads/main' && github.actor == 'akilatrades' &&
+      github.triggering_actor == 'akilatrades'
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    environment: funded-droplet
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+      - name: Install paper and cash observers only
+        env:
+          DROPLET_HOST: ${{ secrets.DROPLET_HOST }}
+          DROPLET_USER: ${{ secrets.DROPLET_USER }}
+          DROPLET_SSH_KEY: ${{ secrets.DROPLET_SSH_KEY }}
+          DROPLET_KNOWN_HOSTS: ${{ secrets.DROPLET_KNOWN_HOSTS }}
+          REVISION: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          [[ "$DROPLET_USER" == trader ]]
+          [[ "$DROPLET_KNOWN_HOSTS" == *ssh-ed25519* ]]
+          [[ "$REVISION" =~ ^[0-9a-f]{40}$ ]]
+          test -n "$DROPLET_HOST"
+          umask 077
+          mkdir -p ~/.ssh
+          printf '%s\n' "$DROPLET_SSH_KEY" > ~/.ssh/smm_paused_research
+          printf '%s\n' "$DROPLET_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          ssh-keygen -y -f ~/.ssh/smm_paused_research > /dev/null
+          remote="$DROPLET_USER@$DROPLET_HOST"
+          ssh_args=(-T -o BatchMode=yes -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes -o ConnectTimeout=12 -i ~/.ssh/smm_paused_research)
+          release="/home/trader/spread-paper-execution/releases/$REVISION"
+          tar -czf /tmp/paused-research.tgz research/__init__.py research/spread_paper_study.py research/spread_paper_recorder.py research/spread_cash_reconciliation.py research/nba_entry_study.py research/nba_entry_runner.py research/spread_entry_recorder.py research/spread_entry_quality.py research/spread_forward_core.py research/spread_forward_recorder.py research/spread_forward_candidates.py deploy/paused_research_control.py deploy/repair_spread_export.py tools/export_private_fills.py
+          ssh "${ssh_args[@]}" "$remote" "umask 077; mkdir -p '$release'; tar -xzf - -C '$release'" < /tmp/paused-research.tgz
+          python="/home/trader/sports-market-maker-prod-auto/.venv/bin/python"
+          ssh "${ssh_args[@]}" "$remote" "cd '$release' && '$python' -m deploy.paused_research_control"
+      - name: Remove temporary SSH identity
+        if: always()
+        run: rm -f ~/.ssh/smm_paused_research /tmp/paused-research.tgz
+  nba-paper:
+    if: github.repository == 'akilatrades/sports-market-maker' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: write
+    concurrency:
+      group: nba-projections
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install -r requirements.txt
+      - name: Refresh near-term NBA consensus
+        env:
+          ODDS_API_KEY: ${{ secrets.ODDS_API_KEY }}
+        run: python -m live.log_books nba --near
+      - name: Refresh public NBA history and projections
+        run: |
+          python -m live.fetch_nba_data
+          python -m live.nba_paper
+          python -m live.nba_projections
+      - name: Record unchanged paper comparison and model diagnostics
+        run: |
+          python -m research.nba_entry_runner
+          python -m research.nba_model_diagnostics
+      - name: Commit public paper data only
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add outputs/books outputs/projections outputs/paper outputs/paper_maker outputs/bets outputs/nba_entry_study outputs/nba_model_diagnostics
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m "Refresh NBA paper evidence and input diagnostics"
+          for attempt in 1 2 3 4 5; do
+            if git pull --rebase && git push; then exit 0; fi
+            sleep $((attempt * 5))
+          done
+          exit 1

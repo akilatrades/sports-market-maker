@@ -851,6 +851,25 @@ def _csv(columns, rows):
 
 FORWARD_EXPORT = Path("/home/trader/spread-forward-study/export.json")
 ENTRY_EXPORT = Path("/home/trader/spread-entry-quality/export.json")
+PAPER_HOME = Path("/home/trader/spread-paper-execution")
+
+
+def paused_research_file(path, protocol):
+    """Explicitly scoped summaries; raw signed account evidence stays local."""
+    if path.stat().st_size > 10_000_000:
+        raise ExportError("paused_research_export_too_large")
+    value = json.loads(path.read_text())
+    if not isinstance(value, dict) or value.get("protocol") != protocol:
+        raise ExportError("paused_research_protocol_unknown")
+    clean = {
+        k: value[k]
+        for k in ("protocol", "generated_at", "manifest", "report")
+        if k in value
+    }
+    health = path.with_name("health.json")
+    if health.exists() and health.stat().st_size < 20_000:
+        clean["health"] = json.loads(health.read_text())
+    return json.dumps(clean, sort_keys=True) + "\n"
 
 
 def entry_quality_file(path):
@@ -1072,6 +1091,23 @@ def build_files(journals, shadow=None, forward=FORWARD_EXPORT, entry=ENTRY_EXPOR
             summary["entry_quality_export"] = "ok"
         except (OSError, ValueError, ExportError, TypeError, KeyError) as error:
             summary["entry_quality_export"] = "error_" + type(error).__name__
+    for name, filename, protocol in (
+        ("spread-paper", "export.json", "spread-paper-execution-v1"),
+        (
+            "spread-reconciliation",
+            "reconciliation.json",
+            "spread-cash-reconciliation-v1",
+        ),
+    ):
+        path = PAPER_HOME / filename
+        if path.exists():
+            try:
+                files[f"research/{name}/latest.json"] = paused_research_file(
+                    path, protocol
+                )
+                summary[name + "_export"] = "ok"
+            except (OSError, ValueError, ExportError, TypeError, KeyError) as error:
+                summary[name + "_export"] = "error_" + type(error).__name__
     files["data/summary.json"] = json.dumps(summary, indent=2, sort_keys=True) + "\n"
     files["README.md"] = README
     return files, summary, complete
