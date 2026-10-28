@@ -61,6 +61,7 @@ def input_quality(rows, at):
 def calibration(rows):
     buckets, games = defaultdict(list), defaultdict(list)
     errors, market_errors, book_errors = [], [], []
+    matched_model_errors, book_games = [], defaultdict(list)
     forecasts, wins = [], []
     for row in rows:
         p = 1 - study.number(row["p_model_yes"])
@@ -87,7 +88,10 @@ def calibration(rows):
                 and study.number(inputs["book_n"]) >= 2
                 and instant(inputs["book_commence_utc"]) == instant(row["tip_utc"])
             ):
-                book_errors.append(((1 - study.number(inputs["p_book"])) - won) ** 2)
+                book_error = ((1 - study.number(inputs["p_book"])) - won) ** 2
+                book_errors.append(book_error)
+                matched_model_errors.append(squared)
+                book_games[row["game_id"]].append(squared - book_error)
         except (KeyError, ValueError, TypeError):
             pass
     n = len(rows)
@@ -102,6 +106,13 @@ def calibration(rows):
         if book_errors
         else None,
         "fresh_book_observations": len(book_errors),
+        "model_brier_on_fresh_book_coverage": sum(matched_model_errors)
+        / len(matched_model_errors)
+        if matched_model_errors
+        else None,
+        "model_minus_book_brier_game_95_interval": interval(
+            [sum(v) / len(v) for v in book_games.values()]
+        ),
         "model_minus_market_brier_game_95_interval": interval(
             [sum(v) / len(v) for v in games.values()]
         ),

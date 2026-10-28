@@ -5,11 +5,14 @@ import unittest
 from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 from pathlib import Path
+from unittest.mock import patch
 
 from deploy.paused_research_control import cron
+from research import spread_paper_recorder as recorder
 from research.nba_model_diagnostics import calibration, input_quality
 from research.spread_cash_reconciliation import reconciliation
 from research.spread_forward_core import EvidenceError, digest
+from research.spread_forward_recorder import Store
 from research.spread_paper_study import (
     first_fill,
     make_opportunity,
@@ -321,6 +324,83 @@ class DiagnosticsTest(unittest.TestCase):
             self.assertNotIn("raw_signed_fills", out)
             with self.assertRaises(ExportError):
                 paused_research_file(path, "wrong-version")
+
+    def test_complete_cycle_uses_isolated_storage_and_preserves_pause(self):
+        events, raw = events_and_fill(quantity="1")
+
+        class API:
+            def pages(self, route, key, params=None):
+                if route == "/portfolio/fills":
+                    return [raw]
+                if route == "/portfolio/positions":
+                    return [{"ticker": raw["ticker"], "position_fp": "1"}]
+                if route in ("/portfolio/orders", "/portfolio/settlements"):
+                    return []
+                raise AssertionError(route)
+
+        def get(route, params):
+            if route.endswith("/orderbook"):
+                return {
+                    "orderbook_fp": {
+                        "yes_dollars": [["0.4", "10"]],
+                        "no_dollars": [["0.4", "10"]],
+                    }
+                }
+            if route.startswith("/series/"):
+                return {"series": {"fee_type": "quadratic", "fee_multiplier": 1}}
+            raise AssertionError(route)
+
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            original, state, paper = root / "original", root / "worker", root / "paper"
+            original.mkdir()
+            state.mkdir()
+            stop = state / "KILL"
+            stop.write_text("owner pause\n")
+            manifest = {
+                "start": "2026-10-25T21:47:54.024216+00:00",
+                "end": "2026-11-24T21:47:54.024216+00:00",
+                "drain_end": "2026-12-01T21:47:54.024216+00:00",
+                "baseline_events": [],
+            }
+            manifest_path = original / "manifest.json"
+            manifest_path.write_text(json.dumps(manifest))
+            before_manifest = manifest_path.read_bytes()
+            (original / "health.json").write_text(
+                json.dumps({"state": "recording", "last_success": AT.isoformat()})
+            )
+            source = Store(original / "evidence.sqlite3")
+            source.put(
+                "candidate",
+                "fresh-candidate",
+                {
+                    "ticker": "KXTEST-NEWGAME-TEAM",
+                    "event_ticker": "KXTEST-NEWGAME",
+                    "eligible": True,
+                    "at": AT.isoformat(),
+                    "event_start_utc": (AT + timedelta(hours=4)).isoformat(),
+                },
+                at=AT,
+            )
+            source.db.close()
+            with (
+                patch.object(recorder, "ORIGINAL", original),
+                patch.object(recorder, "STATE", state),
+                patch.object(recorder, "now", return_value=AT),
+                patch.object(recorder, "policy", return_value={}),
+                patch.object(recorder, "journal", return_value=events),
+                patch.object(recorder, "environment", return_value={}),
+                patch.object(recorder, "ReadOnlyAPI", return_value=API()),
+                patch.object(recorder.os, "nice"),
+            ):
+                recorder.cycle(home=paper, get=get)
+            health = json.loads((paper / "health.json").read_text())
+            self.assertEqual(health["state"], "recording", health)
+            self.assertEqual(health["cash_status"], "reconciled")
+            self.assertEqual(health["opportunities"], 2)
+            self.assertEqual(stop.read_text(), "owner pause\n")
+            self.assertEqual(manifest_path.read_bytes(), before_manifest)
+            self.assertFalse((state / "journal.jsonl").exists())
 
 
 if __name__ == "__main__":
