@@ -96,6 +96,22 @@ class NBAStudyTest(unittest.TestCase):
         self.assertEqual(nba.fee(0.5), 0.02)
         self.assertEqual(nba.fee(0.5, count=10), 0.18)
 
+    def test_subcent_join_does_not_round_into_a_crossing_order(self):
+        row = nba.opportunity(
+            projection(),
+            {
+                "orderbook_fp": {
+                    "yes_dollars": [[".5001", "10"]],
+                    "no_dollars": [[".4998", "10"]],
+                }
+            },
+            {"fee_type": "quadratic", "fee_multiplier": "1"},
+            AT,
+        )
+        self.assertFalse(row["improved"])
+        self.assertEqual(row["price"], 0.4998)
+        self.assertLess(row["price"], 1 - 0.5001)
+
     def test_trade_pages_fail_closed_and_deduplicate(self):
         def responder(payload):
             return (
@@ -196,7 +212,11 @@ class NBAStudyTest(unittest.TestCase):
         with (
             tempfile.TemporaryDirectory() as directory,
             patch.object(nba, "utcnow", return_value=AT),
-            patch.object(nba, "load_csv", return_value=candidates),
+            patch.object(
+                nba,
+                "load_csv",
+                side_effect=lambda p: candidates if p.name == "latest.csv" else [],
+            ),
         ):
             root = Path(directory)
             run(get=get, root=root)

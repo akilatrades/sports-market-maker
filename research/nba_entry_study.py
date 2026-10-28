@@ -95,7 +95,7 @@ def opportunity(row, book, fees, at):
         raise EvidenceError("unsupported_fee_type")
     multiplier = number(fees["fee_multiplier"])
     improved = ask - bid >= 0.02 - 1e-9
-    price = round(1 - ask + (0.01 if improved else 0), 2)
+    price = round(1 - ask + (0.01 if improved else 0), 4)
     charge = fee(price, multiplier)
     p = number(row["p_model"])
     source_age = (at - instant(row["snapshot_utc"])).total_seconds()
@@ -144,7 +144,7 @@ def opportunity(row, book, fees, at):
         "quantity": 1,
         "price": price,
         "improved": improved,
-        "yes_level": round(1 - price, 2),
+        "yes_level": round(1 - price, 4),
         "p_model_yes": p,
         "fee_upper_estimate": charge,
         "fee_type": fees["fee_type"],
