@@ -97,6 +97,13 @@ def main():
         raise ValueError("paper_recorder_unhealthy")
     report = json.loads((HOME / "reconciliation.json").read_text())["report"]
     print("CASH_RECONCILIATION=" + report["status"])
+    print(
+        "SCALAR_CASH_VERIFIED="
+        + ("PASS" if report["scalar_cash_reconciled"] else "NO_VERIFIED_CASE")
+    )
+    issues = sorted({code for row in report["markets"] for code in row["issues"]})
+    if issues:
+        print("CASH_REVIEW_CODES=" + ",".join(issues))
 
 
 if __name__ == "__main__":
