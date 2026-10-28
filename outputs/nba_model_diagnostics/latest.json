@@ -1,0 +1,257 @@
+{
+  "calibration": {
+    "all_resolved_opportunities": {
+      "actual_win_rate": null,
+      "fresh_book_brier": null,
+      "fresh_book_observations": 0,
+      "independent_games": 0,
+      "market_midpoint_brier": null,
+      "mean_predicted_win_probability": null,
+      "model_brier": null,
+      "model_brier_on_fresh_book_coverage": null,
+      "model_minus_book_brier_game_95_interval": null,
+      "model_minus_market_brier_game_95_interval": null,
+      "note": "Lower Brier score is better. Market midpoint is a forecast benchmark, not an executable price. Book and model scores must use matched coverage for a causal comparison.",
+      "opportunities": 0,
+      "probability_buckets": []
+    },
+    "through_filled": {
+      "actual_win_rate": null,
+      "fresh_book_brier": null,
+      "fresh_book_observations": 0,
+      "independent_games": 0,
+      "market_midpoint_brier": null,
+      "mean_predicted_win_probability": null,
+      "model_brier": null,
+      "model_brier_on_fresh_book_coverage": null,
+      "model_minus_book_brier_game_95_interval": null,
+      "model_minus_market_brier_game_95_interval": null,
+      "note": "Lower Brier score is better. Market midpoint is a forecast benchmark, not an executable price. Book and model scores must use matched coverage for a causal comparison.",
+      "opportunities": 0,
+      "probability_buckets": []
+    },
+    "through_unfilled": {
+      "actual_win_rate": null,
+      "fresh_book_brier": null,
+      "fresh_book_observations": 0,
+      "independent_games": 0,
+      "market_midpoint_brier": null,
+      "mean_predicted_win_probability": null,
+      "model_brier": null,
+      "model_brier_on_fresh_book_coverage": null,
+      "model_minus_book_brier_game_95_interval": null,
+      "model_minus_market_brier_game_95_interval": null,
+      "note": "Lower Brier score is better. Market midpoint is a forecast benchmark, not an executable price. Book and model scores must use matched coverage for a causal comparison.",
+      "opportunities": 0,
+      "probability_buckets": []
+    },
+    "touch_filled": {
+      "actual_win_rate": null,
+      "fresh_book_brier": null,
+      "fresh_book_observations": 0,
+      "independent_games": 0,
+      "market_midpoint_brier": null,
+      "mean_predicted_win_probability": null,
+      "model_brier": null,
+      "model_brier_on_fresh_book_coverage": null,
+      "model_minus_book_brier_game_95_interval": null,
+      "model_minus_market_brier_game_95_interval": null,
+      "note": "Lower Brier score is better. Market midpoint is a forecast benchmark, not an executable price. Book and model scores must use matched coverage for a causal comparison.",
+      "opportunities": 0,
+      "probability_buckets": []
+    },
+    "touch_unfilled": {
+      "actual_win_rate": null,
+      "fresh_book_brier": null,
+      "fresh_book_observations": 0,
+      "independent_games": 0,
+      "market_midpoint_brier": null,
+      "mean_predicted_win_probability": null,
+      "model_brier": null,
+      "model_brier_on_fresh_book_coverage": null,
+      "model_minus_book_brier_game_95_interval": null,
+      "model_minus_market_brier_game_95_interval": null,
+      "note": "Lower Brier score is better. Market midpoint is a forecast benchmark, not an executable price. Book and model scores must use matched coverage for a causal comparison.",
+      "opportunities": 0,
+      "probability_buckets": []
+    }
+  },
+  "generated_at": "2026-10-28T15:27:46.034770+00:00",
+  "input_quality": {
+    "issues": {
+      "fresh_two_book_consensus_missing": 1780,
+      "fully_verified_rows": 0,
+      "lineup_unverified": 1780,
+      "reported_injury_status": 135,
+      "tonight_minutes_unverified": 1780
+    },
+    "meaning": "Freshly generated predictions do not establish confirmed lineups or tonight-specific minutes. Missing inputs remain unverified.",
+    "rows": 1780
+  },
+  "next_requirements": [
+    "Fresh prospective games under the fixed equal-size protocol.",
+    "Model filter must improve fee-adjusted outcomes over the same-opportunity NO baseline.",
+    "Verify lineup and tonight-specific minutes before relying on model-derived sizing.",
+    "Compare filled and unfilled forecast errors by game; do not fit corrections to the evaluation games."
+  ],
+  "paper_comparison": {
+    "all_opportunities_resolved": 0,
+    "brier_all_resolved": null,
+    "comparisons": {
+      "through/fresh_books_veto": {
+        "actual_win_rate": null,
+        "brier_filled": null,
+        "execution_known": 0,
+        "exposure_by_game": {},
+        "filled": 0,
+        "forecast_win_probability": null,
+        "net_pnl_fee_upper_estimate": 0,
+        "orders": 0,
+        "pending_or_unknown_execution": 0,
+        "pnl_without_best_game": 0,
+        "pnl_without_best_three_games": 0,
+        "settled": 0,
+        "settled_games": 0,
+        "trade_print_markouts_not_executable_quotes": {
+          "300": {
+            "mean": null,
+            "observations": 0
+          },
+          "60": {
+            "mean": null,
+            "observations": 0
+          }
+        }
+      },
+      "through/model_veto": {
+        "actual_win_rate": null,
+        "brier_filled": null,
+        "execution_known": 0,
+        "exposure_by_game": {},
+        "filled": 0,
+        "forecast_win_probability": null,
+        "net_pnl_fee_upper_estimate": 0,
+        "orders": 0,
+        "pending_or_unknown_execution": 0,
+        "pnl_without_best_game": 0,
+        "pnl_without_best_three_games": 0,
+        "settled": 0,
+        "settled_games": 0,
+        "trade_print_markouts_not_executable_quotes": {
+          "300": {
+            "mean": null,
+            "observations": 0
+          },
+          "60": {
+            "mean": null,
+            "observations": 0
+          }
+        }
+      },
+      "through/no_baseline": {
+        "actual_win_rate": null,
+        "brier_filled": null,
+        "execution_known": 0,
+        "exposure_by_game": {},
+        "filled": 0,
+        "forecast_win_probability": null,
+        "net_pnl_fee_upper_estimate": 0,
+        "orders": 0,
+        "pending_or_unknown_execution": 0,
+        "pnl_without_best_game": 0,
+        "pnl_without_best_three_games": 0,
+        "settled": 0,
+        "settled_games": 0,
+        "trade_print_markouts_not_executable_quotes": {
+          "300": {
+            "mean": null,
+            "observations": 0
+          },
+          "60": {
+            "mean": null,
+            "observations": 0
+          }
+        }
+      },
+      "touch/fresh_books_veto": {
+        "actual_win_rate": null,
+        "brier_filled": null,
+        "execution_known": 0,
+        "exposure_by_game": {},
+        "filled": 0,
+        "forecast_win_probability": null,
+        "net_pnl_fee_upper_estimate": 0,
+        "orders": 0,
+        "pending_or_unknown_execution": 0,
+        "pnl_without_best_game": 0,
+        "pnl_without_best_three_games": 0,
+        "settled": 0,
+        "settled_games": 0,
+        "trade_print_markouts_not_executable_quotes": {
+          "300": {
+            "mean": null,
+            "observations": 0
+          },
+          "60": {
+            "mean": null,
+            "observations": 0
+          }
+        }
+      },
+      "touch/model_veto": {
+        "actual_win_rate": null,
+        "brier_filled": null,
+        "execution_known": 0,
+        "exposure_by_game": {},
+        "filled": 0,
+        "forecast_win_probability": null,
+        "net_pnl_fee_upper_estimate": 0,
+        "orders": 0,
+        "pending_or_unknown_execution": 0,
+        "pnl_without_best_game": 0,
+        "pnl_without_best_three_games": 0,
+        "settled": 0,
+        "settled_games": 0,
+        "trade_print_markouts_not_executable_quotes": {
+          "300": {
+            "mean": null,
+            "observations": 0
+          },
+          "60": {
+            "mean": null,
+            "observations": 0
+          }
+        }
+      },
+      "touch/no_baseline": {
+        "actual_win_rate": null,
+        "brier_filled": null,
+        "execution_known": 0,
+        "exposure_by_game": {},
+        "filled": 0,
+        "forecast_win_probability": null,
+        "net_pnl_fee_upper_estimate": 0,
+        "orders": 0,
+        "pending_or_unknown_execution": 0,
+        "pnl_without_best_game": 0,
+        "pnl_without_best_three_games": 0,
+        "settled": 0,
+        "settled_games": 0,
+        "trade_print_markouts_not_executable_quotes": {
+          "300": {
+            "mean": null,
+            "observations": 0
+          },
+          "60": {
+            "mean": null,
+            "observations": 0
+          }
+        }
+      }
+    },
+    "interpretation": "Paper execution sensitivity only; public prints do not prove queue fills. Correlated games, not contracts, are independent observations."
+  },
+  "promotion_status": "research_only_no_live_enable",
+  "protocol": "nba-model-diagnostics-v1",
+  "source_protocol": "nba-equal-size-entry-v1"
+}
