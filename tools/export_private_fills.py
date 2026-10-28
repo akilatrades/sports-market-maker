@@ -857,9 +857,14 @@ def entry_quality_file(path):
     if path.stat().st_size > 10_000_000:
         raise ExportError("entry_quality_export_too_large")
     value = json.loads(path.read_text())
-    if not isinstance(value, dict) or value.get("protocol") != "spread-entry-quality-v1":
+    if (
+        not isinstance(value, dict)
+        or value.get("protocol") != "spread-entry-quality-v1"
+    ):
         raise ExportError("entry_quality_protocol_unknown")
-    clean = {key: value[key] for key in ("protocol", "generated_at", "manifest", "report")}
+    clean = {
+        key: value[key] for key in ("protocol", "generated_at", "manifest", "report")
+    }
     health = path.with_name("health.json")
     if health.exists() and health.stat().st_size < 20_000:
         clean["health"] = json.loads(health.read_text())
