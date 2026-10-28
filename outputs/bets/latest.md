@@ -52,6 +52,7 @@
 | Tue 11:00 PM | Austin Reaves | NO 25+ points | 60¢ | 72% | 10¢ | 8 | $4.94 | paper |
 | Tue 11:00 PM | Austin Reaves | NO 6+ assists | 49¢ | 60% | 9¢ | 10 | $5.08 | paper |
 | Tue 11:00 PM | Collin Sexton | YES 2+ threes | 34¢ | 47% | 11¢ | 14 | $4.98 | paper |
+| Tue 11:00 PM | Collin Sexton | YES 15+ points | 23¢ | 45% | 21¢ | 21 | $5.10 | paper |
 | Tue 11:00 PM | Damian Lillard | NO 3+ threes | 39¢ | 53% | 12¢ | 12 | $4.88 | paper |
 | Tue 11:00 PM | Damian Lillard | YES 4+ assists | 64¢ | 73% | 7¢ | 7 | $4.60 | paper |
 | Tue 11:00 PM | Damian Lillard | NO 20+ points | 48¢ | 56% | 6¢ | 10 | $4.98 | paper |
@@ -62,7 +63,12 @@
 | Tue 11:00 PM | Jrue Holiday | YES 4+ assists | 53¢ | 73% | 18¢ | 9 | $4.93 | paper |
 | Tue 11:00 PM | Jrue Holiday | YES 15+ points | 28¢ | 47% | 17¢ | 17 | $5.00 | paper |
 | Tue 11:00 PM | Jrue Holiday | YES 2+ threes | 56¢ | 65% | 8¢ | 8 | $4.62 | paper |
+| Tue 11:00 PM | Jrue Holiday | YES 4+ rebounds | 45¢ | 57% | 10¢ | 11 | $5.15 | paper |
 | Tue 11:00 PM | Luka Dončić | YES 4+ threes | 51¢ | 59% | 6¢ | 9 | $4.75 | paper |
 | Tue 11:00 PM | Quentin Grimes | NO 2+ threes | 63¢ | 76% | 12¢ | 7 | $4.53 | paper |
+| Tue 11:00 PM | Quentin Grimes | NO 4+ rebounds | 61¢ | 72% | 10¢ | 8 | $5.02 | paper |
+| Tue 11:00 PM | Quentin Grimes | NO 10+ points | 58¢ | 67% | 7¢ | 8 | $4.78 | paper |
+| Tue 11:00 PM | Sandro Mamukelashvili | NO 1+ threes | 39¢ | 48% | 7¢ | 12 | $4.88 | paper |
 | Tue 11:00 PM | Walker Kessler | YES 2+ assists | 49¢ | 61% | 11¢ | 10 | $5.08 | paper |
 | Tue 11:00 PM | Walker Kessler | YES 10+ rebounds | 55¢ | 65% | 8¢ | 9 | $5.11 | paper |
+| Tue 11:00 PM | Walker Kessler | NO 15+ points | 60¢ | 69% | 7¢ | 8 | $4.94 | paper |
