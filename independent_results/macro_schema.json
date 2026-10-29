@@ -1,0 +1,39 @@
+{
+  "length": 160,
+  "first": {
+    "chart": {
+      "_comment": "2026-10-28 00:00",
+      "caption": "Inflation Nowcasting",
+      "subcaption": "2013-7",
+      "yaxisname": "Month-over-month percent change",
+      "legendnumcolumns": "4",
+      "labelpadding": "10",
+      "showvalues": "0",
+      "showexportdatamenuitem": "1",
+      "showtooltip": "1",
+      "basefont": "Helvetica",
+      "bgalpha": "0",
+      "showborder": "0"
+    },
+    "categories": {
+      "length": 1,
+      "first": {
+        "category": {
+          "length": 10,
+          "first": "dict"
+        }
+      }
+    },
+    "dataset": {
+      "length": 8,
+      "first": {
+        "seriesname": "CPI Inflation",
+        "color": "e03430",
+        "data": {
+          "length": 9,
+          "first": "dict"
+        }
+      }
+    }
+  }
+}
