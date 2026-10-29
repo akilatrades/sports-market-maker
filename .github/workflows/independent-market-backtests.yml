@@ -1,0 +1,46 @@
+name: Independent market backtests
+on:
+  push:
+    branches: [research/independent-market-backtests-20261029]
+    paths: ['independent_research/**', '.github/workflows/independent-market-backtests.yml']
+permissions:
+  contents: write
+concurrency:
+  group: independent-market-backtests-20261029
+  cancel-in-progress: false
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: research/independent-market-backtests-20261029
+          sparse-checkout: |
+            independent_research
+            independent_results
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install pandas==2.2.3 numpy==2.1.3 scipy==1.14.1
+      - name: Public-data collection only
+        run: python independent_research/collect.py
+      - name: Analyze if analysis module is present
+        run: |
+          if test -f independent_research/analyze.py; then python independent_research/analyze.py; fi
+      - name: Retain data on isolated research branch
+        if: always()
+        run: |
+          test "$GITHUB_REF_NAME" = 'research/independent-market-backtests-20261029'
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add --sparse independent_results
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m 'Independent public research data [skip ci]'
+          git push origin HEAD:refs/heads/research/independent-market-backtests-20261029
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: independent-public-data
+          path: independent_results
+          retention-days: 30
