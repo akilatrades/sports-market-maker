@@ -1,0 +1,784 @@
+{
+  "run_at": "2026-10-29T12:54:39.651016+00:00",
+  "scope": "independent research only",
+  "analysis_sha256": "1c6771bbbda776bba2e4e839cb2ea5cdd95d12c8a456c9a481384f6f931f5a9e",
+  "trading_backtests_completed": 0,
+  "tsa": {
+    "baseline": {
+      "mae": 150347.42324561405,
+      "rmse": 190811.20606989265,
+      "bias": 31457.041666666668,
+      "brier": 0.06842458970005659,
+      "log_score": 0.21542020084933666,
+      "covered90": 0.6842105263157895,
+      "width90": 464825.37759703
+    },
+    "challenger": {
+      "mae": 127265.62053409849,
+      "rmse": 175881.18229091394,
+      "bias": 67642.92851657202,
+      "brier": 0.05415765284699783,
+      "log_score": 0.19871289525061822,
+      "covered90": 0.8157894736842105,
+      "width90": 429858.2148373055
+    },
+    "mae_improvement_baseline_minus_challenger": {
+      "n": 114,
+      "mean": 23081.802711515553,
+      "ci95": [
+        -11091.092450189704,
+        59332.96278942639
+      ]
+    },
+    "relative_mae_improvement": 0.1535231014488897,
+    "n_targets": 114,
+    "first": "2026-07-01 00:00:00",
+    "last": "2026-10-22 00:00:00",
+    "status": "forecast_proxy_completed",
+    "no_trading_pnl": true,
+    "label": "first observed in third-party weekly archive; first official release not verified",
+    "snapshots": 35,
+    "all_forecasts": 226,
+    "skipped": 0,
+    "protocol": "one preceding-day 12 UTC origin per target; known snapshot only; fixed ridge=10",
+    "thresholds": [
+      1500000,
+      2000000,
+      2500000,
+      3000000
+    ],
+    "max_feature_snapshot_age_days": 6.370300925925926,
+    "brier_improvement": {
+      "n": 114,
+      "mean": 0.01426693685305876,
+      "ci95": [
+        -0.014823312019643289,
+        0.03839878621501723
+      ]
+    },
+    "by_month": {
+      "2026-07": {
+        "baseline": {
+          "mae": 87657.73387096774,
+          "rmse": 134346.39683438127,
+          "bias": 14740.975806451614
+        },
+        "challenger": {
+          "mae": 142477.5905960169,
+          "rmse": 183731.8450299589,
+          "bias": 95746.16709535429
+        },
+        "mae_improvement_baseline_minus_challenger": {
+          "n": 31,
+          "mean": -54819.85672504916,
+          "ci95": [
+            -75192.75410623735,
+            -34189.089177929185
+          ]
+        },
+        "relative_mae_improvement": -0.6253852832397429,
+        "n_targets": 31,
+        "first": "2026-07-01 00:00:00",
+        "last": "2026-07-31 00:00:00"
+      },
+      "2026-08": {
+        "baseline": {
+          "mae": 207285.46774193548,
+          "rmse": 234233.73469380723,
+          "bias": 186386.24193548388
+        },
+        "challenger": {
+          "mae": 137743.85892147946,
+          "rmse": 183648.03846164217,
+          "bias": 120548.89726000727
+        },
+        "mae_improvement_baseline_minus_challenger": {
+          "n": 31,
+          "mean": 69541.60882045601,
+          "ci95": [
+            14935.946408940492,
+            133603.14937170033
+          ]
+        },
+        "relative_mae_improvement": 0.3354871404059707,
+        "n_targets": 31,
+        "first": "2026-08-01 00:00:00",
+        "last": "2026-08-31 00:00:00"
+      },
+      "2026-09": {
+        "baseline": {
+          "mae": 149032.475,
+          "rmse": 190924.64327482387,
+          "bias": 28569.608333333334
+        },
+        "challenger": {
+          "mae": 147159.62360019208,
+          "rmse": 207322.0639270532,
+          "bias": 10888.40560823467
+        },
+        "mae_improvement_baseline_minus_challenger": {
+          "n": 30,
+          "mean": 1872.8513998079036,
+          "ci95": [
+            -39195.47773988804,
+            36812.595176049515
+          ]
+        },
+        "relative_mae_improvement": 0.012566733524407514,
+        "n_targets": 30,
+        "first": "2026-09-01 00:00:00",
+        "last": "2026-09-30 00:00:00"
+      },
+      "2026-10": {
+        "baseline": {
+          "mae": 160245.125,
+          "rmse": 190299.2358726015,
+          "bias": -159360.42045454544
+        },
+        "challenger": {
+          "mae": 63937.59535632166,
+          "rmse": 81190.22737763384,
+          "bias": 30886.122164816446
+        },
+        "mae_improvement_baseline_minus_challenger": {
+          "n": 22,
+          "mean": 96307.52964367834,
+          "ci95": [
+            43304.78952286015,
+            151392.21785492345
+          ]
+        },
+        "relative_mae_improvement": 0.6010013074886262,
+        "n_targets": 22,
+        "first": "2026-10-01 00:00:00",
+        "last": "2026-10-22 00:00:00"
+      }
+    },
+    "revisions_after_first_observed": 0
+  },
+  "weather_jfk": {
+    "baseline": {
+      "mae": 2.6801470588235294,
+      "rmse": 3.4603850516788377,
+      "bias": -2.1286764705882355
+    },
+    "challenger": {
+      "mae": 2.0940563725490198,
+      "rmse": 2.741585822483039,
+      "bias": 0.06769587072117011
+    },
+    "mae_improvement_baseline_minus_challenger": {
+      "n": 272,
+      "mean": 0.5860906862745097,
+      "ci95": [
+        0.34761901794616135,
+        0.8193084288800264
+      ]
+    },
+    "relative_mae_improvement": 0.21867855509830814,
+    "n_targets": 272,
+    "first": "2026-01-01 00:00:00",
+    "last": "2026-09-30 00:00:00",
+    "status": "forecast_component_completed",
+    "no_trading_pnl": true,
+    "station": "KJFK",
+    "raw_forecast_rows": 5088,
+    "joined_days": 634,
+    "label": "NWS CLI archive; exchange settlement and revision identity not verified",
+    "signal": "00 UTC GFS MOS temperature grid max for local day; fixed trailing bias correction",
+    "limitations": [
+      "grid maximum approximates daily maximum",
+      "assumed 6-hour publication lag, receipt timestamps absent",
+      "not an NBM distribution or intraday conditional-nowcast test",
+      "two cities, shared regional shocks"
+    ],
+    "by_month": {
+      "2026-01": {
+        "baseline": {
+          "mae": 2.4838709677419355,
+          "rmse": 3.3166247903554,
+          "bias": -1.7096774193548387
+        },
+        "challenger": {
+          "mae": 2.4274193548387104,
+          "rmse": 2.9257952385253785,
+          "bias": 0.146774193548387
+        },
+        "mae_improvement_baseline_minus_challenger": {
+          "n": 31,
+          "mean": 0.056451612903225805,
+          "ci95": [
+            -0.7043010752688174,
+            0.8650806451612905
+          ]
+        },
+        "relative_mae_improvement": 0.022727272727272485,
+        "n_targets": 31,
+        "first": "2026-01-01 00:00:00",
+        "last": "2026-01-31 00:00:00"
+      },
+      "2026-02": {
+        "baseline": {
+          "mae": 2.0714285714285716,
+          "rmse": 2.7645717829090897,
+          "bias": -1.5714285714285714
+        },
+        "challenger": {
+          "mae": 1.8583333333333338,
+          "rmse": 2.315582994231605,
+          "bias": 0.18452380952381006
+        },
+        "mae_improvement_baseline_minus_challenger": {
+          "n": 28,
+          "mean": 0.21309523809523753,
+          "ci95": [
+            -0.4059821428571435,
+            0.8422767857142852
+          ]
+        },
+        "relative_mae_improvement": 0.1028735632183907,
+        "n_targets": 28,
+        "first": "2026-02-01 00:00:00",
+        "last": "2026-02-28 00:00:00"
+      },
+      "2026-03": {
+        "baseline": {
+          "mae": 3.4516129032258065,
+          "rmse": 4.497311024558219,
+          "bias": -2.6774193548387095
+        },
+        "challenger": {
+          "mae": 2.8650537634408595,
+          "rmse": 3.754732974961288,
+          "bias": -1.006989247311828
+        },
+        "mae_improvement_baseline_minus_challenger": {
+          "n": 31,
+          "mean": 0.5865591397849468,
+          "ci95": [
+            0.13084677419354876,
+            1.0440994623655915
+          ]
+        },
+        "relative_mae_improvement": 0.16993769470405007,
+        "n_targets": 31,
+        "first": "2026-03-01 00:00:00",
+        "last": "2026-03-31 00:00:00"
+      },
+      "2026-04": {
+        "baseline": {
+          "mae": 3.2666666666666666,
+          "rmse": 4.049691346263317,
+          "bias": -2.6
+        },
+        "challenger": {
+          "mae": 2.531111111111112,
+          "rmse": 3.166698830246016,
+          "bias": -0.18444444444444413
+        },
+        "mae_improvement_baseline_minus_challenger": {
+          "n": 30,
+          "mean": 0.7355555555555543,
+          "ci95": [
+            0.07498611111110878,
+            1.3801666666666652
+          ]
+        },
+        "relative_mae_improvement": 0.22517006802721062,
+        "n_targets": 30,
+        "first": "2026-04-01 00:00:00",
+        "last": "2026-04-30 00:00:00"
+      },
+      "2026-05": {
+        "baseline": {
+          "mae": 3.4516129032258065,
+          "rmse": 3.9553964770074037,
+          "bias": -2.5483870967741935
+        },
+        "challenger": {
+          "mae": 2.357526881720431,
+          "rmse": 3.051609540640884,
+          "bias": 0.018817204301074888
+        },
+        "mae_improvement_baseline_minus_challenger": {
+          "n": 31,
+          "mean": 1.0940860215053758,
+          "ci95": [
+            0.42301075268817134,
+            1.7673387096774176
+          ]
+        },
+        "relative_mae_improvement": 0.3169781931464172,
+        "n_targets": 31,
+        "first": "2026-05-01 00:00:00",
+        "last": "2026-05-31 00:00:00"
+      },
+      "2026-06": {
+        "baseline": {
+          "mae": 2.8666666666666667,
+          "rmse": 3.714835124201342,
+          "bias": -2.7333333333333334
+        },
+        "challenger": {
+          "mae": 1.7988888888888894,
+          "rmse": 2.5376680750758682,
+          "bias": -0.1488888888888885
+        },
+        "mae_improvement_baseline_minus_challenger": {
+          "n": 30,
+          "mean": 1.0677777777777773,
+          "ci95": [
+            0.5032916666666669,
+            1.660597222222221
+          ]
+        },
+        "relative_mae_improvement": 0.3724806201550386,
+        "n_targets": 30,
+        "first": "2026-06-01 00:00:00",
+        "last": "2026-06-30 00:00:00"
+      },
+      "2026-07": {
+        "baseline": {
+          "mae": 2.5806451612903225,
+          "rmse": 3.192733685589322,
+          "bias": -2.3225806451612905
+        },
+        "challenger": {
+          "mae": 1.759677419354839,
+          "rmse": 2.254018712970888,
+          "bias": 0.39838709677419426
+        },
+        "mae_improvement_baseline_minus_challenger": {
+          "n": 31,
+          "mean": 0.8209677419354835,
+          "ci95": [
+            0.28923387096774156,
+            1.3399327956989249
+          ]
+        },
+        "relative_mae_improvement": 0.3181249999999999,
+        "n_targets": 31,
+        "first": "2026-07-01 00:00:00",
+        "last": "2026-07-31 00:00:00"
+      },
+      "2026-08": {
+        "baseline": {
+          "mae": 2.2903225806451615,
+          "rmse": 2.822718890623696,
+          "bias": -2.096774193548387
+        },
+        "challenger": {
+          "mae": 1.4817204301075275,
+          "rmse": 1.9227136960528595,
+          "bias": 0.21182795698924856
+        },
+        "mae_improvement_baseline_minus_challenger": {
+          "n": 31,
+          "mean": 0.8086021505376338,
+          "ci95": [
+            0.42361559139784827,
+            1.1532526881720424
+          ]
+        },
+        "relative_mae_improvement": 0.35305164319248805,
+        "n_targets": 31,
+        "first": "2026-08-01 00:00:00",
+        "last": "2026-08-31 00:00:00"
+      },
+      "2026-09": {
+        "baseline": {
+          "mae": 1.5517241379310345,
+          "rmse": 2.0426487199475707,
+          "bias": -0.7931034482758621
+        },
+        "challenger": {
+          "mae": 1.7247126436781595,
+          "rmse": 2.1741117253856728,
+          "bias": 1.0487336840054549
+        },
+        "mae_improvement_baseline_minus_challenger": {
+          "n": 29,
+          "mean": -0.17298850574712493,
+          "ci95": [
+            -0.5637390414961992,
+            0.24838836937463635
+          ]
+        },
+        "relative_mae_improvement": -0.11148148148148063,
+        "n_targets": 29,
+        "first": "2026-09-01 00:00:00",
+        "last": "2026-09-30 00:00:00"
+      }
+    }
+  },
+  "weather_ord": {
+    "baseline": {
+      "mae": 2.474264705882353,
+      "rmse": 3.4762852045724633,
+      "bias": -1.0404411764705883
+    },
+    "challenger": {
+      "mae": 2.435324235626454,
+      "rmse": 3.3060755371391477,
+      "bias": -0.01972935360584901
+    },
+    "mae_improvement_baseline_minus_challenger": {
+      "n": 272,
+      "mean": 0.03894047025589935,
+      "ci95": [
+        -0.10741125581588554,
+        0.18805022432701954
+      ]
+    },
+    "relative_mae_improvement": 0.015738198974152295,
+    "n_targets": 272,
+    "first": "2026-01-01 00:00:00",
+    "last": "2026-09-30 00:00:00",
+    "status": "forecast_component_completed",
+    "no_trading_pnl": true,
+    "station": "KORD",
+    "raw_forecast_rows": 5088,
+    "joined_days": 636,
+    "label": "NWS CLI archive; exchange settlement and revision identity not verified",
+    "signal": "00 UTC GFS MOS temperature grid max for local day; fixed trailing bias correction",
+    "limitations": [
+      "grid maximum approximates daily maximum",
+      "assumed 6-hour publication lag, receipt timestamps absent",
+      "not an NBM distribution or intraday conditional-nowcast test",
+      "two cities, shared regional shocks"
+    ],
+    "by_month": {
+      "2026-01": {
+        "baseline": {
+          "mae": 2.903225806451613,
+          "rmse": 3.3504934638964605,
+          "bias": -0.7741935483870968
+        },
+        "challenger": {
+          "mae": 2.9010752688172046,
+          "rmse": 3.3282030412628028,
+          "bias": -0.4967741935483871
+        },
+        "mae_improvement_baseline_minus_challenger": {
+          "n": 31,
+          "mean": 0.0021505376344085943,
+          "ci95": [
+            -0.09838709677419313,
+            0.08065860215053784
+          ]
+        },
+        "relative_mae_improvement": 0.0007407407407407085,
+        "n_targets": 31,
+        "first": "2026-01-01 00:00:00",
+        "last": "2026-01-31 00:00:00"
+      },
+      "2026-02": {
+        "baseline": {
+          "mae": 3.3214285714285716,
+          "rmse": 4.346591439606113,
+          "bias": -2.107142857142857
+        },
+        "challenger": {
+          "mae": 3.0869047619047616,
+          "rmse": 3.9727594264336554,
+          "bias": -1.3214285714285716
+        },
+        "mae_improvement_baseline_minus_challenger": {
+          "n": 28,
+          "mean": 0.23452380952380913,
+          "ci95": [
+            0.022023809523809283,
+            0.4273958333333328
+          ]
+        },
+        "relative_mae_improvement": 0.07060931899641587,
+        "n_targets": 28,
+        "first": "2026-02-01 00:00:00",
+        "last": "2026-02-28 00:00:00"
+      },
+      "2026-03": {
+        "baseline": {
+          "mae": 4.064516129032258,
+          "rmse": 5.775364811825952,
+          "bias": -3.032258064516129
+        },
+        "challenger": {
+          "mae": 3.598387096774193,
+          "rmse": 5.103970097158502,
+          "bias": -1.4080645161290317
+        },
+        "mae_improvement_baseline_minus_challenger": {
+          "n": 31,
+          "mean": 0.46612903225806485,
+          "ci95": [
+            -0.033400537634408985,
+            0.9559274193548397
+          ]
+        },
+        "relative_mae_improvement": 0.11468253968253983,
+        "n_targets": 31,
+        "first": "2026-03-01 00:00:00",
+        "last": "2026-03-31 00:00:00"
+      },
+      "2026-04": {
+        "baseline": {
+          "mae": 2.933333333333333,
+          "rmse": 3.7327380477785117,
+          "bias": -1.4666666666666666
+        },
+        "challenger": {
+          "mae": 2.826111111111111,
+          "rmse": 3.664581477796259,
+          "bias": 1.2427777777777773
+        },
+        "mae_improvement_baseline_minus_challenger": {
+          "n": 30,
+          "mean": 0.10722222222222229,
+          "ci95": [
+            -0.7894305555555555,
+            0.904999999999999
+          ]
+        },
+        "relative_mae_improvement": 0.036553030303030254,
+        "n_targets": 30,
+        "first": "2026-04-01 00:00:00",
+        "last": "2026-04-30 00:00:00"
+      },
+      "2026-05": {
+        "baseline": {
+          "mae": 1.967741935483871,
+          "rmse": 2.6457513110645907,
+          "bias": -1.4516129032258065
+        },
+        "challenger": {
+          "mae": 1.9387096774193535,
+          "rmse": 2.3691453020795463,
+          "bias": 0.7021505376344088
+        },
+        "mae_improvement_baseline_minus_challenger": {
+          "n": 31,
+          "mean": 0.02903225806451746,
+          "ci95": [
+            -0.59521505376344,
+            0.6333602150537649
+          ]
+        },
+        "relative_mae_improvement": 0.014754098360656442,
+        "n_targets": 31,
+        "first": "2026-05-01 00:00:00",
+        "last": "2026-05-31 00:00:00"
+      },
+      "2026-06": {
+        "baseline": {
+          "mae": 1.8666666666666667,
+          "rmse": 2.54296414970142,
+          "bias": 0.6
+        },
+        "challenger": {
+          "mae": 2.1827777777777775,
+          "rmse": 2.900968867528635,
+          "bias": 1.550555555555556
+        },
+        "mae_improvement_baseline_minus_challenger": {
+          "n": 30,
+          "mean": -0.3161111111111107,
+          "ci95": [
+            -0.5566805555555542,
+            -0.05665277777777655
+          ]
+        },
+        "relative_mae_improvement": -0.16934523809523783,
+        "n_targets": 30,
+        "first": "2026-06-01 00:00:00",
+        "last": "2026-06-30 00:00:00"
+      },
+      "2026-07": {
+        "baseline": {
+          "mae": 1.7419354838709677,
+          "rmse": 2.341766633920198,
+          "bias": -0.5161290322580645
+        },
+        "challenger": {
+          "mae": 1.752150537634408,
+          "rmse": 2.307939778569921,
+          "bias": -0.27580645161290224
+        },
+        "mae_improvement_baseline_minus_challenger": {
+          "n": 31,
+          "mean": -0.01021505376344028,
+          "ci95": [
+            -0.09946236559139679,
+            0.07580645161290353
+          ]
+        },
+        "relative_mae_improvement": -0.005864197530863757,
+        "n_targets": 31,
+        "first": "2026-07-01 00:00:00",
+        "last": "2026-07-31 00:00:00"
+      },
+      "2026-08": {
+        "baseline": {
+          "mae": 1.4838709677419355,
+          "rmse": 2.063507818286384,
+          "bias": -0.12903225806451613
+        },
+        "challenger": {
+          "mae": 1.5774193548387094,
+          "rmse": 2.1346140309039243,
+          "bias": 0.06774193548387124
+        },
+        "mae_improvement_baseline_minus_challenger": {
+          "n": 31,
+          "mean": -0.09354838709677392,
+          "ci95": [
+            -0.19193548387096784,
+            0.0016129032258072767
+          ]
+        },
+        "relative_mae_improvement": -0.06304347826086931,
+        "n_targets": 31,
+        "first": "2026-08-01 00:00:00",
+        "last": "2026-08-31 00:00:00"
+      },
+      "2026-09": {
+        "baseline": {
+          "mae": 2.0344827586206895,
+          "rmse": 2.906591794880899,
+          "bias": -0.5172413793103449
+        },
+        "challenger": {
+          "mae": 2.1002824858757054,
+          "rmse": 2.903074469764589,
+          "bias": -0.2907948568088845
+        },
+        "mae_improvement_baseline_minus_challenger": {
+          "n": 29,
+          "mean": -0.06579972725501584,
+          "ci95": [
+            -0.13505795830897982,
+            -0.0036910676017924524
+          ]
+        },
+        "relative_mae_improvement": -0.032342238820262104,
+        "n_targets": 29,
+        "first": "2026-09-01 00:00:00",
+        "last": "2026-09-30 00:00:00"
+      }
+    }
+  },
+  "structural": {
+    "status": "historical_price_screen_completed",
+    "no_trading_pnl": true,
+    "valid_bid_ask_rows": 94136,
+    "invalid_or_crossed_rows": 0,
+    "checks": 933580,
+    "positive_raw_candidates": 27,
+    "candidate_events": 12,
+    "max_raw_margin": 0.020000000000000018,
+    "coverage": {
+      "KXBTC15M": {
+        "markets": 30,
+        "events": 30,
+        "quote_dates": 1,
+        "candle_rows": 420,
+        "first": "2026-10-27T16:16:00+00:00",
+        "last": "2026-10-27T23:44:00+00:00"
+      },
+      "KXCPI": {
+        "markets": 107,
+        "events": 10,
+        "quote_dates": 30,
+        "candle_rows": 3327,
+        "first": "2026-01-11T14:00:00+00:00",
+        "last": "2026-10-14T12:00:00+00:00"
+      },
+      "KXCPINDEX": {
+        "markets": 83,
+        "events": 4,
+        "quote_dates": 12,
+        "candle_rows": 1830,
+        "first": "2026-07-12T13:00:00+00:00",
+        "last": "2026-10-14T12:00:00+00:00"
+      },
+      "KXGOLDD": {
+        "markets": 1200,
+        "events": 30,
+        "quote_dates": 46,
+        "candle_rows": 42194,
+        "first": "2026-09-02T10:00:00+00:00",
+        "last": "2026-10-27T20:00:00+00:00"
+      },
+      "KXHIGHCHI": {
+        "markets": 180,
+        "events": 30,
+        "quote_dates": 32,
+        "candle_rows": 6923,
+        "first": "2026-09-26T15:00:00+00:00",
+        "last": "2026-10-27T05:00:00+00:00"
+      },
+      "KXHIGHNY": {
+        "markets": 180,
+        "events": 30,
+        "quote_dates": 32,
+        "candle_rows": 6748,
+        "first": "2026-09-26T15:00:00+00:00",
+        "last": "2026-10-27T04:00:00+00:00"
+      },
+      "KXHIGHTHOU": {
+        "markets": 180,
+        "events": 30,
+        "quote_dates": 32,
+        "candle_rows": 6672,
+        "first": "2026-09-26T15:00:00+00:00",
+        "last": "2026-10-27T05:00:00+00:00"
+      },
+      "KXINX": {
+        "markets": 897,
+        "events": 30,
+        "quote_dates": 42,
+        "candle_rows": 18054,
+        "first": "2026-09-16T03:00:00+00:00",
+        "last": "2026-10-27T19:00:00+00:00"
+      },
+      "KXTSAD": {
+        "markets": 264,
+        "events": 18,
+        "quote_dates": 19,
+        "candle_rows": 1581,
+        "first": "2026-10-09T14:00:00+00:00",
+        "last": "2026-10-27T10:00:00+00:00"
+      },
+      "KXTSAW": {
+        "markets": 511,
+        "events": 30,
+        "quote_dates": 90,
+        "candle_rows": 6387,
+        "first": "2026-04-04T04:00:00+00:00",
+        "last": "2026-10-26T03:00:00+00:00"
+      }
+    },
+    "limitations": [
+      "no historical depth or quote-update age",
+      "candle close timestamps do not ensure simultaneous executable quotes",
+      "rule versions, exceptional settlement, fees, publication cutoff and failed-leg execution not certified",
+      "no exhaustive-bucket basket test without complete interval/rule certification"
+    ],
+    "candidate_definition": "positive ordinary-payout price inconsistency before fees, not realized profit"
+  },
+  "spx": {
+    "status": "blocked",
+    "missing": "timestamp-matched historical SPXW option bid/ask surface and matched settlement audit"
+  },
+  "macro": {
+    "status": "data_audit_only",
+    "missing": "frozen challenger, first-release/vintage series joined to market quotes"
+  },
+  "politics_mentions_entertainment": {
+    "status": "not_a_defined_strategy",
+    "missing": "one recurring contract family, fixed signal, point-in-time text/poll inputs and target rules"
+  },
+  "short_crypto_gold": {
+    "status": "blocked",
+    "missing": "synchronized underlying feeds and event books with measured receipt/latency/depth; minute bars insufficient"
+  }
+}
