@@ -1,0 +1,55 @@
+{
+  "baseline": {
+    "mae_percentage_points": 0.07232478588956186,
+    "rmse_percentage_points": 0.10329814907603636,
+    "bias_percentage_points": -0.010265336067768395
+  },
+  "challenger": {
+    "mae_percentage_points": 0.08246331855640224,
+    "rmse_percentage_points": 0.11753676407448162,
+    "bias_percentage_points": -0.04324776113270385
+  },
+  "status": "forecast_component_completed",
+  "no_trading_pnl": true,
+  "test_months": 31,
+  "first": "2024-01-01T00:00:00",
+  "last": "2026-09-01T00:00:00",
+  "mae_improvement": {
+    "n": 31,
+    "mean": -0.010138532666840349,
+    "ci95": [
+      -0.033552889321938166,
+      0.011568267584796897
+    ]
+  },
+  "relative_mae_improvement": -0.14018061086722966,
+  "model": "Public month-end Cleveland Fed headline CPI nowcast plus trailing 24 released forecast errors; at least 12 required.",
+  "excluded_substitute_targets": [
+    "2025-10",
+    "2025-11"
+  ],
+  "limitations": [
+    "archived provider forecast/first-release labels, not independently captured vintages",
+    "unrounded headline CPI monthly change; not the rounded exchange payout target",
+    "small monthly sample; no execution or market-price comparison"
+  ],
+  "all_eligible_forecasts": 156,
+  "skipped": [
+    {
+      "month": "2013-07-01",
+      "reason": "missing month-end forecast or unique first-release label"
+    },
+    {
+      "month": "2025-10-01",
+      "reason": "not official BLS month-over-month readings"
+    },
+    {
+      "month": "2025-11-01",
+      "reason": "not official BLS month-over-month readings"
+    },
+    {
+      "month": "2026-10-01",
+      "reason": "missing month-end forecast or unique first-release label"
+    }
+  ]
+}

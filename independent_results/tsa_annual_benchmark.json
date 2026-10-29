@@ -2,14 +2,14 @@
   "label": "Exploratory benchmark added after the primary scores were inspected; not a new holdout.",
   "targets": 114,
   "annual_naive_mae": 116574.23684210527,
-  "challenger_mae": 127265.62053409849,
-  "relative_mae_improvement": -0.0917130918598612,
+  "challenger_mae": 127265.62053409843,
+  "relative_mae_improvement": -0.09171309185986076,
   "paired_improvement": {
     "n": 114,
-    "mean": -10691.383691993244,
+    "mean": -10691.383691993165,
     "ci95": [
-      -18614.79227751983,
-      -2822.97751094597
+      -18614.79227751975,
+      -2822.9775109458524
     ]
   }
 }

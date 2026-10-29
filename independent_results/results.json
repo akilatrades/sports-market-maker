@@ -1,5 +1,5 @@
 {
-  "run_at": "2026-10-29T13:01:42.607959+00:00",
+  "run_at": "2026-10-29T13:11:55.499351+00:00",
   "scope": "independent research only",
   "analysis_sha256": "cc9032cb53c1c94834003a8f6ec933706aa6e42196a8a497c849d6ecf6e229ff",
   "trading_backtests_completed": 0,
@@ -9,28 +9,28 @@
       "rmse": 190811.20606989265,
       "bias": 31457.041666666668,
       "brier": 0.06842458970005659,
-      "log_score": 0.21542020084933666,
+      "log_score": 0.21542020084933663,
       "covered90": 0.6842105263157895,
       "width90": 464825.37759703
     },
     "challenger": {
-      "mae": 127265.62053409849,
-      "rmse": 175881.18229091394,
-      "bias": 67642.92851657202,
+      "mae": 127265.62053409843,
+      "rmse": 175881.18229091386,
+      "bias": 67642.92851657192,
       "brier": 0.05415765284699783,
       "log_score": 0.19871289525061822,
       "covered90": 0.8157894736842105,
-      "width90": 429858.2148373055
+      "width90": 429858.21483730566
     },
     "mae_improvement_baseline_minus_challenger": {
       "n": 114,
-      "mean": 23081.802711515553,
+      "mean": 23081.802711515615,
       "ci95": [
-        -11091.092450189704,
-        59332.96278942639
+        -11091.092450189637,
+        59332.96278942647
       ]
     },
-    "relative_mae_improvement": 0.1535231014488897,
+    "relative_mae_improvement": 0.15352310144889003,
     "n_targets": 114,
     "first": "2026-07-01 00:00:00",
     "last": "2026-10-22 00:00:00",
@@ -64,19 +64,19 @@
           "bias": 14740.975806451614
         },
         "challenger": {
-          "mae": 142477.5905960169,
-          "rmse": 183731.8450299589,
-          "bias": 95746.16709535429
+          "mae": 142477.59059601685,
+          "rmse": 183731.84502995887,
+          "bias": 95746.16709535428
         },
         "mae_improvement_baseline_minus_challenger": {
           "n": 31,
-          "mean": -54819.85672504916,
+          "mean": -54819.85672504915,
           "ci95": [
-            -75192.75410623735,
-            -34189.089177929185
+            -75192.75410623733,
+            -34189.089177929156
           ]
         },
-        "relative_mae_improvement": -0.6253852832397429,
+        "relative_mae_improvement": -0.6253852832397422,
         "n_targets": 31,
         "first": "2026-07-01 00:00:00",
         "last": "2026-07-31 00:00:00"
@@ -88,19 +88,19 @@
           "bias": 186386.24193548388
         },
         "challenger": {
-          "mae": 137743.85892147946,
-          "rmse": 183648.03846164217,
-          "bias": 120548.89726000727
+          "mae": 137743.85892147943,
+          "rmse": 183648.03846164205,
+          "bias": 120548.89726000716
         },
         "mae_improvement_baseline_minus_challenger": {
           "n": 31,
-          "mean": 69541.60882045601,
+          "mean": 69541.60882045608,
           "ci95": [
             14935.946408940492,
-            133603.14937170033
+            133603.1493717004
           ]
         },
-        "relative_mae_improvement": 0.3354871404059707,
+        "relative_mae_improvement": 0.33548714040597083,
         "n_targets": 31,
         "first": "2026-08-01 00:00:00",
         "last": "2026-08-31 00:00:00"
@@ -112,19 +112,19 @@
           "bias": 28569.608333333334
         },
         "challenger": {
-          "mae": 147159.62360019208,
-          "rmse": 207322.0639270532,
-          "bias": 10888.40560823467
+          "mae": 147159.62360019193,
+          "rmse": 207322.0639270531,
+          "bias": 10888.405608234485
         },
         "mae_improvement_baseline_minus_challenger": {
           "n": 30,
-          "mean": 1872.8513998079036,
+          "mean": 1872.8513998080432,
           "ci95": [
-            -39195.47773988804,
-            36812.595176049515
+            -39195.477739887916,
+            36812.59517604966
           ]
         },
-        "relative_mae_improvement": 0.012566733524407514,
+        "relative_mae_improvement": 0.012566733524408513,
         "n_targets": 30,
         "first": "2026-09-01 00:00:00",
         "last": "2026-09-30 00:00:00"
@@ -136,19 +136,19 @@
           "bias": -159360.42045454544
         },
         "challenger": {
-          "mae": 63937.59535632166,
-          "rmse": 81190.22737763384,
-          "bias": 30886.122164816446
+          "mae": 63937.59535632163,
+          "rmse": 81190.2273776338,
+          "bias": 30886.12216481631
         },
         "mae_improvement_baseline_minus_challenger": {
           "n": 22,
-          "mean": 96307.52964367834,
+          "mean": 96307.52964367835,
           "ci95": [
-            43304.78952286015,
+            43304.78952286016,
             151392.21785492345
           ]
         },
-        "relative_mae_improvement": 0.6010013074886262,
+        "relative_mae_improvement": 0.6010013074886263,
         "n_targets": 22,
         "first": "2026-10-01 00:00:00",
         "last": "2026-10-22 00:00:00"
@@ -770,8 +770,59 @@
     "missing": "timestamp-matched historical SPXW option bid/ask surface and matched settlement audit"
   },
   "macro": {
-    "status": "data_audit_only",
-    "missing": "frozen challenger, first-release/vintage series joined to market quotes"
+    "baseline": {
+      "mae_percentage_points": 0.07232478588956186,
+      "rmse_percentage_points": 0.10329814907603636,
+      "bias_percentage_points": -0.010265336067768395
+    },
+    "challenger": {
+      "mae_percentage_points": 0.08246331855640224,
+      "rmse_percentage_points": 0.11753676407448162,
+      "bias_percentage_points": -0.04324776113270385
+    },
+    "status": "forecast_component_completed",
+    "no_trading_pnl": true,
+    "test_months": 31,
+    "first": "2024-01-01T00:00:00",
+    "last": "2026-09-01T00:00:00",
+    "mae_improvement": {
+      "n": 31,
+      "mean": -0.010138532666840349,
+      "ci95": [
+        -0.033552889321938166,
+        0.011568267584796897
+      ]
+    },
+    "relative_mae_improvement": -0.14018061086722966,
+    "model": "Public month-end Cleveland Fed headline CPI nowcast plus trailing 24 released forecast errors; at least 12 required.",
+    "excluded_substitute_targets": [
+      "2025-10",
+      "2025-11"
+    ],
+    "limitations": [
+      "archived provider forecast/first-release labels, not independently captured vintages",
+      "unrounded headline CPI monthly change; not the rounded exchange payout target",
+      "small monthly sample; no execution or market-price comparison"
+    ],
+    "all_eligible_forecasts": 156,
+    "skipped": [
+      {
+        "month": "2013-07-01",
+        "reason": "missing month-end forecast or unique first-release label"
+      },
+      {
+        "month": "2025-10-01",
+        "reason": "not official BLS month-over-month readings"
+      },
+      {
+        "month": "2025-11-01",
+        "reason": "not official BLS month-over-month readings"
+      },
+      {
+        "month": "2026-10-01",
+        "reason": "missing month-end forecast or unique first-release label"
+      }
+    ]
   },
   "politics_mentions_entertainment": {
     "status": "not_a_defined_strategy",
