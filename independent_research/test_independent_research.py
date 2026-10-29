@@ -105,6 +105,8 @@ class ResearchGuards(unittest.TestCase):
                 )
                 cs = []
                 for t, b, a in [
+                    (end - pd.Timedelta(hours=4), 0, 0),
+                    (end - pd.Timedelta(hours=3), 1, 1),
                     (end - pd.Timedelta(hours=2), bid, ask),
                     (end - pd.Timedelta(hours=1), 0.8, 0.2),
                     (end, bid, ask),
@@ -133,3 +135,4 @@ class ResearchGuards(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+

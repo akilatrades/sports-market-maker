@@ -34,6 +34,7 @@ jobs:
         run: |
           if test -f independent_research/repair_weather.py; then python independent_research/repair_weather.py; fi
           if test -f independent_research/analyze.py; then python independent_research/analyze.py; fi
+          if test -f independent_research/finalize.py; then python independent_research/finalize.py; fi
       - name: Retain data on isolated research branch
         if: always()
         run: |

@@ -362,7 +362,7 @@ def structural():
             # Exclude final/after-close candles. A rule-specific outcome-time screen is still required.
             if t >= pd.Timestamp(m["close_time"]):
                 continue
-            if not np.isfinite(b + a) or not (0 <= b <= a <= 1):
+            if not np.isfinite(b + a) or not (0 <= b <= a <= 1 and a > 0 and b < 1):
                 invalid += 1
                 continue
             records.append(
@@ -509,3 +509,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
