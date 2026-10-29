@@ -52,3 +52,11 @@ python independent_research/macro_test.py
 No new money should be committed on these results. The next stage requires
 stronger settlement-matched benchmarks, daily publication records and actual
 timestamped bid/ask depth, followed by a genuinely new evaluation sample.
+
+## Reproduction check
+
+The complete archived-data analysis and four research guard tests completed in
+[run 40879681051](https://github.com/akilatrades/sports-market-maker/actions/runs/40879681051).
+The saved combined results include the 31-month CPI test. Keep forecast scores
+separate from trading returns when reusing these outputs; no executed return
+series was produced.
