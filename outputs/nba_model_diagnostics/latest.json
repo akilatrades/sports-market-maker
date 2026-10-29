@@ -285,17 +285,17 @@
       ]
     }
   },
-  "generated_at": "2026-10-29T20:26:50.856657+00:00",
+  "generated_at": "2026-10-29T22:55:04.424909+00:00",
   "input_quality": {
     "issues": {
-      "fresh_two_book_consensus_missing": 548,
+      "fresh_two_book_consensus_missing": 563,
       "fully_verified_rows": 0,
-      "lineup_unverified": 548,
+      "lineup_unverified": 563,
       "reported_injury_status": 15,
-      "tonight_minutes_unverified": 548
+      "tonight_minutes_unverified": 563
     },
     "meaning": "Freshly generated predictions do not establish confirmed lineups or tonight-specific minutes. Missing inputs remain unverified.",
-    "rows": 548
+    "rows": 563
   },
   "next_requirements": [
     "Fresh prospective games under the fixed equal-size protocol.",
@@ -337,13 +337,14 @@
         "brier_filled": 0.28792294472499996,
         "execution_known": 15,
         "exposure_by_game": {
-          "401909893": 1.51
+          "401909893": 1.51,
+          "401909895": 1.6099999999999999
         },
         "filled": 8,
         "forecast_win_probability": 0.5699445,
         "net_pnl_fee_upper_estimate": 0.76,
-        "orders": 18,
-        "pending_or_unknown_execution": 3,
+        "orders": 21,
+        "pending_or_unknown_execution": 6,
         "pnl_without_best_game": -0.1,
         "pnl_without_best_three_games": -0.44,
         "settled": 8,
@@ -365,13 +366,14 @@
         "execution_known": 32,
         "exposure_by_game": {
           "401909893": 4.990000000000001,
-          "401909894": 0.6
+          "401909894": 0.6,
+          "401909895": 5.0
         },
         "filled": 19,
         "forecast_win_probability": 0.5134938947368421,
         "net_pnl_fee_upper_estimate": 1.93,
-        "orders": 42,
-        "pending_or_unknown_execution": 10,
+        "orders": 52,
+        "pending_or_unknown_execution": 20,
         "pnl_without_best_game": 0.36,
         "pnl_without_best_three_games": -0.85,
         "settled": 19,
@@ -417,13 +419,14 @@
         "brier_filled": 0.28792294472499996,
         "execution_known": 15,
         "exposure_by_game": {
-          "401909893": 1.51
+          "401909893": 1.51,
+          "401909895": 1.6099999999999999
         },
         "filled": 8,
         "forecast_win_probability": 0.5699445,
         "net_pnl_fee_upper_estimate": 0.76,
-        "orders": 18,
-        "pending_or_unknown_execution": 3,
+        "orders": 21,
+        "pending_or_unknown_execution": 6,
         "pnl_without_best_game": -0.1,
         "pnl_without_best_three_games": -0.44,
         "settled": 8,
@@ -445,13 +448,14 @@
         "execution_known": 32,
         "exposure_by_game": {
           "401909893": 4.990000000000001,
-          "401909894": 0.6
+          "401909894": 0.6,
+          "401909895": 5.0
         },
         "filled": 20,
         "forecast_win_probability": 0.51388995,
         "net_pnl_fee_upper_estimate": 1.4,
-        "orders": 42,
-        "pending_or_unknown_execution": 10,
+        "orders": 52,
+        "pending_or_unknown_execution": 20,
         "pnl_without_best_game": -0.17,
         "pnl_without_best_three_games": -0.85,
         "settled": 20,
