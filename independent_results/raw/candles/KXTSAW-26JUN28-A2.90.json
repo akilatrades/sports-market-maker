@@ -1,0 +1,80 @@
+{
+ "candlesticks": [
+  {
+   "end_period_ts": 1782680400,
+   "open_interest": "696.42",
+   "price": {
+    "close": "0.0100",
+    "high": "0.0100",
+    "low": "0.0100",
+    "mean": "0.0100",
+    "open": "0.0100",
+    "previous": "0.0100"
+   },
+   "volume": "24.31",
+   "yes_ask": {
+    "close": "0.0100",
+    "high": "0.0100",
+    "low": "0.0100",
+    "open": "0.0100"
+   },
+   "yes_bid": {
+    "close": "0.0000",
+    "high": "0.0000",
+    "low": "0.0000",
+    "open": "0.0000"
+   }
+  },
+  {
+   "end_period_ts": 1782694800,
+   "open_interest": "696.42",
+   "price": {
+    "close": null,
+    "high": null,
+    "low": null,
+    "mean": null,
+    "open": null,
+    "previous": "0.0100"
+   },
+   "volume": "0.00",
+   "yes_ask": {
+    "close": "0.0100",
+    "high": "0.0200",
+    "low": "0.0100",
+    "open": "0.0100"
+   },
+   "yes_bid": {
+    "close": "0.0000",
+    "high": "0.0000",
+    "low": "0.0000",
+    "open": "0.0000"
+   }
+  },
+  {
+   "end_period_ts": 1782698400,
+   "open_interest": "696.42",
+   "price": {
+    "close": null,
+    "high": null,
+    "low": null,
+    "mean": null,
+    "open": null,
+    "previous": "0.0100"
+   },
+   "volume": "0.00",
+   "yes_ask": {
+    "close": "0.0200",
+    "high": "0.0200",
+    "low": "0.0100",
+    "open": "0.0100"
+   },
+   "yes_bid": {
+    "close": "0.0000",
+    "high": "0.0000",
+    "low": "0.0000",
+    "open": "0.0000"
+   }
+  }
+ ],
+ "ticker": "KXTSAW-26JUN28-A2.90"
+}
