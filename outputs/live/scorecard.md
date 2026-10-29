@@ -1,11 +1,11 @@
 # Live trader
 
-Updated 2026-10-29 00:00 UTC. Risk limits: kalshi/risk.py. Rule: no_seller_bookline.
+Updated 2026-10-29 04:20 UTC. Risk limits: kalshi/risk.py. Rule: no_seller_bookline.
 
 | Status | Orders | Dollars |
 |---|---:|---:|
-| cancelled | 968 | $2,140.77 |
-| dry | 514 | $1,122.22 |
+| cancelled | 974 | $2,154.92 |
+| dry | 508 | $1,108.07 |
 | rejected | 7125 | $15,022.80 |
 
 Rejections:
