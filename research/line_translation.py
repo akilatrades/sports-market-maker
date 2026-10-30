@@ -12,9 +12,8 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
-from scipy.optimize import minimize_scalar
-from scipy.stats import nbinom
 
+from kalshi.line_translation import translate as _translate
 from kalshi.stats import clustered_mean_t
 from research.bookline_backtest import FEE_SHARE, difference, maker_fee, summary
 
@@ -25,12 +24,13 @@ STATS = {
     "assists": "assists",
     "threes": "threes",
 }
-MAX_GAP = {"points": 3.0, "rebounds": 2.0, "assists": 2.0, "threes": 1.0}
-MIN_QUOTES = 2
 
 
 def dispersion(path="data/player_games.parquet", last_season=2025):
-    """Pooled negative-binomial size r per stat: var = mu + mu^2 / r."""
+    """Pooled negative-binomial size r per stat: var = mu + mu^2 / r.
+
+    Its output is frozen in kalshi.line_translation.DISPERSION for live use.
+    """
     p = pd.read_parquet(path)
     p = p[(p.season <= last_season) & ~p.did_not_play.astype(bool) & (p.minutes > 0)]
     out = {}
@@ -42,50 +42,9 @@ def dispersion(path="data/player_games.parquet", last_season=2025):
     return out
 
 
-def p_over(mu, r, line):
-    """P(stat > line) for a half-point line under NB(mean mu, size r)."""
-    return float(nbinom.sf(np.floor(line), r, r / (r + mu)))
-
-
-def logit(p):
-    p = np.clip(p, 1e-4, 1 - 1e-4)
-    return np.log(p / (1 - p))
-
-
-def fit_mu(lines, probs, weights, r):
-    def loss(mu):
-        model = np.array([p_over(mu, r, x) for x in lines])
-        return float(np.sum(weights * (logit(model) - logit(probs)) ** 2))
-
-    # The loss is flat where every fitted probability saturates, so a bounded
-    # Brent search alone can stall at the upper bound: grid first, then refine.
-    grid = np.geomspace(0.05, 90.0, 160)
-    best = int(np.argmin([loss(m) for m in grid]))
-    lo, hi = grid[max(best - 1, 0)], grid[min(best + 1, len(grid) - 1)]
-    res = minimize_scalar(loss, bounds=(lo, hi), method="bounded")
-    return res.x
-
-
-def translate(quotes, line, stat, r, exclude_exact=True):
-    """Translated over probability for `line`, or None when the rules say no."""
-    q = quotes
-    if exclude_exact:
-        q = q[(q.line - line).abs() > 1e-6]
-    if q.empty:
-        return None, None
-    if (q.line - line).abs().min() > MAX_GAP[
-        stat
-    ] + 1e-9 or q.book_n.sum() < MIN_QUOTES:
-        return None, None
-    mu = fit_mu(
-        q.line.to_numpy(float), q.p_book.to_numpy(float), q.book_n.to_numpy(float), r
-    )
-    nb = p_over(mu, r, line)
-    # sensitivity: logit interpolation between the two nearest lines (flat beyond the ends)
-    srt = q.sort_values("line")
-    xs, ys = srt.line.to_numpy(float), logit(srt.p_book.to_numpy(float))
-    interp = float(1 / (1 + np.exp(-np.interp(line, xs, ys)))) if len(xs) >= 2 else None
-    return nb, interp
+def translate(quotes, line, stat, r=None, exclude_exact=True):
+    """Shared method (kalshi.line_translation); ``r`` is kept for old callers."""
+    return _translate(quotes, line, stat, exclude_exact=exclude_exact)
 
 
 def logloss(p, y):

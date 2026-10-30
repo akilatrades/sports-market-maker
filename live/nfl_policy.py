@@ -12,10 +12,19 @@ MAX_GAME_COST = 3.0
 MAX_TEAM_COST = 3.0
 MAX_DAILY_COST = 30.0
 MAX_GAME_ORDERS = 2
-MAX_CONTRACTS = 5
+# v4 (2026-10-30, RESEARCH_LOG.md "NBA rules v7" and NFL v4): every order is
+# priced from the sportsbooks' exact line, never from the stat model; the
+# model may only veto; one contract an order. Old (v3) values: book or else
+# model, 5 contracts. The 15c outlier cap is unchanged: MIN_RESERVED_EDGE
+# (3c after the full 10% reserve) already needs about 8.5c of book edge at a
+# 51c price, so NBA's 8c cap would block every NFL order. Nearby-line pricing
+# is NBA-only until tested on yardage.
+MAX_CONTRACTS = 1  # v3: 5
 FEE_RESERVE = 1.10
-STRATEGY_VERSION = "nfl-no-v3-baseline-quote"
+STRATEGY_VERSION = "nfl-no-v4-book-priced"
 MIN_RESERVED_EDGE = 0.03
+MAX_ENTRY_NET_EDGE = 0.15  # unchanged from v3 (see above)
+MODEL_VETO_MIN_EDGE = 0.0  # the model's own NO edge after fees must clear this
 STATE = Path("/home/trader/prod-nfl-auto")
 
 

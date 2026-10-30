@@ -35,7 +35,7 @@ def priced():
                 "tip_utc": pd.Timestamp(NOW + timedelta(hours=4)),
                 "hours_to_tip": 4.0,
                 "p_model": 0.35,
-                "p_book": 0.40,
+                "p_book": 0.43,
                 "book_n": 2,
                 "book_updated_utc": NOW.isoformat(),
                 "injury_status": "",
@@ -104,17 +104,25 @@ def test_nba_baseline_retains_no_side_and_passive_price():
     assert order.post_only
     assert order.body()["side"] == "ask"
     assert 0 < cost <= nba.MAX_ORDER_COST
-    # v6: three contracts an order, charged at three times the price.
-    assert order.count == nba.MAX_CONTRACTS == 3
-    assert cost == pytest.approx(round(3 * quote, 2))
+    # v7: one contract an order (v6: three).
+    assert order.count == nba.MAX_CONTRACTS == 1
+    assert cost == pytest.approx(round(quote, 2))
 
 
 def test_separate_risk_caps_and_state():
     assert str(nba.STATE).endswith("prod-nba-auto")
     # RESEARCH_LOG.md, 2026-10-23, "NBA rules v6" (v5: 1 contract, $25 a
-    # game, $2,000 lifetime, -$60 total). Change only through a new amendment.
-    assert nba.STRATEGY_VERSION == "nba-no-v6-three-contracts"
-    assert "nba-no-v5-one-contract-breadth" in nba.PRIOR_VERSIONS
+    # game, $2,000 lifetime, -$60 total), then 2026-10-30, "NBA rules v7"
+    # (v6: 3 contracts, two books or the model, 15c edges, 120/75-minute
+    # book ages). Change only through a new amendment.
+    assert nba.STRATEGY_VERSION == "nba-no-v7-book-priced"
+    assert {
+        "nba-no-v5-one-contract-breadth",
+        "nba-no-v6-three-contracts",
+    } <= nba.PRIOR_VERSIONS
+    assert (nba.MIN_BOOKS, nba.BOOK_MAX_AGE_MINUTES) == (1, 60)
+    assert (nba.MAX_ENTRY_NET_EDGE, nba.MODEL_VETO_MIN_EDGE) == (0.08, 0.0)
+    assert nba.TRANSLATE_NEARBY_LINES is True
     assert nba.MAX_GROSS_COST == 5000
     assert nba.MAX_ACTIVE_COST == 150
     assert nba.MAX_ORDER_COST == 4
@@ -122,7 +130,7 @@ def test_separate_risk_caps_and_state():
     assert nba.MAX_TEAM_COST == 25
     assert nba.MAX_DAILY_COST == 150
     assert nba.MAX_GAME_ORDERS == 40
-    assert nba.MAX_CONTRACTS == 3
+    assert nba.MAX_CONTRACTS == 1
     assert nba.MAX_NEW_ORDERS_PER_PASS == 3
     assert nba.PRICE_BAND_CENTS == (5, 95)
     assert nba.MAX_REALIZED_DAILY_LOSS == 20
@@ -254,6 +262,8 @@ def test_selection_funnel_counts_each_gate_without_loosening_it():
         "supported_prop_series": 1,
         "passed_book_model_and_spread": 1,
         "no_side_candidates": 1,
+        "book_priced": 1,
+        "passed_model_veto": 1,
         "passed_edge_sanity": 1,
         "not_previously_attempted": 1,
     }
@@ -328,7 +338,11 @@ def test_resting_quote_retains_order_while_edge_remains_valid():
     [
         ({"injury_status": "NEW_INJURY_NEWS"}, "unverified_roster_injury_or_model"),
         ({"hours_to_tip": -0.01}, "outside_verified_pretip_window"),
-        ({"book_n": 1}, "fresh_two_book_consensus_missing"),
+        ({"book_n": 1}, None),  # v7: one fresh book prices a line
+        (
+            {"book_n": 1, "requires_book": True},
+            "fresh_two_book_consensus_missing",
+        ),
         ({"p_book": 0.51}, "current_net_edge_below_minimum"),
         ({"p_book": float("nan"), "book_n": 0}, "fresh_two_book_consensus_missing"),
         ({"requires_book": "unknown"}, "unverified_book_requirement"),
@@ -768,7 +782,7 @@ def test_late_window_candidates_are_shadow_only_even_if_they_qualify(tmp_path):
     assert not (tmp_path / "last_scan.json").exists()
 
 
-def test_single_sportsbook_cannot_be_used_as_consensus_at_entry(tmp_path, monkeypatch):
+def test_one_book_prices_a_line_but_flagged_players_need_two(tmp_path, monkeypatch):
     import kalshi.books as books
     import live.nba_trade as trader
     import markets.nba.live as live
@@ -785,9 +799,10 @@ def test_single_sportsbook_cannot_be_used_as_consensus_at_entry(tmp_path, monkey
     publish(frame, tmp_path, NOW)
     out = nba.nba_candidates(NOW, latest=tmp_path / "latest.csv")
     assert len(out) == 1
-    assert pd.isna(out.p_book.iloc[0])
+    # v7: one fresh book on the exact line prices it (v6: model fallback).
+    assert out.p_book.iloc[0] == pytest.approx(0.43)
+    assert out.book_source.iloc[0] == "exact"
     assert out.injury_status.iloc[0] == ""
-    # In-season market may use the independently modeled probability.
     assert len(nba.select_candidates(out, [], {"active": []}, NOW)) == 1
 
     frame["requires_book"] = True
@@ -1017,7 +1032,12 @@ def test_old_sportsbook_consensus_is_not_used_to_retain_nba_orders(
     publish(q, tmp_path, NOW)
     fresh = nba.nba_candidates(NOW, latest=tmp_path / "latest.csv")
     assert fresh.book_n.iloc[0] == 2
-    assert fresh.p_book.iloc[0] == 0.4
+    assert fresh.p_book.iloc[0] == 0.43
+    # v7: older than 60 minutes is stale at any time before tip (v6: 120).
+    q["book_updated_utc"] = (NOW - timedelta(minutes=61)).isoformat()
+    publish(q, tmp_path, NOW)
+    old = nba.nba_candidates(NOW, latest=tmp_path / "latest.csv")
+    assert pd.isna(old.p_book.iloc[0]) and old.book_n.iloc[0] == 0
 
 
 def _one_resting_order_world(monkeypatch, tmp_path, *, dual=False, shared=None):
@@ -1186,7 +1206,7 @@ def test_fee_reserve_shrinks_a_cheap_order_instead_of_skipping_it():
         return Order(
             ticker="KXNBAPTS-X",
             side="no",
-            count=nba.MAX_CONTRACTS,
+            count=3,  # the shrinking logic, independent of the live size
             price_cents=cents,
             expiration_ts=int(NOW.timestamp()) + 3600,
         )
@@ -1204,13 +1224,13 @@ def test_fee_reserve_shrinks_a_cheap_order_instead_of_skipping_it():
     assert free.count == 3
 
 
-def test_a_resting_three_contract_order_is_valid_and_four_is_not():
+def test_a_resting_one_contract_order_is_valid_and_two_is_not():
     row = priced().iloc[0]
     market = {"status": "active", "yes_bid_dollars": 0.40, "yes_ask_dollars": 0.50}
     intent = {
         "ticker": row.ticker,
         "price_cents": 51,
-        "count": 3,
+        "count": 1,
         "probability_source": "sportsbook",
     }
     assert nba.resting_cancel_reason(row, intent, market, 0.0) is None
@@ -1218,3 +1238,92 @@ def test_a_resting_three_contract_order_is_valid_and_four_is_not():
     assert (
         nba.resting_cancel_reason(row, too_big, market, 0.0) == "invalid_original_order"
     )
+
+
+def test_v7_never_prices_from_the_model():
+    f = priced()
+    f["p_book"] = float("nan")
+    f["book_n"] = 0
+    stats = {}
+    assert nba.select_candidates(f, [], {"active": []}, NOW, diagnostics=stats) == []
+    assert stats["book_priced"] == 0
+
+
+def test_v7_model_can_only_veto_and_edges_are_capped():
+    f = priced()
+    f["p_model"] = 0.60  # the model thinks NO is worth 40c, under the 51c price
+    stats = {}
+    assert nba.select_candidates(f, [], {"active": []}, NOW, diagnostics=stats) == []
+    assert stats["book_priced"] == 1 and stats["passed_model_veto"] == 0
+    g = priced()
+    g["p_book"] = 0.38  # book edge about 10.6c: above the 8c cap
+    stats = {}
+    assert nba.select_candidates(g, [], {"active": []}, NOW, diagnostics=stats) == []
+    assert stats["passed_model_veto"] == 1 and stats["passed_edge_sanity"] == 0
+
+
+def test_v7_translated_price_fills_a_line_no_book_quotes(tmp_path):
+    from kalshi.line_translation import attach_translated
+
+    frame = priced().assign(player_key="test player", p_book=float("nan"), book_n=0)
+    tip = frame.tip_utc.iloc[0].isoformat()
+    book = pd.DataFrame(
+        {
+            "player_key": ["test player"] * 3,
+            "stat": ["points"] * 3,
+            "line": [27.5, 28.5, 31.5],
+            "p_book": [0.55, 0.50, 0.36],
+            "book_n": [2, 3, 1],
+            "updated_utc": [NOW.isoformat()] * 3,
+            "commence_utc": [tip] * 3,
+        }
+    )
+    out = attach_translated(frame, book)
+    assert out.book_source.iloc[0] == "translated" and out.book_n.iloc[0] == 6
+    assert 0.36 < out.p_book.iloc[0] < 0.50  # between the nearby lines
+    far = book.assign(line=book.line - 10)  # nothing within 3 points
+    assert attach_translated(frame, far).book_source.iloc[0] == ""
+
+
+def test_v7_pipeline_prices_an_unquoted_line_from_fresh_nearby_lines(
+    tmp_path, monkeypatch
+):
+    import kalshi.books as books
+    import live.nba_trade as trader
+    import markets.nba.live as live
+
+    monkeypatch.setattr(trader, "refresh_quotes", lambda f, now: f.copy())
+    monkeypatch.setattr(books, "attach_latest", lambda f, path=None: f.copy())
+    monkeypatch.setattr(
+        live,
+        "injuries",
+        lambda: pd.DataFrame(columns=["player_id", "team", "updated", "out"]),
+    )
+    frame = priced()
+    frame["p_book"] = float("nan")
+    frame["book_n"] = 0
+    publish(frame, tmp_path, NOW)
+    tip = frame.tip_utc.iloc[0].isoformat()
+
+    def write_book(minutes_old):
+        pd.DataFrame(
+            {
+                "player_key": ["test player"] * 3,
+                "stat": ["points"] * 3,
+                "line": [27.5, 28.5, 31.5],
+                "p_book": [0.55, 0.50, 0.36],
+                "book_n": [2, 3, 1],
+                "updated_utc": [(NOW - timedelta(minutes=minutes_old)).isoformat()] * 3,
+                "commence_utc": [tip] * 3,
+                "snapshot_utc": [NOW.isoformat()] * 3,
+            }
+        ).to_csv(tmp_path / "nba_books.csv", index=False)
+
+    write_book(10)
+    out = nba.nba_candidates(NOW, latest=tmp_path / "latest.csv")
+    assert out.book_source.iloc[0] == "translated"
+    assert 0.36 < out.p_book.iloc[0] < 0.50
+    assert out.attrs["diagnostics"]["book_translated"] == 1
+    write_book(90)  # every nearby line older than 60 minutes: no price
+    stale = nba.nba_candidates(NOW, latest=tmp_path / "latest.csv")
+    assert pd.isna(stale.p_book.iloc[0])

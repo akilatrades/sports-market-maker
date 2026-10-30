@@ -40,13 +40,13 @@ import pandas as pd
 from research.fill_sizing_replay import clustered_mean_t
 
 ROOT = Path(__file__).resolve().parents[1]
-# NBA review (RESEARCH_LOG.md, 2026-10-23, "NBA rules v6"): v6 keeps v5's
-# selection and pricing and only trades 3 contracts an order, so v5 and v6 are
-# judged together from the first v5 order and also reported apart. The bar
-# counts settled filled ORDERS (at one contract an order, v5's fills and
-# contracts were the same); the allowance bar follows the allowance
-# ($2,000 -> $5,000).
-NBA_VERSIONS = ("nba-no-v5-one-contract-breadth", "nba-no-v6-three-contracts")
+# NBA review (RESEARCH_LOG.md, 2026-10-23, "NBA rules v6"): v6 kept v5's
+# selection and pricing, so v5 and v6 were judged together. v7 (2026-10-30,
+# "NBA rules v7") prices every order from the sportsbooks instead, so it is
+# judged on its own orders from its first order; v5 and v6 stay in the
+# record. The bar counts settled filled ORDERS; the allowance bar follows the
+# allowance ($2,000 -> $5,000).
+NBA_VERSIONS = ("nba-no-v7-book-priced",)
 NBA_VERSION = NBA_VERSIONS[-1]  # the bot's current rules
 NBA_BARS = {"settled_fills": 1900, "allowance_dollars": 5000.0, "days": 30}
 NBA_FEE_RESERVE = 1.10  # live/prod_nba_auto.py FEE_RESERVE

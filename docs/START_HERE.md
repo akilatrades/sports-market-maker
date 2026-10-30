@@ -93,7 +93,9 @@ code is right.
 
 | Limit | NBA ([`prod_nba_auto.py`](../live/prod_nba_auto.py)) | NFL ([`nfl_policy.py`](../live/nfl_policy.py)) |
 |---|---:|---:|
-| Contracts per order | 3 | 5 |
+| Rules version | v7 (book-priced) | v4 (book-priced) |
+| Price source | Books: exact line (1+ book), else nearby lines; never the model | Books: exact line only; never the model |
+| Contracts per order | 1 | 1 |
 | Cost per order | $4 | $3 |
 | Orders per game | 40 | 2 |
 | Cost per game | $50 | $3 |
@@ -101,7 +103,7 @@ code is right.
 | Open orders at once | $150 | $15 |
 | New orders per day | $150 | $30 |
 | New orders per scan | 3 | 1 |
-| Edge needed to post | 0¢ to 15¢ | 3¢ to 15¢ |
+| Edge needed to post | 0¢ to 8¢ (books), model must not disagree | 3¢ to 15¢ (books), model must not disagree |
 | Price range | 5–95¢ | 10–90¢ |
 | Lifetime orders placed | $5,000 | $50 |
 
