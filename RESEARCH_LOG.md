@@ -3667,3 +3667,44 @@ only tested on NBA stats. Expect fewer NFL orders (exact lines only).
 (`book_exact`, `book_translated`, `book_priced` and `passed_model_veto` in
 each scan's diagnostics), then turn NBA on at these sizes. The checkpoint
 (`research/live_checkpoint.py`) judges v7 alone with the existing bars.
+
+## 2026-10-30: Stop resting NBA orders in the last hour before tip-off (pre-registered)
+
+*Written before running. Question: do NBA resting NO orders that first fill
+in the last hour before tip-off lose money, so that cancelling resting
+orders 60 minutes before tip would add money?*
+
+**Where the idea came from (live, small, not a test).** Live NBA fills
+20–24 October: the 8 fills in the last 60 minutes before tip lost about
+−23¢ and −45¢ a contract (5 and 3 fills); fills 1–2 hours out made about
++31¢ (13 fills). Starting lineups and late injury news land in the last
+hour, so a YES buyer then may know something we do not. The bot lets
+accepted orders rest to tip (`RESTING_WINDOW = (0.0, 6.0)`) and no replay
+has tested a cutoff (the code comment says so).
+
+**Data.** 2025–26 replay (`outputs/decompose/orders_no.csv.gz`, one
+hypothetical 1-contract NO order per market placed about five hours before
+tip) against Kalshi's public trade prints. Fill time = the first print that
+would have filled the order under `research.fill_sizing_replay` rules (a
+YES taker at a better price, or at our price when we improved the quote).
+The season is in-sample for the pricing rules, but the cutoff was never
+tuned on it. No maker fee (as in the replay). SIMULATED.
+
+**Populations.** P1 (primary): every replay order priced 10–90¢, whatever
+priced it (the question is about timing, not pricing). P2: v7-like orders:
+an exact sportsbook line, book edge 0–8¢, model's own edge ≥ 0.
+
+**Primary test.** In P1, first in line: mean P&L per contract of the fills
+a 60-minute cutoff would remove (first fill within 60 minutes of tip),
+game-clustered (`kalshi.stats.clustered_mean_t`). **Pass:** mean ≤ −2¢ and
+t ≤ −2.0, with at least 300 such fills; and the same sign in P1 at
+`flow_share` 0.25 (median of 20 draws) and in P2. Otherwise the bot keeps
+resting to tip.
+
+**Also reported (not decision rules).** Cutoffs of 30, 90 and 120 minutes;
+late minus early fills; by stat. Cells: 4 cutoffs × 2 populations × 2 fill
+assumptions = 16, one primary.
+
+**If it passes:** NBA `RESTING_WINDOW` becomes (1.0, 6.0) in v7 before
+it goes live. NFL is not tested here (no NFL trade history for a replay);
+its entry window (10 minutes to 2 hours before kickoff) stays as it is.
