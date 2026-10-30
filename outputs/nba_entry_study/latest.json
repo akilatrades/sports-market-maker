@@ -1,9 +1,9 @@
 {
   "health": {
     "attempted_candidates": 40,
-    "eligible_candidates": 274,
+    "eligible_candidates": 359,
     "errors": [],
-    "generated_at": "2026-10-30T18:09:20.822149+00:00",
+    "generated_at": "2026-10-30T20:00:15.744285+00:00",
     "state": "recording"
   },
   "manifest": {
@@ -55,13 +55,13 @@
         "execution_known": 21,
         "exposure_by_game": {
           "401909277": 3.75,
-          "401909278": 0.9299999999999999
+          "401909278": 2.02
         },
         "filled": 12,
         "forecast_win_probability": 0.581014,
         "net_pnl_fee_upper_estimate": 0.7,
-        "orders": 30,
-        "pending_or_unknown_execution": 9,
+        "orders": 32,
+        "pending_or_unknown_execution": 11,
         "pnl_without_best_game": -0.16,
         "pnl_without_best_three_games": -1.03,
         "settled": 12,
@@ -83,13 +83,13 @@
         "execution_known": 52,
         "exposure_by_game": {
           "401909277": 4.699999999999999,
-          "401909278": 2.39
+          "401909278": 4.920000000000001
         },
         "filled": 29,
         "forecast_win_probability": 0.5255471724137931,
         "net_pnl_fee_upper_estimate": 0.52,
-        "orders": 66,
-        "pending_or_unknown_execution": 14,
+        "orders": 71,
+        "pending_or_unknown_execution": 19,
         "pnl_without_best_game": -1.05,
         "pnl_without_best_three_games": -2.26,
         "settled": 29,
@@ -136,13 +136,13 @@
         "execution_known": 21,
         "exposure_by_game": {
           "401909277": 3.75,
-          "401909278": 0.9299999999999999
+          "401909278": 2.02
         },
         "filled": 12,
         "forecast_win_probability": 0.581014,
         "net_pnl_fee_upper_estimate": 0.7,
-        "orders": 30,
-        "pending_or_unknown_execution": 9,
+        "orders": 32,
+        "pending_or_unknown_execution": 11,
         "pnl_without_best_game": -0.16,
         "pnl_without_best_three_games": -1.03,
         "settled": 12,
@@ -164,13 +164,13 @@
         "execution_known": 52,
         "exposure_by_game": {
           "401909277": 4.699999999999999,
-          "401909278": 2.39
+          "401909278": 4.920000000000001
         },
         "filled": 30,
         "forecast_win_probability": 0.5254094333333333,
         "net_pnl_fee_upper_estimate": -0.01,
-        "orders": 66,
-        "pending_or_unknown_execution": 14,
+        "orders": 71,
+        "pending_or_unknown_execution": 19,
         "pnl_without_best_game": -1.58,
         "pnl_without_best_three_games": -2.26,
         "settled": 30,

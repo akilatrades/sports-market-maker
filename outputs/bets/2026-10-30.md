@@ -5,15 +5,21 @@
 | Tip-off (ET) | Player | Bet | Price | Model | Edge | Contracts | Risk | Mode |
 |---|---|---|---:|---:|---:|---:|---:|---|
 | Fri 7:00 PM | Brandon Miller | NO 30+ points | 59¢ | 77% | 16¢ | 8 | $4.86 | paper |
+| Fri 7:00 PM | Brandon Miller | NO 5+ threes | 67¢ | 80% | 12¢ | 7 | $4.80 | paper |
 | Fri 7:00 PM | Naz Reid | NO 15+ points | 35¢ | 67% | 31¢ | 14 | $5.13 | paper |
 | Fri 7:00 PM | Naz Reid | NO 3+ threes | 53¢ | 76% | 21¢ | 9 | $4.93 | paper |
 | Fri 7:00 PM | Naz Reid | NO 2+ assists | 35¢ | 52% | 15¢ | 14 | $5.13 | paper |
 | Fri 7:00 PM | Naz Reid | NO 8+ rebounds | 52¢ | 67% | 13¢ | 10 | $5.38 | paper |
+| Fri 7:30 PM | Anthony Black | NO 4+ assists | 48¢ | 73% | 23¢ | 10 | $4.98 | paper |
+| Fri 7:30 PM | Anthony Black | NO 15+ points | 57¢ | 69% | 10¢ | 9 | $5.29 | paper |
 | Fri 7:30 PM | Ausar Thompson | NO 10+ points | 48¢ | 63% | 13¢ | 10 | $4.98 | paper |
+| Fri 7:30 PM | Cade Cunningham | NO 10+ assists | 56¢ | 68% | 10¢ | 9 | $5.20 | paper |
 | Fri 7:30 PM | Day'Ron Sharpe | NO 8+ rebounds | 55¢ | 72% | 16¢ | 9 | $5.11 | paper |
 | Fri 7:30 PM | Day'Ron Sharpe | NO 2+ assists | 37¢ | 52% | 13¢ | 14 | $5.41 | paper |
 | Fri 7:30 PM | Franz Wagner | NO 6+ assists | 43¢ | 63% | 19¢ | 12 | $5.37 | paper |
 | Fri 7:30 PM | Immanuel Quickley | NO 6+ assists | 47¢ | 62% | 13¢ | 11 | $5.37 | paper |
+| Fri 7:30 PM | Immanuel Quickley | NO 15+ points | 36¢ | 49% | 11¢ | 14 | $5.27 | paper |
+| Fri 7:30 PM | Immanuel Quickley | NO 4+ rebounds | 49¢ | 60% | 10¢ | 10 | $5.08 | paper |
 | Fri 7:30 PM | Jakob Poeltl | NO 2+ assists | 50¢ | 67% | 16¢ | 10 | $5.18 | paper |
 | Fri 7:30 PM | Jayson Tatum | YES 12+ rebounds | 17¢ | 32% | 14¢ | 30 | $5.40 | paper |
 | Fri 7:30 PM | John Collins | NO 6+ rebounds | 31¢ | 54% | 21¢ | 16 | $5.20 | paper |
@@ -21,18 +27,44 @@
 | Fri 7:30 PM | John Collins | NO 2+ threes | 63¢ | 76% | 12¢ | 1 | $0.65 | paper |
 | Fri 7:30 PM | Julius Randle | NO 6+ assists | 60¢ | 79% | 18¢ | 8 | $4.94 | paper |
 | Fri 7:30 PM | Karl-Anthony Towns | NO 20+ points | 50¢ | 65% | 13¢ | 10 | $5.18 | paper |
+| Fri 7:30 PM | Karl-Anthony Towns | NO 2+ threes | 57¢ | 70% | 11¢ | 9 | $5.29 | paper |
+| Fri 7:30 PM | LeBron James | YES 20+ points | 33¢ | 44% | 9¢ | 5 | $1.73 | paper |
 | Fri 7:30 PM | Mikal Bridges | NO 2+ assists | 30¢ | 44% | 13¢ | 17 | $5.35 | paper |
+| Fri 7:30 PM | Mikal Bridges | NO 10+ points | 48¢ | 62% | 12¢ | 10 | $4.98 | paper |
+| Fri 7:30 PM | Norman Powell | NO 4+ rebounds | 61¢ | 72% | 9¢ | 8 | $5.02 | paper |
+| Fri 7:30 PM | RJ Barrett | YES 20+ points | 64¢ | 76% | 10¢ | 8 | $5.25 | paper |
 | Fri 7:30 PM | VJ Edgecombe | YES 4+ assists | 26¢ | 43% | 15¢ | 20 | $5.47 | paper |
+| Fri 7:30 PM | Wendell Carter Jr. | YES 10+ points | 59¢ | 71% | 10¢ | 8 | $4.86 | paper |
+| Fri 8:00 PM | Amen Thompson | NO 8+ rebounds | 48¢ | 60% | 10¢ | 10 | $4.98 | paper |
+| Fri 8:00 PM | Cooper Flagg | NO 25+ points | 55¢ | 68% | 11¢ | 9 | $5.11 | paper |
+| Fri 8:00 PM | Cooper Flagg | NO 8+ rebounds | 67¢ | 80% | 11¢ | 7 | $4.80 | paper |
+| Fri 8:00 PM | Cooper Flagg | NO 2+ threes | 57¢ | 69% | 10¢ | 9 | $5.29 | paper |
 | Fri 8:00 PM | Daniel Gafford | YES 10+ points | 35¢ | 50% | 13¢ | 14 | $5.13 | paper |
 | Fri 8:00 PM | Darius Garland | NO 25+ points | 57¢ | 80% | 21¢ | 9 | $5.29 | paper |
 | Fri 8:00 PM | Darius Garland | NO 6+ assists | 29¢ | 48% | 17¢ | 18 | $5.48 | paper |
 | Fri 8:00 PM | Darius Garland | NO 3+ threes | 47¢ | 61% | 12¢ | 11 | $5.37 | paper |
+| Fri 8:00 PM | Darius Garland | NO 4+ rebounds | 67¢ | 80% | 11¢ | 7 | $4.80 | paper |
 | Fri 8:00 PM | Davion Mitchell | YES 2+ rebounds | 64¢ | 80% | 14¢ | 8 | $5.25 | paper |
 | Fri 8:00 PM | Fred VanVleet | YES 15+ points | 33¢ | 47% | 13¢ | 15 | $5.19 | paper |
 | Fri 8:00 PM | Fred VanVleet | YES 4+ threes | 22¢ | 36% | 12¢ | 23 | $5.34 | paper |
 | Fri 8:00 PM | Giannis Antetokounmpo | NO 6+ assists | 45¢ | 63% | 16¢ | 11 | $5.15 | paper |
+| Fri 8:00 PM | Giannis Antetokounmpo | NO 30+ points | 43¢ | 58% | 14¢ | 12 | $5.37 | paper |
+| Fri 8:00 PM | Giannis Antetokounmpo | NO 12+ rebounds | 51¢ | 64% | 11¢ | 10 | $5.28 | paper |
 | Fri 8:00 PM | Kelly Oubre Jr. | YES 6+ rebounds | 25¢ | 44% | 17¢ | 20 | $5.27 | paper |
 | Fri 8:00 PM | Kevin Durant | YES 4+ assists | 55¢ | 73% | 16¢ | 9 | $5.11 | paper |
+| Fri 8:00 PM | Klay Thompson | YES 4+ threes | 17¢ | 35% | 17¢ | 30 | $5.40 | paper |
+| Fri 8:00 PM | Klay Thompson | YES 10+ points | 38¢ | 50% | 10¢ | 13 | $5.16 | paper |
+| Fri 8:00 PM | LaMelo Ball | YES 6+ threes | 16¢ | 34% | 17¢ | 32 | $5.43 | paper |
+| Fri 8:00 PM | Max Christie | NO 4+ rebounds | 61¢ | 72% | 9¢ | 8 | $5.02 | paper |
 | Fri 8:00 PM | Pascal Siakam | YES 25+ points | 45¢ | 58% | 12¢ | 1 | $0.47 | paper |
 | Fri 8:00 PM | Rudy Gobert | NO 12+ rebounds | 53¢ | 70% | 16¢ | 9 | $4.93 | paper |
 | Fri 8:00 PM | Rudy Gobert | NO 10+ points | 49¢ | 65% | 14¢ | 10 | $5.08 | paper |
+| Fri 10:00 PM | Al Horford | YES 10+ points | 19¢ | 28% | 8¢ | 1 | $0.21 | paper |
+| Fri 10:00 PM | Austin Reaves | NO 20+ points | 33¢ | 56% | 21¢ | 15 | $5.19 | paper |
+| Fri 10:00 PM | Austin Reaves | NO 6+ assists | 50¢ | 62% | 10¢ | 10 | $5.18 | paper |
+| Fri 10:00 PM | Dillon Brooks | YES 6+ rebounds | 20¢ | 32% | 11¢ | 26 | $5.50 | paper |
+| Fri 10:00 PM | Draymond Green | NO 6+ rebounds | 52¢ | 64% | 11¢ | 10 | $5.38 | paper |
+| Fri 10:00 PM | Jalen Green | YES 20+ points | 27¢ | 49% | 21¢ | 19 | $5.40 | paper |
+| Fri 10:00 PM | Luka Dončić | NO 6+ rebounds | 26¢ | 42% | 14¢ | 20 | $5.47 | paper |
+| Fri 10:00 PM | Luka Dončić | NO 30+ points | 31¢ | 44% | 12¢ | 16 | $5.20 | paper |
+| Fri 10:00 PM | Walker Kessler | NO 15+ points | 55¢ | 74% | 17¢ | 9 | $5.11 | paper |
