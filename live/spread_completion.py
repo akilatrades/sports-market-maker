@@ -79,11 +79,15 @@ def inventory(events, fills, positions, settled, now):
         if fill["fid"] in normalized and normalized[fill["fid"]] != fill:
             raise EvidenceError("conflicting_fill")
         if fill["fid"] not in normalized:
-            filled_by_order[fill["oid"]] = filled_by_order.get(fill["oid"], Decimal(0)) + amount(fill["quantity"])
+            filled_by_order[fill["oid"]] = filled_by_order.get(
+                fill["oid"], Decimal(0)
+            ) + amount(fill["quantity"])
         if filled_by_order[fill["oid"]] > amount(own[fill["oid"]]["count"]):
             raise EvidenceError("fill_exceeds_order_quantity")
         reserve = own[fill["oid"]].get("fee_bound_per_contract")
-        if reserve is None or amount(fill["fee"]) > amount(fill["quantity"]) * amount(reserve):
+        if reserve is None or amount(fill["fee"]) > amount(fill["quantity"]) * amount(
+            reserve
+        ):
             raise EvidenceError("observed_fee_exceeds_reserve")
         normalized[fill["fid"]] = fill
     for row in events:
@@ -142,7 +146,10 @@ def entry_quotes(market, book, fees, start, now):
     maker, taker = fee_bound(fees), fee_bound(fees, True)
     if 1 - Decimal(yp + np) / 100 - 2 * maker < TARGET:
         return []
-    if max(Decimal(yp) / 100 - yes, Decimal(np) / 100 - no) + maker + taker > MAX_EXIT_GAP:
+    if (
+        max(Decimal(yp) / 100 - yes, Decimal(np) / 100 - no) + maker + taker
+        > MAX_EXIT_GAP
+    ):
         return []
     return [
         Quote(market["ticker"], "yes", yp, SIZE, "entry"),
@@ -177,8 +184,12 @@ def completion_quote(ticker, lots, book, fees, start, now):
     limit = min(99, cents_floor(1 - basis - target - fee_bound(fees, True)))
     if limit >= 1 and ask <= Decimal(limit) / 100:
         return Quote(
-            ticker, side, limit, quantity,
-            "timeout_exit" if expired else "take_profit", True,
+            ticker,
+            side,
+            limit,
+            quantity,
+            "timeout_exit" if expired else "take_profit",
+            True,
         ), "inventory_timeout" if expired else "completing"
     if expired:
         return None, "exit_price_floor_blocked"

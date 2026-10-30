@@ -13,6 +13,7 @@ import os
 import subprocess
 import time
 import uuid
+from dataclasses import asdict
 from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 from pathlib import Path
@@ -41,7 +42,7 @@ STUDY = Path("/home/trader/spread-forward-study/manifest.json")
 
 def source_digest(root):
     digest = hashlib.sha256()
-    for name in ("live", "kalshi", "research"):
+    for name in ("live", "kalshi", "research", "markets"):
         for path in sorted((root / name).rglob("*.py")):
             digest.update(str(path.relative_to(root)).encode() + b"\0" + path.read_bytes())
     return digest.hexdigest()
@@ -312,6 +313,11 @@ def run_once(client, journal, now, series, live=False, stop=False, authorize=Non
         "decision": reason, "held_markets": len(lots), "cancel_count": len(cancel),
         "orders_planned": len(plans), "submitted": 0,
         "entries_blocked_by_inventory": bool(lots),
+        "planned_quotes": [asdict(q) for q in plans],
+        "evidence": None if data is None else {
+            "market": data["market"], "external_book": data["book"],
+            "fees": data["fees"], "event_start_utc": data["start"].isoformat(),
+        },
     }
     if not live:
         return report
@@ -372,7 +378,7 @@ def main():
             try:
                 report = run_once(client, STATE / "journal.jsonl", datetime.now(UTC), args.series, live=args.live, stop=os.path.lexists(STATE / "V4_KILL"), authorize=lambda: guard(client, os.environ, root))
             except Exception as error:
-                report = {"version": policy.VERSION, "at": datetime.now(UTC).isoformat(), "decision": "halt", "error_class": type(error).__name__}
+                report = {"version": policy.VERSION, "at": datetime.now(UTC).isoformat(), "decision": "halt", "error_class": type(error).__name__, "error": str(error)[:240]}
                 if args.live:
                     try:
                         cancel_v4_on_halt(client, STATE / "journal.jsonl", datetime.now(UTC))
@@ -380,9 +386,10 @@ def main():
                         report["cancellation_unconfirmed"] = True
     target = STATE / "v4_last_scan.json"
     temporary = target.with_suffix(".tmp")
-    temporary.write_text(json.dumps(report, sort_keys=True, indent=2) + "\n")
+    temporary.write_text(json.dumps(report, sort_keys=True, indent=2, default=str) + "\n")
     temporary.replace(target)
-    print(json.dumps(report, sort_keys=True))
+    # The detailed evidence stays in the private state directory.
+    print(json.dumps({k: v for k, v in report.items() if k not in ("planned_quotes", "evidence", "error")}, sort_keys=True))
     if report.get("decision") == "halt":
         raise SystemExit(2)
 
