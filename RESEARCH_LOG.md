@@ -3667,3 +3667,95 @@ only tested on NBA stats. Expect fewer NFL orders (exact lines only).
 (`book_exact`, `book_translated`, `book_priced` and `passed_model_veto` in
 each scan's diagnostics), then turn NBA on at these sizes. The checkpoint
 (`research/live_checkpoint.py`) judges v7 alone with the existing bars.
+
+## 2026-10-30: Stop resting NBA orders in the last hour before tip-off (pre-registered)
+
+*Written before running. Question: do NBA resting NO orders that first fill
+in the last hour before tip-off lose money, so that cancelling resting
+orders 60 minutes before tip would add money?*
+
+**Where the idea came from (live, small, not a test).** Live NBA fills
+20–24 October: the 8 fills in the last 60 minutes before tip lost about
+−23¢ and −45¢ a contract (5 and 3 fills); fills 1–2 hours out made about
++31¢ (13 fills). Starting lineups and late injury news land in the last
+hour, so a YES buyer then may know something we do not. The bot lets
+accepted orders rest to tip (`RESTING_WINDOW = (0.0, 6.0)`) and no replay
+has tested a cutoff (the code comment says so).
+
+**Data.** 2025–26 replay (`outputs/decompose/orders_no.csv.gz`, one
+hypothetical 1-contract NO order per market placed about five hours before
+tip) against Kalshi's public trade prints. Fill time = the first print that
+would have filled the order under `research.fill_sizing_replay` rules (a
+YES taker at a better price, or at our price when we improved the quote).
+The season is in-sample for the pricing rules, but the cutoff was never
+tuned on it. No maker fee (as in the replay). SIMULATED.
+
+**Populations.** P1 (primary): every replay order priced 10–90¢, whatever
+priced it (the question is about timing, not pricing). P2: v7-like orders:
+an exact sportsbook line, book edge 0–8¢, model's own edge ≥ 0.
+
+**Primary test.** In P1, first in line: mean P&L per contract of the fills
+a 60-minute cutoff would remove (first fill within 60 minutes of tip),
+game-clustered (`kalshi.stats.clustered_mean_t`). **Pass:** mean ≤ −2¢ and
+t ≤ −2.0, with at least 300 such fills; and the same sign in P1 at
+`flow_share` 0.25 (median of 20 draws) and in P2. Otherwise the bot keeps
+resting to tip.
+
+**Also reported (not decision rules).** Cutoffs of 30, 90 and 120 minutes;
+late minus early fills; by stat. Cells: 4 cutoffs × 2 populations × 2 fill
+assumptions = 16, one primary.
+
+**If it passes:** NBA `RESTING_WINDOW` becomes (1.0, 6.0) in v7 before
+it goes live. NFL is not tested here (no NFL trade history for a replay);
+its entry window (10 minutes to 2 hours before kickoff) stays as it is.
+
+### Result (2026-10-30): FAIL. Keep resting to tip.
+
+SIMULATED, 2025–26 replay, in-sample season. `research/nba_late_fill_cutoff.py`,
+`outputs/research/nba_late_fill_cutoff.json`. 16 cells, one primary.
+
+| P1, first in line (45,585 orders, 30,195 fills) | fills | ¢ a contract | t |
+|---|---|---|---|
+| All fills | 30,195 | +2.1 | 4.8 |
+| **Removed by a 60-minute cutoff (primary)** | **5,083** | **+3.3** | **4.6** |
+| Kept (filled earlier) | 25,112 | +1.8 | 4.0 |
+| Late minus early | | +1.5 | 2.0 |
+
+The fills in the last hour made *more* than earlier ones, not less. Same at
+`flow_share` 0.25 (median draw +3.1¢, t 4.4), at 30, 90 and 120 minutes
+(late +2.5¢ to +3.2¢), in every stat, and in P2 (v7-like, 1,139 fills: late
++5.6¢, t 1.5). The 8 losing live fills look like noise. `RESTING_WINDOW`
+stays (0.0, 6.0).
+
+## 2026-10-30: NBA v7: model veto off (plan amendment, exploratory evidence)
+
+*Not a pre-registered test: two exploratory looks, reported with their
+variant counts, and the owner's go-live decision.*
+
+**Replay (SIMULATED, in-sample, first in line), orders with an exact book
+line, 3,192 fills; 12 cells.** Book edge 0–8¢: orders the model veto keeps
++4.1¢ a contract (1,139 fills, t 2.1); orders it blocks +4.4¢ (495 fills,
+t 1.8). Book edge decides more than the model: −2¢ to 0¢ +0.4¢ (t 0.2),
+0–2¢ +4.9¢ (t 2.9). One book +1.7¢ (434 fills, t 0.8) against two +8.9¢
+and three or more +4.0¢: not reliable enough to require two books.
+
+**Live (20–24 October, book-priced NBA fills, small); 8 cells.** Fills the
+model disagreed with +9.5¢ a contract (20 fills, 9 games, t 0.8); fills it
+agreed with −0.6¢ (35 fills, 12 games). Every live book-priced fill had 2+
+books. Queue ahead at entry showed no pattern.
+
+**Change.** `MODEL_VETO_MIN_EDGE` 0.0 → `None` (off) in
+`live/prod_nba_auto.py`, still `nba-no-v7-book-priced` (never deployed).
+Why: the veto removed about 30% of book-priced orders without making the
+rest better, and the live test needs fills. NBA orders are now priced and
+chosen by the books alone; the injury, roster and freshness vetoes stay.
+NFL v4 keeps its veto (no NFL evidence; NFL allows book edges up to 15¢,
+where a second opinion matters more). Test:
+`tests/test_prod_nba_auto.py`.
+
+**Go-live decision (owner, 30 October).** The owner wants real fills
+rather than a paper period, so the "watch two weeks of scans" step above is
+dropped: NBA v7 and NFL v4 go live at 1 contract. The checkpoint
+(`research/live_checkpoint.py`) judges v7 and v4 on their own orders. At
+1 contract the answer comes slowly: about 1,900 fills for t ≈ 2 at 3¢ (same
+game correlation counted).
