@@ -19,7 +19,12 @@ from kalshi.stats import clustered_mean_t
 from research.bookline_backtest import FEE_SHARE, difference, maker_fee, summary
 
 OUT = Path("outputs/line_translation")
-STATS = {"points": "points", "rebounds": "rebounds", "assists": "assists", "threes": "threes"}
+STATS = {
+    "points": "points",
+    "rebounds": "rebounds",
+    "assists": "assists",
+    "threes": "threes",
+}
 MAX_GAP = {"points": 3.0, "rebounds": 2.0, "assists": 2.0, "threes": 1.0}
 MIN_QUOTES = 2
 
@@ -68,9 +73,13 @@ def translate(quotes, line, stat, r, exclude_exact=True):
         q = q[(q.line - line).abs() > 1e-6]
     if q.empty:
         return None, None
-    if (q.line - line).abs().min() > MAX_GAP[stat] + 1e-9 or q.book_n.sum() < MIN_QUOTES:
+    if (q.line - line).abs().min() > MAX_GAP[
+        stat
+    ] + 1e-9 or q.book_n.sum() < MIN_QUOTES:
         return None, None
-    mu = fit_mu(q.line.to_numpy(float), q.p_book.to_numpy(float), q.book_n.to_numpy(float), r)
+    mu = fit_mu(
+        q.line.to_numpy(float), q.p_book.to_numpy(float), q.book_n.to_numpy(float), r
+    )
     nb = p_over(mu, r, line)
     # sensitivity: logit interpolation between the two nearest lines (flat beyond the ends)
     srt = q.sort_values("line")
@@ -87,7 +96,7 @@ def logloss(p, y):
 def paired_logloss(frame, a, b):
     d = logloss(frame[a], frame.over) - logloss(frame[b], frame.over)
     mean, t = clustered_mean_t(pd.Series(d, index=frame.index), frame.game_id)
-    return {"mean": round(float(mean), 4), "t": round(float(t), 2), "fills": int(len(frame))}
+    return {"mean": round(float(mean), 4), "t": round(float(t), 2), "fills": len(frame)}
 
 
 def main():
@@ -106,26 +115,41 @@ def main():
         a, b = translate(q, row.line, row.stat, r[row.stat])
         nb.append(a), interp.append(b)
     fills["p_tr"] = pd.to_numeric(pd.Series(nb, index=fills.index), errors="coerce")
-    fills["p_interp"] = pd.to_numeric(pd.Series(interp, index=fills.index), errors="coerce")
+    fills["p_interp"] = pd.to_numeric(
+        pd.Series(interp, index=fills.index), errors="coerce"
+    )
     fills["mid"] = fills["mid"].astype(float)
     fee = maker_fee(fills.price.astype(float), FEE_SHARE)
-    for col, src in (("tr_edge", "p_tr"), ("interp_edge", "p_interp"), ("book_edge", "p_book")):
+    for col, src in (
+        ("tr_edge", "p_tr"),
+        ("interp_edge", "p_interp"),
+        ("book_edge", "p_book"),
+    ):
         fills[col] = (1 - fills[src]) - fills.price - fee
 
     exact = fills.p_book.notna()
     has_tr = fills.p_tr.notna()
-    res = {"dispersion_r": {k: round(v, 3) for k, v in r.items()},
-           "coverage": {"fills": int(len(fills)),
-                        "exact_quote": round(float(exact.mean()), 3),
-                        "no_exact_but_translated": round(float((~exact & has_tr).mean()), 3),
-                        "neither": round(float((~exact & ~has_tr).mean()), 3)}}
+    res = {
+        "dispersion_r": {k: round(v, 3) for k, v in r.items()},
+        "coverage": {
+            "fills": len(fills),
+            "exact_quote": round(float(exact.mean()), 3),
+            "no_exact_but_translated": round(float((~exact & has_tr).mean()), 3),
+            "neither": round(float((~exact & ~has_tr).mean()), 3),
+        },
+    }
 
     # 1. validation where both exist (exact line left out of the fit)
     v = fills[exact & has_tr].copy()
     res["validation"] = {
-        "fills": int(len(v)),
-        "mean_abs_gap_to_exact_cents": round(100 * float((v.p_tr - v.p_book).abs().mean()), 2),
-        "logloss": {k: round(float(logloss(v[k], v.over).mean()), 4) for k in ("p_tr", "p_book", "mid", "p_model")},
+        "fills": len(v),
+        "mean_abs_gap_to_exact_cents": round(
+            100 * float((v.p_tr - v.p_book).abs().mean()), 2
+        ),
+        "logloss": {
+            k: round(float(logloss(v[k], v.over).mean()), 4)
+            for k in ("p_tr", "p_book", "mid", "p_model")
+        },
         "translated_minus_mid": paired_logloss(v, "p_tr", "mid"),
         "translated_minus_model": paired_logloss(v, "p_tr", "p_model"),
         "exact_minus_mid": paired_logloss(v, "p_book", "mid"),
@@ -138,24 +162,35 @@ def main():
         "kept": summary(keep, "kept by translated veto"),
         "removed": summary(cut, "removed by translated veto"),
         "kept_minus_removed": difference(keep, cut),
-        "logloss": {k: round(float(logloss(u[k], u.over).mean()), 4) for k in ("p_tr", "mid", "p_model")},
+        "logloss": {
+            k: round(float(logloss(u[k], u.over).mean()), 4)
+            for k in ("p_tr", "mid", "p_model")
+        },
         "translated_minus_mid": paired_logloss(u, "p_tr", "mid"),
         "translated_minus_model": paired_logloss(u, "p_tr", "p_model"),
     }
     d = res["primary"]["kept_minus_removed"]
-    res["primary"]["pass"] = bool(d and d["cents"] >= 1 and (d["t"] or 0) >= 2 and len(u) >= 1000)
+    res["primary"]["pass"] = bool(
+        d and d["cents"] >= 1 and (d["t"] or 0) >= 2 and len(u) >= 1000
+    )
     # sensitivity: logit interpolation
     ui = fills[~exact & fills.p_interp.notna() & has_tr]
-    res["sensitivity_interp"] = {"kept_minus_removed": difference(ui[ui.interp_edge >= 0], ui[ui.interp_edge < 0]),
-                                 "fills": int(len(ui))}
+    res["sensitivity_interp"] = {
+        "kept_minus_removed": difference(
+            ui[ui.interp_edge >= 0], ui[ui.interp_edge < 0]
+        ),
+        "fills": len(ui),
+    }
     # combined coverage: exact where available, else translated
     fills["p_best"] = fills.p_book.fillna(fills.p_tr)
     fills["best_edge"] = (1 - fills.p_best) - fills.price - fee
     c = fills[fills.p_best.notna()]
-    res["combined"] = {"kept": summary(c[c.best_edge >= 0], "kept, exact or translated"),
-                       "removed": summary(c[c.best_edge < 0], "removed"),
-                       "kept_minus_removed": difference(c[c.best_edge >= 0], c[c.best_edge < 0]),
-                       "everything_unfiltered": summary(fills, "all fills, no veto")}
+    res["combined"] = {
+        "kept": summary(c[c.best_edge >= 0], "kept, exact or translated"),
+        "removed": summary(c[c.best_edge < 0], "removed"),
+        "kept_minus_removed": difference(c[c.best_edge >= 0], c[c.best_edge < 0]),
+        "everything_unfiltered": summary(fills, "all fills, no veto"),
+    }
     OUT.mkdir(parents=True, exist_ok=True)
     (OUT / "results.json").write_text(json.dumps(res, indent=2) + "\n")
     print(json.dumps(res, indent=2))

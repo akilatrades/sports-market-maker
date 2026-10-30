@@ -3481,3 +3481,39 @@ Sensitivity (one): logit interpolation between the two nearest lines.
    snapshots taken before each order (about 200 contracts; no test).
 
 **Variants counted:** 1 primary, 1 sensitivity, 3 descriptive measures.
+
+## 2026-10-30: Price Kalshi props from nearby sportsbook lines (results)
+
+*Plan above. Simulated replay, 2025–26 (in-sample season), fills first in
+line from public prints. Fix made while running: the curve fit stalled at
+its upper bound when probabilities saturate; a grid search before the
+bounded search fixed it (no change to the method).*
+
+**Coverage.** Exact-line book quote 65.8% of 4,862 fills; translated only
+20.9%; neither 13.3%. Coverage rises from 66% to 87%.
+
+**Validation** (2,962 fills with an exact quote, that quote left out of the
+fit). Translated price is 2.2¢ from the exact book price on average. Log
+loss: translated 0.6265, exact book 0.6258, Kalshi mid 0.6272, model
+0.6377. Translated beats the model (t −1.9) and ties the mid (t −0.3).
+
+**Primary** (1,017 fills with no exact quote, 124 games). Translated beats
+the model on log loss (−0.0147, t −2.2) and ties the mid (−0.0047, t
+−0.9). Veto: kept 436 fills +2.99¢ (t 1.6), removed 581 fills +0.67¢;
+kept minus removed **+2.32¢, t 1.24: fails** the bar (≥ 1¢ and t ≥ 2).
+Same direction as the exact-line veto (+3.44¢, t 2.42). Sensitivity, logit
+interpolation: +2.87¢, t 1.34.
+
+**Exploratory, exact or translated together** (4,214 fills): kept 2,083
+fills +3.64¢ (t 2.62), removed +0.46¢; kept minus removed +3.19¢ (t 2.81).
+Against the exact-only veto (1,647 kept at +3.81¢), about 26% more kept
+fills at a similar rate.
+
+**Reading.** Nearby book lines price Kalshi's line about as well as an
+exact quote and better than the stat model, so they can replace the model
+as the price source. The veto gain on the newly covered fills is the right
+sign and size but not proven on its own. A live check on 2026–27 fills is
+kept in the private data repository (live results stay out of this file).
+
+**Variants counted:** 1 primary, 1 sensitivity, 3 descriptive (as planned)
+plus the combined view above.
