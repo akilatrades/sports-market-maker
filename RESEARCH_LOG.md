@@ -3550,3 +3550,38 @@ changing.
 one-sided ones.
 
 **Variants counted:** 2 tests × 2 fill assumptions; 1 descriptive split.
+
+## 2026-10-30: Spread maker: quote where both sides trade, and when (results)
+
+*Plan above. Simulated, in-sample replay, 144,828 pregame quotes under the
+v3 rule; 10,223 first-in-line fills (+8.69¢, t 13.84, as on 23 October).
+`python -m research.spread_flow_timing`. Flow-share 0.25 figures are one
+representative draw.*
+
+**Test A, two-sided series: fails.** 32 series had 30+ earlier-half fills;
+the top third (10: mostly NCAA women's basketball lines, World Baseball
+Classic spreads, IPL, mention markets, Brent, boxing) paired 49% of their
+filled contracts against 28% for the rest, and still 54% against 30% in
+the later half, so two-sidedness persists. But later-half profit was
++4.05¢ (t 1.2) for them against +6.05¢ (t 4.7) for the rest: −2.0¢, t
+−0.57 (flow 0.25: +3.4¢, t 0.67). Picking series by two-sided trading does
+not raise profit.
+
+**Test B, timing: no bin dropped,** so the plan says no change. Every bin
+was positive in the earlier half (8.7¢ to 11.5¢). Later half, first in
+line: 12–24 h +3.3¢ (t 1.7), 6–12 h +7.2¢ (t 3.9), 3–6 h +6.3¢ (t 3.0),
+1.4–3 h +7.9¢ (t 4.0); at flow 0.25 the 12–24 h bin is +1.8¢ (t 0.8).
+Noted, not tested: the earliest quotes weakened most.
+
+**Descriptive.** Later half, markets where both sides filled +7.0¢ (t 4.7)
+against one side only +4.8¢ (t 2.4).
+
+**Outside prices (coverage check, judgement on market types).** The Odds
+API covers AHL, NPB, NCAA women's basketball, PLL, boxing, MMA, IPL, WNBA
+and more, but no esports and not NWSL. In the replay, markets the books
+price directly are 36% of fills and 41% of profit; esports are 19% of
+fills. Live v3 fills were mostly esports (47 of 62 markets), where this
+feed cannot help.
+
+**Variants counted:** as planned (2 tests × 2 fill assumptions, 1
+descriptive) plus the coverage split.
