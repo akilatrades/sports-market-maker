@@ -1,0 +1,243 @@
+{
+ "note": "SIMULATED 2025-26 replay, in-sample season; RESEARCH_LOG.md 2026-10-30",
+ "variants": 16,
+ "P1_all_10_90c": {
+  "orders": 45585,
+  "first_in_line": {
+   "all_fills": {
+    "fills": 30195,
+    "games": 1008,
+    "cents": 2.08,
+    "t": 4.83
+   },
+   "30m": {
+    "removed_late": {
+     "fills": 2825,
+     "games": 826,
+     "cents": 3.18,
+     "t": 3.37
+    },
+    "kept_early": {
+     "fills": 27370,
+     "games": 999,
+     "cents": 1.96,
+     "t": 4.41
+    },
+    "late_minus_early": {
+     "cents": 1.22,
+     "t": 1.27
+    },
+    "dollars_removed": 89.77
+   },
+   "60m": {
+    "removed_late": {
+     "fills": 5083,
+     "games": 912,
+     "cents": 3.3,
+     "t": 4.64
+    },
+    "kept_early": {
+     "fills": 25112,
+     "games": 990,
+     "cents": 1.83,
+     "t": 3.97
+    },
+    "late_minus_early": {
+     "cents": 1.47,
+     "t": 1.99
+    },
+    "dollars_removed": 167.76
+   },
+   "90m": {
+    "removed_late": {
+     "fills": 7226,
+     "games": 948,
+     "cents": 2.53,
+     "t": 4.08
+    },
+    "kept_early": {
+     "fills": 22969,
+     "games": 987,
+     "cents": 1.93,
+     "t": 4.07
+    },
+    "late_minus_early": {
+     "cents": 0.6,
+     "t": 0.91
+    },
+    "dollars_removed": 182.95
+   },
+   "120m": {
+    "removed_late": {
+     "fills": 9768,
+     "games": 974,
+     "cents": 2.48,
+     "t": 4.42
+    },
+    "kept_early": {
+     "fills": 20427,
+     "games": 972,
+     "cents": 1.88,
+     "t": 3.8
+    },
+    "late_minus_early": {
+     "cents": 0.6,
+     "t": 0.98
+    },
+    "dollars_removed": 242.45
+   }
+  },
+  "flow_0.25_primary_median_draw": {
+   "fills": 5146,
+   "games": 917,
+   "cents": 3.09,
+   "t": 4.4
+  },
+  "late_by_stat_first_in_line": {
+   "assists": {
+    "fills": 1023,
+    "games": 542,
+    "cents": 3.5,
+    "t": 2.41
+   },
+   "points": {
+    "fills": 1463,
+    "games": 665,
+    "cents": 3.61,
+    "t": 3.05
+   },
+   "rebounds": {
+    "fills": 1508,
+    "games": 640,
+    "cents": 1.08,
+    "t": 0.8
+   },
+   "threes": {
+    "fills": 1089,
+    "games": 539,
+    "cents": 5.77,
+    "t": 4.13
+   }
+  }
+ },
+ "P2_v7_like": {
+  "orders": 1823,
+  "first_in_line": {
+   "all_fills": {
+    "fills": 1139,
+    "games": 132,
+    "cents": 4.14,
+    "t": 2.11
+   },
+   "30m": {
+    "removed_late": {
+     "fills": 98,
+     "games": 61,
+     "cents": 3.71,
+     "t": 0.72
+    },
+    "kept_early": {
+     "fills": 1041,
+     "games": 130,
+     "cents": 4.18,
+     "t": 2.1
+    },
+    "late_minus_early": {
+     "cents": -0.46,
+     "t": -0.09
+    },
+    "dollars_removed": 3.64
+   },
+   "60m": {
+    "removed_late": {
+     "fills": 179,
+     "games": 88,
+     "cents": 5.56,
+     "t": 1.47
+    },
+    "kept_early": {
+     "fills": 960,
+     "games": 127,
+     "cents": 3.87,
+     "t": 1.92
+    },
+    "late_minus_early": {
+     "cents": 1.69,
+     "t": 0.46
+    },
+    "dollars_removed": 9.96
+   },
+   "90m": {
+    "removed_late": {
+     "fills": 253,
+     "games": 96,
+     "cents": 3.2,
+     "t": 1.04
+    },
+    "kept_early": {
+     "fills": 886,
+     "games": 126,
+     "cents": 4.41,
+     "t": 2.06
+    },
+    "late_minus_early": {
+     "cents": -1.21,
+     "t": -0.38
+    },
+    "dollars_removed": 8.09
+   },
+   "120m": {
+    "removed_late": {
+     "fills": 329,
+     "games": 108,
+     "cents": 3.74,
+     "t": 1.26
+    },
+    "kept_early": {
+     "fills": 810,
+     "games": 122,
+     "cents": 4.3,
+     "t": 1.96
+    },
+    "late_minus_early": {
+     "cents": -0.56,
+     "t": -0.18
+    },
+    "dollars_removed": 12.3
+   }
+  },
+  "flow_0.25_primary_median_draw": {
+   "fills": 178,
+   "games": 87,
+   "cents": 5.52,
+   "t": 1.39
+  },
+  "late_by_stat_first_in_line": {
+   "assists": {
+    "fills": 46,
+    "games": 38,
+    "cents": 2.83,
+    "t": 0.4
+   },
+   "points": {
+    "fills": 53,
+    "games": 40,
+    "cents": 3.6,
+    "t": 0.54
+   },
+   "rebounds": {
+    "fills": 46,
+    "games": 33,
+    "cents": 7.5,
+    "t": 1.03
+   },
+   "threes": {
+    "fills": 34,
+    "games": 30,
+    "cents": 9.71,
+    "t": 1.2
+   }
+  }
+ },
+ "pass": false
+}

@@ -121,7 +121,8 @@ def test_separate_risk_caps_and_state():
         "nba-no-v6-three-contracts",
     } <= nba.PRIOR_VERSIONS
     assert (nba.MIN_BOOKS, nba.BOOK_MAX_AGE_MINUTES) == (1, 60)
-    assert (nba.MAX_ENTRY_NET_EDGE, nba.MODEL_VETO_MIN_EDGE) == (0.08, 0.0)
+    # Model veto off: 2026-10-30, "NBA v7: model veto off" (was 0.0).
+    assert (nba.MAX_ENTRY_NET_EDGE, nba.MODEL_VETO_MIN_EDGE) == (0.08, None)
     assert nba.TRANSLATE_NEARBY_LINES is True
     assert nba.MAX_GROSS_COST == 5000
     assert nba.MAX_ACTIVE_COST == 150
@@ -1249,12 +1250,25 @@ def test_v7_never_prices_from_the_model():
     assert stats["book_priced"] == 0
 
 
-def test_v7_model_can_only_veto_and_edges_are_capped():
+def test_v7_model_disagreeing_does_not_block_a_book_priced_order():
     f = priced()
     f["p_model"] = 0.60  # the model thinks NO is worth 40c, under the 51c price
     stats = {}
+    got = nba.select_candidates(f, [], {"active": []}, NOW, diagnostics=stats)
+    assert len(got) == 1
+    assert stats["book_priced"] == 1 and stats["passed_model_veto"] == 1
+
+
+def test_model_veto_still_blocks_when_switched_back_on(monkeypatch):
+    monkeypatch.setattr(nba, "MODEL_VETO_MIN_EDGE", 0.0)
+    f = priced()
+    f["p_model"] = 0.60
+    stats = {}
     assert nba.select_candidates(f, [], {"active": []}, NOW, diagnostics=stats) == []
     assert stats["book_priced"] == 1 and stats["passed_model_veto"] == 0
+
+
+def test_v7_edges_are_capped():
     g = priced()
     g["p_book"] = 0.38  # book edge about 10.6c: above the 8c cap
     stats = {}

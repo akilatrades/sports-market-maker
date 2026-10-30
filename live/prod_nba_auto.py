@@ -69,7 +69,12 @@ MIN_BOOKS = 1  # books on Kalshi's exact line (v6: 2, else the model priced it)
 TRANSLATE_NEARBY_LINES = True
 BOOK_MAX_AGE_MINUTES = 60  # oldest contributing book update (v6: 120 / 75)
 MAX_ENTRY_NET_EDGE = 0.08  # v6: 0.15; live, the largest edges were model errors
-MODEL_VETO_MIN_EDGE = 0.0  # the model may only block: its NO edge must be >= this
+# Off (None) since 2026-10-30, "NBA v7: model veto off": orders the veto
+# would have blocked did as well as the rest in the replay (+4.4c vs +4.1c a
+# contract, simulated) and live (+9.5c vs -0.6c, 55 book-priced fills), and
+# it removed about 30% of orders. Old value: 0.0 (the model's own NO edge
+# after the fee had to be >= 0).
+MODEL_VETO_MIN_EDGE = None
 MAX_NEW_ORDERS_PER_PASS = 3
 PRICE_BAND_CENTS = (5, 95)  # NO price, inclusive
 # systemd stops a pass after TimeoutStartSec=240. A stop between an order's
@@ -859,14 +864,16 @@ def select_candidates(frame, events, state, now, diagnostics=None, window=WINDOW
     # v7: the sportsbooks price every order; the model never does.
     found = found[pd.to_numeric(found.get("p_book"), errors="coerce").notna()]
     counts["book_priced"] = len(found)
-    # The model may only block: its own NO edge after the fee must clear the bar.
-    price = pd.to_numeric(found.price, errors="coerce")
-    model_edge = (
-        (1 - pd.to_numeric(found.p_model, errors="coerce"))
-        - price
-        - maker_fee(price, PAPER_FEE_SHARE)
-    )
-    found = found[model_edge >= MODEL_VETO_MIN_EDGE - 1e-9]
+    # When switched on, the model may only block: its own NO edge after the
+    # fee must clear the bar. Off (None) in v7.
+    if MODEL_VETO_MIN_EDGE is not None:
+        price = pd.to_numeric(found.price, errors="coerce")
+        model_edge = (
+            (1 - pd.to_numeric(found.p_model, errors="coerce"))
+            - price
+            - maker_fee(price, PAPER_FEE_SHARE)
+        )
+        found = found[model_edge >= MODEL_VETO_MIN_EDGE - 1e-9]
     counts["passed_model_veto"] = len(found)
     found["edge"] = pd.to_numeric(found.edge, errors="coerce")
     # Large apparent edges often imply a wrong line or stale book.
