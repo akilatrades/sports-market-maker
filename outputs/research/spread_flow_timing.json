@@ -1,0 +1,242 @@
+{
+ "note": "SIMULATED, in-sample, exploratory (RESEARCH_LOG.md 2026-10-30)",
+ "quotes": 144828,
+ "first_in_line": {
+  "all_fills": {
+   "fills": 10223,
+   "events": 2335,
+   "cents": 8.69,
+   "t": 13.84
+  },
+  "test_a": {
+   "eligible_series": 32,
+   "selected": [
+    "KXBOXING",
+    "KXBRENTD",
+    "KXIPLFOUR",
+    "KXNCAABMENTION",
+    "KXNCAAMENTION",
+    "KXNCAAWBSPREAD",
+    "KXNCAAWBTOTAL",
+    "KXNFLMENTION",
+    "KXWBCF5SPREAD",
+    "KXWBCSPREAD"
+   ],
+   "earlier_paired_share_selected": 0.494,
+   "earlier_paired_share_rest": 0.275,
+   "later_paired_share_selected": 0.544,
+   "later_paired_share_rest": 0.304,
+   "later_selected": {
+    "fills": 228,
+    "events": 29,
+    "cents": 4.05,
+    "t": 1.22
+   },
+   "later_rest": {
+    "fills": 2108,
+    "events": 663,
+    "cents": 6.05,
+    "t": 4.71
+   },
+   "later_selected_minus_rest": {
+    "cents": -2.0,
+    "t": -0.57
+   }
+  },
+  "test_b": {
+   "bins": {
+    "12-24 h": {
+     "earlier": {
+      "fills": 2308,
+      "events": 773,
+      "cents": 9.52,
+      "t": 7.83
+     },
+     "later": {
+      "fills": 761,
+      "events": 354,
+      "cents": 3.29,
+      "t": 1.71
+     }
+    },
+    "6-12 h": {
+     "earlier": {
+      "fills": 2657,
+      "events": 869,
+      "cents": 8.67,
+      "t": 9.05
+     },
+     "later": {
+      "fills": 747,
+      "events": 346,
+      "cents": 7.18,
+      "t": 3.94
+     }
+    },
+    "3-6 h": {
+     "earlier": {
+      "fills": 1829,
+      "events": 792,
+      "cents": 9.62,
+      "t": 7.94
+     },
+     "later": {
+      "fills": 466,
+      "events": 272,
+      "cents": 6.3,
+      "t": 2.98
+     }
+    },
+    "1.42-3 h": {
+     "earlier": {
+      "fills": 1093,
+      "events": 646,
+      "cents": 11.52,
+      "t": 8.78
+     },
+     "later": {
+      "fills": 362,
+      "events": 235,
+      "cents": 7.94,
+      "t": 4.03
+     }
+    }
+   },
+   "dropped_bins": [],
+   "later_kept_minus_dropped": null
+  },
+  "paired_vs_one_sided": {
+   "markets_with_both_sides": {
+    "fills": 1146,
+    "events": 221,
+    "cents": 7.01,
+    "t": 4.7
+   },
+   "markets_one_side_only": {
+    "fills": 1190,
+    "events": 549,
+    "cents": 4.75,
+    "t": 2.4
+   }
+  }
+ },
+ "flow_0.25": {
+  "all_fills": {
+   "fills": 8854,
+   "events": 2179,
+   "cents": 8.18,
+   "t": 12.38
+  },
+  "test_a": {
+   "eligible_series": 31,
+   "selected": [
+    "KXBRENTD",
+    "KXIPLFOUR",
+    "KXIPLSIX",
+    "KXNCAAMB1HSPREAD",
+    "KXNCAAMENTION",
+    "KXNCAAWBSPREAD",
+    "KXNCAAWBTOTAL",
+    "KXNFLMENTION",
+    "KXWBCF5SPREAD",
+    "KXWBCSPREAD"
+   ],
+   "earlier_paired_share_selected": 0.479,
+   "earlier_paired_share_rest": 0.256,
+   "later_paired_share_selected": 0.348,
+   "later_paired_share_rest": 0.309,
+   "later_selected": {
+    "fills": 161,
+    "events": 37,
+    "cents": 8.14,
+    "t": 1.65
+   },
+   "later_rest": {
+    "fills": 1853,
+    "events": 616,
+    "cents": 4.74,
+    "t": 3.64
+   },
+   "later_selected_minus_rest": {
+    "cents": 3.4,
+    "t": 0.67
+   }
+  },
+  "test_b": {
+   "bins": {
+    "12-24 h": {
+     "earlier": {
+      "fills": 1935,
+      "events": 695,
+      "cents": 9.02,
+      "t": 6.66
+     },
+     "later": {
+      "fills": 633,
+      "events": 305,
+      "cents": 1.78,
+      "t": 0.84
+     }
+    },
+    "6-12 h": {
+     "earlier": {
+      "fills": 2322,
+      "events": 798,
+      "cents": 8.08,
+      "t": 8.15
+     },
+     "later": {
+      "fills": 646,
+      "events": 320,
+      "cents": 7.12,
+      "t": 3.63
+     }
+    },
+    "3-6 h": {
+     "earlier": {
+      "fills": 1604,
+      "events": 726,
+      "cents": 9.41,
+      "t": 7.36
+     },
+     "later": {
+      "fills": 408,
+      "events": 257,
+      "cents": 5.81,
+      "t": 2.51
+     }
+    },
+    "1.42-3 h": {
+     "earlier": {
+      "fills": 979,
+      "events": 602,
+      "cents": 11.27,
+      "t": 8.05
+     },
+     "later": {
+      "fills": 327,
+      "events": 216,
+      "cents": 6.1,
+      "t": 3.08
+     }
+    }
+   },
+   "dropped_bins": [],
+   "later_kept_minus_dropped": null
+  },
+  "paired_vs_one_sided": {
+   "markets_with_both_sides": {
+    "fills": 941,
+    "events": 193,
+    "cents": 7.03,
+    "t": 4.23
+   },
+   "markets_one_side_only": {
+    "fills": 1073,
+    "events": 528,
+    "cents": 3.24,
+    "t": 1.65
+   }
+  }
+ }
+}

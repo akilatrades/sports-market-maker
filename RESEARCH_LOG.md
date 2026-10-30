@@ -3438,3 +3438,192 @@ Scratch scripts, not committed.
 
 **Checkpoint, unchanged:** v3 is judged on its own orders, 300 filled
 contracts or 4 weeks.
+
+## 2026-10-30: Price Kalshi props from nearby sportsbook lines (plan)
+
+*Written before running. Owner asked to improve the NBA model. Live v6
+priced 97% of its filled contracts from the stat model because two books
+rarely quote Kalshi's exact line; model-priced live fills lost about 7¢
+per contract (live, small sample) while book-priced ones were about even.*
+
+**Question.** Can the books' other lines for the same player and stat
+(alternate lines) price Kalshi's line well enough to replace the model,
+and does the book veto still pay on fills that had no exact-line quote?
+
+**Data.** The 16 October book-veto replay: 4,862 simulated NO fills in
+151 sampled 2025–26 games (`outputs/bookline/fills_with_book.csv.gz`) and
+the book lines as they stood when each order was posted
+(`outputs/bookline/book_lines.csv.gz`, de-vigged, books per line). Fills
+are first-in-line from public prints (optimistic). In-sample season.
+
+**Method (one primary method).** Per game, player and stat, fit a
+negative binomial whose mean makes P(stat > line) match the books'
+de-vigged over probabilities at every quoted line (least squares on the
+logit, weighted by the number of books). Dispersion per stat is fixed
+from 2017–18 to 2024–25 box scores (player-season moments, players with
+20+ games); nothing from 2025–26. The Kalshi line is then priced from the
+fitted curve. Only when the nearest quoted line is within 3 points (2 for
+rebounds and assists, 1 for threes) and at least 2 book quotes in total
+went into the fit. For fills that have an exact-line quote, the exact line
+is left out of the fit so the translation is scored against it.
+Sensitivity (one): logit interpolation between the two nearest lines.
+
+**Measures** (game-clustered, cents per contract after the replay's fee):
+1. Validation on fills with an exact quote: translated price against the
+   exact book price (mean absolute gap), and log loss against outcomes for
+   translated, exact book, Kalshi mid and model.
+2. **Primary:** on fills with NO exact quote but a translated price, the
+   same veto as 16 October (keep when 1 − p − price − fee ≥ 0). Pass:
+   kept minus removed ≥ 1¢, t ≥ 2, at least 1,000 such fills.
+3. Coverage: share of fills with an exact quote, a translated price, or
+   neither.
+4. Descriptive only: live 2026–27 NBA fills re-priced from the daily book
+   snapshots taken before each order (about 200 contracts; no test).
+
+**Variants counted:** 1 primary, 1 sensitivity, 3 descriptive measures.
+
+## 2026-10-30: Price Kalshi props from nearby sportsbook lines (results)
+
+*Plan above. Simulated replay, 2025–26 (in-sample season), fills first in
+line from public prints. Fix made while running: the curve fit stalled at
+its upper bound when probabilities saturate; a grid search before the
+bounded search fixed it (no change to the method).*
+
+**Coverage.** Exact-line book quote 65.8% of 4,862 fills; translated only
+20.9%; neither 13.3%. Coverage rises from 66% to 87%.
+
+**Validation** (2,962 fills with an exact quote, that quote left out of the
+fit). Translated price is 2.2¢ from the exact book price on average. Log
+loss: translated 0.6265, exact book 0.6258, Kalshi mid 0.6272, model
+0.6377. Translated beats the model (t −1.9) and ties the mid (t −0.3).
+
+**Primary** (1,017 fills with no exact quote, 124 games). Translated beats
+the model on log loss (−0.0147, t −2.2) and ties the mid (−0.0047, t
+−0.9). Veto: kept 436 fills +2.99¢ (t 1.6), removed 581 fills +0.67¢;
+kept minus removed **+2.32¢, t 1.24: fails** the bar (≥ 1¢ and t ≥ 2).
+Same direction as the exact-line veto (+3.44¢, t 2.42). Sensitivity, logit
+interpolation: +2.87¢, t 1.34.
+
+**Exploratory, exact or translated together** (4,214 fills): kept 2,083
+fills +3.64¢ (t 2.62), removed +0.46¢; kept minus removed +3.19¢ (t 2.81).
+Against the exact-only veto (1,647 kept at +3.81¢), about 26% more kept
+fills at a similar rate.
+
+**Reading.** Nearby book lines price Kalshi's line about as well as an
+exact quote and better than the stat model, so they can replace the model
+as the price source. The veto gain on the newly covered fills is the right
+sign and size but not proven on its own. A live check on 2026–27 fills is
+kept in the private data repository (live results stay out of this file).
+
+**Variants counted:** 1 primary, 1 sensitivity, 3 descriptive (as planned)
+plus the combined view above.
+
+## 2026-10-30: Spread maker: quote where both sides trade, and when (plan)
+
+*Written before running. Owner asked to improve the spread maker. Live, 60
+of 62 markets filled on one side only (live; small sample). Exploratory
+in-sample replay; it can only pick rules to paper-test, not prove them.*
+
+**Data and baseline.** The 24-to-4-hour scan (`outputs/scan_24h`, 64 pilot
+series), pregame quotes under the v3 rule exactly as in
+`research.spread_start_window` (start known from S1+S2+S3, quotes up to 24
+hours before expiry, at least 85 minutes before start, spreads 8¢+), one
+contract per side per hourly quote, held to settlement, maker fee where
+charged. Halves are that module's (split at the median day). Fills first
+in line and at flow share 0.25 (median of 20 draws). Clustered by event.
+
+**Test A: two-sided series.** Per series on the earlier half: the share
+of filled contracts that end up paired (YES and NO in the same market;
+paired = 2 × min(YES fills, NO fills)), series with at least 30 earlier-
+half fills only. Selected = the top third by that share. On the later
+half: cents per filled contract, selected minus the rest. Pass: at least
+1¢ with t ≥ 2, the selected series positive on their own, and the paired
+share of the selected series still above the rest's (persistence).
+
+**Test B: quote timing.** Bins of hours before start: 24–12, 12–6, 6–3,
+3–1.4 (the 85-minute floor). Drop any bin whose earlier-half cents per
+contract is below zero. On the later half: kept bins minus dropped bins.
+Pass: at least 1¢ with t ≥ 2. If no bin is dropped, timing does not need
+changing.
+
+**Reported, not tested:** later-half profit from paired contracts versus
+one-sided ones.
+
+**Variants counted:** 2 tests × 2 fill assumptions; 1 descriptive split.
+
+## 2026-10-30: Spread maker: quote where both sides trade, and when (results)
+
+*Plan above. Simulated, in-sample replay, 144,828 pregame quotes under the
+v3 rule; 10,223 first-in-line fills (+8.69¢, t 13.84, as on 23 October).
+`python -m research.spread_flow_timing`. Flow-share 0.25 figures are one
+representative draw.*
+
+**Test A, two-sided series: fails.** 32 series had 30+ earlier-half fills;
+the top third (10: mostly NCAA women's basketball lines, World Baseball
+Classic spreads, IPL, mention markets, Brent, boxing) paired 49% of their
+filled contracts against 28% for the rest, and still 54% against 30% in
+the later half, so two-sidedness persists. But later-half profit was
++4.05¢ (t 1.2) for them against +6.05¢ (t 4.7) for the rest: −2.0¢, t
+−0.57 (flow 0.25: +3.4¢, t 0.67). Picking series by two-sided trading does
+not raise profit.
+
+**Test B, timing: no bin dropped,** so the plan says no change. Every bin
+was positive in the earlier half (8.7¢ to 11.5¢). Later half, first in
+line: 12–24 h +3.3¢ (t 1.7), 6–12 h +7.2¢ (t 3.9), 3–6 h +6.3¢ (t 3.0),
+1.4–3 h +7.9¢ (t 4.0); at flow 0.25 the 12–24 h bin is +1.8¢ (t 0.8).
+Noted, not tested: the earliest quotes weakened most.
+
+**Descriptive.** Later half, markets where both sides filled +7.0¢ (t 4.7)
+against one side only +4.8¢ (t 2.4).
+
+**Outside prices (coverage check, judgement on market types).** The Odds
+API covers AHL, NPB, NCAA women's basketball, PLL, boxing, MMA, IPL, WNBA
+and more, but no esports and not NWSL. In the replay, markets the books
+price directly are 36% of fills and 41% of profit; esports are 19% of
+fills. Live v3 fills were mostly esports (47 of 62 markets), where this
+feed cannot help.
+
+**Variants counted:** as planned (2 tests × 2 fill assumptions, 1
+descriptive) plus the coverage split.
+
+## 2026-10-30: Spread maker v5 (plan amendment)
+
+*The owner asked for all the spread-maker improvements on 30 October.
+Built as a new rule version so v3's record stays separate; nothing changes
+on the server until the owner merges and deploys. Evidence: the two tests
+above (neither passed; the timing pattern is an observation), the live
+v3 review (60 of 62 markets filled on one side; 4 matches held twice on the
+same result) and the live esports split below. Exploratory: v5 is judged on
+its own orders.*
+
+| Setting (`live/spread_policy.py`) | v3 | v5 | Why |
+|---|---|---|---|
+| `STRATEGY_VERSION` | `spread-maker-v3-24h-starts` | `spread-maker-v5-12h-one-per-event` | new rules, measured on their own orders |
+| `MAX_LEAD_HOURS` (new) | none (up to 24 h before expiry) | 12 h before the start | quotes 12–24 h out weakened most in the replay's later half |
+| `MAX_MARKETS_PER_EVENT` (new) | none | 1 (held, then resting, then widest) | live v3 doubled one result in 4 matches |
+| `CONTRACTS`, `MAX_NET_PER_MARKET` | 5, 5 | 2, 2 | smaller swings while the edge is unproven |
+| `MAX_ACTIVE_COST` | $120 | $50 | scaled to the size (also caps v4, which reads it) |
+| `QUOTE_ESPORTS` (new) | quoted | off | owner: model or stop; no model possible from the scan |
+
+Unchanged: 8¢ spreads, 85-minute floor, 20-minute cancel, −$15 / −$40
+stops, account stops, 1,500 submissions a day.
+
+**Esports (live v3, post hoc).** Esports: 45 markets, 40 events, −3.7¢ a
+contract (t −0.55). Other series: 17 markets, 13 events, +20.7¢ (t 3.7).
+Replay (24→4 h, in-sample): esports +6.7¢ (t 4.8), the weakest group. A
+rating model was not possible: the scan samples most teams once or twice.
+
+**Sportsbook fair price (shadow only).** `kalshi/spread_books.py` maps five
+game-winner series to The Odds API (AHL, NCAA men's and women's basketball,
+PLL, boxing), de-vigs head-to-head prices per book and needs two books.
+`research/spread_book_shadow.py record` writes Kalshi quotes beside the
+book price to a folder outside the repository; it never trades. Plan for
+later: after 200 matched markets, test whether quoting only when our price
+is at or below the book's fair price beats quoting everywhere.
+
+**v4 completion pilot.** Unchanged. It cannot run in Kalshi's demo yet
+(`TradingClient(env="prod")` is fixed and its guards read the production
+account), so its demo checklist needs a separate change first.
+
+**Checkpoint:** `research/live_checkpoint.py` now judges v5 with the
+existing spread bars (300 filled contracts or 28 days).

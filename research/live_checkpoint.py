@@ -50,10 +50,10 @@ NBA_VERSIONS = ("nba-no-v5-one-contract-breadth", "nba-no-v6-three-contracts")
 NBA_VERSION = NBA_VERSIONS[-1]  # the bot's current rules
 NBA_BARS = {"settled_fills": 1900, "allowance_dollars": 5000.0, "days": 30}
 NBA_FEE_RESERVE = 1.10  # live/prod_nba_auto.py FEE_RESERVE
-# Each spread rule version is judged on its own orders, the current one (v3,
-# RESEARCH_LOG.md, 2026-10-23, "Spread maker v3") with the v2 bars; earlier
-# versions are reported apart.
-SPREAD_VERSION = "spread-maker-v3-24h-starts"
+# Each spread rule version is judged on its own orders, the current one (v5,
+# RESEARCH_LOG.md, 2026-10-30, "Spread maker v5") with the v2 bars; earlier
+# versions (v3: "spread-maker-v3-24h-starts") are reported apart.
+SPREAD_VERSION = "spread-maker-v5-12h-one-per-event"
 SPREAD_BARS = {
     "filled_contracts": 300,
     "days": 28,

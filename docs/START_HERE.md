@@ -115,12 +115,13 @@ likely data error, not a bargain.
 
 A third bot, the **spread maker pilot** ([`prod_spread_auto.py`](../live/prod_spread_auto.py),
 limits in [`spread_policy.py`](../live/spread_policy.py)), quotes both sides
-of wide-spread markets outside NBA and NFL props: up to 5 contracts per
-order and 5 per market side, $120 open, its own −$15 daily and −$40 total
-loss stops, and the account stops above. It quotes only before a known
-event start (rules v2, then v3 from 23 October): a new quote needs the
-start at least 85 minutes away, and every quote is cancelled 20 minutes
-before it. v3 quotes from 24 hours before Kalshi's expected expiration and
+of wide-spread markets outside NBA and NFL props: up to 2 contracts per
+order and 2 per market side, $50 open, one market per event, its own −$15
+daily and −$40 total loss stops, and the account stops above. It quotes only
+before a known event start (rules v2, v3 from 23 October, v5 once deployed
+after 30 October): a new quote needs the start 85 minutes to 12 hours away,
+and every quote is cancelled 20 minutes before it. v5 places no new esports
+quotes (a switch in `spread_policy.py`). It considers markets from 24 hours before Kalshi's expected expiration and
 takes start times from the ticker or, failing that, the earlier of a
 validated Kalshi milestone and a cautious per-series gap before expiry; a
 start never moves later. It leaves out three daily financial series and

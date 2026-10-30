@@ -1,0 +1,122 @@
+{
+  "dispersion_r": {
+    "points": 5.924,
+    "rebounds": 10.042,
+    "assists": 11.155,
+    "threes": 7.628
+  },
+  "coverage": {
+    "fills": 4862,
+    "exact_quote": 0.658,
+    "no_exact_but_translated": 0.209,
+    "neither": 0.133
+  },
+  "validation": {
+    "fills": 2962,
+    "mean_abs_gap_to_exact_cents": 2.2,
+    "logloss": {
+      "p_tr": 0.6265,
+      "p_book": 0.6258,
+      "mid": 0.6272,
+      "p_model": 0.6377
+    },
+    "translated_minus_mid": {
+      "mean": -0.0006,
+      "t": -0.26,
+      "fills": 2962
+    },
+    "translated_minus_model": {
+      "mean": -0.0111,
+      "t": -1.9,
+      "fills": 2962
+    },
+    "exact_minus_mid": {
+      "mean": -0.0014,
+      "t": -0.71,
+      "fills": 2962
+    }
+  },
+  "primary": {
+    "all": {
+      "label": "no exact quote, translated",
+      "fills": 1017,
+      "games": 124,
+      "cents": 1.66,
+      "t": 1.21,
+      "hit": 0.427
+    },
+    "kept": {
+      "label": "kept by translated veto",
+      "fills": 436,
+      "games": 111,
+      "cents": 2.99,
+      "t": 1.64,
+      "hit": 0.704
+    },
+    "removed": {
+      "label": "removed by translated veto",
+      "fills": 581,
+      "games": 112,
+      "cents": 0.67,
+      "t": 0.44,
+      "hit": 0.219
+    },
+    "kept_minus_removed": {
+      "cents": 2.32,
+      "t": 1.24
+    },
+    "logloss": {
+      "p_tr": 0.4567,
+      "mid": 0.4614,
+      "p_model": 0.4713
+    },
+    "translated_minus_mid": {
+      "mean": -0.0047,
+      "t": -0.92,
+      "fills": 1017
+    },
+    "translated_minus_model": {
+      "mean": -0.0147,
+      "t": -2.23,
+      "fills": 1017
+    },
+    "pass": false
+  },
+  "sensitivity_interp": {
+    "kept_minus_removed": {
+      "cents": 2.87,
+      "t": 1.34
+    },
+    "fills": 910
+  },
+  "combined": {
+    "kept": {
+      "label": "kept, exact or translated",
+      "fills": 2083,
+      "games": 148,
+      "cents": 3.64,
+      "t": 2.62,
+      "hit": 0.559
+    },
+    "removed": {
+      "label": "removed",
+      "fills": 2131,
+      "games": 134,
+      "cents": 0.46,
+      "t": 0.37,
+      "hit": 0.345
+    },
+    "kept_minus_removed": {
+      "cents": 3.19,
+      "t": 2.81
+    },
+    "everything_unfiltered": {
+      "label": "all fills, no veto",
+      "fills": 4862,
+      "games": 151,
+      "cents": 2.04,
+      "t": 1.8,
+      "hit": 0.431
+    }
+  }
+}

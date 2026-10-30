@@ -1,15 +1,16 @@
-"""Spread maker (spread-maker-v3-24h-starts): two-sided quotes one cent
+"""Spread maker (spread-maker-v5-12h-one-per-event): two-sided quotes one cent
 inside wide spreads, before the event starts.
 
-Plans: RESEARCH_LOG.md, "2026-10-22: Spread maker pilot" and, for v3,
-"2026-10-23: Spread maker v3" with its "changes after review". For open
-markets in the allowed series whose expected expiration is 4 to 24 hours
-away and whose spread is 8c or more, quote a YES bid one cent above the best
-YES bid and a NO bid one cent above the best NO bid, up to 5 contracts each
-(live/spread_policy.py), post-only, expiring after 65 minutes. Only events
+Plans: RESEARCH_LOG.md, "2026-10-22: Spread maker pilot", for v3
+"2026-10-23: Spread maker v3" with its "changes after review", and for v5
+"2026-10-30: Spread maker v5". For open markets in the allowed series whose
+expected expiration is 4 to 24 hours away and whose spread is 8c or more,
+quote a YES bid one cent above the best YES bid and a NO bid one cent above
+the best NO bid, up to 2 contracts each (live/spread_policy.py), post-only,
+expiring after 65 minutes, in at most one market per event. Only events
 with a known start (ticker time, validated Kalshi milestone or per-series
 offset; the earliest wins) are quoted, a new quote needs the start 85 minutes
-away, and every quote is cancelled 20 minutes before it. Hold fills to
+to 12 hours away, and every quote is cancelled 20 minutes before it. Hold fills to
 settlement; an order shrinks so that held plus resting contracts on one side
 of a market never exceed the per-market cap.
 
@@ -615,6 +616,9 @@ def eligible_markets(
         if series in P.NO_START_SERIES:
             reasons["no_start_series"] += 1
             continue
+        if series in P.ESPORTS_SERIES and not P.QUOTE_ESPORTS:
+            reasons["esports_off"] += 1
+            continue
         expires = pd.to_datetime(
             m.get("expected_expiration_time"), utc=True, errors="coerce"
         )
@@ -635,6 +639,9 @@ def eligible_markets(
         if lead < P.CANCEL_LEAD_MINUTES:
             reasons["event_starting"] += 1
             continue
+        too_far = lead > P.MAX_LEAD_HOURS * 60
+        if too_far:
+            reasons["start_too_far"] += 1
         rows.append(
             {
                 "ticker": ticker,
@@ -647,7 +654,7 @@ def eligible_markets(
                 "no_price": prices[1],
                 "expiration_utc": expires.isoformat(),
                 "event_start_utc": start.isoformat(),
-                "postable": lead >= P.MIN_LEAD_MINUTES,
+                "postable": lead >= P.MIN_LEAD_MINUTES and not too_far,
             }
         )
     return rows
@@ -1614,15 +1621,49 @@ def held_cost(positions, open_lots):
     return round(total, 4)
 
 
-def desired_quotes(markets, positions):
+def event_of(ticker):
+    """Kalshi market tickers are the event ticker plus one suffix."""
+    return str(ticker).rsplit("-", 1)[0]
+
+
+def one_market_per_event(markets, positions, resting=frozenset()):
+    """At most MAX_MARKETS_PER_EVENT markets of each event (v5).
+
+    A market already held comes first, then one with our resting quotes,
+    then the input order (widest spread first). A market whose event is held
+    through a different market is dropped, wherever that market is listed.
+    """
+    held = {}
+    for ticker, qty in positions.items():
+        if abs(qty) > 1e-9:
+            held.setdefault(event_of(ticker), set()).add(ticker)
+
+    def rank(m):
+        if abs(positions.get(m["ticker"], 0.0)) > 1e-9:
+            return 0
+        return 1 if m["ticker"] in resting else 2
+
+    chosen, count = [], Counter()
+    for m in sorted(markets, key=rank):  # stable: keeps widest-first order
+        event = m.get("event_ticker") or event_of(m["ticker"])
+        if event in held and m["ticker"] not in held[event]:
+            continue
+        if count[event] >= P.MAX_MARKETS_PER_EVENT:
+            continue
+        count[event] += 1
+        chosen.append(m)
+    return chosen
+
+
+def desired_quotes(markets, positions, resting=frozenset()):
     """{(ticker, side): (price, contracts)} after the inventory cap.
 
     A YES order is at most the room left before net YES reaches the cap
     (positive net = YES held), a NO order likewise; a side with no room is
-    not quoted.
+    not quoted. Only one market per event is quoted (v5).
     """
     out = {}
-    for m in markets:
+    for m in one_market_per_event(markets, positions, resting):
         net = positions.get(m["ticker"], 0.0)
         rooms = {
             "yes": math.floor(P.MAX_NET_PER_MARKET - net + 1e-9),
@@ -2141,7 +2182,9 @@ def _pass_live(client, now, journal, public, require_shard, deadline):
         report["standing_error"] = type(error).__name__
     by_ticker = {m["ticker"]: m for m in markets}
     positions = state["positions"]
-    wanted = desired_quotes(markets, positions)
+    wanted = desired_quotes(
+        markets, positions, {intent["ticker"] for _, intent, _ in resting_intents}
+    )
     # Cancel quotes that are stale, too old, or no longer wanted.
     keep = {}
     just_filled = set()
