@@ -1,14 +1,14 @@
 {
   "KXITFMATCH": {
-    "orders": 1416,
+    "orders": 1451,
     "vetoed": 0,
-    "open": 25,
-    "fill_rate": 0.6887131560028756,
-    "fills_settled": 958,
-    "bankroll": 241.16,
+    "open": 42,
+    "fill_rate": 0.6926898509581263,
+    "fills_settled": 976,
+    "bankroll": 236.8,
     "cents_per_contract": -0.74,
-    "t": -1.08,
-    "profit_dollars": -258.84
+    "t": -1.1,
+    "profit_dollars": -263.2
   },
   "KXNASCARRACE": {
     "orders": 182,
@@ -54,13 +54,13 @@
   "KXNFLRECYDS": {
     "orders": 618,
     "vetoed": 0,
-    "open": 48,
-    "fill_rate": 0.5701754385964912,
-    "fills_settled": 325,
-    "bankroll": 241.42,
-    "cents_per_contract": -9.16,
-    "t": -2.58,
-    "profit_dollars": -258.58
+    "open": 0,
+    "fill_rate": 0.580906148867314,
+    "fills_settled": 359,
+    "bankroll": 213.83,
+    "cents_per_contract": -9.62,
+    "t": -2.94,
+    "profit_dollars": -286.17
   },
   "KXCLUBFBTTS": {
     "orders": 0,
@@ -119,13 +119,13 @@
   "KXNBA3D": {
     "orders": 114,
     "vetoed": 0,
-    "open": 4,
-    "fill_rate": 0.6727272727272727,
-    "fills_settled": 74,
-    "bankroll": 511.88,
-    "cents_per_contract": 3.1,
-    "t": 1.1,
-    "profit_dollars": 11.88
+    "open": 1,
+    "fill_rate": 0.672566371681416,
+    "fills_settled": 76,
+    "bankroll": 513.48,
+    "cents_per_contract": 3.4,
+    "t": 1.23,
+    "profit_dollars": 13.48
   },
   "KXNASCARTOP10": {
     "orders": 186,
@@ -149,26 +149,26 @@
   "KXNFLRECYDS+model": {
     "orders": 547,
     "vetoed": 1887,
-    "open": 38,
-    "fill_rate": 0.4675834970530452,
-    "fills_settled": 238,
-    "bankroll": 357.39,
-    "cents_per_contract": -4.08,
-    "t": -0.87,
-    "profit_dollars": -142.61,
-    "vetoed_would_have_made_cents": -11.23,
-    "vetoed_settled": 890
+    "open": 0,
+    "fill_rate": 0.4625228519195612,
+    "fills_settled": 253,
+    "bankroll": 361.02,
+    "cents_per_contract": -3.35,
+    "t": -0.77,
+    "profit_dollars": -138.98,
+    "vetoed_would_have_made_cents": -11.12,
+    "vetoed_settled": 918
   },
   "KXITFMATCH+no30": {
-    "orders": 1122,
+    "orders": 1155,
     "vetoed": 0,
-    "open": 19,
-    "fill_rate": 0.7207615593834995,
-    "fills_settled": 795,
-    "bankroll": 452.11,
-    "cents_per_contract": -0.46,
+    "open": 39,
+    "fill_rate": 0.7240143369175627,
+    "fills_settled": 808,
+    "bankroll": 451.72,
+    "cents_per_contract": -0.45,
     "t": -0.44,
-    "profit_dollars": -47.89
+    "profit_dollars": -48.28
   },
-  "updated_utc": "2026-10-30T00:44+00:00"
+  "updated_utc": "2026-10-30T09:50+00:00"
 }
