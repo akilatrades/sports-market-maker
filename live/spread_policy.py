@@ -13,7 +13,10 @@ from pathlib import Path
 # before expiry, more start times (validated milestone types, per-series
 # offsets), tightened after two reviews the same day, then 5 contracts an
 # order with a $120 open cap ("5 contracts and higher caps").
-STRATEGY_VERSION = "spread-maker-v3-24h-starts"
+# v5 (2026-10-30, RESEARCH_LOG.md "Spread maker v5"): new quotes only within
+# MAX_LEAD_HOURS of the start, one market per event, 2 contracts, $50 cap.
+# (v4 is the separate completion pilot, live/prod_spread_v4.py.)
+STRATEGY_VERSION = "spread-maker-v5-12h-one-per-event"
 # The shared-risk cohort journal lives in STATE; the owner creates ARM_MARKER
 # to allow live orders.
 STATE = Path("/home/trader/prod-spread-auto")
@@ -25,10 +28,17 @@ PRICE_RANGE_CENTS = (2, 98)  # both of our quotes must lie inside this range
 # Sizes and stops: owner's 5-contract amendment (RESEARCH_LOG.md, 2026-10-22,
 # "5 contracts per order"; old values 1 contract, 1 net, $25, $5, $15), then
 # v3 "5 contracts and higher caps" (2026-10-23; the first v3 draft had 2 and
-# 2, $60 and $10; v2: 5, 5, $60, $10).
-CONTRACTS = 5  # largest order; it shrinks to stay inside MAX_NET_PER_MARKET
-MAX_NET_PER_MARKET = 5  # held plus resting on one side of a market, contracts
-MAX_ACTIVE_COST = 120.00  # resting orders plus held contracts at cost, dollars
+# 2, $60 and $10; v2: 5, 5, $60, $10). v5 (2026-10-30): 5 -> 2, 5 -> 2 and
+# $120 -> $50, so one match cannot swing results while the edge is unproven
+# (live v3: 60 of 62 markets filled on one side only, held to settlement).
+CONTRACTS = 2  # largest order; it shrinks to stay inside MAX_NET_PER_MARKET
+MAX_NET_PER_MARKET = 2  # held plus resting on one side of a market, contracts
+MAX_ACTIVE_COST = 50.00  # resting orders plus held contracts at cost, dollars
+# v5 (2026-10-30), new rule: at most this many markets of one event are
+# quoted or held at a time. A market already held comes first, then one with
+# our resting quotes, then the widest spread. Live v3 held both markets of
+# one match paying on the same result in 4 matches (before: no limit).
+MAX_MARKETS_PER_EVENT = 1
 DAILY_LOSS_STOP = 15.00  # own realized loss, New York day, dollars
 CUMULATIVE_LOSS_STOP = 40.00  # own realized loss since launch, dollars
 MAX_ORDERS_PER_PASS = 20
@@ -49,6 +59,13 @@ SHADOW_REPOST_MINUTES = 60  # shadow: one quote per market and side per hour
 # away, so a 65-minute order expires at least CANCEL_LEAD_MINUTES before the
 # start; any resting quote that close to the start is cancelled.
 MIN_LEAD_MINUTES = 85  # ORDER_LIFETIME_MINUTES + CANCEL_LEAD_MINUTES
+# v5 (2026-10-30), new rule: a new quote also needs the start no more than
+# this far away (before: up to 24 hours before expiry, WINDOW_HOURS). In the
+# 24-to-4-hour replay's later half, quotes 12-24 hours before the start made
+# +3.3c a contract (flow 0.25: +1.8c) against +6.3c to +7.9c for the other
+# bins (research.spread_flow_timing; observed, not a passed test). Quotes
+# already resting further out are kept until they expire or are requoted.
+MAX_LEAD_HOURS = 12.0
 # Twice the timer's 10 minutes, so a start learned or moved late is still
 # caught before the event.
 CANCEL_LEAD_MINUTES = 20
@@ -138,6 +155,27 @@ OFFSET_SUSPEND_DAYS = 2
 # session open while the underlying futures trade overnight, so a pregame
 # rule protects nothing. They stay in SERIES so the record shows the sweep.
 NO_START_SERIES = frozenset({"KXBRENTD", "KXINXDUD", "KXTNOTED"})
+# v5 (2026-10-30, owner: "build a rating model or stop trading esports"): no
+# new esports quotes while QUOTE_ESPORTS is False (before: quoted like any
+# series). Live v3, esports lost 3.7c a contract over 40 events (t -0.55)
+# while the other series made 20.7c (t 3.7, 13 events); in the replay esports
+# were the weakest group (+6.7c against +8c to +13c). No rating model could
+# be built from the scan's sample (most teams appear once or twice), and
+# esports milestones are never trusted. Positions already held settle as
+# usual. They stay in SERIES so the record shows the sweep.
+ESPORTS_SERIES = frozenset(
+    {
+        "KXCODGAME",
+        "KXCODTOTALMAPS",
+        "KXCS2GAME",
+        "KXCSGOGAME",
+        "KXDOTA2GAME",
+        "KXOWGAME",
+        "KXR6GAME",
+        "KXRLGAME",
+    }
+)
+QUOTE_ESPORTS = False
 MAX_START_LOOKUPS_PER_PASS = 60  # v2: 30; the 24-hour window holds more events
 START_LOOKUP_SECONDS = 45  # no milestone read after this, from process start
 

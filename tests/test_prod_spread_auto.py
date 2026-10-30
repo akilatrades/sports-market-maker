@@ -2,6 +2,7 @@
 
 import json
 import time
+from collections import Counter
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
@@ -20,7 +21,7 @@ TICKER = "KXDOTA2GAME-26OCT221800AB-A"
 # Tests that check the live limits themselves, rather than logic at a size.
 REAL_LIMIT_TESTS = {
     "test_pilot_limits_are_the_owner_approved_ones",
-    "test_v3_quotes_five_contracts_a_side_and_caps_net_at_five",
+    "test_v5_quotes_two_contracts_a_side_and_caps_net_at_two",
 }
 
 
@@ -30,6 +31,10 @@ def logic_sized_at_five(request, monkeypatch):
     orders (v2's size, and v3's again since "5 contracts and higher caps");
     they pin it so a later size change does not silently change them. The
     live values are pinned in REAL_LIMIT_TESTS."""
+    # The test market is a Dota 2 game; v5 stops new esports quotes, which
+    # test_v5_stops_new_esports_quotes covers with the real setting.
+    if request.node.originalname != "test_v5_stops_new_esports_quotes":
+        monkeypatch.setattr(P, "QUOTE_ESPORTS", True)
     if request.node.originalname not in REAL_LIMIT_TESTS:
         monkeypatch.setattr(P, "CONTRACTS", 5)
         monkeypatch.setattr(P, "MAX_NET_PER_MARKET", 5)
@@ -654,9 +659,9 @@ def test_shadow_ledger_end_to_end(world, tmp_path):
         {"created_time": at, "yes_price": 0.41, "count": 3, "taker_outcome_side": "no"}
     ]
     reads = []
-    world["public"]["fetch_market"] = lambda ticker: reads.append(ticker) or {
-        "result": "no"
-    }
+    world["public"]["fetch_market"] = lambda ticker: (
+        reads.append(ticker) or {"result": "no"}
+    )
     first = bot.run_shadow(folder, NOW, world["public"])
     assert first == {"quotes": 2, "scored": 0}
     later = bot.run_shadow(folder, NOW + timedelta(minutes=61), world["public"])
@@ -702,7 +707,7 @@ def test_other_bots_markets_are_never_quoted(world):
 
 
 def test_unarmed_auto_run_is_shadow_only(world, monkeypatch, tmp_path, capsys):
-    import live.production_lock as production_lock
+    from live import production_lock
 
     state = tmp_path / "state"
     monkeypatch.setattr(P, "STATE", state)
@@ -897,7 +902,7 @@ def test_no_new_orders_after_the_pass_deadline(world):
 def test_a_broken_link_named_kill_still_halts(world, monkeypatch, tmp_path):
     import contextlib
 
-    import live.production_lock as production_lock
+    from live import production_lock
 
     run(world)
     monkeypatch.setattr(P, "STATE", world["dir"])
@@ -1090,10 +1095,13 @@ def test_pilot_limits_are_the_owner_approved_ones():
     # $5, $15), then "Spread maker v3" (2026-10-23; v2: 5 and 5, 4-7 hours,
     # 30 reads, 300 submissions a day), its "changes after review" (first
     # draft: one_off_milestone trusted, 35 median offsets) and "5 contracts
-    # and higher caps" (first v3 draft: 2 and 2, $60 open, -$10 a day).
-    # Change these only through a new, recorded amendment.
-    assert P.STRATEGY_VERSION == "spread-maker-v3-24h-starts"
-    assert (P.CONTRACTS, P.MAX_NET_PER_MARKET) == (5, 5)
+    # and higher caps" (first v3 draft: 2 and 2, $60 open, -$10 a day), then
+    # "Spread maker v5" (2026-10-30; v3: 5 and 5, $120 open, no lead or
+    # per-event limit). Change these only through a new, recorded amendment.
+    assert P.STRATEGY_VERSION == "spread-maker-v5-12h-one-per-event"
+    assert (P.CONTRACTS, P.MAX_NET_PER_MARKET) == (2, 2)
+    assert (P.MAX_LEAD_HOURS, P.MAX_MARKETS_PER_EVENT) == (12.0, 1)
+    assert P.ESPORTS_SERIES <= set(P.SERIES) and "KXCS2GAME" in P.ESPORTS_SERIES
     assert P.MAX_START_LOOKUPS_PER_PASS == 60
     assert P.TRUSTED_MILESTONE_TYPES == {
         "baseball_game",
@@ -1123,7 +1131,7 @@ def test_pilot_limits_are_the_owner_approved_ones():
     assert P.OFFSET_SUSPEND_DAYS == 2
     assert not P.NO_START_SERIES & set(P.SERIES_START_OFFSET_HOURS)
     assert (P.MAX_ACTIVE_COST, P.DAILY_LOSS_STOP, P.CUMULATIVE_LOSS_STOP) == (
-        120,
+        50,
         15,
         40,
     )
@@ -1994,17 +2002,83 @@ def test_summary_reports_clustered_t_and_gaps():
     assert bot.summarize_measurements(journal, marks, NOW)["fills_never_measured"] == 0
 
 
-def test_v3_quotes_five_contracts_a_side_and_caps_net_at_five(world):
+def test_v5_quotes_two_contracts_a_side_and_caps_net_at_two(world):
     report, _ = run(world)
     assert {(o.side, o.count) for o in world["exchange"].placed} == {
-        ("yes", 5),
-        ("no", 5),
+        ("yes", 2),
+        ("no", 2),
     }
-    # Five YES contracts held: no more YES room; NO may still offset them.
+    # Two YES contracts held: no more YES room; NO may still offset them.
     quotes = bot.desired_quotes(
-        [{"ticker": TICKER, "yes_price": 41, "no_price": 49}], {TICKER: 5.0}
+        [{"ticker": TICKER, "yes_price": 41, "no_price": 49}], {TICKER: 2.0}
     )
-    assert quotes == {(TICKER, "no"): (49, 5)}
+    assert quotes == {(TICKER, "no"): (49, 2)}
+
+
+# ------------------------------------------- v5: lead limit, one market per event
+
+
+def test_v5_new_quotes_need_the_start_within_twelve_hours():
+    # NOW is 18:00 UTC on 22 Oct; ticker times are New York time (UTC-4).
+    near = "KXDOTA2GAME-26OCT222300XY-A"  # starts 03:00 UTC: 9 hours ahead
+    edge = "KXDOTA2GAME-26OCT230200XY-A"  # 06:00 UTC: exactly 12 hours
+    far = "KXDOTA2GAME-26OCT230300XY-A"  # 07:00 UTC: 13 hours ahead
+    reasons = Counter()
+    rows = bot.eligible_markets(
+        [market(near, hours=13.0), market(edge, hours=16.0), market(far, hours=17.0)],
+        "KXDOTA2GAME",
+        NOW,
+        reasons=reasons,
+    )
+    postable = {r["ticker"]: r["postable"] for r in rows}
+    assert postable == {near: True, edge: True, far: False}
+    assert reasons["start_too_far"] == 1
+    # Too far for a new order, but listed, so a quote already resting there
+    # is kept until it expires or is requoted (no forced cancel).
+    assert far in postable
+
+
+def test_v5_stops_new_esports_quotes():
+    assert P.QUOTE_ESPORTS is False  # the real v5 setting
+    reasons = Counter()
+    rows = bot.eligible_markets([market()], "KXDOTA2GAME", NOW, reasons=reasons)
+    assert rows == [] and reasons["esports_off"] == 1
+    # Other series are unaffected.
+    hockey = "KXAHLGAME-26OCT221900MANIOW-MAN"
+    rows = bot.eligible_markets([market(hockey)], "KXAHLGAME", NOW)
+    assert [r["ticker"] for r in rows] == [hockey]
+
+
+def _m(ticker, yes=41, no=49):
+    return {
+        "ticker": ticker,
+        "event_ticker": ticker.rsplit("-", 1)[0],
+        "yes_price": yes,
+        "no_price": no,
+    }
+
+
+def test_v5_quotes_one_market_per_event_widest_first():
+    a, b = "KXCS2GAME-26OCT230700AABB-AA", "KXCS2GAME-26OCT230700AABB-BB"
+    other = "KXCS2GAME-26OCT230900CCDD-CC"
+    quotes = bot.desired_quotes([_m(a), _m(b), _m(other)], {})
+    assert {t for t, _ in quotes} == {a, other}  # input order is widest first
+
+
+def test_v5_a_held_market_keeps_its_event_and_blocks_the_other():
+    a, b = "KXCS2GAME-26OCT230700AABB-AA", "KXCS2GAME-26OCT230700AABB-BB"
+    # Held in b (listed second): only b is quoted, so it can be paired off.
+    quotes = bot.desired_quotes([_m(a), _m(b)], {b: 2.0})
+    assert {t for t, _ in quotes} == {b}
+    assert (b, "no") in quotes
+    # Held in b even when b is not listed this pass: a is still blocked.
+    assert bot.desired_quotes([_m(a)], {b: -1.0}) == {}
+
+
+def test_v5_resting_quotes_keep_their_market_before_a_wider_one():
+    a, b = "KXCS2GAME-26OCT230700AABB-AA", "KXCS2GAME-26OCT230700AABB-BB"
+    quotes = bot.desired_quotes([_m(a), _m(b)], {}, resting={b})
+    assert {t for t, _ in quotes} == {b}
 
 
 # ------------------------------------------- v3: changes after review
@@ -2388,7 +2462,7 @@ def test_standing_records_carry_their_rule_version(world):
 def test_live_measurements_run_before_the_shadow_ledger(world, monkeypatch, tmp_path):
     import contextlib
 
-    import live.production_lock as production_lock
+    from live import production_lock
 
     state = tmp_path / "state"
     monkeypatch.setattr(P, "STATE", state)

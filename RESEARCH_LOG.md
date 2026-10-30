@@ -3585,3 +3585,45 @@ feed cannot help.
 
 **Variants counted:** as planned (2 tests × 2 fill assumptions, 1
 descriptive) plus the coverage split.
+
+## 2026-10-30: Spread maker v5 (plan amendment)
+
+*The owner asked for all the spread-maker improvements on 30 October.
+Built as a new rule version so v3's record stays separate; nothing changes
+on the server until the owner merges and deploys. Evidence: the two tests
+above (neither passed; the timing pattern is an observation), the live
+v3 review (60 of 62 markets filled on one side; 4 matches held twice on the
+same result) and the live esports split below. Exploratory: v5 is judged on
+its own orders.*
+
+| Setting (`live/spread_policy.py`) | v3 | v5 | Why |
+|---|---|---|---|
+| `STRATEGY_VERSION` | `spread-maker-v3-24h-starts` | `spread-maker-v5-12h-one-per-event` | new rules, measured on their own orders |
+| `MAX_LEAD_HOURS` (new) | none (up to 24 h before expiry) | 12 h before the start | quotes 12–24 h out weakened most in the replay's later half |
+| `MAX_MARKETS_PER_EVENT` (new) | none | 1 (held, then resting, then widest) | live v3 doubled one result in 4 matches |
+| `CONTRACTS`, `MAX_NET_PER_MARKET` | 5, 5 | 2, 2 | smaller swings while the edge is unproven |
+| `MAX_ACTIVE_COST` | $120 | $50 | scaled to the size (also caps v4, which reads it) |
+| `QUOTE_ESPORTS` (new) | quoted | off | owner: model or stop; no model possible from the scan |
+
+Unchanged: 8¢ spreads, 85-minute floor, 20-minute cancel, −$15 / −$40
+stops, account stops, 1,500 submissions a day.
+
+**Esports (live v3, post hoc).** Esports: 45 markets, 40 events, −3.7¢ a
+contract (t −0.55). Other series: 17 markets, 13 events, +20.7¢ (t 3.7).
+Replay (24→4 h, in-sample): esports +6.7¢ (t 4.8), the weakest group. A
+rating model was not possible: the scan samples most teams once or twice.
+
+**Sportsbook fair price (shadow only).** `kalshi/spread_books.py` maps five
+game-winner series to The Odds API (AHL, NCAA men's and women's basketball,
+PLL, boxing), de-vigs head-to-head prices per book and needs two books.
+`research/spread_book_shadow.py record` writes Kalshi quotes beside the
+book price to a folder outside the repository; it never trades. Plan for
+later: after 200 matched markets, test whether quoting only when our price
+is at or below the book's fair price beats quoting everywhere.
+
+**v4 completion pilot.** Unchanged. It cannot run in Kalshi's demo yet
+(`TradingClient(env="prod")` is fixed and its guards read the production
+account), so its demo checklist needs a separate change first.
+
+**Checkpoint:** `research/live_checkpoint.py` now judges v5 with the
+existing spread bars (300 filled contracts or 28 days).
