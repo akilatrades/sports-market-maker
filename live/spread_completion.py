@@ -175,14 +175,16 @@ def completion_quote(ticker, lots, book, fees, start, now):
     expired = now >= min(oldest + MAX_AGE, start - CUTOFF)
     if now >= start:
         return None, "event_started_unmatched"
-    bid, _ = best(book, side)
-    opposite_bid, _ = best(book, held)
-    ask = 1 - opposite_bid
-    if bid >= ask:
+    if any(not isinstance(book.get(s), list) for s in ("yes", "no")):
+        raise EvidenceError("missing_book_side")
+    bid = best(book, side)[0] if book[side] else None
+    opposite_bid = best(book, held)[0] if book[held] else None
+    ask = 1 - opposite_bid if opposite_bid is not None else Decimal(1)
+    if bid is not None and bid >= ask:
         raise EvidenceError("crossed_book")
     target = -LOSS_ALLOWANCE if expired else TARGET
     limit = min(99, cents_floor(1 - basis - target - fee_bound(fees, True)))
-    if limit >= 1 and ask <= Decimal(limit) / 100:
+    if opposite_bid is not None and limit >= 1 and ask <= Decimal(limit) / 100:
         return Quote(
             ticker,
             side,
@@ -195,7 +197,8 @@ def completion_quote(ticker, lots, book, fees, start, now):
         return None, "exit_price_floor_blocked"
     passive_limit = cents_floor(1 - basis - TARGET - fee_bound(fees))
     # At least a full cent below the offer, even for sub-cent books.
-    price = min(99, passive_limit, cents_floor(bid) + 1, cents_floor(ask - CENT))
+    improve = cents_floor(bid) + 1 if bid is not None else passive_limit
+    price = min(99, passive_limit, improve, cents_floor(ask - CENT))
     if price < 1:
         return None, "no_profitable_quote"
     return Quote(ticker, side, price, quantity, "complete"), "completing"

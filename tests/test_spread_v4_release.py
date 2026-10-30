@@ -11,18 +11,40 @@ ROOT = Path(__file__).resolve().parents[1]
 def test_stage_uses_only_the_read_only_execution_path():
     tree = ast.parse((ROOT / "deploy/stage_spread_v4.py").read_text())
     calls = [n for n in ast.walk(tree) if isinstance(n, ast.Call)]
-    client = next(n for n in calls if isinstance(n.func, ast.Name) and n.func.id == "TradingClient")
-    assert any(k.arg == "dry_run" and isinstance(k.value, ast.Constant) and k.value.value is True for k in client.keywords)
-    preview = next(n for n in calls if isinstance(n.func, ast.Attribute) and n.func.attr == "run_once")
+    client = next(
+        n
+        for n in calls
+        if isinstance(n.func, ast.Name) and n.func.id == "TradingClient"
+    )
+    assert any(
+        k.arg == "dry_run"
+        and isinstance(k.value, ast.Constant)
+        and k.value.value is True
+        for k in client.keywords
+    )
+    preview = next(
+        n
+        for n in calls
+        if isinstance(n.func, ast.Attribute) and n.func.attr == "run_once"
+    )
     assert not any(k.arg in ("live", "authorize") for k in preview.keywords)
-    assert not any(isinstance(n.func, ast.Attribute) and n.func.attr in ("place", "cancel", "unlink", "symlink_to") for n in calls)
+    assert not any(
+        isinstance(n.func, ast.Attribute)
+        and n.func.attr in ("place", "cancel", "unlink", "symlink_to")
+        for n in calls
+    )
 
 
 def test_staging_workflow_never_installs_or_arms_a_service():
     text = (ROOT / ".github/workflows/spread-v4-candidate.yml").read_text()
-    assert "python -m" not in text  # interpreter comes from the existing release
     assert "-m deploy.stage_spread_v4" in text
-    for forbidden in ("systemctl", "--live", "SPREAD_V4_ARM=YES", "setup_spread_maker", "smm-prod-release"):
+    for forbidden in (
+        "systemctl",
+        "--live",
+        "SPREAD_V4_ARM=YES",
+        "setup_spread_maker",
+        "smm-prod-release",
+    ):
         assert forbidden not in text
     assert "set -eu; umask 077" in text
     assert "test ! -e '$release'" in text

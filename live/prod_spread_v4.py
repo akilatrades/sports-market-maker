@@ -44,8 +44,37 @@ def source_digest(root):
     digest = hashlib.sha256()
     for name in ("live", "kalshi", "research", "markets"):
         for path in sorted((root / name).rglob("*.py")):
-            digest.update(str(path.relative_to(root)).encode() + b"\0" + path.read_bytes())
+            digest.update(
+                str(path.relative_to(root)).encode() + b"\0" + path.read_bytes()
+            )
     return digest.hexdigest()
+
+
+def inactive_worker(sport):
+    unit = f"market-maker-prod-{sport}-auto"
+    for suffix in ("timer", "service"):
+        result = subprocess.run(
+            [
+                "systemctl",
+                "show",
+                f"{unit}.{suffix}",
+                "-p",
+                "ActiveState",
+                "-p",
+                "UnitFileState",
+            ],
+            text=True,
+            capture_output=True,
+            check=True,
+        )
+        values = dict(
+            line.split("=", 1) for line in result.stdout.splitlines() if "=" in line
+        )
+        if values.get("ActiveState") != "inactive" or (
+            suffix == "timer"
+            and values.get("UnitFileState") not in ("disabled", "masked")
+        ):
+            raise TradingError("Legacy funded timer/service must be inactive")
 
 
 def isolation_check():
@@ -53,32 +82,41 @@ def isolation_check():
     for sport in ("spread", "nba", "nfl"):
         if not os.path.lexists(shared.ROOT / f"prod-{sport}-auto/KILL"):
             raise TradingError("Legacy funded workers must remain paused")
-    unit = "market-maker-prod-spread-auto"
-    for suffix in ("timer", "service"):
-        result = subprocess.run(
-            ["systemctl", "show", f"{unit}.{suffix}", "-p", "ActiveState", "-p", "UnitFileState"],
-            text=True, capture_output=True, check=True,
-        )
-        values = dict(line.split("=", 1) for line in result.stdout.splitlines() if "=" in line)
-        if values.get("ActiveState") != "inactive" or (
-            suffix == "timer" and values.get("UnitFileState") not in ("disabled", "masked")
-        ):
-            raise TradingError("Legacy spread timer/service must be inactive")
+        inactive_worker(sport)
     revision = subprocess.check_output(
         ["git", "-C", str(PRODUCTION), "rev-parse", "HEAD"], text=True
     ).strip()
     manifest = json.loads(STUDY.read_text())
     if revision != FROZEN_REVISION or manifest.get("production_revision") != revision:
         raise TradingError("Frozen production identity changed")
-    subprocess.run(["git", "-C", str(PRODUCTION), "diff", "--quiet", "HEAD", "--", "live", "kalshi"], check=True)
-    if manifest.get("start") != "2026-10-25T21:47:54.024216+00:00" or manifest.get("end") != "2026-11-24T21:47:54.024216+00:00":
+    subprocess.run(
+        [
+            "git",
+            "-C",
+            str(PRODUCTION),
+            "diff",
+            "--quiet",
+            "HEAD",
+            "--",
+            "live",
+            "kalshi",
+        ],
+        check=True,
+    )
+    if (
+        manifest.get("start") != "2026-10-25T21:47:54.024216+00:00"
+        or manifest.get("end") != "2026-11-24T21:47:54.024216+00:00"
+    ):
         raise TradingError("Frozen study window changed")
 
 
 def guard(client, env, root):
     if client.dry_run or client.env != "prod" or not client.can_sign:
         raise TradingError("Signed live production client required")
-    if env.get("ALLOW_PRODUCTION_TRADING") != "YES" or env.get("SPREAD_V4_ARM") != "YES":
+    if (
+        env.get("ALLOW_PRODUCTION_TRADING") != "YES"
+        or env.get("SPREAD_V4_ARM") != "YES"
+    ):
         raise TradingError("V4 is not armed")
     if not shared.dual_mode(env):
         raise TradingError("Shared account mode required")
@@ -87,11 +125,18 @@ def guard(client, env, root):
     if GATE.is_symlink() or stat.st_uid != 0 or stat.st_mode & 0o022:
         raise TradingError("Release gate must be root-owned and not writable by trader")
     gate = json.loads(GATE.read_text())
-    if gate.get("version") != policy.VERSION or gate.get("source_sha256") != source_digest(root):
+    if gate.get("version") != policy.VERSION or gate.get(
+        "source_sha256"
+    ) != source_digest(root):
         raise TradingError("Release gate does not match this code")
     # A short explicit pilot authorization, not a permanent switch.
     now = datetime.now(UTC)
-    if not instant(gate["approved_at"]) <= now < instant(gate["expires_at"]) <= instant(gate["approved_at"]) + timedelta(days=1):
+    if (
+        not instant(gate["approved_at"])
+        <= now
+        < instant(gate["expires_at"])
+        <= instant(gate["approved_at"]) + timedelta(days=1)
+    ):
         raise TradingError("Release gate expired or invalid")
 
 
@@ -107,11 +152,29 @@ def snapshot(client, journal, now):
         intent = orders.get(str(order.get("order_id")))
         if intent is None or intent.get("strategy_version") != policy.VERSION:
             raise TradingError("Legacy or unowned spread order is still resting")
-    lots = policy.inventory(events, state["fills"], state["positions"], state["settled"], now)
-    own_cids = {i["client_order_id"] for i in orders.values() if i.get("strategy_version") == policy.VERSION}
-    own_tickers = {i["ticker"] for i in orders.values() if i.get("strategy_version") == policy.VERSION}
-    own_events = [e for e in events if e.get("client_order_id") in own_cids or (e.get("event") == "settlement" and e.get("ticker") in own_tickers)]
-    pilot_pnl = shared.spread_ledger(own_events, state["fills"], state["settlements"], now)
+    read_at = max(now, datetime.now(UTC))
+    lots = policy.inventory(
+        events, state["fills"], state["positions"], state["settled"], read_at
+    )
+    own_cids = {
+        i["client_order_id"]
+        for i in orders.values()
+        if i.get("strategy_version") == policy.VERSION
+    }
+    own_tickers = {
+        i["ticker"]
+        for i in orders.values()
+        if i.get("strategy_version") == policy.VERSION
+    }
+    own_events = [
+        e
+        for e in events
+        if e.get("client_order_id") in own_cids
+        or (e.get("event") == "settlement" and e.get("ticker") in own_tickers)
+    ]
+    pilot_pnl = shared.spread_ledger(
+        own_events, state["fills"], state["settlements"], now
+    )
     if len(lots) > 1 or any(
         sum((amount(x["left"]) for x in queue), Decimal(0)) > policy.SIZE
         for queue in lots.values()
@@ -146,11 +209,17 @@ def market_data(client, ticker, resting, recorded=()):
     if start is None:
         raise EvidenceError("verified_start_missing")
     expires = instant(market["expected_expiration_time"])
-    milestones = client._request("GET", "/milestones", {"related_event_ticker": event, "limit": 100})
+    milestones = client._request(
+        "GET", "/milestones", {"related_event_ticker": event, "limit": 100}
+    )
     if not isinstance(milestones.get("milestones"), list):
         raise EvidenceError("milestones_unavailable")
     earlier = legacy.milestone_start(event, expires, lambda _: milestones)
-    prior = [instant(i["event_start_utc"]) for i in recorded if i.get("event_ticker") == event and i.get("event_start_utc")]
+    prior = [
+        instant(i["event_start_utc"])
+        for i in recorded
+        if i.get("event_ticker") == event and i.get("event_start_utc")
+    ]
     start = min([start, *prior, *([earlier] if earlier else [])])
     fees = client._request("GET", f"/series/{quote(series, safe='')}")["series"]
     if fees.get("ticker") != series:
@@ -163,10 +232,35 @@ def market_data(client, ticker, resting, recorded=()):
     own = normalized_orders([o for o in resting if o.get("ticker") == ticker])
     depth = external_book(book, ticker, own)
     return {
-        "market": market, "start": start, "expires": expires, "fees": fees,
-        "book": depth, "book_read": time.monotonic(), "series": series,
+        "market": market,
+        "start": start,
+        "expires": expires,
+        "fees": fees,
+        "book": depth,
+        "book_read": time.monotonic(),
+        "series": series,
         "exchange_index": shard_funding.verify_market_shard({"market": market}),
     }
+
+
+def candidates(client, active, context, banned, now, series, deadline):
+    if active:
+        yield from active
+        return
+    others = {
+        t for t, owner in context["ownership"]["tickers"].items() if owner != "spread"
+    }
+    for name in series:
+        if time.monotonic() >= deadline:
+            return
+        rows = client._pages(
+            "/markets",
+            "markets",
+            {"series_ticker": name, "status": "open", "limit": 200},
+        )
+        for market in legacy.eligible_markets(rows, name, now, others):
+            if market["postable"] and game_key(market["event_ticker"]) not in banned:
+                yield market["ticker"]
 
 
 def decision(client, events, orders, state, context, lots, now, series, deadline):
@@ -179,7 +273,8 @@ def decision(client, events, orders, state, context, lots, now, series, deadline
         )
         return ([planned] if planned else []), data, reason
     filled = {
-        str(f.get("order_id")) for f in state["fills"]
+        str(f.get("order_id"))
+        for f in state["fills"]
         if str(f.get("order_id")) in orders
     }
     banned = {
@@ -190,21 +285,13 @@ def decision(client, events, orders, state, context, lots, now, series, deadline
     for attempt in context["ownership"]["attempts"]:
         if attempt.get("_cohort") != "spread" and attempt.get("event_ticker"):
             banned.add(game_key(attempt["event_ticker"]))
+    for ticker, owner in context["ownership"]["tickers"].items():
+        if owner != "spread":
+            banned.add(game_key("-".join(ticker.split("-")[:2])))
     active = {o["ticker"] for o in state["resting"]}
     if len(active) > 1:
         raise EvidenceError("multiple_active_pilot_markets")
-    candidates = []
-    if active:
-        candidates = list(active)
-    else:
-        others = {t for t, owner in context["ownership"]["tickers"].items() if owner != "spread"}
-        for name in series:
-            if time.monotonic() >= deadline:
-                break
-            rows = client._pages("/markets", "markets", {"series_ticker": name, "status": "open", "limit": 200})
-            eligible = legacy.eligible_markets(rows, name, now, others)
-            candidates.extend(m["ticker"] for m in eligible if m["postable"] and game_key(m["event_ticker"]) not in banned)
-    for ticker in candidates:
+    for ticker in candidates(client, active, context, banned, now, series, deadline):
         if time.monotonic() >= deadline:
             break
         data = market_data(client, ticker, state["resting"], recorded)
@@ -213,7 +300,9 @@ def decision(client, events, orders, state, context, lots, now, series, deadline
         hours = (data["expires"] - now).total_seconds() / 3600
         if not caps.WINDOW_HOURS[0] <= hours <= caps.WINDOW_HOURS[1]:
             continue
-        plans = policy.entry_quotes(data["market"], data["book"], data["fees"], data["start"], now)
+        plans = policy.entry_quotes(
+            data["market"], data["book"], data["fees"], data["start"], now
+        )
         if plans:
             return plans, data, "quoting_entry"
     return [], None, "no_entry"
@@ -229,9 +318,12 @@ def cancellations(resting, orders, fills, plans, now):
         left = legacy.remaining_count(order, intent, fills)
         expires = instant(intent["expires_utc"]) if intent.get("expires_utc") else now
         if (
-            plan is not None and not plan.immediate and key not in kept
+            plan is not None
+            and not plan.immediate
+            and key not in kept
             and intent["price_cents"] == plan.price
-            and Decimal(str(left)) <= plan.quantity and left > 0
+            and Decimal(str(left)) <= plan.quantity
+            and left > 0
             and expires > now + timedelta(seconds=30)
             and intent.get("purpose") == plan.purpose
         ):
@@ -243,54 +335,93 @@ def cancellations(resting, orders, fills, plans, now):
 
 def submit(client, journal, plan, data, now, deadline, authorize):
     """Durable intent before POST; never retry an ambiguous submission."""
-    cost = plan.quantity * (Decimal(plan.price) / 100 + policy.fee_bound(data["fees"], plan.immediate))
+    cost = plan.quantity * (
+        Decimal(plan.price) / 100 + policy.fee_bound(data["fees"], plan.immediate)
+    )
     balances = client._request("GET", "/portfolio/balance")
     if shard_funding.shard_balance(balances, data["exchange_index"]) < cost:
         raise TradingError("V4 shard is unfunded")
-    if time.monotonic() >= deadline or time.monotonic() - data["book_read"] > policy.MAX_BOOK_SECONDS:
+    if (
+        time.monotonic() >= deadline
+        or time.monotonic() - data["book_read"] > policy.MAX_BOOK_SECONDS
+    ):
         return "stale_before_submit"
-    if datetime.now(UTC) >= data["start"] or os.path.lexists(journal.parent / "V4_KILL"):
+    if datetime.now(UTC) >= data["start"] or os.path.lexists(
+        journal.parent / "V4_KILL"
+    ):
         return "stopped_before_submit"
     authorize()
     if time.monotonic() - data["book_read"] > policy.MAX_BOOK_SECONDS:
         return "stale_before_submit"
     expires = min(now + policy.QUOTE_LIFE, data["start"] - policy.CUTOFF)
     order = Order(
-        ticker=plan.ticker, side=plan.side, count=plan.quantity,
-        price_cents=plan.price, fractional=True,
+        ticker=plan.ticker,
+        side=plan.side,
+        count=plan.quantity,
+        price_cents=plan.price,
+        fractional=True,
         expiration_ts=None if plan.immediate else int(expires.timestamp()),
-        post_only=not plan.immediate, reduce_only=plan.immediate,
+        post_only=not plan.immediate,
+        reduce_only=plan.immediate,
         time_in_force="immediate_or_cancel" if plan.immediate else "good_till_canceled",
-        client_order_id=f"smm-spread-v4-{uuid.uuid4()}", exchange_index=data["exchange_index"],
+        client_order_id=f"smm-spread-v4-{uuid.uuid4()}",
+        exchange_index=data["exchange_index"],
     )
     order.validate()
     stamp = datetime.now(UTC).isoformat()
-    legacy.write_event(journal, {
-        "event": "intent", "utc": stamp, "client_order_id": order.client_order_id,
-        "ticker": plan.ticker, "event_ticker": data["market"]["event_ticker"],
-        "event_start_utc": data["start"].isoformat(), "series": data["series"],
-        "side": plan.side, "price_cents": plan.price, "count": str(plan.quantity),
-        "cost": float(cost), "strategy_version": policy.VERSION, "purpose": plan.purpose,
-        "expires_utc": None if plan.immediate else expires.isoformat(),
-        "reduce_only": plan.immediate, "fee_bound_per_contract": str(policy.fee_bound(data["fees"], plan.immediate)),
-        "external_book": data["book"], "fee_type": data["fees"]["fee_type"],
-        "fee_multiplier": data["fees"]["fee_multiplier"],
-    })
+    legacy.write_event(
+        journal,
+        {
+            "event": "intent",
+            "utc": stamp,
+            "client_order_id": order.client_order_id,
+            "ticker": plan.ticker,
+            "event_ticker": data["market"]["event_ticker"],
+            "event_start_utc": data["start"].isoformat(),
+            "series": data["series"],
+            "side": plan.side,
+            "price_cents": plan.price,
+            "count": str(plan.quantity),
+            "cost": float(cost),
+            "strategy_version": policy.VERSION,
+            "purpose": plan.purpose,
+            "expires_utc": None if plan.immediate else expires.isoformat(),
+            "reduce_only": plan.immediate,
+            "fee_bound_per_contract": str(
+                policy.fee_bound(data["fees"], plan.immediate)
+            ),
+            "external_book": data["book"],
+            "fee_type": data["fees"]["fee_type"],
+            "fee_multiplier": data["fees"]["fee_multiplier"],
+        },
+    )
     try:
         result = client.place(order)
         if not isinstance(result, dict) or not result.get("order_id"):
             raise TradingError("Order response has no identity")
     except Exception as error:
-        legacy.write_event(journal, {
-            "event": "unknown_outcome", "utc": datetime.now(UTC).isoformat(),
-            "client_order_id": order.client_order_id, "type": type(error).__name__,
-        })
+        legacy.write_event(
+            journal,
+            {
+                "event": "unknown_outcome",
+                "utc": datetime.now(UTC).isoformat(),
+                "client_order_id": order.client_order_id,
+                "type": type(error).__name__,
+            },
+        )
         # Even a 4xx waits for the existing signed reconciliation tool.
-        raise TradingError("V4 order outcome unknown; signed reconciliation required") from error
-    legacy.write_event(journal, {
-        "event": "accepted", "utc": datetime.now(UTC).isoformat(),
-        "client_order_id": order.client_order_id, "order_id": str(result["order_id"]),
-    })
+        raise TradingError(
+            "V4 order outcome unknown; signed reconciliation required"
+        ) from error
+    legacy.write_event(
+        journal,
+        {
+            "event": "accepted",
+            "utc": datetime.now(UTC).isoformat(),
+            "client_order_id": order.client_order_id,
+            "order_id": str(result["order_id"]),
+        },
+    )
     return "submitted"
 
 
@@ -302,28 +433,54 @@ def run_once(client, journal, now, series, live=False, stop=False, authorize=Non
     deadline = time.monotonic() + caps.PASS_DEADLINE_SECONDS
     events, orders, state, context, lots, stopped = snapshot(client, journal, now)
     if live:
-        legacy.record_execution(journal, events, set(orders), state["fills"], state["settlements"], {i["ticker"] for i in orders.values()})
+        legacy.record_execution(
+            journal,
+            events,
+            set(orders),
+            state["fills"],
+            state["settlements"],
+            {i["ticker"] for i in orders.values()},
+        )
     if stopped or stop:
         plans, data, reason = [], None, "risk_stop" if stopped else "kill"
     else:
-        plans, data, reason = decision(client, events, orders, state, context, lots, now, series, deadline)
+        plans, data, reason = decision(
+            client, events, orders, state, context, lots, now, series, deadline
+        )
     keep, cancel = cancellations(state["resting"], orders, state["fills"], plans, now)
     report = {
-        "version": policy.VERSION, "at": now.isoformat(), "mode": "live" if live else "preview",
-        "decision": reason, "held_markets": len(lots), "cancel_count": len(cancel),
-        "orders_planned": len(plans), "submitted": 0,
+        "version": policy.VERSION,
+        "at": now.isoformat(),
+        "mode": "live" if live else "preview",
+        "decision": reason,
+        "held_markets": len(lots),
+        "cancel_count": len(cancel),
+        "orders_planned": len(plans),
+        "submitted": 0,
         "entries_blocked_by_inventory": bool(lots),
         "planned_quotes": [asdict(q) for q in plans],
-        "evidence": None if data is None else {
-            "market": data["market"], "external_book": data["book"],
-            "fees": data["fees"], "event_start_utc": data["start"].isoformat(),
+        "evidence": None
+        if data is None
+        else {
+            "market": data["market"],
+            "external_book": data["book"],
+            "fees": data["fees"],
+            "event_start_utc": data["start"].isoformat(),
         },
     }
     if not live:
         return report
     if cancel:
         for order, left in cancel:
-            legacy.cancel_order(client, journal, order["order_id"], order["ticker"], "v4_reconcile_barrier", now, expected=left)
+            legacy.cancel_order(
+                client,
+                journal,
+                order["order_id"],
+                order["ticker"],
+                "v4_reconcile_barrier",
+                now,
+                expected=left,
+            )
         report["decision"] = "canceled_waiting_for_fresh_account"
         return report
     for plan in plans:
@@ -331,20 +488,44 @@ def run_once(client, journal, now, series, live=False, stop=False, authorize=Non
             continue
         today = now.astimezone(legacy.NY).date()
         attempts = [e for e in events if e.get("event") == "intent"]
-        if sum(instant(e["utc"]).astimezone(legacy.NY).date() == today for e in attempts) >= caps.MAX_SUBMISSIONS_PER_DAY:
+        if (
+            sum(
+                instant(e["utc"]).astimezone(legacy.NY).date() == today
+                for e in attempts
+            )
+            >= caps.MAX_SUBMISSIONS_PER_DAY
+        ):
             report["decision"] = "daily_submission_cap"
             break
         resting_cost = sum(
-            Decimal(str(legacy.remaining_count(o, orders[str(o["order_id"])], state["fills"])))
-            * (Decimal(orders[str(o["order_id"])] ["price_cents"]) / 100 + policy.fee_bound(data["fees"]))
+            Decimal(
+                str(
+                    legacy.remaining_count(
+                        o, orders[str(o["order_id"])], state["fills"]
+                    )
+                )
+            )
+            * (
+                Decimal(orders[str(o["order_id"])]["price_cents"]) / 100
+                + policy.fee_bound(data["fees"])
+            )
             for o in state["resting"]
         )
-        held_cost = sum((amount(x["left"]) * x["basis"] for queue in lots.values() for x in queue), Decimal(0))
-        reserved = plan.quantity * (Decimal(plan.price) / 100 + policy.fee_bound(data["fees"], plan.immediate))
-        if held_cost + resting_cost + reserved > min(policy.ACTIVE_CAP, Decimal(str(caps.MAX_ACTIVE_COST))):
+        held_cost = sum(
+            (amount(x["left"]) * x["basis"] for queue in lots.values() for x in queue),
+            Decimal(0),
+        )
+        reserved = plan.quantity * (
+            Decimal(plan.price) / 100 + policy.fee_bound(data["fees"], plan.immediate)
+        )
+        if held_cost + resting_cost + reserved > min(
+            policy.ACTIVE_CAP, Decimal(str(caps.MAX_ACTIVE_COST))
+        ):
             report["decision"] = "active_cost_cap"
             break
-        report["decision"] = submit(client, journal, plan, data, now, deadline, authorize)
+        report["decision"] = submit(
+            client, journal, plan, data, now, deadline, authorize
+        )
         report["submitted"] = int(report["decision"] == "submitted")
         break  # reread account before another order, including the second entry leg
     return report
@@ -355,14 +536,18 @@ def cancel_v4_on_halt(client, journal, now):
     emergency = journal.parent / "v4_emergency.jsonl"
     for order in client.orders("resting"):
         if str(order.get("client_order_id", "")).startswith("smm-spread-v4-"):
-            legacy.cancel_order(client, emergency, order["order_id"], order["ticker"], "v4_halt", now)
+            legacy.cancel_order(
+                client, emergency, order["order_id"], order["ticker"], "v4_halt", now
+            )
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--live", action="store_true")
     parser.add_argument("--digest", action="store_true")
-    parser.add_argument("--series", nargs="+", choices=caps.SERIES, default=list(caps.SERIES))
+    parser.add_argument(
+        "--series", nargs="+", choices=caps.SERIES, default=list(caps.SERIES)
+    )
     args = parser.parse_args()
     root = Path(__file__).resolve().parents[1]
     if args.digest:
@@ -376,20 +561,47 @@ def main():
         fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
         with production_lock.account_lock():
             try:
-                report = run_once(client, STATE / "journal.jsonl", datetime.now(UTC), args.series, live=args.live, stop=os.path.lexists(STATE / "V4_KILL"), authorize=lambda: guard(client, os.environ, root))
+                report = run_once(
+                    client,
+                    STATE / "journal.jsonl",
+                    datetime.now(UTC),
+                    args.series,
+                    live=args.live,
+                    stop=os.path.lexists(STATE / "V4_KILL"),
+                    authorize=lambda: guard(client, os.environ, root),
+                )
             except Exception as error:
-                report = {"version": policy.VERSION, "at": datetime.now(UTC).isoformat(), "decision": "halt", "error_class": type(error).__name__, "error": str(error)[:240]}
+                report = {
+                    "version": policy.VERSION,
+                    "at": datetime.now(UTC).isoformat(),
+                    "decision": "halt",
+                    "error_class": type(error).__name__,
+                    "error": str(error)[:240],
+                }
                 if args.live:
                     try:
-                        cancel_v4_on_halt(client, STATE / "journal.jsonl", datetime.now(UTC))
+                        cancel_v4_on_halt(
+                            client, STATE / "journal.jsonl", datetime.now(UTC)
+                        )
                     except Exception:
                         report["cancellation_unconfirmed"] = True
     target = STATE / "v4_last_scan.json"
     temporary = target.with_suffix(".tmp")
-    temporary.write_text(json.dumps(report, sort_keys=True, indent=2, default=str) + "\n")
+    temporary.write_text(
+        json.dumps(report, sort_keys=True, indent=2, default=str) + "\n"
+    )
     temporary.replace(target)
     # The detailed evidence stays in the private state directory.
-    print(json.dumps({k: v for k, v in report.items() if k not in ("planned_quotes", "evidence", "error")}, sort_keys=True))
+    print(
+        json.dumps(
+            {
+                k: v
+                for k, v in report.items()
+                if k not in ("planned_quotes", "evidence", "error")
+            },
+            sort_keys=True,
+        )
+    )
     if report.get("decision") == "halt":
         raise SystemExit(2)
 

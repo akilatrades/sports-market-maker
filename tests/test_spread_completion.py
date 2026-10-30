@@ -203,6 +203,27 @@ def test_legacy_position_is_not_silently_adopted():
         p.inventory(events, [fill], {"M": 1}, set(), NOW)
 
 
+def test_completion_can_take_existing_depth_in_a_one_sided_book():
+    depth = {"yes": [["0.60", "1"]], "no": []}
+    quote, _ = p.completion_quote(
+        "M", [lot()], depth, FEES, NOW + timedelta(hours=2), NOW
+    )
+    assert quote.immediate and quote.purpose == "take_profit"
+    assert quote.side == "no"
+
+
+def test_empty_depth_is_a_blocked_timeout_not_an_invented_fill():
+    quote, reason = p.completion_quote(
+        "M",
+        [lot(age=61)],
+        {"yes": [], "no": []},
+        FEES,
+        NOW + timedelta(hours=2),
+        NOW,
+    )
+    assert quote is None and reason == "exit_price_floor_blocked"
+
+
 def test_shared_ledger_keeps_legacy_validation_and_checks_v4_limits():
     events, fill = journal_fill()
     bad = copy.deepcopy(events)

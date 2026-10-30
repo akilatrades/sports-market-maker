@@ -87,9 +87,10 @@ observer must continue filtering strictly by v3 strategy identity.
 Before a funded pilot can be approved:
 
 - Review the exact CI-passing revision and this specification. Confirm the
-  signed-read preview reconciles. Existing approved manual closes may require
-  a separate production accounting repair: the worker deliberately refuses
-  unowned fills even when an independent cash report can reconcile them.
+  signed-read preview reconciles. This candidate restores the approved manual
+  close accounting already deployed in `fe7a5e7`, which was absent from the
+  current main snapshot. Only existing, hashed, explicitly approved reducing
+  fills are recognized. It creates no new approvals and changes no journal.
 - Exercise the release in the exchange demo environment, including a partial
   close, IOC price improvement, an expired order and lost-response recovery.
   Preview is not a fill simulator, and unit tests do not validate exchange behavior.
@@ -97,7 +98,8 @@ Before a funded pilot can be approved:
   opportunities are hindsight diagnostics, not a v4 backtest. Report paired
   and unmatched outcomes together, after fees, by independent event; do not
   promote from completion rate or a few winning trades alone.
-- Keep NBA/NFL funded workers paused. They must not run an older ledger that
+- Keep NBA/NFL funded workers paused, with their funded timers disabled and
+  services inactive. They must not run an older ledger that
   assumes every v4 IOC filled at its limit. Paper research is independent.
 - Keep legacy KILL markers; disable the old spread timer and ensure its
   service is inactive so it cannot cancel v4 quotes. Do not change the frozen
