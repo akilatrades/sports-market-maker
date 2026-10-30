@@ -558,3 +558,12 @@ def test_account_loss_stop_blocks_new_nfl_orders(quotes, tmp_path, monkeypatch):
     client = Client()
     assert not auto.pass_once(client, ARMED, frame(), NOW, tmp_path / "ledger.jsonl")
     assert client.placed == []
+
+
+def test_v4_model_alone_cannot_select_an_nfl_order():
+    f = frame()
+    f["p_book"] = float("nan")
+    f["book_n"] = 0
+    stats = {}
+    assert auto.select_candidates(f, [], {"active": []}, NOW, diagnostics=stats) == []
+    assert stats["book_priced"] == 0

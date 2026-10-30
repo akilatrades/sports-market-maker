@@ -3627,3 +3627,43 @@ account), so its demo checklist needs a separate change first.
 
 **Checkpoint:** `research/live_checkpoint.py` now judges v5 with the
 existing spread bars (300 filled contracts or 28 days).
+
+## 2026-10-30: NBA rules v7 and NFL v4: priced from the books (plan amendment)
+
+*The owner asked for the prop-bot changes on 30 October. New rule versions,
+judged on their own orders; nothing changes on the server until the owner
+merges and deploys, and the NBA bot stays switched off until the owner
+turns it on. Evidence: live v6 priced 97% of its filled contracts from the
+stat model; model-priced fills promised about +10¢ and lost about 7¢ a
+contract while book-priced ones were about even (live, small sample, 7
+games); line translation (above) matches exact book quotes and beats the
+model (simulated, in-sample).*
+
+| NBA setting (`live/prod_nba_auto.py`) | v6 | v7 | Why |
+|---|---|---|---|
+| `STRATEGY_VERSION` | `nba-no-v6-three-contracts` | `nba-no-v7-book-priced` | new pricing, judged on its own orders |
+| Price source | 2 books on the exact line, else the model | 1 book on the exact line, else nearby lines (2+ quotes), else no order | the model priced the losers |
+| `MODEL_VETO_MIN_EDGE` (new) | none | model's own NO edge after fee ≥ 0 | the model may only block |
+| `MAX_ENTRY_NET_EDGE` (new) | 15¢ | 8¢ | live, the largest promised edges lost most |
+| `BOOK_MAX_AGE_MINUTES` (new) | 120 min (75 within 2.5 h of tip) | 60 min | one freshness rule; books refresh hourly |
+| `MAX_CONTRACTS` | 3 | 1 | while the new pricing proves itself |
+
+Unchanged: 2–6 h entry window, 5–95¢ prices, the dollar caps, −$20/−$100
+stops, injury and roster vetoes; players flagged for a role change or an
+uncertain teammate still need two books.
+
+| NFL setting (`live/nfl_policy.py`, `live/prod_nfl_auto.py`) | v3 | v4 | Why |
+|---|---|---|---|
+| `STRATEGY_VERSION` | `nfl-no-v3-baseline-quote` | `nfl-no-v4-book-priced` | new pricing |
+| Price source | book, else the model | book on the exact line only | as NBA |
+| `MODEL_VETO_MIN_EDGE` (new) | none | ≥ 0 | as NBA |
+| `MAX_CONTRACTS` | 5 | 1 | as NBA |
+| Edge cap | 15¢ | 15¢ (unchanged) | 3¢ after the full 10% reserve already needs about 8.5¢ of book edge, so an 8¢ cap would block every order |
+
+NFL gets no nearby-line pricing: yardage is not a count and the method was
+only tested on NBA stats. Expect fewer NFL orders (exact lines only).
+
+**Before going live:** paper or watch at least two weeks of v7 scans
+(`book_exact`, `book_translated`, `book_priced` and `passed_model_veto` in
+each scan's diagnostics), then turn NBA on at these sizes. The checkpoint
+(`research/live_checkpoint.py`) judges v7 alone with the existing bars.

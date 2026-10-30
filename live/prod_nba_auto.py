@@ -21,6 +21,8 @@ import numpy as np
 import pandas as pd
 
 from kalshi.api import fetch_market
+from kalshi.maker import maker_fee
+from kalshi.paper_props import FEE_SHARE as PAPER_FEE_SHARE
 from kalshi.paper_props import candidate_orders
 from kalshi.shard_funding import require_funded_shard
 from kalshi.trading import Order, TradingClient, TradingError
@@ -28,7 +30,7 @@ from live.nfl_policy import settlement_accounting
 from live.nba_inputs import MODEL_VERSION
 from live.reconciled_attempts import rejected_client_ids
 
-STRATEGY_VERSION = "nba-no-v6-three-contracts"
+STRATEGY_VERSION = "nba-no-v7-book-priced"
 # Earlier versions whose resting orders are left untouched to expire while
 # new orders wait (see legacy_resting_count); any other version HALTs.
 PRIOR_VERSIONS = frozenset(
@@ -37,6 +39,7 @@ PRIOR_VERSIONS = frozenset(
         "nba-no-v3-long-resting-throughput",
         "nba-no-v4-smaller-orders-edge3-baseline",
         "nba-no-v5-one-contract-breadth",
+        "nba-no-v6-three-contracts",
     }
 )
 
@@ -53,7 +56,20 @@ MAX_GAME_COST = 50.0
 MAX_TEAM_COST = 25.0  # per team per New York day
 MAX_DAILY_COST = 150.0
 MAX_GAME_ORDERS = 40
-MAX_CONTRACTS = 3  # contracts per order (v5: 1)
+MAX_CONTRACTS = 1  # contracts per order (v5: 1, v6: 3, v7: 1)
+# v7 pricing (2026-10-30, RESEARCH_LOG.md "NBA rules v7"): every order is
+# priced from the sportsbooks, never from the stat model. Live v6 priced 97%
+# of its filled contracts from the model, which promised about +10c and lost
+# about 7c a contract; book-priced fills were about even (live, small).
+# Old values: two books on the exact line or the model; edges up to 15c;
+# book quotes up to 120 minutes old (75 within 2.5 hours of tip).
+MIN_BOOKS = 1  # books on Kalshi's exact line (v6: 2, else the model priced it)
+# A line no book quotes is priced from the same game's nearby lines
+# (kalshi/line_translation.py), with at least 2 book quotes in the fit.
+TRANSLATE_NEARBY_LINES = True
+BOOK_MAX_AGE_MINUTES = 60  # oldest contributing book update (v6: 120 / 75)
+MAX_ENTRY_NET_EDGE = 0.08  # v6: 0.15; live, the largest edges were model errors
+MODEL_VETO_MIN_EDGE = 0.0  # the model may only block: its NO edge must be >= this
 MAX_NEW_ORDERS_PER_PASS = 3
 PRICE_BAND_CENTS = (5, 95)  # NO price, inclusive
 # systemd stops a pass after TimeoutStartSec=240. A stop between an order's
@@ -387,7 +403,7 @@ def resting_cancel_reason(row, intent, market, fee_bound):
         no_price = cents / 100
 
         source = str(intent["probability_source"])
-        if source not in {"sportsbook", "model"}:
+        if source not in {"sportsbook", "sportsbook_translated", "model"}:
             return "unverified_original_probability_source"
         raw_book_n = float(row.get("book_n", 0))
         book_n = raw_book_n if math.isfinite(raw_book_n) else 0
@@ -395,10 +411,13 @@ def resting_cancel_reason(row, intent, market, fee_bound):
         required = str(row.get("requires_book", "")).lower()
         if required not in {"true", "false", "1", "0"}:
             return "unverified_book_requirement"
-        has_books = book_n >= 2 and math.isfinite(p_book) and 0 <= p_book <= 1
+        has_books = book_n >= MIN_BOOKS and math.isfinite(p_book) and 0 <= p_book <= 1
         # Never degrade an originally sportsbook-confirmed signal to a
-        # model-only signal; opening-week/role-change veto remains binding.
-        if (source == "sportsbook" or required in {"true", "1"}) and not has_books:
+        # model-only signal; opening-week/role-change veto remains binding
+        # and still needs two books.
+        if source != "model" and not has_books:
+            return "fresh_two_book_consensus_missing"
+        if required in {"true", "1"} and not (has_books and book_n >= 2):
             return "fresh_two_book_consensus_missing"
         p_yes = p_book if has_books else float(row["p_model"])
         if not math.isfinite(p_yes) or not 0 <= p_yes <= 1:
@@ -837,9 +856,21 @@ def select_candidates(frame, events, state, now, diagnostics=None, window=WINDOW
         return []
     found = found[found.side.eq("no")].copy()
     counts["no_side_candidates"] = len(found)
+    # v7: the sportsbooks price every order; the model never does.
+    found = found[pd.to_numeric(found.get("p_book"), errors="coerce").notna()]
+    counts["book_priced"] = len(found)
+    # The model may only block: its own NO edge after the fee must clear the bar.
+    price = pd.to_numeric(found.price, errors="coerce")
+    model_edge = (
+        (1 - pd.to_numeric(found.p_model, errors="coerce"))
+        - price
+        - maker_fee(price, PAPER_FEE_SHARE)
+    )
+    found = found[model_edge >= MODEL_VETO_MIN_EDGE - 1e-9]
+    counts["passed_model_veto"] = len(found)
     found["edge"] = pd.to_numeric(found.edge, errors="coerce")
     # Large apparent edges often imply a wrong line or stale book.
-    found = found[found.edge.between(0, 0.15)]
+    found = found[found.edge.between(0, MAX_ENTRY_NET_EDGE)]
     counts["passed_edge_sanity"] = len(found)
     already = {a["ticker"] for a in attempts}
     found = found[~found.ticker.isin(already)]
@@ -1328,9 +1359,11 @@ def pass_once(client, env, frame, now, journal, *, dry=False):
                 order, quoted, fee_cache, live_maker_fee_bound
             )
             p_book = float(getattr(row, "p_book", float("nan")))
-            p_yes = p_book if math.isfinite(p_book) else float(row.p_model)
+            if not math.isfinite(p_book) or not 0 <= p_book <= 1:
+                raise TradingError("no_book_price")  # v7: never the model
+            p_yes = p_book
             net_edge = 1 - p_yes - quoted - fee_bound / order.count
-            if not ENTRY_MIN_NET_EDGE - 1e-9 <= net_edge <= 0.15:
+            if not ENTRY_MIN_NET_EDGE - 1e-9 <= net_edge <= MAX_ENTRY_NET_EDGE:
                 raise TradingError("nonpositive_or_outlier_net_edge")
             if cost + fee_bound > reserve(cost) + 1e-9:
                 raise TradingError("fee_exceeds_reservation")
@@ -1409,7 +1442,11 @@ def pass_once(client, env, frame, now, journal, *, dry=False):
             "extra_maker_ticks": extra_ticks,
             "strategy_version": STRATEGY_VERSION,
             "model_version": MODEL_VERSION,
-            "probability_source": "sportsbook" if math.isfinite(p_book) else "model",
+            "probability_source": (
+                "sportsbook_translated"
+                if str(getattr(row, "book_source", "")) == "translated"
+                else "sportsbook"
+            ),
             "p_yes": p_yes,
             "book_n": int(getattr(row, "book_n", 0)),
             "fee_bound_dollars": fee_bound,
@@ -1638,6 +1675,39 @@ def _official_injury_vetoes(frame, model_utc, now, cache_dir):
         f"{sorted(summary['team_vetoes']) or 'none'}"
     )
     return summary
+
+
+def attach_nearby_lines(frame, book_path, now, diagnostics):
+    """v7: price lines the books do not quote from the same game's nearby
+    lines. Only book lines whose oldest contributing update is within
+    BOOK_MAX_AGE_MINUTES are used; the age checks that follow apply to the
+    translated price as to an exact one."""
+    from kalshi.books import LATEST
+    from kalshi.line_translation import attach_translated
+
+    frame = frame.copy()
+    exact = pd.to_numeric(frame.get("p_book"), errors="coerce").notna()
+    frame["book_source"] = np.where(exact, "exact", "")
+    if "player_key" not in frame and "player" in frame:
+        from markets.nba.kalshi import normalize_name
+
+        frame["player_key"] = frame.player.map(normalize_name)
+    path = Path(book_path) if book_path is not None else LATEST
+    if not TRANSLATE_NEARBY_LINES or frame.empty or not path.exists():
+        return frame
+    try:
+        book = pd.read_csv(path)
+    except (OSError, ValueError, pd.errors.EmptyDataError):
+        return frame
+    if book.empty or not {"updated_utc", "commence_utc", "player_key"} <= set(book):
+        return frame
+    stamp = pd.to_datetime(book.updated_utc, utc=True, errors="coerce")
+    age = (pd.Timestamp(now) - stamp).dt.total_seconds() / 60
+    book = book[stamp.notna() & age.between(0, BOOK_MAX_AGE_MINUTES)]
+    out = attach_translated(frame, book)
+    diagnostics["book_exact"] = int(out.book_source.eq("exact").sum())
+    diagnostics["book_translated"] = int(out.book_source.eq("translated").sum())
+    return out
 
 
 def nba_candidates(now, latest=Path("outputs/projections/latest.csv")):
@@ -1905,6 +1975,9 @@ def nba_candidates(now, latest=Path("outputs/projections/latest.csv")):
                 if book_path.exists()
                 else attach_latest(frame)
             )
+        frame = attach_nearby_lines(
+            frame, book_path if book_path.exists() else None, now, diagnostics
+        )
         if "book_updated_utc" in frame and not report.empty:
             team_news = (
                 report.assign(stamp=pd.to_datetime(report.updated, utc=True))
@@ -1935,8 +2008,11 @@ def nba_candidates(now, latest=Path("outputs/projections/latest.csv")):
                 frame.book_updated_utc, utc=True, errors="coerce"
             )
             age_minutes = (pd.Timestamp(now) - book_stamp).dt.total_seconds() / 60
-            max_minutes = frame.hours_to_tip.le(2.5).map({True: 75, False: 120})
-            stale = book_stamp.isna() | age_minutes.lt(0) | age_minutes.gt(max_minutes)
+            stale = (
+                book_stamp.isna()
+                | age_minutes.lt(0)
+                | age_minutes.gt(BOOK_MAX_AGE_MINUTES)
+            )
         else:
             stale = frame.book_n.ge(2)
         diagnostics["sportsbook_age_rejected"] = int(stale.sum())
@@ -1947,7 +2023,9 @@ def nba_candidates(now, latest=Path("outputs/projections/latest.csv")):
         # resting recheck required two books and canceled the same order
         # on the next pass. With only one book, fall back to the historical
         # model ONLY when this market is independently role-verified.
-        weak_books = pd.to_numeric(frame.book_n, errors="coerce").fillna(0) < 2
+        # v7: one book on the exact line is enough (translated prices already
+        # need 2 quotes); flagged players below still need two books.
+        weak_books = pd.to_numeric(frame.book_n, errors="coerce").fillna(0) < MIN_BOOKS
         frame.loc[weak_books, "p_book"] = float("nan")
         # Opening-night, long-absence and transferred-player roles are not
         # established by last season's box scores. Require two fresh books.

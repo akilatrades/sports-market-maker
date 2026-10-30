@@ -24,8 +24,8 @@ def test_nba_orders_expire_at_tip_despite_early_entry_cutoff():
         price=0.60, ticker="KXNBAPTS-X-Y", tip_utc=now + timedelta(hours=4)
     )
     order, cost = nba.order_from_row(row, now)
-    assert order.count == nba.MAX_CONTRACTS == 3
-    assert cost == 1.8 and nba.reserve(cost) == 1.98
+    assert order.count == nba.MAX_CONTRACTS == 1
+    assert cost == 0.6 and nba.reserve(cost) == 0.66
     # New maker orders are submitted 2-6h before tip, but may rest until tip.
     assert order.expiration_ts == int(now.timestamp()) + 4 * 3600
     row.tip_utc = now + timedelta(hours=2, minutes=20)

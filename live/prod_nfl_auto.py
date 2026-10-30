@@ -19,6 +19,8 @@ from pathlib import Path
 import pandas as pd
 
 from kalshi.api import fetch_market
+from kalshi.maker import maker_fee
+from kalshi.paper_props import FEE_SHARE as PAPER_FEE_SHARE
 from kalshi.paper_props import candidate_orders
 from kalshi.shard_funding import require_funded_shard
 from kalshi.trading import Order, TradingClient, TradingError
@@ -27,12 +29,14 @@ from live.nfl_policy import (
     MAX_ACTIVE_COST,
     MAX_CONTRACTS,
     MAX_DAILY_COST,
+    MAX_ENTRY_NET_EDGE,
     MAX_GAME_COST,
     MAX_GAME_ORDERS,
     MAX_GROSS_COST,
     MAX_ORDER_COST,
     MAX_TEAM_COST,
     MIN_RESERVED_EDGE,
+    MODEL_VETO_MIN_EDGE,
     STATE,
     STRATEGY_VERSION,
     money,
@@ -425,10 +429,21 @@ def select_candidates(frame, events, state, now, diagnostics=None):
     if found.empty:
         return []
     found = found[found.side.eq("no")].copy()
+    # v4: the sportsbooks price every order; the model may only block one.
+    found = found[pd.to_numeric(found.get("p_book"), errors="coerce").notna()]
+    counts["book_priced"] = len(found)
+    price = pd.to_numeric(found.price, errors="coerce")
+    model_edge = (
+        (1 - pd.to_numeric(found.p_model, errors="coerce"))
+        - price
+        - maker_fee(price, PAPER_FEE_SHARE)
+    )
+    found = found[model_edge >= MODEL_VETO_MIN_EDGE - 1e-9]
+    counts["passed_model_veto"] = len(found)
     found["edge"] = pd.to_numeric(found.edge, errors="coerce")
-    # Extremely large modeled edges are suspicious: wrong player, mismatched
-    # line, or stale sportsbook feed. Such markets need human review.
-    found = found[found.edge.between(0, 0.15)]
+    # Extremely large edges are suspicious: wrong player, mismatched line,
+    # or stale sportsbook feed. Such markets need human review.
+    found = found[found.edge.between(0, MAX_ENTRY_NET_EDGE)]
     counts["passed_outlier_check"] = len(found)
     already = {a["ticker"] for a in attempts}
     found = found[~found.ticker.isin(already)]
@@ -546,7 +561,9 @@ def entry_evidence(row, order, cost):
     model = float(row.p_model)
     book = getattr(row, "p_book", None)
     covered = book is not None and pd.notna(book)
-    probability = float(book) if covered else model
+    if not covered:
+        raise TradingError("no_book_price")  # v4: never priced from the model
+    probability = float(book)
     if not all(math.isfinite(p) and 0 <= p <= 1 for p in (model, probability)):
         raise TradingError("invalid_probability")
     net = 1 - probability - reserve(cost) / order.count

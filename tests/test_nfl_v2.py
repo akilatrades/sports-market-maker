@@ -24,14 +24,20 @@ class EntryChecks(unittest.TestCase):
         self.order = Order(ticker="EXAMPLE", side="no", count=4, price_cents=66)
 
     def test_four_contract_math_uses_cost_plus_full_reserve(self):
+        self.row.p_book = 0.1939  # v4: priced from the books only
         evidence = entry_evidence(self.row, self.order, 2.64)
-        self.assertEqual(evidence["probability_source"], "model")
+        self.assertEqual(evidence["probability_source"], "sportsbook")
         self.assertEqual(evidence["fee_buffer_dollars"], 0.27)
         self.assertAlmostEqual(evidence["edge_after_fee_buffer"], 0.0786)
 
     def test_weak_edge_is_rejected_even_though_old_rule_would_enter(self):
-        self.row.p_model = 0.32
+        self.row.p_book = 0.32
         with self.assertRaisesRegex(TradingError, "insufficient_edge"):
+            entry_evidence(self.row, self.order, 2.64)
+
+    def test_v4_never_prices_from_the_model(self):
+        # p_book is None: the model alone (19c YES, a big NO edge) cannot enter.
+        with self.assertRaisesRegex(TradingError, "no_book_price"):
             entry_evidence(self.row, self.order, 2.64)
 
     def test_sportsbook_evidence_controls_when_available(self):
@@ -52,6 +58,7 @@ class EntryChecks(unittest.TestCase):
                     entry_evidence(self.row, self.order, 2.64)
 
     def test_invalid_probability_is_rejected(self):
+        self.row.p_book = 0.20
         for probability in (float("nan"), float("inf"), -0.01, 1.01):
             self.row.p_model = probability
             with self.assertRaisesRegex(TradingError, "invalid_probability"):

@@ -42,6 +42,7 @@ class ExecutionRepairs(unittest.TestCase):
                 self.assertTrue(auto.room_for([], [], self.row, cost, self.now))
                 self.assertTrue(order.post_only)
 
+    @patch.object(auto, "MAX_CONTRACTS", 5)  # shrink logic; live v4 size is 1
     def test_sixty_cent_order_shrinks_instead_of_being_rejected(self):
         order, _ = auto.order_from_row(self.row, self.now)
         self.assertEqual(order.count, 5)
@@ -152,6 +153,7 @@ class ExecutionRepairs(unittest.TestCase):
         self.assertEqual(counts["verified_availability_and_time"], 1)
         self.assertEqual(counts["in_entry_window"], 0)
 
+    @patch.object(auto, "MAX_CONTRACTS", 5)  # shrink logic; live v4 size is 1
     def test_live_pass_uses_reduced_quantity_and_refreshes_queue(self):
         priced = pd.DataFrame(
             [
@@ -231,3 +233,14 @@ class ExecutionRepairs(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+def test_v4_orders_are_one_contract():
+    from live import nfl_policy
+
+    assert nfl_policy.STRATEGY_VERSION == "nfl-no-v4-book-priced"
+    assert auto.MAX_CONTRACTS == nfl_policy.MAX_CONTRACTS == 1
+    assert (nfl_policy.MAX_ENTRY_NET_EDGE, nfl_policy.MODEL_VETO_MIN_EDGE) == (
+        0.15,
+        0.0,
+    )
