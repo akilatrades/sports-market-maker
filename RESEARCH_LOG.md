@@ -3438,3 +3438,46 @@ Scratch scripts, not committed.
 
 **Checkpoint, unchanged:** v3 is judged on its own orders, 300 filled
 contracts or 4 weeks.
+
+## 2026-10-30: Price Kalshi props from nearby sportsbook lines (plan)
+
+*Written before running. Owner asked to improve the NBA model. Live v6
+priced 97% of its filled contracts from the stat model because two books
+rarely quote Kalshi's exact line; model-priced live fills lost about 7¢
+per contract (live, small sample) while book-priced ones were about even.*
+
+**Question.** Can the books' other lines for the same player and stat
+(alternate lines) price Kalshi's line well enough to replace the model,
+and does the book veto still pay on fills that had no exact-line quote?
+
+**Data.** The 16 October book-veto replay: 4,862 simulated NO fills in
+151 sampled 2025–26 games (`outputs/bookline/fills_with_book.csv.gz`) and
+the book lines as they stood when each order was posted
+(`outputs/bookline/book_lines.csv.gz`, de-vigged, books per line). Fills
+are first-in-line from public prints (optimistic). In-sample season.
+
+**Method (one primary method).** Per game, player and stat, fit a
+negative binomial whose mean makes P(stat > line) match the books'
+de-vigged over probabilities at every quoted line (least squares on the
+logit, weighted by the number of books). Dispersion per stat is fixed
+from 2017–18 to 2024–25 box scores (player-season moments, players with
+20+ games); nothing from 2025–26. The Kalshi line is then priced from the
+fitted curve. Only when the nearest quoted line is within 3 points (2 for
+rebounds and assists, 1 for threes) and at least 2 book quotes in total
+went into the fit. For fills that have an exact-line quote, the exact line
+is left out of the fit so the translation is scored against it.
+Sensitivity (one): logit interpolation between the two nearest lines.
+
+**Measures** (game-clustered, cents per contract after the replay's fee):
+1. Validation on fills with an exact quote: translated price against the
+   exact book price (mean absolute gap), and log loss against outcomes for
+   translated, exact book, Kalshi mid and model.
+2. **Primary:** on fills with NO exact quote but a translated price, the
+   same veto as 16 October (keep when 1 − p − price − fee ≥ 0). Pass:
+   kept minus removed ≥ 1¢, t ≥ 2, at least 1,000 such fills.
+3. Coverage: share of fills with an exact quote, a translated price, or
+   neither.
+4. Descriptive only: live 2026–27 NBA fills re-priced from the daily book
+   snapshots taken before each order (about 200 contracts; no test).
+
+**Variants counted:** 1 primary, 1 sensitivity, 3 descriptive measures.
