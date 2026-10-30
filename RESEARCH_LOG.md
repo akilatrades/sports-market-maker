@@ -3517,3 +3517,36 @@ kept in the private data repository (live results stay out of this file).
 
 **Variants counted:** 1 primary, 1 sensitivity, 3 descriptive (as planned)
 plus the combined view above.
+
+## 2026-10-30: Spread maker: quote where both sides trade, and when (plan)
+
+*Written before running. Owner asked to improve the spread maker. Live, 60
+of 62 markets filled on one side only (live; small sample). Exploratory
+in-sample replay; it can only pick rules to paper-test, not prove them.*
+
+**Data and baseline.** The 24-to-4-hour scan (`outputs/scan_24h`, 64 pilot
+series), pregame quotes under the v3 rule exactly as in
+`research.spread_start_window` (start known from S1+S2+S3, quotes up to 24
+hours before expiry, at least 85 minutes before start, spreads 8¢+), one
+contract per side per hourly quote, held to settlement, maker fee where
+charged. Halves are that module's (split at the median day). Fills first
+in line and at flow share 0.25 (median of 20 draws). Clustered by event.
+
+**Test A: two-sided series.** Per series on the earlier half: the share
+of filled contracts that end up paired (YES and NO in the same market;
+paired = 2 × min(YES fills, NO fills)), series with at least 30 earlier-
+half fills only. Selected = the top third by that share. On the later
+half: cents per filled contract, selected minus the rest. Pass: at least
+1¢ with t ≥ 2, the selected series positive on their own, and the paired
+share of the selected series still above the rest's (persistence).
+
+**Test B: quote timing.** Bins of hours before start: 24–12, 12–6, 6–3,
+3–1.4 (the 85-minute floor). Drop any bin whose earlier-half cents per
+contract is below zero. On the later half: kept bins minus dropped bins.
+Pass: at least 1¢ with t ≥ 2. If no bin is dropped, timing does not need
+changing.
+
+**Reported, not tested:** later-half profit from paired contracts versus
+one-sided ones.
+
+**Variants counted:** 2 tests × 2 fill assumptions; 1 descriptive split.
