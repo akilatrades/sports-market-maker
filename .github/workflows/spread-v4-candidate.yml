@@ -1,0 +1,61 @@
+name: Stage spread v4 candidate (no live activation)
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: funded-droplet-code-release
+  cancel-in-progress: false
+jobs:
+  validate:
+    if: >-
+      github.repository == 'akilatrades/sports-market-maker' &&
+      github.ref == 'refs/heads/main' && github.actor == 'akilatrades' &&
+      github.triggering_actor == 'akilatrades'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install -r requirements.txt ruff==0.11.13
+      - run: ruff check . && ruff format --check . && pytest
+  stage:
+    needs: validate
+    if: >-
+      github.repository == 'akilatrades/sports-market-maker' &&
+      github.ref == 'refs/heads/main' && github.actor == 'akilatrades' &&
+      github.triggering_actor == 'akilatrades'
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    environment: funded-droplet
+    steps:
+      - uses: actions/checkout@v4
+      - name: Copy isolated code and run signed-read preview only
+        env:
+          DROPLET_HOST: ${{ secrets.DROPLET_HOST }}
+          DROPLET_USER: ${{ secrets.DROPLET_USER }}
+          DROPLET_SSH_KEY: ${{ secrets.DROPLET_SSH_KEY }}
+          DROPLET_KNOWN_HOSTS: ${{ secrets.DROPLET_KNOWN_HOSTS }}
+          REVISION: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          [[ "$DROPLET_USER" == trader ]]
+          [[ "$DROPLET_KNOWN_HOSTS" == *ssh-ed25519* ]]
+          [[ "$REVISION" =~ ^[0-9a-f]{40}$ ]]
+          test -n "$DROPLET_HOST"
+          umask 077
+          mkdir -p ~/.ssh
+          printf '%s\n' "$DROPLET_SSH_KEY" > ~/.ssh/smm_v4_candidate
+          printf '%s\n' "$DROPLET_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          ssh-keygen -y -f ~/.ssh/smm_v4_candidate > /dev/null
+          remote="$DROPLET_USER@$DROPLET_HOST"
+          ssh_args=(-T -o BatchMode=yes -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes -o ConnectTimeout=12 -i ~/.ssh/smm_v4_candidate)
+          release="/home/trader/spread-v4/releases/$REVISION"
+          tar -czf /tmp/spread-v4.tgz live kalshi research markets deploy/stage_spread_v4.py deploy/market-maker-spread-v4.service deploy/market-maker-spread-v4.timer docs/spread-v4-completion.md
+          ssh "${ssh_args[@]}" "$remote" "set -eu; umask 077; mkdir -p /home/trader/spread-v4/releases; test ! -e '$release'; mkdir '$release'; tar -xzf - -C '$release'" < /tmp/spread-v4.tgz
+          python="/home/trader/sports-market-maker-prod-auto/.venv/bin/python"
+          ssh "${ssh_args[@]}" "$remote" "cd '$release' && '$python' -m deploy.stage_spread_v4"
+      - name: Remove temporary SSH identity
+        if: always()
+        run: rm -f ~/.ssh/smm_v4_candidate /tmp/spread-v4.tgz

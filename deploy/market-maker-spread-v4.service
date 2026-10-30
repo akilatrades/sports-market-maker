@@ -1,0 +1,24 @@
+[Unit]
+Description=Isolated spread v4 completion pilot (requires explicit release gate)
+After=network-online.target
+Wants=network-online.target
+ConditionPathExists=/etc/market-maker-spread-v4.json
+
+[Service]
+Type=oneshot
+User=trader
+Group=trader
+WorkingDirectory=/home/trader/spread-v4/approved
+EnvironmentFile=/etc/market-maker-prod-nba-auto.env
+EnvironmentFile=/etc/market-maker-spread-v4.env
+Environment=OPENBLAS_NUM_THREADS=1
+Environment=OMP_NUM_THREADS=1
+ExecStart=/home/trader/sports-market-maker-prod-auto/.venv/bin/python -m live.prod_spread_v4 --live
+TimeoutStartSec=180
+KillMode=control-group
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ReadWritePaths=/home/trader/prod-spread-auto /home/trader/production-execution.lock
+
