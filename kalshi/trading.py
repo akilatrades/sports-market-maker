@@ -26,6 +26,7 @@ import urllib.parse
 import urllib.request
 import uuid
 from dataclasses import dataclass, field
+from decimal import Decimal
 
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import ed25519, padding
@@ -116,14 +117,33 @@ class Order:
     client_order_id: str = field(default_factory=lambda: f"smm-{uuid.uuid4()}")
     action: str = "buy"  # "sell" closes contracts we hold (the early exit)
     exchange_index: int | None = None  # assigned by signed market-shard verification
+    time_in_force: str = "good_till_canceled"
+    reduce_only: bool = False
+    fractional: bool = False  # explicit opt-in; legacy integer validation stays
 
     def validate(self):
         if self.side not in ("yes", "no"):
             raise TradingError(f"bad side {self.side!r}")
         if self.action not in ("buy", "sell"):
             raise TradingError(f"bad action {self.action!r}")
-        if not isinstance(self.count, int) or self.count < 1:
+        if self.fractional:
+            if (
+                not isinstance(self.count, Decimal)
+                or not self.count.is_finite()
+                or self.count <= 0
+                or self.count % Decimal("0.01")
+            ):
+                raise TradingError(f"bad fixed-point count {self.count!r}")
+        elif not isinstance(self.count, int) or self.count < 1:
             raise TradingError(f"bad count {self.count!r}")
+        if self.time_in_force not in ("good_till_canceled", "immediate_or_cancel"):
+            raise TradingError("Unsupported time_in_force")
+        if self.time_in_force == "immediate_or_cancel" and (
+            self.post_only or self.expiration_ts is not None
+        ):
+            raise TradingError("IOC cannot be post-only or have an expiration")
+        if self.reduce_only and self.time_in_force != "immediate_or_cancel":
+            raise TradingError("reduce_only requires IOC")
         if not isinstance(self.price_cents, int) or not 1 <= self.price_cents <= 99:
             raise TradingError(f"bad price {self.price_cents!r}")
         if self.exchange_index is not None and (
@@ -152,13 +172,15 @@ class Order:
             "side": book_side,
             "count": f"{self.count:.2f}",
             "price": f"{yes_cents / 100:.4f}",
-            "time_in_force": "good_till_canceled",
+            "time_in_force": self.time_in_force,
             "self_trade_prevention_type": "taker_at_cross",
             "post_only": self.post_only,
             "cancel_order_on_pause": True,
         }
         if self.exchange_index is not None:
             body["exchange_index"] = self.exchange_index
+        if self.reduce_only:
+            body["reduce_only"] = True
         if self.expiration_ts is not None:
             body["expiration_time"] = int(self.expiration_ts)
         return body

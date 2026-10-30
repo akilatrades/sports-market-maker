@@ -183,14 +183,25 @@ def spread_ledger(events, fills, settlements, now):
         expected = int(intent.get("price_cents")) / 100
         raw = fill.get(f"{side}_price_dollars")
         price = expected if raw is None else _amount(raw, "fill price")
-        if abs(price - expected) > 0.005:
+        completion_v4 = intent.get("strategy_version") == "spread-v4-completion-pilot-1"
+        if completion_v4:
+            # IOC closing orders can improve on their limit. Require actual
+            # prices/fees/direction; never value a v4 fill at its limit.
+            from research.spread_forward_core import normalize_fill
+
+            try:
+                verified = normalize_fill(fill, intent)
+            except (ValueError, KeyError, TypeError) as error:
+                raise TradingError("Unverifiable v4 spread fill: HALT") from error
+            price = float(verified["price"])
+        elif abs(price - expected) > 0.005:
             raise TradingError("Spread fill price disagrees with journal: HALT")
         row = {
             "when": _when(fill.get("created_time"), "fill"),
             "fid": str(fid),
             "ticker": intent.get("ticker"),
             "side": side,
-            "price": expected,
+            "price": price if completion_v4 else expected,
             "count": _amount(
                 fill.get("count_fp")
                 if fill.get("count_fp") is not None
