@@ -3708,3 +3708,54 @@ assumptions = 16, one primary.
 **If it passes:** NBA `RESTING_WINDOW` becomes (1.0, 6.0) in v7 before
 it goes live. NFL is not tested here (no NFL trade history for a replay);
 its entry window (10 minutes to 2 hours before kickoff) stays as it is.
+
+### Result (2026-10-30): FAIL. Keep resting to tip.
+
+SIMULATED, 2025–26 replay, in-sample season. `research/nba_late_fill_cutoff.py`,
+`outputs/research/nba_late_fill_cutoff.json`. 16 cells, one primary.
+
+| P1, first in line (45,585 orders, 30,195 fills) | fills | ¢ a contract | t |
+|---|---|---|---|
+| All fills | 30,195 | +2.1 | 4.8 |
+| **Removed by a 60-minute cutoff (primary)** | **5,083** | **+3.3** | **4.6** |
+| Kept (filled earlier) | 25,112 | +1.8 | 4.0 |
+| Late minus early | | +1.5 | 2.0 |
+
+The fills in the last hour made *more* than earlier ones, not less. Same at
+`flow_share` 0.25 (median draw +3.1¢, t 4.4), at 30, 90 and 120 minutes
+(late +2.5¢ to +3.2¢), in every stat, and in P2 (v7-like, 1,139 fills: late
++5.6¢, t 1.5). The 8 losing live fills look like noise. `RESTING_WINDOW`
+stays (0.0, 6.0).
+
+## 2026-10-30: NBA v7: model veto off (plan amendment, exploratory evidence)
+
+*Not a pre-registered test: two exploratory looks, reported with their
+variant counts, and the owner's go-live decision.*
+
+**Replay (SIMULATED, in-sample, first in line), orders with an exact book
+line, 3,192 fills; 12 cells.** Book edge 0–8¢: orders the model veto keeps
++4.1¢ a contract (1,139 fills, t 2.1); orders it blocks +4.4¢ (495 fills,
+t 1.8). Book edge decides more than the model: −2¢ to 0¢ +0.4¢ (t 0.2),
+0–2¢ +4.9¢ (t 2.9). One book +1.7¢ (434 fills, t 0.8) against two +8.9¢
+and three or more +4.0¢: not reliable enough to require two books.
+
+**Live (20–24 October, book-priced NBA fills, small); 8 cells.** Fills the
+model disagreed with +9.5¢ a contract (20 fills, 9 games, t 0.8); fills it
+agreed with −0.6¢ (35 fills, 12 games). Every live book-priced fill had 2+
+books. Queue ahead at entry showed no pattern.
+
+**Change.** `MODEL_VETO_MIN_EDGE` 0.0 → `None` (off) in
+`live/prod_nba_auto.py`, still `nba-no-v7-book-priced` (never deployed).
+Why: the veto removed about 30% of book-priced orders without making the
+rest better, and the live test needs fills. NBA orders are now priced and
+chosen by the books alone; the injury, roster and freshness vetoes stay.
+NFL v4 keeps its veto (no NFL evidence; NFL allows book edges up to 15¢,
+where a second opinion matters more). Test:
+`tests/test_prod_nba_auto.py`.
+
+**Go-live decision (owner, 30 October).** The owner wants real fills
+rather than a paper period, so the "watch two weeks of scans" step above is
+dropped: NBA v7 and NFL v4 go live at 1 contract. The checkpoint
+(`research/live_checkpoint.py`) judges v7 and v4 on their own orders. At
+1 contract the answer comes slowly: about 1,900 fills for t ≈ 2 at 3¢ (same
+game correlation counted).

@@ -103,7 +103,7 @@ code is right.
 | Open orders at once | $150 | $15 |
 | New orders per day | $150 | $30 |
 | New orders per scan | 3 | 1 |
-| Edge needed to post | 0¢ to 8¢ (books), model must not disagree | 3¢ to 15¢ (books), model must not disagree |
+| Edge needed to post | 0¢ to 8¢ (books); the model is not used | 3¢ to 15¢ (books), model must not disagree |
 | Price range | 5–95¢ | 10–90¢ |
 | Lifetime orders placed | $5,000 | $50 |
 
