@@ -1,7 +1,7 @@
 {
   "model_side": {
-    "orders": 366,
-    "resting_or_awaiting_result": 0,
+    "orders": 400,
+    "resting_or_awaiting_result": 34,
     "fill_rate": 0.26229508196721313,
     "fills_settled": 96,
     "bankroll": 496.19,
@@ -10,8 +10,8 @@
     "profit_dollars": -3.81
   },
   "no_seller": {
-    "orders": 369,
-    "resting_or_awaiting_result": 0,
+    "orders": 404,
+    "resting_or_awaiting_result": 35,
     "fill_rate": 0.5094850948509485,
     "fills_settled": 188,
     "bankroll": 492.71,
@@ -20,9 +20,9 @@
     "profit_dollars": -7.29
   },
   "no_seller_late": {
-    "orders": 365,
-    "resting_or_awaiting_result": 0,
-    "fill_rate": 0.42191780821917807,
+    "orders": 397,
+    "resting_or_awaiting_result": 17,
+    "fill_rate": 0.4052631578947368,
     "fills_settled": 154,
     "bankroll": 423.86,
     "cents_per_contract": -4.91,
@@ -30,8 +30,8 @@
     "profit_dollars": -76.14
   },
   "no_seller_edge_sized": {
-    "orders": 250,
-    "resting_or_awaiting_result": 0,
+    "orders": 273,
+    "resting_or_awaiting_result": 23,
     "fill_rate": 0.484,
     "fills_settled": 121,
     "bankroll": 540.45,
@@ -40,8 +40,8 @@
     "profit_dollars": 40.45
   },
   "no_seller_veto2": {
-    "orders": 369,
-    "resting_or_awaiting_result": 0,
+    "orders": 403,
+    "resting_or_awaiting_result": 34,
     "fill_rate": 0.5094850948509485,
     "fills_settled": 188,
     "bankroll": 492.71,
@@ -50,8 +50,8 @@
     "profit_dollars": -7.29
   },
   "no_seller_stat_veto": {
-    "orders": 369,
-    "resting_or_awaiting_result": 0,
+    "orders": 404,
+    "resting_or_awaiting_result": 35,
     "fill_rate": 0.5094850948509485,
     "fills_settled": 188,
     "bankroll": 492.71,
@@ -60,8 +60,8 @@
     "profit_dollars": -7.29
   },
   "no_seller_bookline": {
-    "orders": 373,
-    "resting_or_awaiting_result": 0,
+    "orders": 408,
+    "resting_or_awaiting_result": 35,
     "fill_rate": 0.48525469168900803,
     "fills_settled": 181,
     "bankroll": 412.81,
@@ -69,5 +69,5 @@
     "t": -1.65,
     "profit_dollars": -87.19
   },
-  "updated_utc": "2026-10-31T17:19+00:00"
+  "updated_utc": "2026-10-31T19:26+00:00"
 }
