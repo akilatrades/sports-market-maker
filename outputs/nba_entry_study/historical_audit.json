@@ -1,6 +1,6 @@
 {
   "accounting_errors": [],
-  "generated_at": "2026-10-30T22:35:34.650336+00:00",
+  "generated_at": "2026-10-31T00:59:12.885689+00:00",
   "limitations": [
     "Existing no_seller uses a model veto; it is not a model-free control.",
     "Different sizing and candidate baskets confound existing variant comparisons.",
@@ -9,44 +9,44 @@
   ],
   "rules": {
     "model_side": {
-      "actual_win_rate": 0.3366733466933868,
-      "contracts": 998.0,
-      "forecast_win_probability": 0.5951134268537074,
-      "games": 22,
-      "net_pnl": 6.14,
-      "settled_orders": 83,
-      "without_best_game": -19.07,
-      "without_best_three_games": -57.52
+      "actual_win_rate": 0.3333333333333333,
+      "contracts": 1008.0,
+      "forecast_win_probability": 0.596446626984127,
+      "games": 23,
+      "net_pnl": 1.39,
+      "settled_orders": 84,
+      "without_best_game": -23.82,
+      "without_best_three_games": -62.27
     },
     "no_seller": {
-      "actual_win_rate": 0.36293859649122806,
-      "contracts": 1824.0,
-      "forecast_win_probability": 0.6033807565789473,
-      "games": 26,
-      "net_pnl": -2.52,
-      "settled_orders": 170,
-      "without_best_game": -41.13,
-      "without_best_three_games": -97.77
+      "actual_win_rate": 0.36095965103598693,
+      "contracts": 1834.0,
+      "forecast_win_probability": 0.6040684296619411,
+      "games": 27,
+      "net_pnl": -7.27,
+      "settled_orders": 171,
+      "without_best_game": -45.88,
+      "without_best_three_games": -102.52
     },
     "no_seller_bookline": {
-      "actual_win_rate": 0.2563157894736842,
-      "contracts": 1900.0,
-      "forecast_win_probability": 0.5051672105263157,
-      "games": 28,
-      "net_pnl": -92.79,
-      "settled_orders": 164,
-      "without_best_game": -125.21,
-      "without_best_three_games": -147.7
+      "actual_win_rate": 0.25604626708727657,
+      "contracts": 1902.0,
+      "forecast_win_probability": 0.5049542060988433,
+      "games": 29,
+      "net_pnl": -93.1,
+      "settled_orders": 165,
+      "without_best_game": -125.52,
+      "without_best_three_games": -148.01
     },
     "no_seller_edge_sized": {
-      "actual_win_rate": 0.3970747562296858,
-      "contracts": 1846.0,
-      "forecast_win_probability": 0.6296717768147345,
-      "games": 25,
-      "net_pnl": 63.67,
-      "settled_orders": 109,
-      "without_best_game": 9.23,
-      "without_best_three_games": -90.28
+      "actual_win_rate": 0.3934514224369297,
+      "contracts": 1863.0,
+      "forecast_win_probability": 0.6305827160493827,
+      "games": 26,
+      "net_pnl": 55.6,
+      "settled_orders": 110,
+      "without_best_game": 1.16,
+      "without_best_three_games": -98.35
     },
     "no_seller_late": {
       "actual_win_rate": 0.3159528243327126,
@@ -59,24 +59,24 @@
       "without_best_three_games": -144.57
     },
     "no_seller_stat_veto": {
-      "actual_win_rate": 0.36293859649122806,
-      "contracts": 1824.0,
-      "forecast_win_probability": 0.6033807565789473,
-      "games": 26,
-      "net_pnl": -2.52,
-      "settled_orders": 170,
-      "without_best_game": -41.13,
-      "without_best_three_games": -97.77
+      "actual_win_rate": 0.36095965103598693,
+      "contracts": 1834.0,
+      "forecast_win_probability": 0.6040684296619411,
+      "games": 27,
+      "net_pnl": -7.27,
+      "settled_orders": 171,
+      "without_best_game": -45.88,
+      "without_best_three_games": -102.52
     },
     "no_seller_veto2": {
-      "actual_win_rate": 0.36293859649122806,
-      "contracts": 1824.0,
-      "forecast_win_probability": 0.6033807565789473,
-      "games": 26,
-      "net_pnl": -2.52,
-      "settled_orders": 170,
-      "without_best_game": -41.13,
-      "without_best_three_games": -97.77
+      "actual_win_rate": 0.36095965103598693,
+      "contracts": 1834.0,
+      "forecast_win_probability": 0.6040684296619411,
+      "games": 27,
+      "net_pnl": -7.27,
+      "settled_orders": 171,
+      "without_best_game": -45.88,
+      "without_best_three_games": -102.52
     }
   }
 }
