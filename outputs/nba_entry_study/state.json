@@ -8499,7 +8499,7 @@
         "stat": "threes",
         "team": "NOP"
       },
-      "last_checked": "2026-10-31T21:48:59.270712+00:00",
+      "last_checked": "2026-11-01T00:20:12.927661+00:00",
       "outcome_status": "pending",
       "p_model_yes": 0.549814,
       "policies": {
@@ -17348,7 +17348,19 @@
           ]
         ]
       },
-      "execution_status": "pending",
+      "execution": {
+        "through": {
+          "filled": false,
+          "first_fill_print": null,
+          "later_trade_markouts": {}
+        },
+        "touch": {
+          "filled": false,
+          "first_fill_print": null,
+          "later_trade_markouts": {}
+        }
+      },
+      "execution_status": "complete",
       "fee_multiplier": 1.0,
       "fee_type": "quadratic",
       "fee_upper_estimate": 0.02,
@@ -17372,6 +17384,7 @@
         "stat": "threes",
         "team": "CHA"
       },
+      "last_checked": "2026-11-01T00:19:43.403950+00:00",
       "outcome_status": "pending",
       "p_model_yes": 0.392924,
       "policies": {
@@ -17539,7 +17552,19 @@
           ]
         ]
       },
-      "execution_status": "pending",
+      "execution": {
+        "through": {
+          "filled": false,
+          "first_fill_print": null,
+          "later_trade_markouts": {}
+        },
+        "touch": {
+          "filled": false,
+          "first_fill_print": null,
+          "later_trade_markouts": {}
+        }
+      },
+      "execution_status": "complete",
       "fee_multiplier": 1.0,
       "fee_type": "quadratic",
       "fee_upper_estimate": 0.02,
@@ -17563,6 +17588,7 @@
         "stat": "threes",
         "team": "CHA"
       },
+      "last_checked": "2026-11-01T00:19:44.291180+00:00",
       "outcome_status": "pending",
       "p_model_yes": 0.304672,
       "policies": {
@@ -17738,7 +17764,22 @@
           ]
         ]
       },
-      "execution_status": "pending",
+      "execution": {
+        "through": {
+          "filled": false,
+          "first_fill_print": null,
+          "later_trade_markouts": {}
+        },
+        "touch": {
+          "filled": true,
+          "first_fill_print": {
+            "at": "2026-10-31T21:18:58.418688Z",
+            "yes_price": 0.48
+          },
+          "later_trade_markouts": {}
+        }
+      },
+      "execution_status": "complete",
       "fee_multiplier": 1.0,
       "fee_type": "quadratic",
       "fee_upper_estimate": 0.02,
@@ -17762,6 +17803,7 @@
         "stat": "threes",
         "team": "CHA"
       },
+      "last_checked": "2026-11-01T00:19:45.168052+00:00",
       "outcome_status": "pending",
       "p_model_yes": 0.358497,
       "policies": {
@@ -17925,7 +17967,25 @@
           ]
         ]
       },
-      "execution_status": "pending",
+      "execution": {
+        "through": {
+          "filled": true,
+          "first_fill_print": {
+            "at": "2026-10-31T17:21:13.364239Z",
+            "yes_price": 0.56
+          },
+          "later_trade_markouts": {}
+        },
+        "touch": {
+          "filled": true,
+          "first_fill_print": {
+            "at": "2026-10-31T17:21:13.364239Z",
+            "yes_price": 0.56
+          },
+          "later_trade_markouts": {}
+        }
+      },
+      "execution_status": "complete",
       "fee_multiplier": 1.0,
       "fee_type": "quadratic",
       "fee_upper_estimate": 0.02,
@@ -17949,6 +18009,7 @@
         "stat": "threes",
         "team": "PHI"
       },
+      "last_checked": "2026-11-01T00:19:46.051984+00:00",
       "outcome_status": "pending",
       "p_model_yes": 0.473218,
       "policies": {
@@ -18116,7 +18177,19 @@
           ]
         ]
       },
-      "execution_status": "pending",
+      "execution": {
+        "through": {
+          "filled": false,
+          "first_fill_print": null,
+          "later_trade_markouts": {}
+        },
+        "touch": {
+          "filled": false,
+          "first_fill_print": null,
+          "later_trade_markouts": {}
+        }
+      },
+      "execution_status": "complete",
       "fee_multiplier": 1.0,
       "fee_type": "quadratic",
       "fee_upper_estimate": 0.02,
@@ -18140,6 +18213,7 @@
         "stat": "threes",
         "team": "PHI"
       },
+      "last_checked": "2026-11-01T00:19:46.939630+00:00",
       "outcome_status": "pending",
       "p_model_yes": 0.596646,
       "policies": {
@@ -18327,7 +18401,25 @@
           ]
         ]
       },
-      "execution_status": "pending",
+      "execution": {
+        "through": {
+          "filled": true,
+          "first_fill_print": {
+            "at": "2026-10-31T21:03:34.932299Z",
+            "yes_price": 0.38
+          },
+          "later_trade_markouts": {}
+        },
+        "touch": {
+          "filled": true,
+          "first_fill_print": {
+            "at": "2026-10-31T21:03:34.932299Z",
+            "yes_price": 0.38
+          },
+          "later_trade_markouts": {}
+        }
+      },
+      "execution_status": "complete",
       "fee_multiplier": 1.0,
       "fee_type": "quadratic",
       "fee_upper_estimate": 0.02,
@@ -18351,6 +18443,7 @@
         "stat": "assists",
         "team": "CHA"
       },
+      "last_checked": "2026-11-01T00:19:47.825032+00:00",
       "outcome_status": "pending",
       "p_model_yes": 0.319981,
       "policies": {
@@ -18554,7 +18647,25 @@
           ]
         ]
       },
-      "execution_status": "pending",
+      "execution": {
+        "through": {
+          "filled": true,
+          "first_fill_print": {
+            "at": "2026-10-31T17:39:55.552477Z",
+            "yes_price": 0.58
+          },
+          "later_trade_markouts": {}
+        },
+        "touch": {
+          "filled": true,
+          "first_fill_print": {
+            "at": "2026-10-31T17:39:55.552477Z",
+            "yes_price": 0.58
+          },
+          "later_trade_markouts": {}
+        }
+      },
+      "execution_status": "complete",
       "fee_multiplier": 1.0,
       "fee_type": "quadratic",
       "fee_upper_estimate": 0.02,
@@ -18578,6 +18689,7 @@
         "stat": "assists",
         "team": "CHA"
       },
+      "last_checked": "2026-11-01T00:19:48.696497+00:00",
       "outcome_status": "pending",
       "p_model_yes": 0.285376,
       "policies": {
@@ -18789,7 +18901,19 @@
           ]
         ]
       },
-      "execution_status": "pending",
+      "execution": {
+        "through": {
+          "filled": false,
+          "first_fill_print": null,
+          "later_trade_markouts": {}
+        },
+        "touch": {
+          "filled": false,
+          "first_fill_print": null,
+          "later_trade_markouts": {}
+        }
+      },
+      "execution_status": "complete",
       "fee_multiplier": 1.0,
       "fee_type": "quadratic",
       "fee_upper_estimate": 0.02,
@@ -18813,6 +18937,7 @@
         "stat": "assists",
         "team": "CHA"
       },
+      "last_checked": "2026-11-01T00:19:49.591137+00:00",
       "outcome_status": "pending",
       "p_model_yes": 0.613613,
       "policies": {
@@ -19012,7 +19137,19 @@
           ]
         ]
       },
-      "execution_status": "pending",
+      "execution": {
+        "through": {
+          "filled": false,
+          "first_fill_print": null,
+          "later_trade_markouts": {}
+        },
+        "touch": {
+          "filled": false,
+          "first_fill_print": null,
+          "later_trade_markouts": {}
+        }
+      },
+      "execution_status": "complete",
       "fee_multiplier": 1.0,
       "fee_type": "quadratic",
       "fee_upper_estimate": 0.02,
@@ -19036,6 +19173,7 @@
         "stat": "assists",
         "team": "CHA"
       },
+      "last_checked": "2026-11-01T00:19:50.473213+00:00",
       "outcome_status": "pending",
       "p_model_yes": 0.482735,
       "policies": {
@@ -19247,7 +19385,25 @@
           ]
         ]
       },
-      "execution_status": "pending",
+      "execution": {
+        "through": {
+          "filled": true,
+          "first_fill_print": {
+            "at": "2026-10-31T17:49:45.41518Z",
+            "yes_price": 0.56
+          },
+          "later_trade_markouts": {}
+        },
+        "touch": {
+          "filled": true,
+          "first_fill_print": {
+            "at": "2026-10-31T17:49:45.41518Z",
+            "yes_price": 0.56
+          },
+          "later_trade_markouts": {}
+        }
+      },
+      "execution_status": "complete",
       "fee_multiplier": 1.0,
       "fee_type": "quadratic",
       "fee_upper_estimate": 0.02,
@@ -19271,6 +19427,7 @@
         "stat": "assists",
         "team": "PHI"
       },
+      "last_checked": "2026-11-01T00:19:51.359344+00:00",
       "outcome_status": "pending",
       "p_model_yes": 0.568901,
       "policies": {
@@ -19478,7 +19635,25 @@
           ]
         ]
       },
-      "execution_status": "pending",
+      "execution": {
+        "through": {
+          "filled": true,
+          "first_fill_print": {
+            "at": "2026-10-31T17:36:19.671922Z",
+            "yes_price": 0.62
+          },
+          "later_trade_markouts": {}
+        },
+        "touch": {
+          "filled": true,
+          "first_fill_print": {
+            "at": "2026-10-31T17:36:19.671922Z",
+            "yes_price": 0.62
+          },
+          "later_trade_markouts": {}
+        }
+      },
+      "execution_status": "complete",
       "fee_multiplier": 1.0,
       "fee_type": "quadratic",
       "fee_upper_estimate": 0.02,
@@ -19502,6 +19677,7 @@
         "stat": "threes",
         "team": "ATL"
       },
+      "last_checked": "2026-11-01T00:19:52.248516+00:00",
       "outcome_status": "pending",
       "p_model_yes": 0.449293,
       "policies": {
@@ -19681,7 +19857,19 @@
           ]
         ]
       },
-      "execution_status": "pending",
+      "execution": {
+        "through": {
+          "filled": false,
+          "first_fill_print": null,
+          "later_trade_markouts": {}
+        },
+        "touch": {
+          "filled": false,
+          "first_fill_print": null,
+          "later_trade_markouts": {}
+        }
+      },
+      "execution_status": "complete",
       "fee_multiplier": 1.0,
       "fee_type": "quadratic",
       "fee_upper_estimate": 0.02,
@@ -19705,6 +19893,7 @@
         "stat": "threes",
         "team": "ATL"
       },
+      "last_checked": "2026-11-01T00:19:53.143356+00:00",
       "outcome_status": "pending",
       "p_model_yes": 0.358497,
       "policies": {
@@ -19852,7 +20041,25 @@
           ]
         ]
       },
-      "execution_status": "pending",
+      "execution": {
+        "through": {
+          "filled": true,
+          "first_fill_print": {
+            "at": "2026-10-31T17:48:54.327563Z",
+            "yes_price": 0.35
+          },
+          "later_trade_markouts": {}
+        },
+        "touch": {
+          "filled": true,
+          "first_fill_print": {
+            "at": "2026-10-31T17:48:54.327563Z",
+            "yes_price": 0.35
+          },
+          "later_trade_markouts": {}
+        }
+      },
+      "execution_status": "complete",
       "fee_multiplier": 1.0,
       "fee_type": "quadratic",
       "fee_upper_estimate": 0.02,
@@ -19876,6 +20083,7 @@
         "stat": "threes",
         "team": "ATL"
       },
+      "last_checked": "2026-11-01T00:19:54.016450+00:00",
       "outcome_status": "pending",
       "p_model_yes": 0.350711,
       "policies": {
@@ -20051,7 +20259,25 @@
           ]
         ]
       },
-      "execution_status": "pending",
+      "execution": {
+        "through": {
+          "filled": true,
+          "first_fill_print": {
+            "at": "2026-10-31T19:12:50.533039Z",
+            "yes_price": 0.51
+          },
+          "later_trade_markouts": {}
+        },
+        "touch": {
+          "filled": true,
+          "first_fill_print": {
+            "at": "2026-10-31T19:12:50.533039Z",
+            "yes_price": 0.51
+          },
+          "later_trade_markouts": {}
+        }
+      },
+      "execution_status": "complete",
       "fee_multiplier": 1.0,
       "fee_type": "quadratic",
       "fee_upper_estimate": 0.02,
@@ -20075,6 +20301,7 @@
         "stat": "threes",
         "team": "ATL"
       },
+      "last_checked": "2026-11-01T00:19:54.882746+00:00",
       "outcome_status": "pending",
       "p_model_yes": 0.47905,
       "policies": {
@@ -20246,7 +20473,25 @@
           ]
         ]
       },
-      "execution_status": "pending",
+      "execution": {
+        "through": {
+          "filled": true,
+          "first_fill_print": {
+            "at": "2026-10-31T21:00:44.065881Z",
+            "yes_price": 0.47
+          },
+          "later_trade_markouts": {}
+        },
+        "touch": {
+          "filled": true,
+          "first_fill_print": {
+            "at": "2026-10-31T21:00:44.065881Z",
+            "yes_price": 0.47
+          },
+          "later_trade_markouts": {}
+        }
+      },
+      "execution_status": "complete",
       "fee_multiplier": 1.0,
       "fee_type": "quadratic",
       "fee_upper_estimate": 0.02,
@@ -20270,6 +20515,7 @@
         "stat": "threes",
         "team": "ATL"
       },
+      "last_checked": "2026-11-01T00:19:55.754625+00:00",
       "outcome_status": "pending",
       "p_model_yes": 0.424992,
       "policies": {
@@ -20449,7 +20695,25 @@
           ]
         ]
       },
-      "execution_status": "pending",
+      "execution": {
+        "through": {
+          "filled": true,
+          "first_fill_print": {
+            "at": "2026-10-31T17:57:07.397617Z",
+            "yes_price": 0.59
+          },
+          "later_trade_markouts": {}
+        },
+        "touch": {
+          "filled": true,
+          "first_fill_print": {
+            "at": "2026-10-31T17:57:07.397617Z",
+            "yes_price": 0.59
+          },
+          "later_trade_markouts": {}
+        }
+      },
+      "execution_status": "complete",
       "fee_multiplier": 1.0,
       "fee_type": "quadratic",
       "fee_upper_estimate": 0.02,
@@ -20473,6 +20737,7 @@
         "stat": "threes",
         "team": "ATL"
       },
+      "last_checked": "2026-11-01T00:19:56.657786+00:00",
       "outcome_status": "pending",
       "p_model_yes": 0.550279,
       "policies": {
@@ -20656,7 +20921,19 @@
           ]
         ]
       },
-      "execution_status": "pending",
+      "execution": {
+        "through": {
+          "filled": false,
+          "first_fill_print": null,
+          "later_trade_markouts": {}
+        },
+        "touch": {
+          "filled": false,
+          "first_fill_print": null,
+          "later_trade_markouts": {}
+        }
+      },
+      "execution_status": "complete",
       "fee_multiplier": 1.0,
       "fee_type": "quadratic",
       "fee_upper_estimate": 0.02,
@@ -20680,6 +20957,7 @@
         "stat": "threes",
         "team": "ATL"
       },
+      "last_checked": "2026-11-01T00:19:57.550478+00:00",
       "outcome_status": "pending",
       "p_model_yes": 0.47905,
       "policies": {
@@ -20851,7 +21129,19 @@
           ]
         ]
       },
-      "execution_status": "pending",
+      "execution": {
+        "through": {
+          "filled": false,
+          "first_fill_print": null,
+          "later_trade_markouts": {}
+        },
+        "touch": {
+          "filled": false,
+          "first_fill_print": null,
+          "later_trade_markouts": {}
+        }
+      },
+      "execution_status": "complete",
       "fee_multiplier": 1.0,
       "fee_type": "quadratic",
       "fee_upper_estimate": 0.02,
@@ -20875,6 +21165,7 @@
         "stat": "threes",
         "team": "NOP"
       },
+      "last_checked": "2026-11-01T00:19:58.427516+00:00",
       "outcome_status": "pending",
       "p_model_yes": 0.47905,
       "policies": {
@@ -21038,7 +21329,25 @@
           ]
         ]
       },
-      "execution_status": "pending",
+      "execution": {
+        "through": {
+          "filled": true,
+          "first_fill_print": {
+            "at": "2026-10-31T22:50:11.297069Z",
+            "yes_price": 0.62
+          },
+          "later_trade_markouts": {}
+        },
+        "touch": {
+          "filled": true,
+          "first_fill_print": {
+            "at": "2026-10-31T22:50:11.297069Z",
+            "yes_price": 0.62
+          },
+          "later_trade_markouts": {}
+        }
+      },
+      "execution_status": "complete",
       "fee_multiplier": 1.0,
       "fee_type": "quadratic",
       "fee_upper_estimate": 0.02,
@@ -21062,6 +21371,7 @@
         "stat": "threes",
         "team": "NOP"
       },
+      "last_checked": "2026-11-01T00:19:59.419437+00:00",
       "outcome_status": "pending",
       "p_model_yes": 0.69499,
       "policies": {
@@ -21257,7 +21567,25 @@
           ]
         ]
       },
-      "execution_status": "pending",
+      "execution": {
+        "through": {
+          "filled": true,
+          "first_fill_print": {
+            "at": "2026-10-31T22:36:03.202146Z",
+            "yes_price": 0.56
+          },
+          "later_trade_markouts": {}
+        },
+        "touch": {
+          "filled": true,
+          "first_fill_print": {
+            "at": "2026-10-31T22:36:03.202146Z",
+            "yes_price": 0.56
+          },
+          "later_trade_markouts": {}
+        }
+      },
+      "execution_status": "complete",
       "fee_multiplier": 1.0,
       "fee_type": "quadratic",
       "fee_upper_estimate": 0.02,
@@ -21281,6 +21609,7 @@
         "stat": "threes",
         "team": "MEM"
       },
+      "last_checked": "2026-11-01T00:20:00.299925+00:00",
       "outcome_status": "pending",
       "p_model_yes": 0.597578,
       "policies": {
@@ -21476,7 +21805,25 @@
           ]
         ]
       },
-      "execution_status": "pending",
+      "execution": {
+        "through": {
+          "filled": true,
+          "first_fill_print": {
+            "at": "2026-10-31T22:13:34.884231Z",
+            "yes_price": 0.53
+          },
+          "later_trade_markouts": {}
+        },
+        "touch": {
+          "filled": true,
+          "first_fill_print": {
+            "at": "2026-10-31T22:13:34.884231Z",
+            "yes_price": 0.53
+          },
+          "later_trade_markouts": {}
+        }
+      },
+      "execution_status": "complete",
       "fee_multiplier": 1.0,
       "fee_type": "quadratic",
       "fee_upper_estimate": 0.02,
@@ -21500,6 +21847,7 @@
         "stat": "threes",
         "team": "MEM"
       },
+      "last_checked": "2026-11-01T00:20:01.217624+00:00",
       "outcome_status": "pending",
       "p_model_yes": 0.529292,
       "policies": {
@@ -21715,7 +22063,25 @@
           ]
         ]
       },
-      "execution_status": "pending",
+      "execution": {
+        "through": {
+          "filled": true,
+          "first_fill_print": {
+            "at": "2026-10-31T23:23:38.515706Z",
+            "yes_price": 0.56
+          },
+          "later_trade_markouts": {}
+        },
+        "touch": {
+          "filled": true,
+          "first_fill_print": {
+            "at": "2026-10-31T23:23:38.515706Z",
+            "yes_price": 0.56
+          },
+          "later_trade_markouts": {}
+        }
+      },
+      "execution_status": "complete",
       "fee_multiplier": 1.0,
       "fee_type": "quadratic",
       "fee_upper_estimate": 0.02,
@@ -21739,6 +22105,7 @@
         "stat": "threes",
         "team": "MEM"
       },
+      "last_checked": "2026-11-01T00:20:02.093563+00:00",
       "outcome_status": "pending",
       "p_model_yes": 0.586324,
       "policies": {
@@ -21914,7 +22281,25 @@
           ]
         ]
       },
-      "execution_status": "pending",
+      "execution": {
+        "through": {
+          "filled": true,
+          "first_fill_print": {
+            "at": "2026-10-31T23:24:02.98608Z",
+            "yes_price": 0.49
+          },
+          "later_trade_markouts": {}
+        },
+        "touch": {
+          "filled": true,
+          "first_fill_print": {
+            "at": "2026-10-31T23:24:02.98608Z",
+            "yes_price": 0.49
+          },
+          "later_trade_markouts": {}
+        }
+      },
+      "execution_status": "complete",
       "fee_multiplier": 1.0,
       "fee_type": "quadratic",
       "fee_upper_estimate": 0.02,
@@ -21938,6 +22323,7 @@
         "stat": "threes",
         "team": "SAC"
       },
+      "last_checked": "2026-11-01T00:20:03.012546+00:00",
       "outcome_status": "pending",
       "p_model_yes": 0.391993,
       "policies": {
@@ -22121,7 +22507,25 @@
           ]
         ]
       },
-      "execution_status": "pending",
+      "execution": {
+        "through": {
+          "filled": true,
+          "first_fill_print": {
+            "at": "2026-10-31T23:23:36.310953Z",
+            "yes_price": 0.57
+          },
+          "later_trade_markouts": {}
+        },
+        "touch": {
+          "filled": true,
+          "first_fill_print": {
+            "at": "2026-10-31T23:23:36.310953Z",
+            "yes_price": 0.57
+          },
+          "later_trade_markouts": {}
+        }
+      },
+      "execution_status": "complete",
       "fee_multiplier": 1.0,
       "fee_type": "quadratic",
       "fee_upper_estimate": 0.02,
@@ -22145,6 +22549,7 @@
         "stat": "threes",
         "team": "SAC"
       },
+      "last_checked": "2026-11-01T00:20:03.912099+00:00",
       "outcome_status": "pending",
       "p_model_yes": 0.529292,
       "policies": {
@@ -22300,7 +22705,19 @@
           ]
         ]
       },
-      "execution_status": "pending",
+      "execution": {
+        "through": {
+          "filled": false,
+          "first_fill_print": null,
+          "later_trade_markouts": {}
+        },
+        "touch": {
+          "filled": false,
+          "first_fill_print": null,
+          "later_trade_markouts": {}
+        }
+      },
+      "execution_status": "complete",
       "fee_multiplier": 1.0,
       "fee_type": "quadratic",
       "fee_upper_estimate": 0.02,
@@ -22324,6 +22741,7 @@
         "stat": "threes",
         "team": "SAC"
       },
+      "last_checked": "2026-11-01T00:20:04.834570+00:00",
       "outcome_status": "pending",
       "p_model_yes": 0.232309,
       "policies": {
@@ -22503,7 +22921,19 @@
           ]
         ]
       },
-      "execution_status": "pending",
+      "execution": {
+        "through": {
+          "filled": false,
+          "first_fill_print": null,
+          "later_trade_markouts": {}
+        },
+        "touch": {
+          "filled": false,
+          "first_fill_print": null,
+          "later_trade_markouts": {}
+        }
+      },
+      "execution_status": "complete",
       "fee_multiplier": 1.0,
       "fee_type": "quadratic",
       "fee_upper_estimate": 0.02,
@@ -22527,6 +22957,7 @@
         "stat": "threes",
         "team": "SAC"
       },
+      "last_checked": "2026-11-01T00:20:05.837638+00:00",
       "outcome_status": "pending",
       "p_model_yes": 0.351049,
       "policies": {
@@ -22718,7 +23149,19 @@
           ]
         ]
       },
-      "execution_status": "pending",
+      "execution": {
+        "through": {
+          "filled": false,
+          "first_fill_print": null,
+          "later_trade_markouts": {}
+        },
+        "touch": {
+          "filled": false,
+          "first_fill_print": null,
+          "later_trade_markouts": {}
+        }
+      },
+      "execution_status": "complete",
       "fee_multiplier": 1.0,
       "fee_type": "quadratic",
       "fee_upper_estimate": 0.02,
@@ -22742,6 +23185,7 @@
         "stat": "threes",
         "team": "SAC"
       },
+      "last_checked": "2026-11-01T00:20:06.713295+00:00",
       "outcome_status": "pending",
       "p_model_yes": 0.391993,
       "policies": {
@@ -22937,7 +23381,25 @@
           ]
         ]
       },
-      "execution_status": "pending",
+      "execution": {
+        "through": {
+          "filled": true,
+          "first_fill_print": {
+            "at": "2026-10-31T23:32:26.933817Z",
+            "yes_price": 0.56
+          },
+          "later_trade_markouts": {}
+        },
+        "touch": {
+          "filled": true,
+          "first_fill_print": {
+            "at": "2026-10-31T23:32:26.933817Z",
+            "yes_price": 0.56
+          },
+          "later_trade_markouts": {}
+        }
+      },
+      "execution_status": "complete",
       "fee_multiplier": 1.0,
       "fee_type": "quadratic",
       "fee_upper_estimate": 0.02,
@@ -22961,6 +23423,7 @@
         "stat": "assists",
         "team": "SAC"
       },
+      "last_checked": "2026-11-01T00:20:07.602319+00:00",
       "outcome_status": "pending",
       "p_model_yes": 0.594041,
       "policies": {
@@ -23152,7 +23615,19 @@
           ]
         ]
       },
-      "execution_status": "pending",
+      "execution": {
+        "through": {
+          "filled": false,
+          "first_fill_print": null,
+          "later_trade_markouts": {}
+        },
+        "touch": {
+          "filled": false,
+          "first_fill_print": null,
+          "later_trade_markouts": {}
+        }
+      },
+      "execution_status": "complete",
       "fee_multiplier": 1.0,
       "fee_type": "quadratic",
       "fee_upper_estimate": 0.02,
@@ -23176,6 +23651,7 @@
         "stat": "threes",
         "team": "CLE"
       },
+      "last_checked": "2026-11-01T00:20:08.478619+00:00",
       "outcome_status": "pending",
       "p_model_yes": 0.549814,
       "policies": {
@@ -23379,7 +23855,19 @@
           ]
         ]
       },
-      "execution_status": "pending",
+      "execution": {
+        "through": {
+          "filled": false,
+          "first_fill_print": null,
+          "later_trade_markouts": {}
+        },
+        "touch": {
+          "filled": false,
+          "first_fill_print": null,
+          "later_trade_markouts": {}
+        }
+      },
+      "execution_status": "complete",
       "fee_multiplier": 1.0,
       "fee_type": "quadratic",
       "fee_upper_estimate": 0.02,
@@ -23403,6 +23891,7 @@
         "stat": "threes",
         "team": "CLE"
       },
+      "last_checked": "2026-11-01T00:20:09.351511+00:00",
       "outcome_status": "pending",
       "p_model_yes": 0.415463,
       "policies": {
@@ -23590,7 +24079,19 @@
           ]
         ]
       },
-      "execution_status": "pending",
+      "execution": {
+        "through": {
+          "filled": false,
+          "first_fill_print": null,
+          "later_trade_markouts": {}
+        },
+        "touch": {
+          "filled": false,
+          "first_fill_print": null,
+          "later_trade_markouts": {}
+        }
+      },
+      "execution_status": "complete",
       "fee_multiplier": 1.0,
       "fee_type": "quadratic",
       "fee_upper_estimate": 0.02,
@@ -23614,6 +24115,7 @@
         "stat": "threes",
         "team": "CLE"
       },
+      "last_checked": "2026-11-01T00:20:10.225242+00:00",
       "outcome_status": "pending",
       "p_model_yes": 0.472753,
       "policies": {
@@ -23809,7 +24311,19 @@
           ]
         ]
       },
-      "execution_status": "pending",
+      "execution": {
+        "through": {
+          "filled": false,
+          "first_fill_print": null,
+          "later_trade_markouts": {}
+        },
+        "touch": {
+          "filled": false,
+          "first_fill_print": null,
+          "later_trade_markouts": {}
+        }
+      },
+      "execution_status": "complete",
       "fee_multiplier": 1.0,
       "fee_type": "quadratic",
       "fee_upper_estimate": 0.02,
@@ -23833,6 +24347,7 @@
         "stat": "threes",
         "team": "CLE"
       },
+      "last_checked": "2026-11-01T00:20:11.132418+00:00",
       "outcome_status": "pending",
       "p_model_yes": 0.425669,
       "policies": {
@@ -23992,7 +24507,19 @@
           ]
         ]
       },
-      "execution_status": "pending",
+      "execution": {
+        "through": {
+          "filled": false,
+          "first_fill_print": null,
+          "later_trade_markouts": {}
+        },
+        "touch": {
+          "filled": false,
+          "first_fill_print": null,
+          "later_trade_markouts": {}
+        }
+      },
+      "execution_status": "complete",
       "fee_multiplier": 1.0,
       "fee_type": "quadratic",
       "fee_upper_estimate": 0.02,
@@ -24016,6 +24543,7 @@
         "stat": "threes",
         "team": "CLE"
       },
+      "last_checked": "2026-11-01T00:20:12.015945+00:00",
       "outcome_status": "pending",
       "p_model_yes": 0.586324,
       "policies": {
