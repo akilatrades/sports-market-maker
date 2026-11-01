@@ -1,14 +1,14 @@
 {
   "KXITFMATCH": {
-    "orders": 1543,
+    "orders": 1573,
     "vetoed": 0,
-    "open": 10,
-    "fill_rate": 0.7077625570776256,
-    "fills_settled": 1085,
-    "bankroll": 375.79,
+    "open": 34,
+    "fill_rate": 0.7089018843404808,
+    "fills_settled": 1091,
+    "bankroll": 394.89,
     "cents_per_contract": -0.62,
     "t": -0.99,
-    "profit_dollars": -124.21
+    "profit_dollars": -105.11
   },
   "KXNASCARRACE": {
     "orders": 227,
@@ -33,9 +33,9 @@
     "profit_dollars": -44.22
   },
   "KXLALIGASPREAD": {
-    "orders": 147,
+    "orders": 154,
     "vetoed": 0,
-    "open": 0,
+    "open": 7,
     "fill_rate": 0.4421768707482993,
     "fills_settled": 65,
     "bankroll": 497.33,
@@ -52,9 +52,9 @@
     "bankroll": 500.0
   },
   "KXNFLRECYDS": {
-    "orders": 618,
+    "orders": 654,
     "vetoed": 0,
-    "open": 0,
+    "open": 36,
     "fill_rate": 0.580906148867314,
     "fills_settled": 359,
     "bankroll": 213.83,
@@ -109,9 +109,9 @@
     "bankroll": 500.0
   },
   "KXNCAAMB1HSPREAD": {
-    "orders": 0,
+    "orders": 13,
     "vetoed": 0,
-    "open": 0,
+    "open": 13,
     "fill_rate": null,
     "fills_settled": 0,
     "bankroll": 500.0
@@ -147,9 +147,9 @@
     "bankroll": 500.0
   },
   "KXNFLRECYDS+model": {
-    "orders": 547,
-    "vetoed": 1887,
-    "open": 0,
+    "orders": 579,
+    "vetoed": 2031,
+    "open": 32,
     "fill_rate": 0.4625228519195612,
     "fills_settled": 253,
     "bankroll": 361.02,
@@ -160,15 +160,15 @@
     "vetoed_settled": 918
   },
   "KXITFMATCH+no30": {
-    "orders": 1224,
+    "orders": 1246,
     "vetoed": 0,
-    "open": 9,
-    "fill_rate": 0.7382716049382716,
-    "fills_settled": 897,
-    "bankroll": 440.43,
-    "cents_per_contract": -0.96,
-    "t": -0.96,
-    "profit_dollars": -59.57
+    "open": 28,
+    "fill_rate": 0.7389162561576355,
+    "fills_settled": 900,
+    "bankroll": 432.9,
+    "cents_per_contract": -1.11,
+    "t": -1.11,
+    "profit_dollars": -67.1
   },
-  "updated_utc": "2026-11-01T05:38+00:00"
+  "updated_utc": "2026-11-01T13:04+00:00"
 }
