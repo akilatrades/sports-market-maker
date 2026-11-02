@@ -119,8 +119,11 @@ def bankroll(ledger, rule, start=START_BANKROLL):
     return start + float(pd.to_numeric(done.profit).fillna(0).sum())
 
 
-def candidate_orders(priced, rule, window=None):
-    """Orders a rule would post from one run's prices (before sizing)."""
+def candidate_orders(priced, rule, window=None, min_edge=None):
+    """Orders a rule would post from one run's prices (before sizing).
+
+    ``min_edge`` overrides the rule's own floor (the live NBA bot passes its
+    ENTRY_MIN_NET_EDGE); paper rules keep theirs."""
     spec = V2_RULES.get(
         rule, {"window": WINDOW_HOURS, "min_edge": 0.0, "sizing": "flat"}
     )
@@ -138,7 +141,7 @@ def candidate_orders(priced, rule, window=None):
     )
     o["p_model"] = o.p_real
     o["edge"] = (1 - o.p_model) - o.price - maker_fee(o.price, FEE_SHARE)
-    threshold = spec["min_edge"]
+    threshold = spec["min_edge"] if min_edge is None else min_edge
     if isinstance(threshold, dict):
         need = o.stat.map(threshold).fillna(0.0)
     else:

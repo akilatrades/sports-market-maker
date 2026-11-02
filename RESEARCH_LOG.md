@@ -3837,3 +3837,49 @@ decided on judgement, labelled as such: the NBA entry window.
 
 Both bots keep their sizes (spread 2 contracts, NBA 1) and dollar caps;
 those can follow once the new versions have fills.
+
+### Result (2026-11-02): spread v6 and NBA v8 chosen by the rule above
+
+SIMULATED, in-sample (`research/fills_first_sweep.py`,
+`outputs/research/fills_first_{spread,nba}.json`). 48 spread and 12 NBA
+variants, as planned; each rule picked its loosest qualifying variant.
+
+| Spread (293 scan days, flow 0.25) | fills a day | ¢ a contract | t | earlier / later half |
+|---|---|---|---|---|
+| v5: 12 h, 1 market an event, 8¢+, no esports | 8.9 | +8.1 | 6.9 | +9.6 / +1.7 |
+| 12 h, every market, 8¢+, no esports | 18.2 | +9.1 | 11.3 | +9.5 / +6.5 |
+| **v6: 24 h, every market, 4¢+, esports** | **62.7** | **+4.3** | **8.8** | +5.1 / +2.3 |
+
+| NBA (150 games with logged book lines, flow 0.25) | fills | ¢ a contract | t |
+|---|---|---|---|
+| v7: book edge ≥ 0¢, v7 gaps | 1,851 | +4.3 | 2.9 |
+| book edge ≥ −3¢, v7 gaps | 3,398 | +2.7 | 2.1 |
+| **v8: book edge ≥ −3¢, gaps ×2** | **3,481** | **+2.8** | **2.1** |
+
+Every spread variant passed the +2¢ bar, so the rule took the one with the
+most fills; the edge per fill roughly halves while fills grow about 7×.
+For NBA nearly all the extra fills come from the lower edge floor.
+
+**Live caveat.** The replay has been kinder than live trading: spread v3
+made about 0¢ a contract live (57 settled fills) against about +8¢ in this
+replay. Looser settings could turn a small live edge negative; the loss
+stops below bound that.
+
+**Changes (old → new).** Spread `live/spread_policy.py`, version
+`spread-maker-v6-fills-first`: `MIN_SPREAD_CENTS` 8 → 4, `MAX_LEAD_HOURS`
+12 → 24, `MAX_MARKETS_PER_EVENT` 1 → None, `QUOTE_ESPORTS` False → True;
+and three throughput limits that already bound v5 live (on 2 November it
+placed exactly 120 orders an hour from 09:00 UTC, its 20-a-pass limit, was
+near its 1,500-a-day limit by 18:00, and quoted 124 markets, which would
+need roughly $200 to cover): `MAX_ORDERS_PER_PASS` 20 → 60,
+`MAX_SUBMISSIONS_PER_DAY` 1,500 → 6,000, and `MAX_ACTIVE_COST` $50 → $100
+(owner's choice). Unchanged: 2 contracts, 2 net per market, −$15 daily and
+−$40 total loss stops, the 85-minute floor. NBA `live/prod_nba_auto.py`,
+version `nba-no-v8-more-fills`: `ENTRY_MIN_NET_EDGE` (and the resting floor)
+0¢ → −3¢; `WINDOW` 2–6 h → 1–6 h, and the submit-time clock check follows
+`WINDOW[0]` (judgement, not tested); `kalshi/line_translation.MAX_GAP`
+doubled (points 3 → 6, rebounds 2 → 4, assists 2 → 4, threes 1 → 2).
+Unchanged: 1 contract, the 8¢ cap, dollar caps, −$20/−$100 stops, the
+60/120-minute book ages, injury and roster vetoes. NFL unchanged.
+
+**Judged live** on their own versions by `research/live_checkpoint.py`.

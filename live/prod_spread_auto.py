@@ -1627,12 +1627,15 @@ def event_of(ticker):
 
 
 def one_market_per_event(markets, positions, resting=frozenset()):
-    """At most MAX_MARKETS_PER_EVENT markets of each event (v5).
+    """At most MAX_MARKETS_PER_EVENT markets of each event (v5). None (v6)
+    means no limit: every market passes, as in the v6 replay.
 
     A market already held comes first, then one with our resting quotes,
     then the input order (widest spread first). A market whose event is held
     through a different market is dropped, wherever that market is listed.
     """
+    if P.MAX_MARKETS_PER_EVENT is None:
+        return list(markets)
     held = {}
     for ticker, qty in positions.items():
         if abs(qty) > 1e-9:
@@ -1660,7 +1663,7 @@ def desired_quotes(markets, positions, resting=frozenset()):
 
     A YES order is at most the room left before net YES reaches the cap
     (positive net = YES held), a NO order likewise; a side with no room is
-    not quoted. Only one market per event is quoted (v5).
+    not quoted. v5 quoted one market per event; v6 quotes them all.
     """
     out = {}
     for m in one_market_per_event(markets, positions, resting):
