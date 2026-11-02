@@ -104,6 +104,7 @@ code is right.
 | New orders per day | $150 | $30 |
 | New orders per scan | 3 | 1 |
 | Edge needed to post | 0¢ to 8¢ (books); the model is not used | 3¢ to 15¢ (books), model must not disagree |
+| Sportsbook price age | 60 min to post; a resting order keeps one up to 120 min | unchanged |
 | Price range | 5–95¢ | 10–90¢ |
 | Lifetime orders placed | $5,000 | $50 |
 

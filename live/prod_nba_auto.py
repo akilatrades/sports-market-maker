@@ -67,7 +67,13 @@ MIN_BOOKS = 1  # books on Kalshi's exact line (v6: 2, else the model priced it)
 # A line no book quotes is priced from the same game's nearby lines
 # (kalshi/line_translation.py), with at least 2 book quotes in the fit.
 TRANSLATE_NEARBY_LINES = True
-BOOK_MAX_AGE_MINUTES = 60  # oldest contributing book update (v6: 120 / 75)
+BOOK_MAX_AGE_MINUTES = 60  # NEW orders: oldest contributing book update (v6: 120 / 75)
+# ALREADY-RESTING orders keep a book price up to this age (2026-11-02,
+# RESEARCH_LOG.md "NBA v7: resting orders keep 120-minute book prices").
+# Old value: the same 60 minutes as new orders, which cancelled 134 of the
+# first 150 v7 orders about 20 minutes after placement, as their price
+# crossed 60 minutes old between book refreshes (live). 120 is v6's limit.
+RESTING_BOOK_MAX_AGE_MINUTES = 120
 MAX_ENTRY_NET_EDGE = 0.08  # v6: 0.15; live, the largest edges were model errors
 # Off (None) since 2026-10-30, "NBA v7: model veto off": orders the veto
 # would have blocked did as well as the rest in the replay (+4.4c vs +4.1c a
@@ -855,6 +861,18 @@ def select_candidates(frame, events, state, now, diagnostics=None, window=WINDOW
     counts["supported_prop_series"] = len(eligible)
     if eligible.empty:
         return []
+    # New orders need a book price at most BOOK_MAX_AGE_MINUTES old. Older
+    # prices (up to RESTING_BOOK_MAX_AGE_MINUTES) only keep a resting order.
+    eligible = eligible.copy()
+    if "book_updated_utc" in eligible:
+        stamp = pd.to_datetime(eligible.book_updated_utc, utc=True, errors="coerce")
+        age = (pd.Timestamp(now) - stamp).dt.total_seconds() / 60
+        too_old = ~age.between(0, BOOK_MAX_AGE_MINUTES)
+    else:
+        too_old = pd.Series(True, index=eligible.index)
+    priced_now = pd.to_numeric(eligible.get("p_book"), errors="coerce").notna()
+    counts["book_too_old_for_entry"] = int((too_old & priced_now).sum())
+    eligible.loc[too_old, "p_book"] = float("nan")
     found = candidate_orders(eligible, "no_seller_bookline", window=window)
     counts["passed_book_model_and_spread"] = len(found)
     if found.empty:
@@ -1686,9 +1704,10 @@ def _official_injury_vetoes(frame, model_utc, now, cache_dir):
 
 def attach_nearby_lines(frame, book_path, now, diagnostics):
     """v7: price lines the books do not quote from the same game's nearby
-    lines. Only book lines whose oldest contributing update is within
-    BOOK_MAX_AGE_MINUTES are used; the age checks that follow apply to the
-    translated price as to an exact one."""
+    lines. Only book lines updated within RESTING_BOOK_MAX_AGE_MINUTES are
+    used; the translated price carries its oldest line's update time, so the
+    age checks that follow (60 minutes for new orders) apply to it as to an
+    exact one."""
     from kalshi.books import LATEST
     from kalshi.line_translation import attach_translated
 
@@ -1710,7 +1729,9 @@ def attach_nearby_lines(frame, book_path, now, diagnostics):
         return frame
     stamp = pd.to_datetime(book.updated_utc, utc=True, errors="coerce")
     age = (pd.Timestamp(now) - stamp).dt.total_seconds() / 60
-    book = book[stamp.notna() & age.between(0, BOOK_MAX_AGE_MINUTES)]
+    # Resting orders may use lines up to RESTING_BOOK_MAX_AGE_MINUTES old;
+    # select_candidates holds new orders to BOOK_MAX_AGE_MINUTES.
+    book = book[stamp.notna() & age.between(0, RESTING_BOOK_MAX_AGE_MINUTES)]
     out = attach_translated(frame, book)
     diagnostics["book_exact"] = int(out.book_source.eq("exact").sum())
     diagnostics["book_translated"] = int(out.book_source.eq("translated").sum())
@@ -2006,10 +2027,10 @@ def nba_candidates(now, latest=Path("outputs/projections/latest.csv")):
             )
             frame.loc[game_gap > 900, "p_book"] = float("nan")
             frame.loc[game_gap > 900, "book_n"] = 0
-        # A sportsbook quote may have been cached for four hours. Those
-        # probabilities are too old to validate a live resting order near
-        # tip, especially after lineup/injury changes. Hard age bounds:
-        # 2h early; 75m inside 2.5h of tip. No synthetic fresh timestamps.
+        # A sportsbook quote may have been cached for four hours. Prices older
+        # than RESTING_BOOK_MAX_AGE_MINUTES are dropped here, so they can
+        # neither keep a resting order nor start one; select_candidates holds
+        # NEW orders to BOOK_MAX_AGE_MINUTES. No synthetic fresh timestamps.
         if "book_updated_utc" in frame:
             book_stamp = pd.to_datetime(
                 frame.book_updated_utc, utc=True, errors="coerce"
@@ -2018,7 +2039,7 @@ def nba_candidates(now, latest=Path("outputs/projections/latest.csv")):
             stale = (
                 book_stamp.isna()
                 | age_minutes.lt(0)
-                | age_minutes.gt(BOOK_MAX_AGE_MINUTES)
+                | age_minutes.gt(RESTING_BOOK_MAX_AGE_MINUTES)
             )
         else:
             stale = frame.book_n.ge(2)

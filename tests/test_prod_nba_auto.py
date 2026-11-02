@@ -121,6 +121,8 @@ def test_separate_risk_caps_and_state():
         "nba-no-v6-three-contracts",
     } <= nba.PRIOR_VERSIONS
     assert (nba.MIN_BOOKS, nba.BOOK_MAX_AGE_MINUTES) == (1, 60)
+    # 2026-11-02, "NBA v7: resting orders keep 120-minute book prices" (was 60).
+    assert nba.RESTING_BOOK_MAX_AGE_MINUTES == 120
     # Model veto off: 2026-10-30, "NBA v7: model veto off" (was 0.0).
     assert (nba.MAX_ENTRY_NET_EDGE, nba.MODEL_VETO_MIN_EDGE) == (0.08, None)
     assert nba.TRANSLATE_NEARBY_LINES is True
@@ -261,6 +263,7 @@ def test_selection_funnel_counts_each_gate_without_loosening_it():
         "verified_availability_and_tip": 1,
         "in_entry_window": 1,
         "supported_prop_series": 1,
+        "book_too_old_for_entry": 0,
         "passed_book_model_and_spread": 1,
         "no_side_candidates": 1,
         "book_priced": 1,
@@ -1034,8 +1037,13 @@ def test_old_sportsbook_consensus_is_not_used_to_retain_nba_orders(
     fresh = nba.nba_candidates(NOW, latest=tmp_path / "latest.csv")
     assert fresh.book_n.iloc[0] == 2
     assert fresh.p_book.iloc[0] == 0.43
-    # v7: older than 60 minutes is stale at any time before tip (v6: 120).
-    q["book_updated_utc"] = (NOW - timedelta(minutes=61)).isoformat()
+    # 2026-11-02: up to 120 minutes old the price stays in the frame, so a
+    # resting order can be rechecked against it (new orders still need 60).
+    q["book_updated_utc"] = (NOW - timedelta(minutes=90)).isoformat()
+    publish(q, tmp_path, NOW)
+    resting_age = nba.nba_candidates(NOW, latest=tmp_path / "latest.csv")
+    assert resting_age.p_book.iloc[0] == 0.43 and resting_age.book_n.iloc[0] == 2
+    q["book_updated_utc"] = (NOW - timedelta(minutes=121)).isoformat()
     publish(q, tmp_path, NOW)
     old = nba.nba_candidates(NOW, latest=tmp_path / "latest.csv")
     assert pd.isna(old.p_book.iloc[0]) and old.book_n.iloc[0] == 0
@@ -1268,6 +1276,32 @@ def test_model_veto_still_blocks_when_switched_back_on(monkeypatch):
     assert stats["book_priced"] == 1 and stats["passed_model_veto"] == 0
 
 
+def test_new_orders_need_a_book_price_at_most_60_minutes_old():
+    f = priced()
+    f["book_updated_utc"] = (NOW - timedelta(minutes=61)).isoformat()
+    stats = {}
+    assert nba.select_candidates(f, [], {"active": []}, NOW, diagnostics=stats) == []
+    assert stats["book_too_old_for_entry"] == 1 and stats["book_priced"] == 0
+    f["book_updated_utc"] = (NOW - timedelta(minutes=59)).isoformat()
+    stats = {}
+    got = nba.select_candidates(f, [], {"active": []}, NOW, diagnostics=stats)
+    assert len(got) == 1 and stats["book_too_old_for_entry"] == 0
+    g = priced().drop(columns=["book_updated_utc"])  # no stamp: never enter
+    assert nba.select_candidates(g, [], {"active": []}, NOW) == []
+
+
+def test_resting_order_is_kept_on_a_90_minute_old_book_price():
+    row = priced().iloc[0].to_dict()  # p_book 0.43 from 2 books, as the frame keeps it
+    row["book_updated_utc"] = (NOW - timedelta(minutes=90)).isoformat()
+    intent = {
+        "price_cents": 51,
+        "count": 1,
+        "probability_source": "sportsbook_translated",
+    }
+    market = {"status": "active", "yes_bid_dollars": 0.40, "yes_ask_dollars": 0.50}
+    assert nba.resting_cancel_reason(row, intent, market, 0.0) is None
+
+
 def test_v7_edges_are_capped():
     g = priced()
     g["p_book"] = 0.38  # book edge about 10.6c: above the 8c cap
@@ -1338,6 +1372,15 @@ def test_v7_pipeline_prices_an_unquoted_line_from_fresh_nearby_lines(
     assert out.book_source.iloc[0] == "translated"
     assert 0.36 < out.p_book.iloc[0] < 0.50
     assert out.attrs["diagnostics"]["book_translated"] == 1
-    write_book(90)  # every nearby line older than 60 minutes: no price
+    # 90 minutes old: the translated price stays (it can keep a resting
+    # order) but is too old to start one.
+    write_book(90)
+    held = nba.nba_candidates(NOW, latest=tmp_path / "latest.csv")
+    assert held.book_source.iloc[0] == "translated"
+    assert 0.36 < held.p_book.iloc[0] < 0.50
+    stats = {}
+    assert nba.select_candidates(held, [], {"active": []}, NOW, stats) == []
+    assert stats["book_too_old_for_entry"] == 1
+    write_book(121)  # every nearby line older than 120 minutes: no price
     stale = nba.nba_candidates(NOW, latest=tmp_path / "latest.csv")
     assert pd.isna(stale.p_book.iloc[0])
