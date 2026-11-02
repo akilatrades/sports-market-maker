@@ -3806,3 +3806,34 @@ guarded against; watch it in the checkpoint.
 Tests: `tests/test_prod_nba_auto.py` (new order refuses a 61-minute price;
 resting order kept on a 90-minute one; 121 minutes drops it for both;
 nearby-line pricing end to end).
+
+## 2026-11-02: More fills for the spread maker and NBA (owner-directed, rule written before the sweeps)
+
+*The owner asked on 2 November for more fills from both bots ("don't be super
+selective"). Live fills are the scarce input: spread v5 had 9 in three days
+from 2,752 quotes, NBA v7 17 in three nights. This entry fixes, before any
+sweep is run, which looser settings are tried and how one is chosen.
+SIMULATED and in-sample; the chosen settings are then judged live on their
+own new version.*
+
+**Spread maker (replay `outputs/scan_24h`, one quote per side per hourly
+snapshot, held to settlement, start times S1+S2+S3, 85-minute floor).**
+Variants: lead window before the start {12 h (v5), 24 h (v3)} × markets per
+event {1 (v5), 2, all} × minimum spread {8¢ (v5), 6¢, 5¢, 4¢} × esports
+{off (v5), on} = 48. **Rule:** take the variant with the most simulated
+fills per day at `flow_share` 0.25 (median of 20 draws) among those whose
+flow-0.25 result is at least +2¢ a contract with event-clustered t ≥ 2 and
+positive in each half of the scan (earlier and later). Ties: fewer changes
+from v5.
+
+**NBA (replay `outputs/decompose/orders_no.csv.gz` in the games with logged
+book lines, first trade print reaching each 1-contract order).** Variants:
+book edge floor {0¢ (v7), −1¢, −2¢, −3¢} × nearby-line maximum gap {v7's
+(points 3, rebounds 2, assists 2, threes 1), 1.5×, 2×} = 12. Edge cap stays
+8¢. **Rule:** the variant with the most simulated fills among those whose
+result is at least +1¢ a contract with game-clustered t ≥ 1 at
+`flow_share` 0.25 and positive at first in line. Not testable here and
+decided on judgement, labelled as such: the NBA entry window.
+
+Both bots keep their sizes (spread 2 contracts, NBA 1) and dollar caps;
+those can follow once the new versions have fills.
