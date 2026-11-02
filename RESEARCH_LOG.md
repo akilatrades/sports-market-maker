@@ -3759,3 +3759,50 @@ dropped: NBA v7 and NFL v4 go live at 1 contract. The checkpoint
 (`research/live_checkpoint.py`) judges v7 and v4 on their own orders. At
 1 contract the answer comes slowly: about 1,900 fills for t ≈ 2 at 3¢ (same
 game correlation counted).
+
+## 2026-11-02: NBA v7: resting orders keep 120-minute book prices (execution fix)
+
+*Owner asked for the fix on 2 November. A fault in how v7 was carried out,
+not a new pricing rule. Evidence is live (private export, 30 October to
+2 November).*
+
+**What went wrong.** v7 placed 150 NBA orders in three nights and only 17
+filled (11%, against 52% for v5). 134 were cancelled by the bot's own
+resting recheck a median 20–24 minutes after acceptance, 3–4 hours before
+tip: 103 as `unverified_roster_injury_or_model` and 31 as
+`fresh_two_book_consensus_missing`. Their book price was a median 60.6
+minutes old at the cancel (10th–90th percentile 55.6–65.0): the moment it
+crossed `BOOK_MAX_AGE_MINUTES` = 60, the price was dropped from the frame,
+and the missing price either flagged the player (uncertain team or role
+change needs two books) or failed the recheck directly. The book file
+reaches the bot from a GitHub job meant to run every 20 minutes that often
+starts late, and a nearby-line price carries its oldest line's time, so v7
+prices were already 35–41 minutes old when placed. v6 used 120 minutes (75
+within 2.5 hours of tip) and lost 3 of 169 orders this way. All 16 v7
+orders that were not cancelled filled. A cancelled ticker is never
+re-ordered.
+
+| Setting (`live/prod_nba_auto.py`) | Old | New |
+|---|---|---|
+| Book price age to place a NEW order | 60 min | 60 min (unchanged) |
+| Book price age to KEEP a resting order | 60 min (same constant) | 120 min (`RESTING_BOOK_MAX_AGE_MINUTES`, v6's value) |
+| Book lines used for nearby-line pricing | updated within 60 min | updated within 120 min; a new order still needs the oldest line within 60 |
+
+Unchanged: the team-news check (a price older than the team's latest
+injury-report update is dropped), two books for flagged players, the
+injury and roster vetoes, the 0–8¢ edge band, 1 contract. The pre-registered
+late-fill test above found no harm in resting to tip.
+
+**Version.** Still `nba-no-v7-book-priced`, so the bot does not stop placing
+orders while earlier v7 orders rest. Orders placed before this fix reached
+the server ran with the 60-minute cancel; analyses of v7 should split at the
+deploy time (`intent_utc`).
+
+**What should change.** Book-age cancels should fall from 89% of v7 orders
+to about v6's level, and the fill rate should move toward v5's. If fills
+rise but the per-contract result falls, that is the news risk the old limit
+guarded against; watch it in the checkpoint.
+
+Tests: `tests/test_prod_nba_auto.py` (new order refuses a 61-minute price;
+resting order kept on a 90-minute one; 121 minutes drops it for both;
+nearby-line pricing end to end).
