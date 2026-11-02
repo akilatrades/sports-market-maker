@@ -1,14 +1,14 @@
 {
   "KXITFMATCH": {
-    "orders": 1605,
+    "orders": 1609,
     "vetoed": 0,
-    "open": 26,
-    "fill_rate": 0.6991766941101963,
-    "fills_settled": 1104,
-    "bankroll": 387.67,
-    "cents_per_contract": -0.54,
-    "t": -0.86,
-    "profit_dollars": -112.33
+    "open": 6,
+    "fill_rate": 0.6999376169681847,
+    "fills_settled": 1122,
+    "bankroll": 371.58,
+    "cents_per_contract": -0.64,
+    "t": -1.03,
+    "profit_dollars": -128.42
   },
   "KXNASCARRACE": {
     "orders": 243,
@@ -52,9 +52,9 @@
     "bankroll": 500.0
   },
   "KXNFLRECYDS": {
-    "orders": 707,
+    "orders": 779,
     "vetoed": 0,
-    "open": 0,
+    "open": 72,
     "fill_rate": 0.5954738330975955,
     "fills_settled": 421,
     "bankroll": 206.27,
@@ -109,9 +109,9 @@
     "bankroll": 500.0
   },
   "KXNCAAMB1HSPREAD": {
-    "orders": 13,
+    "orders": 92,
     "vetoed": 0,
-    "open": 0,
+    "open": 79,
     "fill_rate": 0.3076923076923077,
     "fills_settled": 4,
     "bankroll": 500.97,
@@ -120,9 +120,9 @@
     "profit_dollars": 0.97
   },
   "KXNBA3D": {
-    "orders": 160,
+    "orders": 210,
     "vetoed": 0,
-    "open": 1,
+    "open": 51,
     "fill_rate": 0.6415094339622641,
     "fills_settled": 102,
     "bankroll": 515.26,
@@ -150,9 +150,9 @@
     "bankroll": 500.0
   },
   "KXNFLRECYDS+model": {
-    "orders": 632,
-    "vetoed": 2404,
-    "open": 0,
+    "orders": 687,
+    "vetoed": 2457,
+    "open": 55,
     "fill_rate": 0.4920886075949367,
     "fills_settled": 311,
     "bankroll": 316.02,
@@ -163,15 +163,15 @@
     "vetoed_settled": 1118
   },
   "KXITFMATCH+no30": {
-    "orders": 1266,
+    "orders": 1268,
     "vetoed": 0,
-    "open": 21,
-    "fill_rate": 0.734136546184739,
-    "fills_settled": 914,
-    "bankroll": 428.34,
-    "cents_per_contract": -1.16,
-    "t": -1.18,
-    "profit_dollars": -71.66
+    "open": 6,
+    "fill_rate": 0.7337559429477021,
+    "fills_settled": 926,
+    "bankroll": 421.64,
+    "cents_per_contract": -1.14,
+    "t": -1.16,
+    "profit_dollars": -78.36
   },
-  "updated_utc": "2026-11-02T10:50+00:00"
+  "updated_utc": "2026-11-02T21:38+00:00"
 }
