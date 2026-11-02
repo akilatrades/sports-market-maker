@@ -1,35 +1,37 @@
-# Bet card, 2026-11-01
+# Bet card, 2026-11-02
 
-**Unproven rule.** In 2025-26 it broke even in the regular season and made its money in the playoffs, a finding made after the fact (see RESEARCH_LOG.md). Regular-season positions are paper only. Paper bankroll: $527.98.
+**Unproven rule.** In 2025-26 it broke even in the regular season and made its money in the playoffs, a finding made after the fact (see RESEARCH_LOG.md). Regular-season positions are paper only. Paper bankroll: $521.60.
 
 | Tip-off (ET) | Player | Bet | Price | Model | Edge | Contracts | Risk | Mode |
 |---|---|---|---:|---:|---:|---:|---:|---|
-| Sun 3:30 PM | Anthony Black | NO 4+ rebounds | 47¢ | 60% | 12¢ | 11 | $5.37 | paper |
-| Sun 3:30 PM | Anthony Black | NO 4+ assists | 48¢ | 61% | 11¢ | 11 | $5.48 | paper |
-| Sun 3:30 PM | Anthony Black | NO 15+ points | 57¢ | 68% | 10¢ | 9 | $5.29 | paper |
-| Sun 3:30 PM | Derrick White | NO 6+ assists | 62¢ | 78% | 15¢ | 8 | $5.10 | paper |
-| Sun 3:30 PM | Derrick White | NO 15+ points | 55¢ | 70% | 13¢ | 9 | $5.11 | paper |
-| Sun 3:30 PM | Desmond Bane | NO 4+ assists | 49¢ | 57% | 7¢ | 10 | $5.08 | paper |
-| Sun 3:30 PM | Franz Wagner | NO 6+ assists | 44¢ | 60% | 14¢ | 12 | $5.49 | paper |
-| Sun 3:30 PM | Franz Wagner | NO 20+ points | 40¢ | 50% | 8¢ | 13 | $5.42 | paper |
-| Sun 3:30 PM | Jayson Tatum | NO 20+ points | 21¢ | 30% | 8¢ | 25 | $5.55 | paper |
-| Sun 3:30 PM | Jayson Tatum | YES 8+ rebounds | 58¢ | 66% | 6¢ | 9 | $5.38 | paper |
-| Sun 3:30 PM | Jayson Tatum | NO 8+ assists | 65¢ | 73% | 6¢ | 8 | $5.33 | paper |
-| Sun 3:30 PM | Paul George | NO 20+ points | 58¢ | 65% | 5¢ | 9 | $5.38 | paper |
-| Sun 3:30 PM | Wendell Carter Jr. | YES 15+ points | 30¢ | 40% | 8¢ | 17 | $5.35 | paper |
-| Sun 5:00 PM | Andrew Nembhard | YES 10+ assists | 45¢ | 59% | 12¢ | 11 | $5.15 | paper |
-| Sun 5:00 PM | Day'Ron Sharpe | YES 10+ points | 43¢ | 50% | 5¢ | 12 | $5.37 | paper |
-| Sun 5:00 PM | Day'Ron Sharpe | NO 1+ threes | 75¢ | 82% | 5¢ | 7 | $5.35 | paper |
-| Sun 5:00 PM | Jarace Walker | YES 4+ assists | 22¢ | 39% | 16¢ | 24 | $5.57 | paper |
-| Sun 5:00 PM | Jarace Walker | YES 10+ points | 51¢ | 64% | 12¢ | 10 | $5.28 | paper |
-| Sun 5:00 PM | Jarace Walker | YES 6+ rebounds | 45¢ | 52% | 5¢ | 11 | $5.15 | paper |
-| Sun 5:00 PM | Julius Randle | NO 6+ assists | 57¢ | 75% | 17¢ | 9 | $5.29 | paper |
-| Sun 5:00 PM | Kelly Oubre Jr. | YES 10+ points | 59¢ | 66% | 6¢ | 8 | $4.86 | paper |
-| Sun 5:00 PM | Pascal Siakam | YES 4+ assists | 57¢ | 66% | 7¢ | 9 | $5.29 | paper |
-| Sun 5:00 PM | Pascal Siakam | NO 8+ rebounds | 57¢ | 65% | 6¢ | 9 | $5.29 | paper |
-| Sun 8:30 PM | Brandin Podziemski | YES 20+ points | 32¢ | 59% | 25¢ | 16 | $5.37 | paper |
-| Sun 8:30 PM | Darius Garland | NO 8+ assists | 57¢ | 69% | 10¢ | 9 | $5.29 | paper |
-| Sun 8:30 PM | De'Anthony Melton | YES 3+ threes | 26¢ | 36% | 8¢ | 20 | $5.47 | paper |
-| Sun 8:30 PM | Rui Hachimura | NO 15+ points | 44¢ | 60% | 14¢ | 12 | $5.49 | paper |
-| Sun 8:30 PM | Rui Hachimura | NO 6+ rebounds | 61¢ | 76% | 13¢ | 8 | $5.02 | paper |
-| Sun 8:30 PM | Yaxel Lendeborg | NO 25+ points | 72¢ | 80% | 6¢ | 7 | $5.14 | paper |
+| Mon 7:00 PM | Ajay Mitchell | NO 20+ points | 59¢ | 78% | 17¢ | 8 | $4.86 | paper |
+| Mon 7:00 PM | Shai Gilgeous-Alexander | NO 30+ points | 47¢ | 68% | 19¢ | 11 | $5.37 | paper |
+| Mon 7:30 PM | Ausar Thompson | NO 10+ points | 46¢ | 66% | 18¢ | 11 | $5.26 | paper |
+| Mon 7:30 PM | Cade Cunningham | NO 25+ points | 51¢ | 74% | 21¢ | 10 | $5.28 | paper |
+| Mon 7:30 PM | Cade Cunningham | NO 8+ assists | 45¢ | 66% | 20¢ | 11 | $5.15 | paper |
+| Mon 7:30 PM | Cade Cunningham | NO 6+ rebounds | 56¢ | 76% | 18¢ | 9 | $5.20 | paper |
+| Mon 7:30 PM | Desmond Bane | NO 4+ assists | 42¢ | 57% | 14¢ | 12 | $5.25 | paper |
+| Mon 7:30 PM | Jalen Brunson | YES 25+ points | 41¢ | 57% | 14¢ | 12 | $5.13 | paper |
+| Mon 7:30 PM | Jase Richardson | NO 10+ points | 48¢ | 77% | 28¢ | 10 | $4.98 | paper |
+| Mon 7:30 PM | Jase Richardson | NO 4+ assists | 63¢ | 84% | 19¢ | 8 | $5.18 | paper |
+| Mon 7:30 PM | Karl-Anthony Towns | YES 4+ assists | 49¢ | 66% | 15¢ | 10 | $5.08 | paper |
+| Mon 7:30 PM | Naz Reid | NO 15+ points | 44¢ | 62% | 17¢ | 11 | $5.03 | paper |
+| Mon 7:30 PM | Onyeka Okongwu | NO 8+ rebounds | 43¢ | 59% | 14¢ | 12 | $5.37 | paper |
+| Mon 7:30 PM | Paul Reed | NO 8+ rebounds | 48¢ | 77% | 27¢ | 10 | $4.98 | paper |
+| Mon 7:30 PM | Paul Reed | NO 2+ assists | 40¢ | 58% | 16¢ | 13 | $5.42 | paper |
+| Mon 7:30 PM | Trae Young | YES 20+ points | 49¢ | 65% | 14¢ | 10 | $5.08 | paper |
+| Mon 7:30 PM | Tre Jones | YES 10+ points | 43¢ | 67% | 22¢ | 12 | $5.37 | paper |
+| Mon 7:30 PM | Tristan da Silva | NO 3+ threes | 47¢ | 71% | 22¢ | 11 | $5.37 | paper |
+| Mon 7:30 PM | Wendell Carter Jr. | YES 15+ points | 32¢ | 48% | 15¢ | 16 | $5.37 | paper |
+| Mon 8:00 PM | Isaiah Stewart | NO 4+ rebounds | 44¢ | 61% | 15¢ | 11 | $5.03 | paper |
+| Mon 8:00 PM | Jonathan Kuminga | NO 6+ rebounds | 48¢ | 64% | 14¢ | 10 | $4.98 | paper |
+| Mon 8:00 PM | Rudy Gobert | NO 10+ points | 45¢ | 66% | 20¢ | 11 | $5.15 | paper |
+| Mon 8:30 PM | Keyonte George | NO 6+ assists | 49¢ | 64% | 13¢ | 2 | $1.02 | paper |
+| Mon 8:30 PM | Marcus Smart | YES 10+ points | 31¢ | 50% | 17¢ | 16 | $5.20 | paper |
+| Mon 8:30 PM | Marcus Smart | YES 2+ threes | 37¢ | 53% | 14¢ | 14 | $5.41 | paper |
+| Mon 9:00 PM | Damian Lillard | YES 6+ assists | 31¢ | 54% | 21¢ | 16 | $5.20 | paper |
+| Mon 9:00 PM | Nikola Jokić | NO 2+ threes | 50¢ | 68% | 16¢ | 10 | $5.18 | paper |
+| Mon 10:00 PM | Brandin Podziemski | YES 15+ points | 52¢ | 70% | 16¢ | 10 | $5.38 | paper |
+| Mon 10:00 PM | Giannis Antetokounmpo | NO 30+ points | 50¢ | 67% | 15¢ | 10 | $5.18 | paper |
+| Mon 10:00 PM | Keaton Wagler | NO 4+ assists | 48¢ | 73% | 23¢ | 10 | $4.98 | paper |
+| Mon 10:00 PM | Khaman Maluach | NO 8+ rebounds | 60¢ | 81% | 19¢ | 8 | $4.94 | paper |
