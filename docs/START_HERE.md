@@ -108,6 +108,9 @@ code is right.
 | Price range | 5–95¢ | 10–90¢ |
 | Lifetime orders placed | $5,000 | $50 |
 
+The NBA bot's sportsbook lines and model inputs can come from the server
+itself rather than GitHub's scheduler ([deploy/NBA_SERVER_FEED.md](../deploy/NBA_SERVER_FEED.md)).
+
 NBA and NFL together ([`shared_account_risk.py`](../live/shared_account_risk.py)):
 at most $165 open, $180 placed per day and $5,050 placed in total. All
 three bots, including the spread maker, stop for the day after $20 of

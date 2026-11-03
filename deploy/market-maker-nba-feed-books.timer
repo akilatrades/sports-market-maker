@@ -1,0 +1,13 @@
+[Unit]
+Description=NBA sportsbook lines every 20 minutes (games within 6.5 hours only)
+
+[Timer]
+# Minutes 5, 25 and 45, as the GitHub schedule it replaces. With no game
+# within 6.5 hours a run fetches nothing and spends no Odds API credits.
+OnCalendar=*-*-* *:05,25,45:00 UTC
+AccuracySec=30s
+Persistent=false
+Unit=market-maker-nba-feed-books.service
+
+[Install]
+WantedBy=timers.target

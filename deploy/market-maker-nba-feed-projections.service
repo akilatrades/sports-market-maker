@@ -1,0 +1,34 @@
+[Unit]
+Description=NBA model inputs for the NBA bot, built on this server (optional; needs memory)
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=oneshot
+User=trader
+Group=trader
+WorkingDirectory=/home/trader/sports-market-maker-prod-auto
+# Public data only: box scores, ESPN, Kalshi's public market list. No keys.
+Environment=KALSHI_ENV=prod
+Environment=NBA_FEED_DIR=/home/trader/nba-feed
+Environment=PYTHONUNBUFFERED=1
+Environment=PYTHONDONTWRITEBYTECODE=1
+Environment=OPENBLAS_NUM_THREADS=1
+Environment=OMP_NUM_THREADS=1
+ExecStart=/home/trader/sports-market-maker-prod-auto/.venv/bin/python -m live.nba_feed projections
+# The model step peaks near 900 MB (measured offline). Capped, no swap, first
+# to be killed: a failed run leaves the last good inputs (or GitHub's) in use.
+Nice=19
+CPUWeight=10
+IOSchedulingClass=idle
+MemoryHigh=1100M
+MemoryMax=1300M
+MemorySwapMax=0
+OOMScoreAdjust=1000
+TimeoutStartSec=1500
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=/home/trader/nba-feed
+UMask=0077

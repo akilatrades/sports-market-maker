@@ -1,0 +1,36 @@
+[Unit]
+Description=NBA sportsbook lines for the NBA bot, fetched on this server (not GitHub's scheduler)
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=oneshot
+User=trader
+Group=trader
+WorkingDirectory=/home/trader/sports-market-maker-prod-auto
+# Only the Odds API key (ODDS_API_KEY=...). No Kalshi credentials, no orders.
+EnvironmentFile=/etc/market-maker-odds.env
+Environment=NBA_FEED_DIR=/home/trader/nba-feed
+Environment=PYTHONUNBUFFERED=1
+Environment=PYTHONDONTWRITEBYTECODE=1
+Environment=OPENBLAS_NUM_THREADS=1
+Environment=OMP_NUM_THREADS=1
+ExecStart=/home/trader/sports-market-maker-prod-auto/.venv/bin/python -m live.nba_feed books
+# Never compete with the trading bots on the small server: capped memory,
+# among the first killed if memory runs out, low CPU and disk priority.
+Nice=10
+CPUWeight=20
+IOSchedulingClass=idle
+MemoryHigh=256M
+MemoryMax=320M
+MemorySwapMax=0
+OOMScoreAdjust=900
+TimeoutStartSec=150
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+# The trading checkout and journals are read-only here; only the feed folder
+# is writable (the setup script creates it).
+ProtectHome=read-only
+ReadWritePaths=/home/trader/nba-feed
+UMask=0077
