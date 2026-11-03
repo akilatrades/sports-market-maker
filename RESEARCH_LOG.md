@@ -3806,3 +3806,150 @@ guarded against; watch it in the checkpoint.
 Tests: `tests/test_prod_nba_auto.py` (new order refuses a 61-minute price;
 resting order kept on a 90-minute one; 121 minutes drops it for both;
 nearby-line pricing end to end).
+
+## 2026-11-02: More fills for the spread maker and NBA (owner-directed, rule written before the sweeps)
+
+*The owner asked on 2 November for more fills from both bots ("don't be super
+selective"). Live fills are the scarce input: spread v5 had 9 in three days
+from 2,752 quotes, NBA v7 17 in three nights. This entry fixes, before any
+sweep is run, which looser settings are tried and how one is chosen.
+SIMULATED and in-sample; the chosen settings are then judged live on their
+own new version.*
+
+**Spread maker (replay `outputs/scan_24h`, one quote per side per hourly
+snapshot, held to settlement, start times S1+S2+S3, 85-minute floor).**
+Variants: lead window before the start {12 h (v5), 24 h (v3)} × markets per
+event {1 (v5), 2, all} × minimum spread {8¢ (v5), 6¢, 5¢, 4¢} × esports
+{off (v5), on} = 48. **Rule:** take the variant with the most simulated
+fills per day at `flow_share` 0.25 (median of 20 draws) among those whose
+flow-0.25 result is at least +2¢ a contract with event-clustered t ≥ 2 and
+positive in each half of the scan (earlier and later). Ties: fewer changes
+from v5.
+
+**NBA (replay `outputs/decompose/orders_no.csv.gz` in the games with logged
+book lines, first trade print reaching each 1-contract order).** Variants:
+book edge floor {0¢ (v7), −1¢, −2¢, −3¢} × nearby-line maximum gap {v7's
+(points 3, rebounds 2, assists 2, threes 1), 1.5×, 2×} = 12. Edge cap stays
+8¢. **Rule:** the variant with the most simulated fills among those whose
+result is at least +1¢ a contract with game-clustered t ≥ 1 at
+`flow_share` 0.25 and positive at first in line. Not testable here and
+decided on judgement, labelled as such: the NBA entry window.
+
+Both bots keep their sizes (spread 2 contracts, NBA 1) and dollar caps;
+those can follow once the new versions have fills.
+
+### Result (2026-11-02): spread v6 and NBA v8 chosen by the rule above
+
+SIMULATED, in-sample (`research/fills_first_sweep.py`,
+`outputs/research/fills_first_{spread,nba}.json`). 48 spread and 12 NBA
+variants, as planned; each rule picked its loosest qualifying variant.
+
+| Spread (293 scan days, flow 0.25) | fills a day | ¢ a contract | t | earlier / later half |
+|---|---|---|---|---|
+| v5: 12 h, 1 market an event, 8¢+, no esports | 8.9 | +8.1 | 6.9 | +9.6 / +1.7 |
+| 12 h, every market, 8¢+, no esports | 18.2 | +9.1 | 11.3 | +9.5 / +6.5 |
+| **v6: 24 h, every market, 4¢+, esports** | **62.7** | **+4.3** | **8.8** | +5.1 / +2.3 |
+
+| NBA (150 games with logged book lines, flow 0.25) | fills | ¢ a contract | t |
+|---|---|---|---|
+| v7: book edge ≥ 0¢, v7 gaps | 1,851 | +4.3 | 2.9 |
+| book edge ≥ −3¢, v7 gaps | 3,398 | +2.7 | 2.1 |
+| **v8: book edge ≥ −3¢, gaps ×2** | **3,481** | **+2.8** | **2.1** |
+
+Every spread variant passed the +2¢ bar, so the rule took the one with the
+most fills; the edge per fill roughly halves while fills grow about 7×.
+For NBA nearly all the extra fills come from the lower edge floor.
+
+**Live caveat.** The replay has been kinder than live trading: spread v3
+made about 0¢ a contract live (57 settled fills) against about +8¢ in this
+replay. Looser settings could turn a small live edge negative; the loss
+stops below bound that.
+
+**Changes (old → new).** Spread `live/spread_policy.py`, version
+`spread-maker-v6-fills-first`: `MIN_SPREAD_CENTS` 8 → 4, `MAX_LEAD_HOURS`
+12 → 24, `MAX_MARKETS_PER_EVENT` 1 → None, `QUOTE_ESPORTS` False → True;
+and three throughput limits that already bound v5 live (on 2 November it
+placed exactly 120 orders an hour from 09:00 UTC, its 20-a-pass limit, was
+near its 1,500-a-day limit by 18:00, and quoted 124 markets, which would
+need roughly $200 to cover): `MAX_ORDERS_PER_PASS` 20 → 60,
+`MAX_SUBMISSIONS_PER_DAY` 1,500 → 6,000, and `MAX_ACTIVE_COST` $50 → $100
+(owner's choice). Unchanged: 2 contracts, 2 net per market, −$15 daily and
+−$40 total loss stops, the 85-minute floor. NBA `live/prod_nba_auto.py`,
+version `nba-no-v8-more-fills`: `ENTRY_MIN_NET_EDGE` (and the resting floor)
+0¢ → −3¢; `WINDOW` 2–6 h → 1–6 h, and the submit-time clock check follows
+`WINDOW[0]` (judgement, not tested); `kalshi/line_translation.MAX_GAP`
+doubled (points 3 → 6, rebounds 2 → 4, assists 2 → 4, threes 1 → 2).
+Unchanged: 1 contract, the 8¢ cap, dollar caps, −$20/−$100 stops, the
+60/120-minute book ages, injury and roster vetoes. NFL unchanged.
+
+**Judged live** on their own versions by `research/live_checkpoint.py`.
+
+## 2026-11-03: College basketball: sell NO only on first-half spreads? (pre-registered)
+
+*The owner asked on 3 November for a bot for NCAA men's first-half spreads,
+the scan's best series, and a look at women's college basketball. Written
+before running.*
+
+**Background.** The 16 October scan (7-to-4-hour window) found
+`KXNCAAMB1HSPREAD` the strongest series: resting NO +16.4¢ a contract (223
+fills, t 4.0, both halves positive) while resting YES lost −15.7¢ (112
+fills, t −2.9); it alone survived the time holdout (+14.8¢, t 2.84 on the
+later half). The spread maker already quotes this series, but on **both**
+sides, so its YES quotes give the edge back. Women's: game winner NO +2.9¢
+(2,236 fills, t 2.1); spread NO −2.6¢ (303 fills); total NO +6.9¢ (153
+fills, t 0.9).
+
+**Question.** On a second sample, the spread maker's own 24-to-4-hour
+replay (`outputs/scan_24h`, hourly quotes one cent inside, held to
+settlement), does selling NO only beat quoting both sides on
+`KXNCAAMB1HSPREAD`?
+
+**Method.** v6 quote rule (spreads 4¢+, start known, 85 minutes to 24
+hours before it, every market). Per side, P&L per contract and fills,
+event-clustered t, at `flow_share` 0.25 (median of 20 draws) and first in
+line, by half of the scan.
+
+**Pass (KXNCAAMB1HSPREAD, flow 0.25):** NO side positive with t ≥ 2, YES
+side at or below zero, and NO-only dollars above both-sides dollars; NO
+positive in both halves. **If it passes,** the spread maker quotes only NO
+on this series. **Exploratory, reported but not decided here:** the same
+table for `KXNCAAMB1HTOTAL`, `KXNCAAWBGAME`, `KXNCAAWBSPREAD` and
+`KXNCAAWBTOTAL` (4 series × 3 side choices × 2 fill assumptions = 24
+cells), and the primary series at 8¢+.
+
+### Result (2026-11-03): PASS with one disclosed change. NO only, 5 contracts
+
+SIMULATED, in-sample (`research/ncaa_side_test.py`,
+`outputs/research/ncaa_side_test.json`). `KXNCAAMB1HSPREAD`, v6 quote rule,
+261 events from 18 February to 7 April 2026, `flow_share` 0.25:
+
+| Side | fills | ¢ a contract | t | dollars | halves (by this series' dates) |
+|---|---|---|---|---|---|
+| **NO only** | 271 | **+18.1** | **3.2** | **+$49.1** | +19.3 / +16.7 |
+| YES only | 109 | −10.0 | −1.1 | −$10.9 | −8.9 / −11.6 |
+| Both (today) | 378 | +10.0 | 4.0 | +$37.8 | |
+
+At 8¢+ spreads, NO only +22.5¢ (153 fills, t 4.0). First in line gives the
+same picture (NO +18.0¢, YES −7.9¢).
+
+**The disclosed change.** As written, "positive in both halves" used the
+scan's own earlier/later split, which is by calendar across all series; the
+whole college season falls in its earlier half, so the later half was empty.
+The halves above split this series' own dates at their median (20 March)
+instead. Every other check passed as written. The sample covers only late
+February to the tournament, not the early season.
+
+**Exploratory (24 cells, nothing decided from them).** First-half totals:
+NO −0.3¢, YES +9.1¢ (t 1.0), both +4.8¢. Women's game winner: both +4.5¢
+(t 1.7). Women's spreads: both +8.2¢ (t 3.3), with YES (+13.2¢) ahead of NO
+(+5.2¢). Women's totals: both +10.7¢ (t 3.2). The women's series are already
+quoted on both sides and stay that way. Capacity (exploratory): when a NO
+quote was traded through, the median trade was 59 contracts; 5-contract
+orders filled about 1,180 contracts at +18.0¢ against 520 at 2.
+
+**Change.** `live/spread_policy.py` (still v6, not yet deployed):
+`NO_ONLY_SERIES` = {`KXNCAAMB1HSPREAD`} (before: both sides),
+`SERIES_CONTRACTS` and `SERIES_MAX_NET` 5 for that series (before: 2 and 2;
+owner's choice of 5). Shadow quotes follow the same rule. Everything else in
+v6 is unchanged. Live so far: 186 quotes on this series since the season
+opened, no fills; the paper ledger has 9 settled fills (+8.1¢, t 1.1).

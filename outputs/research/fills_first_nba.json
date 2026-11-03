@@ -1,0 +1,240 @@
+{
+ "games": 150,
+ "variants": [
+  {
+   "gap": "v7",
+   "edge_floor_cents": 0,
+   "orders": 3116,
+   "translated_orders": 594,
+   "first_in_line": {
+    "fills": 1953,
+    "cents": 4.08,
+    "t": 2.85,
+    "dollars": 79.74
+   },
+   "flow_0.25": {
+    "fills": 1851,
+    "cents": 4.26,
+    "t": 2.87,
+    "dollars": 78.81
+   }
+  },
+  {
+   "gap": "v7",
+   "edge_floor_cents": -1,
+   "orders": 4118,
+   "translated_orders": 669,
+   "first_in_line": {
+    "fills": 2688,
+    "cents": 3.66,
+    "t": 2.67,
+    "dollars": 98.33
+   },
+   "flow_0.25": {
+    "fills": 2571,
+    "cents": 3.75,
+    "t": 2.64,
+    "dollars": 96.32
+   }
+  },
+  {
+   "gap": "v7",
+   "edge_floor_cents": -2,
+   "orders": 4867,
+   "translated_orders": 785,
+   "first_in_line": {
+    "fills": 3243,
+    "cents": 2.78,
+    "t": 2.13,
+    "dollars": 90.14
+   },
+   "flow_0.25": {
+    "fills": 3096,
+    "cents": 2.86,
+    "t": 2.16,
+    "dollars": 88.66
+   }
+  },
+  {
+   "gap": "v7",
+   "edge_floor_cents": -3,
+   "orders": 5293,
+   "translated_orders": 932,
+   "first_in_line": {
+    "fills": 3558,
+    "cents": 2.65,
+    "t": 2.04,
+    "dollars": 94.2
+   },
+   "flow_0.25": {
+    "fills": 3398,
+    "cents": 2.73,
+    "t": 2.08,
+    "dollars": 92.78
+   }
+  },
+  {
+   "gap": "1.5x",
+   "edge_floor_cents": 0,
+   "orders": 3172,
+   "translated_orders": 650,
+   "first_in_line": {
+    "fills": 1986,
+    "cents": 4.22,
+    "t": 2.97,
+    "dollars": 83.75
+   },
+   "flow_0.25": {
+    "fills": 1887,
+    "cents": 4.41,
+    "t": 3.0,
+    "dollars": 83.25
+   }
+  },
+  {
+   "gap": "1.5x",
+   "edge_floor_cents": -1,
+   "orders": 4184,
+   "translated_orders": 735,
+   "first_in_line": {
+    "fills": 2724,
+    "cents": 3.76,
+    "t": 2.76,
+    "dollars": 102.38
+   },
+   "flow_0.25": {
+    "fills": 2604,
+    "cents": 3.86,
+    "t": 2.73,
+    "dollars": 100.54
+   }
+  },
+  {
+   "gap": "1.5x",
+   "edge_floor_cents": -2,
+   "orders": 4943,
+   "translated_orders": 861,
+   "first_in_line": {
+    "fills": 3282,
+    "cents": 2.86,
+    "t": 2.21,
+    "dollars": 93.9
+   },
+   "flow_0.25": {
+    "fills": 3139,
+    "cents": 2.95,
+    "t": 2.25,
+    "dollars": 92.61
+   }
+  },
+  {
+   "gap": "1.5x",
+   "edge_floor_cents": -3,
+   "orders": 5384,
+   "translated_orders": 1023,
+   "first_in_line": {
+    "fills": 3606,
+    "cents": 2.69,
+    "t": 2.08,
+    "dollars": 96.85
+   },
+   "flow_0.25": {
+    "fills": 3443,
+    "cents": 2.77,
+    "t": 2.09,
+    "dollars": 95.41
+   }
+  },
+  {
+   "gap": "2x",
+   "edge_floor_cents": 0,
+   "orders": 3209,
+   "translated_orders": 687,
+   "first_in_line": {
+    "fills": 2003,
+    "cents": 4.16,
+    "t": 2.95,
+    "dollars": 83.23
+   },
+   "flow_0.25": {
+    "fills": 1898,
+    "cents": 4.37,
+    "t": 3.01,
+    "dollars": 82.93
+   }
+  },
+  {
+   "gap": "2x",
+   "edge_floor_cents": -1,
+   "orders": 4230,
+   "translated_orders": 781,
+   "first_in_line": {
+    "fills": 2748,
+    "cents": 3.76,
+    "t": 2.78,
+    "dollars": 103.23
+   },
+   "flow_0.25": {
+    "fills": 2635,
+    "cents": 3.87,
+    "t": 2.77,
+    "dollars": 101.96
+   }
+  },
+  {
+   "gap": "2x",
+   "edge_floor_cents": -2,
+   "orders": 5008,
+   "translated_orders": 926,
+   "first_in_line": {
+    "fills": 3317,
+    "cents": 2.91,
+    "t": 2.26,
+    "dollars": 96.39
+   },
+   "flow_0.25": {
+    "fills": 3169,
+    "cents": 3.01,
+    "t": 2.31,
+    "dollars": 95.24
+   }
+  },
+  {
+   "gap": "2x",
+   "edge_floor_cents": -3,
+   "orders": 5463,
+   "translated_orders": 1102,
+   "first_in_line": {
+    "fills": 3647,
+    "cents": 2.69,
+    "t": 2.09,
+    "dollars": 98.14
+   },
+   "flow_0.25": {
+    "fills": 3481,
+    "cents": 2.78,
+    "t": 2.11,
+    "dollars": 96.86
+   }
+  }
+ ],
+ "pick": {
+  "gap": "2x",
+  "edge_floor_cents": -3,
+  "orders": 5463,
+  "translated_orders": 1102,
+  "first_in_line": {
+   "fills": 3647,
+   "cents": 2.69,
+   "t": 2.09,
+   "dollars": 98.14
+  },
+  "flow_0.25": {
+   "fills": 3481,
+   "cents": 2.78,
+   "t": 2.11,
+   "dollars": 96.86
+  }
+ },
+ "note": "SIMULATED, in-sample; RESEARCH_LOG.md 2026-11-02"
+}

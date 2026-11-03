@@ -16,13 +16,19 @@ from pathlib import Path
 # v5 (2026-10-30, RESEARCH_LOG.md "Spread maker v5"): new quotes only within
 # MAX_LEAD_HOURS of the start, one market per event, 2 contracts, $50 cap.
 # (v4 is the separate completion pilot, live/prod_spread_v4.py.)
-STRATEGY_VERSION = "spread-maker-v5-12h-one-per-event"
+# v6 (2026-11-02, RESEARCH_LOG.md "More fills for the spread maker and NBA",
+# owner: more fills): spreads of 4c or more (v5: 8c), quotes from 24 hours
+# before the start (v5: 12), every market of an event (v5: one), esports
+# back on, $100 open (v5: $50), 60 orders a pass (v5: 20) and 6,000 a day
+# (v5: 1,500). Replay (simulated, in-sample, flow 0.25): about 63 fills a
+# day at +4.3c a contract (t 8.8) against v5's 9 a day at +8.1c (t 6.9).
+STRATEGY_VERSION = "spread-maker-v6-fills-first"
 # The shared-risk cohort journal lives in STATE; the owner creates ARM_MARKER
 # to allow live orders.
 STATE = Path("/home/trader/prod-spread-auto")
 ARM_MARKER = Path("/etc/market-maker-spread.enabled")
 
-MIN_SPREAD_CENTS = 8
+MIN_SPREAD_CENTS = 4  # v6; v1-v5: 8
 WINDOW_HOURS = (4.0, 24.0)  # hours before the market's expected expiration (v2: 4-7)
 PRICE_RANGE_CENTS = (2, 98)  # both of our quotes must lie inside this range
 # Sizes and stops: owner's 5-contract amendment (RESEARCH_LOG.md, 2026-10-22,
@@ -33,18 +39,38 @@ PRICE_RANGE_CENTS = (2, 98)  # both of our quotes must lie inside this range
 # (live v3: 60 of 62 markets filled on one side only, held to settlement).
 CONTRACTS = 2  # largest order; it shrinks to stay inside MAX_NET_PER_MARKET
 MAX_NET_PER_MARKET = 2  # held plus resting on one side of a market, contracts
-MAX_ACTIVE_COST = 50.00  # resting orders plus held contracts at cost, dollars
+# v6 (2026-11-03, RESEARCH_LOG.md "College basketball: sell NO only on
+# first-half spreads?", owner chose the size): NCAA men's first-half spreads
+# are quoted on the NO side only, 5 contracts an order and 5 net a market
+# (before: both sides, 2 and 2 like every series). Replay (simulated,
+# in-sample, flow 0.25): NO +18.1c a contract (271 fills, t 3.2), YES -10.0c;
+# 5-contract orders still filled at about 18c. The 16 October scan found the
+# same split (NO +16.4c, t 4.0; YES -15.7c).
+NO_ONLY_SERIES = frozenset({"KXNCAAMB1HSPREAD"})
+SERIES_CONTRACTS = {"KXNCAAMB1HSPREAD": 5}  # else CONTRACTS
+SERIES_MAX_NET = {"KXNCAAMB1HSPREAD": 5}  # else MAX_NET_PER_MARKET
+# v6 (owner, 2026-11-02): $50 -> $100. On 2 November v5 quoted 124 markets;
+# quoting them all, both sides, would need roughly $200, so $50 was already
+# choosing which to quote.
+MAX_ACTIVE_COST = 100.00  # resting orders plus held contracts at cost, dollars
 # v5 (2026-10-30), new rule: at most this many markets of one event are
 # quoted or held at a time. A market already held comes first, then one with
 # our resting quotes, then the widest spread. Live v3 held both markets of
 # one match paying on the same result in 4 matches (before: no limit).
-MAX_MARKETS_PER_EVENT = 1
+# v6: None (no limit; v5: 1). The replay's later half made +6.5c with every
+# market of an event against +1.7c with one (flow 0.25, 12 h, 8c).
+MAX_MARKETS_PER_EVENT = None
 DAILY_LOSS_STOP = 15.00  # own realized loss, New York day, dollars
 CUMULATIVE_LOSS_STOP = 40.00  # own realized loss since launch, dollars
-MAX_ORDERS_PER_PASS = 20
+# v6: 20 -> 60. From 09:00 UTC on 2 November v5 placed exactly 120 an hour
+# (20 a pass): the limit, not the market, set its pace. The pass deadline
+# below still stops new orders in a slow pass.
+MAX_ORDERS_PER_PASS = 60
 # v3: 1,500 (owner, 2026-10-23; v1-v2: 300). Each quote is re-posted at
 # least hourly, so 300 would run out by early morning with ~30 markets quoted.
-MAX_SUBMISSIONS_PER_DAY = 1500
+# v6: 1,500 -> 6,000. v5 reached about 1,380 by 18:00 UTC on 2 November;
+# each quote is re-posted about 1.6 times an hour as prices move.
+MAX_SUBMISSIONS_PER_DAY = 6000
 ORDER_LIFETIME_MINUTES = 65  # orders expire on the exchange even if the bot stops
 # No new order after this many seconds from process start (lock waits count).
 # Checked again just before each order is journaled; from there one order's
@@ -65,7 +91,11 @@ MIN_LEAD_MINUTES = 85  # ORDER_LIFETIME_MINUTES + CANCEL_LEAD_MINUTES
 # +3.3c a contract (flow 0.25: +1.8c) against +6.3c to +7.9c for the other
 # bins (research.spread_flow_timing; observed, not a passed test). Quotes
 # already resting further out are kept until they expire or are requoted.
-MAX_LEAD_HOURS = 12.0
+# v6 (2026-11-02): 12 -> 24 hours, back to v3's reach. With every market of
+# an event, 4c spreads and esports, the 24-hour window made +4.3c (t 8.8;
+# later half +2.3c) and the 12-hour one +4.2c (t 8.4) at flow 0.25, with
+# about a third more fills (research.fills_first_sweep, simulated).
+MAX_LEAD_HOURS = 24.0
 # Twice the timer's 10 minutes, so a start learned or moved late is still
 # caught before the event.
 CANCEL_LEAD_MINUTES = 20
@@ -175,7 +205,10 @@ ESPORTS_SERIES = frozenset(
         "KXRLGAME",
     }
 )
-QUOTE_ESPORTS = False
+# v6 (2026-11-02): back on (v5: off). Replay: esports raise fills by about a
+# third at the chosen settings and stayed positive; the live v3 result
+# (-3.7c, t -0.55) is too small to tell from zero.
+QUOTE_ESPORTS = True
 MAX_START_LOOKUPS_PER_PASS = 60  # v2: 30; the 24-hour window holds more events
 START_LOOKUP_SECONDS = 45  # no milestone read after this, from process start
 

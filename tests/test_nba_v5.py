@@ -171,11 +171,14 @@ def test_new_price_band_is_5_to_95_cents():
 
 @pytest.mark.parametrize(
     "p_book, expected",
-    [(0.48, None), (0.49, None), (0.50, "current_net_edge_below_minimum")],
+    [(0.48, None), (0.52, None), (0.53, "current_net_edge_below_minimum")],
 )
-def test_resting_orders_are_kept_at_zero_edge_and_cancelled_below(p_book, expected):
+def test_resting_orders_are_kept_down_to_the_floor_and_cancelled_below(
+    p_book, expected
+):
+    # v8 floor: -3c (v5-v7: 0c).
     row = priced().iloc[0].copy()
-    row["p_book"] = p_book  # NO bought at 51c: edge +1c, 0c, -1c
+    row["p_book"] = p_book  # NO bought at 51c: edge +1c, -3c, -4c
     intent = {
         "ticker": row.ticker,
         "price_cents": 51,
@@ -348,11 +351,13 @@ def test_unfunded_shard_after_an_order_still_reports_it_placed(
     assert report["placed"] is True and report["orders_placed_this_pass"] == 1
 
 
-def test_entry_edge_floor_is_zero_after_the_estimated_fee(tmp_path, no_fees):
+def test_entry_edge_floor_is_minus_three_cents_after_the_estimated_fee(
+    tmp_path, no_fees
+):
     # NO at 51c. The candidate stage subtracts an estimated maker fee (about
-    # 0.44c here) even when the live fee is zero, so the effective floor is
-    # just above zero: a book probability up to 0.4856 passes, 0.486 does not.
-    for p_book, expected in ((0.48, 3), (0.4856, 3), (0.486, 0)):
+    # 0.44c here) even when the live fee is zero, so with v8's -3c floor a
+    # book probability up to 0.5156 passes and 0.516 does not (v7: 0.4856).
+    for p_book, expected in ((0.48, 3), (0.5156, 3), (0.516, 0)):
         frame = several(3)
         frame["p_book"] = p_book
         client = Client()

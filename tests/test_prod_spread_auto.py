@@ -22,6 +22,7 @@ TICKER = "KXDOTA2GAME-26OCT221800AB-A"
 REAL_LIMIT_TESTS = {
     "test_pilot_limits_are_the_owner_approved_ones",
     "test_v5_quotes_two_contracts_a_side_and_caps_net_at_two",
+    "test_ncaa_first_half_spreads_sell_no_only_five_contracts",
 }
 
 
@@ -31,8 +32,8 @@ def logic_sized_at_five(request, monkeypatch):
     orders (v2's size, and v3's again since "5 contracts and higher caps");
     they pin it so a later size change does not silently change them. The
     live values are pinned in REAL_LIMIT_TESTS."""
-    # The test market is a Dota 2 game; v5 stops new esports quotes, which
-    # test_v5_stops_new_esports_quotes covers with the real setting.
+    # The test market is a Dota 2 game. v6 quotes esports again (v5 did not);
+    # test_v5_stops_new_esports_quotes pins the switch off to test it.
     if request.node.originalname != "test_v5_stops_new_esports_quotes":
         monkeypatch.setattr(P, "QUOTE_ESPORTS", True)
     if request.node.originalname not in REAL_LIMIT_TESTS:
@@ -61,8 +62,11 @@ def market(ticker=TICKER, bid=0.40, ask=0.52, hours=5.0, status="active"):
 def test_quote_prices_one_cent_inside_wide_spreads_only():
     # YES bid 41c and NO bid 49c (the same as a YES offer at 51c).
     assert bot.quote_prices(40, 52) == (41, 49)
-    assert bot.quote_prices(40, 48) == (41, 53)  # exactly 8c is enough
-    assert bot.quote_prices(40, 47) is None  # 7c spread
+    assert bot.quote_prices(40, 48) == (41, 53)
+    # v6 (2026-11-02): 4c is enough (v1-v5 needed 8c); 3c is not.
+    assert bot.quote_prices(40, 47) == (41, 54)
+    assert bot.quote_prices(40, 44) == (41, 57)
+    assert bot.quote_prices(40, 43) is None
     assert bot.quote_prices(0, 10) is None  # no YES bid: one-sided book
     assert bot.quote_prices(90, 100) is None  # no YES offer: one-sided book
     assert bot.quote_prices(52, 40) is None  # crossed book
@@ -77,7 +81,7 @@ def test_eligible_markets_filters_window_series_and_other_bots():
             market(),
             market("KXDOTA2GAME-26OCT221800XY-B", hours=3.0),
             market("KXDOTA2GAME-26OCT221800XY-C", hours=P.WINDOW_HOURS[1] + 1),
-            market("KXDOTA2GAME-26OCT221800XY-D", ask=0.45),
+            market("KXDOTA2GAME-26OCT221800XY-D", ask=0.43),  # 3c: too narrow
             market("KXDOTA2GAME-26OCT221800XY-E", status="closed"),
             market("KXDOTA2GAME-26OCT221800XY-F"),
             market("KXNBAPTS-26OCT22AB-P10"),
@@ -739,7 +743,7 @@ def test_unarmed_auto_run_is_shadow_only(world, monkeypatch, tmp_path, capsys):
     check_start = (soon - timedelta(hours=2)).astimezone(bot.NY)
     check = f"KXDOTA2GAME-{check_start:%y%b%d%H%M}".upper() + "CDEF"
     world["quotes"][f"{check}-C"] = {
-        **market(f"{check}-C", bid=0.40, ask=0.45),  # too narrow to quote
+        **market(f"{check}-C", bid=0.40, ask=0.43),  # too narrow to quote
         "expected_expiration_time": soon.isoformat(),
     }
 
@@ -1097,10 +1101,18 @@ def test_pilot_limits_are_the_owner_approved_ones():
     # draft: one_off_milestone trusted, 35 median offsets) and "5 contracts
     # and higher caps" (first v3 draft: 2 and 2, $60 open, -$10 a day), then
     # "Spread maker v5" (2026-10-30; v3: 5 and 5, $120 open, no lead or
-    # per-event limit). Change these only through a new, recorded amendment.
-    assert P.STRATEGY_VERSION == "spread-maker-v5-12h-one-per-event"
+    # per-event limit), then "More fills for the spread maker and NBA"
+    # (2026-11-02, v6; v5: 8c spreads, 12 hours, one market per event,
+    # esports off, $50 open, 20 a pass, 1,500 a day). Change these only
+    # through a new, recorded amendment.
+    assert P.STRATEGY_VERSION == "spread-maker-v6-fills-first"
     assert (P.CONTRACTS, P.MAX_NET_PER_MARKET) == (2, 2)
-    assert (P.MAX_LEAD_HOURS, P.MAX_MARKETS_PER_EVENT) == (12.0, 1)
+    assert (P.MAX_LEAD_HOURS, P.MAX_MARKETS_PER_EVENT) == (24.0, None)
+    assert P.MIN_SPREAD_CENTS == 4 and P.QUOTE_ESPORTS is True
+    # 2026-11-03, "College basketball: sell NO only on first-half spreads?"
+    # (before: both sides, 2 contracts, 2 net, like every series).
+    assert P.NO_ONLY_SERIES == {"KXNCAAMB1HSPREAD"} <= set(P.SERIES)
+    assert P.SERIES_CONTRACTS == P.SERIES_MAX_NET == {"KXNCAAMB1HSPREAD": 5}
     assert P.ESPORTS_SERIES <= set(P.SERIES) and "KXCS2GAME" in P.ESPORTS_SERIES
     assert P.MAX_START_LOOKUPS_PER_PASS == 60
     assert P.TRUSTED_MILESTONE_TYPES == {
@@ -1131,12 +1143,12 @@ def test_pilot_limits_are_the_owner_approved_ones():
     assert P.OFFSET_SUSPEND_DAYS == 2
     assert not P.NO_START_SERIES & set(P.SERIES_START_OFFSET_HOURS)
     assert (P.MAX_ACTIVE_COST, P.DAILY_LOSS_STOP, P.CUMULATIVE_LOSS_STOP) == (
-        50,
+        100,
         15,
         40,
     )
-    assert (P.MAX_ORDERS_PER_PASS, P.MAX_SUBMISSIONS_PER_DAY) == (20, 1500)
-    assert P.MIN_SPREAD_CENTS == 8 and P.WINDOW_HOURS == (4.0, 24.0)
+    assert (P.MAX_ORDERS_PER_PASS, P.MAX_SUBMISSIONS_PER_DAY) == (60, 6000)
+    assert P.MIN_SPREAD_CENTS == 4 and P.WINDOW_HOURS == (4.0, 24.0)  # v6; v5: 8c
     # Account-wide total stop -$60 -> -$100 on 2026-10-23 ("NBA rules v6");
     # the spread maker's own limits above are unchanged, 8c spreads included.
     assert shared.ACCOUNT_LOSS_STOPS == {"daily": 20.0, "cumulative": 100.0}
@@ -2018,7 +2030,8 @@ def test_v5_quotes_two_contracts_a_side_and_caps_net_at_two(world):
 # ------------------------------------------- v5: lead limit, one market per event
 
 
-def test_v5_new_quotes_need_the_start_within_twelve_hours():
+def test_v5_new_quotes_need_the_start_within_twelve_hours(monkeypatch):
+    monkeypatch.setattr(P, "MAX_LEAD_HOURS", 12.0)  # v5's value; v6 uses 24
     # NOW is 18:00 UTC on 22 Oct; ticker times are New York time (UTC-4).
     near = "KXDOTA2GAME-26OCT222300XY-A"  # starts 03:00 UTC: 9 hours ahead
     edge = "KXDOTA2GAME-26OCT230200XY-A"  # 06:00 UTC: exactly 12 hours
@@ -2038,8 +2051,8 @@ def test_v5_new_quotes_need_the_start_within_twelve_hours():
     assert far in postable
 
 
-def test_v5_stops_new_esports_quotes():
-    assert P.QUOTE_ESPORTS is False  # the real v5 setting
+def test_v5_stops_new_esports_quotes(monkeypatch):
+    monkeypatch.setattr(P, "QUOTE_ESPORTS", False)  # v5's setting; v6 quotes them
     reasons = Counter()
     rows = bot.eligible_markets([market()], "KXDOTA2GAME", NOW, reasons=reasons)
     assert rows == [] and reasons["esports_off"] == 1
@@ -2058,14 +2071,16 @@ def _m(ticker, yes=41, no=49):
     }
 
 
-def test_v5_quotes_one_market_per_event_widest_first():
+def test_v5_quotes_one_market_per_event_widest_first(monkeypatch):
+    monkeypatch.setattr(P, "MAX_MARKETS_PER_EVENT", 1)  # v5's limit; v6: None
     a, b = "KXCS2GAME-26OCT230700AABB-AA", "KXCS2GAME-26OCT230700AABB-BB"
     other = "KXCS2GAME-26OCT230900CCDD-CC"
     quotes = bot.desired_quotes([_m(a), _m(b), _m(other)], {})
     assert {t for t, _ in quotes} == {a, other}  # input order is widest first
 
 
-def test_v5_a_held_market_keeps_its_event_and_blocks_the_other():
+def test_v5_a_held_market_keeps_its_event_and_blocks_the_other(monkeypatch):
+    monkeypatch.setattr(P, "MAX_MARKETS_PER_EVENT", 1)
     a, b = "KXCS2GAME-26OCT230700AABB-AA", "KXCS2GAME-26OCT230700AABB-BB"
     # Held in b (listed second): only b is quoted, so it can be paired off.
     quotes = bot.desired_quotes([_m(a), _m(b)], {b: 2.0})
@@ -2075,10 +2090,26 @@ def test_v5_a_held_market_keeps_its_event_and_blocks_the_other():
     assert bot.desired_quotes([_m(a)], {b: -1.0}) == {}
 
 
-def test_v5_resting_quotes_keep_their_market_before_a_wider_one():
+def test_v5_resting_quotes_keep_their_market_before_a_wider_one(monkeypatch):
+    monkeypatch.setattr(P, "MAX_MARKETS_PER_EVENT", 1)
     a, b = "KXCS2GAME-26OCT230700AABB-AA", "KXCS2GAME-26OCT230700AABB-BB"
     quotes = bot.desired_quotes([_m(a), _m(b)], {}, resting={b})
     assert {t for t, _ in quotes} == {b}
+
+
+def test_v6_quotes_every_market_of_an_event_even_when_one_is_held():
+    a, b = "KXCS2GAME-26OCT230700AABB-AA", "KXCS2GAME-26OCT230700AABB-BB"
+    quotes = bot.desired_quotes([_m(a), _m(b)], {})
+    assert {t for t, _ in quotes} == {a, b}
+    held = bot.desired_quotes([_m(a), _m(b)], {b: 2.0})
+    assert {t for t, _ in held} == {a, b}
+
+
+def test_v6_new_quotes_reach_24_hours_before_the_start():
+    # NOW is 18:00 UTC on 22 Oct; ticker times are New York time (UTC-4).
+    far = "KXDOTA2GAME-26OCT230300XY-A"  # 07:00 UTC: 13 hours ahead
+    rows = bot.eligible_markets([market(far, hours=17.0)], "KXDOTA2GAME", NOW)
+    assert [(r["ticker"], r["postable"]) for r in rows] == [(far, True)]
 
 
 # ------------------------------------------- v3: changes after review
@@ -2575,3 +2606,32 @@ def test_team_codes_starting_with_a_digit_are_read_as_untimed():
     # Known limit (second review): such tickers lose their time, so the event
     # is dated by milestones or the series gap instead (costs quotes only).
     assert bot.ticker_start("KXCS2GAME-26OCT221800100TFAZE") is None
+
+
+# ------------------------------------- v6: NCAA men's first-half spreads
+
+
+def test_ncaa_first_half_spreads_sell_no_only_five_contracts():
+    t = "KXNCAAMB1HSPREAD-26NOV03DUKEUNC-DUKE7"
+    assert bot.desired_quotes([_m(t)], {}) == {(t, "no"): (49, 5)}
+    # Held NO is negative net: 3 held leaves room for 2 more, 5 for none.
+    assert bot.desired_quotes([_m(t)], {t: -3.0}) == {(t, "no"): (49, 2)}
+    assert bot.desired_quotes([_m(t)], {t: -5.0}) == {}
+    # Every other series keeps both sides at the normal size.
+    other = "KXNCAAMB1HTOTAL-26NOV03DUKEUNC-T140"
+    assert bot.desired_quotes([_m(other)], {}) == {
+        (other, "yes"): (41, 2),
+        (other, "no"): (49, 2),
+    }
+
+
+def test_shadow_quotes_follow_the_no_only_rule():
+    t = "KXNCAAMB1HSPREAD-26NOV03DUKEUNC-DUKE7"
+    row = {
+        **_m(t),
+        "series": "KXNCAAMB1HSPREAD",
+        "spread": 12,
+        "expiration_utc": (NOW + timedelta(hours=5)).isoformat(),
+    }
+    posted = bot.shadow_post([], [row], NOW)
+    assert [(e["side"], e["contracts"]) for e in posted] == [("no", 5)]

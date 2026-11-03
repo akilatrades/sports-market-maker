@@ -759,7 +759,9 @@ def shadow_post(events, markets, now):
     cutoff = (now - timedelta(minutes=P.SHADOW_REPOST_MINUTES)).isoformat()
     new = []
     for m in markets:
-        for side, price in (("yes", m["yes_price"]), ("no", m["no_price"])):
+        prices = {"yes": m["yes_price"], "no": m["no_price"]}
+        for side in quoted_sides(m["ticker"]):
+            price = prices[side]
             if recent.get((m["ticker"], side), "") > cutoff:
                 continue
             new.append(
@@ -771,7 +773,7 @@ def shadow_post(events, markets, now):
                     "event_ticker": m["event_ticker"],
                     "side": side,
                     "price_cents": price,
-                    "contracts": P.CONTRACTS,
+                    "contracts": order_size(m["ticker"]),
                     "spread": m["spread"],
                     "posted_utc": now.isoformat(),
                     "expires_utc": (
@@ -1627,12 +1629,15 @@ def event_of(ticker):
 
 
 def one_market_per_event(markets, positions, resting=frozenset()):
-    """At most MAX_MARKETS_PER_EVENT markets of each event (v5).
+    """At most MAX_MARKETS_PER_EVENT markets of each event (v5). None (v6)
+    means no limit: every market passes, as in the v6 replay.
 
     A market already held comes first, then one with our resting quotes,
     then the input order (widest spread first). A market whose event is held
     through a different market is dropped, wherever that market is listed.
     """
+    if P.MAX_MARKETS_PER_EVENT is None:
+        return list(markets)
     held = {}
     for ticker, qty in positions.items():
         if abs(qty) > 1e-9:
@@ -1655,24 +1660,48 @@ def one_market_per_event(markets, positions, resting=frozenset()):
     return chosen
 
 
+def series_of(ticker):
+    """Kalshi tickers start with their series, then a hyphen."""
+    return str(ticker).split("-", 1)[0]
+
+
+def quoted_sides(ticker):
+    """("yes", "no"), or ("no",) for a NO-only series (v6, NCAA 1H spreads)."""
+    return ("no",) if series_of(ticker) in P.NO_ONLY_SERIES else ("yes", "no")
+
+
+def order_size(ticker):
+    """Largest order on this market: the series' own size, else CONTRACTS."""
+    return P.SERIES_CONTRACTS.get(series_of(ticker), P.CONTRACTS)
+
+
+def net_cap(ticker):
+    """Held plus resting on one side: the series' own cap, else
+    MAX_NET_PER_MARKET."""
+    return P.SERIES_MAX_NET.get(series_of(ticker), P.MAX_NET_PER_MARKET)
+
+
 def desired_quotes(markets, positions, resting=frozenset()):
     """{(ticker, side): (price, contracts)} after the inventory cap.
 
     A YES order is at most the room left before net YES reaches the cap
     (positive net = YES held), a NO order likewise; a side with no room is
-    not quoted. Only one market per event is quoted (v5).
+    not quoted. v5 quoted one market per event; v6 quotes them all, and only
+    the NO side of a NO-only series.
     """
     out = {}
     for m in one_market_per_event(markets, positions, resting):
         net = positions.get(m["ticker"], 0.0)
+        cap = net_cap(m["ticker"])
         rooms = {
-            "yes": math.floor(P.MAX_NET_PER_MARKET - net + 1e-9),
-            "no": math.floor(P.MAX_NET_PER_MARKET + net + 1e-9),
+            "yes": math.floor(cap - net + 1e-9),
+            "no": math.floor(cap + net + 1e-9),
         }
-        for side, price in (("yes", m["yes_price"]), ("no", m["no_price"])):
-            size = int(min(P.CONTRACTS, rooms[side]))
+        prices = {"yes": m["yes_price"], "no": m["no_price"]}
+        for side in quoted_sides(m["ticker"]):
+            size = int(min(order_size(m["ticker"]), rooms[side]))
             if size >= 1:
-                out[(m["ticker"], side)] = (price, size)
+                out[(m["ticker"], side)] = (prices[side], size)
     return out
 
 

@@ -114,12 +114,16 @@ def test_separate_risk_caps_and_state():
     # RESEARCH_LOG.md, 2026-10-23, "NBA rules v6" (v5: 1 contract, $25 a
     # game, $2,000 lifetime, -$60 total), then 2026-10-30, "NBA rules v7"
     # (v6: 3 contracts, two books or the model, 15c edges, 120/75-minute
-    # book ages). Change only through a new amendment.
-    assert nba.STRATEGY_VERSION == "nba-no-v7-book-priced"
+    # book ages), then 2026-11-02, "More fills for the spread maker and NBA"
+    # (v8; v7: 0c edge floor, 2-6 hour entries, v7's nearby-line gaps).
+    # Change only through a new amendment.
+    assert nba.STRATEGY_VERSION == "nba-no-v8-more-fills"
     assert {
         "nba-no-v5-one-contract-breadth",
         "nba-no-v6-three-contracts",
+        "nba-no-v7-book-priced",
     } <= nba.PRIOR_VERSIONS
+    assert (nba.ENTRY_MIN_NET_EDGE, nba.WINDOW) == (-0.03, (1.0, 6.0))
     assert (nba.MIN_BOOKS, nba.BOOK_MAX_AGE_MINUTES) == (1, 60)
     # 2026-11-02, "NBA v7: resting orders keep 120-minute book prices" (was 60).
     assert nba.RESTING_BOOK_MAX_AGE_MINUTES == 120
@@ -138,13 +142,15 @@ def test_separate_risk_caps_and_state():
     assert nba.PRICE_BAND_CENTS == (5, 95)
     assert nba.MAX_REALIZED_DAILY_LOSS == 20
     assert nba.MAX_REALIZED_CUMULATIVE_LOSS == 100
-    assert nba.WINDOW == (2.0, 6.0)
+    assert nba.WINDOW == (1.0, 6.0)  # v8; v7: (2.0, 6.0)
 
 
-def test_nba_clock_rejects_below_two_hours_at_submission():
+def test_nba_clock_rejects_below_the_entry_window_at_submission():
+    # v8: the minimum lead is WINDOW[0] = 1 hour (v7: 2 hours).
     assert nba.pre_submit_kickoff_ok(NOW + timedelta(hours=4), NOW)
-    assert not nba.pre_submit_kickoff_ok(NOW + timedelta(hours=2), NOW)
-    assert not nba.pre_submit_kickoff_ok(NOW + timedelta(hours=2, seconds=20), NOW)
+    assert nba.pre_submit_kickoff_ok(NOW + timedelta(hours=1, minutes=5), NOW)
+    assert not nba.pre_submit_kickoff_ok(NOW + timedelta(hours=1), NOW)
+    assert not nba.pre_submit_kickoff_ok(NOW + timedelta(hours=1, seconds=20), NOW)
 
 
 def test_missing_projection_or_meta_blocks_new_orders(tmp_path):
@@ -271,7 +277,7 @@ def test_selection_funnel_counts_each_gate_without_loosening_it():
         "passed_edge_sanity": 1,
         "not_previously_attempted": 1,
     }
-    f.loc[0, "hours_to_tip"] = 1.5
+    f.loc[0, "hours_to_tip"] = 0.5  # outside v8's 1-6 hour entry window
     stats = {}
     assert nba.select_candidates(f, [], {"active": []}, NOW, diagnostics=stats) == []
     assert stats["in_entry_window"] == 0
@@ -347,7 +353,8 @@ def test_resting_quote_retains_order_while_edge_remains_valid():
             {"book_n": 1, "requires_book": True},
             "fresh_two_book_consensus_missing",
         ),
-        ({"p_book": 0.51}, "current_net_edge_below_minimum"),
+        ({"p_book": 0.51}, None),  # -2c: inside v8's -3c floor
+        ({"p_book": 0.53}, "current_net_edge_below_minimum"),  # -4c
         ({"p_book": float("nan"), "book_n": 0}, "fresh_two_book_consensus_missing"),
         ({"requires_book": "unknown"}, "unverified_book_requirement"),
     ],
@@ -399,7 +406,7 @@ def test_resting_recheck_cancels_only_bad_order_and_journals_reason(
     row = priced().iloc[0]
     ticker = str(row.ticker)
     row = row.copy()
-    row["p_book"] = 0.52  # negative after-fee remaining edge
+    row["p_book"] = 0.54  # -4c after-fee remaining edge: below v8's -3c floor
     events = [
         {
             "event": "intent",
@@ -709,7 +716,7 @@ def test_resting_edge_rule_does_not_cancel_accepted_positive_edge():
         "probability_source": "sportsbook",
     }
     market = {"status": "active", "yes_bid_dollars": 0.40, "yes_ask_dollars": 0.50}
-    assert nba.RESTING_MIN_NET_EDGE == nba.ENTRY_MIN_NET_EDGE == 0.0
+    assert nba.RESTING_MIN_NET_EDGE == nba.ENTRY_MIN_NET_EDGE == -0.03
     assert nba.resting_cancel_reason(row, intent, market, 0.0) is None
 
 
@@ -767,13 +774,13 @@ def test_invalid_reported_historical_minutes_fail_closed(tmp_path, monkeypatch):
 
 def test_late_window_candidates_are_shadow_only_even_if_they_qualify(tmp_path):
     row = priced()
-    row.loc[0, "tip_utc"] = pd.Timestamp(NOW + timedelta(hours=1))
-    row.loc[0, "hours_to_tip"] = 1.0
+    row.loc[0, "tip_utc"] = pd.Timestamp(NOW + timedelta(minutes=45))
+    row.loc[0, "hours_to_tip"] = 0.75
 
-    # Regular production window stays at 2-6 hours. The research cohort
+    # Production window: 1-6 hours (v8; v7: 2-6). The research cohort
     # observes but can NEVER feed the production POST loop.
     assert nba.select_candidates(row, [], {"active": []}, NOW) == []
-    study = nba.select_candidates(row, [], {"active": []}, NOW, window=(0.5, 2.0))
+    study = nba.select_candidates(row, [], {"active": []}, NOW, window=(0.5, 1.0))
     assert len(study) == 1
 
     class NoTradingClient:
@@ -901,11 +908,11 @@ def test_v4_handback_waits_for_v3_resting_orders():
     assert nba.legacy_resting_count([v3], accepted, []) == 0
 
 
-@pytest.mark.parametrize("hours_to_tip", [1.95, 1.0, 0.5, 0.05])
+@pytest.mark.parametrize("hours_to_tip", [0.95, 0.5, 0.05])
 def test_accepted_nba_order_may_stay_resting_near_tip(hours_to_tip):
     # These quotes could never be new *entries* this close to tip,
     # but already-accepted orders must not be auto-canceled solely because
-    # the 2h entry cutoff passed.
+    # the entry cutoff (1 hour in v8; 2 in v7) passed.
     row = priced().iloc[0].copy()
     row["hours_to_tip"] = hours_to_tip
     intent = {

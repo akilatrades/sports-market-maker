@@ -16,8 +16,12 @@ from scipy.stats import nbinom
 # moments, 2017-18 to 2024-25 box scores, players with 20+ games
 # (research/line_translation.py dispersion(); nothing from 2025-26).
 DISPERSION = {"points": 5.924, "rebounds": 10.042, "assists": 11.155, "threes": 7.628}
-# Only translate when a quoted line is this close to Kalshi's line.
-MAX_GAP = {"points": 3.0, "rebounds": 2.0, "assists": 2.0, "threes": 1.0}
+# Only translate when a quoted line is this close to Kalshi's line. Twice the
+# first values (points 3, rebounds 2, assists 2, threes 1) since 2026-11-02
+# (RESEARCH_LOG.md "More fills for the spread maker and NBA"): the replay's
+# orders priced this way did as well (+4.4c vs +4.3c a contract at flow 0.25,
+# simulated) and the live bot mostly prices Kalshi's ladder lines this way.
+MAX_GAP = {"points": 6.0, "rebounds": 4.0, "assists": 4.0, "threes": 2.0}
 MIN_QUOTES = 2  # book quotes (books x lines) that go into one fit
 
 

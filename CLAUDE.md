@@ -9,16 +9,16 @@ file is the short version for an AI helping them.
 - Research and live trading for Kalshi player-prop markets ("Will this player
   score 25+ points?"). The strategy posts **post-only resting NO orders**,
   because the people buying YES at the ask are mostly fans backing a player.
-- Fair probability comes from sportsbook odds (de-vigged, at least two books on
-  the exact line) or, failing that, the project's stat model. An NBA order
-  (rules v6, from 23 October) is three contracts, needs 0¢ to 15¢ of
-  estimated edge, goes one cent inside the spread 2–6 hours before tip-off,
-  and rests until tip-off.
+- Fair probability comes from sportsbook odds (de-vigged; the exact line, or
+  for NBA a price read off the books' nearby lines); the stat model no longer
+  prices orders. An NBA order (rules v8, from 2 November) is one contract,
+  needs −3¢ to 8¢ of book edge, goes one cent inside the spread 1–6 hours
+  before tip-off, and rests until tip-off.
 - Three bots trade one small real-money account from a private server: NBA
   and NFL (live since 19–20 October 2026) and the spread maker (live since
-  22 October; rules v3 from 23 October: pregame only, quoting from 24
-  hours before expiry, 5 contracts a side), which rests YES and NO bids one
-  cent inside 8¢+ spreads in 61 other series. **You cannot
+  22 October; rules v6 from 2 November: pregame only, quoting up to 24
+  hours before the start, 2 contracts a side, $100 open), which rests YES
+  and NO bids one cent inside 4¢+ spreads in 61 other series. **You cannot
   see the server, the account or its private journals**; only the public
   files here. Questions
   about live results go to the owner. If the owner has added the private

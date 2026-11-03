@@ -30,7 +30,12 @@ from live.nfl_policy import settlement_accounting
 from live.nba_inputs import MODEL_VERSION
 from live.reconciled_attempts import rejected_client_ids
 
-STRATEGY_VERSION = "nba-no-v7-book-priced"
+# v8 (2026-11-02, RESEARCH_LOG.md "More fills for the spread maker and NBA",
+# owner: more fills): book edge floor -3c (v7: 0c), nearby-line pricing from
+# lines twice as far away (kalshi/line_translation.py), entries from 1 hour
+# before tip (v7: 2). Replay (simulated, in-sample, flow 0.25): 3,481 fills at
+# +2.8c a contract (t 2.1) against v7's 1,851 at +4.3c (t 2.9).
+STRATEGY_VERSION = "nba-no-v8-more-fills"
 # Earlier versions whose resting orders are left untouched to expire while
 # new orders wait (see legacy_resting_count); any other version HALTs.
 PRIOR_VERSIONS = frozenset(
@@ -40,6 +45,7 @@ PRIOR_VERSIONS = frozenset(
         "nba-no-v4-smaller-orders-edge3-baseline",
         "nba-no-v5-one-contract-breadth",
         "nba-no-v6-three-contracts",
+        "nba-no-v7-book-priced",
     }
 )
 
@@ -99,11 +105,14 @@ OFFICIAL_REPORT_MAX_AGE_MINUTES = 60
 MAX_REALIZED_DAILY_LOSS = 20.0
 MAX_REALIZED_CUMULATIVE_LOSS = 100.0  # v5: 60
 FEE_RESERVE = 1.10
-WINDOW = (2.0, 6.0)  # NEW orders still start 2–6 hours before tip
+# v8 (2026-11-02): 1-6 hours (v7: 2-6). Judgement, not tested: the replay
+# places one order about five hours out, so it cannot test entry times; its
+# fills in the last hour made +3.3c (research.nba_late_fill_cutoff).
+WINDOW = (1.0, 6.0)  # NEW orders start 1–6 hours before tip
 # ALREADY-ACCEPTED orders may rest until the verified scheduled tip.
-# This is separate from the entry window: the final two hours were not
-# eligible for new posts, but cutting off existing maker liquidity then
-# made the live execution policy differ from historical tests.
+# This is separate from the entry window: the final hour (v8; two hours
+# before) is not eligible for new posts, but cutting off existing maker
+# liquidity then made the live execution policy differ from historical tests.
 RESTING_WINDOW = (0.0, 6.0)
 STATE = Path("/home/trader/prod-nba-auto")
 REQUIRED = {
@@ -767,8 +776,11 @@ EXTRA_MAKER_TICK = 0.0  # historical baseline already improves one tick
 MIN_EDGE_AFTER_IMPROVEMENT = 0.03
 # New entries and resting orders use the SAME after-fee edge floor, so an
 # order is never placed on terms that the next scan would cancel it for. Since
-# v5 any non-negative edge is accepted (v4 required 3c); the 15c outlier cap stays.
-ENTRY_MIN_NET_EDGE = 0.0
+# v5 any non-negative edge is accepted (v4 required 3c). v8 (2026-11-02):
+# down to -3c of book edge (v5-v7: 0c). Replay, book-priced orders with book
+# edges of -2c to 0c made +0.4c a contract and -5c to -2c +1.4c (simulated,
+# 2026-10-30 exploratory); the fan-driven YES buying is there either way.
+ENTRY_MIN_NET_EDGE = -0.03
 RESTING_MIN_NET_EDGE = ENTRY_MIN_NET_EDGE
 
 
@@ -873,7 +885,9 @@ def select_candidates(frame, events, state, now, diagnostics=None, window=WINDOW
     priced_now = pd.to_numeric(eligible.get("p_book"), errors="coerce").notna()
     counts["book_too_old_for_entry"] = int((too_old & priced_now).sum())
     eligible.loc[too_old, "p_book"] = float("nan")
-    found = candidate_orders(eligible, "no_seller_bookline", window=window)
+    found = candidate_orders(
+        eligible, "no_seller_bookline", window=window, min_edge=ENTRY_MIN_NET_EDGE
+    )
     counts["passed_book_model_and_spread"] = len(found)
     if found.empty:
         return []
@@ -895,7 +909,7 @@ def select_candidates(frame, events, state, now, diagnostics=None, window=WINDOW
     counts["passed_model_veto"] = len(found)
     found["edge"] = pd.to_numeric(found.edge, errors="coerce")
     # Large apparent edges often imply a wrong line or stale book.
-    found = found[found.edge.between(0, MAX_ENTRY_NET_EDGE)]
+    found = found[found.edge.between(ENTRY_MIN_NET_EDGE, MAX_ENTRY_NET_EDGE)]
     counts["passed_edge_sanity"] = len(found)
     already = {a["ticker"] for a in attempts}
     found = found[~found.ticker.isin(already)]
@@ -960,8 +974,9 @@ def order_from_row(row, now, no_price=None):
 def pre_submit_kickoff_ok(tip_utc, now):
     """Fail closed on the wall clock, not the earlier two-minute scan start.
 
-    The 30-second buffer enforces the NBA baseline 2-hour minimum at POST,
-    even if the model/market scan has been running for several minutes.
+    The 30-second buffer enforces the entry window's minimum lead
+    (WINDOW[0]: 1 hour in v8, 2 hours before) at POST, even if the
+    model/market scan has been running for several minutes.
     """
     from datetime import timedelta
 
@@ -969,7 +984,7 @@ def pre_submit_kickoff_ok(tip_utc, now):
     if pd.isna(tip):
         return False
     try:
-        return tip.to_pydatetime() > now + timedelta(hours=2, seconds=30)
+        return tip.to_pydatetime() > now + timedelta(hours=WINDOW[0], seconds=30)
     except (TypeError, ValueError):
         return False
 

@@ -246,7 +246,7 @@ def test_report_labels_live_and_simulated(tmp_path):
     spread_export(tmp_path)
     text = cp.report(tmp_path, NOW)
     assert "LIVE CHECKPOINT REPORT" in text and "SIMULATED (not added" in text
-    assert "NBA (nba-no-v7" in text and "SPREAD MAKER" in text
+    assert "NBA (nba-no-v8" in text and "SPREAD MAKER" in text
 
 
 def test_spread_v2_is_judged_on_its_own_orders(tmp_path):
@@ -287,7 +287,7 @@ def test_nba_versions_can_be_judged_together_counting_orders(tmp_path):
             rows[2] = rows[2].replace(",1", ",3")
         path.write_text("\n".join(rows) + "\n")
     # v7 is judged on its own orders (it prices from the books, not the model).
-    assert cp.NBA_VERSIONS == ("nba-no-v7-book-priced",)
+    assert cp.NBA_VERSIONS == ("nba-no-v8-more-fills",)
     assert cp.NBA_BARS == {
         "settled_fills": 1900,
         "allowance_dollars": 5000.0,
@@ -306,7 +306,7 @@ def test_nba_versions_can_be_judged_together_counting_orders(tmp_path):
     v5 = cp.no_bot(tmp_path / "data/nba", NOW, V5)
     assert v5["orders"] == 1 and v5["settled_fills"] == 1
     text = cp.report(tmp_path, NOW)
-    assert "nba-no-v7-book-priced: 5 orders" in text  # v5's order is not v7's
+    assert "nba-no-v8-more-fills: 5 orders" in text  # v5's order is not v8's
 
 
 def test_the_checkpoint_judges_the_spread_bots_current_rules():

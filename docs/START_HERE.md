@@ -93,7 +93,7 @@ code is right.
 
 | Limit | NBA ([`prod_nba_auto.py`](../live/prod_nba_auto.py)) | NFL ([`nfl_policy.py`](../live/nfl_policy.py)) |
 |---|---:|---:|
-| Rules version | v7 (book-priced) | v4 (book-priced) |
+| Rules version | v8 (book-priced, more fills) | v4 (book-priced) |
 | Price source | Books: exact line (1+ book), else nearby lines; never the model | Books: exact line only; never the model |
 | Contracts per order | 1 | 1 |
 | Cost per order | $4 | $3 |
@@ -103,7 +103,7 @@ code is right.
 | Open orders at once | $150 | $15 |
 | New orders per day | $150 | $30 |
 | New orders per scan | 3 | 1 |
-| Edge needed to post | 0¢ to 8¢ (books); the model is not used | 3¢ to 15¢ (books), model must not disagree |
+| Edge needed to post | −3¢ to 8¢ (books); the model is not used | 3¢ to 15¢ (books), model must not disagree |
 | Sportsbook price age | 60 min to post; a resting order keeps one up to 120 min | unchanged |
 | Price range | 5–95¢ | 10–90¢ |
 | Lifetime orders placed | $5,000 | $50 |
@@ -119,16 +119,18 @@ likely data error, not a bargain.
 A third bot, the **spread maker pilot** ([`prod_spread_auto.py`](../live/prod_spread_auto.py),
 limits in [`spread_policy.py`](../live/spread_policy.py)), quotes both sides
 of wide-spread markets outside NBA and NFL props: up to 2 contracts per
-order and 2 per market side, $50 open, one market per event, its own −$15
-daily and −$40 total loss stops, and the account stops above. It quotes only
-before a known event start (rules v2, v3 from 23 October, v5 once deployed
-after 30 October): a new quote needs the start 85 minutes to 12 hours away,
-and every quote is cancelled 20 minutes before it. v5 places no new esports
-quotes (a switch in `spread_policy.py`). It considers markets from 24 hours before Kalshi's expected expiration and
+order and 2 per market side, $100 open, its own −$15 daily and −$40 total
+loss stops, and the account stops above. It quotes only before a known event
+start (rules v2, v3 from 23 October, v5 from 30 October, v6 once deployed
+after 2 November): a new quote needs a spread of 4¢ or more and the start
+85 minutes to 24 hours away, every market of an event is quoted (v5: one),
+esports included (v5: none), and every quote is cancelled 20 minutes before
+the start. On NCAA men's first-half spreads it sells NO only, 5 contracts an
+order (the scan's best series; YES lost there). It considers markets from 24 hours before Kalshi's expected expiration and
 takes start times from the ticker or, failing that, the earlier of a
 validated Kalshi milestone and a cautious per-series gap before expiry; a
 start never moves later. It leaves out three daily financial series and
-can submit up to 1,500 orders a day.
+can submit up to 60 orders a pass and 6,000 a day.
 It places orders only after the owner arms it
 ([deploy/PROD_SPREAD_AUTO.md](../deploy/PROD_SPREAD_AUTO.md)).
 

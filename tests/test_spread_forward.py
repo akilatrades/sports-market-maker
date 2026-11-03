@@ -277,7 +277,7 @@ def test_independent_candidates_use_frozen_policy_and_unknown_starts():
     assert decision["yes_price_cents"] == 41
     assert decision["no_price_cents"] == 41
     assert (
-        candidate(dict(row, yes_ask_dollars="0.45"), "KXAHLGAME", config, {}, START)[
+        candidate(dict(row, yes_ask_dollars="0.43"), "KXAHLGAME", config, {}, START)[
             "reason"
         ]
         == "spread_too_narrow"
