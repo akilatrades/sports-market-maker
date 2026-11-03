@@ -3916,3 +3916,40 @@ on this series. **Exploratory, reported but not decided here:** the same
 table for `KXNCAAMB1HTOTAL`, `KXNCAAWBGAME`, `KXNCAAWBSPREAD` and
 `KXNCAAWBTOTAL` (4 series × 3 side choices × 2 fill assumptions = 24
 cells), and the primary series at 8¢+.
+
+### Result (2026-11-03): PASS with one disclosed change. NO only, 5 contracts
+
+SIMULATED, in-sample (`research/ncaa_side_test.py`,
+`outputs/research/ncaa_side_test.json`). `KXNCAAMB1HSPREAD`, v6 quote rule,
+261 events from 18 February to 7 April 2026, `flow_share` 0.25:
+
+| Side | fills | ¢ a contract | t | dollars | halves (by this series' dates) |
+|---|---|---|---|---|---|
+| **NO only** | 271 | **+18.1** | **3.2** | **+$49.1** | +19.3 / +16.7 |
+| YES only | 109 | −10.0 | −1.1 | −$10.9 | −8.9 / −11.6 |
+| Both (today) | 378 | +10.0 | 4.0 | +$37.8 | |
+
+At 8¢+ spreads, NO only +22.5¢ (153 fills, t 4.0). First in line gives the
+same picture (NO +18.0¢, YES −7.9¢).
+
+**The disclosed change.** As written, "positive in both halves" used the
+scan's own earlier/later split, which is by calendar across all series; the
+whole college season falls in its earlier half, so the later half was empty.
+The halves above split this series' own dates at their median (20 March)
+instead. Every other check passed as written. The sample covers only late
+February to the tournament, not the early season.
+
+**Exploratory (24 cells, nothing decided from them).** First-half totals:
+NO −0.3¢, YES +9.1¢ (t 1.0), both +4.8¢. Women's game winner: both +4.5¢
+(t 1.7). Women's spreads: both +8.2¢ (t 3.3), with YES (+13.2¢) ahead of NO
+(+5.2¢). Women's totals: both +10.7¢ (t 3.2). The women's series are already
+quoted on both sides and stay that way. Capacity (exploratory): when a NO
+quote was traded through, the median trade was 59 contracts; 5-contract
+orders filled about 1,180 contracts at +18.0¢ against 520 at 2.
+
+**Change.** `live/spread_policy.py` (still v6, not yet deployed):
+`NO_ONLY_SERIES` = {`KXNCAAMB1HSPREAD`} (before: both sides),
+`SERIES_CONTRACTS` and `SERIES_MAX_NET` 5 for that series (before: 2 and 2;
+owner's choice of 5). Shadow quotes follow the same rule. Everything else in
+v6 is unchanged. Live so far: 186 quotes on this series since the season
+opened, no fills; the paper ledger has 9 settled fills (+8.1¢, t 1.1).

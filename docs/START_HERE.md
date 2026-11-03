@@ -125,7 +125,8 @@ start (rules v2, v3 from 23 October, v5 from 30 October, v6 once deployed
 after 2 November): a new quote needs a spread of 4¢ or more and the start
 85 minutes to 24 hours away, every market of an event is quoted (v5: one),
 esports included (v5: none), and every quote is cancelled 20 minutes before
-the start. It considers markets from 24 hours before Kalshi's expected expiration and
+the start. On NCAA men's first-half spreads it sells NO only, 5 contracts an
+order (the scan's best series; YES lost there). It considers markets from 24 hours before Kalshi's expected expiration and
 takes start times from the ticker or, failing that, the earlier of a
 validated Kalshi milestone and a cautious per-series gap before expiry; a
 start never moves later. It leaves out three daily financial series and

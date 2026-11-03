@@ -39,6 +39,16 @@ PRICE_RANGE_CENTS = (2, 98)  # both of our quotes must lie inside this range
 # (live v3: 60 of 62 markets filled on one side only, held to settlement).
 CONTRACTS = 2  # largest order; it shrinks to stay inside MAX_NET_PER_MARKET
 MAX_NET_PER_MARKET = 2  # held plus resting on one side of a market, contracts
+# v6 (2026-11-03, RESEARCH_LOG.md "College basketball: sell NO only on
+# first-half spreads?", owner chose the size): NCAA men's first-half spreads
+# are quoted on the NO side only, 5 contracts an order and 5 net a market
+# (before: both sides, 2 and 2 like every series). Replay (simulated,
+# in-sample, flow 0.25): NO +18.1c a contract (271 fills, t 3.2), YES -10.0c;
+# 5-contract orders still filled at about 18c. The 16 October scan found the
+# same split (NO +16.4c, t 4.0; YES -15.7c).
+NO_ONLY_SERIES = frozenset({"KXNCAAMB1HSPREAD"})
+SERIES_CONTRACTS = {"KXNCAAMB1HSPREAD": 5}  # else CONTRACTS
+SERIES_MAX_NET = {"KXNCAAMB1HSPREAD": 5}  # else MAX_NET_PER_MARKET
 # v6 (owner, 2026-11-02): $50 -> $100. On 2 November v5 quoted 124 markets;
 # quoting them all, both sides, would need roughly $200, so $50 was already
 # choosing which to quote.

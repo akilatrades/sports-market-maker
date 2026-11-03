@@ -22,6 +22,7 @@ TICKER = "KXDOTA2GAME-26OCT221800AB-A"
 REAL_LIMIT_TESTS = {
     "test_pilot_limits_are_the_owner_approved_ones",
     "test_v5_quotes_two_contracts_a_side_and_caps_net_at_two",
+    "test_ncaa_first_half_spreads_sell_no_only_five_contracts",
 }
 
 
@@ -1108,6 +1109,10 @@ def test_pilot_limits_are_the_owner_approved_ones():
     assert (P.CONTRACTS, P.MAX_NET_PER_MARKET) == (2, 2)
     assert (P.MAX_LEAD_HOURS, P.MAX_MARKETS_PER_EVENT) == (24.0, None)
     assert P.MIN_SPREAD_CENTS == 4 and P.QUOTE_ESPORTS is True
+    # 2026-11-03, "College basketball: sell NO only on first-half spreads?"
+    # (before: both sides, 2 contracts, 2 net, like every series).
+    assert P.NO_ONLY_SERIES == {"KXNCAAMB1HSPREAD"} <= set(P.SERIES)
+    assert P.SERIES_CONTRACTS == P.SERIES_MAX_NET == {"KXNCAAMB1HSPREAD": 5}
     assert P.ESPORTS_SERIES <= set(P.SERIES) and "KXCS2GAME" in P.ESPORTS_SERIES
     assert P.MAX_START_LOOKUPS_PER_PASS == 60
     assert P.TRUSTED_MILESTONE_TYPES == {
@@ -2601,3 +2606,32 @@ def test_team_codes_starting_with_a_digit_are_read_as_untimed():
     # Known limit (second review): such tickers lose their time, so the event
     # is dated by milestones or the series gap instead (costs quotes only).
     assert bot.ticker_start("KXCS2GAME-26OCT221800100TFAZE") is None
+
+
+# ------------------------------------- v6: NCAA men's first-half spreads
+
+
+def test_ncaa_first_half_spreads_sell_no_only_five_contracts():
+    t = "KXNCAAMB1HSPREAD-26NOV03DUKEUNC-DUKE7"
+    assert bot.desired_quotes([_m(t)], {}) == {(t, "no"): (49, 5)}
+    # Held NO is negative net: 3 held leaves room for 2 more, 5 for none.
+    assert bot.desired_quotes([_m(t)], {t: -3.0}) == {(t, "no"): (49, 2)}
+    assert bot.desired_quotes([_m(t)], {t: -5.0}) == {}
+    # Every other series keeps both sides at the normal size.
+    other = "KXNCAAMB1HTOTAL-26NOV03DUKEUNC-T140"
+    assert bot.desired_quotes([_m(other)], {}) == {
+        (other, "yes"): (41, 2),
+        (other, "no"): (49, 2),
+    }
+
+
+def test_shadow_quotes_follow_the_no_only_rule():
+    t = "KXNCAAMB1HSPREAD-26NOV03DUKEUNC-DUKE7"
+    row = {
+        **_m(t),
+        "series": "KXNCAAMB1HSPREAD",
+        "spread": 12,
+        "expiration_utc": (NOW + timedelta(hours=5)).isoformat(),
+    }
+    posted = bot.shadow_post([], [row], NOW)
+    assert [(e["side"], e["contracts"]) for e in posted] == [("no", 5)]
