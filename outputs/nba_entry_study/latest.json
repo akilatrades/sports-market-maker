@@ -3,7 +3,7 @@
     "attempted_candidates": 0,
     "eligible_candidates": 0,
     "errors": [],
-    "generated_at": "2026-11-03T03:00:58.871442+00:00",
+    "generated_at": "2026-11-03T19:43:26.250928+00:00",
     "state": "recording"
   },
   "manifest": {
@@ -21,8 +21,8 @@
     "start": "2026-10-28T02:14:07.060361+00:00"
   },
   "report": {
-    "all_opportunities_resolved": 149,
-    "brier_all_resolved": 0.23599893355104026,
+    "all_opportunities_resolved": 159,
+    "brier_all_resolved": 0.23579527779220122,
     "comparisons": {
       "through/fresh_books_veto": {
         "actual_win_rate": null,
@@ -50,21 +50,19 @@
         }
       },
       "through/model_veto": {
-        "actual_win_rate": 0.5833333333333334,
-        "brier_filled": 0.2519048933887222,
+        "actual_win_rate": 0.5897435897435898,
+        "brier_filled": 0.2568070787157949,
         "execution_known": 77,
-        "exposure_by_game": {
-          "401909916": 1.57
-        },
+        "exposure_by_game": {},
         "filled": 39,
-        "forecast_win_probability": 0.5693078333333333,
-        "net_pnl_fee_upper_estimate": 2.36,
+        "forecast_win_probability": 0.5750556923076923,
+        "net_pnl_fee_upper_estimate": 2.79,
         "orders": 77,
         "pending_or_unknown_execution": 0,
-        "pnl_without_best_game": 0.9,
-        "pnl_without_best_three_games": -1.37,
-        "settled": 36,
-        "settled_games": 15,
+        "pnl_without_best_game": 1.33,
+        "pnl_without_best_three_games": -0.94,
+        "settled": 39,
+        "settled_games": 16,
         "trade_print_markouts_not_executable_quotes": {
           "300": {
             "mean": -0.01,
@@ -77,21 +75,19 @@
         }
       },
       "through/no_baseline": {
-        "actual_win_rate": 0.5256410256410257,
-        "brier_filled": 0.23231058431665383,
+        "actual_win_rate": 0.5301204819277109,
+        "brier_filled": 0.2360306390039277,
         "execution_known": 161,
-        "exposure_by_game": {
-          "401909916": 2.7600000000000002
-        },
+        "exposure_by_game": {},
         "filled": 83,
-        "forecast_win_probability": 0.5122317051282052,
-        "net_pnl_fee_upper_estimate": 0.69,
+        "forecast_win_probability": 0.5157298313253013,
+        "net_pnl_fee_upper_estimate": 0.93,
         "orders": 161,
         "pending_or_unknown_execution": 0,
-        "pnl_without_best_game": -0.88,
-        "pnl_without_best_three_games": -2.91,
-        "settled": 78,
-        "settled_games": 16,
+        "pnl_without_best_game": -0.64,
+        "pnl_without_best_three_games": -2.67,
+        "settled": 83,
+        "settled_games": 17,
         "trade_print_markouts_not_executable_quotes": {
           "300": {
             "mean": -0.012,
@@ -129,21 +125,19 @@
         }
       },
       "touch/model_veto": {
-        "actual_win_rate": 0.5789473684210527,
-        "brier_filled": 0.2496446637527105,
+        "actual_win_rate": 0.5853658536585366,
+        "brier_filled": 0.2544731007445122,
         "execution_known": 77,
-        "exposure_by_game": {
-          "401909916": 1.57
-        },
+        "exposure_by_game": {},
         "filled": 41,
-        "forecast_win_probability": 0.5703827631578947,
-        "net_pnl_fee_upper_estimate": 2.44,
+        "forecast_win_probability": 0.5757715853658537,
+        "net_pnl_fee_upper_estimate": 2.87,
         "orders": 77,
         "pending_or_unknown_execution": 0,
-        "pnl_without_best_game": 0.98,
-        "pnl_without_best_three_games": -1.29,
-        "settled": 38,
-        "settled_games": 15,
+        "pnl_without_best_game": 1.41,
+        "pnl_without_best_three_games": -0.86,
+        "settled": 41,
+        "settled_games": 16,
         "trade_print_markouts_not_executable_quotes": {
           "300": {
             "mean": -0.01,
@@ -156,21 +150,19 @@
         }
       },
       "touch/no_baseline": {
-        "actual_win_rate": 0.5180722891566265,
-        "brier_filled": 0.23146307337539757,
+        "actual_win_rate": 0.5227272727272727,
+        "brier_filled": 0.23501991534982955,
         "execution_known": 161,
-        "exposure_by_game": {
-          "401909916": 2.7600000000000002
-        },
+        "exposure_by_game": {},
         "filled": 88,
-        "forecast_win_probability": 0.5117336144578313,
-        "net_pnl_fee_upper_estimate": 0.24,
+        "forecast_win_probability": 0.5150612840909091,
+        "net_pnl_fee_upper_estimate": 0.48,
         "orders": 161,
         "pending_or_unknown_execution": 0,
-        "pnl_without_best_game": -1.33,
-        "pnl_without_best_three_games": -3.36,
-        "settled": 83,
-        "settled_games": 16,
+        "pnl_without_best_game": -1.09,
+        "pnl_without_best_three_games": -3.12,
+        "settled": 88,
+        "settled_games": 17,
         "trade_print_markouts_not_executable_quotes": {
           "300": {
             "mean": -0.008333333333333333,

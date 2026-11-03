@@ -1,6 +1,9 @@
 {
-  "accounting_errors": [],
-  "generated_at": "2026-11-03T03:00:58.871442+00:00",
+  "accounting_errors": [
+    "invalid_settlement",
+    "invalid_settlement"
+  ],
+  "generated_at": "2026-11-03T19:43:26.250928+00:00",
   "limitations": [
     "Existing no_seller uses a model veto; it is not a model-free control.",
     "Different sizing and candidate baskets confound existing variant comparisons.",
@@ -19,64 +22,64 @@
       "without_best_three_games": -57.57
     },
     "no_seller": {
-      "actual_win_rate": 0.37520938023450584,
-      "contracts": 2388.0,
-      "forecast_win_probability": 0.5979348827470687,
-      "games": 38,
-      "net_pnl": 5.76,
-      "settled_orders": 227,
-      "without_best_game": -32.85,
-      "without_best_three_games": -89.49
+      "actual_win_rate": 0.3830049261083744,
+      "contracts": 2436.0,
+      "forecast_win_probability": 0.6014049671592775,
+      "games": 43,
+      "net_pnl": 17.32,
+      "settled_orders": 234,
+      "without_best_game": -21.29,
+      "without_best_three_games": -77.93
     },
     "no_seller_bookline": {
-      "actual_win_rate": 0.29351095831542756,
-      "contracts": 2327.0,
-      "forecast_win_probability": 0.5031988826815642,
-      "games": 43,
-      "net_pnl": -44.11,
-      "settled_orders": 218,
-      "without_best_game": -76.53,
-      "without_best_three_games": -119.07
+      "actual_win_rate": 0.2952906236741621,
+      "contracts": 2357.0,
+      "forecast_win_probability": 0.5044829444208739,
+      "games": 44,
+      "net_pnl": -43.34,
+      "settled_orders": 222,
+      "without_best_game": -75.76,
+      "without_best_three_games": -118.3
     },
     "no_seller_edge_sized": {
-      "actual_win_rate": 0.38519697572622363,
-      "contracts": 2513.0,
-      "forecast_win_probability": 0.616149820931158,
-      "games": 35,
-      "net_pnl": 42.53,
-      "settled_orders": 149,
-      "without_best_game": -11.91,
-      "without_best_three_games": -111.42
+      "actual_win_rate": 0.389518967540086,
+      "contracts": 2557.0,
+      "forecast_win_probability": 0.6195368009386,
+      "games": 38,
+      "net_pnl": 46.48,
+      "settled_orders": 152,
+      "without_best_game": -7.96,
+      "without_best_three_games": -107.47
     },
     "no_seller_late": {
-      "actual_win_rate": 0.32677369238736403,
-      "contracts": 1931.0,
-      "forecast_win_probability": 0.5559540652511652,
-      "games": 37,
-      "net_pnl": -85.8,
-      "settled_orders": 186,
-      "without_best_game": -115.29,
-      "without_best_three_games": -161.18
+      "actual_win_rate": 0.3282520325203252,
+      "contracts": 1968.0,
+      "forecast_win_probability": 0.5582320630081301,
+      "games": 38,
+      "net_pnl": -86.48,
+      "settled_orders": 190,
+      "without_best_game": -115.97,
+      "without_best_three_games": -161.86
     },
     "no_seller_stat_veto": {
-      "actual_win_rate": 0.37520938023450584,
-      "contracts": 2388.0,
-      "forecast_win_probability": 0.5979348827470687,
-      "games": 38,
-      "net_pnl": 5.76,
-      "settled_orders": 227,
-      "without_best_game": -32.85,
-      "without_best_three_games": -89.49
+      "actual_win_rate": 0.3830049261083744,
+      "contracts": 2436.0,
+      "forecast_win_probability": 0.6014049671592775,
+      "games": 43,
+      "net_pnl": 17.32,
+      "settled_orders": 234,
+      "without_best_game": -21.29,
+      "without_best_three_games": -77.93
     },
     "no_seller_veto2": {
-      "actual_win_rate": 0.375366568914956,
-      "contracts": 2387.0,
-      "forecast_win_probability": 0.5981764139086719,
-      "games": 38,
-      "net_pnl": 5.79,
-      "settled_orders": 226,
-      "without_best_game": -32.82,
-      "without_best_three_games": -89.46
+      "actual_win_rate": 0.38316221765913755,
+      "contracts": 2435.0,
+      "forecast_win_probability": 0.6016431622176591,
+      "games": 43,
+      "net_pnl": 17.35,
+      "settled_orders": 233,
+      "without_best_game": -21.26,
+      "without_best_three_games": -77.9
     }
   }
 }
