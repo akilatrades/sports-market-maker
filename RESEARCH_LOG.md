@@ -3883,3 +3883,36 @@ Unchanged: 1 contract, the 8¢ cap, dollar caps, −$20/−$100 stops, the
 60/120-minute book ages, injury and roster vetoes. NFL unchanged.
 
 **Judged live** on their own versions by `research/live_checkpoint.py`.
+
+## 2026-11-03: College basketball: sell NO only on first-half spreads? (pre-registered)
+
+*The owner asked on 3 November for a bot for NCAA men's first-half spreads,
+the scan's best series, and a look at women's college basketball. Written
+before running.*
+
+**Background.** The 16 October scan (7-to-4-hour window) found
+`KXNCAAMB1HSPREAD` the strongest series: resting NO +16.4¢ a contract (223
+fills, t 4.0, both halves positive) while resting YES lost −15.7¢ (112
+fills, t −2.9); it alone survived the time holdout (+14.8¢, t 2.84 on the
+later half). The spread maker already quotes this series, but on **both**
+sides, so its YES quotes give the edge back. Women's: game winner NO +2.9¢
+(2,236 fills, t 2.1); spread NO −2.6¢ (303 fills); total NO +6.9¢ (153
+fills, t 0.9).
+
+**Question.** On a second sample, the spread maker's own 24-to-4-hour
+replay (`outputs/scan_24h`, hourly quotes one cent inside, held to
+settlement), does selling NO only beat quoting both sides on
+`KXNCAAMB1HSPREAD`?
+
+**Method.** v6 quote rule (spreads 4¢+, start known, 85 minutes to 24
+hours before it, every market). Per side, P&L per contract and fills,
+event-clustered t, at `flow_share` 0.25 (median of 20 draws) and first in
+line, by half of the scan.
+
+**Pass (KXNCAAMB1HSPREAD, flow 0.25):** NO side positive with t ≥ 2, YES
+side at or below zero, and NO-only dollars above both-sides dollars; NO
+positive in both halves. **If it passes,** the spread maker quotes only NO
+on this series. **Exploratory, reported but not decided here:** the same
+table for `KXNCAAMB1HTOTAL`, `KXNCAAWBGAME`, `KXNCAAWBSPREAD` and
+`KXNCAAWBTOTAL` (4 series × 3 side choices × 2 fill assumptions = 24
+cells), and the primary series at 8¢+.
