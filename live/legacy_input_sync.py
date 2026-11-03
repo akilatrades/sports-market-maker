@@ -36,7 +36,8 @@ def refresh(now=None, root=Path("."), stamp=STAMP):
     projection_dir = root / "outputs/projections"
     # Reads one immutable GitHub commit, verifies projection timestamp, row
     # count, checksum and model version, and never touches source code.
-    meta = sync(projection_dir, now)
+    # GitHub only, as before the server feed: its source_commit must be a SHA.
+    meta = sync(projection_dir, now, feed=False, keep_cache=False)
     sha = meta["source_commit"]
     base = f"https://raw.githubusercontent.com/{REPOSITORY}/{sha}/outputs/books"
     book_dir = root / "outputs/books"

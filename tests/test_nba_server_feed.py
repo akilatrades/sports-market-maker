@@ -152,7 +152,7 @@ def test_neither_source_raises_and_missing_books_clear_the_cache(tmp_path, monke
 
 
 def test_newest_line_reads_update_times():
-    assert nba_inputs.newest_line(book(NOW).encode()) == NOW
+    assert nba_inputs.newest_line(book(NOW).encode(), NOW) == NOW
     assert nba_inputs.newest_line(b"") is None
     assert nba_inputs.newest_line(b"\xff\xfe") is None
 
@@ -224,7 +224,7 @@ def test_projections_job_publishes_only_a_checked_pair(tmp_path, monkeypatch):
     feed = tmp_path / "feed"
     here = os.getcwd()
     try:
-        nba_feed.projections(feed)
+        nba_feed.projections(feed, memory=lambda: 4000)
     finally:
         os.chdir(here)
     assert fetched == [feed]  # no history yet: downloaded first
@@ -242,20 +242,20 @@ def test_a_failed_check_leaves_the_last_published_pair(tmp_path, monkeypatch):
     here = os.getcwd()
     try:
         with pytest.raises(ValueError, match="checksum"):
-            nba_feed.projections(feed)
+            nba_feed.projections(feed, memory=lambda: 4000)
     finally:
         os.chdir(here)
     assert b"OLD" in (feed / "published/latest.csv").read_bytes()
 
 
-def test_history_is_downloaded_at_most_every_20_hours(tmp_path):
+def test_history_is_downloaded_every_run_unless_just_fetched(tmp_path):
     feed = tmp_path
     (feed / "data").mkdir()
     assert nba_feed.history_age_hours(feed, NOW) is None
     stamp = (NOW - timedelta(hours=5)).isoformat(timespec="seconds")
     (feed / "data/retrieval.json").write_text(json.dumps({"retrieved": stamp}))
     assert nba_feed.history_age_hours(feed, NOW) == pytest.approx(5)
-    assert nba_feed.HISTORY_MAX_AGE_HOURS == 20
+    assert nba_feed.HISTORY_MAX_AGE_HOURS == 2
 
 
 def test_cli_accepts_only_the_two_jobs():
@@ -281,7 +281,11 @@ def test_units_are_capped_and_cannot_write_the_trading_checkout(job):
         assert "OnCalendar=*-*-* *:05,25,45:00 UTC" in timer
     else:
         assert "EnvironmentFile" not in unit
-        assert "OnCalendar=*-*-* 12,15,18,21:20:00 UTC" in timer
+        assert "OnCalendar=*-*-* 10,12,15,18,21:20:00 UTC" in timer
+    assert (
+        "ExecCondition=+/usr/bin/flock -n /run/lock/smm-production-release.lock" in unit
+    )
+    assert "InaccessiblePaths=-/home/trader/prod-nba-auto" in unit
 
 
 def test_setup_never_prints_the_key_file():
@@ -359,3 +363,152 @@ def test_an_empty_published_pair_reports_how_many_props_were_open(tmp_path):
     assert frame.empty
     assert frame.attrs["diagnostics"]["blocked"] == "no_priced_markets"
     assert frame.attrs["diagnostics"]["open_markets"] == 0
+
+
+# --- review fixes (3 November) -----------------------------------------------
+
+
+def test_default_install_takes_github_inputs_and_server_lines(tmp_path, monkeypatch):
+    # Only the sportsbook job is installed: no published pair on the server.
+    github(
+        monkeypatch,
+        tmp_path,
+        NOW - timedelta(hours=2),
+        books=book(NOW - timedelta(hours=3)),
+    )
+    feed = server(tmp_path, books=book(NOW - timedelta(minutes=10), 23.5))
+    meta, data, books = synced(tmp_path, feed)
+    assert meta["source_commit"] == SHA and "G0" in data
+    assert "23.5" in books
+
+
+def test_github_down_keeps_held_inputs_and_fresh_server_lines(tmp_path, monkeypatch):
+    dest = tmp_path / "inputs"
+    nba_inputs.publish(
+        pd.DataFrame({"ticker": ["HELD"]}), dest, NOW - timedelta(hours=1)
+    )
+    (dest / "nba_books.csv").write_text(book(NOW - timedelta(minutes=90)))
+    github(monkeypatch, tmp_path, NOW, fail=True)
+    feed = server(tmp_path, books=book(NOW - timedelta(minutes=5), 24.5))
+    nba_inputs.sync(dest, NOW, feed=feed)
+    assert b"HELD" in nba_inputs.read(dest, NOW)[0]
+    assert "24.5" in (dest / "nba_books.csv").read_text()
+
+
+def test_lines_are_refreshed_even_when_no_inputs_are_valid(tmp_path, monkeypatch):
+    dest = tmp_path / "inputs"
+    nba_inputs.publish(
+        pd.DataFrame({"ticker": ["OLD"]}), dest, NOW - timedelta(hours=10)
+    )
+    github(monkeypatch, tmp_path, NOW, fail=True)
+    feed = server(tmp_path, books=book(NOW - timedelta(minutes=5), 25.5))
+    with pytest.raises(OSError):
+        nba_inputs.sync(dest, NOW, feed=feed)
+    assert "25.5" in (dest / "nba_books.csv").read_text()
+
+
+def test_a_pass_never_rolls_the_inputs_back(tmp_path, monkeypatch):
+    dest = tmp_path / "inputs"
+    nba_inputs.publish(
+        pd.DataFrame({"ticker": ["NEWER"]}), dest, NOW - timedelta(hours=1)
+    )
+    (dest / "nba_books.csv").write_text(book(NOW - timedelta(minutes=10), 26.5))
+    github(monkeypatch, tmp_path, NOW, fail=True)
+    feed = server(
+        tmp_path, NOW - timedelta(hours=2), books=book(NOW - timedelta(minutes=110))
+    )
+    nba_inputs.sync(dest, NOW, feed=feed)
+    assert b"NEWER" in nba_inputs.read(dest, NOW)[0]
+    assert "26.5" in (dest / "nba_books.csv").read_text()
+
+
+def test_legacy_sync_stays_github_only(tmp_path, monkeypatch):
+    github(monkeypatch, tmp_path, NOW, fail=True)
+    server(tmp_path, NOW - timedelta(hours=1))
+    with pytest.raises(OSError):
+        nba_inputs.sync(tmp_path / "inputs", NOW, feed=False, keep_cache=False)
+
+
+def test_newest_line_skips_bad_rows_and_future_stamps():
+    good = book(NOW - timedelta(minutes=10))
+    bad_row = good + "x,points,20.5,0.5,2,not-a-time,also-bad\n"
+    assert nba_inputs.newest_line(bad_row.encode(), NOW) == NOW - timedelta(minutes=10)
+    assert nba_inputs.newest_line(book(NOW + timedelta(days=1)).encode(), NOW) is None
+
+
+def test_projections_skip_when_memory_is_short(tmp_path, monkeypatch):
+    ran = []
+    monkeypatch.setattr(nba_feed, "refresh_history", lambda feed: ran.append(feed))
+    here = os.getcwd()
+    try:
+        assert nba_feed.projections(tmp_path / "feed", memory=lambda: 800) is None
+    finally:
+        os.chdir(here)
+    assert ran == []
+
+
+def test_a_ledger_error_after_publishing_still_publishes(tmp_path, monkeypatch):
+    from live import nba_projections
+
+    monkeypatch.setattr(nba_feed, "refresh_history", lambda feed: None)
+    fake_projections(monkeypatch)
+    good = nba_projections.main
+
+    def publish_then_fail():
+        good()
+        raise RuntimeError("paper ledger")
+
+    monkeypatch.setattr(nba_projections, "main", publish_then_fail)
+    feed = tmp_path / "feed"
+    here = os.getcwd()
+    try:
+        nba_feed.projections(feed, memory=lambda: 4000)
+    finally:
+        os.chdir(here)
+    assert (feed / "published/latest.csv").exists()
+
+
+def test_an_old_staged_pair_is_never_published(tmp_path, monkeypatch):
+    from live import nba_projections
+
+    monkeypatch.setattr(nba_feed, "refresh_history", lambda feed: None)
+    feed = tmp_path / "feed"
+    nba_inputs.publish(
+        pd.DataFrame({"ticker": ["STALE"]}),
+        feed / "outputs/projections",
+        datetime.now(UTC) - timedelta(hours=1),
+    )
+
+    def fail_before_publishing():
+        raise ConnectionError("Kalshi")
+
+    monkeypatch.setattr(nba_projections, "main", fail_before_publishing)
+    here = os.getcwd()
+    try:
+        with pytest.raises(ConnectionError):
+            nba_feed.projections(feed, memory=lambda: 4000)
+    finally:
+        os.chdir(here)
+    assert not (feed / "published").exists()
+
+
+def test_book_files_are_written_whole_and_empty_files_do_not_stop_the_job(tmp_path):
+    from live import log_books
+
+    path = tmp_path / "nba_latest.csv"
+    path.write_bytes(b"")  # left by a crash mid-write before this change
+    assert log_books.read_or_none(path) is None
+    frame = pd.DataFrame({"event_id": ["e"], "line": [20.5]})
+    log_books.write_atomic(frame, path)
+    log_books.write_atomic(frame, tmp_path / "day.csv.gz")
+    assert log_books.read_or_none(tmp_path / "day.csv.gz").line.tolist() == [20.5]
+    assert log_books.merge_latest(None, frame).equals(frame)
+    names = sorted(p.name for p in tmp_path.iterdir())
+    assert names == ["day.csv.gz", "nba_latest.csv"]
+
+
+def test_off_sets_the_feed_data_aside_and_the_lock_is_released_before_runs():
+    script = (ROOT / "deploy/setup_nba_feed.sh").read_text()
+    off = script[script.index("  --off)") : script.index("  --status)")]
+    assert 'mv "$FEED/published"' in off and "nba_latest.off-" in off
+    assert script.index("exec 9>&-") < script.index('systemctl start "$BOOKS.service"')

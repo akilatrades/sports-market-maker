@@ -27,11 +27,17 @@ import json
 import os
 import subprocess
 import sys
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 FEED = Path(os.environ.get("NBA_FEED_DIR", "/home/trader/nba-feed"))
-HISTORY_MAX_AGE_HOURS = 20  # box scores change once a night
+# Box scores are downloaded on every run, as on GitHub, unless one finished
+# in the last 2 hours (a rerun by hand).
+HISTORY_MAX_AGE_HOURS = 2
+# Checked at the start of every model-inputs run: below this the run is
+# skipped, so it never squeezes the trading bots (the model step peaks near
+# 900 MB; the unit caps it at 1.3 GB and gives it no swap).
+MIN_AVAILABLE_MB = 1200
 KEEP_DAYS = 14  # daily book logs and projection ladders older than this are deleted
 PRUNE = ("outputs/books/nba_*.csv.gz", "outputs/projections/ladders/*.csv")
 PUBLISHED = Path("published")  # checked projection pair the bot reads
@@ -86,21 +92,49 @@ def refresh_history(feed):
     )
 
 
-def projections(feed=FEED, now=None):
-    from live import nba_projections
-    from live.nba_inputs import atomic_write
-    from live.nba_publish_check import inspect
+def available_mb(meminfo=Path("/proc/meminfo")):
+    for line in meminfo.read_text().splitlines():
+        if line.startswith("MemAvailable:"):
+            return int(line.split()[1]) // 1024
+    return 0
 
+
+def projections(feed=FEED, now=None, memory=available_mb):
     feed = enter(feed)
+    free = memory()
+    if free < MIN_AVAILABLE_MB:
+        print(
+            f"NBA FEED PROJECTIONS: skipped, {free} MB of memory free "
+            f"(needs {MIN_AVAILABLE_MB}); the last good inputs stay in use",
+            flush=True,
+        )
+        return None
     now = now or datetime.now(UTC)
     age = history_age_hours(feed, now)
     have = (feed / "data" / "player_games.parquet").exists()
     if not have or age is None or not 0 <= age <= HISTORY_MAX_AGE_HOURS:
         refresh_history(feed)
-    nba_projections.main()
+    # Imported after the download (its own process) so this one stays small.
+    from live import nba_projections
+    from live.nba_inputs import atomic_write
+    from live.nba_publish_check import inspect
+
+    started = datetime.now(UTC)
+    ledger_error = None
+    try:
+        nba_projections.main()
+    except Exception as error:  # the paper-ledger steps run after publishing
+        ledger_error = error
     staged = feed / "outputs" / "projections"
-    data = (staged / "latest.csv").read_bytes()
-    meta = json.loads((staged / "latest_meta.json").read_text())
+    try:
+        data = (staged / "latest.csv").read_bytes()
+        meta = json.loads((staged / "latest_meta.json").read_text())
+        made = datetime.fromisoformat(meta["generated_utc"])
+    except (OSError, ValueError, KeyError) as error:
+        raise ledger_error or error
+    if made.tzinfo is None or made < started - timedelta(seconds=1):
+        # Not this run's pair (the run failed before publishing).
+        raise ledger_error or ValueError("no_new_projection_pair")
     report = inspect(data, meta, datetime.now(UTC))  # raises on a bad pair
     # Only a checked pair reaches the folder the bot reads, as on GitHub.
     atomic_write(feed / PUBLISHED / "latest.csv", data)
@@ -110,6 +144,13 @@ def projections(feed=FEED, now=None):
     )
     prune(feed)
     print("NBA FEED PROJECTIONS: " + json.dumps(report, sort_keys=True), flush=True)
+    if ledger_error is not None:
+        # Research-only paper ledgers; the inputs above are already good.
+        print(
+            "NBA FEED PROJECTIONS: paper-ledger step failed after publishing "
+            f"({type(ledger_error).__name__}); inputs unaffected",
+            flush=True,
+        )
     return report
 
 

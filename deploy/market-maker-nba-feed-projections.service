@@ -15,6 +15,8 @@ Environment=PYTHONUNBUFFERED=1
 Environment=PYTHONDONTWRITEBYTECODE=1
 Environment=OPENBLAS_NUM_THREADS=1
 Environment=OMP_NUM_THREADS=1
+# Skip the run while a code release is updating the checkout.
+ExecCondition=+/usr/bin/flock -n /run/lock/smm-production-release.lock /bin/true
 ExecStart=/home/trader/sports-market-maker-prod-auto/.venv/bin/python -m live.nba_feed projections
 # The model step peaks near 900 MB (measured offline). Capped, no swap, first
 # to be killed: a failed run leaves the last good inputs (or GitHub's) in use.
@@ -30,5 +32,7 @@ NoNewPrivileges=true
 PrivateTmp=true
 ProtectSystem=strict
 ProtectHome=read-only
+# Not even read access to the bots' journals, KILL switches and state.
+InaccessiblePaths=-/home/trader/prod-nba-auto -/home/trader/prod-nfl-auto -/home/trader/prod-spread-auto
 ReadWritePaths=/home/trader/nba-feed
 UMask=0077

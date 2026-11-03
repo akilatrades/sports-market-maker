@@ -12,7 +12,9 @@ def test_legacy_refresh_pins_books_to_one_verified_commit(tmp_path, monkeypatch)
     now = datetime(2026, 10, 20, 20, tzinfo=UTC)
     calls = []
 
-    def signed_projection_sync(directory, stamp_time):
+    def signed_projection_sync(directory, stamp_time, **options):
+        # GitHub only: no server feed and no held copy (nba_inputs.sync options).
+        assert options == {"feed": False, "keep_cache": False}
         calls.append(("projection", stamp_time))
         directory.mkdir(parents=True, exist_ok=True)
         (directory / "nba_books.csv").write_bytes(b"nba-book")
@@ -49,7 +51,9 @@ def test_legacy_refresh_clears_missing_books_instead_of_reusing_them(
     for sport in ("nfl", "nba"):
         (book_dir / f"{sport}_latest.csv").write_bytes(b"old")
 
-    def sync_without_nba_book(directory, now):
+    def sync_without_nba_book(directory, now, **options):
+        # GitHub only: no server feed and no held copy (nba_inputs.sync options).
+        assert options == {"feed": False, "keep_cache": False}
         directory.mkdir(parents=True)
         (directory / "nba_books.csv").write_bytes(b"")
         return {"source_commit": "b" * 40}
@@ -68,7 +72,9 @@ def test_failed_projection_sync_does_not_mark_refresh_as_success(tmp_path, monke
 
     stamp = tmp_path / "cache" / "last"
 
-    def fail_sync(directory, now):
+    def fail_sync(directory, now, **options):
+        # GitHub only: no server feed and no held copy (nba_inputs.sync options).
+        assert options == {"feed": False, "keep_cache": False}
         raise ValueError("unverified projection checksum")
 
     monkeypatch.setattr(loader, "sync", fail_sync)

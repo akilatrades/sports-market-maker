@@ -17,7 +17,7 @@ import json
 import os
 import tempfile
 import urllib.request
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 SCHEMA = 2
@@ -26,6 +26,9 @@ REPOSITORY = "akilatrades/sports-market-maker"
 MAX_BYTES = 20_000_000
 # The server feed's folder (live/nba_feed.py); absent means GitHub only.
 LOCAL_FEED = Path(os.environ.get("NBA_FEED_DIR", "/home/trader/nba-feed"))
+# A held book file is kept only while its lines can still keep a resting
+# order (live/prod_nba_auto.py RESTING_BOOK_MAX_AGE_MINUTES).
+CACHE_BOOK_MAX_AGE_MINUTES = 120
 
 
 def atomic_write(path, data):
@@ -140,69 +143,118 @@ def from_feed(feed, now):
     return pair, book
 
 
-def newest_line(book):
-    """Newest update time among a book file's lines (None if unreadable)."""
+def newest_line(book, now=None):
+    """Newest update time among a book file's lines (None if none readable).
+
+    Unreadable rows are skipped, not fatal; stamps more than five minutes
+    ahead of ``now`` are ignored so a bad clock cannot win forever.
+    """
     if not book:
         return None
     try:
-        rows = csv.DictReader(book.decode().splitlines())
-        stamps = []
-        for row in rows:
+        text = book.decode()
+    except UnicodeDecodeError:
+        return None
+    limit = (now or datetime.now(UTC)) + timedelta(minutes=5)
+    stamps = []
+    try:
+        for row in csv.DictReader(text.splitlines()):
             for key in ("updated_utc", "snapshot_utc"):
                 value = (row.get(key) or "").strip()
-                if value:
+                try:
                     stamp = datetime.fromisoformat(value.replace("Z", "+00:00"))
-                    if stamp.tzinfo is not None:
-                        stamps.append(stamp)
-        return max(stamps) if stamps else None
-    except (UnicodeDecodeError, ValueError, csv.Error):
+                except ValueError:
+                    continue
+                if stamp.tzinfo is not None and stamp <= limit:
+                    stamps.append(stamp)
+    except csv.Error:
         return None
+    return max(stamps) if stamps else None
 
 
-def _better_pair(a, b):
-    """The pair to use: a non-empty one first, then the newer generation."""
-    candidates = [p for p in (a, b) if p is not None]
+def from_cache(directory, now):
+    """The pair and book this bot already holds (each may be None)."""
+    directory = Path(directory)
+    try:
+        pair = read(directory, now)
+    except (OSError, ValueError, KeyError, TypeError):
+        pair = None
+    try:
+        book = (directory / "nba_books.csv").read_bytes()
+    except OSError:
+        book = None
+    return pair, book
+
+
+def _generated(pair):
+    return datetime.fromisoformat(pair[1]["generated_utc"].replace("Z", "+00:00"))
+
+
+def _better_pair(*pairs):
+    """The pair to use: a non-empty one first, then the newest generation."""
+    candidates = [p for p in pairs if p is not None]
     if not candidates:
         return None
-
-    def generated(pair):
-        return datetime.fromisoformat(pair[1]["generated_utc"].replace("Z", "+00:00"))
-
-    return max(candidates, key=lambda p: (p[1].get("rows", 0) > 0, generated(p)))
+    return max(candidates, key=lambda p: (p[1].get("rows", 0) > 0, _generated(p)))
 
 
-def sync(directory, now=None, feed=None):
-    """Write the newer valid projection pair and the newer book file.
+def sync(directory, now=None, feed=None, keep_cache=True):
+    """Write the newest valid projection pair and the newest book file.
 
-    GitHub reads are pinned to one public commit; this server's feed is read
-    from disk. Never git-pull executable code. Raises only when neither
-    source has a valid projection pair (the caller then checks its cache).
+    Sources: GitHub (pinned to one public commit), this server's feed (read
+    from disk; ``feed=False`` turns it off) and, with ``keep_cache``, the
+    copies already in ``directory``, so a failed or older source never rolls
+    the bot back. The book file is refreshed even when no pair is valid, so
+    fresh lines from the server keep flowing while GitHub is down. Raises only
+    when no source has a valid pair (the caller then checks its cache age).
+    Never git-pull executable code.
     """
     now = now or datetime.now(UTC)
+    directory = Path(directory)
     feed = LOCAL_FEED if feed is None else feed
-    remote, remote_book, error = None, None, None
+    remote = remote_book = error = None
     try:
         data, meta, remote_book = from_github(now)
         remote = (data, meta)
-    except Exception as exc:  # network, validation or format: try the feed
+    except Exception as exc:  # network, validation or format: other sources
         error = exc
-    local, local_book = from_feed(feed, now)
-    chosen = _better_pair(remote, local)
+    local = local_book = None
+    if feed:
+        local, local_book = from_feed(feed, now)
+    cached = cached_book = None
+    if keep_cache:
+        cached, cached_book = from_cache(directory, now)
+
+    def newest(item):
+        return newest_line(item[0], now) or datetime.min.replace(tzinfo=UTC)
+
+    books = [(b, src) for b, src in ((remote_book, "github"), (local_book, "server"))]
+    books = [(b, src) for b, src in books if b]
+    # Reuse the held file only while its lines can still keep a resting order;
+    # missing book data must not preserve yesterday's odds.
+    held = newest_line(cached_book, now) if cached_book else None
+    if held is not None and now - held <= timedelta(minutes=CACHE_BOOK_MAX_AGE_MINUTES):
+        books.append((cached_book, "held"))
+    book, book_source = max(books, key=newest, default=(b"", "none"))
+    atomic_write(directory / "nba_books.csv", book)
+
+    chosen = _better_pair(remote, local, cached)
     if chosen is None:
         raise error or ValueError("no_valid_projection_source")
     data, meta = chosen
-    books = [b for b in (remote_book, local_book) if b]
-    # Missing book data must remove a previously cached file, not preserve it.
-    book = max(
-        books,
-        key=lambda b: newest_line(b) or datetime.min.replace(tzinfo=UTC),
-        default=b"",
-    )
-    directory = Path(directory)
-    atomic_write(directory / "nba_books.csv", book)
-    atomic_write(directory / "latest.csv", data)
-    atomic_write(
-        directory / "latest_meta.json", (json.dumps(meta, indent=2) + "\n").encode()
+    if chosen is not cached:
+        atomic_write(directory / "latest.csv", data)
+        atomic_write(
+            directory / "latest_meta.json",
+            (json.dumps(meta, indent=2) + "\n").encode(),
+        )
+    source = {id(remote): "github", id(local): "server", id(cached): "held"}
+    print(
+        "NBA INPUTS: model inputs from "
+        f"{source[id(chosen)]} ({meta['generated_utc']}, {meta.get('rows')} rows); "
+        f"sportsbook lines from {book_source}"
+        + (f"; GitHub unavailable ({type(error).__name__})" if error else ""),
+        flush=True,
     )
     return meta
 

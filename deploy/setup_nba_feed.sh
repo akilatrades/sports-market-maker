@@ -8,7 +8,8 @@
 #   ... setup_nba_feed.sh --with-projections
 #       also the NBA model-inputs job (4 times a day); refuses without spare memory
 #   ... setup_nba_feed.sh --status     what ran, when, and how fresh the feed is
-#   ... setup_nba_feed.sh --off        both jobs off (the bot falls back to GitHub)
+#   ... setup_nba_feed.sh --off        both jobs off and their data set aside, so
+#                                       the bot falls back to GitHub at once
 # Never touches the trading bots, their timers, journals, Kalshi settings or orders.
 set -Eeuo pipefail
 umask 077
@@ -55,7 +56,16 @@ PY
 case "${1:-}" in
   --off)
     systemctl disable --now "$BOOKS.timer" "$PROJ.timer" 2>/dev/null || true
-    echo "NBA server feed is OFF. The NBA bot falls back to GitHub's copies."
+    systemctl stop "$BOOKS.service" "$PROJ.service" 2>/dev/null || true
+    # Set the data aside too: the bot reads it for as long as it is newest.
+    stamp=$(date -u +%Y%m%dT%H%M%SZ)
+    if [[ -d "$FEED/published" ]]; then
+      mv "$FEED/published" "$FEED/published.off-$stamp"
+    fi
+    if [[ -f "$FEED/outputs/books/nba_latest.csv" ]]; then
+      mv "$FEED/outputs/books/nba_latest.csv" "$FEED/outputs/books/nba_latest.off-$stamp.csv"
+    fi
+    echo "NBA server feed is OFF and its data set aside. The NBA bot uses GitHub's copies."
     exit 0 ;;
   --status) feed_status; exit 0 ;;
   ""|--with-projections) ;;
@@ -87,7 +97,10 @@ for f in "$BOOKS.service" "$BOOKS.timer" "$PROJ.service" "$PROJ.timer"; do
   chmod 644 "/etc/systemd/system/$f"
 done
 systemctl daemon-reload
+[[ ! -L "$FEED" ]] || { echo "$FEED is a link; refusing." >&2; exit 1; }
 install -d -o trader -g trader -m 700 "$FEED"
+# Release the code-release lock: the jobs skip themselves while it is held.
+exec 9>&-
 echo "Units installed from GitHub main $(tgit rev-parse --short FETCH_HEAD); server code at $(tgit rev-parse --short HEAD)."
 
 if [[ ! -f "$ENV" ]]; then
@@ -106,11 +119,11 @@ fi
 
 echo "Fetching sportsbook lines once now..."
 if systemctl start "$BOOKS.service"; then
-  systemctl enable --now "$BOOKS.timer" >/dev/null 2>&1
+  systemctl enable --now "$BOOKS.timer"
   echo "OK: sportsbook lines now refresh on this server every 20 minutes."
 else
   journalctl -u "$BOOKS.service" -n 8 --no-pager -o cat | grep -iE "error|odds api" | clean || true
-  echo "The sportsbook job failed (reason above). Its timer was NOT turned on." >&2
+  echo "The sportsbook job failed (reason above). Its timer was left as it was." >&2
   echo "Common fix: the key was pasted wrongly in $ENV." >&2
   exit 1
 fi
@@ -120,18 +133,19 @@ if (( WITH_PROJECTIONS )); then
   free -h
   if (( available < MIN_AVAILABLE_KB )); then
     echo "Not enough spare memory for the model-inputs job ($((available / 1024)) MB free," >&2
-    echo "it needs about $((MIN_AVAILABLE_KB / 1024)) MB). Left OFF: the NBA bot keeps using" >&2
-    echo "GitHub's model inputs. Sportsbook lines still come from this server." >&2
+    echo "it needs about $((MIN_AVAILABLE_KB / 1024)) MB). Not turned on: the NBA bot keeps" >&2
+    echo "using GitHub's model inputs. Sportsbook lines still come from this server." >&2
     exit 1
   fi
   echo "Building NBA model inputs once now (the first run downloads the box-score"
   echo "history and can take up to 10 minutes)..."
   if systemctl start "$PROJ.service"; then
-    systemctl enable --now "$PROJ.timer" >/dev/null 2>&1
-    echo "OK: NBA model inputs now also come from this server, 4 times a day."
+    journalctl -u "$PROJ.service" -n 20 --no-pager -o cat | grep -E "NBA FEED PROJECTIONS" | tail -n 2 || true
+    systemctl enable --now "$PROJ.timer"
+    echo "OK: NBA model inputs now also come from this server, 5 times a day."
   else
     journalctl -u "$PROJ.service" -n 8 --no-pager -o cat | grep -iE "error|refus|memory" | clean || true
-    echo "The model-inputs job failed (reason above). Its timer was NOT turned on;" >&2
+    echo "The model-inputs job failed (reason above). Its timer was left as it was;" >&2
     echo "the NBA bot keeps using GitHub's model inputs." >&2
     exit 1
   fi

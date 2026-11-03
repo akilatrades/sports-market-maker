@@ -15,6 +15,8 @@ Environment=PYTHONUNBUFFERED=1
 Environment=PYTHONDONTWRITEBYTECODE=1
 Environment=OPENBLAS_NUM_THREADS=1
 Environment=OMP_NUM_THREADS=1
+# Skip the run while a code release is updating the checkout.
+ExecCondition=+/usr/bin/flock -n /run/lock/smm-production-release.lock /bin/true
 ExecStart=/home/trader/sports-market-maker-prod-auto/.venv/bin/python -m live.nba_feed books
 # Never compete with the trading bots on the small server: capped memory,
 # among the first killed if memory runs out, low CPU and disk priority.
@@ -32,5 +34,7 @@ ProtectSystem=strict
 # The trading checkout and journals are read-only here; only the feed folder
 # is writable (the setup script creates it).
 ProtectHome=read-only
+# Not even read access to the bots' journals, KILL switches and state.
+InaccessiblePaths=-/home/trader/prod-nba-auto -/home/trader/prod-nfl-auto -/home/trader/prod-spread-auto
 ReadWritePaths=/home/trader/nba-feed
 UMask=0077

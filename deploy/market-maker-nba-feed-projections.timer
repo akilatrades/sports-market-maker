@@ -1,10 +1,10 @@
 [Unit]
-Description=NBA model inputs four times a day
+Description=NBA model inputs five times a day
 
 [Timer]
-# 12:20, 15:20, 18:20 and 21:20 UTC: the bot accepts inputs up to 9 hours
-# old, so the last run covers the latest tip-offs.
-OnCalendar=*-*-* 12,15,18,21:20:00 UTC
+# 10:20, 12:20, 15:20, 18:20 and 21:20 UTC: the bot accepts inputs up to 9
+# hours old; the first run covers afternoon tip-offs, the last the latest.
+OnCalendar=*-*-* 10,12,15,18,21:20:00 UTC
 AccuracySec=1min
 Persistent=false
 Unit=market-maker-nba-feed-projections.service
