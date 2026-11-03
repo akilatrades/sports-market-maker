@@ -23,7 +23,9 @@ Run: python -m live.log_books [nba|nfl] [--near]
 """
 
 import json
+import os
 import sys
+import tempfile
 from datetime import UTC, datetime
 from pathlib import Path
 
@@ -45,6 +47,30 @@ def merge_latest(previous, fresh):
         return previous
     keep = previous[~previous.event_id.isin(set(fresh.event_id))]
     return pd.concat([fresh, keep], ignore_index=True)
+
+
+def read_or_none(path):
+    """A previous file, or None if missing, empty or unreadable (a crash
+    mid-write must not stop every later run)."""
+    try:
+        return pd.read_csv(path)
+    except (OSError, pd.errors.EmptyDataError, pd.errors.ParserError):
+        return None
+
+
+def write_atomic(frame, path):
+    """Write next to the target and rename, so a reader never sees half a file."""
+    path = Path(path)
+    # Same suffix (.csv or .csv.gz), so pandas picks the same compression.
+    suffix = "".join(path.suffixes)
+    fd, name = tempfile.mkstemp(dir=path.parent, prefix=".tmp-", suffix=suffix)
+    os.close(fd)
+    try:
+        frame.to_csv(name, index=False)
+        os.replace(name, path)
+    finally:
+        if os.path.exists(name):
+            os.unlink(name)
 
 
 def main(sport="nba", scope="full"):
@@ -77,12 +103,12 @@ def main(sport="nba", scope="full"):
     OUT.mkdir(parents=True, exist_ok=True)
     latest_path = OUT / SPORTS[sport][2]
     latest = table
-    if near and latest_path.exists():
-        latest = merge_latest(pd.read_csv(latest_path), table)
-    latest.to_csv(latest_path, index=False)
+    if near:
+        latest = merge_latest(read_or_none(latest_path), table)
+    write_atomic(latest, latest_path)
     day = OUT / f"{sport}_{now:%Y-%m-%d}.csv.gz"
-    old = pd.read_csv(day) if day.exists() else pd.DataFrame()
-    pd.concat([old, table], ignore_index=True).to_csv(day, index=False)
+    old = read_or_none(day)
+    write_atomic(pd.concat([old, table], ignore_index=True), day)
     out = {
         "sport": sport,
         "scope": scope,

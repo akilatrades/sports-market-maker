@@ -1779,7 +1779,14 @@ def nba_candidates(now, latest=Path("outputs/projections/latest.csv")):
         if len(frame) != metadata["rows"]:
             raise ValueError("projection_row_count")
         if frame.empty:
-            frame.attrs["diagnostics"] = {**diagnostics, "blocked": "no_priced_markets"}
+            # A published empty pair passed the publish check, which refuses
+            # zero rows while games and props are open: Kalshi listed no NBA
+            # props when it was made (open_markets says how many it saw).
+            frame.attrs["diagnostics"] = {
+                **diagnostics,
+                "blocked": "no_priced_markets",
+                "open_markets": metadata.get("open_markets"),
+            }
             return frame
         needed = {
             "ticker",
@@ -2277,7 +2284,15 @@ def preflight(client, frame, now, journal):
         failures.append(str(error))
     if (journal.parent / "KILL").exists():
         failures.append("NBA_KILL_exists")
-    if frame.empty or not frame.injury_status.eq("").any():
+    # 2026-11-03: a day with no NBA props listed (no games, or not listed yet)
+    # is idle, not a failure; before, it failed every code release that day.
+    diagnostics = frame.attrs.get("diagnostics", {})
+    no_markets_listed = (
+        frame.empty
+        and diagnostics.get("blocked") == "no_priced_markets"
+        and diagnostics.get("open_markets") == 0
+    )
+    if (frame.empty or not frame.injury_status.eq("").any()) and not no_markets_listed:
         failures.append("no_verified_projection_rows")
     try:
         events = load_journal(journal)
@@ -2293,7 +2308,11 @@ def preflight(client, frame, now, journal):
             failures.append("cash_below_order_cap")
         # Aggregated account cash is not usable collateral on another shard.
         # Check one representative eligible market without submitting anything.
-        verified = frame[frame.injury_status.fillna("").eq("")]
+        verified = (
+            frame[frame.injury_status.fillna("").eq("")]
+            if "injury_status" in frame
+            else frame.iloc[0:0]
+        )
         if not verified.empty:
             try:
                 require_funded_shard(
@@ -2336,6 +2355,7 @@ def preflight(client, frame, now, journal):
         "ready": not failures,
         "strategy_version": STRATEGY_VERSION,
         "failures": failures,
+        "idle_reason": "no_nba_markets_listed" if no_markets_listed else None,
         "account": account,
         "inputs": frame.attrs.get("diagnostics", {}),
         "note": "Read-only readiness check; owner activation is separate. No fill or profit claim.",

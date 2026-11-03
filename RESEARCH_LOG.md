@@ -3953,3 +3953,30 @@ orders filled about 1,180 contracts at +18.0¢ against 520 at 2.
 owner's choice of 5). Shadow quotes follow the same rule. Everything else in
 v6 is unchanged. Live so far: 186 quotes on this series since the season
 opened, no fills; the paper ledger has 9 settled fills (+8.1¢, t 1.1).
+
+## 2026-11-03: NBA inputs from the server, not GitHub's scheduler (operations)
+
+*Owner asked on 3 November that the NBA bot stop depending on GitHub's
+scheduled jobs. Not a rule change; the order rules (v8) are untouched.*
+
+**Evidence (live).** After the 2 November fix (resting orders keep book
+prices up to 120 minutes), v7 orders placed that evening were still cancelled
+85% of the time (55 of 65), now at a median book age of 125 minutes: GitHub's
+20-minute sportsbook job ran 3 times between 14:00 and 04:00 UTC. Fill rate
+18% (11% before the fix). 13 settled fills, −11.2¢ a contract (t −1.1; too
+few to read). On 3 November GitHub published no NBA model inputs until the
+owner ran the job by hand.
+
+**Change.** `live/nba_feed.py` with two server timers
+(`deploy/market-maker-nba-feed-{books,projections}.*`, installed by
+`deploy/setup_nba_feed.sh`): sportsbook lines every 20 minutes; model inputs
+four times a day (optional, memory-gated). `live/nba_inputs.sync` takes the
+newer valid copy of each input from the server feed or GitHub (before:
+GitHub only). Also: the NBA readiness check treats a day with no NBA props
+listed as idle rather than a failure (before: every code release on such a
+day rolled back, as on 3 November). Details and safety limits:
+`deploy/NBA_SERVER_FEED.md`. Tests: `tests/test_nba_server_feed.py`.
+
+**Watch.** Book-age cancels (`fresh_two_book_consensus_missing`,
+`unverified_roster_injury_or_model`) should fall well below 85% of NBA
+orders once the feed runs; the checkpoint judges v8 on its own orders.
