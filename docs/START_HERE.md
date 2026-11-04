@@ -133,7 +133,7 @@ order (the scan's best series; YES lost there). It considers markets from 24 hou
 takes start times from the ticker or, failing that, the earlier of a
 validated Kalshi milestone and a cautious per-series gap before expiry; a
 start never moves later. It leaves out three daily financial series and
-can submit up to 60 orders a pass and 6,000 a day.
+can submit up to 60 orders a pass and 9,000 a day (6,000 until 4 November).
 It places orders only after the owner arms it
 ([deploy/PROD_SPREAD_AUTO.md](../deploy/PROD_SPREAD_AUTO.md)).
 

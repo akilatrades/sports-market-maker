@@ -3980,3 +3980,31 @@ day rolled back, as on 3 November). Details and safety limits:
 **Watch.** Book-age cancels (`fresh_two_book_consensus_missing`,
 `unverified_roster_injury_or_model`) should fall well below 85% of NBA
 orders once the feed runs; the checkpoint judges v8 on its own orders.
+
+## 2026-11-04: Spread maker daily order limit 6,000 → 9,000 (owner, operations)
+
+*The owner asked on 4 November to raise this limit. Not a rule change: which
+markets v6 quotes, at what price and size, is unchanged, so the version stays
+`spread-maker-v6-fills-first` and its checkpoint keeps counting.*
+
+**Evidence (live order counts; no P&L).** v6 submits about 280 orders an
+hour (45 a pass on average, 60 at most). Quotes are re-posted often: about
+80% of v6 orders were cancelled for a requote, most after one 10-minute pass,
+and about half of the re-posts were at the same price (the hourly refresh
+before the 65-minute expiry, plus quotes that dropped out for one pass and
+came back; the cause of the second is not known yet). At that pace 6,000
+runs out around 21:00 New York time, and nothing new is quoted until
+midnight: the late college games and overnight esports.
+
+**Change (old → new).** `live/spread_policy.py` `MAX_SUBMISSIONS_PER_DAY`
+6,000 → 9,000. Why 9,000: `MAX_ORDERS_PER_PASS` (60, unchanged) times the
+timer's passes in the longest New York day (150 ten-minute passes on the
+25-hour day when clocks go back; 144 otherwise) is 9,000, so a normal day can
+no longer reach the daily limit; it still stops extra passes (run by hand,
+or a broken timer). Unchanged: 60 orders a pass (the fastest rate), the $100
+open cap, 2 contracts (5 on men's first-half spreads), the −$15 daily and
+−$40 total loss stops. Test: `test_daily_limit_only_stops_extra_passes`.
+
+**Watch.** Refused orders (none for v6 so far). The same-price re-posts are a
+separate fix: fewer needless cancels would also keep the orders' place in
+the queue.

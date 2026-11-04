@@ -433,6 +433,25 @@ def test_daily_submission_cap(world, monkeypatch):
     assert report["placed"] == 0 and report["skip_daily_cap"] == 1
 
 
+def test_daily_limit_only_stops_extra_passes():
+    """Owner, 4 November: at v6's pace (about 280 orders an hour) 6,000 ran
+    out near 21:00 New York time. 9,000 covers every timer pass of the
+    longest New York day at the per-pass limit, so only passes beyond the
+    timer's (by hand, or a broken timer) can reach it."""
+    timer = Path(__file__).resolve().parents[1] / "deploy"
+    timer = (timer / "market-maker-prod-spread-auto.timer").read_text()
+    assert "OnCalendar=*-*-* *:03/10:00 UTC" in timer  # minute 3, 13, ... UTC
+
+    def passes(day):
+        first = datetime(day.year, day.month, day.day, 0, 3, tzinfo=UTC)
+        times = (first + timedelta(minutes=10 * k) for k in range(-300, 600))
+        return sum(t.astimezone(bot.NY).date() == day for t in times)
+
+    ordinary, clocks_back = passes(NOW.date()), passes(datetime(2026, 11, 1).date())
+    assert (ordinary, clocks_back) == (144, 150)  # 1 November 2026 has 25 hours
+    assert P.MAX_ORDERS_PER_PASS * clocks_back <= P.MAX_SUBMISSIONS_PER_DAY == 9000
+
+
 def test_post_only_refusal_is_recorded_after_a_signed_check(world):
     ex = world["exchange"]
     ex.fail_place = TradingError(
@@ -1147,7 +1166,8 @@ def test_pilot_limits_are_the_owner_approved_ones():
         15,
         40,
     )
-    assert (P.MAX_ORDERS_PER_PASS, P.MAX_SUBMISSIONS_PER_DAY) == (60, 6000)
+    # Daily limit 6,000 -> 9,000 on 4 November (owner); the pass limit is v6's.
+    assert (P.MAX_ORDERS_PER_PASS, P.MAX_SUBMISSIONS_PER_DAY) == (60, 9000)
     assert P.MIN_SPREAD_CENTS == 4 and P.WINDOW_HOURS == (4.0, 24.0)  # v6; v5: 8c
     # Account-wide total stop -$60 -> -$100 on 2026-10-23 ("NBA rules v6");
     # the spread maker's own limits above are unchanged, 8c spreads included.
