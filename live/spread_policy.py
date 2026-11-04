@@ -20,7 +20,7 @@ from pathlib import Path
 # owner: more fills): spreads of 4c or more (v5: 8c), quotes from 24 hours
 # before the start (v5: 12), every market of an event (v5: one), esports
 # back on, $100 open (v5: $50), 60 orders a pass (v5: 20) and 6,000 a day
-# (v5: 1,500). Replay (simulated, in-sample, flow 0.25): about 63 fills a
+# (v5: 1,500; 9,000 from 4 November). Replay (simulated, in-sample, flow 0.25): about 63 fills a
 # day at +4.3c a contract (t 8.8) against v5's 9 a day at +8.1c (t 6.9).
 STRATEGY_VERSION = "spread-maker-v6-fills-first"
 # The shared-risk cohort journal lives in STATE; the owner creates ARM_MARKER
@@ -70,7 +70,13 @@ MAX_ORDERS_PER_PASS = 60
 # least hourly, so 300 would run out by early morning with ~30 markets quoted.
 # v6: 1,500 -> 6,000. v5 reached about 1,380 by 18:00 UTC on 2 November;
 # each quote is re-posted about 1.6 times an hour as prices move.
-MAX_SUBMISSIONS_PER_DAY = 6000
+# 6,000 -> 9,000 (owner, 4 November; RESEARCH_LOG.md "Spread maker daily
+# order limit"): v6 places about 280 orders an hour, so 6,000 ran out near
+# 21:00 New York time and nothing new was quoted until midnight. 9,000 is
+# what MAX_ORDERS_PER_PASS allows in a full day of 10-minute passes (144, or
+# 150 on the 25-hour day when clocks go back), so this limit now only stops
+# extra passes (a timer or by-hand runs), not a normal day.
+MAX_SUBMISSIONS_PER_DAY = 9000
 ORDER_LIFETIME_MINUTES = 65  # orders expire on the exchange even if the bot stops
 # No new order after this many seconds from process start (lock waits count).
 # Checked again just before each order is journaled; from there one order's

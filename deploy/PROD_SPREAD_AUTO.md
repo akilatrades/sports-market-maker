@@ -91,7 +91,7 @@ directly: that comparison is the main point of the pilot.
 | Contracts per order | up to 5 | 1, then 5 (22 October); the first v3 draft had 2 |
 | Net contracts per market and side | 5 | 1, then 5; the first v3 draft had 2 |
 | Open exposure (resting orders + held contracts, at cost) | $120 | $25, then $60 until v3 |
-| Orders per pass / per New York day | 20 / 1,500 | Cancelled orders still count; 300 a day before v3 (each quote is re-posted at least hourly) |
+| Orders per pass / per New York day | 60 / 9,000 | Cancelled orders still count; 300 a day before v3, 20 / 1,500 until v6, 60 / 6,000 until 4 November (9,000 = 60 a pass in every 10-minute pass of a 25-hour day) |
 | Own realized-loss stop, per day / total | −$15 / −$40 | −$5 / −$15, then −$10 / −$40 until v3; cancels its quotes and stops |
 | Account realized-loss stop, per day / total | −$20 / −$100 | Shared with NBA and NFL; total was −$60 before 23 October |
 
