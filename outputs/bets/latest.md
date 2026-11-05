@@ -30,6 +30,8 @@
 | Thu 9:00 PM | Jase Richardson | NO 4+ assists | 73¢ | 84% | 10¢ | 7 | $5.21 | paper |
 | Thu 9:00 PM | Jase Richardson | NO 15+ points | 86¢ | 95% | 8¢ | 6 | $5.22 | paper |
 | Thu 9:00 PM | Khaman Maluach | NO 6+ rebounds | 52¢ | 60% | 6¢ | 9 | $4.84 | paper |
+| Thu 9:00 PM | Miles Bridges | YES 25+ points | 10¢ | 16% | 5¢ | 51 | $5.43 | paper |
+| Thu 9:00 PM | Oso Ighodaro | YES 10+ points | 23¢ | 33% | 8¢ | 22 | $5.34 | paper |
 | Thu 9:00 PM | Tristan da Silva | NO 2+ threes | 29¢ | 53% | 23¢ | 17 | $5.18 | paper |
 | Thu 9:00 PM | Tristan da Silva | NO 4+ rebounds | 39¢ | 60% | 20¢ | 13 | $5.29 | paper |
 | Thu 9:00 PM | Tristan da Silva | NO 10+ points | 36¢ | 50% | 13¢ | 14 | $5.27 | paper |
@@ -40,10 +42,13 @@
 | Thu 10:00 PM | Bam Adebayo | YES 20+ points | 44¢ | 59% | 13¢ | 11 | $5.03 | paper |
 | Thu 10:00 PM | Bam Adebayo | YES 2+ threes | 34¢ | 48% | 12¢ | 15 | $5.34 | paper |
 | Thu 10:00 PM | Bam Adebayo | YES 4+ assists | 45¢ | 54% | 8¢ | 11 | $5.15 | paper |
+| Thu 10:00 PM | Bobby Portis | YES 1+ threes | 66¢ | 74% | 6¢ | 7 | $4.73 | paper |
+| Thu 10:00 PM | Bobby Portis | YES 15+ points | 14¢ | 20% | 6¢ | 37 | $5.50 | paper |
 | Thu 10:00 PM | Brandin Podziemski | YES 15+ points | 61¢ | 73% | 10¢ | 8 | $5.02 | paper |
 | Thu 10:00 PM | Brandin Podziemski | YES 3+ threes | 38¢ | 47% | 8¢ | 13 | $5.16 | paper |
 | Thu 10:00 PM | Davion Mitchell | YES 15+ points | 33¢ | 47% | 12¢ | 15 | $5.19 | paper |
 | Thu 10:00 PM | Davion Mitchell | YES 2+ rebounds | 67¢ | 80% | 11¢ | 7 | $4.80 | paper |
+| Thu 10:00 PM | Davion Mitchell | YES 2+ threes | 47¢ | 55% | 6¢ | 11 | $5.37 | paper |
 | Thu 10:00 PM | De'Anthony Melton | YES 4+ rebounds | 51¢ | 64% | 11¢ | 10 | $5.28 | paper |
 | Thu 10:00 PM | De'Anthony Melton | YES 3+ threes | 25¢ | 36% | 10¢ | 20 | $5.27 | paper |
 | Thu 10:00 PM | De'Anthony Melton | YES 10+ points | 54¢ | 65% | 9¢ | 9 | $5.02 | paper |
@@ -51,6 +56,7 @@
 | Thu 10:00 PM | Draymond Green | YES 1+ threes | 57¢ | 66% | 7¢ | 9 | $5.29 | paper |
 | Thu 10:00 PM | Georges Niang | YES 2+ threes | 46¢ | 59% | 11¢ | 11 | $5.26 | paper |
 | Thu 10:00 PM | Georges Niang | NO 4+ rebounds | 59¢ | 67% | 6¢ | 8 | $4.86 | paper |
+| Thu 10:00 PM | Georges Niang | YES 10+ points | 33¢ | 50% | 15¢ | 15 | $5.19 | paper |
 | Thu 10:00 PM | Klay Thompson | YES 5+ threes | 23¢ | 39% | 15¢ | 22 | $5.34 | paper |
 | Thu 10:00 PM | Klay Thompson | YES 15+ points | 33¢ | 46% | 11¢ | 15 | $5.19 | paper |
 | Thu 10:00 PM | Pelle Larsson | YES 20+ points | 9¢ | 15% | 6¢ | 57 | $5.46 | paper |
