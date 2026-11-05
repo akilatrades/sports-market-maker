@@ -1,9 +1,9 @@
 {
   "health": {
-    "attempted_candidates": 40,
-    "eligible_candidates": 232,
+    "attempted_candidates": 0,
+    "eligible_candidates": 0,
     "errors": [],
-    "generated_at": "2026-11-04T23:52:36.550395+00:00",
+    "generated_at": "2026-11-05T01:40:33.165914+00:00",
     "state": "recording"
   },
   "manifest": {
@@ -52,17 +52,15 @@
       "through/model_veto": {
         "actual_win_rate": 0.5897435897435898,
         "brier_filled": 0.2568070787157949,
-        "execution_known": 77,
+        "execution_known": 81,
         "exposure_by_game": {
-          "401909922": 1.4100000000000001,
-          "401909923": 0.41000000000000003,
           "401909931": 2.54
         },
         "filled": 39,
         "forecast_win_probability": 0.5750556923076923,
         "net_pnl_fee_upper_estimate": 2.79,
         "orders": 86,
-        "pending_or_unknown_execution": 9,
+        "pending_or_unknown_execution": 5,
         "pnl_without_best_game": 1.33,
         "pnl_without_best_three_games": -0.94,
         "settled": 39,
@@ -81,18 +79,17 @@
       "through/no_baseline": {
         "actual_win_rate": 0.5301204819277109,
         "brier_filled": 0.2360306390039277,
-        "execution_known": 161,
+        "execution_known": 173,
         "exposure_by_game": {
-          "401909922": 4.959999999999999,
-          "401909923": 0.41000000000000003,
+          "401909922": 2.7399999999999998,
           "401909931": 4.99,
           "401909932": 0.42000000000000004
         },
-        "filled": 83,
+        "filled": 89,
         "forecast_win_probability": 0.5157298313253013,
         "net_pnl_fee_upper_estimate": 0.93,
         "orders": 185,
-        "pending_or_unknown_execution": 24,
+        "pending_or_unknown_execution": 12,
         "pnl_without_best_game": -0.64,
         "pnl_without_best_three_games": -2.67,
         "settled": 83,
@@ -103,8 +100,8 @@
             "observations": 5
           },
           "60": {
-            "mean": 0.0,
-            "observations": 3
+            "mean": -0.0025,
+            "observations": 4
           }
         }
       },
@@ -136,17 +133,16 @@
       "touch/model_veto": {
         "actual_win_rate": 0.5853658536585366,
         "brier_filled": 0.2544731007445122,
-        "execution_known": 77,
+        "execution_known": 81,
         "exposure_by_game": {
-          "401909922": 1.4100000000000001,
           "401909923": 0.41000000000000003,
           "401909931": 2.54
         },
-        "filled": 41,
+        "filled": 42,
         "forecast_win_probability": 0.5757715853658537,
         "net_pnl_fee_upper_estimate": 2.87,
         "orders": 86,
-        "pending_or_unknown_execution": 9,
+        "pending_or_unknown_execution": 5,
         "pnl_without_best_game": 1.41,
         "pnl_without_best_three_games": -0.86,
         "settled": 41,
@@ -157,26 +153,26 @@
             "observations": 2
           },
           "60": {
-            "mean": 0.0,
-            "observations": 2
+            "mean": 0.01,
+            "observations": 3
           }
         }
       },
       "touch/no_baseline": {
         "actual_win_rate": 0.5227272727272727,
         "brier_filled": 0.23501991534982955,
-        "execution_known": 161,
+        "execution_known": 173,
         "exposure_by_game": {
-          "401909922": 4.959999999999999,
+          "401909922": 2.7399999999999998,
           "401909923": 0.41000000000000003,
           "401909931": 4.99,
           "401909932": 0.42000000000000004
         },
-        "filled": 88,
+        "filled": 95,
         "forecast_win_probability": 0.5150612840909091,
         "net_pnl_fee_upper_estimate": 0.48,
         "orders": 185,
-        "pending_or_unknown_execution": 24,
+        "pending_or_unknown_execution": 12,
         "pnl_without_best_game": -1.09,
         "pnl_without_best_three_games": -3.12,
         "settled": 88,
@@ -187,8 +183,8 @@
             "observations": 6
           },
           "60": {
-            "mean": 0.0,
-            "observations": 3
+            "mean": 0.003999999999999999,
+            "observations": 5
           }
         }
       }

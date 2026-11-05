@@ -6,7 +6,7 @@ It goes to real money only after the test in RESEARCH_LOG.md is met.
 | Measure | Value |
 |---|---:|
 | positions | 836 |
-| open | 63 |
+| open | 90 |
 | games | 96 |
 | profit dollars | 44.78 |
 | risked dollars | 4006.72 |
@@ -15,4 +15,4 @@ It goes to real money only after the test in RESEARCH_LOG.md is met.
 | t | -0.45 |
 | bankroll | 544.78 |
 | players who sat | 2 |
-| updated utc | 2026-11-04T23:52+00:00 |
+| updated utc | 2026-11-05T01:40+00:00 |
