@@ -65,3 +65,26 @@
 | Fri 8:00 PM | Shai Gilgeous-Alexander | NO 25+ points | 18¢ | 30% | 11¢ | 25 | $4.76 | paper |
 | Fri 8:00 PM | Ty Jerome | NO 6+ assists | 53¢ | 64% | 10¢ | 8 | $4.38 | paper |
 | Fri 8:00 PM | Zach Edey | YES 10+ rebounds | 35¢ | 51% | 14¢ | 12 | $4.40 | paper |
+| Fri 10:00 PM | Damian Lillard | NO 20+ points | 47¢ | 55% | 6¢ | 9 | $4.39 | paper |
+| Fri 10:00 PM | Darius Acuff Jr. | NO 25+ points | 56¢ | 65% | 7¢ | 8 | $4.62 | paper |
+| Fri 10:00 PM | Deni Avdija | NO 2+ threes | 44¢ | 52% | 6¢ | 10 | $4.58 | paper |
+| Fri 10:00 PM | Devin Vassell | YES 4+ assists | 29¢ | 36% | 5¢ | 15 | $4.57 | paper |
+| Fri 10:00 PM | Domantas Sabonis | NO 12+ rebounds | 36¢ | 47% | 9¢ | 12 | $4.52 | paper |
+| Fri 10:00 PM | Domantas Sabonis | NO 6+ assists | 54¢ | 64% | 9¢ | 8 | $4.46 | paper |
+| Fri 10:00 PM | Donovan Clingan | YES 15+ points | 21¢ | 29% | 7¢ | 21 | $4.66 | paper |
+| Fri 10:00 PM | Donovan Clingan | YES 1+ threes | 58¢ | 66% | 6¢ | 7 | $4.18 | paper |
+| Fri 10:00 PM | Donovan Clingan | NO 10+ rebounds | 40¢ | 47% | 6¢ | 11 | $4.59 | paper |
+| Fri 10:00 PM | Dylan Harper | NO 6+ assists | 59¢ | 77% | 17¢ | 7 | $4.25 | paper |
+| Fri 10:00 PM | Keldon Johnson | NO 10+ points | 47¢ | 58% | 9¢ | 9 | $4.39 | paper |
+| Fri 10:00 PM | Keldon Johnson | NO 4+ rebounds | 35¢ | 45% | 8¢ | 12 | $4.40 | paper |
+| Fri 10:00 PM | Luka Dončić | NO 35+ points | 46¢ | 55% | 7¢ | 9 | $4.30 | paper |
+| Fri 10:00 PM | Luka Dončić | NO 5+ threes | 49¢ | 56% | 6¢ | 9 | $4.57 | paper |
+| Fri 10:00 PM | Malik Monk | NO 4+ assists | 45¢ | 52% | 5¢ | 10 | $4.68 | paper |
+| Fri 10:00 PM | Precious Achiuwa | YES 10+ points | 41¢ | 52% | 9¢ | 11 | $4.70 | paper |
+| Fri 10:00 PM | Scoot Henderson | NO 4+ assists | 74¢ | 85% | 9¢ | 6 | $4.53 | paper |
+| Fri 10:00 PM | Sidy Cissoko | NO 2+ rebounds | 27¢ | 38% | 10¢ | 16 | $4.55 | paper |
+| Fri 10:00 PM | Stephon Castle | NO 6+ assists | 43¢ | 59% | 14¢ | 10 | $4.48 | paper |
+| Fri 10:00 PM | Victor Wembanyama | NO 10+ rebounds | 27¢ | 43% | 15¢ | 16 | $4.55 | paper |
+| Fri 10:00 PM | Victor Wembanyama | NO 25+ points | 33¢ | 45% | 11¢ | 13 | $4.50 | paper |
+| Fri 10:00 PM | Walker Kessler | YES 10+ rebounds | 57¢ | 65% | 6¢ | 7 | $4.12 | paper |
+| Fri 10:00 PM | Ziaire Williams | YES 10+ points | 36¢ | 57% | 19¢ | 12 | $4.52 | paper |
