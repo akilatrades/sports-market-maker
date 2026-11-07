@@ -8499,7 +8499,7 @@
         "stat": "threes",
         "team": "NOP"
       },
-      "last_checked": "2026-11-07T19:32:00.437762+00:00",
+      "last_checked": "2026-11-07T22:13:49.794047+00:00",
       "outcome_status": "pending",
       "p_model_yes": 0.549814,
       "policies": {
@@ -21199,7 +21199,7 @@
         "stat": "threes",
         "team": "NOP"
       },
-      "last_checked": "2026-11-07T19:32:00.161352+00:00",
+      "last_checked": "2026-11-07T22:13:49.399187+00:00",
       "outcome_status": "pending",
       "p_model_yes": 0.47905,
       "policies": {
@@ -40169,7 +40169,7 @@
         "stat": "assists",
         "team": "DEN"
       },
-      "last_checked": "2026-11-07T19:31:59.824681+00:00",
+      "last_checked": "2026-11-07T22:13:49.000262+00:00",
       "outcome_status": "pending",
       "p_model_yes": 0.768033,
       "policies": {
@@ -50165,7 +50165,25 @@
           ]
         ]
       },
-      "execution_status": "pending",
+      "execution": {
+        "through": {
+          "filled": true,
+          "first_fill_print": {
+            "at": "2026-11-07T20:41:55.459324Z",
+            "yes_price": 0.44
+          },
+          "later_trade_markouts": {}
+        },
+        "touch": {
+          "filled": true,
+          "first_fill_print": {
+            "at": "2026-11-07T20:41:55.459324Z",
+            "yes_price": 0.44
+          },
+          "later_trade_markouts": {}
+        }
+      },
+      "execution_status": "complete",
       "fee_multiplier": 1.0,
       "fee_type": "quadratic",
       "fee_upper_estimate": 0.02,
@@ -50189,6 +50207,7 @@
         "stat": "threes",
         "team": "DEN"
       },
+      "last_checked": "2026-11-07T22:13:33.677569+00:00",
       "outcome_status": "pending",
       "p_model_yes": 0.370684,
       "policies": {
@@ -50420,7 +50439,22 @@
           ]
         ]
       },
-      "execution_status": "pending",
+      "execution": {
+        "through": {
+          "filled": false,
+          "first_fill_print": null,
+          "later_trade_markouts": {}
+        },
+        "touch": {
+          "filled": true,
+          "first_fill_print": {
+            "at": "2026-11-07T20:57:15.090935Z",
+            "yes_price": 0.46
+          },
+          "later_trade_markouts": {}
+        }
+      },
+      "execution_status": "complete",
       "fee_multiplier": 1.0,
       "fee_type": "quadratic",
       "fee_upper_estimate": 0.02,
@@ -50444,6 +50478,7 @@
         "stat": "threes",
         "team": "DEN"
       },
+      "last_checked": "2026-11-07T22:13:35.306381+00:00",
       "outcome_status": "pending",
       "p_model_yes": 0.415463,
       "policies": {
@@ -50639,7 +50674,25 @@
           ]
         ]
       },
-      "execution_status": "pending",
+      "execution": {
+        "through": {
+          "filled": true,
+          "first_fill_print": {
+            "at": "2026-11-07T18:54:34.114994Z",
+            "yes_price": 0.61
+          },
+          "later_trade_markouts": {}
+        },
+        "touch": {
+          "filled": true,
+          "first_fill_print": {
+            "at": "2026-11-07T18:54:34.114994Z",
+            "yes_price": 0.61
+          },
+          "later_trade_markouts": {}
+        }
+      },
+      "execution_status": "complete",
       "fee_multiplier": 1.0,
       "fee_type": "quadratic",
       "fee_upper_estimate": 0.02,
@@ -50663,6 +50716,7 @@
         "stat": "threes",
         "team": "DEN"
       },
+      "last_checked": "2026-11-07T22:13:36.887059+00:00",
       "outcome_status": "pending",
       "p_model_yes": 0.550279,
       "policies": {
@@ -50870,7 +50924,19 @@
           ]
         ]
       },
-      "execution_status": "pending",
+      "execution": {
+        "through": {
+          "filled": false,
+          "first_fill_print": null,
+          "later_trade_markouts": {}
+        },
+        "touch": {
+          "filled": false,
+          "first_fill_print": null,
+          "later_trade_markouts": {}
+        }
+      },
+      "execution_status": "complete",
       "fee_multiplier": 1.0,
       "fee_type": "quadratic",
       "fee_upper_estimate": 0.02,
@@ -50894,6 +50960,7 @@
         "stat": "threes",
         "team": "DEN"
       },
+      "last_checked": "2026-11-07T22:13:38.414840+00:00",
       "outcome_status": "pending",
       "p_model_yes": 0.472753,
       "policies": {
@@ -51117,7 +51184,25 @@
           ]
         ]
       },
-      "execution_status": "pending",
+      "execution": {
+        "through": {
+          "filled": true,
+          "first_fill_print": {
+            "at": "2026-11-07T18:20:45.260199Z",
+            "yes_price": 0.46
+          },
+          "later_trade_markouts": {}
+        },
+        "touch": {
+          "filled": true,
+          "first_fill_print": {
+            "at": "2026-11-07T18:20:45.260199Z",
+            "yes_price": 0.46
+          },
+          "later_trade_markouts": {}
+        }
+      },
+      "execution_status": "complete",
       "fee_multiplier": 1.0,
       "fee_type": "quadratic",
       "fee_upper_estimate": 0.02,
@@ -51141,6 +51226,7 @@
         "stat": "threes",
         "team": "DEN"
       },
+      "last_checked": "2026-11-07T22:13:40.021948+00:00",
       "outcome_status": "pending",
       "p_model_yes": 0.307263,
       "policies": {
@@ -51340,7 +51426,22 @@
           ]
         ]
       },
-      "execution_status": "pending",
+      "execution": {
+        "through": {
+          "filled": false,
+          "first_fill_print": null,
+          "later_trade_markouts": {}
+        },
+        "touch": {
+          "filled": true,
+          "first_fill_print": {
+            "at": "2026-11-07T17:55:35.434253Z",
+            "yes_price": 0.62
+          },
+          "later_trade_markouts": {}
+        }
+      },
+      "execution_status": "complete",
       "fee_multiplier": 1.0,
       "fee_type": "quadratic",
       "fee_upper_estimate": 0.02,
@@ -51364,6 +51465,7 @@
         "stat": "threes",
         "team": "IND"
       },
+      "last_checked": "2026-11-07T22:13:41.504746+00:00",
       "outcome_status": "pending",
       "p_model_yes": 0.652235,
       "policies": {
@@ -51583,7 +51685,25 @@
           ]
         ]
       },
-      "execution_status": "pending",
+      "execution": {
+        "through": {
+          "filled": true,
+          "first_fill_print": {
+            "at": "2026-11-07T18:39:12.065401Z",
+            "yes_price": 0.39
+          },
+          "later_trade_markouts": {}
+        },
+        "touch": {
+          "filled": true,
+          "first_fill_print": {
+            "at": "2026-11-07T18:39:12.065401Z",
+            "yes_price": 0.39
+          },
+          "later_trade_markouts": {}
+        }
+      },
+      "execution_status": "complete",
       "fee_multiplier": 1.0,
       "fee_type": "quadratic",
       "fee_upper_estimate": 0.02,
@@ -51607,6 +51727,7 @@
         "stat": "threes",
         "team": "IND"
       },
+      "last_checked": "2026-11-07T22:13:43.039001+00:00",
       "outcome_status": "pending",
       "p_model_yes": 0.358158,
       "policies": {
@@ -51838,7 +51959,19 @@
           ]
         ]
       },
-      "execution_status": "pending",
+      "execution": {
+        "through": {
+          "filled": false,
+          "first_fill_print": null,
+          "later_trade_markouts": {}
+        },
+        "touch": {
+          "filled": false,
+          "first_fill_print": null,
+          "later_trade_markouts": {}
+        }
+      },
+      "execution_status": "complete",
       "fee_multiplier": 1.0,
       "fee_type": "quadratic",
       "fee_upper_estimate": 0.02,
@@ -51862,6 +51995,7 @@
         "stat": "threes",
         "team": "IND"
       },
+      "last_checked": "2026-11-07T22:13:44.529569+00:00",
       "outcome_status": "pending",
       "p_model_yes": 0.529631,
       "policies": {
@@ -52077,7 +52211,25 @@
           ]
         ]
       },
-      "execution_status": "pending",
+      "execution": {
+        "through": {
+          "filled": true,
+          "first_fill_print": {
+            "at": "2026-11-07T20:00:14.379409Z",
+            "yes_price": 0.47
+          },
+          "later_trade_markouts": {}
+        },
+        "touch": {
+          "filled": true,
+          "first_fill_print": {
+            "at": "2026-11-07T20:00:14.379409Z",
+            "yes_price": 0.47
+          },
+          "later_trade_markouts": {}
+        }
+      },
+      "execution_status": "complete",
       "fee_multiplier": 1.0,
       "fee_type": "quadratic",
       "fee_upper_estimate": 0.02,
@@ -52101,6 +52253,7 @@
         "stat": "threes",
         "team": "IND"
       },
+      "last_checked": "2026-11-07T22:13:45.998642+00:00",
       "outcome_status": "pending",
       "p_model_yes": 0.47905,
       "policies": {
@@ -52284,7 +52437,19 @@
           ]
         ]
       },
-      "execution_status": "pending",
+      "execution": {
+        "through": {
+          "filled": false,
+          "first_fill_print": null,
+          "later_trade_markouts": {}
+        },
+        "touch": {
+          "filled": false,
+          "first_fill_print": null,
+          "later_trade_markouts": {}
+        }
+      },
+      "execution_status": "complete",
       "fee_multiplier": 1.0,
       "fee_type": "quadratic",
       "fee_upper_estimate": 0.02,
@@ -52308,6 +52473,7 @@
         "stat": "assists",
         "team": "DEN"
       },
+      "last_checked": "2026-11-07T22:13:47.473963+00:00",
       "outcome_status": "pending",
       "p_model_yes": 0.69736,
       "policies": {
@@ -54479,6 +54645,1974 @@
       "ticker": "KXNBAAST-26NOV07BKNATL-ATLCMCCOLLUM3-4",
       "tip_utc": "2026-11-08 00:30:00+00:00",
       "yes_level": 0.44
+    },
+    {
+      "book_age_seconds": 7003.651496,
+      "book_request_at": "2026-11-07T22:14:03.276273+00:00",
+      "book_response_at": "2026-11-07T22:14:03.651496+00:00",
+      "entry_book": {
+        "no": [
+          [
+            "0.5400",
+            "3793.48"
+          ],
+          [
+            "0.5300",
+            "860.17"
+          ],
+          [
+            "0.5200",
+            "5235.00"
+          ],
+          [
+            "0.5100",
+            "1984.00"
+          ],
+          [
+            "0.4900",
+            "15.00"
+          ],
+          [
+            "0.4800",
+            "31.00"
+          ],
+          [
+            "0.4700",
+            "2201.00"
+          ],
+          [
+            "0.4200",
+            "172.00"
+          ],
+          [
+            "0.4100",
+            "200.00"
+          ],
+          [
+            "0.4000",
+            "733.00"
+          ],
+          [
+            "0.3900",
+            "200.00"
+          ],
+          [
+            "0.3300",
+            "223.00"
+          ],
+          [
+            "0.3200",
+            "4987.00"
+          ],
+          [
+            "0.3100",
+            "7105.00"
+          ],
+          [
+            "0.3000",
+            "11540.00"
+          ],
+          [
+            "0.2900",
+            "7248.00"
+          ],
+          [
+            "0.2800",
+            "285.71"
+          ],
+          [
+            "0.2700",
+            "370.00"
+          ],
+          [
+            "0.2500",
+            "10.69"
+          ],
+          [
+            "0.2400",
+            "2.00"
+          ],
+          [
+            "0.1900",
+            "2.00"
+          ],
+          [
+            "0.1600",
+            "927.00"
+          ],
+          [
+            "0.1500",
+            "1.00"
+          ],
+          [
+            "0.1400",
+            "6516.00"
+          ],
+          [
+            "0.1300",
+            "769.00"
+          ],
+          [
+            "0.1100",
+            "1.00"
+          ],
+          [
+            "0.0800",
+            "1.00"
+          ],
+          [
+            "0.0700",
+            "682.00"
+          ],
+          [
+            "0.0600",
+            "26155.00"
+          ],
+          [
+            "0.0500",
+            "48970.00"
+          ],
+          [
+            "0.0400",
+            "2.00"
+          ],
+          [
+            "0.0300",
+            "995.00"
+          ],
+          [
+            "0.0200",
+            "1172.00"
+          ],
+          [
+            "0.0100",
+            "1771.00"
+          ]
+        ],
+        "yes": [
+          [
+            "0.4500",
+            "110.00"
+          ],
+          [
+            "0.4400",
+            "1642.00"
+          ],
+          [
+            "0.4300",
+            "99.00"
+          ],
+          [
+            "0.4200",
+            "150.00"
+          ],
+          [
+            "0.3800",
+            "10.00"
+          ],
+          [
+            "0.3400",
+            "228.00"
+          ],
+          [
+            "0.3300",
+            "241.00"
+          ],
+          [
+            "0.3000",
+            "206.00"
+          ],
+          [
+            "0.2500",
+            "2001.00"
+          ],
+          [
+            "0.1900",
+            "526.00"
+          ],
+          [
+            "0.0900",
+            "1111.00"
+          ],
+          [
+            "0.0700",
+            "28.00"
+          ],
+          [
+            "0.0400",
+            "264.00"
+          ],
+          [
+            "0.0300",
+            "923.00"
+          ],
+          [
+            "0.0200",
+            "1280.00"
+          ],
+          [
+            "0.0100",
+            "1490.00"
+          ]
+        ]
+      },
+      "execution_status": "pending",
+      "fee_multiplier": 1.0,
+      "fee_type": "quadratic",
+      "fee_upper_estimate": 0.02,
+      "game_id": "401909940",
+      "improved": false,
+      "inputs": {
+        "book_commence_utc": "2026-11-08T01:10:00Z",
+        "book_n": "7",
+        "book_updated_utc": "2026-11-07 20:17:20+00:00",
+        "historical_minutes_baseline": "33.798936",
+        "last_game_minutes": "33.0",
+        "last_player_game_utc": "2026-11-07 00:30:00+00:00",
+        "line": "2.5",
+        "lineup_confirmation_status": "unverified",
+        "minutes_estimate_source": "prior_games_only",
+        "p_book": "0.442124",
+        "player_id": "3908809",
+        "recent_start_rate": "1.0",
+        "requires_book": "False",
+        "snapshot_utc": "2026-11-07T22:13:21.732287+00:00",
+        "stat": "threes",
+        "team": "CLE"
+      },
+      "outcome_status": "pending",
+      "p_model_yes": 0.550279,
+      "policies": {
+        "fresh_books_veto": false,
+        "model_veto": false,
+        "no_baseline": true
+      },
+      "price": 0.54,
+      "quantity": 1,
+      "quoted_at": "2026-11-07T22:14:03.651496+00:00",
+      "side": "no",
+      "slot": "401909940|3908809|threes",
+      "source_age_seconds": 41.919209,
+      "ticker": "KXNBA3PT-26NOV07NYKCLE-CLEDMITCHELL45-3",
+      "tip_utc": "2026-11-08 01:00:00+00:00",
+      "yes_level": 0.46
+    },
+    {
+      "book_age_seconds": 7004.03672,
+      "book_request_at": "2026-11-07T22:14:03.679283+00:00",
+      "book_response_at": "2026-11-07T22:14:04.036720+00:00",
+      "entry_book": {
+        "no": [
+          [
+            "0.5900",
+            "1834.78"
+          ],
+          [
+            "0.5800",
+            "1710.00"
+          ],
+          [
+            "0.5700",
+            "1535.00"
+          ],
+          [
+            "0.5600",
+            "382.00"
+          ],
+          [
+            "0.5500",
+            "872.00"
+          ],
+          [
+            "0.5400",
+            "798.00"
+          ],
+          [
+            "0.5300",
+            "228.00"
+          ],
+          [
+            "0.5100",
+            "114.00"
+          ],
+          [
+            "0.5000",
+            "1019.00"
+          ],
+          [
+            "0.4900",
+            "3281.00"
+          ],
+          [
+            "0.4400",
+            "206.00"
+          ],
+          [
+            "0.3800",
+            "1256.00"
+          ],
+          [
+            "0.3700",
+            "1498.00"
+          ],
+          [
+            "0.3600",
+            "1926.00"
+          ],
+          [
+            "0.3500",
+            "2056.00"
+          ],
+          [
+            "0.3100",
+            "259.06"
+          ],
+          [
+            "0.3000",
+            "333.00"
+          ],
+          [
+            "0.2400",
+            "2.00"
+          ],
+          [
+            "0.1900",
+            "2.00"
+          ],
+          [
+            "0.1700",
+            "246.00"
+          ],
+          [
+            "0.1600",
+            "2505.00"
+          ],
+          [
+            "0.1500",
+            "667.00"
+          ],
+          [
+            "0.1100",
+            "1.00"
+          ],
+          [
+            "0.0900",
+            "7837.00"
+          ],
+          [
+            "0.0800",
+            "1.00"
+          ],
+          [
+            "0.0600",
+            "2.00"
+          ],
+          [
+            "0.0500",
+            "2.00"
+          ],
+          [
+            "0.0400",
+            "2.00"
+          ],
+          [
+            "0.0300",
+            "1185.00"
+          ],
+          [
+            "0.0200",
+            "1302.00"
+          ],
+          [
+            "0.0100",
+            "2111.00"
+          ]
+        ],
+        "yes": [
+          [
+            "0.4000",
+            "500.00"
+          ],
+          [
+            "0.3900",
+            "630.00"
+          ],
+          [
+            "0.3800",
+            "886.00"
+          ],
+          [
+            "0.3700",
+            "25.00"
+          ],
+          [
+            "0.3600",
+            "125.00"
+          ],
+          [
+            "0.3500",
+            "150.00"
+          ],
+          [
+            "0.3400",
+            "1.00"
+          ],
+          [
+            "0.3200",
+            "260.00"
+          ],
+          [
+            "0.3100",
+            "12.00"
+          ],
+          [
+            "0.2700",
+            "200.00"
+          ],
+          [
+            "0.2400",
+            "2144.00"
+          ],
+          [
+            "0.2300",
+            "3945.00"
+          ],
+          [
+            "0.2100",
+            "1944.00"
+          ],
+          [
+            "0.1700",
+            "588.00"
+          ],
+          [
+            "0.0800",
+            "1250.00"
+          ],
+          [
+            "0.0700",
+            "28.00"
+          ],
+          [
+            "0.0400",
+            "248.00"
+          ],
+          [
+            "0.0300",
+            "3299.00"
+          ],
+          [
+            "0.0200",
+            "1550.00"
+          ],
+          [
+            "0.0100",
+            "1760.00"
+          ]
+        ]
+      },
+      "execution_status": "pending",
+      "fee_multiplier": 1.0,
+      "fee_type": "quadratic",
+      "fee_upper_estimate": 0.02,
+      "game_id": "401909940",
+      "improved": false,
+      "inputs": {
+        "book_commence_utc": "2026-11-08T01:10:00Z",
+        "book_n": "7",
+        "book_updated_utc": "2026-11-07 20:17:20+00:00",
+        "historical_minutes_baseline": "33.29518",
+        "last_game_minutes": "32.0",
+        "last_player_game_utc": "2026-11-07 00:30:00+00:00",
+        "line": "1.5",
+        "lineup_confirmation_status": "unverified",
+        "minutes_estimate_source": "prior_games_only",
+        "p_book": "0.400047",
+        "player_id": "4432158",
+        "recent_start_rate": "0.99997",
+        "requires_book": "False",
+        "snapshot_utc": "2026-11-07T22:13:21.732287+00:00",
+        "stat": "threes",
+        "team": "CLE"
+      },
+      "outcome_status": "pending",
+      "p_model_yes": 0.415929,
+      "policies": {
+        "fresh_books_veto": false,
+        "model_veto": false,
+        "no_baseline": true
+      },
+      "price": 0.59,
+      "quantity": 1,
+      "quoted_at": "2026-11-07T22:14:04.036720+00:00",
+      "side": "no",
+      "slot": "401909940|4432158|threes",
+      "source_age_seconds": 42.304433,
+      "ticker": "KXNBA3PT-26NOV07NYKCLE-CLEEMOBLEY4-2",
+      "tip_utc": "2026-11-08 01:00:00+00:00",
+      "yes_level": 0.41
+    },
+    {
+      "book_age_seconds": 7004.417966,
+      "book_request_at": "2026-11-07T22:14:04.063892+00:00",
+      "book_response_at": "2026-11-07T22:14:04.417966+00:00",
+      "entry_book": {
+        "no": [
+          [
+            "0.5200",
+            "3174.03"
+          ],
+          [
+            "0.5100",
+            "1990.00"
+          ],
+          [
+            "0.5000",
+            "2963.42"
+          ],
+          [
+            "0.4900",
+            "16.00"
+          ],
+          [
+            "0.4800",
+            "33.00"
+          ],
+          [
+            "0.4700",
+            "116.00"
+          ],
+          [
+            "0.4600",
+            "232.00"
+          ],
+          [
+            "0.4300",
+            "2137.00"
+          ],
+          [
+            "0.4200",
+            "4138.00"
+          ],
+          [
+            "0.3900",
+            "2416.00"
+          ],
+          [
+            "0.3700",
+            "211.00"
+          ],
+          [
+            "0.3000",
+            "1230.00"
+          ],
+          [
+            "0.2900",
+            "652.00"
+          ],
+          [
+            "0.2800",
+            "6290.00"
+          ],
+          [
+            "0.2700",
+            "296.29"
+          ],
+          [
+            "0.2500",
+            "400.00"
+          ],
+          [
+            "0.2400",
+            "2.00"
+          ],
+          [
+            "0.1900",
+            "2.00"
+          ],
+          [
+            "0.1500",
+            "1.00"
+          ],
+          [
+            "0.1300",
+            "3397.00"
+          ],
+          [
+            "0.1200",
+            "834.00"
+          ],
+          [
+            "0.1100",
+            "1.00"
+          ],
+          [
+            "0.0800",
+            "1.00"
+          ],
+          [
+            "0.0600",
+            "2128.00"
+          ],
+          [
+            "0.0500",
+            "255.00"
+          ],
+          [
+            "0.0400",
+            "16148.00"
+          ],
+          [
+            "0.0300",
+            "815.00"
+          ],
+          [
+            "0.0200",
+            "1142.00"
+          ],
+          [
+            "0.0100",
+            "1701.00"
+          ]
+        ],
+        "yes": [
+          [
+            "0.4600",
+            "279.00"
+          ],
+          [
+            "0.4500",
+            "836.58"
+          ],
+          [
+            "0.4400",
+            "341.00"
+          ],
+          [
+            "0.4300",
+            "75.00"
+          ],
+          [
+            "0.4200",
+            "150.00"
+          ],
+          [
+            "0.4100",
+            "1.00"
+          ],
+          [
+            "0.3700",
+            "219.00"
+          ],
+          [
+            "0.3500",
+            "39.00"
+          ],
+          [
+            "0.3400",
+            "200.00"
+          ],
+          [
+            "0.3200",
+            "9.00"
+          ],
+          [
+            "0.3100",
+            "1808.00"
+          ],
+          [
+            "0.3000",
+            "3609.00"
+          ],
+          [
+            "0.2300",
+            "1445.00"
+          ],
+          [
+            "0.2200",
+            "2090.00"
+          ],
+          [
+            "0.2100",
+            "380.95"
+          ],
+          [
+            "0.1100",
+            "909.00"
+          ],
+          [
+            "0.0700",
+            "28.00"
+          ],
+          [
+            "0.0400",
+            "236.00"
+          ],
+          [
+            "0.0300",
+            "993.00"
+          ],
+          [
+            "0.0200",
+            "1310.00"
+          ],
+          [
+            "0.0100",
+            "1440.00"
+          ]
+        ]
+      },
+      "execution_status": "pending",
+      "fee_multiplier": 1.0,
+      "fee_type": "quadratic",
+      "fee_upper_estimate": 0.02,
+      "game_id": "401909940",
+      "improved": true,
+      "inputs": {
+        "book_commence_utc": "2026-11-08T01:10:00Z",
+        "book_n": "7",
+        "book_updated_utc": "2026-11-07 20:17:20+00:00",
+        "historical_minutes_baseline": "34.013733",
+        "last_game_minutes": "30.0",
+        "last_player_game_utc": "2026-11-07 00:30:00+00:00",
+        "line": "2.5",
+        "lineup_confirmation_status": "unverified",
+        "minutes_estimate_source": "prior_games_only",
+        "p_book": "0.466678",
+        "player_id": "3992",
+        "recent_start_rate": "1.0",
+        "requires_book": "False",
+        "snapshot_utc": "2026-11-07T22:13:21.732287+00:00",
+        "stat": "threes",
+        "team": "CLE"
+      },
+      "outcome_status": "pending",
+      "p_model_yes": 0.473218,
+      "policies": {
+        "fresh_books_veto": false,
+        "model_veto": false,
+        "no_baseline": true
+      },
+      "price": 0.53,
+      "quantity": 1,
+      "quoted_at": "2026-11-07T22:14:04.417966+00:00",
+      "side": "no",
+      "slot": "401909940|3992|threes",
+      "source_age_seconds": 42.685679,
+      "ticker": "KXNBA3PT-26NOV07NYKCLE-CLEJHARDEN1-3",
+      "tip_utc": "2026-11-08 01:00:00+00:00",
+      "yes_level": 0.47
+    },
+    {
+      "book_age_seconds": 6936.807275,
+      "book_request_at": "2026-11-07T22:14:04.445364+00:00",
+      "book_response_at": "2026-11-07T22:14:04.807275+00:00",
+      "entry_book": {
+        "no": [
+          [
+            "0.4400",
+            "1484.21"
+          ],
+          [
+            "0.4300",
+            "1948.00"
+          ],
+          [
+            "0.4200",
+            "2728.00"
+          ],
+          [
+            "0.4100",
+            "392.39"
+          ],
+          [
+            "0.3900",
+            "1.00"
+          ],
+          [
+            "0.3000",
+            "338.00"
+          ],
+          [
+            "0.2900",
+            "200.00"
+          ],
+          [
+            "0.2800",
+            "1071.00"
+          ],
+          [
+            "0.1900",
+            "2.00"
+          ],
+          [
+            "0.1500",
+            "1.00"
+          ],
+          [
+            "0.1400",
+            "10.00"
+          ],
+          [
+            "0.1100",
+            "1.00"
+          ],
+          [
+            "0.1000",
+            "562.00"
+          ],
+          [
+            "0.0900",
+            "568.00"
+          ],
+          [
+            "0.0800",
+            "1.00"
+          ],
+          [
+            "0.0600",
+            "1.00"
+          ],
+          [
+            "0.0500",
+            "3509.00"
+          ],
+          [
+            "0.0400",
+            "4061.00"
+          ],
+          [
+            "0.0300",
+            "5069.00"
+          ],
+          [
+            "0.0200",
+            "5410.00"
+          ],
+          [
+            "0.0100",
+            "6279.00"
+          ]
+        ],
+        "yes": [
+          [
+            "0.5400",
+            "109.00"
+          ],
+          [
+            "0.5300",
+            "2288.61"
+          ],
+          [
+            "0.5200",
+            "50.00"
+          ],
+          [
+            "0.5100",
+            "76.00"
+          ],
+          [
+            "0.5000",
+            "150.00"
+          ],
+          [
+            "0.4800",
+            "109.00"
+          ],
+          [
+            "0.4500",
+            "8.00"
+          ],
+          [
+            "0.3900",
+            "200.00"
+          ],
+          [
+            "0.3400",
+            "294.00"
+          ],
+          [
+            "0.3300",
+            "15.00"
+          ],
+          [
+            "0.1400",
+            "1.00"
+          ],
+          [
+            "0.0700",
+            "28.00"
+          ],
+          [
+            "0.0500",
+            "61.00"
+          ],
+          [
+            "0.0400",
+            "773.00"
+          ],
+          [
+            "0.0300",
+            "1618.00"
+          ],
+          [
+            "0.0200",
+            "2325.00"
+          ],
+          [
+            "0.0100",
+            "2805.00"
+          ]
+        ]
+      },
+      "execution_status": "pending",
+      "fee_multiplier": 1.0,
+      "fee_type": "quadratic",
+      "fee_upper_estimate": 0.02,
+      "game_id": "401909940",
+      "improved": true,
+      "inputs": {
+        "book_commence_utc": "2026-11-08T01:10:00Z",
+        "book_n": "3",
+        "book_updated_utc": "2026-11-07 20:18:28+00:00",
+        "historical_minutes_baseline": "19.599972",
+        "last_game_minutes": "27.0",
+        "last_player_game_utc": "2026-11-07 00:30:00+00:00",
+        "line": "1.5",
+        "lineup_confirmation_status": "unverified",
+        "minutes_estimate_source": "prior_games_only",
+        "p_book": "0.516562",
+        "player_id": "2995706",
+        "recent_start_rate": "0.000218",
+        "requires_book": "False",
+        "snapshot_utc": "2026-11-07T22:13:21.732287+00:00",
+        "stat": "threes",
+        "team": "CLE"
+      },
+      "outcome_status": "pending",
+      "p_model_yes": 0.352452,
+      "policies": {
+        "fresh_books_veto": false,
+        "model_veto": true,
+        "no_baseline": true
+      },
+      "price": 0.45,
+      "quantity": 1,
+      "quoted_at": "2026-11-07T22:14:04.807275+00:00",
+      "side": "no",
+      "slot": "401909940|2995706|threes",
+      "source_age_seconds": 43.074988,
+      "ticker": "KXNBA3PT-26NOV07NYKCLE-CLEMHEZONJA33-2",
+      "tip_utc": "2026-11-08 01:00:00+00:00",
+      "yes_level": 0.55
+    },
+    {
+      "book_age_seconds": 6937.190648,
+      "book_request_at": "2026-11-07T22:14:04.834745+00:00",
+      "book_response_at": "2026-11-07T22:14:05.190648+00:00",
+      "entry_book": {
+        "no": [
+          [
+            "0.6200",
+            "244.00"
+          ],
+          [
+            "0.6100",
+            "87.00"
+          ],
+          [
+            "0.6000",
+            "3408.00"
+          ],
+          [
+            "0.5900",
+            "1442.00"
+          ],
+          [
+            "0.5800",
+            "236.00"
+          ],
+          [
+            "0.5700",
+            "219.38"
+          ],
+          [
+            "0.5600",
+            "246.00"
+          ],
+          [
+            "0.5500",
+            "7.00"
+          ],
+          [
+            "0.5300",
+            "18.00"
+          ],
+          [
+            "0.4800",
+            "178.00"
+          ],
+          [
+            "0.4700",
+            "200.00"
+          ],
+          [
+            "0.3100",
+            "1.00"
+          ],
+          [
+            "0.2600",
+            "466.00"
+          ],
+          [
+            "0.2400",
+            "2.00"
+          ],
+          [
+            "0.1900",
+            "2.00"
+          ],
+          [
+            "0.1500",
+            "1.00"
+          ],
+          [
+            "0.1200",
+            "390.00"
+          ],
+          [
+            "0.1100",
+            "31.00"
+          ],
+          [
+            "0.1000",
+            "1031.00"
+          ],
+          [
+            "0.0800",
+            "1.00"
+          ],
+          [
+            "0.0600",
+            "2.00"
+          ],
+          [
+            "0.0500",
+            "2.00"
+          ],
+          [
+            "0.0400",
+            "410.00"
+          ],
+          [
+            "0.0300",
+            "1423.00"
+          ],
+          [
+            "0.0200",
+            "1780.00"
+          ],
+          [
+            "0.0100",
+            "2993.69"
+          ]
+        ],
+        "yes": [
+          [
+            "0.3600",
+            "160.00"
+          ],
+          [
+            "0.3500",
+            "776.04"
+          ],
+          [
+            "0.3400",
+            "645.00"
+          ],
+          [
+            "0.3300",
+            "382.00"
+          ],
+          [
+            "0.3000",
+            "13.00"
+          ],
+          [
+            "0.2200",
+            "272.00"
+          ],
+          [
+            "0.2100",
+            "200.00"
+          ],
+          [
+            "0.0700",
+            "28.00"
+          ],
+          [
+            "0.0500",
+            "1.00"
+          ],
+          [
+            "0.0300",
+            "925.00"
+          ],
+          [
+            "0.0200",
+            "1000.00"
+          ],
+          [
+            "0.0100",
+            "1420.00"
+          ]
+        ]
+      },
+      "execution_status": "pending",
+      "fee_multiplier": 1.0,
+      "fee_type": "quadratic",
+      "fee_upper_estimate": 0.02,
+      "game_id": "401909940",
+      "improved": true,
+      "inputs": {
+        "book_commence_utc": "2026-11-08T01:10:00Z",
+        "book_n": "2",
+        "book_updated_utc": "2026-11-07 20:18:28+00:00",
+        "historical_minutes_baseline": "22.586884",
+        "last_game_minutes": "27.0",
+        "last_player_game_utc": "2026-11-07 00:30:00+00:00",
+        "line": "2.5",
+        "lineup_confirmation_status": "unverified",
+        "minutes_estimate_source": "prior_games_only",
+        "p_book": "0.39268",
+        "player_id": "5041951",
+        "recent_start_rate": "0.173721",
+        "requires_book": "False",
+        "snapshot_utc": "2026-11-07T22:13:21.732287+00:00",
+        "stat": "threes",
+        "team": "CLE"
+      },
+      "outcome_status": "pending",
+      "p_model_yes": 0.358158,
+      "policies": {
+        "fresh_books_veto": false,
+        "model_veto": false,
+        "no_baseline": true
+      },
+      "price": 0.63,
+      "quantity": 1,
+      "quoted_at": "2026-11-07T22:14:05.190648+00:00",
+      "side": "no",
+      "slot": "401909940|5041951|threes",
+      "source_age_seconds": 43.458361,
+      "ticker": "KXNBA3PT-26NOV07NYKCLE-CLEMTHOMAS15-3",
+      "tip_utc": "2026-11-08 01:00:00+00:00",
+      "yes_level": 0.37
+    },
+    {
+      "book_age_seconds": 7005.594424,
+      "book_request_at": "2026-11-07T22:14:05.218158+00:00",
+      "book_response_at": "2026-11-07T22:14:05.594424+00:00",
+      "entry_book": {
+        "no": [
+          [
+            "0.5900",
+            "238.00"
+          ],
+          [
+            "0.5800",
+            "1910.00"
+          ],
+          [
+            "0.5700",
+            "1501.35"
+          ],
+          [
+            "0.5600",
+            "1347.00"
+          ],
+          [
+            "0.5100",
+            "200.00"
+          ],
+          [
+            "0.4800",
+            "55.00"
+          ],
+          [
+            "0.4700",
+            "2001.00"
+          ],
+          [
+            "0.4500",
+            "11.00"
+          ],
+          [
+            "0.4400",
+            "200.00"
+          ],
+          [
+            "0.4300",
+            "42.00"
+          ],
+          [
+            "0.3100",
+            "1.00"
+          ],
+          [
+            "0.3000",
+            "2705.00"
+          ],
+          [
+            "0.2900",
+            "619.86"
+          ],
+          [
+            "0.2400",
+            "2.00"
+          ],
+          [
+            "0.1900",
+            "2.00"
+          ],
+          [
+            "0.1800",
+            "374.00"
+          ],
+          [
+            "0.1700",
+            "250.00"
+          ],
+          [
+            "0.1600",
+            "1035.00"
+          ],
+          [
+            "0.1500",
+            "1.00"
+          ],
+          [
+            "0.1400",
+            "748.00"
+          ],
+          [
+            "0.1300",
+            "769.00"
+          ],
+          [
+            "0.1100",
+            "1.00"
+          ],
+          [
+            "0.0900",
+            "1577.00"
+          ],
+          [
+            "0.0800",
+            "1.00"
+          ],
+          [
+            "0.0700",
+            "5544.00"
+          ],
+          [
+            "0.0600",
+            "1.00"
+          ],
+          [
+            "0.0500",
+            "2.00"
+          ],
+          [
+            "0.0400",
+            "2.00"
+          ],
+          [
+            "0.0300",
+            "1025.00"
+          ],
+          [
+            "0.0200",
+            "1702.00"
+          ],
+          [
+            "0.0100",
+            "2011.00"
+          ]
+        ],
+        "yes": [
+          [
+            "0.3900",
+            "11.00"
+          ],
+          [
+            "0.3800",
+            "85.00"
+          ],
+          [
+            "0.3700",
+            "639.65"
+          ],
+          [
+            "0.3600",
+            "586.00"
+          ],
+          [
+            "0.3500",
+            "168.00"
+          ],
+          [
+            "0.3300",
+            "40.00"
+          ],
+          [
+            "0.2900",
+            "200.00"
+          ],
+          [
+            "0.2700",
+            "4.00"
+          ],
+          [
+            "0.2500",
+            "2001.00"
+          ],
+          [
+            "0.2400",
+            "200.00"
+          ],
+          [
+            "0.1900",
+            "526.00"
+          ],
+          [
+            "0.1000",
+            "65.00"
+          ],
+          [
+            "0.0900",
+            "1112.00"
+          ],
+          [
+            "0.0700",
+            "28.00"
+          ],
+          [
+            "0.0600",
+            "1.00"
+          ],
+          [
+            "0.0400",
+            "229.00"
+          ],
+          [
+            "0.0300",
+            "953.00"
+          ],
+          [
+            "0.0200",
+            "1360.00"
+          ],
+          [
+            "0.0100",
+            "1580.00"
+          ]
+        ]
+      },
+      "execution_status": "pending",
+      "fee_multiplier": 1.0,
+      "fee_type": "quadratic",
+      "fee_upper_estimate": 0.02,
+      "game_id": "401909940",
+      "improved": true,
+      "inputs": {
+        "book_commence_utc": "2026-11-08T01:10:00Z",
+        "book_n": "7",
+        "book_updated_utc": "2026-11-07 20:17:20+00:00",
+        "historical_minutes_baseline": "27.264419",
+        "last_game_minutes": "28.0",
+        "last_player_game_utc": "2026-11-07 00:30:00+00:00",
+        "line": "1.5",
+        "lineup_confirmation_status": "unverified",
+        "minutes_estimate_source": "prior_games_only",
+        "p_book": "0.413325",
+        "player_id": "4576087",
+        "recent_start_rate": "0.852366",
+        "requires_book": "False",
+        "snapshot_utc": "2026-11-07T22:13:21.732287+00:00",
+        "stat": "threes",
+        "team": "CLE"
+      },
+      "outcome_status": "pending",
+      "p_model_yes": 0.424992,
+      "policies": {
+        "fresh_books_veto": false,
+        "model_veto": false,
+        "no_baseline": true
+      },
+      "price": 0.6,
+      "quantity": 1,
+      "quoted_at": "2026-11-07T22:14:05.594424+00:00",
+      "side": "no",
+      "slot": "401909940|4576087|threes",
+      "source_age_seconds": 43.862137,
+      "ticker": "KXNBA3PT-26NOV07NYKCLE-CLEPWATSON8-2",
+      "tip_utc": "2026-11-08 01:00:00+00:00",
+      "yes_level": 0.4
+    },
+    {
+      "book_age_seconds": 7005.973902,
+      "book_request_at": "2026-11-07T22:14:05.622201+00:00",
+      "book_response_at": "2026-11-07T22:14:05.973902+00:00",
+      "entry_book": {
+        "no": [
+          [
+            "0.5000",
+            "1194.83"
+          ],
+          [
+            "0.4900",
+            "3180.66"
+          ],
+          [
+            "0.4800",
+            "4041.39"
+          ],
+          [
+            "0.4600",
+            "4.00"
+          ],
+          [
+            "0.4500",
+            "21.00"
+          ],
+          [
+            "0.4400",
+            "25.00"
+          ],
+          [
+            "0.4300",
+            "374.00"
+          ],
+          [
+            "0.4200",
+            "36.00"
+          ],
+          [
+            "0.4000",
+            "2201.00"
+          ],
+          [
+            "0.3900",
+            "741.00"
+          ],
+          [
+            "0.3500",
+            "273.00"
+          ],
+          [
+            "0.3400",
+            "16.00"
+          ],
+          [
+            "0.3200",
+            "219.00"
+          ],
+          [
+            "0.3100",
+            "21761.99"
+          ],
+          [
+            "0.3000",
+            "14532.00"
+          ],
+          [
+            "0.2900",
+            "21777.00"
+          ],
+          [
+            "0.2800",
+            "14532.00"
+          ],
+          [
+            "0.2500",
+            "15220.00"
+          ],
+          [
+            "0.2400",
+            "417.00"
+          ],
+          [
+            "0.2300",
+            "10.00"
+          ],
+          [
+            "0.2000",
+            "5.00"
+          ],
+          [
+            "0.1900",
+            "2.00"
+          ],
+          [
+            "0.1700",
+            "4.83"
+          ],
+          [
+            "0.1500",
+            "6.00"
+          ],
+          [
+            "0.1300",
+            "5605.00"
+          ],
+          [
+            "0.1200",
+            "833.00"
+          ],
+          [
+            "0.1100",
+            "1.00"
+          ],
+          [
+            "0.1000",
+            "21324.01"
+          ],
+          [
+            "0.0800",
+            "1.00"
+          ],
+          [
+            "0.0700",
+            "20.00"
+          ],
+          [
+            "0.0600",
+            "1.00"
+          ],
+          [
+            "0.0500",
+            "7.00"
+          ],
+          [
+            "0.0400",
+            "68484.01"
+          ],
+          [
+            "0.0300",
+            "955.00"
+          ],
+          [
+            "0.0200",
+            "1105.00"
+          ],
+          [
+            "0.0100",
+            "4670.32"
+          ]
+        ],
+        "yes": [
+          [
+            "0.4900",
+            "15.00"
+          ],
+          [
+            "0.4800",
+            "1029.61"
+          ],
+          [
+            "0.4700",
+            "38.00"
+          ],
+          [
+            "0.4600",
+            "191.00"
+          ],
+          [
+            "0.4500",
+            "150.00"
+          ],
+          [
+            "0.4300",
+            "1.00"
+          ],
+          [
+            "0.4200",
+            "178.00"
+          ],
+          [
+            "0.3900",
+            "47.00"
+          ],
+          [
+            "0.3700",
+            "200.00"
+          ],
+          [
+            "0.3400",
+            "453.00"
+          ],
+          [
+            "0.3300",
+            "1317.00"
+          ],
+          [
+            "0.3200",
+            "3181.00"
+          ],
+          [
+            "0.2500",
+            "320.00"
+          ],
+          [
+            "0.2300",
+            "1704.00"
+          ],
+          [
+            "0.2200",
+            "454.00"
+          ],
+          [
+            "0.2000",
+            "5.00"
+          ],
+          [
+            "0.1500",
+            "5.00"
+          ],
+          [
+            "0.1100",
+            "909.00"
+          ],
+          [
+            "0.1000",
+            "5.00"
+          ],
+          [
+            "0.0900",
+            "10.00"
+          ],
+          [
+            "0.0700",
+            "48.00"
+          ],
+          [
+            "0.0500",
+            "6.00"
+          ],
+          [
+            "0.0300",
+            "4076.00"
+          ],
+          [
+            "0.0200",
+            "1180.00"
+          ],
+          [
+            "0.0100",
+            "4420.00"
+          ]
+        ]
+      },
+      "execution_status": "pending",
+      "fee_multiplier": 1.0,
+      "fee_type": "quadratic",
+      "fee_upper_estimate": 0.02,
+      "game_id": "401909940",
+      "improved": false,
+      "inputs": {
+        "book_commence_utc": "2026-11-08T01:10:00Z",
+        "book_n": "7",
+        "book_updated_utc": "2026-11-07 20:17:20+00:00",
+        "historical_minutes_baseline": "34.874322",
+        "last_game_minutes": "28.0",
+        "last_player_game_utc": "2026-11-05 00:30:00+00:00",
+        "line": "2.5",
+        "lineup_confirmation_status": "unverified",
+        "minutes_estimate_source": "prior_games_only",
+        "p_book": "0.47648",
+        "player_id": "3934672",
+        "recent_start_rate": "1.0",
+        "requires_book": "False",
+        "snapshot_utc": "2026-11-07T22:13:21.732287+00:00",
+        "stat": "threes",
+        "team": "NYK"
+      },
+      "outcome_status": "pending",
+      "p_model_yes": 0.473218,
+      "policies": {
+        "fresh_books_veto": false,
+        "model_veto": true,
+        "no_baseline": true
+      },
+      "price": 0.5,
+      "quantity": 1,
+      "quoted_at": "2026-11-07T22:14:05.973902+00:00",
+      "side": "no",
+      "slot": "401909940|3934672|threes",
+      "source_age_seconds": 44.241615,
+      "ticker": "KXNBA3PT-26NOV07NYKCLE-NYKJBRUNSON11-3",
+      "tip_utc": "2026-11-08 01:00:00+00:00",
+      "yes_level": 0.5
+    },
+    {
+      "book_age_seconds": 7006.372718,
+      "book_request_at": "2026-11-07T22:14:06.001785+00:00",
+      "book_response_at": "2026-11-07T22:14:06.372718+00:00",
+      "entry_book": {
+        "no": [
+          [
+            "0.5400",
+            "613.00"
+          ],
+          [
+            "0.5300",
+            "128.00"
+          ],
+          [
+            "0.5200",
+            "500.00"
+          ],
+          [
+            "0.5100",
+            "563.00"
+          ],
+          [
+            "0.4900",
+            "100.00"
+          ],
+          [
+            "0.4800",
+            "223.00"
+          ],
+          [
+            "0.4700",
+            "31.00"
+          ],
+          [
+            "0.4400",
+            "121.00"
+          ],
+          [
+            "0.4300",
+            "2001.00"
+          ],
+          [
+            "0.3900",
+            "487.00"
+          ],
+          [
+            "0.3800",
+            "19256.00"
+          ],
+          [
+            "0.3700",
+            "9758.00"
+          ],
+          [
+            "0.3600",
+            "14568.00"
+          ],
+          [
+            "0.3500",
+            "9558.00"
+          ],
+          [
+            "0.3400",
+            "9558.00"
+          ],
+          [
+            "0.2700",
+            "296.29"
+          ],
+          [
+            "0.2500",
+            "400.00"
+          ],
+          [
+            "0.2400",
+            "1.00"
+          ],
+          [
+            "0.1900",
+            "2.00"
+          ],
+          [
+            "0.1500",
+            "1.00"
+          ],
+          [
+            "0.1400",
+            "714.00"
+          ],
+          [
+            "0.1100",
+            "1.00"
+          ],
+          [
+            "0.1000",
+            "28660.00"
+          ],
+          [
+            "0.0800",
+            "1.00"
+          ],
+          [
+            "0.0600",
+            "1.00"
+          ],
+          [
+            "0.0500",
+            "53843.00"
+          ],
+          [
+            "0.0400",
+            "2.00"
+          ],
+          [
+            "0.0300",
+            "1165.00"
+          ],
+          [
+            "0.0200",
+            "1475.00"
+          ],
+          [
+            "0.0100",
+            "5131.00"
+          ]
+        ],
+        "yes": [
+          [
+            "0.4500",
+            "20.00"
+          ],
+          [
+            "0.4400",
+            "214.39"
+          ],
+          [
+            "0.4300",
+            "1161.33"
+          ],
+          [
+            "0.4200",
+            "476.00"
+          ],
+          [
+            "0.4100",
+            "150.00"
+          ],
+          [
+            "0.3700",
+            "1.00"
+          ],
+          [
+            "0.3600",
+            "277.00"
+          ],
+          [
+            "0.3500",
+            "10.00"
+          ],
+          [
+            "0.3400",
+            "41.00"
+          ],
+          [
+            "0.3200",
+            "269.00"
+          ],
+          [
+            "0.3100",
+            "412.00"
+          ],
+          [
+            "0.3000",
+            "2232.00"
+          ],
+          [
+            "0.2900",
+            "2001.00"
+          ],
+          [
+            "0.2300",
+            "2259.00"
+          ],
+          [
+            "0.2200",
+            "2903.00"
+          ],
+          [
+            "0.2100",
+            "380.95"
+          ],
+          [
+            "0.1100",
+            "909.00"
+          ],
+          [
+            "0.0700",
+            "28.00"
+          ],
+          [
+            "0.0400",
+            "218.00"
+          ],
+          [
+            "0.0300",
+            "1153.00"
+          ],
+          [
+            "0.0200",
+            "1780.00"
+          ],
+          [
+            "0.0100",
+            "4690.00"
+          ]
+        ]
+      },
+      "execution_status": "pending",
+      "fee_multiplier": 1.0,
+      "fee_type": "quadratic",
+      "fee_upper_estimate": 0.02,
+      "game_id": "401909940",
+      "improved": false,
+      "inputs": {
+        "book_commence_utc": "2026-11-08T01:10:00Z",
+        "book_n": "7",
+        "book_updated_utc": "2026-11-07 20:17:20+00:00",
+        "historical_minutes_baseline": "30.814812",
+        "last_game_minutes": "25.0",
+        "last_player_game_utc": "2026-11-05 00:30:00+00:00",
+        "line": "1.5",
+        "lineup_confirmation_status": "unverified",
+        "minutes_estimate_source": "prior_games_only",
+        "p_book": "0.438936",
+        "player_id": "3136195",
+        "recent_start_rate": "1.0",
+        "requires_book": "False",
+        "snapshot_utc": "2026-11-07T22:13:21.732287+00:00",
+        "stat": "threes",
+        "team": "NYK"
+      },
+      "outcome_status": "pending",
+      "p_model_yes": 0.336127,
+      "policies": {
+        "fresh_books_veto": false,
+        "model_veto": true,
+        "no_baseline": true
+      },
+      "price": 0.54,
+      "quantity": 1,
+      "quoted_at": "2026-11-07T22:14:06.372718+00:00",
+      "side": "no",
+      "slot": "401909940|3136195|threes",
+      "source_age_seconds": 44.640431,
+      "ticker": "KXNBA3PT-26NOV07NYKCLE-NYKKTOWNS32-2",
+      "tip_utc": "2026-11-08 01:00:00+00:00",
+      "yes_level": 0.46
     }
   ]
 }
