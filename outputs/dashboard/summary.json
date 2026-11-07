@@ -1,5 +1,5 @@
 {
- "updated_utc": "2026-11-07T05:38+00:00",
+ "updated_utc": "2026-11-07T11:21+00:00",
  "paper": {
   "ledgers": [
    {
@@ -1535,7 +1535,7 @@
   "90": 10
  },
  "live": {
-  "run_utc": "2026-11-07T04:37+00:00",
+  "run_utc": "2026-11-07T11:21+00:00",
   "mode": "dry",
   "env": "prod",
   "rule": "no_seller_bookline",
@@ -1545,7 +1545,7 @@
   "pilot_day_cap": null,
   "pilot_total_cap": null,
   "bankroll": 250.0,
-  "injury_cancels": 8,
+  "injury_cancels": 0,
   "candidates": 0,
   "placed": 0,
   "rejected": 0,
