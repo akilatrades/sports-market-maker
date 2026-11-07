@@ -1,12 +1,12 @@
 # Live trader
 
-Updated 2026-11-07 19:15 UTC. Risk limits: kalshi/risk.py. Rule: no_seller_bookline.
+Updated 2026-11-07 22:54 UTC. Risk limits: kalshi/risk.py. Rule: no_seller_bookline.
 
 | Status | Orders | Dollars |
 |---|---:|---:|
-| cancelled | 1441 | $3,175.61 |
-| dry | 328 | $722.98 |
-| rejected | 8579 | $18,071.67 |
+| cancelled | 1462 | $3,224.65 |
+| dry | 337 | $742.48 |
+| rejected | 8849 | $18,656.00 |
 
 Rejections:
 
@@ -28,15 +28,16 @@ Rejections:
 - 6 orders already in game 401909857: 157
 - 6 orders already in game 401909865: 152
 - 6 orders already in game 401909835: 149
+- 6 orders already in game 401909940: 139
 - 6 orders already in game 401909859: 133
 - 6 orders already in game 401909893: 131
 - 6 orders already in game 401909895: 129
+- 6 orders already in game 401909941: 126
 - 6 orders already in game 401909091: 119
 - 6 orders already in game 401909848: 116
 - 6 orders already in game 401909840: 106
 - 6 orders already in game 401909294: 99
 - 6 orders already in game 401909878: 98
-- 6 orders already in game 401909941: 97
 - 6 orders already in game 401909936: 93
 - 6 orders already in game 401909850: 92
 - 6 orders already in game 401909847: 90
@@ -44,7 +45,7 @@ Rejections:
 - 6 orders already in game 401909877: 89
 - 6 orders already in game 401909295: 87
 - 6 orders already in game 401909843: 85
-- 6 orders already in game 401909940: 82
+- 6 orders already in game 401909943: 82
 - 6 orders already in game 401909879: 81
 - 6 orders already in game 401909088: 80
 - 6 orders already in game 401909935: 79
@@ -54,8 +55,10 @@ Rejections:
 - 6 orders already in game 401909937: 72
 - 6 orders already in game 401909095: 59
 - 6 orders already in game 401909939: 56
+- 6 orders already in game 401909942: 54
 - 6 orders already in game 401909858: 51
 - 6 orders already in game 401909894: 48
+- 6 orders already in game 401909944: 48
 - 6 orders already in game 401909839: 47
 - 6 orders already in game 401909862: 46
 - 6 orders already in game 401909900: 41
