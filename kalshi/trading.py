@@ -287,7 +287,10 @@ class TradingClient:
             seen.add(cursor)
 
     def orders(self, status="resting", ticker=None):
-        params = {"status": status, "limit": 200}
+        """Signed order list; ``status=None`` lists every status."""
+        params = {"limit": 200}
+        if status:
+            params["status"] = status
         if ticker:
             params["ticker"] = ticker
         orders = self._pages("/portfolio/orders", "orders", params)

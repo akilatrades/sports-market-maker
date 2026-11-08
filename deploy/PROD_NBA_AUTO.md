@@ -46,6 +46,38 @@ A passing preflight shows readiness at that moment, not a fill, a profit or
 future data availability. Fee metadata and the final quote are checked again
 before each order.
 
+### After an "Ambiguous production order" halt (since 8 November)
+
+When Kalshi gives no clear answer to an NBA order (a timeout or a server
+error), the journal records an `unknown_outcome` and all three bots stop
+placing orders until the owner resolves it. Before 8 November only the
+20 October incident scripts could; now one command does, with signed reads
+only (it places, cancels and arms nothing):
+
+```bash
+sudo bash /home/trader/sports-market-maker-prod-auto/deploy/reconcile_nba.sh
+```
+
+It looks up each such order on its market in every status. Found: recorded
+as placed (`accepted`, marked `owner_signed_lookup`), and the bot tracks it
+from then on. Absent: recorded as never placed (`reconciled_rejected`), but
+only after that order's own expiry (tip-off), between 10 minutes and 7 days
+after it was sent (older orders may sit on Kalshi's historical endpoints),
+with no fill on its market from an order outside the journal and no position
+there; every bot re-checks those times from the journal on every pass.
+Otherwise it writes nothing and says why
+(`too_recent_try_again_after_tip_off`, `position_open_try_again_after_settlement`,
+`stopped_early_by` after a failed read, or `..._check_by_hand`). It does not
+cover an order journaled with no reply recorded at all (a pass stopped
+mid-order: "Uncertain production order attempt"). Either way the attempt still counts against every
+budget. `bots_can_trade: true` means the halt is cleared; the spread maker
+resumes on its next pass, and NBA/NFL resume on theirs if their timers are
+on (press Go live if they were stopped).
+
+A code release run while the halt is active fails its funded-account check
+and rolls back; stop NBA and NFL first (Go live / Stop: `STOP`), deploy,
+reconcile, then press `GO_LIVE`.
+
 ## Execution policy
 
 - Points, rebounds, assists and threes; passive NO entries only. Up to three new orders per scan, each charged to every limit before the next is considered, and one lifetime submission per ticker. No market orders or automatic exits.

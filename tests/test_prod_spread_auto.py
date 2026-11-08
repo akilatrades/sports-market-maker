@@ -825,9 +825,13 @@ def test_deploy_units_and_owner_script():
     assert "printf 'SPREAD_AUTO_ARM=%s\\n'" in setup
     assert str(P.ARM_MARKER) in setup and str(P.STATE) in setup
     assert "as_trader --reconcile" in setup
-    # The other preflights read under the account lock (never mid-order).
-    nba = (root / "live/prod_nba_auto.py").read_text()
-    assert "account_lock() if args.live or args.preflight else nullcontext()" in nba
+    # The other preflights read under the account lock (never mid-order), as
+    # does the NBA reconcile (2026-11-08).
+    nba = " ".join((root / "live/prod_nba_auto.py").read_text().split())
+    assert (
+        "account_lock() if args.live or args.preflight or args.reconcile "
+        "else nullcontext()"
+    ) in nba
 
 
 def test_refused_order_found_filled_is_recorded_as_accepted(world):
