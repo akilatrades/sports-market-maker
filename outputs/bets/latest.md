@@ -51,8 +51,10 @@
 | Sun 7:30 PM | Michael Porter Jr. | YES 20+ points | 61¢ | 70% | 7¢ | 4 | $2.51 | paper |
 | Sun 7:30 PM | Naji Marshall | YES 6+ assists | 15¢ | 27% | 11¢ | 17 | $2.71 | paper |
 | Sun 7:30 PM | Naji Marshall | YES 15+ points | 31¢ | 40% | 8¢ | 8 | $2.60 | paper |
+| Sun 7:30 PM | Nolan Traore | NO 6+ assists | 67¢ | 81% | 12¢ | 3 | $2.06 | paper |
 | Sun 7:30 PM | P.J. Washington | YES 15+ points | 41¢ | 54% | 11¢ | 6 | $2.57 | paper |
 | Sun 7:30 PM | Zaccharie Risacher | YES 4+ rebounds | 47¢ | 64% | 15¢ | 5 | $2.44 | paper |
+| Sun 8:00 PM | Derrick White | NO 10+ points | 29¢ | 37% | 7¢ | 8 | $2.44 | paper |
 | Sun 8:00 PM | Jayson Tatum | NO 25+ points | 41¢ | 52% | 10¢ | 6 | $2.57 | paper |
 | Sun 8:00 PM | Jayson Tatum | YES 8+ rebounds | 44¢ | 54% | 8¢ | 5 | $2.29 | paper |
 | Sun 8:00 PM | Kyle Kuzma | YES 3+ threes | 15¢ | 24% | 8¢ | 17 | $2.71 | paper |
@@ -62,3 +64,34 @@
 | Sun 8:00 PM | Paul George | NO 4+ assists | 48¢ | 57% | 8¢ | 5 | $2.49 | paper |
 | Sun 8:00 PM | Ryan Rollins | YES 10+ points | 49¢ | 58% | 7¢ | 5 | $2.54 | paper |
 | Sun 8:00 PM | Ryan Rollins | YES 3+ threes | 18¢ | 24% | 5¢ | 1 | $0.20 | paper |
+| Sun 9:00 PM | Bam Adebayo | YES 2+ threes | 32¢ | 48% | 14¢ | 8 | $2.69 | paper |
+| Sun 9:00 PM | Bam Adebayo | NO 8+ rebounds | 29¢ | 39% | 8¢ | 8 | $2.44 | paper |
+| Sun 9:00 PM | Brook Lopez | YES 6+ rebounds | 44¢ | 56% | 10¢ | 5 | $2.29 | paper |
+| Sun 9:00 PM | Darius Acuff Jr. | YES 4+ rebounds | 40¢ | 49% | 7¢ | 6 | $2.51 | paper |
+| Sun 9:00 PM | Davion Mitchell | YES 2+ rebounds | 68¢ | 80% | 10¢ | 3 | $2.09 | paper |
+| Sun 9:00 PM | Derik Queen | NO 8+ rebounds | 69¢ | 77% | 6¢ | 2 | $1.41 | paper |
+| Sun 9:00 PM | Derrick Jones Jr. | YES 6+ rebounds | 33¢ | 46% | 12¢ | 7 | $2.42 | paper |
+| Sun 9:00 PM | Domantas Sabonis | NO 14+ rebounds | 58¢ | 68% | 9¢ | 4 | $2.39 | paper |
+| Sun 9:00 PM | Domantas Sabonis | NO 6+ assists | 48¢ | 58% | 8¢ | 5 | $2.49 | paper |
+| Sun 9:00 PM | Domantas Sabonis | YES 20+ points | 19¢ | 28% | 8¢ | 13 | $2.62 | paper |
+| Sun 9:00 PM | Giannis Antetokounmpo | NO 12+ rebounds | 47¢ | 67% | 18¢ | 5 | $2.44 | paper |
+| Sun 9:00 PM | Giannis Antetokounmpo | NO 30+ points | 51¢ | 68% | 15¢ | 5 | $2.64 | paper |
+| Sun 9:00 PM | Giannis Antetokounmpo | NO 6+ assists | 41¢ | 54% | 11¢ | 6 | $2.57 | paper |
+| Sun 9:00 PM | Jeremiah Fears | YES 20+ points | 24¢ | 43% | 18¢ | 10 | $2.53 | paper |
+| Sun 9:00 PM | Jeremiah Fears | YES 4+ assists | 47¢ | 66% | 17¢ | 5 | $2.44 | paper |
+| Sun 9:00 PM | Karlo Matković | YES 15+ points | 8¢ | 16% | 7¢ | 32 | $2.73 | paper |
+| Sun 9:00 PM | Keaton Wagler | NO 4+ rebounds | 48¢ | 60% | 11¢ | 5 | $2.49 | paper |
+| Sun 9:00 PM | Keaton Wagler | NO 4+ assists | 63¢ | 73% | 8¢ | 4 | $2.59 | paper |
+| Sun 9:00 PM | Keegan Murray | NO 6+ rebounds | 71¢ | 81% | 9¢ | 3 | $2.18 | paper |
+| Sun 9:00 PM | Keegan Murray | NO 2+ threes | 60¢ | 69% | 8¢ | 4 | $2.47 | paper |
+| Sun 9:00 PM | Klay Thompson | YES 5+ threes | 23¢ | 33% | 9¢ | 11 | $2.67 | paper |
+| Sun 9:00 PM | Klay Thompson | NO 2+ assists | 43¢ | 52% | 7¢ | 5 | $2.24 | paper |
+| Sun 9:00 PM | Kris Dunn | NO 2+ threes | 68¢ | 76% | 7¢ | 3 | $2.09 | paper |
+| Sun 9:00 PM | Max Strus | NO 3+ threes | 53¢ | 64% | 9¢ | 4 | $2.19 | paper |
+| Sun 9:00 PM | Precious Achiuwa | YES 10+ points | 38¢ | 64% | 25¢ | 6 | $2.38 | paper |
+| Sun 9:00 PM | Precious Achiuwa | YES 6+ rebounds | 47¢ | 60% | 11¢ | 5 | $2.44 | paper |
+| Sun 9:00 PM | Rui Hachimura | YES 2+ assists | 41¢ | 50% | 7¢ | 6 | $2.57 | paper |
+| Sun 9:00 PM | Saddiq Bey | YES 15+ points | 42¢ | 59% | 15¢ | 6 | $2.63 | paper |
+| Sun 9:00 PM | Saddiq Bey | YES 4+ assists | 12¢ | 19% | 6¢ | 2 | $0.26 | paper |
+| Sun 9:00 PM | Trey Murphy III | YES 4+ assists | 35¢ | 54% | 18¢ | 7 | $2.57 | paper |
+| Sun 9:00 PM | Zion Williamson | NO 6+ rebounds | 45¢ | 55% | 8¢ | 5 | $2.34 | paper |
