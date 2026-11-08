@@ -1,41 +1,41 @@
 {
   "KXITFMATCH": {
-    "orders": 1954,
+    "orders": 1988,
     "vetoed": 0,
-    "open": 21,
-    "fill_rate": 0.6994309363683394,
-    "fills_settled": 1352,
-    "bankroll": 300.96,
-    "cents_per_contract": -0.9,
-    "t": -1.63,
-    "profit_dollars": -199.04
+    "open": 37,
+    "fill_rate": 0.7001537672988212,
+    "fills_settled": 1366,
+    "bankroll": 283.49,
+    "cents_per_contract": -0.98,
+    "t": -1.76,
+    "profit_dollars": -216.51
   },
   "KXNASCARRACE": {
     "orders": 271,
     "vetoed": 0,
-    "open": 9,
-    "fill_rate": 0.7022900763358778,
-    "fills_settled": 184,
-    "bankroll": 498.63,
-    "cents_per_contract": -0.33,
-    "t": -0.61,
-    "profit_dollars": -1.37
+    "open": 0,
+    "fill_rate": 0.7121771217712177,
+    "fills_settled": 193,
+    "bankroll": 498.91,
+    "cents_per_contract": -0.31,
+    "t": -0.59,
+    "profit_dollars": -1.09
   },
   "KXLIGAMXSPREAD": {
     "orders": 275,
     "vetoed": 0,
-    "open": 11,
-    "fill_rate": 0.5606060606060606,
-    "fills_settled": 148,
-    "bankroll": 466.92,
-    "cents_per_contract": -3.9,
-    "t": -0.79,
-    "profit_dollars": -33.08
+    "open": 0,
+    "fill_rate": 0.5709090909090909,
+    "fills_settled": 157,
+    "bankroll": 453.18,
+    "cents_per_contract": -5.4,
+    "t": -1.12,
+    "profit_dollars": -46.82
   },
   "KXLALIGASPREAD": {
-    "orders": 177,
+    "orders": 185,
     "vetoed": 0,
-    "open": 0,
+    "open": 8,
     "fill_rate": 0.4745762711864407,
     "fills_settled": 84,
     "bankroll": 486.82,
@@ -52,9 +52,9 @@
     "bankroll": 500.0
   },
   "KXNFLRECYDS": {
-    "orders": 851,
+    "orders": 872,
     "vetoed": 0,
-    "open": 0,
+    "open": 21,
     "fill_rate": 0.5875440658049353,
     "fills_settled": 500,
     "bankroll": 215.81,
@@ -84,13 +84,13 @@
   "KXUFCMOF": {
     "orders": 222,
     "vetoed": 0,
-    "open": 17,
-    "fill_rate": 0.45365853658536587,
-    "fills_settled": 93,
-    "bankroll": 452.42,
-    "cents_per_contract": -2.55,
-    "t": -1.04,
-    "profit_dollars": -47.58
+    "open": 0,
+    "fill_rate": 0.46396396396396394,
+    "fills_settled": 103,
+    "bankroll": 457.04,
+    "cents_per_contract": -1.67,
+    "t": -0.7,
+    "profit_dollars": -42.96
   },
   "KXNBAFTM": {
     "orders": 0,
@@ -122,24 +122,24 @@
   "KXNBA3D": {
     "orders": 277,
     "vetoed": 0,
-    "open": 22,
-    "fill_rate": 0.5882352941176471,
-    "fills_settled": 150,
-    "bankroll": 515.68,
-    "cents_per_contract": 2.06,
-    "t": 1.01,
-    "profit_dollars": 15.68
+    "open": 2,
+    "fill_rate": 0.5854545454545454,
+    "fills_settled": 161,
+    "bankroll": 521.52,
+    "cents_per_contract": 2.51,
+    "t": 1.3,
+    "profit_dollars": 21.52
   },
   "KXNASCARTOP10": {
     "orders": 327,
     "vetoed": 0,
-    "open": 9,
-    "fill_rate": 0.720125786163522,
-    "fills_settled": 229,
-    "bankroll": 458.39,
-    "cents_per_contract": 1.83,
-    "t": 2.07,
-    "profit_dollars": -41.61
+    "open": 0,
+    "fill_rate": 0.72782874617737,
+    "fills_settled": 238,
+    "bankroll": 443.08,
+    "cents_per_contract": 1.46,
+    "t": 1.58,
+    "profit_dollars": -56.92
   },
   "KXNFLANYTD+model": {
     "orders": 0,
@@ -150,9 +150,9 @@
     "bankroll": 500.0
   },
   "KXNFLRECYDS+model": {
-    "orders": 726,
-    "vetoed": 2525,
-    "open": 0,
+    "orders": 741,
+    "vetoed": 2531,
+    "open": 15,
     "fill_rate": 0.4903581267217631,
     "fills_settled": 356,
     "bankroll": 313.16,
@@ -163,15 +163,15 @@
     "vetoed_settled": 1193
   },
   "KXITFMATCH+no30": {
-    "orders": 1589,
+    "orders": 1616,
     "vetoed": 0,
-    "open": 20,
-    "fill_rate": 0.7233906947100064,
-    "fills_settled": 1135,
-    "bankroll": 374.52,
-    "cents_per_contract": -1.48,
-    "t": -1.69,
-    "profit_dollars": -125.48
+    "open": 34,
+    "fill_rate": 0.7237673830594185,
+    "fills_settled": 1145,
+    "bankroll": 367.56,
+    "cents_per_contract": -1.54,
+    "t": -1.76,
+    "profit_dollars": -132.44
   },
-  "updated_utc": "2026-11-08T00:20+00:00"
+  "updated_utc": "2026-11-08T10:05+00:00"
 }
