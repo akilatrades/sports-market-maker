@@ -19,7 +19,7 @@ import math
 from zoneinfo import ZoneInfo
 
 from kalshi.trading import TradingError
-from live.reconciled_attempts import rejected_client_ids
+from live.reconciled_attempts import reconciled_found_ids, rejected_client_ids
 from live import external_spread_closes as external_closes
 
 ROOT = Path("/home/trader")
@@ -336,6 +336,10 @@ def ownership(events_by_sport):
             # A spread order with an ambiguous outcome is settled by the
             # owner's signed reconciliation: found (accepted) or absent.
             resolved |= {e.get("client_order_id") for e in accepted}
+        else:
+            # NBA/NFL (2026-11-08): found by the owner's signed lookup
+            # (live.prod_nba_auto --reconcile), recorded after the unknown.
+            resolved |= reconciled_found_ids(events)
         if any(
             e.get("event") == "unknown_outcome"
             and e.get("client_order_id") not in resolved

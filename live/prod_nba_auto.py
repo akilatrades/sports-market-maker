@@ -2192,13 +2192,19 @@ def main():
         action="store_true",
         help="Production GET checks only; never submits or cancels",
     )
+    parser.add_argument(
+        "--reconcile",
+        action="store_true",
+        help="Owner-run, signed GETs only: resolve NBA orders with an unknown outcome",
+    )
     parser.add_argument("--sync-inputs", action="store_true")
     args = parser.parse_args()
-    if sum((args.dry_run, args.live, args.status, args.preflight)) != 1:
+    modes = (args.dry_run, args.live, args.status, args.preflight, args.reconcile)
+    if sum(modes) != 1:
         parser.error("Choose exactly one mode")
     directory = (
         STATE
-        if args.live or args.status or args.preflight
+        if args.live or args.status or args.preflight or args.reconcile
         else Path("/tmp/smm-nba-auto-readonly")
     )
     directory.mkdir(mode=0o700, parents=True, exist_ok=True)
@@ -2207,7 +2213,9 @@ def main():
     # in the middle of another bot's order (spread maker: an intent journaled
     # but not yet answered would look unreconciled).
     with (
-        account_lock() if args.live or args.preflight else nullcontext(),
+        account_lock()
+        if args.live or args.preflight or args.reconcile
+        else nullcontext(),
         (directory / "lock").open("a+") as lock,
     ):
         fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
@@ -2225,9 +2233,14 @@ def main():
             raise TradingError(
                 "Production auto requires production venue even for dry run"
             )
-        client = (ReadOnlyClient if args.preflight else TradingClient)(
-            dry_run=args.dry_run or args.preflight, env="prod"
+        read_only = args.preflight or args.reconcile
+        client = (ReadOnlyClient if read_only else TradingClient)(
+            dry_run=args.dry_run or read_only, env="prod"
         )
+        if args.reconcile:
+            summary = reconcile(client, journal, datetime.now(UTC))
+            print("NBA RECONCILE " + json.dumps(summary, sort_keys=True), flush=True)
+            return
         if args.live:
             guard(os.environ, client)
             if (directory / "KILL").exists():
@@ -2360,6 +2373,159 @@ def preflight(client, frame, now, journal):
         "inputs": frame.attrs.get("diagnostics", {}),
         "note": "Read-only readiness check; owner activation is separate. No fill or profit claim.",
     }
+
+
+def find_order(client, ticker, client_order_id):
+    """Our order with this client id on its market, in any status (signed reads)."""
+    for status in ("resting", "executed", "canceled"):
+        for order in client.orders(status, ticker=ticker):
+            if order.get("client_order_id") == client_order_id:
+                return order
+    return None
+
+
+def _position_on(positions, ticker):
+    for row in positions:
+        if (row.get("market_ticker") or row.get("ticker")) != ticker:
+            continue
+        raw = row.get("position_fp", row.get("position"))
+        try:
+            if abs(float(raw)) > 1e-9:
+                return True
+        except (TypeError, ValueError) as error:
+            raise TradingError("Cannot parse production position") from error
+    return False
+
+
+def reconcile(client, journal, now):
+    """Owner-run resolution of NBA submissions whose outcome the journal
+    cannot prove (``unknown_outcome``), which halt all three bots.
+
+    Owner request, 2026-11-08 (RESEARCH_LOG.md, "NBA reconcile command"):
+    until then only the 20 October incident scripts could resolve one.
+    Signed GETs only; places, cancels and arms nothing. An order found on its
+    market with the client id in any status is recorded as accepted (marked
+    ``FOUND_MARK``). One absent from every status is recorded as never placed
+    only after its own expiry (tip-off) and at least 10 minutes after the
+    intent, and only with no fill on that market from an order outside the
+    journal and no position there; anything newer waits for a later run and
+    anything unexpected is left to check by hand. Either way the attempt
+    still counts against every budget.
+    """
+    from collections import Counter
+
+    from live.reconciled_attempts import (
+        ABSENT_EVIDENCE,
+        ABSENT_MIN_AGE_SECONDS,
+        FOUND_MARK,
+        reconciled_found_ids,
+    )
+
+    events = load_journal(journal)
+    intents = {
+        e.get("client_order_id"): e for e in events if e.get("event") == "intent"
+    }
+    accepted = {
+        e.get("client_order_id") for e in events if e.get("event") == "accepted"
+    }
+    known_orders = {
+        str(e.get("order_id"))
+        for e in events
+        if e.get("event") == "accepted" and e.get("order_id")
+    }
+    resolved = rejected_client_ids(events) | reconciled_found_ids(events)
+    unknown = dict.fromkeys(
+        e.get("client_order_id")
+        for e in events
+        if e.get("event") == "unknown_outcome" and e.get("client_order_id")
+    )
+    summary = Counter()
+    positions = None
+    for cid in unknown:
+        if cid in resolved:
+            continue
+        intent = intents.get(cid)
+        if cid in accepted or intent is None or not intent.get("ticker"):
+            summary["unclear_journal_check_by_hand"] += 1
+            continue
+        ticker = intent["ticker"]
+        found = find_order(client, ticker, cid)
+        if found is not None:
+            oid = found.get("order_id")
+            if (
+                not oid
+                or str(oid) in known_orders
+                or found.get("ticker", ticker) != ticker
+            ):
+                summary["found_but_unclear_check_by_hand"] += 1
+                continue
+            write_event(
+                journal,
+                {
+                    "event": "accepted",
+                    "utc": now.isoformat(),
+                    "client_order_id": cid,
+                    "order_id": str(oid),
+                    "reconciled": FOUND_MARK,
+                },
+            )
+            known_orders.add(str(oid))
+            summary["found_on_exchange"] += 1
+            continue
+        try:
+            placed = datetime.fromisoformat(str(intent["utc"]))
+            expiry = float(intent["expiration_ts"])
+        except (KeyError, TypeError, ValueError):
+            summary["unclear_journal_check_by_hand"] += 1
+            continue
+        if placed.tzinfo is None:
+            summary["unclear_journal_check_by_hand"] += 1
+            continue
+        age = int((now - placed).total_seconds())
+        if age < ABSENT_MIN_AGE_SECONDS or now.timestamp() < expiry:
+            summary["too_recent_try_again_after_tip_off"] += 1
+            continue
+        fills = client.fills(min_ts=placed.timestamp() - 60, ticker=ticker)
+        if not isinstance(fills, list) or any(
+            str(f.get("order_id")) not in known_orders for f in fills
+        ):
+            summary["unexplained_fill_check_by_hand"] += 1
+            continue
+        if positions is None:
+            positions = client.positions()
+            if not isinstance(positions, list):
+                raise TradingError("Unparseable production positions")
+        if _position_on(positions, ticker):
+            summary["position_open_try_again_after_settlement"] += 1
+            continue
+        write_event(
+            journal,
+            {
+                "event": "reconciled_rejected",
+                "utc": now.isoformat(),
+                "client_order_id": cid,
+                "evidence": ABSENT_EVIDENCE,
+                "intent_age_seconds": age,
+                "after_expiry": True,
+            },
+        )
+        summary["never_placed"] += 1
+    try:
+        events = load_journal(journal)
+        attempts, accepted_events = records(events)
+        from live.shared_account_risk import dual_mode, state_for
+
+        if dual_mode(os.environ):
+            state_for(client, "nba", now)
+        else:
+            current_production_state(
+                client, attempts, accepted_events, rejected_client_ids(events)
+            )
+        summary["bots_can_trade"] = True
+    except TradingError as error:
+        summary["bots_can_trade"] = False
+        summary["still_blocked_by"] = str(error)
+    return dict(summary)
 
 
 if __name__ == "__main__":

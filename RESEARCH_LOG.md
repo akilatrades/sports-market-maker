@@ -4008,3 +4008,31 @@ open cap, 2 contracts (5 on men's first-half spreads), the −$15 daily and
 **Watch.** Refused orders (none for v6 so far). The same-price re-posts are a
 separate fix: fewer needless cancels would also keep the orders' place in
 the queue.
+
+## 2026-11-08: NBA reconcile command (owner, operations)
+
+*Not a rule change: which orders the NBA bot places is unchanged
+(`nba-no-v8-more-fills`).*
+
+**Why.** At 23:10 UTC on 7 November one NBA order submission got no clear
+answer from Kalshi, so the journal recorded an `unknown_outcome` and the
+shared account check stopped all three bots (by design: an unproven order
+could hold the account's money). The spread maker has had an owner command
+for this since 22 October (`setup_spread_maker.sh --reconcile`); the NBA bot
+had only the two 20 October incident scripts, which accept a single known
+HTTP 404 case and refuse a second use, so nothing could clear it.
+
+**Change.** `live/prod_nba_auto.py --reconcile` (owner script
+`deploy/reconcile_nba.sh`), signed GETs only, under the account lock. For
+each unresolved NBA `unknown_outcome`: an order found on its market with that
+client id in any status is recorded as `accepted` (marked
+`owner_signed_lookup`); one absent from every status is recorded as
+`reconciled_rejected` (evidence `owner_signed_get_absent_after_expiry`) only
+after its own expiry (tip-off), at least 10 minutes after the intent, with no
+fill on its market from an order outside the journal and no position there.
+Anything else writes nothing and is reported. `live/reconciled_attempts.py`
+accepts the new evidence (and still requires the 404 for the incident ones);
+`live/shared_account_risk.py` treats an NBA/NFL unknown as resolved by a
+marked acceptance written after it (an unmarked or earlier one still halts).
+The attempt still counts against every budget. Tests:
+`tests/test_nba_reconcile.py`.
