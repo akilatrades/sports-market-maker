@@ -2376,8 +2376,9 @@ def preflight(client, frame, now, journal):
 
 
 def find_order(client, ticker, client_order_id):
-    """Our order with this client id on its market, in any status (signed reads)."""
-    for status in ("resting", "executed", "canceled"):
+    """Our order with this client id on its market, in any status (signed
+    reads): one list with no status filter, then each named status."""
+    for status in (None, "resting", "executed", "canceled"):
         for order in client.orders(status, ticker=ticker):
             if order.get("client_order_id") == client_order_id:
                 return order
@@ -2397,6 +2398,17 @@ def _position_on(positions, ticker):
     return False
 
 
+def _short(error):
+    """An error for the owner's screen: our own message, cut at any HTTP
+    status so no exchange response body is printed."""
+    import re
+
+    if not isinstance(error, TradingError):
+        return type(error).__name__
+    text = (str(error).splitlines() or [""])[0]
+    return re.sub(r"(HTTP \d{3}).*", r"\1", text)[:160]
+
+
 def reconcile(client, journal, now):
     """Owner-run resolution of NBA submissions whose outcome the journal
     cannot prove (``unknown_outcome``), which halt all three bots.
@@ -2407,15 +2419,19 @@ def reconcile(client, journal, now):
     market with the client id in any status is recorded as accepted (marked
     ``FOUND_MARK``). One absent from every status is recorded as never placed
     only after its own expiry (tip-off) and at least 10 minutes after the
-    intent, and only with no fill on that market from an order outside the
-    journal and no position there; anything newer waits for a later run and
-    anything unexpected is left to check by hand. Either way the attempt
-    still counts against every budget.
+    intent (at most 7 days: older ones go to a check by hand), and only with
+    no fill on that market from an order outside the journal and no
+    position there; anything newer waits for a later run and anything
+    unexpected is left to check by hand. Either way the attempt still counts
+    against every budget. ``bots_can_trade`` reports the shared journal and
+    account check every bot runs first; a bot's own stops (KILL, loss
+    stops) still apply after it.
     """
     from collections import Counter
 
     from live.reconciled_attempts import (
         ABSENT_EVIDENCE,
+        ABSENT_MAX_AGE_SECONDS,
         ABSENT_MIN_AGE_SECONDS,
         FOUND_MARK,
         reconciled_found_ids,
@@ -2441,75 +2457,83 @@ def reconcile(client, journal, now):
     )
     summary = Counter()
     positions = None
-    for cid in unknown:
-        if cid in resolved:
-            continue
-        intent = intents.get(cid)
-        if cid in accepted or intent is None or not intent.get("ticker"):
-            summary["unclear_journal_check_by_hand"] += 1
-            continue
-        ticker = intent["ticker"]
-        found = find_order(client, ticker, cid)
-        if found is not None:
-            oid = found.get("order_id")
-            if (
-                not oid
-                or str(oid) in known_orders
-                or found.get("ticker", ticker) != ticker
+    try:
+        for cid in unknown:
+            if cid in resolved:
+                continue
+            intent = intents.get(cid)
+            if cid in accepted or intent is None or not intent.get("ticker"):
+                summary["unclear_journal_check_by_hand"] += 1
+                continue
+            ticker = intent["ticker"]
+            found = find_order(client, ticker, cid)
+            if found is not None:
+                oid = found.get("order_id")
+                if (
+                    not oid
+                    or str(oid) in known_orders
+                    or found.get("ticker", ticker) != ticker
+                ):
+                    summary["found_but_unclear_check_by_hand"] += 1
+                    continue
+                write_event(
+                    journal,
+                    {
+                        "event": "accepted",
+                        "utc": now.isoformat(),
+                        "client_order_id": cid,
+                        "order_id": str(oid),
+                        "reconciled": FOUND_MARK,
+                    },
+                )
+                known_orders.add(str(oid))
+                summary["found_on_exchange"] += 1
+                continue
+            try:
+                placed = datetime.fromisoformat(str(intent["utc"]))
+                expiry = float(intent["expiration_ts"])
+            except (KeyError, TypeError, ValueError):
+                summary["unclear_journal_check_by_hand"] += 1
+                continue
+            if placed.tzinfo is None:
+                summary["unclear_journal_check_by_hand"] += 1
+                continue
+            age = int((now - placed).total_seconds())
+            if age > ABSENT_MAX_AGE_SECONDS:
+                # Its order and fills may be on the historical endpoints.
+                summary["older_than_7_days_check_by_hand"] += 1
+                continue
+            if age < ABSENT_MIN_AGE_SECONDS or now.timestamp() < expiry:
+                summary["too_recent_try_again_after_tip_off"] += 1
+                continue
+            fills = client.fills(min_ts=placed.timestamp() - 60, ticker=ticker)
+            if not isinstance(fills, list) or any(
+                str(f.get("order_id")) not in known_orders for f in fills
             ):
-                summary["found_but_unclear_check_by_hand"] += 1
+                summary["unexplained_fill_check_by_hand"] += 1
+                continue
+            if positions is None:
+                positions = client.positions()
+                if not isinstance(positions, list):
+                    raise TradingError("Unparseable production positions")
+            if _position_on(positions, ticker):
+                summary["position_open_try_again_after_settlement"] += 1
                 continue
             write_event(
                 journal,
                 {
-                    "event": "accepted",
+                    "event": "reconciled_rejected",
                     "utc": now.isoformat(),
                     "client_order_id": cid,
-                    "order_id": str(oid),
-                    "reconciled": FOUND_MARK,
+                    "evidence": ABSENT_EVIDENCE,
+                    "intent_age_seconds": age,
+                    "after_expiry": True,
                 },
             )
-            known_orders.add(str(oid))
-            summary["found_on_exchange"] += 1
-            continue
-        try:
-            placed = datetime.fromisoformat(str(intent["utc"]))
-            expiry = float(intent["expiration_ts"])
-        except (KeyError, TypeError, ValueError):
-            summary["unclear_journal_check_by_hand"] += 1
-            continue
-        if placed.tzinfo is None:
-            summary["unclear_journal_check_by_hand"] += 1
-            continue
-        age = int((now - placed).total_seconds())
-        if age < ABSENT_MIN_AGE_SECONDS or now.timestamp() < expiry:
-            summary["too_recent_try_again_after_tip_off"] += 1
-            continue
-        fills = client.fills(min_ts=placed.timestamp() - 60, ticker=ticker)
-        if not isinstance(fills, list) or any(
-            str(f.get("order_id")) not in known_orders for f in fills
-        ):
-            summary["unexplained_fill_check_by_hand"] += 1
-            continue
-        if positions is None:
-            positions = client.positions()
-            if not isinstance(positions, list):
-                raise TradingError("Unparseable production positions")
-        if _position_on(positions, ticker):
-            summary["position_open_try_again_after_settlement"] += 1
-            continue
-        write_event(
-            journal,
-            {
-                "event": "reconciled_rejected",
-                "utc": now.isoformat(),
-                "client_order_id": cid,
-                "evidence": ABSENT_EVIDENCE,
-                "intent_age_seconds": age,
-                "after_expiry": True,
-            },
-        )
-        summary["never_placed"] += 1
+            summary["never_placed"] += 1
+    except Exception as error:
+        # A failed read: whatever was recorded before it stands; run again.
+        summary["stopped_early_by"] = _short(error)
     try:
         events = load_journal(journal)
         attempts, accepted_events = records(events)
@@ -2522,9 +2546,9 @@ def reconcile(client, journal, now):
                 client, attempts, accepted_events, rejected_client_ids(events)
             )
         summary["bots_can_trade"] = True
-    except TradingError as error:
+    except Exception as error:
         summary["bots_can_trade"] = False
-        summary["still_blocked_by"] = str(error)
+        summary["still_blocked_by"] = _short(error)
     return dict(summary)
 
 

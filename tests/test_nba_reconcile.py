@@ -71,7 +71,7 @@ class Client:
         return [
             o
             for o in self.rows
-            if o.get("status") == status and ticker in (None, o.get("ticker"))
+            if status in (None, o.get("status")) and ticker in (None, o.get("ticker"))
         ]
 
     def fills(self, min_ts=None, ticker=None):
@@ -150,9 +150,10 @@ def test_absent_order_after_tip_off_is_recorded_as_never_placed(
     assert events[-1]["evidence"] == ABSENT_EVIDENCE
     assert events[-1]["intent_age_seconds"] == 15 * 3600
     assert rejected_client_ids(events) == {CID}
-    # Every status of its own market was read, then its fills and positions.
+    # Its own market in every status (one unfiltered list first), then its
+    # fills and positions.
     assert [c for c in client.calls if c[0] == "orders"] == [
-        ("orders", s, TICKER) for s in ("resting", "executed", "canceled")
+        ("orders", s, TICKER) for s in (None, "resting", "executed", "canceled")
     ]
     assert ("fills", (NOW - timedelta(hours=15)).timestamp() - 60, TICKER) in (
         client.calls
@@ -208,9 +209,11 @@ def test_found_order_with_an_id_already_in_the_journal_is_left_alone(
 
 
 def test_resolutions_are_strict():
+    """Checked from the events' own times, never from what the resolution
+    says about itself (independent review, 2026-11-08)."""
     placed = NOW - timedelta(hours=1)
     base = [
-        intent(CID, TICKER, placed, NOW),
+        intent(CID, TICKER, placed, NOW - timedelta(minutes=5)),
         {"event": "unknown_outcome", "client_order_id": CID},
     ]
     good = {
@@ -218,18 +221,27 @@ def test_resolutions_are_strict():
         "utc": NOW.isoformat(),
         "client_order_id": CID,
         "evidence": ABSENT_EVIDENCE,
-        "intent_age_seconds": 600,
+        "intent_age_seconds": 3600,
         "after_expiry": True,
     }
     assert rejected_client_ids(base + [good]) == {CID}
-    for bad in (
-        {**good, "intent_age_seconds": 599},
-        {**good, "intent_age_seconds": 600.0},
-        {k: v for k, v in good.items() if k != "after_expiry"},
-        {**good, "evidence": "owner_said_so"},
+    no_expiry = [{**base[0], "expiration_ts": None}, base[1]]
+    naive = [{**base[0], "utc": placed.replace(tzinfo=None).isoformat()}, base[1]]
+    for events in (
+        # Written before tip-off, or under 10 minutes after the intent, even
+        # if it claims otherwise.
+        base + [{**good, "utc": (NOW - timedelta(minutes=6)).isoformat()}],
+        base + [{**good, "utc": (placed + timedelta(minutes=9)).isoformat()}],
+        # Over 7 days after the intent.
+        base + [{**good, "utc": (placed + timedelta(days=7, seconds=1)).isoformat()}],
+        base + [{k: v for k, v in good.items() if k != "after_expiry"}],
+        base + [{**good, "evidence": "owner_said_so"}],
+        base + [{**good, "utc": "not a time"}],
+        no_expiry + [good],
+        naive + [good],
     ):
         with pytest.raises(TradingError, match="rejected-order resolution"):
-            rejected_client_ids(base + [bad])
+            rejected_client_ids(events)
     marked = {
         "event": "accepted",
         "client_order_id": CID,
@@ -273,3 +285,137 @@ def test_owner_script_only_reads_and_never_arms():
     assert "--uid=trader" in script
     for word in ("systemctl start", "systemctl enable", "--live", "ARM"):
         assert word not in script
+
+
+def test_order_in_an_unlisted_status_is_found(tmp_path, journals_only):
+    path = journal(tmp_path)
+    odd = {
+        "status": "expired",
+        "ticker": TICKER,
+        "client_order_id": CID,
+        "order_id": "o-x",
+    }
+    summary = run(path, Client(orders=[odd]), journals_only)
+    assert summary == {"found_on_exchange": 1, "bots_can_trade": True}
+
+
+def test_unclear_cases_write_nothing(tmp_path, journals_only):
+    tip = NOW - timedelta(hours=12)
+    cases = {
+        # Over 7 days old: its order may be on the historical endpoints.
+        "older_than_7_days_check_by_hand": dict(placed=NOW - timedelta(days=8)),
+        # After tip-off but under 10 minutes after the intent.
+        "too_recent_try_again_after_tip_off": dict(placed=NOW - timedelta(minutes=5)),
+    }
+    for reason, change in cases.items():
+        path = tmp_path / f"{reason}.jsonl"
+        events = [
+            intent(CID, TICKER, change["placed"], tip),
+            {"event": "unknown_outcome", "client_order_id": CID},
+        ]
+        path.write_text("".join(json.dumps(e) + "\n" for e in events))
+        summary = run(path, Client(), journals_only)
+        assert summary[reason] == 1 and summary["bots_can_trade"] is False
+        assert len(nba.load_journal(path)) == 2
+    found = {"status": "executed", "ticker": TICKER, "client_order_id": CID}
+    for orders, reason in (
+        ([found], "found_but_unclear_check_by_hand"),  # no order id
+        (
+            [{**found, "order_id": "o", "ticker": OTHER}],
+            "found_but_unclear_check_by_hand",
+        ),
+    ):
+        path = journal(tmp_path)
+        before = path.read_text()
+        client = Client(orders=orders)
+        client.orders = lambda status="resting", ticker=None, rows=orders: rows
+        assert run(path, client, journals_only)[reason] == 1
+        assert path.read_text() == before
+    # A missing intent, a missing expiry, or an unknown after a normal
+    # acceptance: left to a check by hand.
+    path = tmp_path / "odd.jsonl"
+    for events in (
+        [{"event": "unknown_outcome", "client_order_id": CID}],
+        [
+            {
+                **intent(CID, TICKER, NOW - timedelta(hours=2), tip),
+                "expiration_ts": None,
+            },
+            {"event": "unknown_outcome", "client_order_id": CID},
+        ],
+        [
+            intent(CID, TICKER, NOW - timedelta(hours=2), tip),
+            {"event": "accepted", "client_order_id": CID, "order_id": "o-1"},
+            {"event": "unknown_outcome", "client_order_id": CID},
+        ],
+    ):
+        path.write_text("".join(json.dumps(e) + "\n" for e in events))
+        summary = run(path, Client(), journals_only)
+        assert summary["unclear_journal_check_by_hand"] == 1
+        assert summary["bots_can_trade"] is False
+        assert nba.load_journal(path) == events
+
+
+def test_failed_read_stops_early_and_prints_no_response_body(tmp_path, journals_only):
+    path = journal(tmp_path)
+    before = path.read_text()
+
+    class Failing(Client):
+        def orders(self, status="resting", ticker=None):
+            raise TradingError(
+                "GET /portfolio/orders -> HTTP 503: <html>balance 123.45</html>"
+            )
+
+    summary = run(path, Failing(), journals_only)
+    assert summary["stopped_early_by"] == "GET /portfolio/orders -> HTTP 503"
+    assert summary["bots_can_trade"] is False
+    assert path.read_text() == before
+
+    class Broken(Client):
+        def orders(self, status="resting", ticker=None):
+            raise OSError("connection reset")
+
+    assert run(path, Broken(), journals_only)["stopped_early_by"] == "OSError"
+
+
+def test_reconcile_mode_is_read_only_under_the_account_lock(
+    tmp_path, monkeypatch, capsys
+):
+    from contextlib import contextmanager
+
+    import live.production_lock as production_lock
+
+    seen = {}
+
+    @contextmanager
+    def lock():
+        seen["locked"] = True
+        yield
+
+    class ReadOnly:
+        def __init__(self, dry_run, env):
+            seen["client"] = (type(self).__name__, dry_run, env)
+
+    def fake_reconcile(client, journal, now):
+        assert seen.get("locked")
+        seen["journal"] = journal
+        return {"bots_can_trade": True}
+
+    def forbidden(*args, **kwargs):
+        raise AssertionError("no trading path may run in --reconcile")
+
+    monkeypatch.setattr(production_lock, "account_lock", lock)
+    monkeypatch.setattr(nba, "STATE", tmp_path)
+    monkeypatch.setattr(nba, "ReadOnlyClient", ReadOnly)
+    monkeypatch.setattr(nba, "TradingClient", forbidden)
+    monkeypatch.setattr(nba, "reconcile", fake_reconcile)
+    monkeypatch.setattr(nba, "pass_once", forbidden)
+    monkeypatch.setattr(nba, "guard", forbidden)
+    monkeypatch.setenv("KALSHI_ENV", "prod")
+    monkeypatch.setattr("sys.argv", ["prod_nba_auto", "--reconcile"])
+
+    nba.main()
+
+    assert seen["client"] == ("ReadOnly", True, "prod")
+    assert seen["journal"] == tmp_path / "journal.jsonl"
+    assert 'NBA RECONCILE {"bots_can_trade": true}' in capsys.readouterr().out

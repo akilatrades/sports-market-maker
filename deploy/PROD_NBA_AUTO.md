@@ -61,11 +61,15 @@ sudo bash /home/trader/sports-market-maker-prod-auto/deploy/reconcile_nba.sh
 It looks up each such order on its market in every status. Found: recorded
 as placed (`accepted`, marked `owner_signed_lookup`), and the bot tracks it
 from then on. Absent: recorded as never placed (`reconciled_rejected`), but
-only after that order's own expiry (tip-off), at least 10 minutes after it
-was sent, with no fill on its market from an order outside the journal and
-no position there. Otherwise it writes nothing and says why
+only after that order's own expiry (tip-off), between 10 minutes and 7 days
+after it was sent (older orders may sit on Kalshi's historical endpoints),
+with no fill on its market from an order outside the journal and no position
+there; every bot re-checks those times from the journal on every pass.
+Otherwise it writes nothing and says why
 (`too_recent_try_again_after_tip_off`, `position_open_try_again_after_settlement`,
-or `..._check_by_hand`). Either way the attempt still counts against every
+`stopped_early_by` after a failed read, or `..._check_by_hand`). It does not
+cover an order journaled with no reply recorded at all (a pass stopped
+mid-order: "Uncertain production order attempt"). Either way the attempt still counts against every
 budget. `bots_can_trade: true` means the halt is cleared; the spread maker
 resumes on its next pass, and NBA/NFL resume on theirs if their timers are
 on (press Go live if they were stopped).

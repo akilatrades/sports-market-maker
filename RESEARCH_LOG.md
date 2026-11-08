@@ -4026,13 +4026,20 @@ HTTP 404 case and refuse a second use, so nothing could clear it.
 `deploy/reconcile_nba.sh`), signed GETs only, under the account lock. For
 each unresolved NBA `unknown_outcome`: an order found on its market with that
 client id in any status is recorded as `accepted` (marked
-`owner_signed_lookup`); one absent from every status is recorded as
-`reconciled_rejected` (evidence `owner_signed_get_absent_after_expiry`) only
-after its own expiry (tip-off), at least 10 minutes after the intent, with no
-fill on its market from an order outside the journal and no position there.
-Anything else writes nothing and is reported. `live/reconciled_attempts.py`
-accepts the new evidence (and still requires the 404 for the incident ones);
+`owner_signed_lookup`); one absent from every status (an unfiltered list,
+then each status) is recorded as `reconciled_rejected` (evidence
+`owner_signed_get_absent_after_expiry`) only after its own expiry (tip-off),
+10 minutes to 7 days after the intent, with no fill on its market from an
+order outside the journal and no position there. Anything else writes
+nothing and is reported. `live/reconciled_attempts.py` accepts the new
+evidence only when the events' own times show it was written after the
+expiry and 10 minutes to 7 days after the intent (and still requires the 404
+for the incident ones); `kalshi/trading.py` `orders(status=None)` lists
+every status;
 `live/shared_account_risk.py` treats an NBA/NFL unknown as resolved by a
 marked acceptance written after it (an unmarked or earlier one still halts).
-The attempt still counts against every budget. Tests:
-`tests/test_nba_reconcile.py`.
+The attempt still counts against every budget. An independent review found
+nothing blocking; its hardening points (unlisted statuses, a maximum age,
+times checked from the events, the owner script's guard, no response bodies
+printed) are in. Still not covered: an intent with no reply recorded at all.
+Tests: `tests/test_nba_reconcile.py`.

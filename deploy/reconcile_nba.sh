@@ -12,7 +12,7 @@ umask 077
 
 [[ "$EUID" == 0 ]] || { echo "Run with sudo" >&2; exit 2; }
 ROOT=/home/trader/sports-market-maker-prod-auto
-grep -q "def reconcile" "$ROOT/live/prod_nba_auto.py" || {
+grep -q -- '"--reconcile"' "$ROOT/live/prod_nba_auto.py" || {
   echo "Deploy the code first (Deploy funded worker code -> DEPLOY_CODE)." >&2; exit 1; }
 
 systemd-run --quiet --wait --pipe --collect --uid=trader \
