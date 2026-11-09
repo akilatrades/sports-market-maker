@@ -4,8 +4,8 @@ v1 rules (RESEARCH_LOG.md, 2026-10-15) and v2 variants (2026-10-16), each from a
 
 | Measure | model_side | no_seller | no_seller_late | no_seller_edge_sized | no_seller_veto2 | no_seller_stat_veto | no_seller_bookline |
 |---|---:|---:|---:|---:|---:|---:|---:|
-| orders | 637 | 644 | 634 | 439 | 642 | 643 | 641 |
-| resting or awaiting result | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| orders | 671 | 679 | 667 | 462 | 676 | 679 | 676 |
+| resting or awaiting result | 34 | 35 | 33 | 23 | 34 | 36 | 35 |
 | fill rate | 0.282574568288854 | 0.5357142857142857 | 0.4022082018927445 | 0.5239179954441914 | 0.5342679127725857 | 0.536547433903577 | 0.4960998439937597 |
 | fills settled | 180 | 345 | 255 | 230 | 343 | 345 | 318 |
 | bankroll | 452.75 | 362.97 | 320.97 | 387.83 | 362.89 | 361.8 | 340.51 |
