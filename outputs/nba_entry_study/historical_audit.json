@@ -3,7 +3,7 @@
     "invalid_settlement",
     "invalid_settlement"
   ],
-  "generated_at": "2026-11-08T22:22:12.615425+00:00",
+  "generated_at": "2026-11-09T01:09:08.724095+00:00",
   "limitations": [
     "Existing no_seller uses a model veto; it is not a model-free control.",
     "Different sizing and candidate baskets confound existing variant comparisons.",
@@ -12,74 +12,74 @@
   ],
   "rules": {
     "model_side": {
-      "actual_win_rate": 0.3449367088607595,
-      "contracts": 1896.0,
-      "forecast_win_probability": 0.5868236286919831,
-      "games": 47,
-      "net_pnl": -35.68,
-      "settled_orders": 171,
-      "without_best_game": -60.89,
-      "without_best_three_games": -99.34
+      "actual_win_rate": 0.3438320209973753,
+      "contracts": 1905.0,
+      "forecast_win_probability": 0.5873055643044619,
+      "games": 49,
+      "net_pnl": -39.56,
+      "settled_orders": 173,
+      "without_best_game": -64.77,
+      "without_best_three_games": -103.22
     },
     "no_seller": {
-      "actual_win_rate": 0.3448170731707317,
-      "contracts": 3280.0,
-      "forecast_win_probability": 0.5944266768292683,
-      "games": 58,
-      "net_pnl": -119.69,
-      "settled_orders": 326,
-      "without_best_game": -158.3,
-      "without_best_three_games": -214.94
+      "actual_win_rate": 0.34427710843373494,
+      "contracts": 3320.0,
+      "forecast_win_probability": 0.5945016867469879,
+      "games": 59,
+      "net_pnl": -124.9,
+      "settled_orders": 331,
+      "without_best_game": -163.51,
+      "without_best_three_games": -220.15
     },
     "no_seller_bookline": {
-      "actual_win_rate": 0.26645367412140575,
-      "contracts": 3130.0,
-      "forecast_win_probability": 0.48945118210862615,
-      "games": 58,
-      "net_pnl": -142.47,
-      "settled_orders": 302,
-      "without_best_game": -174.89,
-      "without_best_three_games": -217.43
+      "actual_win_rate": 0.2662684690348947,
+      "contracts": 3181.0,
+      "forecast_win_probability": 0.4885158440741905,
+      "games": 59,
+      "net_pnl": -145.66,
+      "settled_orders": 308,
+      "without_best_game": -178.08,
+      "without_best_three_games": -220.62
     },
     "no_seller_edge_sized": {
-      "actual_win_rate": 0.3477142857142857,
-      "contracts": 3500.0,
-      "forecast_win_probability": 0.6067387999999999,
-      "games": 50,
-      "net_pnl": -85.15,
-      "settled_orders": 215,
-      "without_best_game": -139.59,
-      "without_best_three_games": -239.1
+      "actual_win_rate": 0.3475695420061815,
+      "contracts": 3559.0,
+      "forecast_win_probability": 0.606958977240798,
+      "games": 52,
+      "net_pnl": -91.61,
+      "settled_orders": 220,
+      "without_best_game": -146.05,
+      "without_best_three_games": -245.56
     },
     "no_seller_late": {
-      "actual_win_rate": 0.29849532330215534,
-      "contracts": 2459.0,
-      "forecast_win_probability": 0.5538825132167547,
+      "actual_win_rate": 0.304,
+      "contracts": 2500.0,
+      "forecast_win_probability": 0.5575972,
       "games": 49,
-      "net_pnl": -181.58,
-      "settled_orders": 243,
-      "without_best_game": -211.07,
-      "without_best_three_games": -256.96
+      "net_pnl": -181.63,
+      "settled_orders": 253,
+      "without_best_game": -211.12,
+      "without_best_three_games": -257.01
     },
     "no_seller_stat_veto": {
-      "actual_win_rate": 0.34430225472273,
-      "contracts": 3282.0,
-      "forecast_win_probability": 0.5941907982937233,
-      "games": 58,
-      "net_pnl": -120.89,
-      "settled_orders": 327,
-      "without_best_game": -159.5,
-      "without_best_three_games": -216.14
+      "actual_win_rate": 0.3437688139674895,
+      "contracts": 3322.0,
+      "forecast_win_probability": 0.5942686032510536,
+      "games": 59,
+      "net_pnl": -126.1,
+      "settled_orders": 332,
+      "without_best_game": -164.71,
+      "without_best_three_games": -221.35
     },
     "no_seller_veto2": {
-      "actual_win_rate": 0.3450274557657108,
-      "contracts": 3278.0,
-      "forecast_win_probability": 0.5948234289200732,
-      "games": 57,
-      "net_pnl": -119.77,
-      "settled_orders": 324,
-      "without_best_game": -158.38,
-      "without_best_three_games": -215.02
+      "actual_win_rate": 0.3444846292947559,
+      "contracts": 3318.0,
+      "forecast_win_probability": 0.5948937010247136,
+      "games": 59,
+      "net_pnl": -124.98,
+      "settled_orders": 329,
+      "without_best_game": -163.59,
+      "without_best_three_games": -220.23
     }
   }
 }
