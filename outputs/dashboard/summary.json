@@ -1,5 +1,5 @@
 {
- "updated_utc": "2026-11-12T10:51+00:00",
+ "updated_utc": "2026-11-12T19:47+00:00",
  "paper": {
   "ledgers": [
    {
@@ -94,39 +94,39 @@
    },
    {
     "ledger": "KXITFMATCH",
-    "orders": 2313,
-    "open": 41,
-    "fill_rate": 0.7161091549295775,
-    "fills": 1627,
-    "contracts": 16379,
-    "profit": -282.34,
+    "orders": 2323,
+    "open": 13,
+    "fill_rate": 0.716017316017316,
+    "fills": 1654,
+    "contracts": 16619,
+    "profit": -296.76,
     "cents_per_contract": -1.06,
-    "cents_weighted": -1.72,
+    "cents_weighted": -1.79,
     "se_cents": 0.49,
-    "t": -2.16,
-    "hit_rate": 0.482,
-    "max_drawdown": 303.7,
+    "t": -2.19,
+    "hit_rate": 0.483,
+    "max_drawdown": 305.13,
     "days": 28,
-    "bankroll": 217.66,
+    "bankroll": 203.24,
     "group": "other markets (model-free unless +model)",
     "backtest_cents": 4.62
    },
    {
     "ledger": "KXITFMATCH+no30",
-    "orders": 1903,
-    "open": 42,
-    "fill_rate": 0.737775389575497,
-    "fills": 1373,
-    "contracts": 9450,
-    "profit": -168.75,
-    "cents_per_contract": -1.43,
-    "cents_weighted": -1.79,
-    "se_cents": 0.79,
-    "t": -1.81,
-    "hit_rate": 0.631,
-    "max_drawdown": 224.61,
+    "orders": 1911,
+    "open": 19,
+    "fill_rate": 0.7373150105708245,
+    "fills": 1395,
+    "contracts": 9552,
+    "profit": -166.13,
+    "cents_per_contract": -1.3,
+    "cents_weighted": -1.74,
+    "se_cents": 0.78,
+    "t": -1.66,
+    "hit_rate": 0.633,
+    "max_drawdown": 221.99,
     "days": 27,
-    "bankroll": 331.25,
+    "bankroll": 333.87,
     "group": "other markets (model-free unless +model)",
     "backtest_cents": 4.62
    },
@@ -208,8 +208,8 @@
    },
    {
     "ledger": "KXNBA3D",
-    "orders": 344,
-    "open": 4,
+    "orders": 347,
+    "open": 7,
     "fill_rate": 0.5441176470588235,
     "fills": 185,
     "contracts": 952,
@@ -227,8 +227,8 @@
    },
    {
     "ledger": "KXNCAAMB1HSPREAD",
-    "orders": 225,
-    "open": 0,
+    "orders": 235,
+    "open": 10,
     "fill_rate": 0.17777777777777778,
     "fills": 40,
     "contracts": 343,
@@ -246,8 +246,8 @@
    },
    {
     "ledger": "KXNFLRECYDS",
-    "orders": 1017,
-    "open": 0,
+    "orders": 1056,
+    "open": 39,
     "fill_rate": 0.5821042281219272,
     "fills": 592,
     "contracts": 3360,
@@ -265,8 +265,8 @@
    },
    {
     "ledger": "KXNFLRECYDS+model",
-    "orders": 3986,
-    "open": 0,
+    "orders": 4031,
+    "open": 13,
     "fill_rate": 0.4863013698630137,
     "fills": 426,
     "contracts": 3447,
@@ -525,10 +525,10 @@
    {
     "ledger": "KXITFMATCH",
     "day": "2026-11-10",
-    "profit": -27.07,
-    "fills": 76,
-    "contracts": 603,
-    "expected": 27.86
+    "profit": -28.5,
+    "fills": 78,
+    "contracts": 612,
+    "expected": 28.27
    },
    {
     "ledger": "KXITFMATCH",
@@ -541,10 +541,10 @@
    {
     "ledger": "KXITFMATCH",
     "day": "2026-11-12",
-    "profit": -3.63,
-    "fills": 36,
-    "contracts": 267,
-    "expected": 12.34
+    "profit": -16.62,
+    "fills": 61,
+    "contracts": 498,
+    "expected": 23.01
    },
    {
     "ledger": "KXITFMATCH+no30",
@@ -741,10 +741,10 @@
    {
     "ledger": "KXITFMATCH+no30",
     "day": "2026-11-10",
-    "profit": -20.61,
-    "fills": 69,
-    "contracts": 371,
-    "expected": 17.14
+    "profit": -19.63,
+    "fills": 70,
+    "contracts": 375,
+    "expected": 17.32
    },
    {
     "ledger": "KXITFMATCH+no30",
@@ -757,10 +757,10 @@
    {
     "ledger": "KXITFMATCH+no30",
     "day": "2026-11-12",
-    "profit": -12.55,
-    "fills": 30,
-    "contracts": 155,
-    "expected": 7.16
+    "profit": -10.91,
+    "fills": 51,
+    "contracts": 253,
+    "expected": 11.69
    },
    {
     "ledger": "KXLALIGASPREAD",
@@ -1779,8 +1779,8 @@
     "expected": 5.26
    }
   ],
-  "total_profit": -1042.58,
-  "total_fills": 5145,
+  "total_profit": -1054.38,
+  "total_fills": 5194,
   "best": "KXUCLCORNERS",
   "worst": "KXNCAAMB1HSPREAD"
  },
@@ -1789,18 +1789,18 @@
   "-90": 134,
   "-80": 222,
   "-70": 312,
-  "-60": 383,
-  "-50": 546,
-  "-40": 611,
-  "-30": 517,
-  "-20": 379,
-  "-10": 275,
-  "0": 914,
-  "10": 707,
-  "20": 560,
-  "30": 523,
-  "40": 428,
-  "50": 355,
+  "-60": 385,
+  "-50": 552,
+  "-40": 613,
+  "-30": 519,
+  "-20": 382,
+  "-10": 278,
+  "0": 924,
+  "10": 714,
+  "20": 564,
+  "30": 525,
+  "40": 434,
+  "50": 357,
   "60": 300,
   "70": 139,
   "80": 63,
@@ -1886,8 +1886,8 @@
   "account_total_loss_stop": 100.0,
   "daily_loss_stop": 20.0,
   "total_loss_stop": 100.0,
-  "odds_snapshot_utc": "2026-11-12T00:46+00:00",
-  "trade_prints_through": "2026-11-10",
+  "odds_snapshot_utc": "2026-11-12T18:00+00:00",
+  "trade_prints_through": "2026-11-11",
   "spread": {
    "rules": "spread-maker-v6-fills-first",
    "contracts_per_order": 2,
