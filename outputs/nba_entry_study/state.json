@@ -8499,7 +8499,7 @@
         "stat": "threes",
         "team": "NOP"
       },
-      "last_checked": "2026-11-11T22:07:00.798997+00:00",
+      "last_checked": "2026-11-12T00:57:36.926870+00:00",
       "outcome_status": "pending",
       "p_model_yes": 0.549814,
       "policies": {
@@ -21199,7 +21199,7 @@
         "stat": "threes",
         "team": "NOP"
       },
-      "last_checked": "2026-11-11T22:07:00.494182+00:00",
+      "last_checked": "2026-11-12T00:57:36.547866+00:00",
       "outcome_status": "pending",
       "p_model_yes": 0.47905,
       "policies": {
@@ -40169,7 +40169,7 @@
         "stat": "assists",
         "team": "DEN"
       },
-      "last_checked": "2026-11-11T22:07:00.179204+00:00",
+      "last_checked": "2026-11-12T00:57:36.158792+00:00",
       "outcome_status": "pending",
       "p_model_yes": 0.768033,
       "policies": {
@@ -84345,7 +84345,19 @@
           ]
         ]
       },
-      "execution_status": "pending",
+      "execution": {
+        "through": {
+          "filled": false,
+          "first_fill_print": null,
+          "later_trade_markouts": {}
+        },
+        "touch": {
+          "filled": false,
+          "first_fill_print": null,
+          "later_trade_markouts": {}
+        }
+      },
+      "execution_status": "complete",
       "fee_multiplier": 1.0,
       "fee_type": "quadratic",
       "fee_upper_estimate": 0.02,
@@ -84369,6 +84381,7 @@
         "stat": "threes",
         "team": "IND"
       },
+      "last_checked": "2026-11-12T00:57:21.817053+00:00",
       "outcome_status": "pending",
       "p_model_yes": 0.598044,
       "policies": {
@@ -84612,7 +84625,19 @@
           ]
         ]
       },
-      "execution_status": "pending",
+      "execution": {
+        "through": {
+          "filled": false,
+          "first_fill_print": null,
+          "later_trade_markouts": {}
+        },
+        "touch": {
+          "filled": false,
+          "first_fill_print": null,
+          "later_trade_markouts": {}
+        }
+      },
+      "execution_status": "complete",
       "fee_multiplier": 1.0,
       "fee_type": "quadratic",
       "fee_upper_estimate": 0.02,
@@ -84636,6 +84661,7 @@
         "stat": "threes",
         "team": "IND"
       },
+      "last_checked": "2026-11-12T00:57:23.227344+00:00",
       "outcome_status": "pending",
       "p_model_yes": 0.35782,
       "policies": {
@@ -84827,7 +84853,25 @@
           ]
         ]
       },
-      "execution_status": "pending",
+      "execution": {
+        "through": {
+          "filled": true,
+          "first_fill_print": {
+            "at": "2026-11-11T21:43:31.116826Z",
+            "yes_price": 0.66
+          },
+          "later_trade_markouts": {}
+        },
+        "touch": {
+          "filled": true,
+          "first_fill_print": {
+            "at": "2026-11-11T21:43:31.116826Z",
+            "yes_price": 0.66
+          },
+          "later_trade_markouts": {}
+        }
+      },
+      "execution_status": "complete",
       "fee_multiplier": 1.0,
       "fee_type": "quadratic",
       "fee_upper_estimate": 0.02,
@@ -84851,6 +84895,7 @@
         "stat": "threes",
         "team": "IND"
       },
+      "last_checked": "2026-11-12T00:57:24.716672+00:00",
       "outcome_status": "pending",
       "p_model_yes": 0.655721,
       "policies": {
@@ -85066,7 +85111,19 @@
           ]
         ]
       },
-      "execution_status": "pending",
+      "execution": {
+        "through": {
+          "filled": false,
+          "first_fill_print": null,
+          "later_trade_markouts": {}
+        },
+        "touch": {
+          "filled": false,
+          "first_fill_print": null,
+          "later_trade_markouts": {}
+        }
+      },
+      "execution_status": "complete",
       "fee_multiplier": 1.0,
       "fee_type": "quadratic",
       "fee_upper_estimate": 0.02,
@@ -85090,6 +85147,7 @@
         "stat": "threes",
         "team": "IND"
       },
+      "last_checked": "2026-11-12T00:57:26.206200+00:00",
       "outcome_status": "pending",
       "p_model_yes": 0.467502,
       "policies": {
@@ -85337,7 +85395,19 @@
           ]
         ]
       },
-      "execution_status": "pending",
+      "execution": {
+        "through": {
+          "filled": false,
+          "first_fill_print": null,
+          "later_trade_markouts": {}
+        },
+        "touch": {
+          "filled": false,
+          "first_fill_print": null,
+          "later_trade_markouts": {}
+        }
+      },
+      "execution_status": "complete",
       "fee_multiplier": 1.0,
       "fee_type": "quadratic",
       "fee_upper_estimate": 0.02,
@@ -85361,6 +85431,7 @@
         "stat": "threes",
         "team": "IND"
       },
+      "last_checked": "2026-11-12T00:57:27.605704+00:00",
       "outcome_status": "pending",
       "p_model_yes": 0.479516,
       "policies": {
@@ -85564,7 +85635,19 @@
           ]
         ]
       },
-      "execution_status": "pending",
+      "execution": {
+        "through": {
+          "filled": false,
+          "first_fill_print": null,
+          "later_trade_markouts": {}
+        },
+        "touch": {
+          "filled": false,
+          "first_fill_print": null,
+          "later_trade_markouts": {}
+        }
+      },
+      "execution_status": "complete",
       "fee_multiplier": 1.0,
       "fee_type": "quadratic",
       "fee_upper_estimate": 0.02,
@@ -85588,6 +85671,7 @@
         "stat": "threes",
         "team": "WAS"
       },
+      "last_checked": "2026-11-12T00:57:29.048594+00:00",
       "outcome_status": "pending",
       "p_model_yes": 0.633613,
       "policies": {
@@ -85835,7 +85919,19 @@
           ]
         ]
       },
-      "execution_status": "pending",
+      "execution": {
+        "through": {
+          "filled": false,
+          "first_fill_print": null,
+          "later_trade_markouts": {}
+        },
+        "touch": {
+          "filled": false,
+          "first_fill_print": null,
+          "later_trade_markouts": {}
+        }
+      },
+      "execution_status": "complete",
       "fee_multiplier": 1.0,
       "fee_type": "quadratic",
       "fee_upper_estimate": 0.02,
@@ -85859,6 +85955,7 @@
         "stat": "threes",
         "team": "WAS"
       },
+      "last_checked": "2026-11-12T00:57:30.469464+00:00",
       "outcome_status": "pending",
       "p_model_yes": 0.302607,
       "policies": {
@@ -86070,7 +86167,19 @@
           ]
         ]
       },
-      "execution_status": "pending",
+      "execution": {
+        "through": {
+          "filled": false,
+          "first_fill_print": null,
+          "later_trade_markouts": {}
+        },
+        "touch": {
+          "filled": false,
+          "first_fill_print": null,
+          "later_trade_markouts": {}
+        }
+      },
+      "execution_status": "complete",
       "fee_multiplier": 1.0,
       "fee_type": "quadratic",
       "fee_upper_estimate": 0.02,
@@ -86094,6 +86203,7 @@
         "stat": "threes",
         "team": "WAS"
       },
+      "last_checked": "2026-11-12T00:57:31.865938+00:00",
       "outcome_status": "pending",
       "p_model_yes": 0.567897,
       "policies": {
@@ -86297,7 +86407,19 @@
           ]
         ]
       },
-      "execution_status": "pending",
+      "execution": {
+        "through": {
+          "filled": false,
+          "first_fill_print": null,
+          "later_trade_markouts": {}
+        },
+        "touch": {
+          "filled": false,
+          "first_fill_print": null,
+          "later_trade_markouts": {}
+        }
+      },
+      "execution_status": "complete",
       "fee_multiplier": 1.0,
       "fee_type": "quadratic",
       "fee_upper_estimate": 0.02,
@@ -86321,6 +86443,7 @@
         "stat": "threes",
         "team": "WAS"
       },
+      "last_checked": "2026-11-12T00:57:33.322147+00:00",
       "outcome_status": "pending",
       "p_model_yes": 0.567897,
       "policies": {
@@ -86516,7 +86639,25 @@
           ]
         ]
       },
-      "execution_status": "pending",
+      "execution": {
+        "through": {
+          "filled": true,
+          "first_fill_print": {
+            "at": "2026-11-11T22:57:37.537955Z",
+            "yes_price": 0.62
+          },
+          "later_trade_markouts": {}
+        },
+        "touch": {
+          "filled": true,
+          "first_fill_print": {
+            "at": "2026-11-11T22:57:37.537955Z",
+            "yes_price": 0.62
+          },
+          "later_trade_markouts": {}
+        }
+      },
+      "execution_status": "complete",
       "fee_multiplier": 1.0,
       "fee_type": "quadratic",
       "fee_upper_estimate": 0.02,
@@ -86540,6 +86681,7 @@
         "stat": "threes",
         "team": "WAS"
       },
+      "last_checked": "2026-11-12T00:57:34.727498+00:00",
       "outcome_status": "pending",
       "p_model_yes": 0.598044,
       "policies": {
@@ -90620,6 +90762,2444 @@
       "ticker": "KXNBA3PT-26NOV11DENMEM-DENNJOKIC15-2",
       "tip_utc": "2026-11-12 01:00:00+00:00",
       "yes_level": 0.45
+    },
+    {
+      "book_age_seconds": 754.959719,
+      "book_request_at": "2026-11-12T00:57:37.639563+00:00",
+      "book_response_at": "2026-11-12T00:57:37.959719+00:00",
+      "entry_book": {
+        "no": [
+          [
+            "0.6200",
+            "546.00"
+          ],
+          [
+            "0.6100",
+            "25.00"
+          ],
+          [
+            "0.6000",
+            "166.00"
+          ],
+          [
+            "0.5900",
+            "705.00"
+          ],
+          [
+            "0.5800",
+            "1927.00"
+          ],
+          [
+            "0.5700",
+            "264.00"
+          ],
+          [
+            "0.5000",
+            "110.00"
+          ],
+          [
+            "0.4600",
+            "274.00"
+          ],
+          [
+            "0.3300",
+            "100.00"
+          ],
+          [
+            "0.3000",
+            "851.00"
+          ],
+          [
+            "0.2900",
+            "689.00"
+          ],
+          [
+            "0.2400",
+            "2.00"
+          ],
+          [
+            "0.1900",
+            "1.00"
+          ],
+          [
+            "0.1500",
+            "1326.00"
+          ],
+          [
+            "0.1400",
+            "1428.00"
+          ],
+          [
+            "0.1100",
+            "1.00"
+          ],
+          [
+            "0.1000",
+            "2067.00"
+          ],
+          [
+            "0.0800",
+            "1.00"
+          ],
+          [
+            "0.0600",
+            "2.00"
+          ],
+          [
+            "0.0500",
+            "3.00"
+          ],
+          [
+            "0.0400",
+            "50.00"
+          ],
+          [
+            "0.0300",
+            "1284.00"
+          ],
+          [
+            "0.0200",
+            "935.00"
+          ],
+          [
+            "0.0100",
+            "1588.00"
+          ]
+        ],
+        "yes": [
+          [
+            "0.3700",
+            "28.00"
+          ],
+          [
+            "0.3600",
+            "743.00"
+          ],
+          [
+            "0.3500",
+            "314.00"
+          ],
+          [
+            "0.3400",
+            "547.00"
+          ],
+          [
+            "0.3200",
+            "1.00"
+          ],
+          [
+            "0.2700",
+            "203.00"
+          ],
+          [
+            "0.2100",
+            "254.00"
+          ],
+          [
+            "0.1700",
+            "1301.00"
+          ],
+          [
+            "0.1600",
+            "1250.00"
+          ],
+          [
+            "0.1300",
+            "1.00"
+          ],
+          [
+            "0.0800",
+            "3803.00"
+          ],
+          [
+            "0.0700",
+            "128.00"
+          ],
+          [
+            "0.0400",
+            "50.00"
+          ],
+          [
+            "0.0300",
+            "1044.00"
+          ],
+          [
+            "0.0200",
+            "740.00"
+          ],
+          [
+            "0.0100",
+            "1220.00"
+          ]
+        ]
+      },
+      "execution_status": "pending",
+      "fee_multiplier": 1.0,
+      "fee_type": "quadratic",
+      "fee_upper_estimate": 0.02,
+      "game_id": "401909975",
+      "improved": false,
+      "inputs": {
+        "book_commence_utc": "2026-11-12T03:10:00Z",
+        "book_n": "6",
+        "book_updated_utc": "2026-11-12 00:45:03+00:00",
+        "historical_minutes_baseline": "19.967507",
+        "last_game_minutes": "19.0",
+        "last_player_game_utc": "2026-11-11 04:00:00+00:00",
+        "line": "1.5",
+        "lineup_confirmation_status": "unverified",
+        "minutes_estimate_source": "prior_games_only",
+        "p_book": "0.385007",
+        "player_id": "2991350",
+        "recent_start_rate": "0.0",
+        "requires_book": "False",
+        "snapshot_utc": "2026-11-12T00:57:09.982033+00:00",
+        "stat": "threes",
+        "team": "OKC"
+      },
+      "outcome_status": "pending",
+      "p_model_yes": 0.352037,
+      "policies": {
+        "fresh_books_veto": false,
+        "model_veto": true,
+        "no_baseline": true
+      },
+      "price": 0.62,
+      "quantity": 1,
+      "quoted_at": "2026-11-12T00:57:37.959719+00:00",
+      "side": "no",
+      "slot": "401909975|2991350|threes",
+      "source_age_seconds": 27.977686,
+      "ticker": "KXNBA3PT-26NOV11OKCPOR-OKCACARUSO9-2",
+      "tip_utc": "2026-11-12 03:00:00+00:00",
+      "yes_level": 0.38
+    },
+    {
+      "book_age_seconds": 720.322371,
+      "book_request_at": "2026-11-12T00:57:38.003295+00:00",
+      "book_response_at": "2026-11-12T00:57:38.322371+00:00",
+      "entry_book": {
+        "no": [
+          [
+            "0.5200",
+            "24.00"
+          ],
+          [
+            "0.5100",
+            "21.00"
+          ],
+          [
+            "0.5000",
+            "480.00"
+          ],
+          [
+            "0.4900",
+            "1.00"
+          ],
+          [
+            "0.4800",
+            "1.00"
+          ],
+          [
+            "0.4700",
+            "18.00"
+          ],
+          [
+            "0.4600",
+            "35.00"
+          ],
+          [
+            "0.4200",
+            "130.00"
+          ],
+          [
+            "0.3700",
+            "1057.00"
+          ],
+          [
+            "0.3600",
+            "740.00"
+          ],
+          [
+            "0.2700",
+            "236.00"
+          ],
+          [
+            "0.2600",
+            "3082.00"
+          ],
+          [
+            "0.2500",
+            "800.00"
+          ],
+          [
+            "0.2400",
+            "2.00"
+          ],
+          [
+            "0.2200",
+            "100.00"
+          ],
+          [
+            "0.1900",
+            "1.00"
+          ],
+          [
+            "0.1600",
+            "267.00"
+          ],
+          [
+            "0.1500",
+            "1.00"
+          ],
+          [
+            "0.1300",
+            "1059.00"
+          ],
+          [
+            "0.1200",
+            "1666.00"
+          ],
+          [
+            "0.1100",
+            "1.00"
+          ],
+          [
+            "0.1000",
+            "1119.00"
+          ],
+          [
+            "0.0800",
+            "1.00"
+          ],
+          [
+            "0.0700",
+            "20.00"
+          ],
+          [
+            "0.0600",
+            "1.00"
+          ],
+          [
+            "0.0500",
+            "118.00"
+          ],
+          [
+            "0.0400",
+            "8080.00"
+          ],
+          [
+            "0.0300",
+            "1264.00"
+          ],
+          [
+            "0.0200",
+            "1275.00"
+          ],
+          [
+            "0.0100",
+            "1618.00"
+          ]
+        ],
+        "yes": [
+          [
+            "0.4500",
+            "405.00"
+          ],
+          [
+            "0.4400",
+            "1131.00"
+          ],
+          [
+            "0.4300",
+            "72.00"
+          ],
+          [
+            "0.4100",
+            "1.00"
+          ],
+          [
+            "0.3700",
+            "35.00"
+          ],
+          [
+            "0.3500",
+            "157.00"
+          ],
+          [
+            "0.3100",
+            "322.00"
+          ],
+          [
+            "0.3000",
+            "254.00"
+          ],
+          [
+            "0.2300",
+            "869.00"
+          ],
+          [
+            "0.1800",
+            "100.00"
+          ],
+          [
+            "0.1200",
+            "1666.00"
+          ],
+          [
+            "0.0700",
+            "28.00"
+          ],
+          [
+            "0.0400",
+            "51.00"
+          ],
+          [
+            "0.0300",
+            "1266.00"
+          ],
+          [
+            "0.0200",
+            "1180.00"
+          ],
+          [
+            "0.0100",
+            "1480.00"
+          ]
+        ]
+      },
+      "execution_status": "pending",
+      "fee_multiplier": 1.0,
+      "fee_type": "quadratic",
+      "fee_upper_estimate": 0.02,
+      "game_id": "401909975",
+      "improved": true,
+      "inputs": {
+        "book_commence_utc": "2026-11-12T03:10:00Z",
+        "book_n": "5",
+        "book_updated_utc": "2026-11-12 00:45:38+00:00",
+        "historical_minutes_baseline": "20.178682",
+        "last_game_minutes": "18.0",
+        "last_player_game_utc": "2026-11-11 04:00:00+00:00",
+        "line": "1.5",
+        "lineup_confirmation_status": "unverified",
+        "minutes_estimate_source": "prior_games_only",
+        "p_book": "0.460098",
+        "player_id": "5241364",
+        "recent_start_rate": "0.0",
+        "requires_book": "False",
+        "snapshot_utc": "2026-11-12T00:57:09.982033+00:00",
+        "stat": "threes",
+        "team": "OKC"
+      },
+      "outcome_status": "pending",
+      "p_model_yes": 0.370345,
+      "policies": {
+        "fresh_books_veto": false,
+        "model_veto": true,
+        "no_baseline": true
+      },
+      "price": 0.53,
+      "quantity": 1,
+      "quoted_at": "2026-11-12T00:57:38.322371+00:00",
+      "side": "no",
+      "slot": "401909975|5241364|threes",
+      "source_age_seconds": 28.340338,
+      "ticker": "KXNBA3PT-26NOV11OKCPOR-OKCBSTIRTZ14-2",
+      "tip_utc": "2026-11-12 03:00:00+00:00",
+      "yes_level": 0.47
+    },
+    {
+      "book_age_seconds": 755.72072,
+      "book_request_at": "2026-11-12T00:57:38.366818+00:00",
+      "book_response_at": "2026-11-12T00:57:38.720720+00:00",
+      "entry_book": {
+        "no": [
+          [
+            "0.5500",
+            "1143.39"
+          ],
+          [
+            "0.5400",
+            "535.00"
+          ],
+          [
+            "0.5300",
+            "678.68"
+          ],
+          [
+            "0.5200",
+            "100.00"
+          ],
+          [
+            "0.5100",
+            "371.00"
+          ],
+          [
+            "0.5000",
+            "351.00"
+          ],
+          [
+            "0.4800",
+            "1354.50"
+          ],
+          [
+            "0.4200",
+            "25.00"
+          ],
+          [
+            "0.4100",
+            "2.00"
+          ],
+          [
+            "0.4000",
+            "275.00"
+          ],
+          [
+            "0.3900",
+            "51.25"
+          ],
+          [
+            "0.3500",
+            "2830.00"
+          ],
+          [
+            "0.3400",
+            "2866.00"
+          ],
+          [
+            "0.2500",
+            "900.00"
+          ],
+          [
+            "0.2400",
+            "2.00"
+          ],
+          [
+            "0.2100",
+            "21.39"
+          ],
+          [
+            "0.2000",
+            "173.00"
+          ],
+          [
+            "0.1900",
+            "1.00"
+          ],
+          [
+            "0.1800",
+            "59.00"
+          ],
+          [
+            "0.1700",
+            "877.00"
+          ],
+          [
+            "0.1600",
+            "3915.00"
+          ],
+          [
+            "0.1500",
+            "1.00"
+          ],
+          [
+            "0.1200",
+            "1666.00"
+          ],
+          [
+            "0.1100",
+            "1.00"
+          ],
+          [
+            "0.1000",
+            "826.00"
+          ],
+          [
+            "0.0800",
+            "535.00"
+          ],
+          [
+            "0.0600",
+            "11799.00"
+          ],
+          [
+            "0.0500",
+            "4.00"
+          ],
+          [
+            "0.0400",
+            "50.00"
+          ],
+          [
+            "0.0300",
+            "1414.00"
+          ],
+          [
+            "0.0200",
+            "1205.00"
+          ],
+          [
+            "0.0100",
+            "4963.00"
+          ]
+        ],
+        "yes": [
+          [
+            "0.4400",
+            "1406.64"
+          ],
+          [
+            "0.4300",
+            "1426.51"
+          ],
+          [
+            "0.4200",
+            "289.00"
+          ],
+          [
+            "0.4100",
+            "153.00"
+          ],
+          [
+            "0.3700",
+            "10.00"
+          ],
+          [
+            "0.3500",
+            "157.00"
+          ],
+          [
+            "0.2900",
+            "352.00"
+          ],
+          [
+            "0.2700",
+            "3.00"
+          ],
+          [
+            "0.2000",
+            "1000.00"
+          ],
+          [
+            "0.1500",
+            "100.00"
+          ],
+          [
+            "0.1100",
+            "1818.00"
+          ],
+          [
+            "0.0700",
+            "28.00"
+          ],
+          [
+            "0.0400",
+            "52.00"
+          ],
+          [
+            "0.0300",
+            "1343.00"
+          ],
+          [
+            "0.0200",
+            "1130.00"
+          ],
+          [
+            "0.0100",
+            "4640.00"
+          ]
+        ]
+      },
+      "execution_status": "pending",
+      "fee_multiplier": 1.0,
+      "fee_type": "quadratic",
+      "fee_upper_estimate": 0.02,
+      "game_id": "401909975",
+      "improved": false,
+      "inputs": {
+        "book_commence_utc": "2026-11-12T03:10:00Z",
+        "book_n": "7",
+        "book_updated_utc": "2026-11-12 00:45:03+00:00",
+        "historical_minutes_baseline": "25.431871",
+        "last_game_minutes": "31.0",
+        "last_player_game_utc": "2026-11-11 04:00:00+00:00",
+        "line": "2.5",
+        "lineup_confirmation_status": "unverified",
+        "minutes_estimate_source": "prior_games_only",
+        "p_book": "0.46596",
+        "player_id": "4683778",
+        "recent_start_rate": "0.451127",
+        "requires_book": "False",
+        "snapshot_utc": "2026-11-12T00:57:09.982033+00:00",
+        "stat": "threes",
+        "team": "OKC"
+      },
+      "outcome_status": "pending",
+      "p_model_yes": 0.358158,
+      "policies": {
+        "fresh_books_veto": false,
+        "model_veto": true,
+        "no_baseline": true
+      },
+      "price": 0.55,
+      "quantity": 1,
+      "quoted_at": "2026-11-12T00:57:38.720720+00:00",
+      "side": "no",
+      "slot": "401909975|4683778|threes",
+      "source_age_seconds": 28.738687,
+      "ticker": "KXNBA3PT-26NOV11OKCPOR-OKCJMCCAIN3-3",
+      "tip_utc": "2026-11-12 03:00:00+00:00",
+      "yes_level": 0.45
+    },
+    {
+      "book_age_seconds": 756.084445,
+      "book_request_at": "2026-11-12T00:57:38.764419+00:00",
+      "book_response_at": "2026-11-12T00:57:39.084445+00:00",
+      "entry_book": {
+        "no": [
+          [
+            "0.6000",
+            "252.07"
+          ],
+          [
+            "0.5800",
+            "1194.60"
+          ],
+          [
+            "0.5700",
+            "1012.00"
+          ],
+          [
+            "0.5600",
+            "485.00"
+          ],
+          [
+            "0.5500",
+            "997.18"
+          ],
+          [
+            "0.5400",
+            "46.30"
+          ],
+          [
+            "0.4900",
+            "200.00"
+          ],
+          [
+            "0.4800",
+            "1025.00"
+          ],
+          [
+            "0.4600",
+            "876.00"
+          ],
+          [
+            "0.4500",
+            "394.00"
+          ],
+          [
+            "0.3700",
+            "54.02"
+          ],
+          [
+            "0.3400",
+            "276.00"
+          ],
+          [
+            "0.3300",
+            "1952.00"
+          ],
+          [
+            "0.3200",
+            "529.00"
+          ],
+          [
+            "0.3100",
+            "3998.00"
+          ],
+          [
+            "0.3000",
+            "100.00"
+          ],
+          [
+            "0.2900",
+            "689.00"
+          ],
+          [
+            "0.2400",
+            "2.00"
+          ],
+          [
+            "0.1900",
+            "1.00"
+          ],
+          [
+            "0.1500",
+            "1.00"
+          ],
+          [
+            "0.1400",
+            "4091.00"
+          ],
+          [
+            "0.1300",
+            "1538.00"
+          ],
+          [
+            "0.1100",
+            "1.00"
+          ],
+          [
+            "0.1000",
+            "8883.00"
+          ],
+          [
+            "0.0800",
+            "1.00"
+          ],
+          [
+            "0.0600",
+            "2.00"
+          ],
+          [
+            "0.0500",
+            "3.00"
+          ],
+          [
+            "0.0400",
+            "50.00"
+          ],
+          [
+            "0.0300",
+            "1144.00"
+          ],
+          [
+            "0.0200",
+            "905.00"
+          ],
+          [
+            "0.0100",
+            "1638.00"
+          ]
+        ],
+        "yes": [
+          [
+            "0.3900",
+            "619.40"
+          ],
+          [
+            "0.3800",
+            "1090.00"
+          ],
+          [
+            "0.3700",
+            "669.00"
+          ],
+          [
+            "0.3600",
+            "1660.00"
+          ],
+          [
+            "0.3300",
+            "12.00"
+          ],
+          [
+            "0.3200",
+            "1.00"
+          ],
+          [
+            "0.3100",
+            "12.00"
+          ],
+          [
+            "0.2400",
+            "253.00"
+          ],
+          [
+            "0.1900",
+            "1252.00"
+          ],
+          [
+            "0.1000",
+            "100.00"
+          ],
+          [
+            "0.0900",
+            "241.00"
+          ],
+          [
+            "0.0800",
+            "2500.00"
+          ],
+          [
+            "0.0700",
+            "28.00"
+          ],
+          [
+            "0.0400",
+            "51.00"
+          ],
+          [
+            "0.0300",
+            "1273.00"
+          ],
+          [
+            "0.0200",
+            "1060.00"
+          ],
+          [
+            "0.0100",
+            "1430.00"
+          ]
+        ]
+      },
+      "execution_status": "pending",
+      "fee_multiplier": 1.0,
+      "fee_type": "quadratic",
+      "fee_upper_estimate": 0.02,
+      "game_id": "401909975",
+      "improved": false,
+      "inputs": {
+        "book_commence_utc": "2026-11-12T03:10:00Z",
+        "book_n": "7",
+        "book_updated_utc": "2026-11-12 00:45:03+00:00",
+        "historical_minutes_baseline": "18.041035",
+        "last_game_minutes": "19.0",
+        "last_player_game_utc": "2026-11-11 04:00:00+00:00",
+        "line": "1.5",
+        "lineup_confirmation_status": "unverified",
+        "minutes_estimate_source": "prior_games_only",
+        "p_book": "0.40068",
+        "player_id": "3133626",
+        "recent_start_rate": "0.670727",
+        "requires_book": "False",
+        "snapshot_utc": "2026-11-12T00:57:09.982033+00:00",
+        "stat": "threes",
+        "team": "OKC"
+      },
+      "outcome_status": "pending",
+      "p_model_yes": 0.352037,
+      "policies": {
+        "fresh_books_veto": false,
+        "model_veto": true,
+        "no_baseline": true
+      },
+      "price": 0.6,
+      "quantity": 1,
+      "quoted_at": "2026-11-12T00:57:39.084445+00:00",
+      "side": "no",
+      "slot": "401909975|3133626|threes",
+      "source_age_seconds": 29.102412,
+      "ticker": "KXNBA3PT-26NOV11OKCPOR-OKCKWILLIAMSSF-2",
+      "tip_utc": "2026-11-12 03:00:00+00:00",
+      "yes_level": 0.4
+    },
+    {
+      "book_age_seconds": 721.461196,
+      "book_request_at": "2026-11-12T00:57:39.128173+00:00",
+      "book_response_at": "2026-11-12T00:57:39.461196+00:00",
+      "entry_book": {
+        "no": [
+          [
+            "0.3900",
+            "816.91"
+          ],
+          [
+            "0.3800",
+            "544.00"
+          ],
+          [
+            "0.3700",
+            "1486.25"
+          ],
+          [
+            "0.3500",
+            "1994.00"
+          ],
+          [
+            "0.3400",
+            "1442.00"
+          ],
+          [
+            "0.3300",
+            "1309.00"
+          ],
+          [
+            "0.3200",
+            "1.00"
+          ],
+          [
+            "0.3000",
+            "43.00"
+          ],
+          [
+            "0.2700",
+            "76.00"
+          ],
+          [
+            "0.2400",
+            "296.00"
+          ],
+          [
+            "0.2300",
+            "950.00"
+          ],
+          [
+            "0.2200",
+            "2387.00"
+          ],
+          [
+            "0.1900",
+            "1.00"
+          ],
+          [
+            "0.1800",
+            "1111.00"
+          ],
+          [
+            "0.1500",
+            "260.00"
+          ],
+          [
+            "0.1400",
+            "1175.00"
+          ],
+          [
+            "0.1300",
+            "417.00"
+          ],
+          [
+            "0.1200",
+            "2454.00"
+          ],
+          [
+            "0.1100",
+            "1325.00"
+          ],
+          [
+            "0.1000",
+            "266.00"
+          ],
+          [
+            "0.0900",
+            "2222.00"
+          ],
+          [
+            "0.0800",
+            "1.00"
+          ],
+          [
+            "0.0600",
+            "1.00"
+          ],
+          [
+            "0.0500",
+            "3.00"
+          ],
+          [
+            "0.0400",
+            "10448.00"
+          ],
+          [
+            "0.0300",
+            "1344.00"
+          ],
+          [
+            "0.0200",
+            "1115.00"
+          ],
+          [
+            "0.0100",
+            "4578.00"
+          ]
+        ],
+        "yes": [
+          [
+            "0.6000",
+            "8.00"
+          ],
+          [
+            "0.5900",
+            "15.00"
+          ],
+          [
+            "0.5700",
+            "22.00"
+          ],
+          [
+            "0.5600",
+            "253.09"
+          ],
+          [
+            "0.5400",
+            "518.00"
+          ],
+          [
+            "0.5300",
+            "1165.05"
+          ],
+          [
+            "0.5100",
+            "29.00"
+          ],
+          [
+            "0.4900",
+            "238.00"
+          ],
+          [
+            "0.4800",
+            "114.00"
+          ],
+          [
+            "0.4400",
+            "255.00"
+          ],
+          [
+            "0.4000",
+            "50.00"
+          ],
+          [
+            "0.3000",
+            "100.00"
+          ],
+          [
+            "0.2900",
+            "689.00"
+          ],
+          [
+            "0.1500",
+            "64.00"
+          ],
+          [
+            "0.1400",
+            "1428.00"
+          ],
+          [
+            "0.0700",
+            "28.00"
+          ],
+          [
+            "0.0500",
+            "1.00"
+          ],
+          [
+            "0.0400",
+            "266.00"
+          ],
+          [
+            "0.0300",
+            "1303.00"
+          ],
+          [
+            "0.0200",
+            "1080.00"
+          ],
+          [
+            "0.0100",
+            "4390.00"
+          ]
+        ]
+      },
+      "execution_status": "pending",
+      "fee_multiplier": 1.0,
+      "fee_type": "quadratic",
+      "fee_upper_estimate": 0.02,
+      "game_id": "401909975",
+      "improved": false,
+      "inputs": {
+        "book_commence_utc": "2026-11-12T03:10:00Z",
+        "book_n": "6",
+        "book_updated_utc": "2026-11-12 00:45:38+00:00",
+        "historical_minutes_baseline": "32.708872",
+        "last_game_minutes": "29.0",
+        "last_player_game_utc": "2026-11-11 04:00:00+00:00",
+        "line": "1.5",
+        "lineup_confirmation_status": "unverified",
+        "minutes_estimate_source": "prior_games_only",
+        "p_book": "0.59906",
+        "player_id": "4278073",
+        "recent_start_rate": "1.0",
+        "requires_book": "False",
+        "snapshot_utc": "2026-11-12T00:57:09.982033+00:00",
+        "stat": "threes",
+        "team": "OKC"
+      },
+      "outcome_status": "pending",
+      "p_model_yes": 0.548417,
+      "policies": {
+        "fresh_books_veto": false,
+        "model_veto": true,
+        "no_baseline": true
+      },
+      "price": 0.39,
+      "quantity": 1,
+      "quoted_at": "2026-11-12T00:57:39.461196+00:00",
+      "side": "no",
+      "slot": "401909975|4278073|threes",
+      "source_age_seconds": 29.479163,
+      "ticker": "KXNBA3PT-26NOV11OKCPOR-OKCSGILGEOUSALEXANDER2-2",
+      "tip_utc": "2026-11-12 03:00:00+00:00",
+      "yes_level": 0.61
+    },
+    {
+      "book_age_seconds": 756.85854,
+      "book_request_at": "2026-11-12T00:57:39.504948+00:00",
+      "book_response_at": "2026-11-12T00:57:39.858540+00:00",
+      "entry_book": {
+        "no": [
+          [
+            "0.4300",
+            "1927.00"
+          ],
+          [
+            "0.4200",
+            "440.00"
+          ],
+          [
+            "0.4100",
+            "17.00"
+          ],
+          [
+            "0.4000",
+            "817.50"
+          ],
+          [
+            "0.3900",
+            "2091.00"
+          ],
+          [
+            "0.3800",
+            "2533.53"
+          ],
+          [
+            "0.3700",
+            "1357.00"
+          ],
+          [
+            "0.3600",
+            "105.00"
+          ],
+          [
+            "0.3500",
+            "200.00"
+          ],
+          [
+            "0.3400",
+            "38.00"
+          ],
+          [
+            "0.3100",
+            "177.00"
+          ],
+          [
+            "0.2700",
+            "425.00"
+          ],
+          [
+            "0.2400",
+            "2.00"
+          ],
+          [
+            "0.2200",
+            "321.00"
+          ],
+          [
+            "0.2000",
+            "1193.00"
+          ],
+          [
+            "0.1900",
+            "1053.00"
+          ],
+          [
+            "0.1100",
+            "1.00"
+          ],
+          [
+            "0.1000",
+            "1969.00"
+          ],
+          [
+            "0.0900",
+            "2222.00"
+          ],
+          [
+            "0.0800",
+            "276.00"
+          ],
+          [
+            "0.0600",
+            "1.00"
+          ],
+          [
+            "0.0500",
+            "775.00"
+          ],
+          [
+            "0.0400",
+            "4571.00"
+          ],
+          [
+            "0.0300",
+            "1924.00"
+          ],
+          [
+            "0.0200",
+            "1915.00"
+          ],
+          [
+            "0.0100",
+            "2353.00"
+          ]
+        ],
+        "yes": [
+          [
+            "0.5600",
+            "2137.70"
+          ],
+          [
+            "0.5500",
+            "678.00"
+          ],
+          [
+            "0.5400",
+            "426.00"
+          ],
+          [
+            "0.5300",
+            "923.05"
+          ],
+          [
+            "0.5200",
+            "147.00"
+          ],
+          [
+            "0.5100",
+            "1.00"
+          ],
+          [
+            "0.5000",
+            "233.00"
+          ],
+          [
+            "0.4900",
+            "8.00"
+          ],
+          [
+            "0.4700",
+            "39.00"
+          ],
+          [
+            "0.4600",
+            "119.00"
+          ],
+          [
+            "0.4400",
+            "200.00"
+          ],
+          [
+            "0.3900",
+            "424.00"
+          ],
+          [
+            "0.3700",
+            "2.00"
+          ],
+          [
+            "0.2700",
+            "740.00"
+          ],
+          [
+            "0.1300",
+            "1538.00"
+          ],
+          [
+            "0.1100",
+            "1.00"
+          ],
+          [
+            "0.0700",
+            "28.00"
+          ],
+          [
+            "0.0500",
+            "1.00"
+          ],
+          [
+            "0.0400",
+            "50.00"
+          ],
+          [
+            "0.0300",
+            "1903.00"
+          ],
+          [
+            "0.0200",
+            "1760.00"
+          ],
+          [
+            "0.0100",
+            "2170.00"
+          ]
+        ]
+      },
+      "execution_status": "pending",
+      "fee_multiplier": 1.0,
+      "fee_type": "quadratic",
+      "fee_upper_estimate": 0.02,
+      "game_id": "401909975",
+      "improved": false,
+      "inputs": {
+        "book_commence_utc": "2026-11-12T03:10:00Z",
+        "book_n": "7",
+        "book_updated_utc": "2026-11-12 00:45:03+00:00",
+        "historical_minutes_baseline": "32.970103",
+        "last_game_minutes": "34.0",
+        "last_player_game_utc": "2026-11-11 04:00:00+00:00",
+        "line": "1.5",
+        "lineup_confirmation_status": "unverified",
+        "minutes_estimate_source": "prior_games_only",
+        "p_book": "0.563625",
+        "player_id": "4683021",
+        "recent_start_rate": "1.0",
+        "requires_book": "False",
+        "snapshot_utc": "2026-11-12T00:57:09.982033+00:00",
+        "stat": "threes",
+        "team": "POR"
+      },
+      "outcome_status": "pending",
+      "p_model_yes": 0.548417,
+      "policies": {
+        "fresh_books_veto": false,
+        "model_veto": true,
+        "no_baseline": true
+      },
+      "price": 0.43,
+      "quantity": 1,
+      "quoted_at": "2026-11-12T00:57:39.858540+00:00",
+      "side": "no",
+      "slot": "401909975|4683021|threes",
+      "source_age_seconds": 29.876507,
+      "ticker": "KXNBA3PT-26NOV11OKCPOR-PORDAVDIJA8-2",
+      "tip_utc": "2026-11-12 03:00:00+00:00",
+      "yes_level": 0.57
+    },
+    {
+      "book_age_seconds": 722.224066,
+      "book_request_at": "2026-11-12T00:57:39.902430+00:00",
+      "book_response_at": "2026-11-12T00:57:40.224066+00:00",
+      "entry_book": {
+        "no": [
+          [
+            "0.3700",
+            "817.56"
+          ],
+          [
+            "0.3600",
+            "200.00"
+          ],
+          [
+            "0.3500",
+            "500.00"
+          ],
+          [
+            "0.3400",
+            "153.72"
+          ],
+          [
+            "0.3300",
+            "575.00"
+          ],
+          [
+            "0.3200",
+            "322.00"
+          ],
+          [
+            "0.3100",
+            "583.00"
+          ],
+          [
+            "0.3000",
+            "968.00"
+          ],
+          [
+            "0.2900",
+            "400.00"
+          ],
+          [
+            "0.2800",
+            "1471.00"
+          ],
+          [
+            "0.2700",
+            "1.00"
+          ],
+          [
+            "0.2500",
+            "726.00"
+          ],
+          [
+            "0.2200",
+            "778.00"
+          ],
+          [
+            "0.1700",
+            "2831.00"
+          ],
+          [
+            "0.1500",
+            "638.00"
+          ],
+          [
+            "0.1400",
+            "1428.00"
+          ],
+          [
+            "0.1000",
+            "67.00"
+          ],
+          [
+            "0.0900",
+            "1295.00"
+          ],
+          [
+            "0.0800",
+            "1907.00"
+          ],
+          [
+            "0.0700",
+            "2957.00"
+          ],
+          [
+            "0.0600",
+            "1.00"
+          ],
+          [
+            "0.0500",
+            "754.00"
+          ],
+          [
+            "0.0400",
+            "13071.00"
+          ],
+          [
+            "0.0300",
+            "1618.00"
+          ],
+          [
+            "0.0200",
+            "1242.00"
+          ],
+          [
+            "0.0100",
+            "1983.00"
+          ]
+        ],
+        "yes": [
+          [
+            "0.6200",
+            "210.00"
+          ],
+          [
+            "0.6100",
+            "419.81"
+          ],
+          [
+            "0.5900",
+            "4.00"
+          ],
+          [
+            "0.5800",
+            "7.00"
+          ],
+          [
+            "0.5700",
+            "503.00"
+          ],
+          [
+            "0.5500",
+            "27.00"
+          ],
+          [
+            "0.5200",
+            "105.00"
+          ],
+          [
+            "0.5000",
+            "200.00"
+          ],
+          [
+            "0.4400",
+            "255.00"
+          ],
+          [
+            "0.3600",
+            "55.55"
+          ],
+          [
+            "0.3300",
+            "706.00"
+          ],
+          [
+            "0.1600",
+            "1250.00"
+          ],
+          [
+            "0.0700",
+            "28.00"
+          ],
+          [
+            "0.0600",
+            "1.00"
+          ],
+          [
+            "0.0400",
+            "50.00"
+          ],
+          [
+            "0.0300",
+            "1533.00"
+          ],
+          [
+            "0.0200",
+            "1271.00"
+          ],
+          [
+            "0.0100",
+            "1890.00"
+          ]
+        ]
+      },
+      "execution_status": "pending",
+      "fee_multiplier": 1.0,
+      "fee_type": "quadratic",
+      "fee_upper_estimate": 0.02,
+      "game_id": "401909975",
+      "improved": false,
+      "inputs": {
+        "book_commence_utc": "2026-11-12T03:10:00Z",
+        "book_n": "6",
+        "book_updated_utc": "2026-11-12 00:45:38+00:00",
+        "historical_minutes_baseline": "25.042752",
+        "last_game_minutes": "26.0",
+        "last_player_game_utc": "2026-11-11 04:00:00+00:00",
+        "line": "0.5",
+        "lineup_confirmation_status": "unverified",
+        "minutes_estimate_source": "prior_games_only",
+        "p_book": "0.633338",
+        "player_id": "5105565",
+        "recent_start_rate": "1.0",
+        "requires_book": "False",
+        "snapshot_utc": "2026-11-12T00:57:09.982033+00:00",
+        "stat": "threes",
+        "team": "POR"
+      },
+      "outcome_status": "pending",
+      "p_model_yes": 0.65606,
+      "policies": {
+        "fresh_books_veto": false,
+        "model_veto": false,
+        "no_baseline": true
+      },
+      "price": 0.37,
+      "quantity": 1,
+      "quoted_at": "2026-11-12T00:57:40.224066+00:00",
+      "side": "no",
+      "slot": "401909975|5105565|threes",
+      "source_age_seconds": 30.242033,
+      "ticker": "KXNBA3PT-26NOV11OKCPOR-PORDCLINGAN23-1",
+      "tip_utc": "2026-11-12 03:00:00+00:00",
+      "yes_level": 0.63
+    },
+    {
+      "book_age_seconds": 722.615207,
+      "book_request_at": "2026-11-12T00:57:40.268863+00:00",
+      "book_response_at": "2026-11-12T00:57:40.615207+00:00",
+      "entry_book": {
+        "no": [
+          [
+            "0.4100",
+            "106.41"
+          ],
+          [
+            "0.4000",
+            "2004.33"
+          ],
+          [
+            "0.3900",
+            "700.00"
+          ],
+          [
+            "0.3700",
+            "2950.57"
+          ],
+          [
+            "0.3600",
+            "1.00"
+          ],
+          [
+            "0.3500",
+            "294.00"
+          ],
+          [
+            "0.3400",
+            "588.00"
+          ],
+          [
+            "0.3200",
+            "200.00"
+          ],
+          [
+            "0.3100",
+            "44.00"
+          ],
+          [
+            "0.2900",
+            "181.00"
+          ],
+          [
+            "0.2800",
+            "200.00"
+          ],
+          [
+            "0.2700",
+            "1561.00"
+          ],
+          [
+            "0.2600",
+            "573.00"
+          ],
+          [
+            "0.2400",
+            "226.00"
+          ],
+          [
+            "0.2300",
+            "964.00"
+          ],
+          [
+            "0.2200",
+            "5371.00"
+          ],
+          [
+            "0.2100",
+            "7163.00"
+          ],
+          [
+            "0.2000",
+            "1395.00"
+          ],
+          [
+            "0.1900",
+            "1.00"
+          ],
+          [
+            "0.1800",
+            "1111.00"
+          ],
+          [
+            "0.1700",
+            "50.00"
+          ],
+          [
+            "0.1200",
+            "10.00"
+          ],
+          [
+            "0.1100",
+            "6913.00"
+          ],
+          [
+            "0.1000",
+            "8837.00"
+          ],
+          [
+            "0.0900",
+            "2222.00"
+          ],
+          [
+            "0.0800",
+            "1.00"
+          ],
+          [
+            "0.0700",
+            "50.00"
+          ],
+          [
+            "0.0600",
+            "1.00"
+          ],
+          [
+            "0.0500",
+            "3.00"
+          ],
+          [
+            "0.0400",
+            "31268.00"
+          ],
+          [
+            "0.0300",
+            "1314.00"
+          ],
+          [
+            "0.0200",
+            "1175.00"
+          ],
+          [
+            "0.0100",
+            "4833.00"
+          ]
+        ],
+        "yes": [
+          [
+            "0.5600",
+            "125.00"
+          ],
+          [
+            "0.5500",
+            "620.00"
+          ],
+          [
+            "0.5400",
+            "277.00"
+          ],
+          [
+            "0.5100",
+            "7.00"
+          ],
+          [
+            "0.5000",
+            "30.00"
+          ],
+          [
+            "0.4800",
+            "304.00"
+          ],
+          [
+            "0.4700",
+            "200.00"
+          ],
+          [
+            "0.4300",
+            "290.00"
+          ],
+          [
+            "0.4200",
+            "262.00"
+          ],
+          [
+            "0.4100",
+            "253.00"
+          ],
+          [
+            "0.3800",
+            "5.00"
+          ],
+          [
+            "0.3300",
+            "50.00"
+          ],
+          [
+            "0.3200",
+            "62.50"
+          ],
+          [
+            "0.3000",
+            "766.00"
+          ],
+          [
+            "0.1500",
+            "1333.00"
+          ],
+          [
+            "0.1000",
+            "1.00"
+          ],
+          [
+            "0.0700",
+            "48.00"
+          ],
+          [
+            "0.0500",
+            "161.00"
+          ],
+          [
+            "0.0400",
+            "123.00"
+          ],
+          [
+            "0.0300",
+            "1443.00"
+          ],
+          [
+            "0.0200",
+            "1200.00"
+          ],
+          [
+            "0.0100",
+            "4430.00"
+          ]
+        ]
+      },
+      "execution_status": "pending",
+      "fee_multiplier": 1.0,
+      "fee_type": "quadratic",
+      "fee_upper_estimate": 0.02,
+      "game_id": "401909975",
+      "improved": true,
+      "inputs": {
+        "book_commence_utc": "2026-11-12T03:10:00Z",
+        "book_n": "3",
+        "book_updated_utc": "2026-11-12 00:45:38+00:00",
+        "historical_minutes_baseline": "29.100018",
+        "last_game_minutes": "24.0",
+        "last_player_game_utc": "2026-11-11 04:00:00+00:00",
+        "line": "2.5",
+        "lineup_confirmation_status": "unverified",
+        "minutes_estimate_source": "prior_games_only",
+        "p_book": "0.597557",
+        "player_id": "6606",
+        "recent_start_rate": "1.0",
+        "requires_book": "False",
+        "snapshot_utc": "2026-11-12T00:57:09.982033+00:00",
+        "stat": "threes",
+        "team": "POR"
+      },
+      "outcome_status": "pending",
+      "p_model_yes": 0.532837,
+      "policies": {
+        "fresh_books_veto": false,
+        "model_veto": true,
+        "no_baseline": true
+      },
+      "price": 0.42,
+      "quantity": 1,
+      "quoted_at": "2026-11-12T00:57:40.615207+00:00",
+      "side": "no",
+      "slot": "401909975|6606|threes",
+      "source_age_seconds": 30.633174,
+      "ticker": "KXNBA3PT-26NOV11OKCPOR-PORDLILLARD0-3",
+      "tip_utc": "2026-11-12 03:00:00+00:00",
+      "yes_level": 0.58
+    },
+    {
+      "book_age_seconds": 757.993897,
+      "book_request_at": "2026-11-12T00:57:40.659695+00:00",
+      "book_response_at": "2026-11-12T00:57:40.993897+00:00",
+      "entry_book": {
+        "no": [
+          [
+            "0.5500",
+            "1167.38"
+          ],
+          [
+            "0.5400",
+            "1050.00"
+          ],
+          [
+            "0.5300",
+            "1529.00"
+          ],
+          [
+            "0.5200",
+            "432.08"
+          ],
+          [
+            "0.5000",
+            "100.00"
+          ],
+          [
+            "0.4900",
+            "200.00"
+          ],
+          [
+            "0.4700",
+            "200.00"
+          ],
+          [
+            "0.4600",
+            "1974.00"
+          ],
+          [
+            "0.4500",
+            "121.00"
+          ],
+          [
+            "0.4400",
+            "5.00"
+          ],
+          [
+            "0.4100",
+            "284.00"
+          ],
+          [
+            "0.4000",
+            "275.00"
+          ],
+          [
+            "0.3600",
+            "55.55"
+          ],
+          [
+            "0.2900",
+            "501.00"
+          ],
+          [
+            "0.2800",
+            "271.00"
+          ],
+          [
+            "0.2700",
+            "3018.00"
+          ],
+          [
+            "0.2600",
+            "869.00"
+          ],
+          [
+            "0.2400",
+            "2.00"
+          ],
+          [
+            "0.2200",
+            "291.00"
+          ],
+          [
+            "0.1900",
+            "1.00"
+          ],
+          [
+            "0.1500",
+            "1.00"
+          ],
+          [
+            "0.1400",
+            "2120.00"
+          ],
+          [
+            "0.1300",
+            "1538.00"
+          ],
+          [
+            "0.1100",
+            "1.00"
+          ],
+          [
+            "0.0800",
+            "1.00"
+          ],
+          [
+            "0.0600",
+            "6879.00"
+          ],
+          [
+            "0.0500",
+            "4.00"
+          ],
+          [
+            "0.0400",
+            "50.00"
+          ],
+          [
+            "0.0300",
+            "1384.00"
+          ],
+          [
+            "0.0200",
+            "1165.00"
+          ],
+          [
+            "0.0100",
+            "1993.00"
+          ]
+        ],
+        "yes": [
+          [
+            "0.4200",
+            "20.00"
+          ],
+          [
+            "0.4100",
+            "569.55"
+          ],
+          [
+            "0.4000",
+            "500.00"
+          ],
+          [
+            "0.3900",
+            "332.00"
+          ],
+          [
+            "0.3800",
+            "150.00"
+          ],
+          [
+            "0.3600",
+            "1.00"
+          ],
+          [
+            "0.3300",
+            "252.00"
+          ],
+          [
+            "0.3200",
+            "171.00"
+          ],
+          [
+            "0.3000",
+            "200.00"
+          ],
+          [
+            "0.2500",
+            "269.00"
+          ],
+          [
+            "0.2200",
+            "919.00"
+          ],
+          [
+            "0.2100",
+            "952.00"
+          ],
+          [
+            "0.1400",
+            "100.00"
+          ],
+          [
+            "0.1100",
+            "1467.00"
+          ],
+          [
+            "0.1000",
+            "2000.00"
+          ],
+          [
+            "0.0700",
+            "28.00"
+          ],
+          [
+            "0.0400",
+            "52.00"
+          ],
+          [
+            "0.0300",
+            "1353.00"
+          ],
+          [
+            "0.0200",
+            "1440.00"
+          ],
+          [
+            "0.0100",
+            "1760.00"
+          ]
+        ]
+      },
+      "execution_status": "pending",
+      "fee_multiplier": 1.0,
+      "fee_type": "quadratic",
+      "fee_upper_estimate": 0.02,
+      "game_id": "401909975",
+      "improved": true,
+      "inputs": {
+        "book_commence_utc": "2026-11-12T03:10:00Z",
+        "book_n": "6",
+        "book_updated_utc": "2026-11-12 00:45:03+00:00",
+        "historical_minutes_baseline": "28.260709",
+        "last_game_minutes": "25.0",
+        "last_player_game_utc": "2026-11-11 04:00:00+00:00",
+        "line": "2.5",
+        "lineup_confirmation_status": "unverified",
+        "minutes_estimate_source": "prior_games_only",
+        "p_book": "0.430774",
+        "player_id": "3995",
+        "recent_start_rate": "0.249882",
+        "requires_book": "False",
+        "snapshot_utc": "2026-11-12T00:57:09.982033+00:00",
+        "stat": "threes",
+        "team": "POR"
+      },
+      "outcome_status": "pending",
+      "p_model_yes": 0.431618,
+      "policies": {
+        "fresh_books_veto": false,
+        "model_veto": false,
+        "no_baseline": true
+      },
+      "price": 0.56,
+      "quantity": 1,
+      "quoted_at": "2026-11-12T00:57:40.993897+00:00",
+      "side": "no",
+      "slot": "401909975|3995|threes",
+      "source_age_seconds": 31.011864,
+      "ticker": "KXNBA3PT-26NOV11OKCPOR-PORJHOLIDAY5-3",
+      "tip_utc": "2026-11-12 03:00:00+00:00",
+      "yes_level": 0.44
+    },
+    {
+      "book_age_seconds": null,
+      "book_request_at": "2026-11-12T00:57:42.377643+00:00",
+      "book_response_at": "2026-11-12T00:57:42.712355+00:00",
+      "entry_book": {
+        "no": [
+          [
+            "0.3200",
+            "1.00"
+          ],
+          [
+            "0.3100",
+            "238.00"
+          ],
+          [
+            "0.3000",
+            "732.88"
+          ],
+          [
+            "0.2900",
+            "75.00"
+          ],
+          [
+            "0.2800",
+            "1666.00"
+          ],
+          [
+            "0.2700",
+            "75.00"
+          ],
+          [
+            "0.2600",
+            "1939.00"
+          ],
+          [
+            "0.2500",
+            "2049.00"
+          ],
+          [
+            "0.2400",
+            "640.00"
+          ],
+          [
+            "0.2300",
+            "389.00"
+          ],
+          [
+            "0.2200",
+            "75.00"
+          ],
+          [
+            "0.2100",
+            "1.00"
+          ],
+          [
+            "0.1900",
+            "281.00"
+          ],
+          [
+            "0.1800",
+            "720.00"
+          ],
+          [
+            "0.1700",
+            "1176.00"
+          ],
+          [
+            "0.1600",
+            "549.00"
+          ],
+          [
+            "0.1400",
+            "519.00"
+          ],
+          [
+            "0.1100",
+            "1137.00"
+          ],
+          [
+            "0.1000",
+            "250.00"
+          ],
+          [
+            "0.0900",
+            "1841.00"
+          ],
+          [
+            "0.0800",
+            "2501.00"
+          ],
+          [
+            "0.0600",
+            "1.00"
+          ],
+          [
+            "0.0500",
+            "3.00"
+          ],
+          [
+            "0.0400",
+            "4431.00"
+          ],
+          [
+            "0.0300",
+            "1937.00"
+          ],
+          [
+            "0.0200",
+            "1231.00"
+          ],
+          [
+            "0.0100",
+            "1812.00"
+          ]
+        ],
+        "yes": [
+          [
+            "0.6600",
+            "47.00"
+          ],
+          [
+            "0.6500",
+            "118.00"
+          ],
+          [
+            "0.6400",
+            "112.00"
+          ],
+          [
+            "0.6300",
+            "112.00"
+          ],
+          [
+            "0.6200",
+            "75.00"
+          ],
+          [
+            "0.6100",
+            "75.00"
+          ],
+          [
+            "0.6000",
+            "75.00"
+          ],
+          [
+            "0.5900",
+            "75.00"
+          ],
+          [
+            "0.5800",
+            "169.00"
+          ],
+          [
+            "0.5700",
+            "75.00"
+          ],
+          [
+            "0.5500",
+            "5.00"
+          ],
+          [
+            "0.5100",
+            "405.00"
+          ],
+          [
+            "0.5000",
+            "102.00"
+          ],
+          [
+            "0.4900",
+            "156.00"
+          ],
+          [
+            "0.4000",
+            "100.00"
+          ],
+          [
+            "0.3200",
+            "625.00"
+          ],
+          [
+            "0.2400",
+            "1.00"
+          ],
+          [
+            "0.1600",
+            "1250.00"
+          ],
+          [
+            "0.1000",
+            "250.00"
+          ],
+          [
+            "0.0800",
+            "1.00"
+          ],
+          [
+            "0.0700",
+            "1.00"
+          ],
+          [
+            "0.0600",
+            "2.00"
+          ],
+          [
+            "0.0500",
+            "41.00"
+          ],
+          [
+            "0.0300",
+            "1793.00"
+          ],
+          [
+            "0.0200",
+            "1060.00"
+          ],
+          [
+            "0.0100",
+            "1470.00"
+          ]
+        ]
+      },
+      "execution_status": "pending",
+      "fee_multiplier": 1.0,
+      "fee_type": "quadratic",
+      "fee_upper_estimate": 0.02,
+      "game_id": "401909975",
+      "improved": true,
+      "inputs": {
+        "book_commence_utc": "",
+        "book_n": "0",
+        "book_updated_utc": "",
+        "historical_minutes_baseline": "19.967507",
+        "last_game_minutes": "19.0",
+        "last_player_game_utc": "2026-11-11 04:00:00+00:00",
+        "line": "1.5",
+        "lineup_confirmation_status": "unverified",
+        "minutes_estimate_source": "prior_games_only",
+        "p_book": "",
+        "player_id": "2991350",
+        "recent_start_rate": "0.0",
+        "requires_book": "False",
+        "snapshot_utc": "2026-11-12T00:57:09.982033+00:00",
+        "stat": "assists",
+        "team": "OKC"
+      },
+      "outcome_status": "pending",
+      "p_model_yes": 0.552369,
+      "policies": {
+        "fresh_books_veto": false,
+        "model_veto": true,
+        "no_baseline": true
+      },
+      "price": 0.33,
+      "quantity": 1,
+      "quoted_at": "2026-11-12T00:57:42.712355+00:00",
+      "side": "no",
+      "slot": "401909975|2991350|assists",
+      "source_age_seconds": 32.730322,
+      "ticker": "KXNBAAST-26NOV11OKCPOR-OKCACARUSO9-2",
+      "tip_utc": "2026-11-12 03:00:00+00:00",
+      "yes_level": 0.67
     }
   ]
 }
