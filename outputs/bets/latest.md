@@ -55,6 +55,7 @@
 | Thu 9:00 PM | Coby White | NO 2+ assists | 13¢ | 22% | 8¢ | 1 | $0.14 | paper |
 | Thu 9:00 PM | Coby White | YES 4+ rebounds | 31¢ | 39% | 7¢ | 11 | $3.58 | paper |
 | Thu 9:00 PM | Coby White | YES 25+ points | 9¢ | 15% | 6¢ | 38 | $3.64 | paper |
+| Thu 9:00 PM | Devin Booker | NO 4+ rebounds | 59¢ | 66% | 5¢ | 5 | $3.04 | paper |
 | Thu 9:00 PM | Dillon Brooks | NO 2+ assists | 43¢ | 50% | 6¢ | 5 | $2.24 | paper |
 | Thu 9:00 PM | Grayson Allen | YES 5+ threes | 27¢ | 38% | 9¢ | 12 | $3.41 | paper |
 | Thu 9:00 PM | Grayson Allen | NO 4+ assists | 38¢ | 48% | 8¢ | 9 | $3.57 | paper |
@@ -69,3 +70,4 @@
 | Thu 9:00 PM | Ryan Kalkbrenner | YES 6+ rebounds | 37¢ | 57% | 19¢ | 9 | $3.48 | paper |
 | Thu 9:00 PM | Ryan Kalkbrenner | YES 10+ points | 18¢ | 33% | 14¢ | 19 | $3.62 | paper |
 | Thu 9:00 PM | Sion James | YES 6+ assists | 10¢ | 17% | 6¢ | 34 | $3.62 | paper |
+| Thu 9:00 PM | Tidjane Salaün | YES 10+ points | 20¢ | 36% | 15¢ | 17 | $3.60 | paper |
