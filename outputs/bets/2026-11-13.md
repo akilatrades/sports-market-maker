@@ -60,12 +60,43 @@
 | Fri 9:30 PM | Julian Champagnie | NO 6+ rebounds | 62¢ | 75% | 12¢ | 5 | $3.19 | paper |
 | Fri 9:30 PM | Keldon Johnson | NO 1+ threes | 46¢ | 65% | 17¢ | 7 | $3.35 | paper |
 | Fri 9:30 PM | Keldon Johnson | NO 10+ points | 49¢ | 61% | 10¢ | 7 | $3.56 | paper |
+| Fri 9:30 PM | Keldon Johnson | NO 6+ rebounds | 58¢ | 68% | 8¢ | 5 | $2.99 | paper |
 | Fri 9:30 PM | Stephon Castle | NO 15+ points | 42¢ | 59% | 15¢ | 8 | $3.50 | paper |
+| Fri 9:30 PM | Stephon Castle | NO 6+ assists | 49¢ | 60% | 9¢ | 7 | $3.56 | paper |
+| Fri 9:30 PM | Stephon Castle | NO 6+ rebounds | 57¢ | 68% | 9¢ | 6 | $3.53 | paper |
 | Fri 9:30 PM | Victor Wembanyama | NO 10+ rebounds | 30¢ | 50% | 18¢ | 11 | $3.47 | paper |
 | Fri 9:30 PM | Victor Wembanyama | NO 25+ points | 32¢ | 46% | 12¢ | 10 | $3.36 | paper |
+| Fri 9:30 PM | Will Richard | YES 5+ points | 51¢ | 60% | 7¢ | 6 | $3.17 | paper |
+| Fri 9:30 PM | Yaxel Lendeborg | NO 4+ assists | 48¢ | 57% | 8¢ | 7 | $3.49 | paper |
 | Fri 10:00 PM | Damian Lillard | NO 25+ points | 64¢ | 75% | 9¢ | 5 | $3.29 | paper |
+| Fri 10:00 PM | Damian Lillard | NO 2+ threes | 19¢ | 29% | 9¢ | 18 | $3.62 | paper |
 | Fri 10:00 PM | Darius Acuff Jr. | YES 4+ rebounds | 43¢ | 57% | 12¢ | 8 | $3.58 | paper |
+| Fri 10:00 PM | De'Andre Hunter | YES 15+ points | 39¢ | 48% | 7¢ | 8 | $3.26 | paper |
 | Fri 10:00 PM | Deni Avdija | NO 4+ rebounds | 14¢ | 24% | 9¢ | 24 | $3.57 | paper |
 | Fri 10:00 PM | Domantas Sabonis | NO 6+ assists | 47¢ | 67% | 18¢ | 7 | $3.42 | paper |
 | Fri 10:00 PM | Donovan Clingan | NO 12+ rebounds | 54¢ | 65% | 9¢ | 6 | $3.35 | paper |
+| Fri 10:00 PM | Keegan Murray | NO 2+ threes | 59¢ | 69% | 9¢ | 5 | $3.04 | paper |
+| Fri 10:00 PM | Robert Williams III | YES 10+ points | 25¢ | 33% | 7¢ | 13 | $3.43 | paper |
+| Fri 10:00 PM | Scoot Henderson | NO 2+ assists | 35¢ | 44% | 8¢ | 9 | $3.30 | paper |
 | Fri 10:00 PM | Sidy Cissoko | NO 4+ rebounds | 52¢ | 67% | 13¢ | 6 | $3.23 | paper |
+| Fri 10:00 PM | Sidy Cissoko | NO 10+ points | 57¢ | 67% | 8¢ | 6 | $3.53 | paper |
+| Fri 10:00 PM | Sidy Cissoko | NO 2+ assists | 36¢ | 44% | 7¢ | 9 | $3.39 | paper |
+| Fri 10:30 PM | Aday Mara | NO 2+ assists | 44¢ | 58% | 12¢ | 7 | $3.21 | paper |
+| Fri 10:30 PM | Aday Mara | NO 8+ rebounds | 51¢ | 61% | 8¢ | 6 | $3.17 | paper |
+| Fri 10:30 PM | Alex Caruso | NO 2+ assists | 29¢ | 39% | 8¢ | 11 | $3.35 | paper |
+| Fri 10:30 PM | Alex Caruso | YES 3+ threes | 15¢ | 24% | 8¢ | 23 | $3.66 | paper |
+| Fri 10:30 PM | Alex Caruso | YES 10+ points | 29¢ | 38% | 8¢ | 11 | $3.35 | paper |
+| Fri 10:30 PM | Brook Lopez | NO 4+ rebounds | 26¢ | 36% | 9¢ | 13 | $3.56 | paper |
+| Fri 10:30 PM | Darius Garland | NO 8+ assists | 60¢ | 73% | 11¢ | 5 | $3.09 | paper |
+| Fri 10:30 PM | Derrick Jones Jr. | NO 2+ threes | 59¢ | 69% | 9¢ | 5 | $3.04 | paper |
+| Fri 10:30 PM | Isaiah Hartenstein | NO 4+ assists | 41¢ | 53% | 11¢ | 8 | $3.42 | paper |
+| Fri 10:30 PM | Isaiah Hartenstein | NO 8+ rebounds | 24¢ | 32% | 7¢ | 12 | $3.04 | paper |
+| Fri 10:30 PM | Jared McCain | NO 15+ points | 51¢ | 65% | 12¢ | 6 | $3.17 | paper |
+| Fri 10:30 PM | Kenrich Williams | NO 4+ rebounds | 37¢ | 52% | 13¢ | 9 | $3.48 | paper |
+| Fri 10:30 PM | Kris Dunn | NO 4+ rebounds | 47¢ | 60% | 12¢ | 7 | $3.42 | paper |
+| Fri 10:30 PM | Kris Dunn | NO 5+ points | 27¢ | 40% | 12¢ | 12 | $3.41 | paper |
+| Fri 10:30 PM | Kris Dunn | NO 2+ assists | 13¢ | 23% | 9¢ | 26 | $3.59 | paper |
+| Fri 10:30 PM | Rui Hachimura | NO 6+ rebounds | 60¢ | 75% | 13¢ | 5 | $3.09 | paper |
+| Fri 10:30 PM | Rui Hachimura | NO 2+ threes | 32¢ | 45% | 12¢ | 10 | $3.36 | paper |
+| Fri 10:30 PM | Rui Hachimura | NO 15+ points | 48¢ | 61% | 11¢ | 7 | $3.49 | paper |
+| Fri 10:30 PM | Shai Gilgeous-Alexander | NO 30+ points | 42¢ | 70% | 26¢ | 8 | $3.50 | paper |
