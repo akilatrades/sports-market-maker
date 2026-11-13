@@ -1,12 +1,12 @@
 {
-  "retrieved": "2026-11-12",
+  "retrieved": "2026-11-13",
   "seasons": [
     2012,
     2026
   ],
   "last_completed_week": {
     "season": 2026,
-    "week": 9
+    "week": 10
   },
   "sources": {
     "games": "https://raw.githubusercontent.com/nflverse/nfldata/master/data/games.csv",
@@ -15,12 +15,12 @@
   },
   "rows": {
     "games": 3935,
-    "player_week": 83197,
-    "injuries": 23885
+    "player_week": 83220,
+    "injuries": 23889
   },
   "sha256": {
-    "games.csv": "a334b406adf5bdb025129d88ca0b2d991f92b958d37b4caa34151c98e1badf7d",
-    "player_week.csv.gz": "00e0a88015a311a19ac8e39205d2b9dd6180a6113b52aa897c8f8a275c53cd79",
-    "injuries.csv.gz": "fb1e64f8cd72aec91cff9cd229d4a052a239150eeed2ded88945ab618f39d8d9"
+    "games.csv": "73ccfaecaceb3c5c6edc65bae1489b34dfaf288c294d960b276762c3afa7772b",
+    "player_week.csv.gz": "6c7c2b642ee27f27d33b37816e3d01e1a7ad66954731a24d49a20c3b4eb41d41",
+    "injuries.csv.gz": "1b4d836bd6724d1feaace4ca08cc3f1eff101fa29e4a8c3c3968410dcd42aa6d"
   }
 }
