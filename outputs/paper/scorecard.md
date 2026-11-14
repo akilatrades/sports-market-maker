@@ -5,14 +5,14 @@ It goes to real money only after the test in RESEARCH_LOG.md is met.
 
 | Measure | Value |
 |---|---:|
-| positions | 1544 |
-| open | 96 |
-| games | 158 |
-| profit dollars | -154.7 |
-| risked dollars | 6427.4 |
-| return per dollar pct | -2.41 |
-| cents per contract | -1.65 |
-| t | -1.4 |
-| bankroll | 345.3 |
+| positions | 1640 |
+| open | 0 |
+| games | 167 |
+| profit dollars | -201.59 |
+| risked dollars | 6738.29 |
+| return per dollar pct | -2.99 |
+| cents per contract | -1.77 |
+| t | -1.58 |
+| bankroll | 298.41 |
 | players who sat | 6 |
-| updated utc | 2026-11-14T01:36+00:00 |
+| updated utc | 2026-11-14T18:24+00:00 |
