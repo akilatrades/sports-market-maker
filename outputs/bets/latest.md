@@ -1,68 +1,38 @@
-# Bet card, 2026-11-14
+# Bet card, 2026-11-15
 
-**Unproven rule.** In 2025-26 it broke even in the regular season and made its money in the playoffs, a finding made after the fact (see RESEARCH_LOG.md). Regular-season positions are paper only. Paper bankroll: $298.41.
+**Unproven rule.** In 2025-26 it broke even in the regular season and made its money in the playoffs, a finding made after the fact (see RESEARCH_LOG.md). Regular-season positions are paper only. Paper bankroll: $240.62.
 
 | Tip-off (ET) | Player | Bet | Price | Model | Edge | Contracts | Risk | Mode |
 |---|---|---|---:|---:|---:|---:|---:|---|
-| Sat 7:00 PM | Aaron Gordon | NO 10+ points | 28¢ | 35% | 6¢ | 10 | $2.95 | paper |
-| Sat 7:00 PM | DeMar DeRozan | YES 4+ assists | 30¢ | 50% | 18¢ | 9 | $2.84 | paper |
-| Sat 7:00 PM | DeMar DeRozan | YES 20+ points | 8¢ | 14% | 5¢ | 37 | $3.16 | paper |
-| Sat 7:00 PM | Herbert Jones | NO 5+ points | 22¢ | 32% | 8¢ | 13 | $3.02 | paper |
-| Sat 7:00 PM | Jeremiah Fears | YES 20+ points | 42¢ | 51% | 7¢ | 7 | $3.06 | paper |
-| Sat 7:00 PM | Nikola Jokić | NO 1+ threes | 23¢ | 37% | 12¢ | 12 | $2.91 | paper |
-| Sat 7:00 PM | Nikola Jokić | NO 25+ points | 41¢ | 53% | 11¢ | 7 | $2.99 | paper |
-| Sat 7:00 PM | Saddiq Bey | YES 25+ points | 13¢ | 22% | 9¢ | 22 | $3.04 | paper |
-| Sat 7:30 PM | Cooper Flagg | NO 25+ points | 51¢ | 66% | 13¢ | 5 | $2.64 | paper |
-| Sat 7:30 PM | Cooper Flagg | NO 1+ threes | 24¢ | 37% | 11¢ | 12 | $3.04 | paper |
-| Sat 7:30 PM | Daniel Gafford | YES 10+ points | 32¢ | 46% | 12¢ | 9 | $3.02 | paper |
-| Sat 7:30 PM | Jaylon Tyson | NO 2+ threes | 46¢ | 58% | 10¢ | 6 | $2.87 | paper |
-| Sat 7:30 PM | Kyrie Irving | NO 4+ threes | 62¢ | 72% | 9¢ | 4 | $2.55 | paper |
-| Sat 7:30 PM | Kyrie Irving | NO 20+ points | 36¢ | 46% | 8¢ | 8 | $3.01 | paper |
-| Sat 7:30 PM | P.J. Washington | NO 2+ assists | 58¢ | 71% | 11¢ | 5 | $2.99 | paper |
-| Sat 7:30 PM | P.J. Washington | NO 2+ threes | 40¢ | 52% | 10¢ | 7 | $2.92 | paper |
-| Sat 7:30 PM | P.J. Washington | NO 4+ rebounds | 13¢ | 24% | 10¢ | 22 | $3.04 | paper |
-| Sat 7:30 PM | Zaccharie Risacher | YES 4+ rebounds | 43¢ | 64% | 19¢ | 6 | $2.69 | paper |
-| Sat 7:30 PM | Zaccharie Risacher | YES 10+ points | 23¢ | 34% | 10¢ | 12 | $2.91 | paper |
-| Sat 8:00 PM | Ausar Thompson | YES 8+ rebounds | 47¢ | 56% | 8¢ | 6 | $2.93 | paper |
-| Sat 8:00 PM | Bam Adebayo | YES 20+ points | 39¢ | 51% | 10¢ | 7 | $2.85 | paper |
-| Sat 8:00 PM | Bam Adebayo | YES 2+ threes | 31¢ | 42% | 9¢ | 9 | $2.93 | paper |
-| Sat 8:00 PM | Cade Cunningham | NO 10+ assists | 56¢ | 65% | 7¢ | 5 | $2.89 | paper |
-| Sat 8:00 PM | Cam Spencer | NO 8+ assists | 42¢ | 80% | 37¢ | 7 | $3.06 | paper |
-| Sat 8:00 PM | Cam Spencer | NO 4+ rebounds | 52¢ | 72% | 18¢ | 5 | $2.69 | paper |
-| Sat 8:00 PM | Cam Spencer | NO 15+ points | 65¢ | 73% | 6¢ | 4 | $2.67 | paper |
-| Sat 8:00 PM | Cameron Boozer | NO 20+ points | 52¢ | 73% | 19¢ | 5 | $2.69 | paper |
-| Sat 8:00 PM | Cameron Boozer | NO 8+ rebounds | 33¢ | 43% | 8¢ | 9 | $3.11 | paper |
-| Sat 8:00 PM | Cedric Coward | YES 6+ assists | 10¢ | 16% | 6¢ | 29 | $3.09 | paper |
-| Sat 8:00 PM | Daniss Jenkins | NO 6+ assists | 58¢ | 67% | 7¢ | 5 | $2.99 | paper |
-| Sat 8:00 PM | Davion Mitchell | YES 4+ rebounds | 25¢ | 39% | 13¢ | 11 | $2.90 | paper |
-| Sat 8:00 PM | Davion Mitchell | NO 6+ assists | 20¢ | 32% | 11¢ | 14 | $2.96 | paper |
-| Sat 8:00 PM | Day'Ron Sharpe | NO 4+ assists | 48¢ | 61% | 11¢ | 6 | $2.99 | paper |
-| Sat 8:00 PM | Duncan Robinson | YES 15+ points | 55¢ | 66% | 9¢ | 5 | $2.84 | paper |
-| Sat 8:00 PM | Duncan Robinson | YES 2+ assists | 65¢ | 75% | 8¢ | 4 | $2.67 | paper |
-| Sat 8:00 PM | Duncan Robinson | NO 4+ threes | 51¢ | 58% | 5¢ | 5 | $2.64 | paper |
-| Sat 8:00 PM | Isaac Okoro | YES 10+ points | 36¢ | 46% | 8¢ | 8 | $3.01 | paper |
-| Sat 8:00 PM | Jaden McDaniels | NO 6+ rebounds | 44¢ | 55% | 9¢ | 6 | $2.75 | paper |
-| Sat 8:00 PM | Jaden McDaniels | NO 15+ points | 33¢ | 40% | 6¢ | 9 | $3.11 | paper |
-| Sat 8:00 PM | Javonte Green | NO 4+ rebounds | 71¢ | 79% | 7¢ | 4 | $2.90 | paper |
-| Sat 8:00 PM | Jaylen Wells | YES 20+ points | 9¢ | 19% | 9¢ | 33 | $3.16 | paper |
-| Sat 8:00 PM | Joan Beringer | YES 10+ points | 22¢ | 36% | 13¢ | 13 | $3.02 | paper |
-| Sat 8:00 PM | John Collins | NO 4+ rebounds | 18¢ | 25% | 6¢ | 16 | $3.05 | paper |
-| Sat 8:00 PM | Jonathan Kuminga | NO 6+ rebounds | 48¢ | 59% | 9¢ | 6 | $2.99 | paper |
-| Sat 8:00 PM | Jonathan Kuminga | NO 10+ points | 22¢ | 32% | 9¢ | 13 | $3.02 | paper |
-| Sat 8:00 PM | Josh Giddey | YES 3+ threes | 18¢ | 31% | 12¢ | 16 | $3.05 | paper |
-| Sat 8:00 PM | Josh Giddey | NO 15+ points | 54¢ | 62% | 6¢ | 5 | $2.79 | paper |
-| Sat 8:00 PM | Julius Randle | NO 15+ points | 21¢ | 33% | 11¢ | 14 | $3.11 | paper |
-| Sat 8:00 PM | Julius Randle | NO 2+ threes | 57¢ | 69% | 10¢ | 5 | $2.94 | paper |
-| Sat 8:00 PM | Julius Randle | NO 6+ assists | 67¢ | 78% | 9¢ | 4 | $2.75 | paper |
-| Sat 8:00 PM | Kevin Huerter | NO 4+ rebounds | 55¢ | 72% | 16¢ | 5 | $2.84 | paper |
-| Sat 8:00 PM | Kevin Huerter | NO 4+ assists | 74¢ | 81% | 6¢ | 4 | $3.02 | paper |
-| Sat 8:00 PM | LaMelo Ball | NO 4+ rebounds | 39¢ | 53% | 13¢ | 7 | $2.85 | paper |
-| Sat 8:00 PM | LaMelo Ball | YES 5+ threes | 32¢ | 44% | 10¢ | 9 | $3.02 | paper |
-| Sat 8:00 PM | LaMelo Ball | NO 6+ assists | 31¢ | 38% | 6¢ | 9 | $2.93 | paper |
-| Sat 8:00 PM | Michael Porter Jr. | NO 3+ threes | 34¢ | 45% | 9¢ | 8 | $2.85 | paper |
-| Sat 8:00 PM | Michael Porter Jr. | NO 25+ points | 62¢ | 72% | 8¢ | 4 | $2.55 | paper |
-| Sat 8:00 PM | Michael Porter Jr. | NO 2+ assists | 42¢ | 51% | 7¢ | 7 | $3.06 | paper |
-| Sat 8:00 PM | Ronald Holland II | NO 5+ points | 46¢ | 54% | 7¢ | 6 | $2.87 | paper |
-| Sat 8:00 PM | Rudy Gobert | NO 10+ points | 46¢ | 63% | 16¢ | 6 | $2.87 | paper |
-| Sat 8:00 PM | Rudy Gobert | NO 10+ rebounds | 38¢ | 48% | 8¢ | 7 | $2.78 | paper |
-| Sat 8:00 PM | Trey Lyles | NO 6+ rebounds | 67¢ | 75% | 7¢ | 4 | $2.75 | paper |
+| Sun 4:30 PM | Brandon Miller | NO 15+ points | 19¢ | 55% | 35¢ | 12 | $2.41 | paper |
+| Sun 4:30 PM | Brandon Miller | NO 3+ threes | 43¢ | 64% | 20¢ | 5 | $2.24 | paper |
+| Sun 4:30 PM | Brandon Miller | NO 4+ assists | 64¢ | 85% | 19¢ | 3 | $1.97 | paper |
+| Sun 4:30 PM | Brandon Miller | NO 6+ rebounds | 66¢ | 82% | 14¢ | 3 | $2.03 | paper |
+| Sun 4:30 PM | Coby White | NO 4+ assists | 56¢ | 67% | 9¢ | 4 | $2.31 | paper |
+| Sun 4:30 PM | Kris Dunn | NO 4+ rebounds | 54¢ | 67% | 11¢ | 4 | $2.23 | paper |
+| Sun 4:30 PM | Moussa Diabaté | NO 5+ points | 19¢ | 32% | 12¢ | 12 | $2.41 | paper |
+| Sun 5:00 PM | Ace Bailey | YES 2+ threes | 54¢ | 65% | 9¢ | 4 | $2.23 | paper |
+| Sun 5:00 PM | Victor Wembanyama | NO 10+ rebounds | 34¢ | 52% | 17¢ | 7 | $2.49 | paper |
+| Sun 5:00 PM | Victor Wembanyama | NO 25+ points | 38¢ | 54% | 14¢ | 6 | $2.38 | paper |
+| Sun 6:00 PM | Caleb Martin | NO 1+ threes | 51¢ | 65% | 12¢ | 4 | $2.11 | paper |
+| Sun 6:00 PM | Derrick White | NO 10+ points | 25¢ | 37% | 11¢ | 9 | $2.37 | paper |
+| Sun 6:00 PM | Immanuel Quickley | NO 3+ threes | 50¢ | 61% | 9¢ | 4 | $2.07 | paper |
+| Sun 6:00 PM | Jakob Poeltl | NO 8+ rebounds | 59¢ | 72% | 11¢ | 4 | $2.43 | paper |
+| Sun 6:00 PM | Jalen Brunson | NO 6+ assists | 42¢ | 53% | 9¢ | 5 | $2.19 | paper |
+| Sun 6:00 PM | Jayson Tatum | NO 20+ points | 17¢ | 29% | 11¢ | 14 | $2.52 | paper |
+| Sun 6:00 PM | Morez Johnson Jr. | NO 4+ rebounds | 32¢ | 52% | 19¢ | 7 | $2.35 | paper |
+| Sun 6:00 PM | Morez Johnson Jr. | NO 5+ points | 31¢ | 47% | 14¢ | 7 | $2.28 | paper |
+| Sun 6:00 PM | P.J. Washington | NO 6+ rebounds | 42¢ | 55% | 11¢ | 5 | $2.19 | paper |
+| Sun 6:00 PM | Paul George | NO 3+ threes | 41¢ | 53% | 10¢ | 5 | $2.14 | paper |
+| Sun 6:00 PM | Sam Hauser | YES 4+ rebounds | 35¢ | 47% | 10¢ | 6 | $2.20 | paper |
+| Sun 7:00 PM | Alperen Sengun | NO 1+ threes | 52¢ | 77% | 23¢ | 4 | $2.15 | paper |
+| Sun 7:00 PM | Alperen Sengun | YES 25+ points | 29¢ | 45% | 14¢ | 8 | $2.44 | paper |
+| Sun 7:00 PM | Alperen Sengun | YES 8+ rebounds | 65¢ | 77% | 11¢ | 3 | $2.00 | paper |
+| Sun 7:00 PM | Anthony Davis | NO 1+ threes | 49¢ | 77% | 26¢ | 4 | $2.03 | paper |
+| Sun 7:00 PM | Kevin Durant | YES 6+ assists | 24¢ | 40% | 15¢ | 10 | $2.53 | paper |
+| Sun 7:00 PM | Reed Sheppard | NO 4+ rebounds | 59¢ | 83% | 23¢ | 4 | $2.43 | paper |
+| Sun 7:00 PM | Reed Sheppard | NO 15+ points | 56¢ | 77% | 19¢ | 4 | $2.31 | paper |
+| Sun 7:00 PM | Reed Sheppard | NO 4+ assists | 46¢ | 61% | 13¢ | 5 | $2.39 | paper |
+| Sun 8:00 PM | Aaron Wiggins | NO 4+ rebounds | 51¢ | 67% | 14¢ | 4 | $2.11 | paper |
+| Sun 8:00 PM | Brayden Burries | NO 4+ assists | 63¢ | 81% | 16¢ | 3 | $1.94 | paper |
+| Sun 8:00 PM | Brayden Burries | NO 6+ rebounds | 57¢ | 68% | 9¢ | 4 | $2.35 | paper |
