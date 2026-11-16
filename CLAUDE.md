@@ -11,17 +11,19 @@ file is the short version for an AI helping them.
   because the people buying YES at the ask are mostly fans backing a player.
 - Fair probability comes from sportsbook odds (de-vigged; the exact line, or
   for NBA a price read off the books' nearby lines); the stat model no longer
-  prices orders. An NBA order (rules v8, from 2 November) is one contract,
-  needs −3¢ to 8¢ of book edge, goes one cent inside the spread 1–6 hours
+  prices orders. An NBA order (rules v9, from 16 November) is one NO
+  contract at 65¢ or more (a YES longshot at 35¢ or less; this season YES
+  buyers still overpay there but no longer on favourites), needs −3¢ to 8¢
+  of book edge as a sanity check, goes one cent inside the spread 1–6 hours
   before tip-off, and rests until tip-off.
 - Three bots trade one small real-money account from a private server: NBA
   and NFL (live since 19–20 October 2026) and the spread maker (live since
   22 October; rules v7 from 16 November: esports only, pregame, quoting up
   to 24 hours before the start, 2 contracts a side, $100 open, no passes
   during Kalshi's Thursday 3–5am ET maintenance), which rests YES and NO
-  bids one cent inside 4¢+ spreads. On 16 November the owner chose esports
-  only: NBA and NFL are switched off with Go live / Stop (`STOP`); their
-  code is unchanged. **You cannot
+  bids one cent inside 4¢+ spreads. NBA and NFL were switched off with
+  Go live / Stop on 16 November; NBA v9 runs once the owner presses
+  `GO_LIVE` again (that arms NFL too; it rarely finds an order). **You cannot
   see the server, the account or its private journals**; only the public
   files here. Questions
   about live results go to the owner. If the owner has added the private

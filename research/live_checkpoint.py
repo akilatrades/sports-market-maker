@@ -46,7 +46,7 @@ ROOT = Path(__file__).resolve().parents[1]
 # judged on its own orders from its first order; v5 and v6 stay in the
 # record. The bar counts settled filled ORDERS; the allowance bar follows the
 # allowance ($2,000 -> $5,000).
-NBA_VERSIONS = ("nba-no-v8-more-fills",)
+NBA_VERSIONS = ("nba-no-v9-longshots",)
 NBA_VERSION = NBA_VERSIONS[-1]  # the bot's current rules
 NBA_BARS = {"settled_fills": 1900, "allowance_dollars": 5000.0, "days": 30}
 NBA_FEE_RESERVE = 1.10  # live/prod_nba_auto.py FEE_RESERVE

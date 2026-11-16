@@ -93,7 +93,7 @@ code is right.
 
 | Limit | NBA ([`prod_nba_auto.py`](../live/prod_nba_auto.py)) | NFL ([`nfl_policy.py`](../live/nfl_policy.py)) |
 |---|---:|---:|
-| Rules version | v8 (book-priced, more fills) | v4 (book-priced) |
+| Rules version | v9 (longshots only: NO at 65¢+; books as a sanity check) | v4 (book-priced) |
 | Price source | Books: exact line (1+ book), else nearby lines; never the model | Books: exact line only; never the model |
 | Contracts per order | 1 | 1 |
 | Cost per order | $4 | $3 |
@@ -105,7 +105,7 @@ code is right.
 | New orders per scan | 3 | 1 |
 | Edge needed to post | −3¢ to 8¢ (books); the model is not used | 3¢ to 15¢ (books), model must not disagree |
 | Sportsbook price age | 60 min to post; a resting order keeps one up to 120 min | unchanged |
-| Price range | 5–95¢ | 10–90¢ |
+| Price range | 65–95¢ NO (v8: 5–95¢) | 10–90¢ |
 | Lifetime orders placed | $5,000 | $50 |
 
 The NBA bot's sportsbook lines and model inputs can come from the server

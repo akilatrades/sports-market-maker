@@ -115,13 +115,15 @@ def test_separate_risk_caps_and_state():
     # game, $2,000 lifetime, -$60 total), then 2026-10-30, "NBA rules v7"
     # (v6: 3 contracts, two books or the model, 15c edges, 120/75-minute
     # book ages), then 2026-11-02, "More fills for the spread maker and NBA"
-    # (v8; v7: 0c edge floor, 2-6 hour entries, v7's nearby-line gaps).
+    # (v8; v7: 0c edge floor, 2-6 hour entries, v7's nearby-line gaps), then
+    # 2026-11-16, "NBA rules v9: longshots only" (v8: NO prices 5c-95c).
     # Change only through a new amendment.
-    assert nba.STRATEGY_VERSION == "nba-no-v8-more-fills"
+    assert nba.STRATEGY_VERSION == "nba-no-v9-longshots"
     assert {
         "nba-no-v5-one-contract-breadth",
         "nba-no-v6-three-contracts",
         "nba-no-v7-book-priced",
+        "nba-no-v8-more-fills",
     } <= nba.PRIOR_VERSIONS
     assert (nba.ENTRY_MIN_NET_EDGE, nba.WINDOW) == (-0.03, (1.0, 6.0))
     assert (nba.MIN_BOOKS, nba.BOOK_MAX_AGE_MINUTES) == (1, 60)
@@ -139,7 +141,7 @@ def test_separate_risk_caps_and_state():
     assert nba.MAX_GAME_ORDERS == 40
     assert nba.MAX_CONTRACTS == 1
     assert nba.MAX_NEW_ORDERS_PER_PASS == 3
-    assert nba.PRICE_BAND_CENTS == (5, 95)
+    assert nba.PRICE_BAND_CENTS == (65, 95)  # v9; v2-v8: (5, 95)
     assert nba.MAX_REALIZED_DAILY_LOSS == 20
     assert nba.MAX_REALIZED_CUMULATIVE_LOSS == 100
     assert nba.WINDOW == (1.0, 6.0)  # v8; v7: (2.0, 6.0)
@@ -275,6 +277,7 @@ def test_selection_funnel_counts_each_gate_without_loosening_it():
         "book_priced": 1,
         "passed_model_veto": 1,
         "passed_edge_sanity": 1,
+        "in_price_band": 1,  # v9's gate (this test keeps the 5c-95c band)
         "not_previously_attempted": 1,
     }
     f.loc[0, "hours_to_tip"] = 0.5  # outside v8's 1-6 hour entry window
@@ -1391,3 +1394,41 @@ def test_v7_pipeline_prices_an_unquoted_line_from_fresh_nearby_lines(
     write_book(121)  # every nearby line older than 120 minutes: no price
     stale = nba.nba_candidates(NOW, latest=tmp_path / "latest.csv")
     assert pd.isna(stale.p_book.iloc[0])
+
+
+# v9 (2026-11-16, RESEARCH_LOG.md "NBA rules v9: longshots only").
+
+
+def test_v9_orders_are_no_at_65c_to_95c_only():
+    from tests.test_nba_v5 import NOW, priced
+
+    row = priced().iloc[0].copy()
+    row["tip_utc"] = pd.Timestamp(NOW + timedelta(hours=4))
+    for price in (0.65, 0.80, 0.95):
+        order, _ = nba.order_from_row(row, NOW, no_price=price)
+        assert order.side == "no" and order.count == 1
+    for price in (0.05, 0.50, 0.64, 0.96):
+        with pytest.raises(TradingError, match="65c–95c"):
+            nba.order_from_row(row, NOW, no_price=price)
+
+
+def test_v9_favourites_are_dropped_before_any_quote_is_read(monkeypatch):
+    found = pd.DataFrame(
+        {
+            "ticker": ["KXNBAPTS-A-30", "KXNBAPTS-A-10", "KXNBAPTS-A-25"],
+            "side": "no",
+            "price": [0.82, 0.20, 0.64],  # 30+ longshot; 10+ and 25+ too cheap
+            "edge": [0.02, 0.03, 0.04],
+            "p_book": [0.15, 0.75, 0.30],
+            "p_model": 0.5,
+            "injury_status": "",
+            "tip_utc": pd.Timestamp("2026-11-16T23:00Z"),
+            "hours_to_tip": 4.0,
+        }
+    )
+    monkeypatch.setattr(nba, "candidate_orders", lambda *a, **k: found.copy())
+    counts = {}
+    now = datetime(2026, 11, 16, 19, 0, tzinfo=timezone.utc)
+    picked = nba.select_candidates(found, [], {}, now, counts)
+    assert [c.ticker for c in picked] == ["KXNBAPTS-A-30"]
+    assert counts["passed_edge_sanity"] == 3 and counts["in_price_band"] == 1
