@@ -36,6 +36,15 @@ def logic_sized_at_five(request, monkeypatch):
     # test_v5_stops_new_esports_quotes pins the switch off to test it.
     if request.node.originalname != "test_v5_stops_new_esports_quotes":
         monkeypatch.setattr(P, "QUOTE_ESPORTS", True)
+    # v7 settings. The logic tests below predate v7 and use other series
+    # (start lookups, exclusions), so they run with every series quotable as
+    # in v6; the weekly maintenance pause reads the real clock in main(), so
+    # it is off for them and no test depends on the day it runs. The v7
+    # tests and the live-limit tests see the real values.
+    name = request.node.originalname
+    if not name.startswith("test_v7_") and name not in REAL_LIMIT_TESTS:
+        monkeypatch.setattr(P, "ESPORTS_ONLY", False)
+        monkeypatch.setattr(P, "KALSHI_MAINTENANCE", None)
     if request.node.originalname not in REAL_LIMIT_TESTS:
         monkeypatch.setattr(P, "CONTRACTS", 5)
         monkeypatch.setattr(P, "MAX_NET_PER_MARKET", 5)
@@ -1126,9 +1135,12 @@ def test_pilot_limits_are_the_owner_approved_ones():
     # "Spread maker v5" (2026-10-30; v3: 5 and 5, $120 open, no lead or
     # per-event limit), then "More fills for the spread maker and NBA"
     # (2026-11-02, v6; v5: 8c spreads, 12 hours, one market per event,
-    # esports off, $50 open, 20 a pass, 1,500 a day). Change these only
-    # through a new, recorded amendment.
-    assert P.STRATEGY_VERSION == "spread-maker-v6-fills-first"
+    # esports off, $50 open, 20 a pass, 1,500 a day), then "Spread maker v7:
+    # esports only" (2026-11-16; v6: every series, no maintenance pause).
+    # Change these only through a new, recorded amendment.
+    assert P.STRATEGY_VERSION == "spread-maker-v7-esports-only"
+    assert P.ESPORTS_ONLY is True
+    assert P.KALSHI_MAINTENANCE == (3, (2, 55), (5, 5))
     assert (P.CONTRACTS, P.MAX_NET_PER_MARKET) == (2, 2)
     assert (P.MAX_LEAD_HOURS, P.MAX_MARKETS_PER_EVENT) == (24.0, None)
     assert P.MIN_SPREAD_CENTS == 4 and P.QUOTE_ESPORTS is True
@@ -2659,3 +2671,109 @@ def test_shadow_quotes_follow_the_no_only_rule():
     }
     posted = bot.shadow_post([], [row], NOW)
     assert [(e["side"], e["contracts"]) for e in posted] == [("no", 5)]
+
+
+# v7 (2026-11-16, RESEARCH_LOG.md "Spread maker v7: esports only").
+
+
+def test_v7_quotes_only_esports():
+    reasons = Counter()
+    rows = bot.eligible_markets([market()], "KXDOTA2GAME", NOW, reasons=reasons)
+    assert [r["ticker"] for r in rows] == [TICKER] and not reasons["not_esports"]
+    hockey = "KXAHLGAME-26OCT221900MANIOW-MAN"
+    rows = bot.eligible_markets([market(hockey)], "KXAHLGAME", NOW, reasons=reasons)
+    assert rows == [] and reasons["not_esports"] == 1
+    # Women's college basketball, the largest v6 loser, is not esports.
+    assert not any(s.startswith("KXNCAAWB") for s in P.ESPORTS_SERIES)
+    assert {"KXCS2GAME", "KXDOTA2GAME", "KXR6GAME", "KXCODTOTALMAPS"} <= (
+        P.ESPORTS_SERIES
+    )
+
+
+def test_v7_spends_no_start_reads_outside_esports(tmp_path):
+    asked = []
+
+    def milestones(event):
+        asked.append(event)
+        return {"milestones": []}
+
+    listings = {
+        "KXAHLGAME": [_untimed("KXAHLGAME-26OCT22E0", 10.0)],
+        "KXCS2GAME": [_untimed("KXCS2GAME-26OCT22E1", 10.0)],
+    }
+    bot.prefetch_starts(listings, NOW, tmp_path, milestones)
+    assert asked and all(e.startswith("KXCS2GAME") for e in asked)
+
+
+def test_v7_a_v6_quote_outside_esports_is_cancelled_on_the_first_pass(
+    world, monkeypatch
+):
+    hockey = "KXAHLGAME-26OCT221900MANIOW-MAN"
+    world["quotes"].clear()
+    world["quotes"][hockey] = market(hockey)
+    monkeypatch.setattr(P, "SERIES", ("KXAHLGAME",))
+    world["public"]["event_starts"] = {
+        hockey.rsplit("-", 1)[0]: NOW + timedelta(hours=3)
+    }
+    with pytest.MonkeyPatch.context() as v6:
+        v6.setattr(P, "ESPORTS_ONLY", False)
+        run(world)
+    assert len(world["exchange"].resting) == 2
+    report, markets = run(world, NOW + timedelta(minutes=10))
+    assert report["canceled"] == 2 and world["exchange"].resting == []
+    assert report["markets_not_esports"] == 1 and markets == []
+    assert len(world["exchange"].placed) == 2  # nothing new placed
+
+
+def test_v7_no_pass_during_kalshi_maintenance_or_a_pause():
+    def at(day, hh, mm):  # New York time, November 2026 (19th: a Thursday)
+        return datetime(2026, 11, day, hh, mm, tzinfo=bot.NY).astimezone(UTC)
+
+    open_ = lambda: {"exchange_active": True, "trading_active": True}  # noqa: E731
+    assert bot.exchange_paused(at(19, 3, 30), open_) == "kalshi_weekly_maintenance"
+    assert bot.exchange_paused(at(19, 2, 55)) == "kalshi_weekly_maintenance"
+    assert bot.exchange_paused(at(19, 5, 4)) == "kalshi_weekly_maintenance"
+    for when in (at(19, 2, 54), at(19, 5, 5), at(18, 3, 30), at(20, 3, 30)):
+        assert bot.exchange_paused(when, open_) is None
+    noon = at(18, 12, 0)
+    paused = {"exchange_active": True, "trading_active": False}
+    assert bot.exchange_paused(noon, lambda: paused) == "exchange_paused"
+    assert bot.exchange_paused(noon, lambda: {}) == "exchange_paused"
+    assert bot.exchange_paused(noon, lambda: None) == "exchange_paused"
+
+    def down():
+        raise OSError("timed out")
+
+    assert bot.exchange_paused(noon, down) == "exchange_status_unreadable"
+    assert "exchange_status" in bot.public_api()
+
+
+def test_v7_a_paused_live_pass_sends_and_reads_nothing(
+    world, monkeypatch, tmp_path, capsys
+):
+    from live import production_lock
+
+    state = tmp_path / "state"
+    monkeypatch.setattr(P, "STATE", state)
+    monkeypatch.setattr(P, "KALSHI_MAINTENANCE", None)  # real clock: any day
+    monkeypatch.setattr(bot, "armed", lambda env: True)
+    public = {
+        "exchange_status": lambda: {"exchange_active": True, "trading_active": False}
+    }
+    monkeypatch.setattr(bot, "public_api", lambda: public)
+
+    def forbidden(*args, **kwargs):
+        raise AssertionError("nothing may run while Kalshi is paused")
+
+    monkeypatch.setattr(bot, "TradingClient", forbidden)
+    monkeypatch.setattr(production_lock, "account_lock", forbidden)
+    monkeypatch.setattr(bot, "prefetch", forbidden)
+    monkeypatch.setattr("sys.argv", ["prod_spread_auto", "--auto"])
+    bot.main()
+    report = json.loads((state / "last_scan.json").read_text())
+    assert report["mode"] == "live"
+    assert report["live"] == {
+        "decision": "exchange_paused",
+        "reason": "exchange_paused",
+    }
+    assert "exchange_paused" in capsys.readouterr().out

@@ -433,6 +433,8 @@ def prefetch_starts(
     for series, markets in listings.items():
         if series in P.NO_START_SERIES:
             continue
+        if P.ESPORTS_ONLY and series not in P.ESPORTS_SERIES:
+            continue  # v7: never quoted, so no start reads are spent on them
         for m in markets:
             event = m.get("event_ticker")
             expires = _utc(m.get("expected_expiration_time"))
@@ -618,6 +620,9 @@ def eligible_markets(
             continue
         if series in P.ESPORTS_SERIES and not P.QUOTE_ESPORTS:
             reasons["esports_off"] += 1
+            continue
+        if P.ESPORTS_ONLY and series not in P.ESPORTS_SERIES:
+            reasons["not_esports"] += 1  # v7
             continue
         expires = pd.to_datetime(
             m.get("expected_expiration_time"), utc=True, errors="coerce"
@@ -2497,8 +2502,42 @@ def quote_orderbook(ticker):
     return book if isinstance(book, dict) else None
 
 
+def exchange_paused(now, read_status=None):
+    """Why to skip this pass's live part, or None (spread_policy
+    KALSHI_MAINTENANCE; RESEARCH_LOG.md "Spread maker v7: esports only").
+
+    Kalshi's weekly maintenance window by the clock, then (when given) its
+    exchange status: anything but exchange_active and trading_active both
+    true, or a status that cannot be read, skips the pass. Skipping sends
+    nothing at all; resting quotes expire on the exchange within 65 minutes
+    and the next pass, 10 minutes later, checks again."""
+    if P.KALSHI_MAINTENANCE is not None:
+        weekday, (h0, m0), (h1, m1) = P.KALSHI_MAINTENANCE
+        local = now.astimezone(NY)
+        minute = local.hour * 60 + local.minute
+        if local.weekday() == weekday and h0 * 60 + m0 <= minute < h1 * 60 + m1:
+            return "kalshi_weekly_maintenance"
+    if read_status is None:
+        return None
+    try:
+        status = read_status()
+    except Exception:
+        return "exchange_status_unreadable"
+    if not isinstance(status, dict) or not (
+        status.get("exchange_active") is True and status.get("trading_active") is True
+    ):
+        return "exchange_paused"
+    return None
+
+
+def exchange_status():
+    """Kalshi's public exchange status (one attempt; no credentials)."""
+    return kalshi_api.get_json("/exchange/status", {}, retries=1)
+
+
 def public_api():
     return {
+        "exchange_status": exchange_status,  # v7: skip passes while paused
         "fetch_markets": kalshi_api.fetch_markets,
         "fetch_market": kalshi_api.fetch_market,  # shadow results (any age)
         "fetch_orderbook": kalshi_api.fetch_orderbook,
@@ -2792,7 +2831,16 @@ def main():
             return
         started = datetime.now(UTC)
         report = {"run_utc": started.isoformat(), "mode": "live" if live else "shadow"}
-        public = prefetch(public_api())
+        api = public_api()
+        if live:
+            paused = exchange_paused(started, api.get("exchange_status"))
+            if paused:
+                # v7: nothing is read or sent while Kalshi is not trading.
+                report["live"] = {"decision": "exchange_paused", "reason": paused}
+                write_report(state_dir, report)
+                print("SPREAD MAKER", json.dumps(report, sort_keys=True, default=str))
+                return
+        public = prefetch(api)
         public = with_starts(public, started, state_dir, report)
         markets = None
         if live:
