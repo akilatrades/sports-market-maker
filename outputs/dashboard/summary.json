@@ -1,5 +1,5 @@
 {
- "updated_utc": "2026-11-16T13:11+00:00",
+ "updated_utc": "2026-11-16T21:53+00:00",
  "paper": {
   "ledgers": [
    {
@@ -95,38 +95,38 @@
    {
     "ledger": "KXITFMATCH",
     "orders": 2562,
-    "open": 40,
-    "fill_rate": 0.7355273592386995,
-    "fills": 1855,
-    "contracts": 18346,
-    "profit": -273.75,
+    "open": 4,
+    "fill_rate": 0.7380766223612197,
+    "fills": 1888,
+    "contracts": 18561,
+    "profit": -271.56,
     "cents_per_contract": -1.05,
-    "cents_weighted": -1.49,
-    "se_cents": 0.44,
-    "t": -2.37,
+    "cents_weighted": -1.46,
+    "se_cents": 0.43,
+    "t": -2.4,
     "hit_rate": 0.483,
     "max_drawdown": 305.13,
     "days": 32,
-    "bankroll": 226.25,
+    "bankroll": 228.44,
     "group": "other markets (model-free unless +model)",
     "backtest_cents": 4.62
    },
    {
     "ledger": "KXITFMATCH+no30",
     "orders": 2108,
-    "open": 42,
-    "fill_rate": 0.755082284607938,
-    "fills": 1560,
-    "contracts": 10384,
-    "profit": -207.08,
-    "cents_per_contract": -1.49,
-    "cents_weighted": -1.99,
-    "se_cents": 0.73,
-    "t": -2.04,
-    "hit_rate": 0.629,
-    "max_drawdown": 262.94,
+    "open": 8,
+    "fill_rate": 0.7571428571428571,
+    "fills": 1590,
+    "contracts": 10530,
+    "profit": -216.32,
+    "cents_per_contract": -1.51,
+    "cents_weighted": -2.05,
+    "se_cents": 0.72,
+    "t": -2.09,
+    "hit_rate": 0.628,
+    "max_drawdown": 272.18,
     "days": 31,
-    "bankroll": 292.92,
+    "bankroll": 283.68,
     "group": "other markets (model-free unless +model)",
     "backtest_cents": 4.62
    },
@@ -208,8 +208,8 @@
    },
    {
     "ledger": "KXNBA3D",
-    "orders": 407,
-    "open": 4,
+    "orders": 422,
+    "open": 19,
     "fill_rate": 0.5285359801488834,
     "fills": 213,
     "contracts": 1102,
@@ -246,8 +246,8 @@
    },
    {
     "ledger": "KXNFLRECYDS",
-    "orders": 1191,
-    "open": 0,
+    "orders": 1274,
+    "open": 83,
     "fill_rate": 0.5919395465994962,
     "fills": 705,
     "contracts": 3658,
@@ -265,8 +265,8 @@
    },
    {
     "ledger": "KXNFLRECYDS+model",
-    "orders": 4477,
-    "open": 0,
+    "orders": 4572,
+    "open": 71,
     "fill_rate": 0.4898580121703854,
     "fills": 483,
     "contracts": 3779,
@@ -573,10 +573,10 @@
    {
     "ledger": "KXITFMATCH",
     "day": "2026-11-16",
-    "profit": -6.62,
-    "fills": 35,
-    "contracts": 396,
-    "expected": 18.3
+    "profit": -4.43,
+    "fills": 68,
+    "contracts": 611,
+    "expected": 28.23
    },
    {
     "ledger": "KXITFMATCH+no30",
@@ -821,10 +821,10 @@
    {
     "ledger": "KXITFMATCH+no30",
     "day": "2026-11-16",
-    "profit": -7.57,
-    "fills": 28,
-    "contracts": 121,
-    "expected": 5.59
+    "profit": -16.81,
+    "fills": 58,
+    "contracts": 267,
+    "expected": 12.34
    },
    {
     "ledger": "KXLALIGASPREAD",
@@ -1979,31 +1979,31 @@
     "expected": 4.75
    }
   ],
-  "total_profit": -1091.15,
-  "total_fills": 5810,
+  "total_profit": -1098.2,
+  "total_fills": 5873,
   "best": "KXUCLCORNERS",
   "worst": "KXNCAAMB1HSPREAD"
  },
  "per_fill_histogram": {
   "-100": 76,
-  "-90": 143,
-  "-80": 247,
-  "-70": 374,
-  "-60": 436,
-  "-50": 630,
-  "-40": 715,
-  "-30": 594,
-  "-20": 430,
-  "-10": 309,
-  "0": 1022,
-  "10": 789,
-  "20": 618,
-  "30": 605,
-  "40": 490,
-  "50": 415,
+  "-90": 145,
+  "-80": 249,
+  "-70": 376,
+  "-60": 437,
+  "-50": 641,
+  "-40": 719,
+  "-30": 597,
+  "-20": 433,
+  "-10": 312,
+  "0": 1027,
+  "10": 791,
+  "20": 624,
+  "30": 613,
+  "40": 495,
+  "50": 419,
   "60": 329,
-  "70": 165,
-  "80": 71,
+  "70": 166,
+  "80": 72,
   "90": 15
  },
  "live": {
@@ -2063,7 +2063,7 @@
   "max_orders_per_game": 6
  },
  "running_now": {
-  "nba_rules": "nba-no-v8-more-fills",
+  "nba_rules": "nba-no-v9-longshots",
   "contracts_per_order": 1,
   "entry_edge_cents": [
    -3,
@@ -2074,7 +2074,7 @@
    6.0
   ],
   "price_band_cents": [
-   5,
+   65,
    95
   ],
   "nba_max_open": 150.0,
@@ -2086,10 +2086,10 @@
   "account_total_loss_stop": 100.0,
   "daily_loss_stop": 20.0,
   "total_loss_stop": 100.0,
-  "odds_snapshot_utc": "2026-11-16T01:23+00:00",
-  "trade_prints_through": "2026-11-14",
+  "odds_snapshot_utc": "2026-11-16T20:08+00:00",
+  "trade_prints_through": "2026-11-15",
   "spread": {
-   "rules": "spread-maker-v6-fills-first",
+   "rules": "spread-maker-v7-esports-only",
    "contracts_per_order": 2,
    "max_net_per_market_side": 2,
    "min_spread_cents": 4,
