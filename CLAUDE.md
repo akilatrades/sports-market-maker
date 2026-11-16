@@ -90,7 +90,9 @@ python -m research.scaling                 # bankroll replays
   `live/prod_spread_auto.py` and `live/spread_policy.py`: the spread maker.
   `live/shared_account_risk.py`: account-wide caps and loss stops.
 - `kalshi/`: fees, fills, statistics, sportsbook consensus, signed client.
-  `markets/nba/`, `markets/nfl/`: stat models. `research/`: backtests.
+  `markets/nba/`, `markets/nfl/`: stat models. `research/`: backtests
+  (`research/dead_ticket_watch.py`: read-only watcher of late-game NBA
+  quotes; places no orders).
 - Data for research:
   - `outputs/decompose/orders_no.csv.gz`: one row per 2025–26 NBA prop
     market with the hypothetical resting NO order (price, model probability,

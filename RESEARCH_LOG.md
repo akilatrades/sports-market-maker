@@ -4140,3 +4140,66 @@ markets (no tested rule for it at order time). `live/nba_feed.py`
 free, so every model-inputs run from 6 to 15 November skipped itself; the
 job peaks near 900 MB, is capped at 1.3 GB and is killed first. Tests:
 `test_v9_*` in `tests/test_prod_nba_auto.py`.
+
+## 2026-11-16: Dead-ticket watch (owner; pre-registered, watch-only)
+
+**Where it came from (exploratory, in-sample, simulated; about 180 cuts
+tried).** A from-scratch look at this season's public NBA prop trade prints
+during games (137 games, 19 nights to 14 November, 2.0 million prints),
+joined to ESPN play-by-play (hoopR's season file, corrected after the game;
+its result agrees with Kalshi's on 99.9% of markets). The game state was
+taken 2 minutes before each print, as if our feed were that late.
+
+- **Dead tickets.** Late in games people bid 2–3¢ for YES on props that can
+  no longer realistically hit. Selling to that bid is buying NO at 97–98¢.
+  One sale per market at the first print where another trader hit such a
+  bid, after the taker fee:
+
+  | Rule | Markets (a night) | Lost | ¢ per contract | Others' volume a night |
+  |---|---:|---:|---:|---:|
+  | Loose: out of reach in regulation | 3,844 (202) | 26 | +1.71 (t 9.2) | 82,846 contracts |
+  | Strict: out of reach with 5 more minutes, bid 2–10¢ | 513 (27) | 0 | +2.0 | 8,585 contracts |
+
+  "Out of reach": needs more than a rate per game minute left plus an
+  allowance (points 1.5 + 3; rebounds and assists 0.5 + 2; threes ⅓ + 2),
+  second half only. The loose rule's losers were overtime games and near
+  misses. Same result with the state 1 minute late and in each half of the
+  nights. Money is tied up for a median 27 minutes.
+- **Lines already reached** (one to spare): YES still trades at 99¢, about
+  178,000 contracts a night bought there (+0.93¢ after the fee; none of 4.66
+  million contracts lost), but a 99¢ bid was already resting in about 78% of
+  quote snapshots and nothing was offered in about 86–92%: crowded.
+- **Dead ends in the same battery:** buying right after a play (prices move
+  10–20 seconds before the play-by-play); selling in-game longshots without
+  the game state (about zero this season; −19¢ on last season's hourly
+  quotes); pre-game trade size, price drift and order-flow imbalance
+  (nothing this season); ladder arbitrage (2 of 82,978 adjacent-line pairs,
+  1¢).
+
+Limits: 19 nights; the prints show that a bid existed and someone else hit
+it, not that we would have; corrected play-by-play hides live stat
+corrections; a loss costs about 98¢, or 49 wins.
+
+**Question.** Are those bids really there for a trader reading a public box
+score: when the rule first holds, is a YES bid of 2¢ or more on the book,
+does it stay for a poll, and does the trade win?
+
+**Method.** `research/dead_ticket_watch.py` (rules in
+`markets/nba/dead_ticket.py`): during games, every 30 seconds, ESPN's
+public box score and Kalshi's public quotes; a row for every market where
+the loose rule holds with a YES bid of 2–10¢ (flagged strict or not), and
+for every line met with one to spare where YES is offered at 99¢ or less,
+with the contracts resting at that price. Public GETs only: no keys, no
+account, no orders. `summarize` takes each market's first sighting, the
+result Kalshi settled, and the taker fee on a 10-contract order. These are
+sightings of quotes, not fills and not live P&L. The rule's numbers are
+fixed above and are not tuned on watcher data.
+
+**Pass/fail bar** (strict dead-ticket rule, judged once at 7 game nights
+and at least 150 strict markets): pass if first sightings make at least
++1.0¢ a contract after the fee, with no more than 1 loss, the bid still
+there on the next poll in at least half of them, and a median of at least
+10 contracts at the bid. Anything else fails. The loose rule and the
+reached lines are reported, exploratory. A pass allows only a proposal for
+a separate, small, pre-registered live test; this entry changes nothing in
+`live/` and no limit.
