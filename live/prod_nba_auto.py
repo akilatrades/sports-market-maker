@@ -35,7 +35,14 @@ from live.reconciled_attempts import rejected_client_ids
 # lines twice as far away (kalshi/line_translation.py), entries from 1 hour
 # before tip (v7: 2). Replay (simulated, in-sample, flow 0.25): 3,481 fills at
 # +2.8c a contract (t 2.1) against v7's 1,851 at +4.3c (t 2.9).
-STRATEGY_VERSION = "nba-no-v8-more-fills"
+# v9 (2026-11-16, RESEARCH_LOG.md "NBA rules v9: longshots only", owner):
+# NO orders at 65c or more only (v8: 5c or more), i.e. selling YES priced
+# 35c or less. Market-wide this season (137 games, exploratory) YES buyers
+# overpaid +1.9c on longshots (t 3.2) and -0.2c on favourites (t -0.3; last
+# season +3.0c everywhere); 79% of live v8 fills were favourites and made
+# +0.1c, while its 103 longshot fills made +3.4c (t 1.3). Everything else,
+# including the sportsbook edge band as a sanity check, is v8's.
+STRATEGY_VERSION = "nba-no-v9-longshots"
 # Earlier versions whose resting orders are left untouched to expire while
 # new orders wait (see legacy_resting_count); any other version HALTs.
 PRIOR_VERSIONS = frozenset(
@@ -46,6 +53,7 @@ PRIOR_VERSIONS = frozenset(
         "nba-no-v5-one-contract-breadth",
         "nba-no-v6-three-contracts",
         "nba-no-v7-book-priced",
+        "nba-no-v8-more-fills",
     }
 )
 
@@ -88,7 +96,7 @@ MAX_ENTRY_NET_EDGE = 0.08  # v6: 0.15; live, the largest edges were model errors
 # after the fee had to be >= 0).
 MODEL_VETO_MIN_EDGE = None
 MAX_NEW_ORDERS_PER_PASS = 3
-PRICE_BAND_CENTS = (5, 95)  # NO price, inclusive
+PRICE_BAND_CENTS = (65, 95)  # NO price, inclusive (v9; v2-v8: 5-95)
 # systemd stops a pass after TimeoutStartSec=240. A stop between an order's
 # journal intent and its acceptance halts all future orders, so no new order
 # starts after this many seconds of process runtime (main() sets the clock).
@@ -911,6 +919,11 @@ def select_candidates(frame, events, state, now, diagnostics=None, window=WINDOW
     # Large apparent edges often imply a wrong line or stale book.
     found = found[found.edge.between(ENTRY_MIN_NET_EDGE, MAX_ENTRY_NET_EDGE)]
     counts["passed_edge_sanity"] = len(found)
+    # v9: longshots only. The NO price must be inside PRICE_BAND_CENTS before
+    # any quote is read (order_from_row checks the fresh price again).
+    cents = (pd.to_numeric(found.price, errors="coerce") * 100).round()
+    found = found[cents.between(*PRICE_BAND_CENTS)]
+    counts["in_price_band"] = len(found)
     already = {a["ticker"] for a in attempts}
     found = found[~found.ticker.isin(already)]
     counts["not_previously_attempted"] = len(found)

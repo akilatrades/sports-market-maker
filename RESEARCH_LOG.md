@@ -4091,3 +4091,52 @@ sent in the maintenance window were refused and one got no clear answer,
 which stopped all three bots for 6 and 21 hours). Unchanged: 2 contracts a
 side, 2 net, $100 open, 4¢ spreads, 24 hours, 60 orders a pass, 9,000 a day,
 the loss stops. Tests: `test_v7_*` in `tests/test_prod_spread_auto.py`.
+
+## 2026-11-16: NBA rules v9: longshots only (owner; pre-registered)
+
+*Written before any v9 order. The owner asked to go back to the original
+finding, and then to build this ("yes. rewrite and we will have to push").*
+
+**Going back to the original finding (exploratory; about 25 cuts of the same
+data).** Kalshi's public pre-tip trade prints and results, every NBA prop
+market, taker bought YES, price paid minus outcome, clustered by game:
+
+| YES buyers overpaid | 2025–26 (1,038 games) | 2026–27 to 14 Nov (137 games) |
+|---|---|---|
+| all markets | +3.0¢ (t 8.3) | +1.1¢ (t 2.1) |
+| YES at 65¢ or more | +3.0¢ (t 6.3) | −0.2¢ (t −0.3) |
+| YES at 35¢ or less | +2.7¢ (t 7.4) | +1.9¢ (t 3.2) |
+
+Pre-tip volume a game is about 3.3 times last season's. Live v8 put 79% of
+its fills on favourites (NO at 35¢ or less: +0.1¢ a contract, 409 fills);
+its 103 longshot fills (NO at 65¢ or more) made +3.4¢ (t 1.3). The nearby-line
+conversion overstated NO on low lines, so the edge filter steered orders to
+favourites. Simulated on this season's prints (one contract a market, first
+YES-buyer print at 5–35¢, 1–6 hours before tip, first in line; not a
+forecast): 6,307 fills over 19 nights, NO at 81¢ winning 82.1%, +1.4¢ a
+contract (t 2.2), +1.6¢ when a fill needs 4 contracts to trade first; the
+busiest third of markets made +0.1¢ and the rest about +2.1¢; 7 of 19 nights
+lost.
+
+**Question.** Do resting NO orders on YES longshots earn more than zero per
+contract after fees this season?
+
+**Method.** Live v9 fills only (`research/live_checkpoint.py`), profit per
+contract at settlement, game-clustered t. No simulated fills mixed in.
+
+**Pass/fail bar.** At 400 settled v9 fills: continue if profit per contract
+is above zero, otherwise stop and review. Judged at 1,500 settled fills:
+real only with game-clustered t ≥ 2; more size only then. (One contract's
+result has a standard deviation near 38¢ at these prices, so +2¢ needs about
+1,500 independent fills for t 2.) The NBA and account loss stops apply.
+
+**Change (old → new).** `live/prod_nba_auto.py`: `STRATEGY_VERSION`
+`nba-no-v8-more-fills` → `nba-no-v9-longshots`; `PRICE_BAND_CENTS` (NO
+price) `(5, 95)` → `(65, 95)`, applied before any quote is read. Unchanged:
+1 contract, the −3¢ to 8¢ book edge band (now only a sanity check), 1–6
+hours, every cost cap and loss stop. Not included: skipping the busiest
+markets (no tested rule for it at order time). `live/nba_feed.py`
+`MIN_AVAILABLE_MB` 1,200 → 1,000: the server sits at about 1,170–1,190 MB
+free, so every model-inputs run from 6 to 15 November skipped itself; the
+job peaks near 900 MB, is capped at 1.3 GB and is killed first. Tests:
+`test_v9_*` in `tests/test_prod_nba_auto.py`.

@@ -15,7 +15,7 @@ inputs were published until the owner ran the job by hand.
 | Job | Timer | What it does | Needs |
 |---|---|---|---|
 | `market-maker-nba-feed-books` | every 20 minutes (:05, :25, :45 UTC) | sportsbook NBA prop lines for games within 6.5 hours (`live.log_books`, near scope) | `ODDS_API_KEY` in `/etc/market-maker-odds.env` |
-| `market-maker-nba-feed-projections` (optional) | 10:20, 12:20, 15:20, 18:20, 21:20 UTC | box-score history (every run, as on GitHub), then the model inputs for every open market; published to `published/` only after the same check GitHub uses (`live.nba_publish_check`) | about 1.6 GB of free memory to install; a run is skipped if under 1.2 GB is free |
+| `market-maker-nba-feed-projections` (optional) | 10:20, 12:20, 15:20, 18:20, 21:20 UTC | box-score history (every run, as on GitHub), then the model inputs for every open market; published to `published/` only after the same check GitHub uses (`live.nba_publish_check`) | about 1.6 GB of free memory to install; a run is skipped if under 1.0 GB is free (1.2 GB until 16 November) |
 
 Each NBA pass (`live.nba_inputs.sync`) takes the newest valid copy of each
 input from three places: the server's feed, GitHub, and the copy the bot

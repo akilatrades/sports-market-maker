@@ -37,7 +37,10 @@ HISTORY_MAX_AGE_HOURS = 2
 # Checked at the start of every model-inputs run: below this the run is
 # skipped, so it never squeezes the trading bots (the model step peaks near
 # 900 MB; the unit caps it at 1.3 GB and gives it no swap).
-MIN_AVAILABLE_MB = 1200
+# 1,200 -> 1,000 on 16 November (RESEARCH_LOG.md "NBA rules v9"): the 2 GB
+# server idles at about 1,170-1,190 MB free, so every run from 6 to 15
+# November skipped itself and the bot depended on GitHub's copy.
+MIN_AVAILABLE_MB = 1000
 KEEP_DAYS = 14  # daily book logs and projection ladders older than this are deleted
 PRUNE = ("outputs/books/nba_*.csv.gz", "outputs/projections/ladders/*.csv")
 PUBLISHED = Path("published")  # checked projection pair the bot reads
