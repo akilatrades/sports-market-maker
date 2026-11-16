@@ -35,6 +35,16 @@
 | Mon 8:00 PM | Yaxel Lendeborg | NO 25+ points | 56¢ | 69% | 11¢ | 3 | $1.74 | paper |
 | Mon 8:00 PM | Yaxel Lendeborg | NO 6+ assists | 74¢ | 86% | 11¢ | 2 | $1.51 | paper |
 | Mon 8:00 PM | Yaxel Lendeborg | NO 3+ threes | 60¢ | 69% | 8¢ | 3 | $1.86 | paper |
+| Mon 9:00 PM | Aaron Gordon | NO 10+ points | 27¢ | 34% | 6¢ | 8 | $2.28 | paper |
+| Mon 9:00 PM | Collin Gillespie | NO 5+ points | 14¢ | 21% | 6¢ | 15 | $2.23 | paper |
 | Mon 9:00 PM | DeMar DeRozan | YES 4+ assists | 28¢ | 42% | 13¢ | 7 | $2.06 | paper |
 | Mon 9:00 PM | DeMar DeRozan | YES 15+ points | 22¢ | 35% | 12¢ | 9 | $2.09 | paper |
+| Mon 9:00 PM | Dillon Brooks | NO 15+ points | 50¢ | 59% | 7¢ | 4 | $2.07 | paper |
+| Mon 9:00 PM | Dillon Brooks | NO 2+ assists | 43¢ | 52% | 7¢ | 5 | $2.24 | paper |
+| Mon 9:00 PM | Jalen Green | YES 15+ points | 30¢ | 39% | 8¢ | 7 | $2.21 | paper |
+| Mon 9:00 PM | Jamal Murray | YES 6+ rebounds | 29¢ | 37% | 7¢ | 7 | $2.14 | paper |
 | Mon 9:00 PM | Luke Kennard | YES 10+ points | 35¢ | 44% | 8¢ | 2 | $0.74 | paper |
+| Mon 9:00 PM | Luke Kennard | NO 2+ threes | 49¢ | 57% | 7¢ | 4 | $2.03 | paper |
+| Mon 9:00 PM | Nikola Jokić | NO 20+ points | 23¢ | 30% | 5¢ | 9 | $2.19 | paper |
+| Mon 9:00 PM | Oso Ighodaro | NO 6+ rebounds | 60¢ | 68% | 6¢ | 3 | $1.86 | paper |
+| Mon 9:00 PM | Trevon Brazile | YES 10+ points | 14¢ | 22% | 7¢ | 15 | $2.23 | paper |
