@@ -22,7 +22,13 @@ from pathlib import Path
 # back on, $100 open (v5: $50), 60 orders a pass (v5: 20) and 6,000 a day
 # (v5: 1,500; 9,000 from 4 November). Replay (simulated, in-sample, flow 0.25): about 63 fills a
 # day at +4.3c a contract (t 8.8) against v5's 9 a day at +8.1c (t 6.9).
-STRATEGY_VERSION = "spread-maker-v6-fills-first"
+# v7 (2026-11-16, RESEARCH_LOG.md "Spread maker v7: esports only", owner:
+# "can we just have esports fills for now"): new quotes in ESPORTS_SERIES
+# only (v6: every series in SERIES). Live v6 to 15 November (exploratory,
+# split after looking): esports +16.1c a contract over 119 contracts and 51
+# matches (match-level t 2.5); women's college basketball -5.7c over 187;
+# everything else -2.4c over 50. Every other limit is v6's.
+STRATEGY_VERSION = "spread-maker-v7-esports-only"
 # The shared-risk cohort journal lives in STATE; the owner creates ARM_MARKER
 # to allow live orders.
 STATE = Path("/home/trader/prod-spread-auto")
@@ -215,6 +221,17 @@ ESPORTS_SERIES = frozenset(
 # third at the chosen settings and stayed positive; the live v3 result
 # (-3.7c, t -0.55) is too small to tell from zero.
 QUOTE_ESPORTS = True
+# v7: True quotes nothing outside ESPORTS_SERIES (v1-v6: False). Quotes
+# already resting elsewhere are cancelled on the next pass; contracts
+# already held settle as usual.
+ESPORTS_ONLY = True
+# v7: Kalshi pauses trading every Thursday 3:00-5:00 New York time for
+# maintenance (docs.kalshi.com, "Maintenance and pauses"). On 5 and 12
+# November orders sent then were refused and one had no clear answer, which
+# stopped all three bots until the owner reconciled it (6 and 21 hours). No
+# live pass runs from 2:55 to 5:05 on that weekday, nor while Kalshi's
+# exchange status says trading is paused. (weekday Monday=0, start, end)
+KALSHI_MAINTENANCE = (3, (2, 55), (5, 5))
 MAX_START_LOOKUPS_PER_PASS = 60  # v2: 30; the 24-hour window holds more events
 START_LOOKUP_SECONDS = 45  # no milestone read after this, from process start
 

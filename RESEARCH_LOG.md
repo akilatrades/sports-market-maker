@@ -4043,3 +4043,51 @@ nothing blocking; its hardening points (unlisted statuses, a maximum age,
 times checked from the events, the owner script's guard, no response bodies
 printed) are in. Still not covered: an intent with no reply recorded at all.
 Tests: `tests/test_nba_reconcile.py`.
+
+## 2026-11-16: Spread maker v7: esports only (owner; pre-registered)
+
+*Written before any v7 order. The owner asked on 16 November: "can we just
+have esports fills for now". NBA and NFL are switched off with the Go live /
+Stop button (`STOP`); their code and limits are unchanged.*
+
+**What led here (live, exploratory: split after looking; about a dozen splits
+tried on the same data).** Spread maker v6, 3–15 November, settled fills,
+after fees: esports +$19.28 on 119 contracts (+16.1¢ a contract; 51 matches,
+match-level t 2.5; +7.7¢ without the 5 best matches); women's college
+basketball −$10.63 on 187 (−5.7¢; 73% of v6's orders); everything else
+−$1.20 on 50. By series: Rainbow Six +$9.98, Call of Duty maps +$5.20, Dota 2
++$3.71, CS2 +$0.25, Overwatch +$0.14. Prices moved against fills in both
+(10-minute markouts: esports −4.6¢, t −5.8; women's college basketball
+−10.5¢, t −5.2); esports quotes sat far enough inside wide spreads to stay
+ahead. NBA v8 (1,098 orders with Kalshi results): sportsbook P(NO) 36.1%,
+Kalshi midpoint at entry 34.1%, actual 34.0%; the book-minus-Kalshi gap did
+not predict outcomes (slope 0.05, 95% interval −0.65 to 0.75), so the NBA
+bot earned about +0.5¢ a contract (489 settled fills, t 0.32), roughly its
+distance below Kalshi's midpoint.
+
+**Question.** Quoting esports only, does the spread maker earn more than
+zero per contract after fees? v6's esports result chose this rule, so it is
+in-sample; v7's own fills are the test.
+
+**Method.** Live v7 fills only (`research/live_checkpoint.py`,
+`SPREAD_VERSION`), profit per contract after fees at settlement, t clustered
+by event (match). No simulated fills are mixed in.
+
+**Pass/fail bar.** At 300 settled v7 contracts (about 25 days at v6's esports
+pace of about 12 a day): continue if profit per contract is above zero;
+otherwise stop and review. More size only after 600 or more settled
+contracts with event-clustered t ≥ 2. The −$15 daily and −$40 total spread
+stops and the account stops apply throughout.
+
+**Change (old → new).** `live/spread_policy.py`: `STRATEGY_VERSION`
+`spread-maker-v6-fills-first` → `spread-maker-v7-esports-only`;
+`ESPORTS_ONLY` (new) `True`: no new quote outside `ESPORTS_SERIES` and no
+start reads spent on other series; quotes resting elsewhere are cancelled on
+the first v7 pass, and contracts held there settle as usual.
+`KALSHI_MAINTENANCE` (new) `(Thursday, 2:55, 5:05)` New York time, plus
+Kalshi's `/exchange/status`: no live pass while either says Kalshi is not
+trading, or while the status cannot be read (on 5 and 12 November orders
+sent in the maintenance window were refused and one got no clear answer,
+which stopped all three bots for 6 and 21 hours). Unchanged: 2 contracts a
+side, 2 net, $100 open, 4¢ spreads, 24 hours, 60 orders a pass, 9,000 a day,
+the loss stops. Tests: `test_v7_*` in `tests/test_prod_spread_auto.py`.

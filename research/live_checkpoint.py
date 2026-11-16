@@ -53,7 +53,7 @@ NBA_FEE_RESERVE = 1.10  # live/prod_nba_auto.py FEE_RESERVE
 # Each spread rule version is judged on its own orders, the current one (v5,
 # RESEARCH_LOG.md, 2026-10-30, "Spread maker v5") with the v2 bars; earlier
 # versions (v3: "spread-maker-v3-24h-starts") are reported apart.
-SPREAD_VERSION = "spread-maker-v6-fills-first"
+SPREAD_VERSION = "spread-maker-v7-esports-only"
 SPREAD_BARS = {
     "filled_contracts": 300,
     "days": 28,

@@ -16,9 +16,12 @@ file is the short version for an AI helping them.
   before tip-off, and rests until tip-off.
 - Three bots trade one small real-money account from a private server: NBA
   and NFL (live since 19–20 October 2026) and the spread maker (live since
-  22 October; rules v6 from 2 November: pregame only, quoting up to 24
-  hours before the start, 2 contracts a side, $100 open), which rests YES
-  and NO bids one cent inside 4¢+ spreads in 61 other series. **You cannot
+  22 October; rules v7 from 16 November: esports only, pregame, quoting up
+  to 24 hours before the start, 2 contracts a side, $100 open, no passes
+  during Kalshi's Thursday 3–5am ET maintenance), which rests YES and NO
+  bids one cent inside 4¢+ spreads. On 16 November the owner chose esports
+  only: NBA and NFL are switched off with Go live / Stop (`STOP`); their
+  code is unchanged. **You cannot
   see the server, the account or its private journals**; only the public
   files here. Questions
   about live results go to the owner. If the owner has added the private
