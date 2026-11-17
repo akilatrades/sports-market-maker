@@ -1,8 +1,8 @@
 {
   "KXITFMATCH": {
-    "orders": 2562,
+    "orders": 2597,
     "vetoed": 0,
-    "open": 4,
+    "open": 39,
     "fill_rate": 0.7380766223612197,
     "fills_settled": 1888,
     "bankroll": 228.44,
@@ -54,13 +54,13 @@
   "KXNFLRECYDS": {
     "orders": 1274,
     "vetoed": 0,
-    "open": 83,
-    "fill_rate": 0.5919395465994962,
-    "fills_settled": 705,
-    "bankroll": 164.95,
-    "cents_per_contract": -6.29,
-    "t": -2.31,
-    "profit_dollars": -335.05
+    "open": 0,
+    "fill_rate": 0.5800627943485086,
+    "fills_settled": 739,
+    "bankroll": 161.8,
+    "cents_per_contract": -5.9,
+    "t": -2.26,
+    "profit_dollars": -338.2
   },
   "KXCLUBFBTTS": {
     "orders": 0,
@@ -122,13 +122,13 @@
   "KXNBA3D": {
     "orders": 422,
     "vetoed": 0,
-    "open": 19,
-    "fill_rate": 0.5285359801488834,
-    "fills_settled": 213,
-    "bankroll": 537.04,
-    "cents_per_contract": 2.87,
-    "t": 1.63,
-    "profit_dollars": 37.04
+    "open": 4,
+    "fill_rate": 0.5239234449760766,
+    "fills_settled": 219,
+    "bankroll": 536.93,
+    "cents_per_contract": 2.66,
+    "t": 1.5,
+    "profit_dollars": 36.93
   },
   "KXNASCARTOP10": {
     "orders": 367,
@@ -152,20 +152,20 @@
   "KXNFLRECYDS+model": {
     "orders": 1057,
     "vetoed": 3515,
-    "open": 71,
-    "fill_rate": 0.4898580121703854,
-    "fills_settled": 483,
-    "bankroll": 263.42,
-    "cents_per_contract": -5.62,
-    "t": -1.54,
-    "profit_dollars": -236.58,
-    "vetoed_would_have_made_cents": -11.49,
-    "vetoed_settled": 1741
+    "open": 0,
+    "fill_rate": 0.4824976348155156,
+    "fills_settled": 510,
+    "bankroll": 255.66,
+    "cents_per_contract": -5.5,
+    "t": -1.6,
+    "profit_dollars": -244.34,
+    "vetoed_would_have_made_cents": -11.37,
+    "vetoed_settled": 1751
   },
   "KXITFMATCH+no30": {
-    "orders": 2108,
+    "orders": 2143,
     "vetoed": 0,
-    "open": 8,
+    "open": 43,
     "fill_rate": 0.7571428571428571,
     "fills_settled": 1590,
     "bankroll": 283.68,
@@ -173,5 +173,5 @@
     "t": -2.09,
     "profit_dollars": -216.32
   },
-  "updated_utc": "2026-11-16T21:53+00:00"
+  "updated_utc": "2026-11-17T07:34+00:00"
 }
