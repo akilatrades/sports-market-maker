@@ -615,3 +615,18 @@ def test_nfl_off_dry_runs_still_show_what_would_be_ordered(quotes, tmp_path):
     journal = tmp_path / "ledger.jsonl"
     auto.pass_once(client, {}, frame(), NOW, journal, dry=True)
     assert client.placed == [] and not journal.exists()
+
+
+def test_nfl_off_low_cash_stops_only_a_pass_that_may_order(
+    quotes, tmp_path, monkeypatch
+):
+    class Broke(Client):
+        def balance(self):
+            return {"balance": 1.0}
+
+    journal = tmp_path / "ledger.jsonl"
+    assert not auto.pass_once(Broke(), ARMED, frame(), NOW, journal)  # off: no error
+    with monkeypatch.context() as before:
+        before.setattr(auto, "NEW_ORDERS", True)
+        with pytest.raises(TradingError, match="cash balance insufficient"):
+            auto.pass_once(Broke(), ARMED, frame(), NOW, journal)

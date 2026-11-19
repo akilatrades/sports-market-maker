@@ -4310,8 +4310,10 @@ or sends any order (before: it placed up to its limits). Everything earlier
 in the pass still runs: fills and settlements are recorded, resting orders
 that fail the availability checks are cancelled, the account loss stop is
 read. `GO_LIVE` still starts the NFL timer beside NBA's, so the shared
-account checks are unchanged. Dry runs still list the orders it would
-place. Limits and `STRATEGY_VERSION` (`nfl-no-v4-book-priced`) are
+account checks are unchanged. A pass that will not order no longer stops
+with an error when cash is below one order's cost (before: it raised
+"Production cash balance insufficient"). Dry runs still list the orders it
+would place. Limits and `STRATEGY_VERSION` (`nfl-no-v4-book-priced`) are
 unchanged; turning NFL back on is `NEW_ORDERS = True` through a reviewed
 change. Tests: `test_nfl_off_*` in `tests/test_prod_nfl_auto.py`.
 

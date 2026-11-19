@@ -595,7 +595,8 @@ def pass_once(client, env, frame, now, journal, *, dry=False):
         else:
             state = current_production_state(client, attempts, accepted)
         free = money(client.balance()["balance"])
-        if free < MAX_ORDER_COST * FEE_RESERVE:
+        # Cash only matters to a pass that may order (NEW_ORDERS, 2026-11-19).
+        if NEW_ORDERS and free < MAX_ORDER_COST * FEE_RESERVE:
             raise TradingError("Production cash balance insufficient")
     else:
         state = {"active": []}
