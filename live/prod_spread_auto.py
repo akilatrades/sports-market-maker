@@ -765,7 +765,7 @@ def shadow_post(events, markets, now):
     new = []
     for m in markets:
         prices = {"yes": m["yes_price"], "no": m["no_price"]}
-        for side in quoted_sides(m["ticker"]):
+        for side in quoted_sides(m["ticker"], market_spread(m)):
             price = prices[side]
             if recent.get((m["ticker"], side), "") > cutoff:
                 continue
@@ -1670,9 +1670,22 @@ def series_of(ticker):
     return str(ticker).split("-", 1)[0]
 
 
-def quoted_sides(ticker):
-    """("yes", "no"), or ("no",) for a NO-only series (v6, NCAA 1H spreads)."""
-    return ("no",) if series_of(ticker) in P.NO_ONLY_SERIES else ("yes", "no")
+def quoted_sides(ticker, spread=None):
+    """("yes", "no"); ("no",) for a NO-only series (v6, NCAA 1H spreads) or,
+    from v8, when the market's ``spread`` in cents is known and narrower than
+    MIN_YES_SPREAD_CENTS."""
+    if series_of(ticker) in P.NO_ONLY_SERIES:
+        return ("no",)
+    if spread is not None and spread < P.MIN_YES_SPREAD_CENTS:
+        return ("no",)
+    return ("yes", "no")
+
+
+def market_spread(m):
+    """A quotable market's spread in cents: its own field, else from our two
+    prices, each one cent inside (YES bid + 1 and 100 - YES ask + 1)."""
+    spread = m.get("spread")
+    return 102 - m["yes_price"] - m["no_price"] if spread is None else spread
 
 
 def order_size(ticker):
@@ -1692,7 +1705,8 @@ def desired_quotes(markets, positions, resting=frozenset()):
     A YES order is at most the room left before net YES reaches the cap
     (positive net = YES held), a NO order likewise; a side with no room is
     not quoted. v5 quoted one market per event; v6 quotes them all, and only
-    the NO side of a NO-only series.
+    the NO side of a NO-only series. v8: only the NO side where the spread
+    is under MIN_YES_SPREAD_CENTS.
     """
     out = {}
     for m in one_market_per_event(markets, positions, resting):
@@ -1703,7 +1717,7 @@ def desired_quotes(markets, positions, resting=frozenset()):
             "no": math.floor(cap + net + 1e-9),
         }
         prices = {"yes": m["yes_price"], "no": m["no_price"]}
-        for side in quoted_sides(m["ticker"]):
+        for side in quoted_sides(m["ticker"], market_spread(m)):
             size = int(min(order_size(m["ticker"]), rooms[side]))
             if size >= 1:
                 out[(m["ticker"], side)] = (prices[side], size)

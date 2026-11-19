@@ -45,6 +45,14 @@ def logic_sized_at_five(request, monkeypatch):
     if not name.startswith("test_v7_") and name not in REAL_LIMIT_TESTS:
         monkeypatch.setattr(P, "ESPORTS_ONLY", False)
         monkeypatch.setattr(P, "KALSHI_MAINTENANCE", None)
+    # v8 settings. The logic tests are written around 8c to 12c spreads
+    # quoted on both sides, so they keep v7's 4c minimum on either side; the
+    # v8 tests and the pinned live limits see the real values.
+    if not name.startswith("test_v8_") and name != (
+        "test_pilot_limits_are_the_owner_approved_ones"
+    ):
+        monkeypatch.setattr(P, "MIN_SPREAD_CENTS", 4)
+        monkeypatch.setattr(P, "MIN_YES_SPREAD_CENTS", 4)
     if request.node.originalname not in REAL_LIMIT_TESTS:
         monkeypatch.setattr(P, "CONTRACTS", 5)
         monkeypatch.setattr(P, "MAX_NET_PER_MARKET", 5)
@@ -1136,14 +1144,17 @@ def test_pilot_limits_are_the_owner_approved_ones():
     # per-event limit), then "More fills for the spread maker and NBA"
     # (2026-11-02, v6; v5: 8c spreads, 12 hours, one market per event,
     # esports off, $50 open, 20 a pass, 1,500 a day), then "Spread maker v7:
-    # esports only" (2026-11-16; v6: every series, no maintenance pause).
+    # esports only" (2026-11-16; v6: every series, no maintenance pause),
+    # then "Spread maker v8: wide spreads only" (2026-11-19; v7: 4c spreads,
+    # YES bids at any quoted spread).
     # Change these only through a new, recorded amendment.
-    assert P.STRATEGY_VERSION == "spread-maker-v7-esports-only"
+    assert P.STRATEGY_VERSION == "spread-maker-v8-wide-spreads"
+    assert (P.MIN_SPREAD_CENTS, P.MIN_YES_SPREAD_CENTS) == (10, 20)
     assert P.ESPORTS_ONLY is True
     assert P.KALSHI_MAINTENANCE == (3, (2, 55), (5, 5))
     assert (P.CONTRACTS, P.MAX_NET_PER_MARKET) == (2, 2)
     assert (P.MAX_LEAD_HOURS, P.MAX_MARKETS_PER_EVENT) == (24.0, None)
-    assert P.MIN_SPREAD_CENTS == 4 and P.QUOTE_ESPORTS is True
+    assert P.QUOTE_ESPORTS is True
     # 2026-11-03, "College basketball: sell NO only on first-half spreads?"
     # (before: both sides, 2 contracts, 2 net, like every series).
     assert P.NO_ONLY_SERIES == {"KXNCAAMB1HSPREAD"} <= set(P.SERIES)
@@ -1184,7 +1195,7 @@ def test_pilot_limits_are_the_owner_approved_ones():
     )
     # Daily limit 6,000 -> 9,000 on 4 November (owner); the pass limit is v6's.
     assert (P.MAX_ORDERS_PER_PASS, P.MAX_SUBMISSIONS_PER_DAY) == (60, 9000)
-    assert P.MIN_SPREAD_CENTS == 4 and P.WINDOW_HOURS == (4.0, 24.0)  # v6; v5: 8c
+    assert P.WINDOW_HOURS == (4.0, 24.0)
     # Account-wide total stop -$60 -> -$100 on 2026-10-23 ("NBA rules v6");
     # the spread maker's own limits above are unchanged, 8c spreads included.
     assert shared.ACCOUNT_LOSS_STOPS == {"daily": 20.0, "cumulative": 100.0}
@@ -2777,3 +2788,73 @@ def test_v7_a_paused_live_pass_sends_and_reads_nothing(
         "reason": "exchange_paused",
     }
     assert "exchange_paused" in capsys.readouterr().out
+
+
+# ------------------------------------------------ v8: wide spreads only
+
+
+def test_v8_nothing_is_quoted_under_a_ten_cent_spread():
+    assert bot.quote_prices(40, 49) is None  # 9c
+    assert bot.quote_prices(40, 50) == (41, 51)  # 10c
+    rows = bot.eligible_markets([market(bid=0.40, ask=0.49)], "KXDOTA2GAME", NOW)
+    assert rows == []
+
+
+def test_v8_a_yes_bid_needs_a_twenty_cent_spread():
+    def quotes(bid, ask):
+        rows = bot.eligible_markets([market(bid=bid, ask=ask)], "KXDOTA2GAME", NOW)
+        return bot.desired_quotes(rows, {})
+
+    yes, no, n = (TICKER, "yes"), (TICKER, "no"), P.CONTRACTS
+    assert quotes(0.40, 0.52) == {no: (49, n)}  # 12c: NO only
+    assert quotes(0.40, 0.59) == {no: (42, n)}  # 19c: NO only
+    assert quotes(0.40, 0.60) == {yes: (41, n), no: (41, n)}  # 20c: both
+    assert bot.quoted_sides(TICKER, 19) == ("no",)
+    assert bot.quoted_sides(TICKER, 20) == ("yes", "no")
+    # A NO-only series stays NO only at any spread; no spread given: v7's rule.
+    assert bot.quoted_sides("KXNCAAMB1HSPREAD-26NOV03DUKEUNC-DUKE7", 60) == ("no",)
+    assert bot.quoted_sides(TICKER) == ("yes", "no")
+    # Rows without a spread field (older callers): taken from the two prices.
+    assert bot.market_spread({"yes_price": 41, "no_price": 49}) == 12
+    assert bot.desired_quotes([_m(TICKER)], {}) == {no: (49, n)}
+    assert bot.desired_quotes([_m(TICKER, yes=31, no=41)], {}) == {
+        yes: (31, n),
+        no: (41, n),
+    }
+
+
+def test_v8_shadow_quotes_follow_the_same_sides():
+    rows = bot.eligible_markets([market(bid=0.40, ask=0.52)], "KXDOTA2GAME", NOW)
+    assert [q["side"] for q in bot.shadow_post([], rows, NOW)] == ["no"]
+    rows = bot.eligible_markets([market(bid=0.30, ask=0.55)], "KXDOTA2GAME", NOW)
+    assert sorted(q["side"] for q in bot.shadow_post([], rows, NOW)) == ["no", "yes"]
+
+
+def test_v8_a_resting_yes_bid_is_cancelled_when_the_spread_narrows(world):
+    world["quotes"][TICKER] = market(bid=0.30, ask=0.55)  # 25c: both sides
+    run(world)
+    ex = world["exchange"]
+    assert sorted((o["side"], o["price_cents"]) for o in ex.resting) == [
+        ("no", 46),
+        ("yes", 31),
+    ]
+    # Others tighten the market to 12c: the YES bid goes, NO is requoted.
+    world["quotes"][TICKER] = market(bid=0.40, ask=0.52)
+    run(world, NOW + timedelta(minutes=10))
+    assert [(o["side"], o["price_cents"]) for o in ex.resting] == [("no", 49)]
+    # Tighter than 10c: nothing rests and nothing new is placed.
+    world["quotes"][TICKER] = market(bid=0.44, ask=0.52)
+    placed = len(ex.placed)
+    report, markets = run(world, NOW + timedelta(minutes=20))
+    assert ex.resting == [] and markets == [] and len(ex.placed) == placed
+
+
+def test_v8_our_own_quotes_do_not_narrow_the_spread_we_measure(world):
+    world["quotes"][TICKER] = market(bid=0.30, ask=0.50)  # exactly 20c
+    run(world)
+    ex = world["exchange"]
+    assert len(ex.resting) == 2  # our 31c and 51c now make the listing 18c
+    canceled = len(ex.canceled)
+    run(world, NOW + timedelta(minutes=10))
+    # Still both sides, untouched: the spread is read without our orders.
+    assert len(ex.resting) == 2 and len(ex.canceled) == canceled

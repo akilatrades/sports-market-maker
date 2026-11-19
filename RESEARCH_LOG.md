@@ -4203,3 +4203,92 @@ there on the next poll in at least half of them, and a median of at least
 reached lines are reported, exploratory. A pass allows only a proposal for
 a separate, small, pre-registered live test; this entry changes nothing in
 `live/` and no limit.
+
+## 2026-11-19: One month live, and spread maker v8: wide spreads only (owner; pre-registered)
+
+*Written before any v8 order. The owner asked for a review of every bot
+since its first order and then, of the changes it suggested: "lets make all
+the changes". This entry covers the review and the spread maker; the NFL
+switch and the NBA order limit have their own entries below.*
+
+**One month of live results (18 October to 19 November; live, after fees).**
+
+| Bot | Contracts | Cost | Profit | Per contract |
+|---|---:|---:|---:|---:|
+| NBA | 826 | $337 | −$2.27 | −0.3¢ |
+| Spread maker | 910 | $300 | +$7.87 | +0.9¢ |
+| NFL | 20 | $11 | −$2.57 | −12.9¢ |
+| All | 1,756 | $648 | +$3.04 | +0.2¢ |
+
+No bot's result is distinguishable from zero. The total peaked at +$16.77
+on 10 November.
+
+**What the review found (live unless marked; exploratory: about 150 cuts of
+the same data, chosen after looking).**
+
+- *NBA.* One-contract orders made +$9.24 on 699 contracts (+1.3¢, game-level
+  t 0.9); the three-contract orders of 23–24 October lost $13.29 on 121.
+  Every order scored at its own price, filled or not: +2.0¢ (1,937 orders, t
+  2.2); the ones that filled: +1.0¢. The longshot rule replayed on every
+  market's public prints this season (simulated, one contract a market,
+  first in line): +1.2¢ (7,222 markets, 158 games, t 1.9); +3.0¢ in opening
+  week, about +0.7¢ since. v9 so far: 87 contracts, +$0.58. Rebounds lost
+  $10.45 live but are the best longshot stat in the same replay (+2.9¢, t
+  2.7): no change.
+- *Spread maker.* Settlement profit by the spread when quoted (813
+  contracts with a yes/no result): under 10¢, −$7.25 on 220 contracts
+  (−3.3¢); 10¢ or more, +$12.68 on 593 (+2.1¢). YES bids at spreads under
+  10¢: −$9.15 on 77 contracts. The year-long replay (simulated, first in
+  line, every sports series) agrees on the shape: resting YES −0.9¢ to
+  −1.4¢ at spreads under 10¢ and positive only from 20¢ (+2.8¢ to +3.9¢);
+  resting NO +1.1¢ to +1.9¢ under 10¢, +3.4¢ at 10–20¢, +8.6¢ at 20–50¢.
+- *Why v7 lost.* v7 (16–18 November) lost $11.00 on 174 contracts. About
+  85% of them filled at spreads under 10¢ (v6 esports: 10%), and those lost
+  $10.66. Esports books tightened that week (about a quarter of v7's quotes
+  were at spreads under 10¢, against almost none before), and a tight quote
+  fills far more often: 4.4% of orders against 0.1% at 20¢ or more. v7
+  traded a mix its rule was never tested on.
+- *Esports was not the reason v6 worked.* All versions: esports +1.0¢ a
+  contract (513 contracts), other series +1.1¢ (373). v6's +16¢ in esports,
+  which chose v7, came from a few wide-spread markets in two weeks; wide
+  esports fills lost $11.00 in the fortnight before.
+
+**v7's checkpoint.** v7 is stopped at 188 settled contracts and −$10.60,
+before its 300-contract bar, because its fills came from a different mix
+than the result it was based on. It is recorded as a failure of that rule
+at tight spreads, not as a test of esports.
+
+**Question.** Quoting esports only at spreads of 10¢ or more, with YES bids
+only at 20¢ or more, does the spread maker earn more than zero per contract
+after fees? The split by spread was chosen after looking at the same live
+fills, so those fills are in-sample; v8's own fills are the test.
+
+**Method.** Live v8 fills only (`research/live_checkpoint.py`,
+`SPREAD_VERSION`), profit per contract after fees at settlement, t
+clustered by event. No simulated fills are mixed in.
+
+**Pass/fail bar.** At 300 settled v8 contracts (about five weeks at the
+roughly 8 contracts a day these spreads have filled): continue if profit
+per contract is above zero; otherwise stop and review. More size only after
+600 or more settled contracts with event-clustered t ≥ 2. The −$15 daily
+and −$40 total spread stops and the account stops apply throughout.
+
+**Change (old → new).** `live/spread_policy.py`: `STRATEGY_VERSION`
+`spread-maker-v7-esports-only` → `spread-maker-v8-wide-spreads`;
+`MIN_SPREAD_CENTS` 4 → 10 (no quote at all under a 10¢ spread);
+`MIN_YES_SPREAD_CENTS` (new) 20: a YES bid only where the spread is 20¢ or
+more (before: both sides at any quoted spread). The spread is the one the
+bot already measures with its own resting orders taken out. A quote resting
+when its market tightens past these limits is cancelled on the next pass;
+contracts already held settle as usual. Unchanged: esports only, 2
+contracts a side, 2 net, $100 open, 24 hours, 60 orders a pass, 9,000 a
+day, the maintenance pause, the loss stops. Tests: `test_v8_*` in
+`tests/test_prod_spread_auto.py`.
+
+**Rule changes from here (owner, with this entry).** NBA v9 and spread v8
+keep their rules and sizes (one contract; two) until their checkpoints (400
+settled NBA fills; 300 settled spread contracts). The only reasons to
+change one sooner: a loss stop fires, the bot breaks its own written rules,
+or its fills come from a mix the rule was not tested on. NBA has had 8 rule
+sets in 31 days and the spread maker 6; no version has reached a sample
+that could prove anything.
