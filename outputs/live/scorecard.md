@@ -1,12 +1,12 @@
 # Live trader
 
-Updated 2026-11-16 23:38 UTC. Risk limits: kalshi/risk.py. Rule: no_seller_bookline.
+Updated 2026-11-19 05:52 UTC. Risk limits: kalshi/risk.py. Rule: no_seller_bookline.
 
 | Status | Orders | Dollars |
 |---|---:|---:|
-| cancelled | 1757 | $3,884.78 |
-| dry | 285 | $633.46 |
-| rejected | 11529 | $24,460.60 |
+| cancelled | 1825 | $4,033.82 |
+| dry | 270 | $600.08 |
+| rejected | 11841 | $25,136.81 |
 
 Rejections:
 
@@ -37,7 +37,9 @@ Rejections:
 - 6 orders already in game 401909895: 129
 - 6 orders already in game 401909941: 126
 - 6 orders already in game 401909304: 125
+- 6 orders already in game 401910005: 124
 - 6 orders already in game 401909964: 123
+- 6 orders already in game 401910006: 122
 - 6 orders already in game 401909091: 119
 - 6 orders already in game 401909848: 116
 - 6 orders already in game 401909960: 112
@@ -84,6 +86,7 @@ Rejections:
 - 6 orders already in game 401909981: 57
 - 6 orders already in game 401909939: 56
 - 6 orders already in game 401909942: 54
+- 6 orders already in game 401910004: 54
 - 6 orders already in game 401909858: 51
 - 6 orders already in game 401909894: 48
 - 6 orders already in game 401909944: 48
@@ -127,6 +130,7 @@ Rejections:
 - 6 orders already in game 401909914: 5
 - 6 orders already in game 401909289: 5
 - 6 orders already in game 401909974: 5
+- 6 orders already in game 401910013: 5
 - 6 orders already in game 401909868: 4
 - 6 orders already in game 401909281: 4
 - 6 orders already in game 401909969: 4
@@ -134,6 +138,8 @@ Rejections:
 - 6 orders already in game 401909913: 3
 - 6 orders already in game 401909973: 3
 - 6 orders already in game 401909302: 3
+- 6 orders already in game 401910018: 3
+- 6 orders already in game 401910017: 3
 - 6 orders already in game 401909886: 2
 - 6 orders already in game 401909280: 2
 - 6 orders already in game 401909303: 2
@@ -141,3 +147,4 @@ Rejections:
 - 6 orders already in game 401909925: 1
 - 6 orders already in game 401909928: 1
 - 6 orders already in game 401909972: 1
+- 6 orders already in game 401910016: 1
