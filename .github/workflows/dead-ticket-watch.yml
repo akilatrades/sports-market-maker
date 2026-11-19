@@ -1,0 +1,70 @@
+name: dead-ticket watch (read-only)
+# Watches late-game NBA prop quotes against the live box score and writes
+# down what a "dead ticket" trade would have seen (RESEARCH_LOG.md,
+# 2026-11-16, "Dead-ticket watch"). PUBLIC data only: ESPN's box score and
+# Kalshi's public quotes. No keys, no account, no orders.
+on:
+  pull_request:
+    paths:
+      - "research/dead_ticket_watch.py"
+      - "markets/nba/dead_ticket.py"
+      - "tests/test_dead_ticket.py"
+      - ".github/workflows/dead-ticket-watch.yml"
+  schedule:
+    - cron: "30 0 * * *" # 7:30 PM Eastern: the evening games
+    - cron: "0 18 * * *" # 1:00 PM Eastern: afternoon games, when there are any
+  workflow_dispatch:
+    inputs:
+      hours:
+        description: "Hours to watch"
+        required: false
+        default: "5.7"
+permissions:
+  contents: write
+concurrency:
+  group: dead-ticket-watch
+  cancel-in-progress: false
+jobs:
+  watch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 355
+    env:
+      KALSHI_ENV: prod
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r requirements.txt
+      - name: Tests and one live pass (pull requests)
+        if: github.event_name == 'pull_request'
+        run: |
+          set -euo pipefail
+          pip install pytest
+          pytest -q tests/test_dead_ticket.py
+          python -m research.dead_ticket_watch probe
+      - name: Watch
+        if: github.event_name != 'pull_request'
+        env:
+          HOURS: ${{ inputs.hours }}
+        run: |
+          set -euo pipefail
+          HOURS="${HOURS:-5.7}"
+          [[ "$HOURS" =~ ^[0-9]+(\.[0-9]+)?$ ]]
+          python -m research.dead_ticket_watch watch --hours "$HOURS"
+      - name: Summarize what has settled
+        if: github.event_name != 'pull_request'
+        run: python -m research.dead_ticket_watch summarize
+      - name: Commit read-only evidence
+        if: github.event_name != 'pull_request'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A outputs/dead_ticket
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m "Dead-ticket watch $(date -u +%Y-%m-%dT%H:%MZ)"
+          for attempt in 1 2 3 4 5; do
+            if git pull --rebase -X theirs && git push; then exit 0; fi
+            sleep $((attempt * 5))
+          done
+          exit 1
