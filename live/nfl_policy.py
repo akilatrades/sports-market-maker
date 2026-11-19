@@ -22,6 +22,14 @@ MAX_GAME_ORDERS = 2
 MAX_CONTRACTS = 1  # v3: 5
 FEE_RESERVE = 1.10
 STRATEGY_VERSION = "nfl-no-v4-book-priced"
+# 2026-11-19 (owner, RESEARCH_LOG.md "NFL: no new orders"): False means a
+# live pass places no new order (before: True, implied). In a month NFL
+# placed 15 orders for 7 fills and lost $2.57, and any NFL order left with
+# an unknown outcome stops all three bots. Everything else in a pass still
+# runs: fills and settlements are recorded, unsafe resting orders are
+# cancelled and the account stops are read, so Go live can keep starting the
+# NFL timer beside NBA's. Dry runs are unchanged.
+NEW_ORDERS = False
 MIN_RESERVED_EDGE = 0.03
 MAX_ENTRY_NET_EDGE = 0.15  # unchanged from v3 (see above)
 MODEL_VETO_MIN_EDGE = 0.0  # the model's own NO edge after fees must clear this
