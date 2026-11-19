@@ -92,6 +92,19 @@ def games_in_play(payload, now=None):
     return live, waiting
 
 
+def board_statuses(payload):
+    """ESPN id -> the game's status on the scoreboard (period, clock, state)."""
+    out = {}
+    for event in (payload or {}).get("events", []):
+        try:
+            status = event["competitions"][0].get("status") or event.get("status")
+            if isinstance(status, dict):
+                out[str(event["id"])] = status
+        except (KeyError, IndexError, TypeError):
+            continue
+    return out
+
+
 def _price(value):
     try:
         return float(value)
@@ -210,11 +223,14 @@ def one_pass(now, sources=None):
     """Every qualifying row right now, and whether any game is in play or
     starts within SOON_HOURS."""
     s = sources or {}
-    live, waiting = games_in_play(s.get("scoreboards", scoreboards)(now), now)
+    board = s.get("scoreboards", scoreboards)(now)
+    live, waiting = games_in_play(board, now)
+    statuses = board_statuses(board)
     rows = []
     for game_id, game in live:
         try:
-            state = D.parse_summary(s.get("summary", fetch_summary)(game_id))
+            payload = s.get("summary", fetch_summary)(game_id)
+            state = D.parse_summary(payload, statuses.get(game_id))
             if state is None or state["minutes_left"] > D.MAX_MINUTES_LEFT:
                 continue
             markets = s.get("markets", fetch_game_markets)(game)
@@ -358,6 +374,79 @@ def summarize(out=OUT, results_for=fetch_results):
     return summary
 
 
+def shape(payload):
+    """A short description of a summary payload's layout, for the check's
+    log when the box score does not parse (no personal data: field names and
+    one player's public stat line)."""
+
+    def keys(value):
+        return sorted(value)[:25] if isinstance(value, dict) else type(value).__name__
+
+    out = {"top": keys(payload)}
+    try:
+        competition = payload["header"]["competitions"][0]
+        out["status"] = competition.get("status")
+        out["competitor"] = keys(competition["competitors"][0])
+        out["competitor_team"] = keys(competition["competitors"][0].get("team"))
+        out["score"] = competition["competitors"][0].get("score")
+    except (KeyError, IndexError, TypeError) as error:
+        out["header_error"] = f"{type(error).__name__}: {error}"
+    try:
+        box = payload["boxscore"]
+        out["boxscore"] = keys(box)
+        block = box["players"][0]
+        out["block"] = keys(block)
+        out["block_team"] = keys(block.get("team"))
+        table = block["statistics"][0]
+        out["table"] = keys(table)
+        for name in ("names", "labels", "keys"):
+            out[name] = table.get(name)
+        athlete = table["athletes"][0]
+        out["athlete"] = keys(athlete)
+        out["athlete_who"] = keys(athlete.get("athlete"))
+        out["athlete_stats"] = athlete.get("stats")
+    except (KeyError, IndexError, TypeError) as error:
+        out["boxscore_error"] = f"{type(error).__name__}: {error}"
+    return out
+
+
+def probe(now=None, sources=None):
+    """One look at the public feeds, for a pull request's check: what the
+    scoreboard lists, and whether a finished game's box score parses the way
+    a live one must (its state is read as "in" for this check only)."""
+    s = sources or {}
+    now = now or datetime.now(timezone.utc)
+    board = s.get("scoreboards", scoreboards)(now)
+    live, waiting = games_in_play(board, now)
+    out = {"events": len(board["events"]), "in_play": len(live), "soon": waiting}
+    for event in board["events"]:
+        try:
+            status = event["competitions"][0]["status"]["type"]
+            if status["state"] != "post":
+                continue
+            payload = s.get("summary", fetch_summary)(str(event["id"]))
+            payload["header"]["competitions"][0]["status"]["type"]["state"] = "in"
+            board_status = board_statuses(board).get(str(event["id"]))
+            out["board_status"] = board_status
+            state = D.parse_summary(payload, board_status)
+        except (OSError, KeyError, IndexError, TypeError, ValueError) as error:
+            out["box_score_error"] = type(error).__name__
+            break
+        out["box_score_game"] = game_code(event)
+        out["box_score_parsed"] = state is not None
+        if state is None:
+            out["layout"] = shape(payload)
+        if state is not None:
+            players = state["players"]
+            out["players"] = len(players)
+            out["period"] = state["period"]
+            top = max(players.items(), key=lambda kv: kv[1]["points"], default=None)
+            out["top_scorer"] = None if top is None else [*top[0], top[1]]
+        break
+    print(json.dumps(out))
+    return out
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     sub = parser.add_subparsers(dest="command", required=True)
@@ -365,9 +454,15 @@ def main():
     w.add_argument("--hours", type=float, default=5.5)
     w.add_argument("--poll", type=int, default=POLL_SECONDS)
     sub.add_parser("summarize")
+    sub.add_parser("probe")
     args = parser.parse_args()
     if args.command == "watch":
         watch(args.hours, args.poll)
+    elif args.command == "probe":
+        found = probe()
+        # A finished game was listed but its box score did not parse: fail.
+        if found.get("box_score_error") or found.get("box_score_parsed") is False:
+            raise SystemExit(1)
     else:
         summarize()
 

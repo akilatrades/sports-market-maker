@@ -42,20 +42,7 @@ jobs:
           set -euo pipefail
           pip install pytest
           pytest -q tests/test_dead_ticket.py
-          python - <<'PY'
-          from datetime import datetime, timezone
-
-          from research import dead_ticket_watch as W
-
-          now = datetime.now(timezone.utc)
-          board = W.scoreboards(now)
-          live, waiting = W.games_in_play(board)
-          print("events", len(board["events"]), "in play", live, "waiting", waiting)
-          rows, active = W.one_pass(now)
-          print("qualifying rows", len(rows), "active", active)
-          for row in rows[:5]:
-              print(row)
-          PY
+          python -m research.dead_ticket_watch probe
       - name: Watch
         if: github.event_name != 'pull_request'
         env:

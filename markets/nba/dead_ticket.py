@@ -122,9 +122,13 @@ def clock_seconds(status):
         return (float(minutes) if minutes else 0.0) * 60 + float(seconds)
 
 
-def parse_summary(payload):
+def parse_summary(payload, board_status=None):
     """ESPN game summary -> the state the rules need, or None when the game
     is not in progress or the payload is not as expected.
+
+    The summary's own status may carry only the game's state; the period and
+    clock then come from ``board_status``, the same game's status on the
+    scoreboard.
 
     {"game": "26NOV14BKNMEM", "period", "clock_seconds", "minutes_left",
      "margin" (absolute score gap), "players": {(team, key): {stat: n}}}
@@ -132,11 +136,14 @@ def parse_summary(payload):
     """
     try:
         competition = payload["header"]["competitions"][0]
-        status = competition["status"]
-        if status["type"]["state"] != "in":
+        status = competition.get("status") or {}
+        board = board_status or {}
+        state = (status.get("type") or board.get("type") or {}).get("state")
+        if state != "in":
             return None
-        period = int(status["period"])
-        clock = clock_seconds(status)
+        timing = status if "period" in status else board
+        period = int(timing["period"])
+        clock = clock_seconds(timing)
         sides = {c["homeAway"]: c for c in competition["competitors"]}
         home = kalshi_team(sides["home"]["team"]["abbreviation"])
         away = kalshi_team(sides["away"]["team"]["abbreviation"])
