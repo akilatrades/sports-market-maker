@@ -358,6 +358,42 @@ def summarize(out=OUT, results_for=fetch_results):
     return summary
 
 
+def shape(payload):
+    """A short description of a summary payload's layout, for the check's
+    log when the box score does not parse (no personal data: field names and
+    one player's public stat line)."""
+
+    def keys(value):
+        return sorted(value)[:25] if isinstance(value, dict) else type(value).__name__
+
+    out = {"top": keys(payload)}
+    try:
+        competition = payload["header"]["competitions"][0]
+        out["status"] = competition.get("status")
+        out["competitor"] = keys(competition["competitors"][0])
+        out["competitor_team"] = keys(competition["competitors"][0].get("team"))
+        out["score"] = competition["competitors"][0].get("score")
+    except (KeyError, IndexError, TypeError) as error:
+        out["header_error"] = f"{type(error).__name__}: {error}"
+    try:
+        box = payload["boxscore"]
+        out["boxscore"] = keys(box)
+        block = box["players"][0]
+        out["block"] = keys(block)
+        out["block_team"] = keys(block.get("team"))
+        table = block["statistics"][0]
+        out["table"] = keys(table)
+        for name in ("names", "labels", "keys"):
+            out[name] = table.get(name)
+        athlete = table["athletes"][0]
+        out["athlete"] = keys(athlete)
+        out["athlete_who"] = keys(athlete.get("athlete"))
+        out["athlete_stats"] = athlete.get("stats")
+    except (KeyError, IndexError, TypeError) as error:
+        out["boxscore_error"] = f"{type(error).__name__}: {error}"
+    return out
+
+
 def probe(now=None, sources=None):
     """One look at the public feeds, for a pull request's check: what the
     scoreboard lists, and whether a finished game's box score parses the way
@@ -380,6 +416,8 @@ def probe(now=None, sources=None):
             break
         out["box_score_game"] = game_code(event)
         out["box_score_parsed"] = state is not None
+        if state is None:
+            out["layout"] = shape(payload)
         if state is not None:
             players = state["players"]
             out["players"] = len(players)
