@@ -358,6 +358,39 @@ def summarize(out=OUT, results_for=fetch_results):
     return summary
 
 
+def probe(now=None, sources=None):
+    """One look at the public feeds, for a pull request's check: what the
+    scoreboard lists, and whether a finished game's box score parses the way
+    a live one must (its state is read as "in" for this check only)."""
+    s = sources or {}
+    now = now or datetime.now(timezone.utc)
+    board = s.get("scoreboards", scoreboards)(now)
+    live, waiting = games_in_play(board, now)
+    out = {"events": len(board["events"]), "in_play": len(live), "soon": waiting}
+    for event in board["events"]:
+        try:
+            status = event["competitions"][0]["status"]["type"]
+            if status["state"] != "post":
+                continue
+            payload = s.get("summary", fetch_summary)(str(event["id"]))
+            payload["header"]["competitions"][0]["status"]["type"]["state"] = "in"
+            state = D.parse_summary(payload)
+        except (OSError, KeyError, IndexError, TypeError, ValueError) as error:
+            out["box_score_error"] = type(error).__name__
+            break
+        out["box_score_game"] = game_code(event)
+        out["box_score_parsed"] = state is not None
+        if state is not None:
+            players = state["players"]
+            out["players"] = len(players)
+            out["period"] = state["period"]
+            top = max(players.items(), key=lambda kv: kv[1]["points"], default=None)
+            out["top_scorer"] = None if top is None else [*top[0], top[1]]
+        break
+    print(json.dumps(out))
+    return out
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     sub = parser.add_subparsers(dest="command", required=True)
@@ -365,9 +398,15 @@ def main():
     w.add_argument("--hours", type=float, default=5.5)
     w.add_argument("--poll", type=int, default=POLL_SECONDS)
     sub.add_parser("summarize")
+    sub.add_parser("probe")
     args = parser.parse_args()
     if args.command == "watch":
         watch(args.hours, args.poll)
+    elif args.command == "probe":
+        found = probe()
+        # A finished game was listed but its box score did not parse: fail.
+        if found.get("box_score_error") or found.get("box_score_parsed") is False:
+            raise SystemExit(1)
     else:
         summarize()
 

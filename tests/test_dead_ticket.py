@@ -225,6 +225,34 @@ def test_a_game_hours_away_does_not_keep_the_watcher_waiting():
     )
 
 
+def test_probe_reads_a_finished_game_as_if_live():
+    def event(state):
+        return {
+            "id": "7",
+            "date": "2026-11-15T01:00Z",
+            "competitions": [
+                {
+                    "status": {"type": {"state": state}},
+                    "competitors": [
+                        {"homeAway": "home", "team": {"abbreviation": "MEM"}},
+                        {"homeAway": "away", "team": {"abbreviation": "BKN"}},
+                    ],
+                }
+            ],
+        }
+
+    final = lambda game_id: summary(state="post", clock=0.0)  # noqa: E731
+    sources = {"scoreboards": lambda now: {"events": [event("post")]}, "summary": final}
+    out = W.probe(NOW, sources)
+    assert out["box_score_parsed"] and out["players"] == 2 and out["period"] == 4
+    assert out["box_score_game"] == "26NOV14BKNMEM"
+    assert out["top_scorer"][:2] == ["MEM", "JMORANT"]
+    broken = sources | {"summary": lambda game_id: {"header": {}}}
+    assert W.probe(NOW, broken)["box_score_error"] == "KeyError"
+    nothing = {"scoreboards": lambda now: {"events": [event("pre")]}}
+    assert "box_score_parsed" not in W.probe(NOW, nothing)
+
+
 def test_throttled_books_once_per_window():
     calls, clock = [], [0.0]
     read = W.throttled_books(
