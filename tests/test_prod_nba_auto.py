@@ -140,7 +140,7 @@ def test_separate_risk_caps_and_state():
     assert nba.MAX_DAILY_COST == 150
     assert nba.MAX_GAME_ORDERS == 40
     assert nba.MAX_CONTRACTS == 1
-    assert nba.MAX_NEW_ORDERS_PER_PASS == 3
+    assert nba.MAX_NEW_ORDERS_PER_PASS == 6  # 3 until 2026-11-19
     assert nba.PRICE_BAND_CENTS == (65, 95)  # v9; v2-v8: (5, 95)
     assert nba.MAX_REALIZED_DAILY_LOSS == 20
     assert nba.MAX_REALIZED_CUMULATIVE_LOSS == 100

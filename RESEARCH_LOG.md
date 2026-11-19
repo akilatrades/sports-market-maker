@@ -4292,3 +4292,69 @@ change one sooner: a loss stop fires, the bot breaks its own written rules,
 or its fills come from a mix the rule was not tested on. NBA has had 8 rule
 sets in 31 days and the spread maker 6; no version has reached a sample
 that could prove anything.
+
+## 2026-11-19: NFL: no new orders (owner)
+
+*Not a test: a switch. Part of "lets make all the changes" after the
+one-month review above.*
+
+**Why (live).** From 18 October to 19 November the NFL bot placed 15 orders
+and got 7 fills (20 contracts, $10.57 at cost) for −$2.57. That is too
+little to learn anything from, and an NFL order whose outcome Kalshi does
+not confirm stops all three bots (`live/shared_account_risk.py`), as NBA
+and spread-maker orders did on 5, 7 and 12 November.
+
+**Change (old → new).** `live/nfl_policy.py`: `NEW_ORDERS` (new) `False`. A
+live NFL pass now ends with the decision `new_orders_off` before it prices
+or sends any order (before: it placed up to its limits). Everything earlier
+in the pass still runs: fills and settlements are recorded, resting orders
+that fail the availability checks are cancelled, the account loss stop is
+read. `GO_LIVE` still starts the NFL timer beside NBA's, so the shared
+account checks are unchanged. Dry runs still list the orders it would
+place. Limits and `STRATEGY_VERSION` (`nfl-no-v4-book-priced`) are
+unchanged; turning NFL back on is `NEW_ORDERS = True` through a reviewed
+change. Tests: `test_nfl_off_*` in `tests/test_prod_nfl_auto.py`.
+
+## 2026-11-19: NBA: six new orders a pass (owner)
+
+*A throughput limit, not a rule: which markets qualify, at what price and
+size, is unchanged, so this stays v9 and counts toward v9's checkpoint.*
+
+**What limited the bot (live, exploratory).** Of the 493 v8 and v9 passes
+that placed any order, 468 placed exactly 3, the limit, and such passes
+came about every 10 minutes: at most about 18 orders an hour whatever the
+slate. On v9's first two nights the bot ordered in 114 of the 620 longshot
+markets where a YES buyer traded 1 to 6 hours before tip-off (18%), on
+nights with 71 and 134 orders. The limit, not the rules, was choosing.
+Orders are taken in order of sportsbook edge, so the limit also favoured
+the largest edges, which did not do better live (edge of 6¢ or more: −5.7¢
+a contract on 181 contracts; 2¢ to 6¢: +2.0¢ on 428). An order takes about
+2 seconds to place; the first is accepted a median 97 seconds into a pass.
+
+**Change (old → new).** `live/prod_nba_auto.py`:
+`MAX_NEW_ORDERS_PER_PASS` 3 → 6. `NEW_ORDER_DEADLINE_SECONDS` (150) still
+stops new orders in a slow pass, and it is checked again before each
+order. Unchanged: one contract an order, the 65–95¢ NO band, the −3¢ to 8¢
+sportsbook check, $150 of orders a day, $150 open, $50 a game, $25 a team,
+40 orders a game, the loss stops, the account caps. A day's orders
+therefore still cost at most $150 (about 160 orders at v9's prices); the
+bot reaches that sooner on a large slate. Not 10: at 60 orders an hour the
+day's $150 would go to the early games before the late games' window
+opens, which concentrates the night in fewer games.
+
+**What to watch (not a bar).** Orders and fills a night (v9 so far: about 76
+orders and 29 fills), and how many games they are spread over. v9's bar is
+unchanged: 400 settled fills, then 1,500 with game-clustered t ≥ 2. Tests:
+`test_one_scan_places_at_most_six_orders` and the pinned limits.
+
+**Not changed, and why.** Ordering in markets the sportsbooks do not price
+would cover more of them, but it means letting the stat model price orders
+again; live, model-priced fills lost 7.3¢ a contract (142 contracts, v5–v6)
+and the owner turned that off in v7. Raising the $150 daily limit is the
+owner's decision and is not part of this change.
+
+**For the owner to check.** On 18 November the bot placed 24 orders on a
+12-game night, in 8 passes; the status button will show whether its
+sportsbook or model inputs stalled that evening. Order passes come every
+10 minutes although the timer runs every 2 in the evening; the status
+output will show what the passes in between report.

@@ -102,7 +102,7 @@ code is right.
 | Cost per team | $25 per day | $3 (lifetime) |
 | Open orders at once | $150 | $15 |
 | New orders per day | $150 | $30 |
-| New orders per scan | 3 | 1 |
+| New orders per scan | 6 (3 until 19 November) | 1 (none since 19 November: NFL places no new orders) |
 | Edge needed to post | −3¢ to 8¢ (books); the model is not used | 3¢ to 15¢ (books), model must not disagree |
 | Sportsbook price age | 60 min to post; a resting order keeps one up to 120 min | unchanged |
 | Price range | 65–95¢ NO (v8: 5–95¢) | 10–90¢ |

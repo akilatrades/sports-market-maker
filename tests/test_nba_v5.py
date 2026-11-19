@@ -80,19 +80,20 @@ def no_fees(monkeypatch):
     )
 
 
-def test_one_scan_places_at_most_three_orders(tmp_path, no_fees):
+def test_one_scan_places_at_most_six_orders(tmp_path, no_fees):
+    # 3 until 2026-11-19 ("NBA: six new orders a pass").
     client = Client()
     journal = tmp_path / "journal.jsonl"
-    assert nba.pass_once(client, ARMED, several(5), NOW, journal)
-    assert len(client.posts) == nba.MAX_NEW_ORDERS_PER_PASS == 3
+    assert nba.pass_once(client, ARMED, several(9), NOW, journal)
+    assert len(client.posts) == nba.MAX_NEW_ORDERS_PER_PASS == 6
     events = nba.load_journal(journal)
     intents = [e for e in events if e["event"] == "intent"]
     accepted = [e for e in events if e["event"] == "accepted"]
-    assert len(intents) == len(accepted) == 3
+    assert len(intents) == len(accepted) == 6
     assert {e["strategy_version"] for e in intents} == {nba.STRATEGY_VERSION}
     assert all(e["count"] == nba.MAX_CONTRACTS for e in intents)
     report = json.loads((tmp_path / "last_scan.json").read_text())
-    assert report["decision"] == "accepted" and report["attempts"] == 3
+    assert report["decision"] == "accepted" and report["attempts"] == 6
 
 
 def test_caps_are_rechecked_after_each_order_in_the_same_scan(
@@ -261,7 +262,7 @@ def test_filled_v4_position_does_not_block_v5(tmp_path, exchange_offline):
     write_v4_order(journal)
     client = Exchange(positions=[{"ticker": "KXNBA-V4-OLD", "position_fp": "-2"}])
     assert nba.pass_once(client, ARMED, several(5), NOW, journal)
-    assert len(client.posts) == 3 and client.cancels == []
+    assert len(client.posts) == 5 and client.cancels == []  # all five fit a pass
 
 
 def test_ambiguous_second_order_halts_this_and_the_next_pass(tmp_path, no_fees):
@@ -493,7 +494,8 @@ def test_scan_skips_recently_observed_resting_queue(
 
     client = Counting(resting=[{"order_id": "oid-v5", "ticker": ticker}])
     assert nba.pass_once(client, ARMED, frame, NOW, journal)
-    assert client.cancels == [] and len(client.posts) == 3
+    # Five markets, one already resting: the other four fit one pass.
+    assert client.cancels == [] and len(client.posts) == 4
     assert client.queue_reads.count("oid-v5") == resting_reads
 
 

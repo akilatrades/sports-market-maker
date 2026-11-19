@@ -23,7 +23,8 @@ file is the short version for an AI helping them.
   during Kalshi's Thursday 3–5am ET maintenance), which rests NO bids one
   cent inside 10¢+ spreads and YES bids only at 20¢+. NBA and NFL were switched off with
   Go live / Stop on 16 November; NBA v9 runs once the owner presses
-  `GO_LIVE` again (that arms NFL too; it rarely finds an order). **You cannot
+  `GO_LIVE` again (that starts NFL's timer too, but NFL places no new
+  orders since 19 November: `nfl_policy.NEW_ORDERS`). **You cannot
   see the server, the account or its private journals**; only the public
   files here. Questions
   about live results go to the owner. If the owner has added the private
