@@ -102,7 +102,7 @@ code is right.
 | Cost per team | $25 per day | $3 (lifetime) |
 | Open orders at once | $150 | $15 |
 | New orders per day | $150 | $30 |
-| New orders per scan | 3 | 1 |
+| New orders per scan | 6 (3 until 19 November) | 1 (none since 19 November: NFL places no new orders) |
 | Edge needed to post | −3¢ to 8¢ (books); the model is not used | 3¢ to 15¢ (books), model must not disagree |
 | Sportsbook price age | 60 min to post; a resting order keeps one up to 120 min | unchanged |
 | Price range | 65–95¢ NO (v8: 5–95¢) | 10–90¢ |
@@ -125,10 +125,12 @@ of wide-spread markets outside NBA and NFL props: up to 2 contracts per
 order and 2 per market side, $100 open, its own −$15 daily and −$40 total
 loss stops, and the account stops above. It quotes only before a known event
 start (rules v2, v3 from 23 October, v5 from 30 October, v6 once deployed
-after 2 November, v7 once deployed after 16 November): since v7 it quotes
+after 2 November, v7 once deployed after 16 November, v8 once deployed
+after 19 November): since v7 it quotes
 esports series only (v6: every series below) and runs no pass during Kalshi's
 Thursday 3–5am ET maintenance or while Kalshi reports trading paused. A new
-quote needs a spread of 4¢ or more and the start
+quote needs a spread of 10¢ or more (v6–v7: 4¢), a YES bid needs 20¢ or
+more (new in v8), and the start
 85 minutes to 24 hours away, every market of an event is quoted (v5: one),
 esports included (v5: none), and every quote is cancelled 20 minutes before
 the start. On NCAA men's first-half spreads it sells NO only, 5 contracts an

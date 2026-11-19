@@ -28,13 +28,28 @@ from pathlib import Path
 # split after looking): esports +16.1c a contract over 119 contracts and 51
 # matches (match-level t 2.5); women's college basketball -5.7c over 187;
 # everything else -2.4c over 50. Every other limit is v6's.
-STRATEGY_VERSION = "spread-maker-v7-esports-only"
+# v8 (2026-11-19, RESEARCH_LOG.md "Spread maker v8: wide spreads only",
+# owner: "lets make all the changes"): quotes only at spreads of
+# MIN_SPREAD_CENTS = 10c or more (v6-v7: 4c), and a YES bid only at
+# MIN_YES_SPREAD_CENTS = 20c or more (new rule; before, both sides at any
+# quoted spread). Live to 18 November (exploratory, split after looking):
+# fills at spreads under 10c lost 3.3c a contract over 220 contracts, those
+# at 10c or more made 2.1c over 593; under v7 about 85% of contracts filled
+# at spreads under 10c and lost $10.66 in three days. Every other limit,
+# esports only included, is v7's.
+STRATEGY_VERSION = "spread-maker-v8-wide-spreads"
 # The shared-risk cohort journal lives in STATE; the owner creates ARM_MARKER
 # to allow live orders.
 STATE = Path("/home/trader/prod-spread-auto")
 ARM_MARKER = Path("/etc/market-maker-spread.enabled")
 
-MIN_SPREAD_CENTS = 4  # v6; v1-v5: 8
+MIN_SPREAD_CENTS = 10  # v8; v6-v7: 4; v1-v5: 8
+# v8, new rule: a YES bid needs a spread at least this wide (before: any
+# quoted spread). In the year-long replay (simulated, first in line) resting
+# YES bids lost 0.9c to 1.4c a contract at spreads under 10c and were
+# positive only from 20c (+2.8c to +3.9c); live, YES fills at spreads under
+# 10c lost 11.9c a contract over 77 contracts.
+MIN_YES_SPREAD_CENTS = 20
 WINDOW_HOURS = (4.0, 24.0)  # hours before the market's expected expiration (v2: 4-7)
 PRICE_RANGE_CENTS = (2, 98)  # both of our quotes must lie inside this range
 # Sizes and stops: owner's 5-contract amendment (RESEARCH_LOG.md, 2026-10-22,

@@ -37,6 +37,7 @@ from live.nfl_policy import (
     MAX_TEAM_COST,
     MIN_RESERVED_EDGE,
     MODEL_VETO_MIN_EDGE,
+    NEW_ORDERS,
     STATE,
     STRATEGY_VERSION,
     money,
@@ -594,7 +595,8 @@ def pass_once(client, env, frame, now, journal, *, dry=False):
         else:
             state = current_production_state(client, attempts, accepted)
         free = money(client.balance()["balance"])
-        if free < MAX_ORDER_COST * FEE_RESERVE:
+        # Cash only matters to a pass that may order (NEW_ORDERS, 2026-11-19).
+        if NEW_ORDERS and free < MAX_ORDER_COST * FEE_RESERVE:
             raise TradingError("Production cash balance insufficient")
     else:
         state = {"active": []}
@@ -672,6 +674,12 @@ def pass_once(client, env, frame, now, journal, *, dry=False):
             f"held={len(state['held'])}, settled_tickers={len(state['settled'])}, "
             f"fills={len(fills)}, gross_reserved=${sum(reserve(a['cost']) for a in attempts):.2f}/${MAX_GROSS_COST:.0f}"
         )
+    if not dry and not NEW_ORDERS:
+        # Owner, 2026-11-19: NFL places no new orders. Everything above has
+        # run: fills and settlements recorded, unsafe resting orders
+        # cancelled, the account stop read.
+        print("NFL new orders are switched off (nfl_policy.NEW_ORDERS)")
+        return finish("new_orders_off", candidates=len(candidates))
     if not candidates:
         print("No eligible late-window NFL opportunities")
         return finish("no_eligible_candidates")

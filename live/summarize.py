@@ -252,6 +252,7 @@ def running_now():
             "contracts_per_order": spread.CONTRACTS,
             "max_net_per_market_side": spread.MAX_NET_PER_MARKET,
             "min_spread_cents": spread.MIN_SPREAD_CENTS,
+            "min_yes_spread_cents": spread.MIN_YES_SPREAD_CENTS,
             "hours_before_expiration": list(spread.WINDOW_HOURS),
             "min_lead_minutes": spread.MIN_LEAD_MINUTES,
             "cancel_lead_minutes": spread.CANCEL_LEAD_MINUTES,

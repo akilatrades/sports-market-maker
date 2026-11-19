@@ -95,7 +95,15 @@ MAX_ENTRY_NET_EDGE = 0.08  # v6: 0.15; live, the largest edges were model errors
 # it removed about 30% of orders. Old value: 0.0 (the model's own NO edge
 # after the fee had to be >= 0).
 MODEL_VETO_MIN_EDGE = None
-MAX_NEW_ORDERS_PER_PASS = 3
+# 3 -> 6 on 2026-11-19 (owner; RESEARCH_LOG.md "NBA: six new orders a
+# pass"). Live v8-v9, 468 of the 493 passes that placed an order placed
+# exactly 3, and such passes came about every 10 minutes, so the limit, not
+# the rules, decided how many qualifying markets got an order (v9: 18% of
+# the longshot markets with YES buying). An order takes about 2 seconds and
+# NEW_ORDER_DEADLINE_SECONDS still stops new orders in a slow pass. Every
+# dollar cap is unchanged, so a day's orders still cost at most
+# MAX_DAILY_COST.
+MAX_NEW_ORDERS_PER_PASS = 6
 PRICE_BAND_CENTS = (65, 95)  # NO price, inclusive (v9; v2-v8: 5-95)
 # systemd stops a pass after TimeoutStartSec=240. A stop between an order's
 # journal intent and its acceptance halts all future orders, so no new order

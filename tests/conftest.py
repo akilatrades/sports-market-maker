@@ -28,3 +28,16 @@ def nba_logic_tests_use_the_wide_price_band(request, monkeypatch):
     import live.prod_nba_auto as nba
 
     monkeypatch.setattr(nba, "PRICE_BAND_CENTS", (5, 95))
+
+
+@pytest.fixture(autouse=True)
+def nfl_logic_tests_may_place_orders(request, monkeypatch):
+    """NFL places no new live orders since 2026-11-19 (nfl_policy.NEW_ORDERS
+    is False). The NFL logic tests were written while it traded, so they run
+    with new orders on; the ``test_nfl_off_`` tests see the real switch."""
+    name = request.node.originalname or request.node.name
+    if name.startswith("test_nfl_off_"):
+        return
+    import live.prod_nfl_auto as nfl
+
+    monkeypatch.setattr(nfl, "NEW_ORDERS", True)

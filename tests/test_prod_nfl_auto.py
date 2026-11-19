@@ -567,3 +567,66 @@ def test_v4_model_alone_cannot_select_an_nfl_order():
     stats = {}
     assert auto.select_candidates(f, [], {"active": []}, NOW, diagnostics=stats) == []
     assert stats["book_priced"] == 0
+
+
+# ----------------------------------------- 2026-11-19: no new NFL orders
+
+
+def test_nfl_off_the_switch_is_off_in_the_policy():
+    from live import nfl_policy
+
+    assert nfl_policy.NEW_ORDERS is False and auto.NEW_ORDERS is False
+    assert nfl_policy.STRATEGY_VERSION == "nfl-no-v4-book-priced"
+
+
+def test_nfl_off_a_live_pass_places_nothing_and_says_why(quotes, tmp_path, capsys):
+    client = Client()
+    journal = tmp_path / "ledger.jsonl"
+    assert auto.select_candidates(frame(), [], {"active": []}, NOW)  # one is eligible
+    assert not auto.pass_once(client, ARMED, frame(), NOW, journal)
+    assert client.placed == []
+    attempts, accepted = auto.records(auto.load_journal(journal))
+    assert attempts == [] and accepted == {}
+    import json
+
+    scan = json.loads((tmp_path / "last_scan.json").read_text())
+    assert scan["decision"] == "new_orders_off" and scan["candidates"] == 1
+    assert "switched off" in capsys.readouterr().out
+
+
+def test_nfl_off_resting_orders_are_still_checked_and_cancelled(
+    quotes, tmp_path, monkeypatch
+):
+    client = Client()
+    journal = tmp_path / "ledger.jsonl"
+    with monkeypatch.context() as before:
+        before.setattr(auto, "NEW_ORDERS", True)
+        assert auto.pass_once(client, ARMED, frame(), NOW, journal)
+    assert len(client.placed) == 1 and len(client.resting) == 1
+    # The player turns doubtful: the resting order goes, switch on or off.
+    later = NOW + timedelta(minutes=1)
+    assert not auto.pass_once(client, ARMED, frame(injury="Doubtful"), later, journal)
+    assert client.resting == [] and len(client.cancelled) == 1
+    assert len(client.placed) == 1
+
+
+def test_nfl_off_dry_runs_still_show_what_would_be_ordered(quotes, tmp_path):
+    client = Client()
+    journal = tmp_path / "ledger.jsonl"
+    auto.pass_once(client, {}, frame(), NOW, journal, dry=True)
+    assert client.placed == [] and not journal.exists()
+
+
+def test_nfl_off_low_cash_stops_only_a_pass_that_may_order(
+    quotes, tmp_path, monkeypatch
+):
+    class Broke(Client):
+        def balance(self):
+            return {"balance": 1.0}
+
+    journal = tmp_path / "ledger.jsonl"
+    assert not auto.pass_once(Broke(), ARMED, frame(), NOW, journal)  # off: no error
+    with monkeypatch.context() as before:
+        before.setattr(auto, "NEW_ORDERS", True)
+        with pytest.raises(TradingError, match="cash balance insufficient"):
+            auto.pass_once(Broke(), ARMED, frame(), NOW, journal)
