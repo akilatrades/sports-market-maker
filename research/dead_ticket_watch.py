@@ -92,6 +92,19 @@ def games_in_play(payload, now=None):
     return live, waiting
 
 
+def board_statuses(payload):
+    """ESPN id -> the game's status on the scoreboard (period, clock, state)."""
+    out = {}
+    for event in (payload or {}).get("events", []):
+        try:
+            status = event["competitions"][0].get("status") or event.get("status")
+            if isinstance(status, dict):
+                out[str(event["id"])] = status
+        except (KeyError, IndexError, TypeError):
+            continue
+    return out
+
+
 def _price(value):
     try:
         return float(value)
@@ -210,11 +223,14 @@ def one_pass(now, sources=None):
     """Every qualifying row right now, and whether any game is in play or
     starts within SOON_HOURS."""
     s = sources or {}
-    live, waiting = games_in_play(s.get("scoreboards", scoreboards)(now), now)
+    board = s.get("scoreboards", scoreboards)(now)
+    live, waiting = games_in_play(board, now)
+    statuses = board_statuses(board)
     rows = []
     for game_id, game in live:
         try:
-            state = D.parse_summary(s.get("summary", fetch_summary)(game_id))
+            payload = s.get("summary", fetch_summary)(game_id)
+            state = D.parse_summary(payload, statuses.get(game_id))
             if state is None or state["minutes_left"] > D.MAX_MINUTES_LEFT:
                 continue
             markets = s.get("markets", fetch_game_markets)(game)
@@ -410,7 +426,9 @@ def probe(now=None, sources=None):
                 continue
             payload = s.get("summary", fetch_summary)(str(event["id"]))
             payload["header"]["competitions"][0]["status"]["type"]["state"] = "in"
-            state = D.parse_summary(payload)
+            board_status = board_statuses(board).get(str(event["id"]))
+            out["board_status"] = board_status
+            state = D.parse_summary(payload, board_status)
         except (OSError, KeyError, IndexError, TypeError, ValueError) as error:
             out["box_score_error"] = type(error).__name__
             break

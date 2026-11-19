@@ -127,6 +127,21 @@ def test_summary_parsing():
     assert state["players"][("MEM", "JMORANT")]["threes"] == 2
     assert D.parse_summary(summary(state="post")) is None
     assert D.parse_summary({"header": {}}) is None
+    # ESPN's summary can give the state alone (seen on a real final game):
+    # the period and clock then come from the scoreboard's status.
+    bare = summary()
+    bare["header"]["competitions"][0]["status"] = {"type": {"state": "in"}}
+    assert D.parse_summary(bare) is None
+    board = {
+        "period": 4,
+        "clock": 90.0,
+        "displayClock": "1:30",
+        "type": {"state": "in"},
+    }
+    assert D.parse_summary(bare, board)["minutes_left"] == 1.5
+    del bare["header"]["competitions"][0]["status"]
+    assert D.parse_summary(bare, board)["period"] == 4
+    assert D.parse_summary(bare, {**board, "type": {"state": "post"}}) is None
     twins = {"Jalen Williams": ["1", "2", "1-1", "0-0", "0-0", "1", "1"]}
     twins["Jaylin Williams"] = ["1", "9", "1-1", "0-0", "0-0", "1", "1"]
     assert ("BKN", "JWILLIAMS") not in D.parse_summary(summary(stats=twins))["players"]
@@ -193,6 +208,17 @@ def test_one_pass_skips_first_half_and_survives_errors():
     }
     rows, active = W.one_pass(NOW, sources)
     assert active and [r["game"] for r in rows] == [game]
+
+    # The summary gives no clock: the scoreboard's status supplies it.
+    def bare(game_id):
+        payload = summary()
+        payload["header"]["competitions"][0]["status"] = {"type": {"state": "in"}}
+        return payload
+
+    board["events"][0]["competitions"][0]["status"].update(period=4, clock=120.0)
+    rows, _ = W.one_pass(NOW, sources | {"summary": bare})
+    assert [r["minutes_left"] for r in rows] == [2.0]
+    assert W.board_statuses(board)["1"]["period"] == 4
     early = sources | {"summary": lambda game_id: summary(period=2)}
     assert W.one_pass(NOW, early) == ([], True)
 
