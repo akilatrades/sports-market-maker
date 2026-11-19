@@ -39,6 +39,7 @@ MAX_REACHED_ASK = 0.99
 POLL_SECONDS = 30
 BOOK_EVERY_SECONDS = 300  # depth per market: first sighting, then every 5 min
 FLUSH_SECONDS = 900
+SOON_HOURS = 2.0  # a game this close to its start keeps the watcher waiting
 COLUMNS = [
     "utc",
     "kind",
@@ -69,9 +70,10 @@ def game_code(event):
     return day + teams["away"] + teams["home"]
 
 
-def games_in_play(payload):
-    """(ESPN id, Kalshi game code) for games in progress, and how many have
-    not started yet."""
+def games_in_play(payload, now=None):
+    """(ESPN id, Kalshi game code) for games in progress, and how many that
+    have not started will start within SOON_HOURS of ``now`` (all of them
+    when ``now`` is not given)."""
     live, waiting = [], 0
     for event in (payload or {}).get("events", []):
         try:
@@ -79,7 +81,12 @@ def games_in_play(payload):
             if state == "in":
                 live.append((str(event["id"]), game_code(event)))
             elif state == "pre":
-                waiting += 1
+                if now is None:
+                    waiting += 1
+                    continue
+                lead = pd.Timestamp(event["date"]) - pd.Timestamp(now)
+                if lead <= pd.Timedelta(hours=SOON_HOURS):
+                    waiting += 1
         except (KeyError, IndexError, TypeError, ValueError):
             continue
     return live, waiting
@@ -200,10 +207,10 @@ def throttled_books(fetch=None, every=BOOK_EVERY_SECONDS, clock=time.monotonic):
 
 
 def one_pass(now, sources=None):
-    """Every qualifying row right now, and whether any game is still to come
-    or in play."""
+    """Every qualifying row right now, and whether any game is in play or
+    starts within SOON_HOURS."""
     s = sources or {}
-    live, waiting = games_in_play(s.get("scoreboards", scoreboards)(now))
+    live, waiting = games_in_play(s.get("scoreboards", scoreboards)(now), now)
     rows = []
     for game_id, game in live:
         try:
@@ -244,7 +251,7 @@ def watch(hours, poll=POLL_SECONDS, out=OUT, sleep=time.sleep, clock=None):
         if (clock() - flushed).total_seconds() >= FLUSH_SECONDS:
             files.append(save(rows, out))  # a killed job keeps what it saw
             rows, flushed = [], clock()
-        if idle * poll >= 600:  # ten minutes with nothing in play or to come
+        if idle * poll >= 600:  # ten minutes with nothing in play or about to start
             break
         sleep(poll)
     files.append(save(rows, out))

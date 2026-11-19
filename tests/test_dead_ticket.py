@@ -203,6 +203,28 @@ def test_one_pass_skips_first_half_and_survives_errors():
     assert W.one_pass(NOW, sources | {"scoreboards": lambda now: {}}) == ([], False)
 
 
+def test_a_game_hours_away_does_not_keep_the_watcher_waiting():
+    def pre(start):
+        return {
+            "id": "9",
+            "date": start,
+            "competitions": [{"status": {"type": {"state": "pre"}}}],
+        }
+
+    soon, later = pre("2026-11-15T04:30Z"), pre("2026-11-15T06:00Z")
+    assert W.games_in_play({"events": [soon, later]}, NOW) == ([], 1)
+    assert W.games_in_play({"events": [later]}, NOW) == ([], 0)
+    assert W.games_in_play({"events": [later]}) == ([], 1)  # no clock: all count
+    assert W.one_pass(NOW, {"scoreboards": lambda now: {"events": [later]}}) == (
+        [],
+        False,
+    )
+    assert W.one_pass(NOW, {"scoreboards": lambda now: {"events": [soon]}}) == (
+        [],
+        True,
+    )
+
+
 def test_throttled_books_once_per_window():
     calls, clock = [], [0.0]
     read = W.throttled_books(
