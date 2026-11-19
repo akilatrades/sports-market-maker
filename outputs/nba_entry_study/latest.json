@@ -1,9 +1,9 @@
 {
   "health": {
     "attempted_candidates": 40,
-    "eligible_candidates": 170,
+    "eligible_candidates": 198,
     "errors": [],
-    "generated_at": "2026-11-19T20:54:39.010165+00:00",
+    "generated_at": "2026-11-19T22:43:59.340316+00:00",
     "state": "recording"
   },
   "manifest": {
@@ -83,13 +83,13 @@
         "execution_known": 575,
         "exposure_by_game": {
           "401910019": 4.98,
-          "401910020": 0.5700000000000001
+          "401910020": 2.25
         },
         "filled": 238,
         "forecast_win_probability": 0.5190190546218487,
         "net_pnl_fee_upper_estimate": -12.55,
-        "orders": 587,
-        "pending_or_unknown_execution": 12,
+        "orders": 590,
+        "pending_or_unknown_execution": 15,
         "pnl_without_best_game": -14.31,
         "pnl_without_best_three_games": -16.97,
         "settled": 238,
@@ -164,13 +164,13 @@
         "execution_known": 575,
         "exposure_by_game": {
           "401910019": 4.98,
-          "401910020": 0.5700000000000001
+          "401910020": 2.25
         },
         "filled": 265,
         "forecast_win_probability": 0.516531279245283,
         "net_pnl_fee_upper_estimate": -17.29,
-        "orders": 587,
-        "pending_or_unknown_execution": 12,
+        "orders": 590,
+        "pending_or_unknown_execution": 15,
         "pnl_without_best_game": -19.38,
         "pnl_without_best_three_games": -22.04,
         "settled": 265,
