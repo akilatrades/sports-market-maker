@@ -19,6 +19,7 @@ import numpy as np
 import pandas as pd
 
 from kalshi.maker import fills, maker_fee, orders
+from kalshi.sportsbook_primary import primary_fair_value
 from kalshi.stats import clustered_mean_t
 from kalshi.strategy import (
     DAY_CAP,
@@ -55,6 +56,15 @@ V2_RULES = {
         "min_edge": 0.0,
         "sizing": "flat",
         "book": True,
+    },
+    # book_primary: sportsbook consensus (exact or translated) is the primary
+    # fair value; model vetoes only on strong disagreement. Falls back to model
+    # when book coverage is insufficient.
+    "no_seller_book_primary": {
+        "window": WINDOW_HOURS,
+        "min_edge": 0.0,
+        "sizing": "flat",
+        "book_primary": True,
     },
 }
 ALL_RULES = RULES + tuple(V2_RULES)
@@ -146,6 +156,12 @@ def candidate_orders(priced, rule, window=None, min_edge=None):
         need = o.stat.map(threshold).fillna(0.0)
     else:
         need = threshold
+    if spec.get("book_primary"):
+        priced_fair = primary_fair_value(o, veto_threshold=0.08)
+        fair = priced_fair["p_fair"]
+        o["edge"] = (1 - fair) - o.price - maker_fee(o.price, FEE_SHARE)
+        o["fair_source"] = priced_fair["fair_source"]
+        return o[o.edge >= need]
     if spec.get("book"):
         p_book = pd.to_numeric(o.get("p_book"), errors="coerce")
         if p_book is None or not isinstance(p_book, pd.Series):
