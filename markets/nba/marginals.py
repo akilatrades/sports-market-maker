@@ -15,6 +15,9 @@ Each stat has two layers, as in the NFL model.
    chance of reaching a line L is the share of training ratios above
    L / expected. This keeps the real shape of outcomes (including zero-three
    nights and big scoring games) without assuming a formula.
+
+Optional residual-variance scaling (paper evaluation) can be applied via
+prob_over_with_scale without changing the default path.
 """
 
 from dataclasses import dataclass, field
@@ -23,6 +26,8 @@ import numpy as np
 from sklearn.linear_model import PoissonRegressor
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
+
+from markets.nba.residual_variance import adjust_threshold_for_scale
 
 N_BANDS = 10
 SEASON_HALF_LIFE = 3  # a season three years older counts half as much
@@ -260,6 +265,29 @@ class StatModel:
         line = np.broadcast_to(np.asarray(line, dtype=float), mean.shape)
         tier, band = self._cells(rows, mean)
         threshold = line / mean
+        out = np.empty(len(mean))
+        for t in range(len(MINUTE_TIERS) + 1):
+            for b in range(N_BANDS):
+                here = (tier == t) & (band == b)
+                if here.any():
+                    ratios = self.ratios[t][b]
+                    above = np.searchsorted(ratios, threshold[here], side="right")
+                    out[here] = 1 - above / len(ratios)
+        return out
+
+    def prob_over_with_scale(self, rows, line, scale, mean=None):
+        """Like prob_over but adjusts the ratio threshold by player residual scale.
+
+        Higher scale widens the tails (more conservative P(over) above the mean).
+        ``scale`` is a Series or array aligned with rows (1.0 = no adjustment).
+        """
+        mean = self.mean(rows) if mean is None else mean
+        line = np.broadcast_to(np.asarray(line, dtype=float), mean.shape)
+        scale = np.asarray(scale, dtype=float)
+        if len(scale) != len(mean):
+            scale = np.ones(len(mean))
+        tier, band = self._cells(rows, mean)
+        threshold = adjust_threshold_for_scale(line / mean, scale)
         out = np.empty(len(mean))
         for t in range(len(MINUTE_TIERS) + 1):
             for b in range(N_BANDS):
