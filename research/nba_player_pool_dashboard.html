@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>NBA Player Pool Dashboard</title>
+  <style>
+    body { font-family: system-ui, sans-serif; margin: 2rem; background: #0f1115; color: #e6e6e6; }
+    h1 { font-weight: 600; }
+    table { border-collapse: collapse; width: 100%; margin-top: 1rem; }
+    th, td { padding: 0.5rem 0.75rem; text-align: right; border-bottom: 1px solid #2a2e36; }
+    th { text-align: right; cursor: pointer; background: #1a1d24; position: sticky; top: 0; }
+    th:first-child, td:first-child { text-align: left; }
+    tr:hover { background: #1e222a; }
+    .positive { color: #4ade80; }
+    .negative { color: #f87171; }
+    .controls { margin: 1rem 0; }
+    input, button { background: #1a1d24; color: #e6e6e6; border: 1px solid #2a2e36; padding: 0.4rem 0.6rem; border-radius: 4px; }
+  </style>
+</head>
+<body>
+  <h1>NBA Player Pool Dashboard</h1>
+  <p>Raw season averages vs hierarchical projections and simple value-over-replacement.</p>
+
+  <div class="controls">
+    <label>Load CSV: <input type="file" id="file" accept=".csv"></label>
+    <button id="sample">Load sample data</button>
+  </div>
+
+  <table id="table">
+    <thead>
+      <tr>
+        <th data-key="PLAYER_NAME">Player</th>
+        <th data-key="TEAM_ABBREVIATION">Team</th>
+        <th data-key="MIN">Min</th>
+        <th data-key="PTS">PTS</th>
+        <th data-key="proj_minutes">Proj Min</th>
+        <th data-key="proj_pts">Proj PTS</th>
+        <th data-key="residual_scale">Resid Scale</th>
+        <th data-key="value_over_repl">Value</th>
+        <th data-key="pts_diff">PTS Diff</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <script>
+    const sample = [
+      {PLAYER_NAME:"Nikola Jokic", TEAM_ABBREVIATION:"DEN", MIN:34.5, PTS:26.2, proj_minutes:34.1, proj_pts:26.8, residual_scale:0.92, value_over_repl:8.4, pts_diff:0.6},
+      {PLAYER_NAME:"Luka Doncic", TEAM_ABBREVIATION:"DAL", MIN:36.2, PTS:28.1, proj_minutes:35.8, proj_pts:27.4, residual_scale:1.15, value_over_repl:7.9, pts_diff:-0.7},
+      {PLAYER_NAME:"Shai Gilgeous-Alexander", TEAM_ABBREVIATION:"OKC", MIN:34.8, PTS:31.2, proj_minutes:34.5, proj_pts:30.1, residual_scale:0.88, value_over_repl:9.1, pts_diff:-1.1}
+    ];
+
+    let data = [];
+    let sortKey = "value_over_repl";
+    let sortAsc = false;
+
+    function render() {
+      const tbody = document.querySelector("#table tbody");
+      const sorted = [...data].sort((a, b) => {
+        const va = a[sortKey] ?? -Infinity;
+        const vb = b[sortKey] ?? -Infinity;
+        return sortAsc ? va - vb : vb - va;
+      });
+      tbody.innerHTML = sorted.map(row => `
+        <tr>
+          <td>${row.PLAYER_NAME || ""}</td>
+          <td>${row.TEAM_ABBREVIATION || ""}</td>
+          <td>${(+row.MIN || 0).toFixed(1)}</td>
+          <td>${(+row.PTS || 0).toFixed(1)}</td>
+          <td>${(+row.proj_minutes || 0).toFixed(1)}</td>
+          <td>${(+row.proj_pts || 0).toFixed(1)}</td>
+          <td>${(+row.residual_scale || 1).toFixed(2)}</td>
+          <td class="${row.value_over_repl >= 0 ? 'positive' : 'negative'}">${(+row.value_over_repl || 0).toFixed(2)}</td>
+          <td class="${(row.pts_diff || 0) >= 0 ? 'positive' : 'negative'}">${(+row.pts_diff || 0).toFixed(1)}</td>
+        </tr>
+      `).join("");
+    }
+
+    document.querySelectorAll("th").forEach(th => {
+      th.addEventListener("click", () => {
+        const key = th.dataset.key;
+        if (sortKey === key) sortAsc = !sortAsc;
+        else { sortKey = key; sortAsc = false; }
+        render();
+      });
+    });
+
+    document.getElementById("file").addEventListener("change", e => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        const lines = reader.result.trim().split("\n");
+        const headers = lines[0].split(",");
+        data = lines.slice(1).map(line => {
+          const vals = line.split(",");
+          const obj = {};
+          headers.forEach((h, i) => obj[h.trim()] = isNaN(vals[i]) ? vals[i] : +vals[i]);
+          return obj;
+        });
+        render();
+      };
+      reader.readAsText(file);
+    });
+
+    document.getElementById("sample").addEventListener("click", () => {
+      data = sample;
+      render();
+    });
+
+    // Auto-load sample on open
+    data = sample;
+    render();
+  </script>
+</body>
+</html>
