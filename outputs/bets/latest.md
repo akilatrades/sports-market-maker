@@ -1,72 +1,41 @@
-# Bet card, 2026-11-19
+# Bet card, 2026-11-20
 
-**Unproven rule.** In 2025-26 it broke even in the regular season and made its money in the playoffs, a finding made after the fact (see RESEARCH_LOG.md). Regular-season positions are paper only. Paper bankroll: $181.28.
+**Unproven rule.** In 2025-26 it broke even in the regular season and made its money in the playoffs, a finding made after the fact (see RESEARCH_LOG.md). Regular-season positions are paper only. Paper bankroll: $176.69.
 
 | Tip-off (ET) | Player | Bet | Price | Model | Edge | Contracts | Risk | Mode |
 |---|---|---|---:|---:|---:|---:|---:|---|
-| Thu 8:00 PM | Al Horford | NO 2+ assists | 34¢ | 45% | 9¢ | 5 | $1.78 | paper |
-| Thu 8:00 PM | Al Horford | NO 1+ threes | 31¢ | 42% | 9¢ | 5 | $1.63 | paper |
-| Thu 8:00 PM | Ayo Dosunmu | NO 4+ assists | 45¢ | 57% | 11¢ | 4 | $1.87 | paper |
-| Thu 8:00 PM | Brandin Podziemski | NO 4+ assists | 40¢ | 57% | 15¢ | 4 | $1.67 | paper |
-| Thu 8:00 PM | Brook Lopez | NO 2+ threes | 53¢ | 63% | 8¢ | 3 | $1.65 | paper |
-| Thu 8:00 PM | Cam Spencer | NO 8+ assists | 58¢ | 70% | 10¢ | 3 | $1.80 | paper |
-| Thu 8:00 PM | Cam Spencer | NO 3+ threes | 63¢ | 71% | 6¢ | 2 | $1.30 | paper |
-| Thu 8:00 PM | Cameron Boozer | NO 15+ points | 26¢ | 38% | 10¢ | 6 | $1.65 | paper |
-| Thu 8:00 PM | Charles Bassey | NO 2+ assists | 60¢ | 78% | 17¢ | 3 | $1.86 | paper |
-| Thu 8:00 PM | Charles Bassey | NO 8+ rebounds | 56¢ | 70% | 12¢ | 3 | $1.74 | paper |
-| Thu 8:00 PM | Charles Bassey | NO 5+ points | 19¢ | 29% | 9¢ | 9 | $1.81 | paper |
-| Thu 8:00 PM | Damian Lillard | NO 20+ points | 35¢ | 56% | 20¢ | 5 | $1.83 | paper |
-| Thu 8:00 PM | Damian Lillard | NO 2+ threes | 18¢ | 29% | 10¢ | 10 | $1.91 | paper |
-| Thu 8:00 PM | Damian Lillard | NO 4+ assists | 28¢ | 35% | 6¢ | 4 | $1.18 | paper |
-| Thu 8:00 PM | De'Aaron Fox | NO 15+ points | 44¢ | 55% | 10¢ | 4 | $1.83 | paper |
-| Thu 8:00 PM | De'Anthony Melton | NO 15+ points | 74¢ | 85% | 9¢ | 2 | $1.51 | paper |
-| Thu 8:00 PM | De'Anthony Melton | NO 2+ threes | 46¢ | 53% | 6¢ | 3 | $1.44 | paper |
-| Thu 8:00 PM | Derrick Jones Jr. | NO 5+ points | 17¢ | 26% | 8¢ | 10 | $1.80 | paper |
-| Thu 8:00 PM | Derrick Jones Jr. | NO 2+ threes | 61¢ | 69% | 7¢ | 2 | $1.26 | paper |
-| Thu 8:00 PM | Devin Vassell | YES 4+ assists | 30¢ | 43% | 11¢ | 6 | $1.89 | paper |
-| Thu 8:00 PM | Devin Vassell | YES 4+ rebounds | 55¢ | 64% | 8¢ | 3 | $1.71 | paper |
-| Thu 8:00 PM | Donovan Clingan | NO 10+ points | 29¢ | 43% | 13¢ | 6 | $1.83 | paper |
-| Thu 8:00 PM | Donovan Clingan | NO 2+ assists | 33¢ | 45% | 10¢ | 5 | $1.73 | paper |
-| Thu 8:00 PM | Donovan Clingan | NO 8+ rebounds | 11¢ | 20% | 9¢ | 4 | $0.47 | paper |
-| Thu 8:00 PM | Jaime Jaquez Jr. | NO 4+ rebounds | 28¢ | 36% | 7¢ | 6 | $1.77 | paper |
-| Thu 8:00 PM | Jalen Brunson | NO 3+ threes | 50¢ | 61% | 9¢ | 3 | $1.56 | paper |
-| Thu 8:00 PM | Jaylen Wells | YES 15+ points | 23¢ | 33% | 9¢ | 7 | $1.70 | paper |
-| Thu 8:00 PM | Josh Hart | YES 6+ rebounds | 57¢ | 66% | 7¢ | 3 | $1.77 | paper |
-| Thu 8:00 PM | Josh Hart | NO 5+ points | 25¢ | 32% | 6¢ | 7 | $1.85 | paper |
-| Thu 8:00 PM | Julian Champagnie | NO 4+ rebounds | 25¢ | 36% | 10¢ | 7 | $1.85 | paper |
-| Thu 8:00 PM | Karl-Anthony Towns | YES 4+ assists | 52¢ | 66% | 12¢ | 3 | $1.62 | paper |
-| Thu 8:00 PM | Karl-Anthony Towns | NO 2+ threes | 47¢ | 58% | 10¢ | 3 | $1.47 | paper |
-| Thu 8:00 PM | Karl-Anthony Towns | NO 20+ points | 45¢ | 55% | 9¢ | 4 | $1.87 | paper |
-| Thu 8:00 PM | Keaton Wagler | NO 4+ rebounds | 64¢ | 72% | 7¢ | 2 | $1.32 | paper |
-| Thu 8:00 PM | Kel'el Ware | NO 8+ rebounds | 44¢ | 55% | 10¢ | 4 | $1.83 | paper |
-| Thu 8:00 PM | Kel'el Ware | NO 10+ points | 44¢ | 53% | 7¢ | 4 | $1.83 | paper |
-| Thu 8:00 PM | Keldon Johnson | NO 10+ points | 37¢ | 56% | 17¢ | 4 | $1.55 | paper |
-| Thu 8:00 PM | Keldon Johnson | NO 1+ threes | 48¢ | 65% | 15¢ | 3 | $1.50 | paper |
-| Thu 8:00 PM | Keldon Johnson | NO 6+ rebounds | 55¢ | 69% | 12¢ | 3 | $1.71 | paper |
-| Thu 8:00 PM | Kris Dunn | NO 1+ threes | 54¢ | 65% | 9¢ | 3 | $1.68 | paper |
-| Thu 8:00 PM | LaMelo Ball | NO 4+ assists | 17¢ | 29% | 11¢ | 10 | $1.80 | paper |
-| Thu 8:00 PM | LaMelo Ball | NO 20+ points | 51¢ | 62% | 9¢ | 3 | $1.59 | paper |
-| Thu 8:00 PM | LaMelo Ball | YES 5+ threes | 32¢ | 42% | 8¢ | 5 | $1.68 | paper |
-| Thu 8:00 PM | Landry Shamet | NO 2+ threes | 45¢ | 53% | 7¢ | 4 | $1.87 | paper |
-| Thu 8:00 PM | Luke Kornet | NO 5+ points | 53¢ | 62% | 7¢ | 3 | $1.65 | paper |
-| Thu 8:00 PM | Nate Ament | NO 2+ rebounds | 16¢ | 27% | 10¢ | 11 | $1.87 | paper |
-| Thu 8:00 PM | OG Anunoby | YES 15+ points | 55¢ | 64% | 7¢ | 3 | $1.71 | paper |
-| Thu 8:00 PM | Rudy Gobert | NO 5+ points | 19¢ | 39% | 19¢ | 9 | $1.81 | paper |
-| Thu 8:00 PM | Rudy Gobert | NO 8+ rebounds | 26¢ | 40% | 13¢ | 6 | $1.65 | paper |
-| Thu 8:00 PM | Rui Hachimura | NO 4+ rebounds | 33¢ | 45% | 10¢ | 5 | $1.73 | paper |
-| Thu 8:00 PM | Rui Hachimura | NO 2+ threes | 45¢ | 53% | 7¢ | 4 | $1.87 | paper |
-| Thu 8:00 PM | Scoot Henderson | NO 2+ assists | 32¢ | 52% | 18¢ | 5 | $1.68 | paper |
-| Thu 8:00 PM | Scoot Henderson | NO 10+ points | 40¢ | 50% | 9¢ | 4 | $1.67 | paper |
-| Thu 8:00 PM | Scoot Henderson | NO 4+ rebounds | 75¢ | 84% | 8¢ | 2 | $1.53 | paper |
-| Thu 8:00 PM | Sidy Cissoko | NO 5+ points | 24¢ | 32% | 7¢ | 7 | $1.77 | paper |
-| Thu 8:00 PM | Stephon Castle | NO 6+ assists | 31¢ | 46% | 14¢ | 5 | $1.63 | paper |
-| Thu 8:00 PM | Taylor Hendricks | YES 10+ points | 39¢ | 52% | 11¢ | 4 | $1.63 | paper |
-| Thu 8:00 PM | Terrence Shannon Jr. | NO 2+ assists | 30¢ | 39% | 7¢ | 6 | $1.89 | paper |
-| Thu 8:00 PM | Terrence Shannon Jr. | NO 4+ rebounds | 64¢ | 72% | 7¢ | 2 | $1.32 | paper |
-| Thu 8:00 PM | Tyler Herro | NO 20+ points | 45¢ | 60% | 13¢ | 4 | $1.87 | paper |
-| Thu 8:00 PM | Victor Wembanyama | NO 14+ rebounds | 67¢ | 78% | 10¢ | 2 | $1.38 | paper |
-| Thu 8:00 PM | Victor Wembanyama | NO 35+ points | 78¢ | 87% | 8¢ | 2 | $1.59 | paper |
-| Thu 8:00 PM | Will Richard | NO 10+ points | 63¢ | 72% | 7¢ | 2 | $1.30 | paper |
-| Thu 8:00 PM | Yaxel Lendeborg | NO 25+ points | 63¢ | 80% | 15¢ | 2 | $1.30 | paper |
-| Thu 8:00 PM | Yaxel Lendeborg | NO 6+ assists | 70¢ | 83% | 11¢ | 2 | $1.43 | paper |
-| Thu 8:00 PM | Yaxel Lendeborg | NO 3+ threes | 65¢ | 78% | 11¢ | 2 | $1.34 | paper |
+| Fri 7:00 PM | Aaron Wiggins | NO 4+ rebounds | 51¢ | 67% | 14¢ | 3 | $1.59 | paper |
+| Fri 7:00 PM | Coby White | NO 4+ assists | 42¢ | 57% | 14¢ | 4 | $1.75 | paper |
+| Fri 7:00 PM | Naz Reid | YES 10+ rebounds | 30¢ | 43% | 12¢ | 5 | $1.58 | paper |
+| Fri 7:00 PM | Onyeka Okongwu | NO 2+ assists | 25¢ | 39% | 12¢ | 7 | $1.85 | paper |
+| Fri 7:00 PM | Royce O'Neale | YES 4+ rebounds | 52¢ | 64% | 10¢ | 1 | $0.54 | paper |
+| Fri 7:30 PM | Aaron Nesmith | NO 4+ rebounds | 51¢ | 67% | 14¢ | 3 | $1.59 | paper |
+| Fri 7:30 PM | Anthony Black | NO 15+ points | 39¢ | 52% | 11¢ | 4 | $1.63 | paper |
+| Fri 7:30 PM | Ivica Zubac | NO 10+ rebounds | 57¢ | 70% | 12¢ | 3 | $1.77 | paper |
+| Fri 7:30 PM | Ivica Zubac | NO 10+ points | 38¢ | 50% | 11¢ | 4 | $1.59 | paper |
+| Fri 7:30 PM | Jakob Poeltl | NO 6+ rebounds | 22¢ | 34% | 11¢ | 8 | $1.86 | paper |
+| Fri 7:30 PM | Jamison Battle | NO 2+ threes | 36¢ | 53% | 15¢ | 4 | $1.51 | paper |
+| Fri 7:30 PM | Jamison Battle | NO 2+ assists | 71¢ | 84% | 12¢ | 2 | $1.45 | paper |
+| Fri 7:30 PM | Jarrett Allen | NO 10+ rebounds | 49¢ | 62% | 11¢ | 3 | $1.53 | paper |
+| Fri 7:30 PM | Julius Randle | NO 4+ assists | 37¢ | 57% | 18¢ | 4 | $1.55 | paper |
+| Fri 7:30 PM | Julius Randle | NO 6+ rebounds | 41¢ | 55% | 12¢ | 4 | $1.71 | paper |
+| Fri 7:30 PM | Kevin Huerter | NO 4+ rebounds | 45¢ | 67% | 20¢ | 3 | $1.41 | paper |
+| Fri 7:30 PM | Michael Porter Jr. | NO 6+ rebounds | 31¢ | 44% | 11¢ | 5 | $1.63 | paper |
+| Fri 7:30 PM | Paul Reed | YES 15+ points | 23¢ | 35% | 11¢ | 7 | $1.70 | paper |
+| Fri 7:30 PM | Scottie Barnes | YES 6+ assists | 40¢ | 59% | 17¢ | 4 | $1.67 | paper |
+| Fri 7:30 PM | Tristan da Silva | NO 2+ threes | 30¢ | 41% | 10¢ | 1 | $0.32 | paper |
+| Fri 8:00 PM | Anthony Davis | NO 1+ threes | 49¢ | 77% | 26¢ | 3 | $1.53 | paper |
+| Fri 8:00 PM | Bilal Coulibaly | YES 10+ points | 29¢ | 43% | 13¢ | 6 | $1.83 | paper |
+| Fri 8:00 PM | Isaiah Hartenstein | NO 6+ rebounds | 7¢ | 13% | 6¢ | 1 | $0.08 | paper |
+| Fri 8:00 PM | Jaylin Williams | NO 5+ points | 39¢ | 54% | 14¢ | 4 | $1.63 | paper |
+| Fri 8:00 PM | Norman Powell | NO 20+ points | 30¢ | 45% | 14¢ | 5 | $1.58 | paper |
+| Fri 8:00 PM | Saddiq Bey | YES 3+ threes | 33¢ | 47% | 13¢ | 5 | $1.73 | paper |
+| Fri 8:00 PM | Shai Gilgeous-Alexander | NO 30+ points | 35¢ | 49% | 13¢ | 5 | $1.83 | paper |
+| Fri 8:00 PM | Trae Young | NO 10+ assists | 45¢ | 59% | 12¢ | 3 | $1.41 | paper |
+| Fri 8:00 PM | Zion Williamson | NO 2+ assists | 24¢ | 39% | 13¢ | 7 | $1.77 | paper |
+| Fri 8:00 PM | Zion Williamson | NO 6+ rebounds | 49¢ | 62% | 11¢ | 3 | $1.53 | paper |
+| Fri 9:30 PM | Collin Gillespie | NO 10+ points | 49¢ | 63% | 12¢ | 3 | $1.53 | paper |
+| Fri 9:30 PM | Darryn Peterson | NO 20+ points | 59¢ | 77% | 17¢ | 2 | $1.22 | paper |
+| Fri 9:30 PM | Darryn Peterson | NO 4+ assists | 43¢ | 60% | 15¢ | 4 | $1.79 | paper |
+| Fri 9:30 PM | Darryn Peterson | NO 4+ rebounds | 37¢ | 51% | 12¢ | 4 | $1.55 | paper |
+| Fri 9:30 PM | Darryn Peterson | NO 3+ threes | 56¢ | 69% | 12¢ | 3 | $1.74 | paper |
