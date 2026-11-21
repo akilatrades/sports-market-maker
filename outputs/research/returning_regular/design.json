@@ -1,0 +1,282 @@
+{
+ "stage": "design",
+ "seasons": [
+  2023,
+  2024,
+  2025
+ ],
+ "box_scores_until": "2026-11-21T12:00:00Z",
+ "player_game_stats": 299004,
+ "variants": {
+  "v1": {
+   "assists": {
+    "stand_in_rows": 1292,
+    "stand_in_games": 497,
+    "production": {
+     "stand_in_ratio": 0.9712050905898767,
+     "stand_in_miss": -0.06361147687255099,
+     "stand_in_t": -1.3022594283854116,
+     "stand_in_mse": 2.981856761113681,
+     "rest_ratio": 1.0022625768947284,
+     "log_loss": 1.3520908582063325
+    },
+    "v1": {
+     "stand_in_ratio": 0.9839558378719635,
+     "stand_in_miss": -0.03498421613443536,
+     "stand_in_t": -0.715776730133887,
+     "stand_in_mse": 2.979262185146553,
+     "rest_ratio": 1.002231042314633,
+     "log_loss": 1.3519717011737986
+    },
+    "mse_change": -0.0025945759671280504,
+    "mse_change_t": -0.5540904300617275
+   },
+   "points": {
+    "stand_in_rows": 1292,
+    "stand_in_games": 497,
+    "production": {
+     "stand_in_ratio": 0.9194838447670556,
+     "stand_in_miss": -0.7824070044520505,
+     "stand_in_t": -5.147504748410934,
+     "stand_in_mse": 34.082235149433345,
+     "rest_ratio": 1.0024294534054512,
+     "log_loss": 1.5799690966852187
+    },
+    "v1": {
+     "stand_in_ratio": 0.9378412280502468,
+     "stand_in_miss": -0.592197963311544,
+     "stand_in_t": -3.8818754640405446,
+     "stand_in_mse": 33.87888534522944,
+     "rest_ratio": 1.0024115569586205,
+     "log_loss": 1.580020052484162
+    },
+    "mse_change": -0.20334980420390442,
+    "mse_change_t": -2.365687430914118
+   },
+   "rebounds": {
+    "stand_in_rows": 1292,
+    "stand_in_games": 497,
+    "production": {
+     "stand_in_ratio": 0.9400263271147432,
+     "stand_in_miss": -0.24260786729125228,
+     "stand_in_t": -3.473248130396718,
+     "stand_in_mse": 6.286430525564293,
+     "rest_ratio": 1.0035371652936198,
+     "log_loss": 1.5927565738273881
+    },
+    "v1": {
+     "stand_in_ratio": 0.9625539912635743,
+     "stand_in_miss": -0.14793287090290602,
+     "stand_in_t": -2.1024320972106194,
+     "stand_in_mse": 6.288139320152413,
+     "rest_ratio": 1.0034716874910812,
+     "log_loss": 1.5928705613172638
+    },
+    "mse_change": 0.001708794588120467,
+    "mse_change_t": 0.07723833065491773
+   },
+   "threes": {
+    "stand_in_rows": 1292,
+    "stand_in_games": 497,
+    "production": {
+     "stand_in_ratio": 0.9559352965460929,
+     "stand_in_miss": -0.05426615544785204,
+     "stand_in_t": -1.637364872384371,
+     "stand_in_mse": 1.5474076482889567,
+     "rest_ratio": 1.0026875418773389,
+     "log_loss": 1.7839866763799004
+    },
+    "v1": {
+     "stand_in_ratio": 0.9726537970973956,
+     "stand_in_miss": -0.03309828152896758,
+     "stand_in_t": -0.9977890865516148,
+     "stand_in_mse": 1.5453398385723545,
+     "rest_ratio": 1.00267705293744,
+     "log_loss": 1.7836045202103217
+    },
+    "mse_change": -0.0020678097166023854,
+    "mse_change_t": -0.8638478938187035
+   }
+  },
+  "v2": {
+   "assists": {
+    "stand_in_rows": 1292,
+    "stand_in_games": 497,
+    "production": {
+     "stand_in_ratio": 0.9712050905898767,
+     "stand_in_miss": -0.06361147687255099,
+     "stand_in_t": -1.3022594283854116,
+     "stand_in_mse": 2.981856761113681,
+     "rest_ratio": 1.0022625768947284,
+     "log_loss": 1.3520908582063325
+    },
+    "v2": {
+     "stand_in_ratio": 0.9952546977663441,
+     "stand_in_miss": -0.010229640095989225,
+     "stand_in_t": -0.20933694818369655,
+     "stand_in_mse": 2.974640789109232,
+     "rest_ratio": 1.001972088862396,
+     "log_loss": 1.351928247097727
+    },
+    "mse_change": -0.007215972004448415,
+    "mse_change_t": -0.8619548265868184
+   },
+   "points": {
+    "stand_in_rows": 1292,
+    "stand_in_games": 497,
+    "production": {
+     "stand_in_ratio": 0.9194838447670556,
+     "stand_in_miss": -0.7824070044520505,
+     "stand_in_t": -5.147504748410934,
+     "stand_in_mse": 34.082235149433345,
+     "rest_ratio": 1.0024294534054512,
+     "log_loss": 1.5799690966852187
+    },
+    "v2": {
+     "stand_in_ratio": 0.9519750541740037,
+     "stand_in_miss": -0.4507493611871783,
+     "stand_in_t": -2.955375029415602,
+     "stand_in_mse": 33.725700434211724,
+     "rest_ratio": 1.0020477196009503,
+     "log_loss": 1.5798835522354595
+    },
+    "mse_change": -0.35653471522161645,
+    "mse_change_t": -2.6324998103908333
+   },
+   "rebounds": {
+    "stand_in_rows": 1292,
+    "stand_in_games": 497,
+    "production": {
+     "stand_in_ratio": 0.9400263271147432,
+     "stand_in_miss": -0.24260786729125228,
+     "stand_in_t": -3.473248130396718,
+     "stand_in_mse": 6.286430525564293,
+     "rest_ratio": 1.0035371652936198,
+     "log_loss": 1.5927565738273881
+    },
+    "v2": {
+     "stand_in_ratio": 0.9798010881708363,
+     "stand_in_miss": -0.0783924624184124,
+     "stand_in_t": -1.1109703937629578,
+     "stand_in_mse": 6.289039005211491,
+     "rest_ratio": 1.0029673977406504,
+     "log_loss": 1.5927969345317126
+    },
+    "mse_change": 0.002608479647198544,
+    "mse_change_t": 0.07408843071157675
+   },
+   "threes": {
+    "stand_in_rows": 1292,
+    "stand_in_games": 497,
+    "production": {
+     "stand_in_ratio": 0.9559352965460929,
+     "stand_in_miss": -0.05426615544785204,
+     "stand_in_t": -1.637364872384371,
+     "stand_in_mse": 1.5474076482889567,
+     "rest_ratio": 1.0026875418773389,
+     "log_loss": 1.7839866763799004
+    },
+    "v2": {
+     "stand_in_ratio": 0.9746229371398308,
+     "stand_in_miss": -0.030652890078680124,
+     "stand_in_t": -0.923905913534396,
+     "stand_in_mse": 1.5452482033884394,
+     "rest_ratio": 1.0024259258661106,
+     "log_loss": 1.7835984561736125
+    },
+    "mse_change": -0.0021594449005174583,
+    "mse_change_t": -0.8521754050137951
+   }
+  },
+  "v3": {
+   "assists": {
+    "stand_in_rows": 1292,
+    "stand_in_games": 497,
+    "production": {
+     "stand_in_ratio": 0.9712050905898767,
+     "stand_in_miss": -0.06361147687255099,
+     "stand_in_t": -1.3022594283854116,
+     "stand_in_mse": 2.981856761113681,
+     "rest_ratio": 1.0022625768947284,
+     "log_loss": 1.3520908582063325
+    },
+    "v3": {
+     "stand_in_ratio": 0.985680250577629,
+     "stand_in_miss": -0.031169517229604385,
+     "stand_in_t": -0.6374146418223822,
+     "stand_in_mse": 2.982053486949842,
+     "rest_ratio": 1.0022276805177905,
+     "log_loss": 1.351897057714781
+    },
+    "mse_change": 0.00019672583616087096,
+    "mse_change_t": 0.02736299701328963
+   },
+   "points": {
+    "stand_in_rows": 1292,
+    "stand_in_games": 497,
+    "production": {
+     "stand_in_ratio": 0.9194838447670556,
+     "stand_in_miss": -0.7824070044520505,
+     "stand_in_t": -5.147504748410934,
+     "stand_in_mse": 34.082235149433345,
+     "rest_ratio": 1.0024294534054512,
+     "log_loss": 1.5799690966852187
+    },
+    "v3": {
+     "stand_in_ratio": 0.941701928500736,
+     "stand_in_miss": -0.5531393221507981,
+     "stand_in_t": -3.644361763884131,
+     "stand_in_mse": 33.84413021579619,
+     "rest_ratio": 1.0023812805212484,
+     "log_loss": 1.5803251382107188
+    },
+    "mse_change": -0.23810493363715352,
+    "mse_change_t": -1.3424825853909441
+   },
+   "rebounds": {
+    "stand_in_rows": 1292,
+    "stand_in_games": 497,
+    "production": {
+     "stand_in_ratio": 0.9400263271147432,
+     "stand_in_miss": -0.24260786729125228,
+     "stand_in_t": -3.473248130396718,
+     "stand_in_mse": 6.286430525564293,
+     "rest_ratio": 1.0035371652936198,
+     "log_loss": 1.5927565738273881
+    },
+    "v3": {
+     "stand_in_ratio": 0.9661390259443983,
+     "stand_in_miss": -0.13327358255907917,
+     "stand_in_t": -1.888750899893407,
+     "stand_in_mse": 6.282124696647548,
+     "rest_ratio": 1.0034356476380057,
+     "log_loss": 1.5929634823797283
+    },
+    "mse_change": -0.004305828916745831,
+    "mse_change_t": -0.1309412112617972
+   },
+   "threes": {
+    "stand_in_rows": 1292,
+    "stand_in_games": 497,
+    "production": {
+     "stand_in_ratio": 0.9559352965460929,
+     "stand_in_miss": -0.05426615544785204,
+     "stand_in_t": -1.637364872384371,
+     "stand_in_mse": 1.5474076482889567,
+     "rest_ratio": 1.0026875418773389,
+     "log_loss": 1.7839866763799004
+    },
+    "v3": {
+     "stand_in_ratio": 0.9771677753889851,
+     "stand_in_miss": -0.02750716243033496,
+     "stand_in_t": -0.8348143178576872,
+     "stand_in_mse": 1.542008379705003,
+     "rest_ratio": 1.0026518081929088,
+     "log_loss": 1.783301192054334
+    },
+    "mse_change": -0.005399268583953825,
+    "mse_change_t": -0.8851616357289018
+   }
+  }
+ }
+}
