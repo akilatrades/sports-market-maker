@@ -39,6 +39,7 @@ re-reads three small public files and prefers them to the copy built in:
 
 import argparse
 import json
+import re
 from pathlib import Path
 
 import numpy as np
@@ -335,6 +336,35 @@ def _clean(value):
     return value
 
 
+def best_play_rules():
+    """The NBA bot's entry tests, for the page's "Best plays" filter.
+
+    Read from the bot's own constants, so the page follows a rule change
+    without an edit. The page only marks rows with them; nothing here or on
+    the page places an order.
+    """
+    from kalshi.maker import TICK, maker_fee
+    from kalshi.paper_props import FEE_SHARE
+    from live import prod_nba_auto as bot
+
+    version = re.search(r"v\d+", bot.STRATEGY_VERSION)
+    low, high = bot.PRICE_BAND_CENTS
+    return {
+        "rules": version.group(0) if version else bot.STRATEGY_VERSION,
+        "no_min": low / 100,  # the NO price, in dollars
+        "no_max": high / 100,
+        "edge_min": bot.ENTRY_MIN_NET_EDGE,  # after the maker fee
+        "edge_max": bot.MAX_ENTRY_NET_EDGE,
+        "tick": TICK,
+        # The maker fee is fee_rate x price x (1 - price), per contract.
+        "fee_rate": round(float(maker_fee(0.5, FEE_SHARE)) / 0.25, 6),
+        "book_minutes": bot.BOOK_MAX_AGE_MINUTES,
+        "hours_min": bot.WINDOW[0],
+        "hours_max": bot.WINDOW[1],
+        "min_books": bot.MIN_BOOKS,
+    }
+
+
 def build_payload(players, projections, books=None):
     """Everything the page shows. The same inputs give the same payload, so
     the data file changes only when the box scores do."""
@@ -352,6 +382,7 @@ def build_payload(players, projections, books=None):
             "value_minutes": VALUE_MINUTES,
             "replacement_rank": REPLACEMENT_RANK,
             "check": check,
+            "best_plays": best_play_rules(),
         },
         "players": table.to_dict("records"),
         "slate": slate_snapshot(projections),
