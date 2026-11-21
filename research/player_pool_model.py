@@ -1,4 +1,9 @@
-"""The stat model's price for every open Kalshi NBA prop, for the player-pool page.
+"""The stat model's numbers for tonight's NBA props, for the player-pool page.
+
+The page shows only what the model expects each player to total; Kalshi is
+traded by the project's bot and its prices are not on the page. The model's
+pricing function works from Kalshi's list of open markets, so that list
+still decides which players get a number here.
 
 The projections job prices the props a few times a day, hours apart. The
 page wants the same numbers more often, so the player-pool workflow runs
