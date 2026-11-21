@@ -1,0 +1,35 @@
+name: player-pool page data (read-only)
+# Keeps the season numbers on the NBA player-pool page current
+# (research/nba_player_pool_dashboard.html reads outputs/player_pool/latest.json).
+# PUBLIC data only: box scores. No keys, no account, no orders.
+on:
+  pull_request:
+    paths:
+      - "research/nba_player_pool_dashboard.py"
+      - "research/nba_player_pool_dashboard.template.html"
+      - "tests/test_nba_player_pool_dashboard.py"
+      - ".github/workflows/player-pool-page.yml"
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Can a browser read Kalshi's public prices? (one-off check)
+        continue-on-error: true
+        run: |
+          origin="https://akilatrades.github.io"
+          for base in https://external-api.kalshi.com https://api.elections.kalshi.com; do
+            echo "== GET $base"
+            curl -sS -m 25 -o body.json -D - -H "Origin: $origin" \
+              "$base/trade-api/v2/markets?series_ticker=KXNBAPTS&status=open&limit=2" \
+              | grep -i -E "^HTTP|access-control|content-type|vary|x-ratelimit|retry-after" || true
+            head -c 600 body.json; echo
+            echo "== OPTIONS $base"
+            curl -sS -m 25 -o /dev/null -D - -X OPTIONS -H "Origin: $origin" \
+              -H "Access-Control-Request-Method: GET" \
+              "$base/trade-api/v2/markets?limit=1" \
+              | grep -i -E "^HTTP|access-control|allow" || true
+          done
