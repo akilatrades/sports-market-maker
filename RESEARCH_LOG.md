@@ -4360,3 +4360,57 @@ owner's decision and is not part of this change.
 sportsbook or model inputs stalled that evening. Order passes come every
 10 minutes although the timer runs every 2 in the evening; the status
 output will show what the passes in between report.
+
+## 2026-11-20: Player-pool page: projection check and rebuild (owner; exploratory)
+
+*Research page only (`research/nba_player_pool_dashboard.html`). No live
+rule, limit or order path changes. Everything here is exploratory: about 30
+cuts, none pre-registered.*
+
+**What was checked.** The first version of the page projected each player
+from this season alone: per-minute rates pulled toward a position and
+usage-group average by 400 minutes, and minutes pulled 15% toward the
+league average. Its later "market" and "edge" columns were simulated from
+the plain season average plus noise.
+
+**What that recipe did (rebuilt from the page's own note; it reproduces the
+page's projected points to 0.12 on average).**
+
+- *This season, against sportsbooks* (181 player-games on the 19 and 20
+  November slates, two or more books): level with the books' middle line
+  below 12.5 points, 2.0 points low around 20, 4.0 low around 25. Where
+  books priced "over 25.5" near 50%, the page said 28% (6 cases).
+- *Last season, replayed day by day* (2025–26 from 20 November, 19,175
+  player-games): players averaging 25 or more scored 26.9; the recipe said
+  24.4 and the stat model 27.4. Average miss per player-game: recipe 4.92
+  points, plain season average 4.89, stat model 4.70 (recipe minus stat
+  model +0.22, game-clustered t 13.7).
+- *The simulated edge columns* measured that shrinkage and nothing else:
+  the "market" matched the plain season average run through a normal curve
+  (correlation 0.997), the "best edge" matched projected minus season
+  average (0.90), and all 41 players averaging 20 or more showed a negative
+  edge.
+
+**What replaced it.** `research/nba_player_pool_dashboard.py` builds the
+page from public box scores and the two public price files.
+
+- *Baseline* (no opponent, betting line or absences): half the stat
+  model's per-minute rates times expected minutes, half recent form, both
+  from `markets/nba/features.py`. Three blends were tried on 2025–26 (all
+  rates, all form, half and half) and half and half was kept, so its check
+  on that season is in-sample: 4.61 points average miss over 23,719
+  player-games against 4.70 for the plain season average (rebounds 1.89
+  against 1.92, assists 1.35 against 1.37, threes 0.90 against 0.90). The
+  page prints these numbers from the build, not from this entry.
+- *Props tab*: Kalshi's own lines with the stat model's probability,
+  Kalshi's bid and ask (`outputs/projections/latest.csv`) and the
+  sportsbook consensus where the books quote the exact line within two
+  hours (`outputs/books/nba_latest.csv`). Nothing is simulated. On the 20
+  November snapshot, across 249 lines in play and priced by two or more
+  books, Kalshi's midpoint sat 1.3 points from the books on average and the
+  stat model 5.6 points from them. One snapshot; a description, not a test.
+
+**Not claimed.** The gaps on the props tab are disagreements, not profit:
+they ignore the spread, fees and whether an order fills. The baseline is
+for reading a player's level, not for pricing orders; the bot still prices
+from sportsbooks (rules v9).
