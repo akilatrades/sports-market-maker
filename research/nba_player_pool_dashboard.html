@@ -230,14 +230,15 @@ function makeTable(table, columns, groups, state) {
     const c = columns.find(c => c.key === state.key); if (!c) return rows;
     const get = c.value || (r => r[c.key]);
     const flip = state.dir === "asc" ? 1 : -1;
-    return [...rows].sort((a, b) => {
+    const order = (a, b) => {
       let x = get(a), y = get(b);
       if (c.text) return flip * String(x ?? "").localeCompare(String(y ?? ""), undefined, {numeric: true});
       const nx = has(x), ny = has(y);
       if (!nx || !ny) return nx === ny ? 0 : nx ? -1 : 1;   /* blanks always last */
       if (state.dir === "size") return Math.abs(y) - Math.abs(x);
       return flip * (x - y);
-    });
+    };
+    return [...rows].sort((a, b) => order(a, b) || (state.tie ? state.tie(a, b) : 0));
   }
   function draw(rows) {
     head();
@@ -307,7 +308,10 @@ async function loadPlayers() {
 
 /* ---------- tonight's props ---------- */
 let slate = [], slateTime = null, slateLive = false, bookRecords = [];
-let liveQuotes = null;   /* {time, quotes: {ticker: [bid, ask]}} from the quote watcher */
+let liveQuotes = null;   /* {time, quotes: {ticker: [bid, ask]}, names, tips} from the quote watcher */
+let slateRecords = [], slateSnapshot = null;   /* the price file as last read */
+let noBooksYet = false;   /* the sportsbook filter was set aside because nothing has a sportsbook price */
+const SERIES_STAT = {KXNBAPTS: "points", KXNBAREB: "rebounds", KXNBAAST: "assists", KXNBA3PT: "threes"};
 const plain = (v, digits = 1) => !has(v) ? dash : `<span class="${Math.abs(v) >= 5 ? "big" : ""}">${v > 0 ? "+" : v < 0 ? "−" : ""}${Math.abs(v).toFixed(digits)}</span>`;
 const lineKey = (player, stat, line, game) => `${player}|${stat}|${(+line).toFixed(1)}|${game}`;
 const span = minutes => minutes < 90 ? `${Math.round(minutes)} min` : `${(minutes / 60).toFixed(1)} h`;
@@ -348,11 +352,34 @@ async function loadQuotes() {
     if (!response.ok) return;
     const data = await response.json(), time = parseTime(data?.updated_utc);
     if (!time || !data.quotes || (liveQuotes && time <= liveQuotes.time)) return;
-    liveQuotes = {time, quotes: data.quotes};
-    if (applyQuotes()) showProps();
+    liveQuotes = {time, quotes: data.quotes, names: data.names || {}, tips: data.tips || {}};
+    readSlate(slateRecords, slateSnapshot); showProps();
   } catch (error) { /* no watcher running, or offline: the price file stands */ }
 }
+function quoteOnlyRows(index, listed) {
+  /* Props Kalshi lists for games still ahead that the price file does not cover yet:
+     the stat model has not run for them, so they carry Kalshi and sportsbook prices only. */
+  if (!liveQuotes) return [];
+  const now = Date.now(), rows = [];
+  for (const [ticker, q] of Object.entries(liveQuotes.quotes)) {
+    const parts = ticker.split("-");
+    if (listed.has(ticker) || parts.length !== 4 || !Array.isArray(q)) continue;
+    const [series, code, who, last] = parts, stat = SERIES_STAT[series], name = liveQuotes.names[who];
+    const tip = parseTime(liveQuotes.tips[code]), threshold = +last;
+    if (!stat || !Array.isArray(name) || !tip || tip <= now || !Number.isInteger(threshold) || code.length < 6) continue;
+    const away = code.slice(-6, -3), home = code.slice(-3);
+    let quote = index.get(lineKey(name[1], stat, threshold - 0.5, away + home));
+    if (quote && quote.commence && Math.abs(quote.commence - tip) / 60000 > TIP_MATCH_MINUTES) quote = undefined;
+    rows.push(price({
+      ticker, player: String(name[0]), id: null, team: who.slice(0, 3), stat, threshold, tip, game: `${away} at ${home}`, injury: "",
+      mean: null, model: null, books: quote ? quote.p : null, bookN: quote ? quote.n : 0, bookSeen: quote ? quote.seen : null,
+      bid: side(q[0]), ask: side(q[1]), kalshiSeen: liveQuotes.time, gapModel: null, modelPending: true,
+    }));
+  }
+  return rows;
+}
 function readSlate(records, snapshot) {
+  slateRecords = records; slateSnapshot = snapshot;
   slateTime = parseTime(snapshot);
   const index = bookIndex();
   slate = records.map(r => {
@@ -374,7 +401,10 @@ function readSlate(records, snapshot) {
   tonight.clear();
   for (const r of slate) if (r.stat === "points" && r.mean !== null) tonight.set(r.id, r.mean);
   applyQuotes();
-  const games = [...new Map(slate.filter(r => r.tip).map(r => [r.game, r.tip])).entries()].sort((a, b) => a[1] - b[1]);
+  slate.push(...quoteOnlyRows(index, new Set(slate.map(r => r.ticker))));
+  /* The game list offers games still ahead; only when none is does it list the ones that have started. */
+  const timed = slate.filter(r => r.tip), ahead = timed.filter(r => r.tip > Date.now());
+  const games = [...new Map((ahead.length ? ahead : timed).map(r => [r.game, r.tip])).entries()].sort((a, b) => a[1] - b[1]);
   const keep = $("s-game").value;
   $("s-game").innerHTML = '<option value="">All games</option>' + games.map(([g, t]) => `<option value="${esc(g)}">${esc(g)}, ${esc(clock(t))}</option>`).join("");
   if (games.some(([g]) => g === keep)) $("s-game").value = keep;
@@ -394,7 +424,7 @@ const propCols = [
   {key: "player", label: "Player", text: true, cell: r => `${esc(r.player)}${r.injury ? `<span class="tag">${esc(r.injury)}</span>` : ""}<span class="sub">${esc(r.team)}</span>`},
   {key: "game", label: "Game", text: true, value: r => `${r.tip ? r.tip.toISOString() : "9"} ${r.game}`, cell: r => `${esc(r.game)}<span class="sub">${r.tip ? esc(clock(r.tip)) : ""}</span>`},
   {key: "line", label: "Line", text: true, value: r => `${r.stat} ${String(r.threshold).padStart(3, "0")}`, cell: r => `${r.threshold}+ ${STAT_NAME[r.stat]}`, title: "Kalshi's market: this many or more."},
-  {key: "model", label: "Stat model", edge: true, cell: r => `${pct0(r.model)}<span class="sub">expects ${r.mean === null ? "—" : r.mean.toFixed(1)}</span>`, title: "The stat model's chance of reaching the line in tonight's game, and the total it expects."},
+  {key: "model", label: "Stat model", edge: true, cell: r => r.modelPending ? `${dash}<span class="sub">not run yet</span>` : `${pct0(r.model)}<span class="sub">expects ${r.mean === null ? "—" : r.mean.toFixed(1)}</span>`, title: "The stat model's chance of reaching the line in tonight's game, and the total it expects. Blank until the model has run for the game."},
   {key: "books", label: "Sportsbooks", cell: r => r.books === null ? dash : `${pct0(r.books)}<span class="sub">${r.bookN} ${r.bookN === 1 ? "book" : "books"}${r.bookOld ? `, <span class="aged">${span(r.bookAge)} older</span>` : ""}</span>`, title: "Sportsbook consensus on this exact line with the bookmakers' margin removed. A quote more than two hours older than Kalshi's prices is marked with its age."},
   {key: "mid", label: "Kalshi", cell: r => r.bid === null && r.ask === null ? dash : `${r.bid === null ? "no bid" : cents(r.bid)} to ${r.ask === null ? "no ask" : cents(r.ask)}`, title: "Kalshi's YES bid and ask. Sorted by the middle of the two."},
   {key: "strip", label: "Around Kalshi's quote", sort: false, center: true, cell: strip},
@@ -404,14 +434,20 @@ const propCols = [
 function aged(r, gap) {   /* a gap against an old sportsbook quote partly measures what changed since */
   return r.bookOld && has(gap) ? `<span class="faint" title="Against a sportsbook quote ${span(r.bookAge)} older than Kalshi's price.">${plain(gap)}</span>` : plain(gap);
 }
-const sState = {key: "gapBook", dir: "size"};
+/* Rows that tie (or have no gap yet) fall back to game time, player, then line. */
+const sState = {key: "gapBook", dir: "size", tie: (a, b) => (a.tip - b.tip) || a.player.localeCompare(b.player) || a.stat.localeCompare(b.stat) || (a.threshold - b.threshold)};
 const drawProps = makeTable($("t-props"), propCols, null, sState);
 function showProps() {
   const q = $("s-search").value.trim().toLowerCase(), stat = $("s-stat").querySelector('[aria-pressed="true"]').dataset.stat, game = $("s-game").value;
   const play = $("s-play").checked, book = +$("s-book").value, upcoming = $("s-upcoming").checked, now = Date.now();
   const started = slate.filter(r => r.tip && r.tip <= now).length;
-  const rows = slate.filter(r => (!q || r.player.toLowerCase().includes(q)) && (!stat || r.stat === stat) && (!game || r.game === game)
-    && (!play || (r.tight && r.mid >= 0.10 && r.mid <= 0.90)) && (!book || (r.books !== null && r.bookN >= book)) && (!upcoming || !r.tip || r.tip > now));
+  const pick = needBooks => slate.filter(r => (!q || r.player.toLowerCase().includes(q)) && (!stat || r.stat === stat) && (!game || r.game === game)
+    && (!play || (r.tight && r.mid >= 0.10 && r.mid <= 0.90)) && (!needBooks || (r.books !== null && r.bookN >= needBooks)) && (!upcoming || !r.tip || r.tip > now));
+  let rows = pick(book);
+  /* Early in the day no sportsbook line may sit on any of these Kalshi lines yet:
+     show Kalshi's prices alone and say so, sooner than an empty table. */
+  noBooksYet = book > 0 && rows.length === 0 && !pick(0).some(r => r.books !== null) && pick(0).length > 0;
+  if (noBooksYet) rows = pick(0);
   drawProps(rows);
   $("t-props").hidden = rows.length === 0; $("s-empty").hidden = rows.length > 0;
   if (!rows.length) $("s-empty").textContent = !slate.length ? "No props are listed right now. They appear here on game days once Kalshi opens its markets."
@@ -428,17 +464,21 @@ function paintTimes(rows) {
   const seen = (ahead.length ? ahead : slate).map(r => +r.kalshiSeen).filter(Boolean);
   const kalshiTime = seen.length ? new Date(Math.max(...seen)) : null;
   const kalshiOld = kalshiTime !== null && (now - kalshiTime) / 60000 > KALSHI_STALE_MINUTES;
-  const priced = slate.filter(r => r.books !== null && r.bookSeen);
+  const priced = (ahead.length ? ahead : slate).filter(r => r.books !== null && r.bookSeen);
   const bookTime = priced.length ? new Date(Math.max(...priced.map(r => +r.bookSeen))) : null;
   const allOld = priced.length > 0 && priced.every(r => r.bookOld), someOld = shown.some(r => r.bookOld);
   $("stamp-kalshi").dataset.state = kalshiOld && ahead.length ? "stale" : "fresh";
   $("stamp-kalshi").innerHTML = kalshiTime ? when(kalshiTime) : "—";
+  const pending = ahead.some(r => r.modelPending);
+  $("stamp-price").dataset.state = pending ? "stale" : "fresh";
   $("stamp-price").innerHTML = slateTime ? when(slateTime) : "—";
   $("stamp-books").dataset.state = allOld ? "stale" : "fresh";
   $("stamp-books").innerHTML = bookTime ? when(bookTime) : "—";
   const notice = $("s-notice"), notes = [];
   if (!slateLive) notes.push("These are the prices saved when this page was built. Open the page on the project site to load the latest.");
   else if (kalshiOld && ahead.length) notes.push(`Kalshi's prices here are ${ago(kalshiTime).replace(" ago", "")} old. They are republished every few minutes while the price watcher is running; right now the page is showing the price file instead, which changes about five times on a game day.`);
+  if (pending) notes.push("The stat model has not run for some of these games yet, so they are listed from Kalshi's own markets with Kalshi and sportsbook prices only. Its numbers fill in when the next projections file is published.");
+  if (noBooksYet) notes.push("No sportsbook line sits on any of these Kalshi lines yet, so the list shows Kalshi's prices without them.");
   if (allOld && kalshiTime) notes.push(`The sportsbook lines were last refreshed ${span((kalshiTime - bookTime) / 60000)} before these Kalshi prices, so a gap against them partly shows what changed in between.`);
   else if (someOld) notes.push("Some sportsbook quotes are more than two hours older than the Kalshi prices beside them. They are marked.");
   notice.hidden = notes.length === 0; notice.textContent = notes.join(" ");
@@ -501,7 +541,7 @@ function method() {
     <p><strong>±</strong> is the typical one-game swing in points (one standard deviation) for players at that scoring level in ${esc(c.season || "")}.</p>
     <p><strong>Value</strong> is a box-score index: z-scores of the baseline (points ${w.points}, rebounds ${w.rebounds}, assists ${w.assists}, threes ${w.threes}) and of true shooting (${w.ts}), among players projected for ${esc(m.value_minutes)}+ minutes, minus the score of the player ranked ${esc(m.replacement_rank)}th. It is not a plus-minus model and says nothing about defence.</p>
     <p><strong>Tonight's props</strong> are Kalshi's own lines (“25+ points” means 25 or more). Model is the project's stat model for tonight's game, which does use the opponent, the betting line and absences. Books is the sportsbook consensus with the bookmakers' margin removed, shown only where the books quote Kalshi's exact line; a quote more than two hours older than Kalshi's prices is marked with its age. Kalshi is its YES bid and ask when the file was written. No price on this page is simulated.</p>
-    <p><strong>How fresh it is.</strong> The page keeps itself current while it is open, and the times at the top show how old each number is. Season numbers are rebuilt when new box scores are published, usually the day after the games. Kalshi's bid and ask are republished every few minutes on game days while the price watcher is running, and the page looks for them every minute; for games that have started it keeps the last pre-game price. The stat model's numbers change about five times on a game day and the sportsbook lines three or four times.</p>
+    <p><strong>How fresh it is.</strong> The page keeps itself current while it is open, and the times at the top show how old each number is. Season numbers are rebuilt when new box scores are published, usually the day after the games. Kalshi's bid and ask are republished every few minutes on game days while the price watcher is running, and the page looks for them every minute; for games that have started it keeps the last pre-game price. A game the stat model has not reached yet is listed from Kalshi's own markets until it has. The stat model's numbers change about five times on a game day and the sportsbook lines three or four times.</p>
     <p><strong>A gap is a disagreement, not a profit.</strong> It ignores the bid-ask spread, fees and whether an order would ever fill. In this project's own records the sportsbooks have been a better guide than the stat model.</p>`;
 }
 function start() {
