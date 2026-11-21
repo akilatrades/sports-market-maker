@@ -11,9 +11,11 @@ from research import player_pool_quotes as Q
 NOW = datetime(2026, 11, 21, 23, 0, tzinfo=UTC)
 
 
-def markets(*rows):
+def markets(*rows, titles=None):
     columns = ["ticker", "yes_bid_dollars", "yes_ask_dollars", "occurrence_datetime"]
-    return pd.DataFrame(rows, columns=columns)
+    frame = pd.DataFrame(rows, columns=columns)
+    frame["yes_sub_title"] = titles if titles is not None else None
+    return frame
 
 
 def test_quotes_are_bid_and_ask_in_dollars_by_ticker():
@@ -71,7 +73,8 @@ def test_one_pass_writes_the_file_and_reports_whether_to_continue(
             assert stop.code == status
         else:
             raise AssertionError("main() should end with an exit status")
-        assert set(json.loads(out.read_text())) == {"updated_utc", "quotes"}
+        saved = json.loads(out.read_text())
+        assert set(saved) == {"updated_utc", "quotes", "names", "tips"}
 
 
 def test_it_only_reads_public_market_data():
@@ -85,3 +88,31 @@ def test_it_only_reads_public_market_data():
         "PRIVATE_KEY",
     ):
         assert forbidden not in source.replace("no orders", ""), forbidden
+
+
+def test_names_and_tip_times_let_the_page_list_props_before_the_model_runs():
+    frame = markets(
+        ("KXNBAPTS-26NOV21SACLAL-SACKMURRAY13-25", 0.1, 0.12, "2026-11-22T06:00:00Z"),
+        ("KXNBAREB-26NOV21SACLAL-SACKMURRAY13-8", 0.3, 0.33, "2026-11-22T06:00:00Z"),
+        ("KXNBAPTS-26NOV21SACLAL-LALLDONCIC77-30", 0.6, 0.62, "2026-11-22T06:00:00Z"),
+        ("KXNBAPTS-26NOV21BOSNYK-BOSJJACKSON1-20", 0.4, 0.5, "not a time"),
+        ("ODD-TICKER", 0.4, 0.5, "2026-11-22T06:00:00Z"),
+        titles=[
+            "Keegan Murray: 25+",
+            "Keegan Murray: 8+",
+            "Luka Dončić: 30+",
+            "Jaren Jackson Jr.: 20+",
+            "Somebody: 1+",
+        ],
+    )
+    out = Q.quote_file(frame, NOW)
+    assert len(out["quotes"]) == 5  # every ticker keeps its price
+    # One entry per player: the name to show and the key sportsbook lines use.
+    assert out["names"] == {
+        "SACKMURRAY13": ["Keegan Murray", "keegan murray"],
+        "LALLDONCIC77": ["Luka Dončić", "luka doncic"],
+        "BOSJJACKSON1": ["Jaren Jackson Jr.", "jaren jackson"],
+    }
+    # Kalshi dates a prop about three hours after tip-off.
+    assert out["tips"] == {"26NOV21SACLAL": "2026-11-22T03:00:00+00:00"}
+    json.dumps(out, allow_nan=False)

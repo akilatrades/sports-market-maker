@@ -7,10 +7,15 @@ only: Kalshi's public market data, with no keys, no account and no orders.
 One pass reads the four NBA prop series and writes
 outputs/player_pool/kalshi_quotes.json:
 
-    {"updated_utc": "...", "quotes": {"<ticker>": [yes bid, yes ask], ...}}
+    {"updated_utc": "...",
+     "quotes": {"<ticker>": [yes bid, yes ask], ...},
+     "names": {"<player part of the ticker>": [name, player key], ...},
+     "tips": {"<game part of the ticker>": tip-off time, ...}}
 
-Prices are in dollars; null means that side has no quote. The player-pool
-workflow runs a pass every few minutes on game days and publishes the file.
+Prices are in dollars; null means that side has no quote. The names and
+tip-off times let the page list a day's props from Kalshi's own markets
+before the stat model has run for them. The player-pool workflow runs a
+pass every few minutes on game days and publishes the file.
 
     python -m research.player_pool_quotes
 
@@ -26,7 +31,7 @@ from pathlib import Path
 import pandas as pd
 
 from kalshi.api import snapshot
-from markets.nba.kalshi import SERIES
+from markets.nba.kalshi import SERIES, normalize_name
 
 OUT = Path("outputs/player_pool/kalshi_quotes.json")
 # Kalshi dates each prop about three hours after its game tips off.
@@ -43,13 +48,38 @@ def _price(value):
     return round(price, 4) if 0 < price < 1 else None
 
 
+def _name(row):
+    """'Keegan Murray: 25+' -> 'Keegan Murray' (older titles: '... records 40+ points')."""
+    for field in ("yes_sub_title", "title"):
+        text = getattr(row, field, None)
+        if isinstance(text, str) and text.strip():
+            return text.split(":")[0].split(" records ")[0].strip()
+    return ""
+
+
 def quote_file(frame, now):
-    quotes = {}
-    for row in frame.itertuples(index=False):
+    quotes, names, tips = {}, {}, {}
+    ends = pd.to_datetime(frame.occurrence_datetime, utc=True, errors="coerce")
+    for row, end in zip(frame.itertuples(index=False), ends, strict=True):
         ticker = str(row.ticker or "")
-        if ticker:
-            quotes[ticker] = [_price(row.yes_bid_dollars), _price(row.yes_ask_dollars)]
-    return {"updated_utc": now.isoformat(timespec="seconds"), "quotes": quotes}
+        if not ticker:
+            continue
+        quotes[ticker] = [_price(row.yes_bid_dollars), _price(row.yes_ask_dollars)]
+        # KXNBAPTS-26NOV21SACLAL-SACKMURRAY13-25: series, game, player, line.
+        parts = ticker.split("-")
+        if len(parts) != 4:
+            continue
+        name = _name(row)
+        if name:
+            names[parts[2]] = [name, normalize_name(name)]
+        if pd.notna(end):
+            tips[parts[1]] = (end - GAME_LENGTH).isoformat(timespec="seconds")
+    return {
+        "updated_utc": now.isoformat(timespec="seconds"),
+        "quotes": quotes,
+        "names": names,
+        "tips": tips,
+    }
 
 
 def games_ahead(frame, now):

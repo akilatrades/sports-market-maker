@@ -67,3 +67,6 @@ def test_the_page_reads_the_files_this_workflow_writes():
     )
     assert '"../outputs/player_pool/latest.json"' in page
     assert "/sports-market-maker/player-pool-live/kalshi_quotes.json" in page
+    # ... and uses every part of the quotes file the watcher publishes.
+    for part in ("data.quotes", "data.names", "data.tips"):
+        assert part in page, part

@@ -4489,3 +4489,37 @@ was tried.
 **Still unproven.** The `prices` job has not run yet: it first runs after
 this is merged. How current the page really is depends on when GitHub
 starts that job each day; the page shows the age of what it has.
+
+## 2026-11-21: Player-pool page: today's props from the morning (owner request)
+
+*Research page only. No live rule, limit or order path changes.*
+
+**First run of the automatic jobs** (started by hand at 16:04 UTC, minutes
+after the merge): the `stats` job passed and found nothing to commit, as
+the box scores had not changed. The `prices` job published Kalshi's bid and
+ask for 1,031 markets at 16:05:22 and again at 16:08:13 UTC; the data
+branch held one commit after both. GitHub serves that file to browsers
+with a five-minute cache, so the page runs about three to eight minutes
+behind Kalshi while the job is up.
+
+**The gap it exposed.** The props tab took its list of props from the
+projections file, which GitHub has been producing from about 20:40 UTC.
+Until then the tab listed the previous night's games, all started, and the
+fresh Kalshi prices had nothing to attach to. On 21 November that would
+have hidden an 18:00 UTC game entirely.
+
+**The fix.** The quotes file now also carries each prop's player name,
+the key sportsbook lines use for him, and his game's tip-off time (Kalshi
+dates a prop three hours after tip-off: 04:00, 05:30 and 06:00 UTC for
+tips at 01:00, 02:30 and 03:00). For a game still ahead that the
+projections file does not cover, the page lists the props from Kalshi's
+own markets with Kalshi and sportsbook prices, shows the stat model as
+"not run yet", and says so above the table. When the projections file
+arrives its rows replace them. If no listed prop has a sportsbook price
+yet, the sportsbook filter is set aside with a note, sooner than showing
+an empty table.
+
+**Checked** in a browser against the real Kalshi snapshot from 08:22 UTC
+on 21 November (450 markets, 51 players, 4 games): 450 props listed with
+no duplicate of any prop the projections file already had; the older
+quotes-file format still loads and adds nothing.
