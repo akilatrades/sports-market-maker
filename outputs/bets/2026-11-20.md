@@ -57,18 +57,43 @@
 | Fri 8:00 PM | Zion Williamson | NO 2+ assists | 24¢ | 39% | 13¢ | 7 | $1.77 | paper |
 | Fri 8:00 PM | Zion Williamson | NO 6+ rebounds | 49¢ | 62% | 11¢ | 3 | $1.53 | paper |
 | Fri 9:30 PM | Collin Gillespie | NO 10+ points | 49¢ | 63% | 12¢ | 3 | $1.53 | paper |
+| Fri 9:30 PM | Collin Gillespie | NO 4+ assists | 54¢ | 65% | 9¢ | 3 | $1.68 | paper |
+| Fri 9:30 PM | Collin Gillespie | NO 4+ rebounds | 63¢ | 72% | 8¢ | 2 | $1.30 | paper |
 | Fri 9:30 PM | Darryn Peterson | NO 20+ points | 59¢ | 77% | 17¢ | 2 | $1.22 | paper |
 | Fri 9:30 PM | Darryn Peterson | NO 4+ assists | 43¢ | 60% | 15¢ | 4 | $1.79 | paper |
 | Fri 9:30 PM | Darryn Peterson | NO 4+ rebounds | 37¢ | 51% | 12¢ | 4 | $1.55 | paper |
 | Fri 9:30 PM | Darryn Peterson | NO 3+ threes | 56¢ | 69% | 12¢ | 3 | $1.74 | paper |
 | Fri 9:30 PM | Devin Booker | NO 25+ points | 40¢ | 51% | 10¢ | 4 | $1.67 | paper |
+| Fri 9:30 PM | Dillon Brooks | YES 15+ points | 53¢ | 60% | 6¢ | 3 | $1.65 | paper |
+| Fri 9:30 PM | Jalen Green | YES 15+ points | 48¢ | 56% | 6¢ | 3 | $1.50 | paper |
 | Fri 9:30 PM | Jaxson Hayes | NO 6+ rebounds | 44¢ | 54% | 8¢ | 4 | $1.83 | paper |
+| Fri 9:30 PM | Jaxson Hayes | NO 2+ assists | 51¢ | 62% | 9¢ | 3 | $1.59 | paper |
 | Fri 9:30 PM | Keyonte George | NO 6+ assists | 28¢ | 41% | 11¢ | 6 | $1.77 | paper |
+| Fri 10:00 PM | Amen Thompson | NO 8+ rebounds | 58¢ | 67% | 7¢ | 3 | $1.80 | paper |
+| Fri 10:00 PM | Cameron Johnson | YES 15+ points | 27¢ | 34% | 6¢ | 6 | $1.71 | paper |
+| Fri 10:00 PM | Collin Sexton | YES 4+ rebounds | 14¢ | 22% | 8¢ | 12 | $1.79 | paper |
 | Fri 10:00 PM | Domantas Sabonis | NO 14+ rebounds | 66¢ | 76% | 8¢ | 2 | $1.36 | paper |
+| Fri 10:00 PM | Domantas Sabonis | NO 4+ assists | 28¢ | 34% | 5¢ | 6 | $1.77 | paper |
+| Fri 10:00 PM | Fred VanVleet | NO 4+ assists | 27¢ | 34% | 6¢ | 6 | $1.71 | paper |
+| Fri 10:00 PM | Jabari Smith Jr. | NO 15+ points | 48¢ | 57% | 8¢ | 3 | $1.50 | paper |
+| Fri 10:00 PM | Jabari Smith Jr. | NO 3+ threes | 56¢ | 65% | 7¢ | 3 | $1.74 | paper |
+| Fri 10:00 PM | Jabari Smith Jr. | NO 8+ rebounds | 65¢ | 73% | 6¢ | 2 | $1.34 | paper |
+| Fri 10:00 PM | Jake LaRavia | NO 5+ points | 32¢ | 40% | 6¢ | 5 | $1.68 | paper |
 | Fri 10:00 PM | Keegan Murray | NO 2+ threes | 53¢ | 63% | 8¢ | 3 | $1.65 | paper |
+| Fri 10:00 PM | Kevin Durant | YES 6+ assists | 25¢ | 33% | 7¢ | 7 | $1.85 | paper |
 | Fri 10:00 PM | Luka Dončić | NO 10+ assists | 69¢ | 79% | 9¢ | 2 | $1.41 | paper |
+| Fri 10:00 PM | Luka Dončić | NO 6+ rebounds | 32¢ | 41% | 8¢ | 5 | $1.68 | paper |
+| Fri 10:00 PM | Luka Dončić | YES 7+ threes | 17¢ | 24% | 6¢ | 10 | $1.80 | paper |
+| Fri 10:00 PM | Malik Monk | NO 10+ points | 41¢ | 48% | 6¢ | 4 | $1.71 | paper |
+| Fri 10:00 PM | Marcus Smart | YES 2+ assists | 62¢ | 70% | 6¢ | 2 | $1.28 | paper |
+| Fri 10:00 PM | Marcus Smart | YES 10+ points | 22¢ | 29% | 6¢ | 8 | $1.86 | paper |
+| Fri 10:00 PM | Nikola Jokić | NO 25+ points | 45¢ | 53% | 6¢ | 3 | $1.41 | paper |
 | Fri 10:00 PM | Quentin Grimes | NO 15+ points | 37¢ | 56% | 17¢ | 4 | $1.55 | paper |
 | Fri 10:00 PM | Quentin Grimes | NO 4+ rebounds | 46¢ | 60% | 13¢ | 3 | $1.44 | paper |
 | Fri 10:00 PM | Quentin Grimes | NO 2+ threes | 30¢ | 41% | 10¢ | 5 | $1.58 | paper |
+| Fri 10:00 PM | Quentin Grimes | NO 4+ assists | 58¢ | 65% | 5¢ | 3 | $1.80 | paper |
+| Fri 10:00 PM | Sandro Mamukelashvili | NO 4+ rebounds | 36¢ | 45% | 7¢ | 4 | $1.51 | paper |
+| Fri 10:00 PM | Tari Eason | NO 6+ rebounds | 47¢ | 54% | 5¢ | 3 | $1.47 | paper |
 | Fri 10:00 PM | Walker Kessler | YES 2+ assists | 48¢ | 61% | 12¢ | 3 | $1.50 | paper |
 | Fri 10:00 PM | Ziaire Williams | NO 2+ rebounds | 30¢ | 40% | 9¢ | 5 | $1.58 | paper |
+| Fri 10:00 PM | Ziaire Williams | YES 10+ points | 39¢ | 48% | 7¢ | 4 | $1.63 | paper |
