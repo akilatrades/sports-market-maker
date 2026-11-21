@@ -34,6 +34,7 @@ h1{margin:0;font-size:30px;line-height:1.15;font-weight:600;letter-spacing:-.02e
 .filters input[type="search"]{width:220px}
 .filters label{display:inline-flex;gap:7px;align-items:center;color:var(--muted);font-size:14px}
 .filters input[type="checkbox"]{accent-color:var(--green);width:15px;height:15px;margin:0}
+.filters label:has(input:disabled){opacity:.6}
 .seg{display:inline-flex;border:1px solid var(--line);border-radius:6px;overflow:hidden}
 .seg button{appearance:none;background:var(--paper);border:0;border-left:1px solid var(--line);color:var(--muted);font:inherit;font-size:14px;padding:7px 12px;min-height:34px;cursor:pointer}
 .seg button:first-child{border-left:0}
@@ -128,6 +129,7 @@ td .sub{display:block;line-height:1.3}
   <section id="panel-players" role="tabpanel" aria-labelledby="tab-players">
     <div class="filters">
       <input type="search" id="p-search" placeholder="Find a player" aria-label="Find a player">
+      <label><input type="checkbox" id="p-tonight"> Playing tonight only <span id="p-tonight-games"></span></label>
       <select id="p-team" aria-label="Team"><option value="">All teams</option></select>
       <select id="p-pos" aria-label="Position"><option value="">All positions</option><option value="G">Guards</option><option value="F">Forwards</option><option value="C">Centers</option></select>
       <label><input type="checkbox" id="p-regulars" checked> Regulars only (5+ games, 10+ minutes)</label>
@@ -193,6 +195,7 @@ const FILE_MINUTES = 10;            /* ... and for newer files */
 const KALSHI_STALE_MINUTES = 30;
 const BOOK_OLD_MINUTES = 120;       /* a sportsbook quote this much older than Kalshi's is marked */
 const TIP_MATCH_MINUTES = 90;       /* same teams, same night */
+const DAY_STARTS_HOUR = 5;          /* a night's games stay on the page until 5am Eastern */
 const STRIP_REACH = 0.20;
 const MAX_SPREAD = 0.10;            /* wider than this, the middle of bid and ask says little */
 const STAT_NAME = {points: "points", rebounds: "rebounds", assists: "assists", threes: "threes"};
@@ -209,6 +212,9 @@ const cents = v => has(v) ? Math.round(100 * v) + "¢" : dash;
 const signed = (v, digits = 1) => !has(v) ? dash : `<span class="${v > 0 ? "up" : v < 0 ? "down" : ""}">${v > 0 ? "+" : v < 0 ? "−" : ""}${Math.abs(v).toFixed(digits)}</span>`;
 const parseTime = s => { if (!s) return null; const d = new Date(String(s).replace(" ", "T").replace(/(\.\d{3})\d+/, "$1")); return isNaN(d) ? null : d; };
 const clock = d => d.toLocaleTimeString([], {hour: "numeric", minute: "2-digit"});
+/* The slate a moment belongs to, as "2026-11-21": the Eastern date, rolling over at 5am so a late game stays with its night. */
+const easternDate = new Intl.DateTimeFormat("en-CA", {timeZone: "America/New_York", year: "numeric", month: "2-digit", day: "2-digit"});
+const slateDay = d => easternDate.format(new Date(+d - DAY_STARTS_HOUR * 3600000));
 const ago = d => { const m = Math.max(0, Math.round((Date.now() - d) / 60000)); return m < 1 ? "just now" : m < 90 ? `${m} min ago` : m < 2880 ? `${Math.round(m / 60)} hours ago` : `${Math.round(m / 1440)} days ago`; };
 
 /* ---------- one small sortable table, used by both tabs ---------- */
@@ -274,17 +280,34 @@ const playerCols = [
   num("swing", "±", f1, {title: "Typical one-game swing in points for players at this level last season (one standard deviation)."}),
   num("proj_rebounds", "REB", f1), num("proj_assists", "AST", f1), num("proj_threes", "3PM", f1),
   {key: "delta", label: "vs season", cell: r => signed(r.delta), title: "Baseline points minus his season average."},
-  {key: "tonight", label: "PTS tonight", value: r => tonight.get(r.player_id), cell: r => f1(tonight.get(r.player_id)), title: "The stat model's expected points in tonight's game. Unlike the baseline it knows the opponent, the betting line and who is out. Blank when he has no game in the latest file."},
+  {key: "tonight", label: "PTS tonight", value: r => tonight.get(r.player_id), cell: r => f1(tonight.get(r.player_id)), title: "The stat model's expected points in tonight's game. Unlike the baseline it knows the opponent, the betting line and who is out. Blank when his team has no game tonight or the model has not priced it."},
   {key: "value", label: "Value", cell: r => signed(r.value, 2), title: "Box-score index against the 150th-ranked regular. Not a plus-minus model."},
 ];
 const playerGroups = [{label: "Player", span: 4}, {label: "This season, per game", span: 7}, {label: "Baseline for his next game", span: 7}, {label: "Stat model", span: 1}, {label: "Index", span: 1}];
 const pState = {key: "value", dir: "desc", rowClass: r => (r.games < 5 || r.minutes < 10) ? "thin" : ""};
 const drawPlayers = makeTable($("t-players"), playerCols, playerGroups, pState);
+let tonightChoice = null;   /* the reader's own setting of "Playing tonight only", once made */
+function gamesTonight() {   /* the teams with a game on today's slate, started or not */
+  const today = slateDay(Date.now()), teams = new Set(), games = new Set();
+  const add = (code, tip) => {
+    if (!tip || code.length < 6 || slateDay(tip) !== today) return;
+    games.add(code); teams.add(code.slice(-6, -3)); teams.add(code.slice(-3));
+  };
+  for (const r of slate) add(String(r.ticker || "").split("-")[1] || "", r.tip);
+  for (const [code, tip] of Object.entries(liveQuotes?.tips || {})) add(String(code), parseTime(tip));
+  return {teams, games: games.size};
+}
 function showPlayers() {
   const q = $("p-search").value.trim().toLowerCase(), team = $("p-team").value, pos = $("p-pos").value, regulars = $("p-regulars").checked;
-  const rows = players.filter(r => (!q || r.player.toLowerCase().includes(q)) && (!team || r.team === team) && (!pos || r.position === pos) && (!regulars || q || (r.games >= 5 && r.minutes >= 10)));
+  /* The pool is tonight's slate unless the reader asks for the whole league. Searching by name finds anyone. */
+  const {teams, games} = gamesTonight(), box = $("p-tonight");
+  box.disabled = games === 0; box.checked = games > 0 && (tonightChoice ?? true);
+  $("p-tonight-games").textContent = games ? `(${games} game${games === 1 ? "" : "s"})` : "(no games listed today)";
+  const playing = box.checked;
+  const rows = players.filter(r => (!q || r.player.toLowerCase().includes(q)) && (!team || r.team === team) && (!pos || r.position === pos) && (!regulars || q || (r.games >= 5 && r.minutes >= 10)) && (!playing || q || teams.has(r.team)));
   drawPlayers(rows);
   $("p-empty").hidden = rows.length > 0; $("t-players").hidden = rows.length === 0;
+  $("p-empty").textContent = playing && !q && team && !teams.has(team) ? `${team} has no game tonight. Untick “Playing tonight only” to see its players.` : "No player matches those filters.";
   $("p-shown").textContent = `${rows.length} of ${players.length} players`;
 }
 pState.redraw = showPlayers;
@@ -355,7 +378,7 @@ async function loadQuotes() {
     const data = await response.json(), time = parseTime(data?.updated_utc);
     if (!time || !data.quotes || (liveQuotes && time <= liveQuotes.time)) return;
     liveQuotes = {time, quotes: data.quotes, names: data.names || {}, tips: data.tips || {}};
-    readSlate(slateRecords, slateSnapshot); showProps();
+    readSlate(slateRecords, slateSnapshot); showProps(); showPlayers();
   } catch (error) { /* no watcher running, or offline: the price file stands */ }
 }
 async function loadModel() {
@@ -396,8 +419,8 @@ function quoteOnlyRows(index, listed, covered) {
 function readSlate(records, snapshot) {
   slateRecords = records; slateSnapshot = snapshot;
   slateTime = parseTime(snapshot);
-  const index = bookIndex();
-  slate = records.map(r => {
+  const index = bookIndex(), now = Date.now(), today = slateDay(now);
+  const fresh = records.map(r => {
     const model = has(r.p_model) ? +r.p_model : null;
     const code = String(r.event_ticker || "").split("-")[1] || "";
     const away = code.slice(-6, -3), home = code.slice(-3);
@@ -412,9 +435,13 @@ function readSlate(records, snapshot) {
       bid: side(r.yes_bid_dollars), ask: side(r.yes_ask_dollars), kalshiSeen: slateTime,
       gapModel: model !== null && books !== null ? 100 * (model - books) : null,
     });
-  }).filter(r => r.player && r.stat in STAT_NAME && Number.isFinite(r.threshold));
+  }).filter(r => r.player && r.stat in STAT_NAME && Number.isFinite(r.threshold) && !(r.tip && slateDay(r.tip) < today));   /* an earlier night's games are over */
+  /* A newer file prices only the games still ahead. Tonight's games that have started keep the last pre-game rows the page read. */
+  const listed = new Set(fresh.map(r => r.ticker));
+  const started = slate.filter(r => !r.modelPending && !r.modelMissing && r.tip && r.tip <= now && slateDay(r.tip) === today && !listed.has(r.ticker));
+  slate = [...fresh, ...started];
   tonight.clear();
-  for (const r of slate) if (r.stat === "points" && r.mean !== null) tonight.set(r.id, r.mean);
+  for (const r of slate) if (r.stat === "points" && r.mean !== null && r.tip && slateDay(r.tip) === today) tonight.set(r.id, r.mean);
   applyQuotes();
   const gameOf = r => String(r.ticker || "").split("-")[1];
   slate.push(...quoteOnlyRows(index, new Set(slate.map(r => r.ticker)), new Set(slate.map(gameOf))));
@@ -466,7 +493,7 @@ function showProps() {
   if (noBooksYet) rows = pick(0);
   drawProps(rows);
   $("t-props").hidden = rows.length === 0; $("s-empty").hidden = rows.length > 0;
-  if (!rows.length) $("s-empty").textContent = !slate.length ? "No props are listed right now. They appear here on game days once Kalshi opens its markets."
+  if (!rows.length) $("s-empty").textContent = !slate.length ? (slateLive ? "No props are listed for today yet. They appear on game days once the price watcher has read Kalshi's markets." : "The prices saved in this page are for games that have finished. Open the page on the project site for today's.")
     : upcoming && started === slate.length ? "Every game in the latest file has started, and prices here are pre-game only. Untick “Hide games that have started” to see the last pre-game snapshot."
     : book && !slate.some(r => r.books !== null) ? "No sportsbook line sits exactly on one of these Kalshi lines right now. Choose “Sportsbook price not needed” to see the stat model and Kalshi alone."
     : "No prop matches those filters. Try another stat, or untick a filter.";
@@ -556,11 +583,12 @@ function method() {
     <p><strong>±</strong> is the typical one-game swing in points (one standard deviation) for players at that scoring level in ${esc(c.season || "")}.</p>
     <p><strong>Value</strong> is a box-score index: z-scores of the baseline (points ${w.points}, rebounds ${w.rebounds}, assists ${w.assists}, threes ${w.threes}) and of true shooting (${w.ts}), among players projected for ${esc(m.value_minutes)}+ minutes, minus the score of the player ranked ${esc(m.replacement_rank)}th. It is not a plus-minus model and says nothing about defence.</p>
     <p><strong>Tonight's props</strong> are Kalshi's own lines (“25+ points” means 25 or more). Model is the project's stat model for tonight's game, which does use the opponent, the betting line and absences. Books is the sportsbook consensus with the bookmakers' margin removed, shown only where the books quote Kalshi's exact line; a quote more than two hours older than Kalshi's prices is marked with its age. Kalshi is its YES bid and ask when the file was written. No price on this page is simulated.</p>
-    <p><strong>How fresh it is.</strong> The page keeps itself current while it is open, and the times at the top show how old each number is. Season numbers are rebuilt when new box scores are published, usually the day after the games. On game days, while the price watcher is running, Kalshi's bid and ask are republished about every three minutes and the stat model is recomputed about every six, with the projections job's own pricing function. The page looks for both every minute. When the watcher is not running they come from the projections file, which changes about five times on a game day. Sportsbook lines change three or four times a day. For a game that has started the page keeps the last pre-game numbers.</p>
+    <p><strong>How fresh it is.</strong> The page keeps itself current while it is open, and the times at the top show how old each number is. Season numbers are rebuilt when new box scores are published, usually the day after the games. On game days, while the price watcher is running, Kalshi's bid and ask are republished about every three minutes and the stat model is recomputed about every six, with the projections job's own pricing function. The page looks for both every minute. When the watcher is not running they come from the projections file, which changes about five times on a game day. Sportsbook lines change three or four times a day. For a game that has started the page keeps the last pre-game numbers it read. A night's games drop off the page at 5am Eastern the next morning, and “Playing tonight only” on the Players tab then follows the new day's games.</p>
     <p><strong>A gap is a disagreement, not a profit.</strong> It ignores the bid-ask spread, fees and whether an order would ever fill. In this project's own records the sportsbooks have been a better guide than the stat model.</p>`;
 }
 function start() {
   for (const id of ["p-search", "p-team", "p-pos", "p-regulars"]) $(id).addEventListener("input", showPlayers);
+  $("p-tonight").addEventListener("input", () => { tonightChoice = $("p-tonight").checked; showPlayers(); });
   for (const id of ["s-search", "s-game", "s-play", "s-book", "s-upcoming"]) $(id).addEventListener("input", showProps);
   $("s-stat").addEventListener("click", e => {
     const b = e.target.closest("button"); if (!b) return;
