@@ -23,17 +23,22 @@ sportsbook price is shown only where the books quote Kalshi's exact line. No
 price on the page is simulated. A gap between two of them is a
 disagreement, not a profit.
 
-The page re-reads both price files from the project site when it is opened
-there, so the props tab stays current between builds; the Players tab is as
-fresh as the last build.
+The page keeps itself current when it is open on the project site. It
+re-reads three small public files and prefers them to the copy built in:
+
+- outputs/player_pool/latest.json: the Players tab, rewritten by the
+  player-pool workflow when new box scores arrive (``--data-only`` below);
+- the two price files above, for the props tab;
+- Kalshi's current bid and ask, published every few minutes on game days
+  by research/player_pool_quotes.py.
 
     python -m live.fetch_nba_data
-    python -m research.nba_player_pool_dashboard
+    python -m research.nba_player_pool_dashboard              # page and data
+    python -m research.nba_player_pool_dashboard --data-only  # data file only
 """
 
 import argparse
 import json
-from datetime import datetime, timezone
 from pathlib import Path
 
 import numpy as np
@@ -51,6 +56,7 @@ from markets.nba.features import (
 HERE = Path(__file__).parent
 TEMPLATE = HERE / "nba_player_pool_dashboard.template.html"
 PAGE = HERE / "nba_player_pool_dashboard.html"
+DATA = Path("outputs/player_pool/latest.json")  # the Players tab, read live
 PLACEHOLDER = "/*__PAYLOAD__*/null"
 
 BLEND = 0.5  # weight on per-minute rates x expected minutes; the rest is form
@@ -69,6 +75,7 @@ TS_SHRINK_ATTEMPTS = 120.0  # true-shooting attempts of league-average shooting
 SWING_LEVELS = (0, 5, 10, 15, 20, 25, 100)  # baseline points, for the +/- column
 SLATE_COLUMNS = [
     "tip_utc",
+    "ticker",
     "event_ticker",
     "player",
     "player_id",
@@ -323,15 +330,15 @@ def _clean(value):
     return value
 
 
-def build_payload(players, projections, books=None, now=None):
-    now = now or datetime.now(timezone.utc)
+def build_payload(players, projections, books=None):
+    """Everything the page shows. The same inputs give the same payload, so
+    the data file changes only when the box scores do."""
     season = int(players.season.max())
     check = check_baseline(players, season - 1)
     table = player_rows(players, season, check["swing_curve"])
     through = regular(players, season).tip_utc.max()
     payload = {
         "meta": {
-            "generated_utc": now.isoformat(timespec="seconds"),
             "season": season_label(season),
             "box_scores_through_utc": pd.Timestamp(through).isoformat(),
             "blend": BLEND,
@@ -348,6 +355,18 @@ def build_payload(players, projections, books=None, now=None):
     return _clean(payload)
 
 
+def player_file(payload):
+    """The part of the payload behind the Players tab, as its own file."""
+    return {"meta": payload["meta"], "players": payload["players"]}
+
+
+def write_json(path, value):
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    text = json.dumps(value, ensure_ascii=False, allow_nan=False, separators=(",", ":"))
+    path.write_text(text + "\n", "utf-8")
+
+
 def render(payload, template):
     if PLACEHOLDER not in template:
         raise ValueError("the template has no payload placeholder")
@@ -362,6 +381,12 @@ def main():
     parser.add_argument("--projections", default="outputs/projections/latest.csv")
     parser.add_argument("--books", default="outputs/books/nba_latest.csv")
     parser.add_argument("--out", default=str(PAGE))
+    parser.add_argument("--data", default=str(DATA))
+    parser.add_argument(
+        "--data-only",
+        action="store_true",
+        help="write the Players-tab data file and leave the page alone",
+    )
     args = parser.parse_args()
 
     players = pd.read_parquet(args.players)
@@ -370,7 +395,10 @@ def main():
         for path in (args.projections, args.books)
     )
     payload = build_payload(players, projections, books)
-    Path(args.out).write_text(render(payload, TEMPLATE.read_text("utf-8")), "utf-8")
+    write_json(args.data, player_file(payload))
+    if not args.data_only:
+        page = render(payload, TEMPLATE.read_text("utf-8"))
+        Path(args.out).write_text(page, "utf-8")
     meta = payload["meta"]
     print(
         f"{len(payload['players'])} players, {len(payload['slate']['rows'])} props, "

@@ -2,7 +2,6 @@
 
 import json
 import re
-from datetime import datetime, timezone
 
 import numpy as np
 import pandas as pd
@@ -10,7 +9,6 @@ import pytest
 
 from research import nba_player_pool_dashboard as D
 
-NOW = datetime(2026, 11, 21, 1, 0, tzinfo=timezone.utc)
 TEAMS = {"BOS": "F", "NY": "G"}  # NY is ESPN's spelling; the page shows NYK
 
 
@@ -58,6 +56,11 @@ def projections():
         {
             "snapshot_utc": "2026-11-21T00:07:16.961699+00:00",
             "tip_utc": "2026-11-21 03:00:00+00:00",
+            "ticker": [
+                "KXNBAPTS-26NOV20BOSNYK-BOSP0-20",
+                "KXNBAPTS-26NOV20BOSNYK-BOSP0-25",
+                "KXNBAPTS-26NOV20BOSNYK-NYKP1-15",
+            ],
             "event_ticker": "KXNBAPTS-26NOV20BOSNYK",
             "player": ["BOS Player 0", "BOS Player 0", "NY Player 1"],
             "player_id": [1000, 1000, 2001],
@@ -200,9 +203,10 @@ def test_value_is_zero_at_the_replacement_rank():
 
 
 def test_the_payload_is_strict_json_with_real_prices_only():
-    payload = D.build_payload(box_scores(), projections(), books(), now=NOW)
+    payload = D.build_payload(box_scores(), projections(), books())
     text = json.dumps(payload, allow_nan=False)  # raises on NaN or infinity
-    assert payload["meta"]["generated_utc"] == "2026-11-21T01:00:00+00:00"
+    # The same inputs give the same payload: no clock in it.
+    assert payload == D.build_payload(box_scores(), projections(), books())
     assert payload["meta"]["season"] == "2026-27"
     assert len(payload["players"]) == 12
     first = payload["players"][0]
@@ -224,7 +228,7 @@ def test_the_payload_is_strict_json_with_real_prices_only():
 
 
 def test_the_page_builds_without_price_files():
-    payload = D.build_payload(box_scores(), None, None, now=NOW)
+    payload = D.build_payload(box_scores(), None, None)
     assert payload["slate"] == {
         "snapshot_utc": None,
         "columns": D.SLATE_COLUMNS,
@@ -239,7 +243,7 @@ def test_render_fills_the_template_and_cannot_close_the_script_early():
     assert template.count(D.PLACEHOLDER) == 1
     players = box_scores()
     players.loc[players.player_id == 1000, "player"] = "</script><b>x"
-    page = D.render(D.build_payload(players, projections(), books(), now=NOW), template)
+    page = D.render(D.build_payload(players, projections(), books()), template)
     assert D.PLACEHOLDER not in page
     assert page.count("</script>") == template.count("</script>")
     assert "<\\/script><b>x" in page
@@ -260,3 +264,35 @@ def test_the_committed_page_is_the_template_plus_data():
     assert payload["slate"]["columns"] == D.SLATE_COLUMNS
     # No made-up market prices: the old page's simulated columns are gone.
     assert not re.search(r"mkt_|best_edge|placeholder market", page, re.IGNORECASE)
+
+
+def test_the_data_file_holds_the_players_tab_and_is_rewritten_alone(
+    tmp_path, monkeypatch
+):
+    players = tmp_path / "players.parquet"
+    box_scores().to_parquet(players)
+    page, data = tmp_path / "page.html", tmp_path / "pool" / "latest.json"
+    argv = ["build", "--players", str(players), "--projections", "none.csv"]
+    argv += ["--books", "none.csv", "--out", str(page), "--data", str(data)]
+    monkeypatch.setattr("sys.argv", argv + ["--data-only"])
+    D.main()
+    assert data.exists() and not page.exists()
+    saved = json.loads(data.read_text("utf-8"))
+    assert set(saved) == {"meta", "players"}
+    assert len(saved["players"]) == 12
+    assert saved["meta"]["season"] == "2026-27"
+    assert saved["meta"]["box_scores_through_utc"].startswith("2026-11-23")
+    first = data.read_bytes()
+    # Without the flag the page is built too, and the data file is unchanged:
+    # the workflow commits it only when the box scores have changed.
+    monkeypatch.setattr("sys.argv", argv)
+    D.main()
+    assert page.exists() and data.read_bytes() == first
+    built = json.loads(
+        next(
+            line[len("const PAYLOAD = ") : -1]
+            for line in page.read_text("utf-8").split("\n")
+            if line.startswith("const PAYLOAD = ")
+        )
+    )
+    assert built["players"] == saved["players"] and built["meta"] == saved["meta"]
