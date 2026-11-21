@@ -5,10 +5,11 @@ number comes from public files:
 
 - box scores (data/player_games.parquet, written by live.fetch_nba_data);
 - the stat model's projections for today's games with Kalshi's quotes
-  (outputs/projections/latest.csv, rewritten by the projections workflow
-  about every half hour);
+  (outputs/projections/latest.csv, rewritten by scheduled jobs; on game
+  days it has changed about five times, from early afternoon to late
+  evening US time);
 - the sportsbook consensus for the same players (outputs/books/nba_latest.csv,
-  rewritten by the books workflow).
+  which has changed three or four times a day).
 
 Players tab: season averages and a *baseline* for each player's next game.
 The baseline is half his recent form and half his per-minute rates times his
@@ -90,6 +91,7 @@ BOOK_COLUMNS = [
     "p_book",
     "book_n",
     "updated_utc",
+    "commence_utc",
 ]
 LINE_KEY = ["player_key", "stat", "line"]
 

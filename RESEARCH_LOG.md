@@ -4414,3 +4414,30 @@ page from public box scores and the two public price files.
 they ignore the spread, fees and whether an order fills. The baseline is
 for reading a player's level, not for pricing orders; the bot still prices
 from sportsbooks (rules v9).
+
+## 2026-11-20: Player-pool page: how fresh its prices are (owner; correction)
+
+*Research page only. Corrects two things in the page built earlier today.*
+
+**The update interval was stated wrongly.** The page and its build script
+said the Kalshi and model file (`outputs/projections/latest.csv`) is
+rewritten "about every half hour". Its history says otherwise: on each of
+17 to 20 November it changed five times, between about 19:15 and 03:05
+UTC, 75 to 155 minutes apart, and not at all overnight. The sportsbook
+file (`outputs/books/nba_latest.csv`) changed three or four times a day.
+The wording now says that.
+
+**Sportsbook prices were mostly hidden.** The page dropped any sportsbook
+quote more than two hours older than the Kalshi prices beside it (the live
+bot's own limit). With the files changing that seldom the column was
+usually blank: at the 02:44 UTC snapshot on 21 November all 129
+exact-line quotes were 151 to 159 minutes older and none was shown. The
+page now shows every exact-line quote for the same game, marks one that is
+more than two hours older with its age, greys the gaps measured against
+it, and prints the sportsbook file's own time at the top. A gap against an
+old quote partly measures what changed in between, and the page says so.
+
+**Also.** A sportsbook quote is matched only to a game that tips within 90
+minutes of its listed start, so a second meeting of the same two teams
+cannot borrow the first one's lines. The link `#props` no longer scrolls
+past the filters.
