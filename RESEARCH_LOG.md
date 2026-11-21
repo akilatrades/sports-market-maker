@@ -4729,3 +4729,112 @@ from the feed's documentation; the first run on GitHub is the real test.
 
 **Polymarket.** Still nothing to show: no NBA player-prop market on
 Polymarket US in any of the watcher's 42 scans from 6 to 21 November.
+
+## 2026-11-21: NBA stat model: a returning regular and his stand-ins (pre-registration)
+
+*Written before either change below was built or tested. Research only: the
+production model, `MODEL_VERSION`, the projections job and the bot's inputs
+are not changed by this test, whatever its result.*
+
+**What prompted it (one instance; exploratory).** On 21 November the stat
+model gave Cam Spencer 68% for 6+ assists (7.4 expected) against the
+sportsbooks' 42%. He had started four games while Ty Jerome was out, and
+Jerome was listed probable that night. Looking into it found three things:
+
+1. *A stale injury status.* The injury feed the model reads still carried
+   "Out" for Jerome from two days earlier, so the model priced none of his
+   props and treated him as absent. Rerunning that night's model offline
+   with Jerome playing moved Spencer from 7.45 to 7.13 expected assists
+   (5 offline views of one game; the game's betting line was approximated,
+   and reproduced the published 7.43 as 7.45).
+2. *A general bias.* On the model's own walk-forward predictions for
+   2022-23 to 20 November 2026 (401,048 player-game-stats), using one
+   definition fixed before looking: a regular (24+ minutes over his last 10
+   games) returns after missing 3+ team games; a stand-in is a teammate who
+   played 5+ more minutes a game while he was out than in his own 10 games
+   before. 844 such returns, 1,731 stand-in player-games with a prediction.
+   Stand-ins averaged 17.1 minutes before, 26.1 while the regular was out
+   and 21.5 the night he returned. In that game the model was too high on
+   them:
+
+   | Stat | Model | Actual | Actual / model | Miss (game-clustered t) |
+   |---|---|---|---|---|
+   | Points | 9.64 | 9.01 | 0.935 | -0.62 (t -4.7) |
+   | Rebounds | 4.05 | 3.79 | 0.938 | -0.25 (t -4.1) |
+   | Assists | 2.22 | 2.18 | 0.983 | -0.04 (t -0.9) |
+   | Threes | 1.21 | 1.17 | 0.962 | -0.05 (t -1.6) |
+
+   Everyone else: 1.002, 1.001, 1.002, 0.997. Cuts looked at: the four
+   stats, assists by season (four seasons), and the same definition on the
+   2025-26 Kalshi-listed replay rows (96 stand-in rows, actual / model
+   1.035, t +0.5: too few to tell). In the walk-forward the model knows from
+   the box score who played, so this bias is there even with a perfect
+   lineup.
+3. *What neither explains.* Most of the 7.4 came from three other Memphis
+   players being out that night (about +1.6 assists). With both fixes the
+   model would still sit near 7.0 against the sportsbooks' roughly 5.3.
+
+### Question 1: one more input for the model
+
+Does telling the model how far a player's minutes rose while a
+now-returning regular was out remove the over-projection of stand-ins,
+without making the model worse anywhere else?
+
+**Method.** A research-only candidate in `research/returning_regular.py`:
+the production features plus one input (two in variant 3), fitted and
+scored exactly as `markets/nba/evaluate.py` does (refit before each month on
+earlier games only). The input, for a player whose team has a regular
+returning (15+ weighted minutes, missed his team's previous game):
+`log((prior + 1) / (recent + 1))`, never above 0, where `recent` is his
+average minutes over the team games the returning regular missed (the
+longest such absence, at most 10 games) and `prior` is his weighted minutes
+going into that stretch. It is 0 for everyone else.
+
+- *Variant 1:* any returning regular counts.
+- *Variant 2:* only regulars who missed 3+ games count.
+- *Variant 3:* variant 1 as two inputs, split by whether a returning
+  regular plays the same position group.
+
+No other variant will be tried. **Design seasons:** 2022-23 to 2024-25. The
+variant with the smallest stand-in bias for points and rebounds there
+(sum of the two absolute biases, same stand-in definition as above) is
+chosen, provided its log loss over all player-games is not higher than the
+production model's; a tie goes to the lower number. **Confirmation
+seasons:** 2025-26 and 2026-27 to 20 November, run once with the chosen
+variant. They were not used to design the fix, but the bias itself was
+measured on all five seasons, so they are not blind to the problem.
+
+**Pass bars (all must hold).**
+
+1. *Bias, confirmation seasons:* for stand-ins, `|actual / model - 1|` is
+   smaller with the candidate than with the production model, for points
+   and for rebounds.
+2. *Accuracy, confirmation seasons:* for stand-ins, mean squared error is
+   lower with the candidate, for points and for rebounds (paired on the
+   same rows; the game-clustered t is reported, not required).
+3. *Bias, all five seasons:* stand-in `actual / model` for points and for
+   rebounds is within 0.97 to 1.03 (now 0.935 and 0.938). One season alone
+   is too noisy for this bar (about +/-5%).
+4. *No harm, confirmation seasons:* over all player-games, log loss summed
+   across the four stats is not higher than the production model's, no
+   single stat is worse by more than 0.05%, and `actual / model` for
+   everyone who is not a stand-in stays within 0.995 to 1.005 per stat.
+
+If any bar fails the candidate is not adopted and that is recorded. If all
+pass it becomes eligible for promotion, which is a separate, versioned
+change (the bot's inputs check `MODEL_VERSION`) and the owner's decision.
+
+### Question 2: which injury status to believe
+
+Not a statistical test: no past copies of the injury feed were kept, so its
+error rate cannot be measured on history. The change is a rule, used for
+the player-pool page's model step only until it has been measured: for a
+game being priced, a player on the league's official injury report takes
+that report's status (Out or Doubtful: not playing; Questionable, Probable
+or Available: expected to play); anyone not on it keeps the feed's status;
+if the official report cannot be read, the feed is used alone and the page
+says so. Unit tests cover that night's case. **Still to measure** (not part
+of this change): from the league's archived reports and the box scores,
+how often players listed Probable played and players listed Out or Doubtful
+did not, with at least 200 listings; the rule stands if Probable played in
+at least 90% and Out or Doubtful in at most 10%.
