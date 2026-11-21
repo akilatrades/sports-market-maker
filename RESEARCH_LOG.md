@@ -4665,3 +4665,67 @@ edge (exploratory, see the 20 November model review).
   publishes only the sportsbooks' de-vigged consensus, never one
   bookmaker's own lines. Their lines must also never enter the consensus
   file the live bot prices from.
+
+## 2026-11-21: Player-pool page: PrizePicks and Underdog lines (owner decision)
+
+*Adds one workflow, `.github/workflows/pickem-lines.yml`, its script
+`research/pickem_lines.py`, the folder `outputs/pickem/` and a third tab on
+the page. `books.yml`, `live/`, `kalshi/` and `deploy/` are not changed. No
+live rule, limit or order path changes. Exploratory: no result is claimed.*
+
+**The decision.** The entry above left two things to the owner: more
+credits, and publishing two apps' own lines. On 21 November the owner
+approved both: pull PrizePicks and Underdog about four times a day and show
+their lines on the public page.
+
+**Open point for the owner.** `CLAUDE.md` still says raw odds-feed data is
+never committed, and `live/log_books.py` reads the feed's terms as not
+allowing bookmakers' odds to be redistributed. This change publishes two
+apps' lines (no prices) on the owner's say-so; the feed's terms were not
+re-read for it. The rule file is left as it was for the owner to amend.
+
+**Old and new.**
+
+- *Requests to the odds feed.* Old: the sportsbook group (`us`) only, 8
+  markets a game. New: also the pick'em group (`us_dfs`), the 4 main
+  markets, for games tipping off within 18 hours. Up to 4 credits a game
+  per pull. A pull is skipped while the last one is under 5 hours old, so
+  about four a day: an 11-game night adds about 176 credits to the roughly
+  2,100 the sportsbook refreshes are budgeted at, about 5,000 a month
+  against the plan's 100,000. A pull is also skipped whenever fewer than
+  15,000 credits remain, so the page cannot use up what the bot's odds
+  need.
+- *What is published from the feed.* Old: only the sportsbooks' de-vigged
+  consensus. New: also the line each of these two apps posts and the sides
+  it offers. Not the feed's prices for those lines (they are indicative
+  and are not stored), and no other bookmaker's lines.
+
+**Kept apart from the bot.** The pull is its own workflow and writes only
+`outputs/pickem/`. It never builds or merges a consensus, and nothing in
+`outputs/books/`, which the live NBA bot prices from, is touched. The "book
+lines" workflow file is unchanged; tests hold all of this in place.
+
+**What the page shows.** The "Pick'em apps" tab lists each app line with
+the sportsbooks' chance of going over or staying under that same line.
+Where no sportsbook quotes the app's exact line, the nearest quoted line
+beyond it gives a floor, shown as "at least": going over 24.5 is at least
+as likely as going over 25.5. "Best plays only" keeps sides at or above a
+chosen chance (54%, 55% or 58%). When every pick must win, the break-even
+chance per pick is (1 / payout) ^ (1 / picks): 57.7% for two picks paying
+3x, 55.0% for three paying 6x. Payouts differ by app, state and entry.
+
+**Status.** Untested. The project has no pick'em results, and the page
+says so. Each day's pulls are kept (`outputs/pickem/nba_<day>.csv.gz`), so
+a later check, written down first, can ask whether sides the sportsbooks
+put at 55% or more win that often at the apps' lines.
+
+**Checked.** Offline tests for the parser, the 5-hour gap, the credit
+floor and the workflow's limits. The tab's arithmetic was checked in a
+browser against an independent calculation on 277 made-up app lines laid
+over the real sportsbook file of 21 November (no mismatches). **Not yet
+checked:** the script has not run against the live feed, because only the
+workflow holds the key. The reply's shape for the pick'em group is taken
+from the feed's documentation; the first run on GitHub is the real test.
+
+**Polymarket.** Still nothing to show: no NBA player-prop market on
+Polymarket US in any of the watcher's 42 scans from 6 to 21 November.

@@ -115,7 +115,7 @@ td .sub{display:block;line-height:1.3}
   <header class="top">
     <div>
       <h1>NBA player pool</h1>
-      <p class="lede">Season numbers and a baseline for each player's next game, plus tonight's props priced three ways: the stat model, the sportsbooks and Kalshi.</p>
+      <p class="lede">Season numbers and a baseline for each player's next game, plus tonight's props priced three ways: the stat model, the sportsbooks and Kalshi. PrizePicks and Underdog lines are set against the sportsbooks too.</p>
     </div>
     <dl class="stamp">
       <div><dt>Box scores through</dt><dd id="stamp-box">—</dd></div>
@@ -128,6 +128,7 @@ td .sub{display:block;line-height:1.3}
   <div class="tabs" role="tablist" aria-label="Views">
     <button type="button" role="tab" id="tab-players" aria-controls="panel-players" aria-selected="true">Players<span id="count-players"></span></button>
     <button type="button" role="tab" id="tab-props" aria-controls="panel-props" aria-selected="false" tabindex="-1">Tonight's props<span id="count-props"></span></button>
+    <button type="button" role="tab" id="tab-apps" aria-controls="panel-apps" aria-selected="false" tabindex="-1">Pick'em apps<span id="count-apps"></span></button>
   </div>
 
   <section id="panel-players" role="tabpanel" aria-labelledby="tab-players">
@@ -176,6 +177,29 @@ td .sub{display:block;line-height:1.3}
     </div>
   </section>
 
+  <section id="panel-apps" role="tabpanel" aria-labelledby="tab-apps" hidden>
+    <div class="filters">
+      <input type="search" id="a-search" placeholder="Find a player" aria-label="Find a player">
+      <div class="seg" id="a-stat" role="group" aria-label="Stat">
+        <button type="button" data-stat="" aria-pressed="true">All</button>
+        <button type="button" data-stat="points" aria-pressed="false">Points</button>
+        <button type="button" data-stat="rebounds" aria-pressed="false">Rebounds</button>
+        <button type="button" data-stat="assists" aria-pressed="false">Assists</button>
+        <button type="button" data-stat="threes" aria-pressed="false">Threes</button>
+      </div>
+      <select id="a-app" aria-label="App"><option value="">Both apps</option></select>
+      <select id="a-game" aria-label="Game"><option value="">All games</option></select>
+      <label class="best"><input type="checkbox" id="a-best"> Best plays only</label>
+      <select id="a-bar" aria-label="Smallest sportsbook chance for a best play"><option value="0.54">54% or better</option><option value="0.55" selected>55% or better</option><option value="0.58">58% or better</option></select>
+      <label><input type="checkbox" id="a-upcoming" checked> Hide games that have started</label>
+      <span class="shown" id="a-shown" role="status"></span>
+    </div>
+    <p class="notice" id="a-notice" hidden></p>
+    <div class="tablewrap" tabindex="0" aria-label="Pick'em app lines table"><table id="t-apps"><thead></thead><tbody></tbody></table>
+      <p class="empty" id="a-empty" hidden></p>
+    </div>
+  </section>
+
   <details class="method" id="method">
     <summary>How these numbers are made</summary>
     <div id="method-body"></div>
@@ -191,6 +215,9 @@ td .sub{display:block;line-height:1.3}
 const PAYLOAD = /*__PAYLOAD__*/null;
 const LIVE_PRICES = "../outputs/projections/latest.csv";
 const LIVE_BOOKS = "../outputs/books/nba_latest.csv";
+/* The lines PrizePicks and Underdog post, read about four times a day (research/pickem_lines.py). */
+const LIVE_PICKEM = "../outputs/pickem/nba_latest.csv";
+const PICKEM_OLD_HOURS = 6;         /* app lines older than this are called out */
 const LIVE_PLAYERS = "../outputs/player_pool/latest.json";
 /* Kalshi's bid and ask, republished every few minutes on game days (research/player_pool_quotes.py). */
 const LIVE_QUOTES = "https://raw.githubusercontent.com/akilatrades/sports-market-maker/player-pool-live/kalshi_quotes.json";
@@ -618,14 +645,110 @@ async function refreshPrices() {
     readSlate(newer ? records : slateRecords, newer ? snapshot : slateSnapshot);
     slateLive = true;
   } catch (error) { /* opened as a file, or offline: keep what the page was built with */ }
-  await Promise.all([loadQuotes(), loadModel(), loadPlayers()]);
+  await Promise.all([loadQuotes(), loadModel(), loadPlayers(), loadApps()]);
   button.disabled = false; button.textContent = "Refresh prices";
-  showProps(); showPlayers();
+  showProps(); showPlayers(); readApps(); showApps();
+}
+
+/* ---------- pick'em apps ---------- */
+let appRecords = [], apps = [], appsTime = null;
+function bookLadders() {
+  /* Every line the sportsbooks quote for a player and stat in one game, lowest line first. */
+  const ladders = new Map();
+  for (const [key, quote] of bookIndex()) {
+    const [player, stat, line, game] = key.split("|"), at = `${player}|${stat}|${game}`;
+    if (!ladders.has(at)) ladders.set(at, []);
+    ladders.get(at).push({line: +line, ...quote});
+  }
+  for (const rungs of ladders.values()) rungs.sort((a, b) => a.line - b.line);
+  return ladders;
+}
+function readApps() {
+  /* Each app line beside the sportsbooks' chance for the same line. Where no sportsbook quotes that exact
+     line, the nearest quoted line beyond it gives a floor: going over 24.5 is at least as likely as going
+     over 25.5, and staying under it at least as likely as staying under 23.5. */
+  const ladders = bookLadders(), today = slateDay(Date.now());
+  const stamps = appRecords.map(r => parseTime(r.snapshot_utc)).filter(Boolean);
+  appsTime = stamps.length ? new Date(Math.max(...stamps)) : null;
+  apps = appRecords.map(r => {
+    const line = +r.line, tip = parseTime(r.commence_utc);
+    let rungs = ladders.get(`${r.player_key}|${r.stat}|${r.away}${r.home}`) || [];
+    rungs = rungs.filter(q => !q.commence || !tip || Math.abs(q.commence - tip) / 60000 <= TIP_MATCH_MINUTES);
+    const exact = rungs.find(q => Math.abs(q.line - line) < 1e-9);
+    const above = rungs.find(q => q.line > line + 1e-9), below = [...rungs].reverse().find(q => q.line < line - 1e-9);
+    const main = rungs.reduce((best, q) => !best || q.n > best.n || (q.n === best.n && Math.abs(q.p - 0.5) < Math.abs(best.p - 0.5)) ? q : best, null);
+    const side = (offered, from, p) => !offered ? {offered: false, p: null} : !from ? {offered: true, p: null}
+      : {offered: true, p, floor: from !== exact, n: from.n, seen: from.seen, from: from.line};
+    const over = side(r.sides !== "under", exact || above, exact ? exact.p : above ? above.p : null);
+    const under = side(r.sides !== "over", exact || below, exact ? 1 - exact.p : below ? 1 - below.p : null);
+    const lean = [["Over", over], ["Under", under]].filter(([, x]) => x.p !== null).sort((a, b) => b[1].p - a[1].p)[0];
+    return {
+      app: String(r.app || ""), player: String(r.player || ""), stat: r.stat, line, tip, game: `${r.away} at ${r.home}`,
+      main: main ? main.line : null, over, under, lean: lean ? {name: lean[0], ...lean[1]} : null, leanP: lean ? lean[1].p : null,
+      seen: parseTime(r.updated_utc),
+    };
+  }).filter(r => r.player && r.app && r.stat in STAT_NAME && Number.isFinite(r.line) && !(r.tip && slateDay(r.tip) < today));
+  const keep = {app: $("a-app").value, game: $("a-game").value};
+  const names = [...new Set(apps.map(r => r.app))].sort();
+  $("a-app").innerHTML = '<option value="">Both apps</option>' + names.map(n => `<option>${esc(n)}</option>`).join("");
+  if (names.includes(keep.app)) $("a-app").value = keep.app;
+  const timed = apps.filter(r => r.tip), ahead = timed.filter(r => r.tip > Date.now());
+  const games = [...new Map((ahead.length ? ahead : timed).map(r => [r.game, r.tip])).entries()].sort((a, b) => a[1] - b[1]);
+  $("a-game").innerHTML = '<option value="">All games</option>' + games.map(([g, t]) => `<option value="${esc(g)}">${esc(g)}, ${esc(clock(t))}</option>`).join("");
+  if (games.some(([g]) => g === keep.game)) $("a-game").value = keep.game;
+}
+const appBar = () => +$("a-bar").value || 0.55;
+const chance = x => `${x.floor ? "at least " : ""}${Math.round(100 * x.p)}%`;
+const fromBooks = x => `${x.n} ${x.n === 1 ? "book" : "books"}${x.floor ? `, from the ${x.from.toFixed(1)} line` : ""}`;
+function sideCell(x) {
+  if (!x.offered) return '<span class="sub" style="display:inline">not offered</span>';
+  if (x.p === null) return dash;
+  return `<span class="${x.p >= appBar() ? "play" : ""}">${chance(x)}</span><span class="sub">${fromBooks(x)}</span>`;
+}
+const appCols = [
+  {key: "player", label: "Player", text: true, cell: r => esc(r.player)},
+  {key: "game", label: "Game", text: true, value: r => `${r.tip ? r.tip.toISOString() : "9"} ${r.game}`, cell: r => `${esc(r.game)}<span class="sub">${r.tip ? esc(clock(r.tip)) : ""}</span>`},
+  {key: "app", label: "App", text: true, cell: r => esc(r.app)},
+  {key: "line", label: "App's line", text: true, value: r => `${r.stat} ${String(Math.round(10 * r.line)).padStart(4, "0")}`, cell: r => `${r.line.toFixed(1)} ${STAT_NAME[r.stat]}`, title: "The line the app posts. Over means more than this, under means fewer."},
+  {key: "main", label: "Sportsbooks' line", cell: r => r.main === null ? dash : `${r.main.toFixed(1)}<span class="sub">${Math.abs(r.main - r.line) < 1e-9 ? "same" : `${Math.abs(r.main - r.line).toFixed(1)} ${r.main > r.line ? "higher" : "lower"}`}</span>`, title: "The line most sportsbooks quote for this player and stat."},
+  {key: "over", label: "Over", value: r => r.over.p, cell: r => sideCell(r.over), edge: true, title: "The sportsbooks' chance that he goes over the app's line, with the bookmakers' margin removed."},
+  {key: "under", label: "Under", value: r => r.under.p, cell: r => sideCell(r.under), title: "The sportsbooks' chance that he stays under the app's line, with the bookmakers' margin removed."},
+  {key: "leanP", label: "Stronger side", cell: r => !r.lean ? dash : `<span class="${r.leanP >= appBar() ? "play" : ""}">${r.lean.name} ${chance(r.lean)}</span>`, edge: true, title: "The side the sportsbooks make more likely, among the sides the app offers. A best play is one at or above the chance you pick."},
+];
+const aState = {key: "leanP", dir: "desc", tie: (a, b) => (a.tip - b.tip) || a.player.localeCompare(b.player) || a.stat.localeCompare(b.stat) || a.app.localeCompare(b.app)};
+const drawApps = makeTable($("t-apps"), appCols, null, aState);
+function showApps() {
+  const q = $("a-search").value.trim().toLowerCase(), stat = $("a-stat").querySelector('[aria-pressed="true"]').dataset.stat;
+  const app = $("a-app").value, game = $("a-game").value, best = $("a-best").checked, upcoming = $("a-upcoming").checked, bar = appBar(), now = Date.now();
+  const live = apps.filter(r => !upcoming || !r.tip || r.tip > now);
+  const rows = live.filter(r => (!q || r.player.toLowerCase().includes(q)) && (!stat || r.stat === stat) && (!app || r.app === app) && (!game || r.game === game) && (!best || (r.leanP !== null && r.leanP >= bar)));
+  drawApps(rows);
+  $("t-apps").hidden = rows.length === 0; $("a-empty").hidden = rows.length > 0;
+  const plays = live.filter(r => r.leanP !== null && r.leanP >= bar).length;
+  if (!rows.length) $("a-empty").textContent = !apps.length ? "No app lines for today have been read yet. They are pulled about four times a day once PrizePicks and Underdog post tonight's lines."
+    : !live.length ? "Every game in the last pull has started. Untick “Hide games that have started” to see its lines."
+    : best && !live.some(r => r.leanP !== null) ? "No sportsbook line has loaded to compare these with yet."
+    : best && !plays ? `No line reaches ${Math.round(100 * bar)}% right now. Pick a lower chance, or untick “Best plays only” to see every line.`
+    : "No line matches those filters. Try All stats, both apps or All games.";
+  $("a-shown").textContent = apps.length ? `${rows.length.toLocaleString()} of ${apps.length.toLocaleString()} lines, ${plays.toLocaleString()} at ${Math.round(100 * bar)}% or better` : "";
+  $("count-apps").textContent = apps.length ? apps.length.toLocaleString() : "";
+  const notice = $("a-notice"), old = appsTime && (now - appsTime) / 3600000 > PICKEM_OLD_HOURS;
+  notice.hidden = !appsTime;
+  if (appsTime) notice.textContent = `PrizePicks and Underdog lines as of ${appsTime.toLocaleDateString([], {month: "short", day: "numeric"})}, ${clock(appsTime)} (${ago(appsTime)}). They are read about four times a day${old ? ", and this pull is old" : ""}, so check the line in the app first: if it has moved, the chance shown here no longer applies. The project has not tested pick'em entries. This is the sportsbooks' price for each line, not a tested strategy.`;
+}
+aState.redraw = showApps;
+async function loadApps() {
+  try {
+    const response = await fetch(LIVE_PICKEM, {cache: "no-store", credentials: "omit"});
+    if (!response.ok) return;
+    appRecords = parseCsv(await response.text());
+  } catch (error) { /* opened as a file, or offline: the tab stays empty */ }
 }
 
 /* ---------- page furniture ---------- */
+const TABS = ["players", "props", "apps"];
 function selectTab(name, focus) {
-  for (const t of ["players", "props"]) {
+  for (const t of TABS) {
     const on = t === name, tab = $(`tab-${t}`);
     tab.setAttribute("aria-selected", on); tab.tabIndex = on ? 0 : -1; $(`panel-${t}`).hidden = !on;
     if (on && focus) tab.focus();
@@ -645,6 +768,7 @@ function method() {
     <p><strong>Tonight's props</strong> are Kalshi's own lines (“25+ points” means 25 or more). Model is the project's stat model for tonight's game, which does use the opponent, the betting line and absences. Books is the sportsbook consensus with the bookmakers' margin removed, shown only where the books quote Kalshi's exact line; a quote more than two hours older than Kalshi's prices is marked with its age. Kalshi is its YES bid and ask when the file was written. No price on this page is simulated.</p>
     <p><strong>How fresh it is.</strong> The page keeps itself current while it is open, and the times at the top show how old each number is. Season numbers are rebuilt when new box scores are published, usually the day after the games. On game days, while the price watcher is running, Kalshi's bid and ask are republished about every three minutes and the stat model is recomputed about every six, with the projections job's own pricing function. The page looks for both every minute. When the watcher is not running they come from the projections file, which changes about five times on a game day. Sportsbook lines change three or four times a day. For a game that has started the page keeps the last pre-game numbers it read. A night's games drop off the page at 5am Eastern the next morning, and “Playing tonight only” on the Players tab then follows the new day's games.</p>
     <p><strong>Best plays</strong> repeat the NBA bot's entry tests (rules ${esc(BEST.rules)}) with the prices on this page. Resting NO is the order those rules would rest: a NO bid one cent inside Kalshi's spread (at the NO bid when the spread is 1¢). Its edge is the sportsbooks' NO chance, minus that price, minus Kalshi's maker fee. A best play is ${bestBand()}, and has at least ${BEST.min_books === 1 ? "one sportsbook" : `${BEST.min_books} sportsbooks`} on Kalshi's exact line. That price range means a YES longshot. A larger edge is left out because it more often means a stale line or team news than a mispricing. A row is ready when its sportsbook price is under ${BEST.book_minutes} minutes old and tip-off is ${BEST.hours_min} to ${BEST.hours_max} hours away. The bot also prices lines no sportsbook quotes from nearby lines, checks the injury report and holds to its own limits; the page does none of that, so this is not a list of the bot's orders. The edge is before the order fills: in the bot's live records, filled orders earned less than the edge shown.</p>
+    <p><strong>Pick'em apps</strong> lists the standard lines PrizePicks and Underdog post for tonight (their changed-payout lines are left out), read about four times a day. Beside each is the sportsbooks' chance of going over or staying under that same line, with the bookmakers' margin removed. Where no sportsbook quotes the app's exact line, the nearest quoted line beyond it gives a floor, shown as “at least”: going over 24.5 is at least as likely as going over 25.5. A best play is a side at or above the chance you pick. What you need depends on the entry: when every pick must win, the break-even chance per pick is (1 ÷ payout) to the power (1 ÷ picks), which is 57.7% for two picks paying 3× and 55.0% for three paying 6×. Payouts differ by app, state and entry, so check yours. The project has not tested pick'em entries, the app's line may have moved since it was read, and Polymarket lists no NBA player props for this page to compare.</p>
     <p><strong>A gap is a disagreement, not a profit.</strong> It ignores the bid-ask spread, fees and whether an order would ever fill. In this project's own records the sportsbooks have been a better guide than the stat model.</p>`;
 }
 function start() {
@@ -661,15 +785,23 @@ function start() {
     sState.key = on ? "noEdge" : "gapBook"; sState.dir = on ? "desc" : "size"; showProps();
   });
   $("s-refresh").addEventListener("click", refreshPrices);
-  for (const t of ["players", "props"]) $(`tab-${t}`).addEventListener("click", () => selectTab(t));
+  for (const id of ["a-search", "a-app", "a-game", "a-best", "a-bar", "a-upcoming"]) $(id).addEventListener("input", showApps);
+  $("a-stat").addEventListener("click", e => {
+    const b = e.target.closest("button"); if (!b) return;
+    for (const other of $("a-stat").children) other.setAttribute("aria-pressed", other === b);
+    showApps();
+  });
+  for (const t of TABS) $(`tab-${t}`).addEventListener("click", () => selectTab(t));
   document.querySelector(".tabs").addEventListener("keydown", e => {
-    if (e.key === "ArrowRight" || e.key === "ArrowLeft") selectTab($("tab-players").getAttribute("aria-selected") === "true" ? "props" : "players", true);
+    if (e.key !== "ArrowRight" && e.key !== "ArrowLeft") return;
+    const at = TABS.findIndex(t => $(`tab-${t}`).getAttribute("aria-selected") === "true");
+    selectTab(TABS[(at + (e.key === "ArrowRight" ? 1 : TABS.length - 1)) % TABS.length], true);
   });
   const records = t => (t?.rows || []).map(r => Object.fromEntries(t.columns.map((c, i) => [c, r[i]])));
   bookRecords = records(PAYLOAD?.books);
   readSlate(records(PAYLOAD?.slate), PAYLOAD?.slate?.snapshot_utc);
-  paintPlayers(); showProps();
-  selectTab(location.hash === "#props" ? "props" : "players");
+  paintPlayers(); showProps(); readApps(); showApps();
+  selectTab(TABS.includes(location.hash.slice(1)) ? location.hash.slice(1) : "players");
   refreshPrices();
   const watching = () => document.visibilityState === "visible";
   setInterval(() => { if (watching()) Promise.all([loadQuotes(), loadModel()]).then(() => paintTimes()); }, QUOTE_SECONDS * 1000);
