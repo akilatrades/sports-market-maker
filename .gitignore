@@ -44,3 +44,7 @@ journal.jsonl
 
 # Screenshots written by the dashboard smoke tests
 /test-artifacts/
+
+# The player-pool page reads Kalshi quotes from the data-only branch
+# player-pool-live; the local copy is never committed to main.
+/outputs/player_pool/kalshi_quotes.json

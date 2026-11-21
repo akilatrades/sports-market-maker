@@ -4414,3 +4414,78 @@ page from public box scores and the two public price files.
 they ignore the spread, fees and whether an order fills. The baseline is
 for reading a player's level, not for pricing orders; the bot still prices
 from sportsbooks (rules v9).
+
+## 2026-11-20: Player-pool page: how fresh its prices are (owner; correction)
+
+*Research page only. Corrects two things in the page built earlier today.*
+
+**The update interval was stated wrongly.** The page and its build script
+said the Kalshi and model file (`outputs/projections/latest.csv`) is
+rewritten "about every half hour". Its history says otherwise: on each of
+17 to 20 November it changed five times, between about 19:15 and 03:05
+UTC, 75 to 155 minutes apart, and not at all overnight. The sportsbook
+file (`outputs/books/nba_latest.csv`) changed three or four times a day.
+The wording now says that.
+
+**Sportsbook prices were mostly hidden.** The page dropped any sportsbook
+quote more than two hours older than the Kalshi prices beside it (the live
+bot's own limit). With the files changing that seldom the column was
+usually blank: at the 02:44 UTC snapshot on 21 November all 129
+exact-line quotes were 151 to 159 minutes older and none was shown. The
+page now shows every exact-line quote for the same game, marks one that is
+more than two hours older with its age, greys the gaps measured against
+it, and prints the sportsbook file's own time at the top. A gap against an
+old quote partly measures what changed in between, and the page says so.
+
+**Also.** A sportsbook quote is matched only to a game that tips within 90
+minutes of its listed start, so a second meeting of the same two teams
+cannot borrow the first one's lines. The link `#props` no longer scrolls
+past the filters.
+
+## 2026-11-21: Player-pool page: automatic updates (owner request)
+
+*Research page only. Adds one workflow, `.github/workflows/player-pool-page.yml`
+(there was none for this page before). No live rule, limit or order path
+changes; no keys, no account, no orders.*
+
+**What GitHub's scheduler actually delivers here** (measured from run
+history on 20 and 21 November; this decided the design):
+
+| Workflow | Its schedule asks for | GitHub started |
+|---|---|---|
+| `trade-dry-run.yml` | every 15 minutes, 14 hours a day (56 runs) | 3 runs in about 30 hours |
+| `books.yml` | every 20 minutes, 18 hours a day, plus 4 (58 runs) | 5 runs in about 30 hours |
+| `projections.yml` | 12:30, 15:30, 18:30, 21:30 UTC | 20:37, 22:17, 00:06, 02:40 UTC |
+| `dead-ticket-watch.yml` | 18:00 and 00:30 UTC | 23:50 and 07:35 UTC |
+
+So a schedule in this repository means "about six hours later, a few times
+a day". A job on a clock of its own cannot keep prices current. Other
+workflows that assume their schedule is kept (the 20-minute odds refresh,
+for one) are not getting it either.
+
+**What was built.**
+
+- *Season numbers.* The page now reads `outputs/player_pool/latest.json`.
+  The `stats` job rewrites it from public box scores each time the
+  projections job finishes, and commits only when the box scores changed
+  (the file has no clock in it). The source posts a night's games the next
+  day: the 20 November games were absent at 04:00 UTC and present by 15:50.
+- *Kalshi prices.* The `prices` job reads Kalshi's public bid and ask for
+  the four NBA prop series about every three minutes, with the same reader
+  as the existing snapshot job, until no listed game is still ahead. Each
+  pass replaces one file on the data-only branch `player-pool-live` (a
+  single commit with no history), so nothing is added to `main`. The page
+  looks for it every minute. It applies a newer quote only to a game that
+  has not started; after tip-off it keeps the last pre-game price.
+- *Stat model and sportsbook lines* still change only when their own jobs
+  run (about five and three or four times on a game day). The page prints
+  a time for each of the four sources.
+
+**Not built: reading Kalshi straight from the browser.** One check from a
+GitHub runner sent the request a web page would send (with its `Origin`
+header) to both Kalshi hosts and got HTTP 403 each time. Nothing further
+was tried.
+
+**Still unproven.** The `prices` job has not run yet: it first runs after
+this is merged. How current the page really is depends on when GitHub
+starts that job each day; the page shows the age of what it has.

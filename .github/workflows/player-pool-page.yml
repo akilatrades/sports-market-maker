@@ -1,0 +1,126 @@
+name: player-pool page (read-only)
+# Keeps the NBA player-pool page current without anyone rebuilding it
+# (research/nba_player_pool_dashboard.html).
+#
+#   stats   rewrites outputs/player_pool/latest.json from public box scores.
+#   prices  reads Kalshi's public bid and ask every few minutes until the
+#           night's last game tips off, and publishes them as one small file
+#           on the data-only branch player-pool-live. Nothing is added to main.
+#
+# PUBLIC data only. No keys, no account, no orders.
+#
+# It starts when the projections job finishes: GitHub has been starting this
+# repository's own scheduled jobs about six hours late and only a few times a
+# day, so a clock of its own would not keep anything current. The one
+# schedule below is an early start for the prices job.
+on:
+  workflow_run:
+    workflows: ["projections"]
+    types: [completed]
+  schedule:
+    - cron: "10 9 * * *"
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - "research/nba_player_pool_dashboard.py"
+      - "research/nba_player_pool_dashboard.template.html"
+      - "research/player_pool_quotes.py"
+      - "tests/test_nba_player_pool_dashboard.py"
+      - "tests/test_player_pool_quotes.py"
+      - "tests/test_player_pool_workflow.py"
+      - ".github/workflows/player-pool-page.yml"
+permissions:
+  contents: read
+jobs:
+  check:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r requirements.txt pytest
+      - run: >-
+          pytest -q tests/test_nba_player_pool_dashboard.py
+          tests/test_player_pool_quotes.py tests/test_player_pool_workflow.py
+  stats:
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: write
+    concurrency:
+      group: player-pool-stats
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r requirements.txt
+      - run: python -m live.fetch_nba_data
+      - run: python -m research.nba_player_pool_dashboard --data-only
+      - name: Commit the Players-tab data when the box scores have changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add outputs/player_pool/latest.json
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m "Player-pool page data"
+          for attempt in 1 2 3 4 5; do
+            if git pull --rebase && git push; then exit 0; fi
+            sleep $((attempt * 5))
+          done
+          exit 1
+  prices:
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    # A job may run six hours; the loop below stops itself at five and a half.
+    timeout-minutes: 345
+    permissions:
+      contents: write
+    concurrency:
+      # One watcher at a time. A start that arrives while one is running
+      # waits and takes over when it ends.
+      group: player-pool-prices
+      cancel-in-progress: false
+    env:
+      KALSHI_ENV: prod
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r requirements.txt
+      - name: Publish Kalshi's quotes until the last game tips off
+        run: |
+          set -uo pipefail
+          export GIT_AUTHOR_NAME="github-actions[bot]"
+          export GIT_AUTHOR_EMAIL="41898282+github-actions[bot]@users.noreply.github.com"
+          export GIT_COMMITTER_NAME="$GIT_AUTHOR_NAME"
+          export GIT_COMMITTER_EMAIL="$GIT_AUTHOR_EMAIL"
+          file=outputs/player_pool/kalshi_quotes.json
+          stop=$((SECONDS + 330 * 60))
+          failures=0
+          while [ "$SECONDS" -lt "$stop" ]; do
+            status=0
+            python -m research.player_pool_quotes --out "$file" || status=$?
+            # 0: quotes written, games still ahead. 3: written, none ahead.
+            if [ "$status" -eq 0 ] || [ "$status" -eq 3 ]; then
+              failures=0
+              # One commit with no history, so the branch never grows.
+              blob=$(git hash-object -w "$file")
+              tree=$(printf '100644 blob %s\tkalshi_quotes.json\n' "$blob" | git mktree)
+              commit=$(git commit-tree "$tree" -m "Kalshi quotes $(date -u +%Y-%m-%dT%H:%MZ)")
+              git push --quiet --force origin "$commit:refs/heads/player-pool-live" \
+                || echo "::warning::could not publish this pass"
+            else
+              failures=$((failures + 1))
+              echo "::warning::pass failed with status $status ($failures in a row)"
+              if [ "$failures" -ge 10 ]; then exit 1; fi
+            fi
+            if [ "$status" -eq 3 ]; then break; fi
+            sleep 170
+          done
