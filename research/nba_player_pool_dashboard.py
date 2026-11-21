@@ -303,6 +303,11 @@ def slate_snapshot(projections):
     }
 
 
+def slate_file(projections):
+    """``slate_snapshot`` as strict JSON values, for a file of its own."""
+    return _clean(slate_snapshot(projections))
+
+
 def book_lines(books, projections):
     """Sportsbook lines that sit exactly on one of today's Kalshi lines.
 

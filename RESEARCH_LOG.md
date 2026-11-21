@@ -4523,3 +4523,47 @@ an empty table.
 on 21 November (450 markets, 51 players, 4 games): 450 props listed with
 no duplicate of any prop the projections file already had; the older
 quotes-file format still loads and adds nothing.
+
+## 2026-11-21: Player-pool page: the stat model every few minutes (owner request)
+
+*Research page only. Changes `.github/workflows/player-pool-page.yml`. No
+live rule, limit or order path changes, and nothing the projections job
+writes is touched.*
+
+**Why.** The page's stat-model numbers came from the projections file. That
+job is scheduled for 12:30, 15:30, 18:30 and 21:30 UTC, but GitHub fires
+those schedules five to eight hours late (each run's creation time equals
+its start time, so it is not waiting in a queue): 20:37, 22:17, 00:06 and
+02:40 UTC on 20 November. At 17:00 UTC on 21 November the newest
+stat-model numbers were 14 hours old and covered none of that day's games.
+
+**What changed.**
+
+- `research/player_pool_model.py` prices every open Kalshi NBA prop with
+  the projections job's own function (`live.nba_projections.price_markets`)
+  on the same public inputs: box scores, Kalshi's open markets, and ESPN's
+  schedule, betting lines and injury report. It writes one file,
+  `model.json`, and no projections file, paper ledger or bet card.
+- The `prices` job now downloads the box scores when it starts (and again
+  every two hours), runs that step every second pass, about every six
+  minutes, and publishes `model.json` beside the quotes on the data-only
+  branch. If the step fails, the quotes still go out.
+- The page reads `model.json` and uses whichever of it and the projections
+  file is newer. A player the model cannot price shows "no model"; a game
+  it has not reached shows "not run yet".
+- Workflow schedule: old, one start at 09:10 UTC; new, starts at 03:10,
+  06:10 and 09:10 UTC, set early because they fire late. A start that finds
+  a watcher running waits its turn; one that finds no game ahead ends at
+  once.
+
+**Rehearsal** (offline, real data as of 22:48 UTC on 20 November, before
+that night's nine games): the step priced all 1,760 props in 8 seconds and
+wrote a 324 KB file the page read. The night's spread and total are not in
+the public box-score files, so a stand-in line was used; the numbers
+themselves were not checked against the projections file. The first run on
+GitHub is the real test.
+
+**The paper ledgers are not affected.** They are written only by the
+projections job, on its own schedule. The page's stat-model numbers can
+now differ from the projections file's by whatever changed in the
+injury report and betting lines between the two runs.

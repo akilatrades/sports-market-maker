@@ -3,21 +3,28 @@ name: player-pool page (read-only)
 # (research/nba_player_pool_dashboard.html).
 #
 #   stats   rewrites outputs/player_pool/latest.json from public box scores.
-#   prices  reads Kalshi's public bid and ask every few minutes until the
-#           night's last game tips off, and publishes them as one small file
-#           on the data-only branch player-pool-live. Nothing is added to main.
+#   prices  until the night's last game tips off: reads Kalshi's public bid
+#           and ask about every three minutes, and every second pass reprices
+#           the props with the stat model (the projections job's own pricing
+#           function). Both go out as small files on the data-only branch
+#           player-pool-live. Nothing is added to main, and nothing the
+#           projections job writes is touched.
 #
 # PUBLIC data only. No keys, no account, no orders.
 #
 # It starts when the projections job finishes: GitHub has been starting this
 # repository's own scheduled jobs about six hours late and only a few times a
-# day, so a clock of its own would not keep anything current. The one
-# schedule below is an early start for the prices job.
+# day, so a clock of its own would not keep anything current. The schedules
+# below are early starts for the prices job, set hours ahead of when they
+# are wanted. A start that finds a watcher running waits its turn; one that
+# finds no game ahead ends at once.
 on:
   workflow_run:
     workflows: ["projections"]
     types: [completed]
   schedule:
+    - cron: "10 3 * * *"
+    - cron: "10 6 * * *"
     - cron: "10 9 * * *"
   workflow_dispatch:
   pull_request:
@@ -25,8 +32,10 @@ on:
       - "research/nba_player_pool_dashboard.py"
       - "research/nba_player_pool_dashboard.template.html"
       - "research/player_pool_quotes.py"
+      - "research/player_pool_model.py"
       - "tests/test_nba_player_pool_dashboard.py"
       - "tests/test_player_pool_quotes.py"
+      - "tests/test_player_pool_model.py"
       - "tests/test_player_pool_workflow.py"
       - ".github/workflows/player-pool-page.yml"
 permissions:
@@ -44,7 +53,8 @@ jobs:
       - run: pip install -r requirements.txt pytest
       - run: >-
           pytest -q tests/test_nba_player_pool_dashboard.py
-          tests/test_player_pool_quotes.py tests/test_player_pool_workflow.py
+          tests/test_player_pool_quotes.py tests/test_player_pool_model.py
+          tests/test_player_pool_workflow.py
   stats:
     if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
@@ -94,26 +104,43 @@ jobs:
         with:
           python-version: "3.12"
       - run: pip install -r requirements.txt
-      - name: Publish Kalshi's quotes until the last game tips off
+      - name: Box scores for the stat model
+        run: python -m live.fetch_nba_data
+      - name: Publish Kalshi's quotes and the stat model until the last game tips off
         run: |
           set -uo pipefail
           export GIT_AUTHOR_NAME="github-actions[bot]"
           export GIT_AUTHOR_EMAIL="41898282+github-actions[bot]@users.noreply.github.com"
           export GIT_COMMITTER_NAME="$GIT_AUTHOR_NAME"
           export GIT_COMMITTER_EMAIL="$GIT_AUTHOR_EMAIL"
-          file=outputs/player_pool/kalshi_quotes.json
+          dir=outputs/player_pool
           stop=$((SECONDS + 330 * 60))
+          fetched=$SECONDS
           failures=0
+          pass=0
           while [ "$SECONDS" -lt "$stop" ]; do
             status=0
-            python -m research.player_pool_quotes --out "$file" || status=$?
+            python -m research.player_pool_quotes --out "$dir/kalshi_quotes.json" || status=$?
             # 0: quotes written, games still ahead. 3: written, none ahead.
             if [ "$status" -eq 0 ] || [ "$status" -eq 3 ]; then
               failures=0
+              # The stat model every second pass. If it fails, its last file
+              # stays and the quotes still go out.
+              if [ "$status" -eq 0 ] && [ $((pass % 2)) -eq 0 ]; then
+                if [ $((SECONDS - fetched)) -ge 7200 ]; then
+                  python -m live.fetch_nba_data || echo "::warning::box scores not refreshed"
+                  fetched=$SECONDS
+                fi
+                timeout 600 python -m research.player_pool_model --out "$dir/model.json" \
+                  || echo "::warning::the stat model pass failed"
+              fi
               # One commit with no history, so the branch never grows.
-              blob=$(git hash-object -w "$file")
-              tree=$(printf '100644 blob %s\tkalshi_quotes.json\n' "$blob" | git mktree)
-              commit=$(git commit-tree "$tree" -m "Kalshi quotes $(date -u +%Y-%m-%dT%H:%MZ)")
+              tree=$(for name in kalshi_quotes.json model.json; do
+                  if [ -f "$dir/$name" ]; then
+                    printf '100644 blob %s\t%s\n' "$(git hash-object -w "$dir/$name")" "$name"
+                  fi
+                done | git mktree)
+              commit=$(git commit-tree "$tree" -m "Player-pool prices $(date -u +%Y-%m-%dT%H:%MZ)")
               git push --quiet --force origin "$commit:refs/heads/player-pool-live" \
                 || echo "::warning::could not publish this pass"
             else
@@ -122,5 +149,6 @@ jobs:
               if [ "$failures" -ge 10 ]; then exit 1; fi
             fi
             if [ "$status" -eq 3 ]; then break; fi
+            pass=$((pass + 1))
             sleep 170
           done

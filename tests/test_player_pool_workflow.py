@@ -20,7 +20,9 @@ def test_it_starts_after_projections_and_never_on_a_push():
     assert 'workflows: ["projections"]' in triggers
     assert "workflow_dispatch:" in triggers
     assert not re.search(r"^  push:", triggers, re.M)
-    assert len(re.findall(r"cron:", triggers)) == 1
+    # A few early starts for the watcher; nothing here runs on a tight clock.
+    crons = re.findall(r'cron: "(\d+) (\d+) \* \* \*"', triggers)
+    assert len(crons) == len(re.findall(r"cron:", triggers)) == 3
 
 
 def test_only_the_two_publishing_jobs_can_write():
@@ -51,6 +53,19 @@ def test_prices_pushes_only_to_its_own_branch():
     assert "/outputs/player_pool/kalshi_quotes.json" in ignored
 
 
+def test_the_stat_model_pass_cannot_stop_the_quotes():
+    job = JOBS["prices"]
+    assert "python -m live.fetch_nba_data" in job
+    model = re.search(
+        r"timeout (\d+) python -m research\.player_pool_model .*\\\n\s+\|\| echo", job
+    )
+    assert model and int(model.group(1)) <= 900
+    # Both files go out in the same single commit.
+    assert "for name in kalshi_quotes.json model.json; do" in job
+    ignored = (ROOT / ".gitignore").read_text("utf-8").splitlines()
+    assert "/outputs/player_pool/model.json" in ignored
+
+
 def test_the_watcher_stops_itself_before_github_stops_it():
     job = JOBS["prices"]
     loop = int(re.search(r"SECONDS \+ (\d+) \* 60", job).group(1))
@@ -70,3 +85,4 @@ def test_the_page_reads_the_files_this_workflow_writes():
     # ... and uses every part of the quotes file the watcher publishes.
     for part in ("data.quotes", "data.names", "data.tips"):
         assert part in page, part
+    assert "/sports-market-maker/player-pool-live/model.json" in page
