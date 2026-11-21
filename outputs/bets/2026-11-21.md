@@ -64,3 +64,22 @@
 | Sat 8:00 PM | Zach Edey | YES 8+ rebounds | 54¢ | 61% | 5¢ | 3 | $1.68 | paper |
 | Sat 8:00 PM | Zion Williamson | YES 20+ points | 49¢ | 59% | 8¢ | 3 | $1.53 | paper |
 | Sat 8:00 PM | Zion Williamson | YES 4+ assists | 27¢ | 33% | 5¢ | 6 | $1.71 | paper |
+| Sat 10:00 PM | Baylor Scheierman | NO 4+ rebounds | 30¢ | 61% | 29¢ | 6 | $1.89 | paper |
+| Sat 10:00 PM | Baylor Scheierman | NO 2+ assists | 26¢ | 45% | 17¢ | 7 | $1.92 | paper |
+| Sat 10:00 PM | Baylor Scheierman | NO 10+ points | 54¢ | 69% | 13¢ | 3 | $1.68 | paper |
+| Sat 10:00 PM | Baylor Scheierman | NO 2+ threes | 50¢ | 57% | 5¢ | 3 | $1.56 | paper |
+| Sat 10:00 PM | Darius Acuff Jr. | NO 25+ points | 60¢ | 68% | 7¢ | 3 | $1.86 | paper |
+| Sat 10:00 PM | Domantas Sabonis | NO 6+ assists | 57¢ | 66% | 7¢ | 3 | $1.77 | paper |
+| Sat 10:00 PM | Domantas Sabonis | YES 15+ points | 36¢ | 44% | 6¢ | 5 | $1.89 | paper |
+| Sat 10:00 PM | Jordan Walsh | NO 4+ rebounds | 38¢ | 76% | 36¢ | 4 | $1.59 | paper |
+| Sat 10:00 PM | Jordan Walsh | NO 5+ points | 27¢ | 54% | 26¢ | 6 | $1.71 | paper |
+| Sat 10:00 PM | Jordan Walsh | NO 1+ threes | 35¢ | 48% | 11¢ | 5 | $1.83 | paper |
+| Sat 10:00 PM | Paul George | NO 6+ assists | 57¢ | 81% | 22¢ | 3 | $1.77 | paper |
+| Sat 10:00 PM | Paul George | NO 20+ points | 27¢ | 47% | 19¢ | 6 | $1.71 | paper |
+| Sat 10:00 PM | Paul George | NO 6+ rebounds | 46¢ | 65% | 17¢ | 4 | $1.91 | paper |
+| Sat 10:00 PM | Paul George | NO 3+ threes | 35¢ | 50% | 14¢ | 5 | $1.83 | paper |
+| Sat 10:00 PM | Payton Pritchard | NO 20+ points | 41¢ | 62% | 19¢ | 4 | $1.71 | paper |
+| Sat 10:00 PM | Payton Pritchard | NO 6+ assists | 42¢ | 58% | 14¢ | 4 | $1.75 | paper |
+| Sat 10:00 PM | Payton Pritchard | NO 4+ rebounds | 50¢ | 60% | 9¢ | 3 | $1.56 | paper |
+| Sat 10:00 PM | Payton Pritchard | NO 2+ threes | 22¢ | 29% | 6¢ | 8 | $1.86 | paper |
+| Sat 10:00 PM | Sam Hauser | NO 3+ threes | 49¢ | 64% | 14¢ | 3 | $1.53 | paper |
