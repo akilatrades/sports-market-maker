@@ -77,22 +77,6 @@ def projections():
     )
 
 
-def books():
-    return pd.DataFrame(
-        {
-            "player_key": ["bos player 0", "bos player 0", "someone else"],
-            "stat": "points",
-            "line": [19.5, 22.5, 19.5],  # only the first sits on a Kalshi line
-            "away": "BOS",
-            "home": "NYK",
-            "p_book": [0.57, 0.44, 0.50],
-            "book_n": [5, 7, 3],
-            "updated_utc": "2026-11-21 00:05:00+00:00",
-            "commence_utc": "2026-11-21 03:00:00+00:00",
-        }
-    )
-
-
 def test_usage_and_true_shooting_follow_the_box_score_arithmetic():
     one_game = pd.DataFrame(
         {
@@ -202,39 +186,51 @@ def test_value_is_zero_at_the_replacement_rank():
     assert sum(D.VALUE_WEIGHTS.values()) == pytest.approx(1.0)
 
 
-def test_the_payload_is_strict_json_with_real_prices_only():
-    payload = D.build_payload(box_scores(), projections(), books())
+def test_the_payload_is_strict_json_and_carries_no_market_price():
+    payload = D.build_payload(box_scores(), projections())
     text = json.dumps(payload, allow_nan=False)  # raises on NaN or infinity
     # The same inputs give the same payload: no clock in it.
-    assert payload == D.build_payload(box_scores(), projections(), books())
+    assert payload == D.build_payload(box_scores(), projections())
+    assert set(payload) == {"meta", "players", "model"}
     assert payload["meta"]["season"] == "2026-27"
     assert len(payload["players"]) == 12
     first = payload["players"][0]
     assert {"player_id", "player", "team", "proj_points", "swing", "value"} <= set(
         first
     )
-    slate = payload["slate"]
-    assert slate["columns"] == D.SLATE_COLUMNS and len(slate["rows"]) == 3
-    assert slate["snapshot_utc"] == "2026-11-21T00:07:16.961699+00:00"
-    # Only the sportsbook line that sits exactly on a Kalshi line is kept.
-    assert payload["books"]["columns"] == D.BOOK_COLUMNS
-    assert [row[:3] for row in payload["books"]["rows"]] == [
-        ["bos player 0", "points", 19.5]
+    # The stat model's expected totals: one row per player and stat. Kalshi
+    # is traded by the bot and is not on this page, so none of its quotes
+    # are built in.
+    model = payload["model"]
+    assert model["columns"] == D.EXPECTED_COLUMNS
+    assert model["snapshot_utc"] == "2026-11-21T00:07:16.961699+00:00"
+    rows = [dict(zip(model["columns"], row, strict=True)) for row in model["rows"]]
+    assert [(r["player_id"], r["stat"], r["model_mean"]) for r in rows] == [
+        (1000, "points", 21.0),
+        (2001, "points", 12.0),
     ]
-    # A missing injury status is null, not the text "nan".
-    assert slate["rows"][0][slate["columns"].index("injury_status")] is None
+    assert rows[0]["player_key"] == "bos player 0"
+    for word in ("yes_bid", "yes_ask", "p_model", "0.52", "0.54"):
+        assert word not in text, word
     for word in ("simulat", "placeholder", "mkt_", "best_edge"):
         assert word not in text.lower()
 
 
+def test_the_player_key_is_worked_out_when_the_file_has_none():
+    frame = projections().drop(columns="player_key")
+    frame["player"] = ["Darius Acuff Jr.", "Darius Acuff Jr.", "Karl-Anthony Towns"]
+    model = D.expected_snapshot(frame)
+    keys = [row[model["columns"].index("player_key")] for row in model["rows"]]
+    assert keys == ["darius acuff", "karl anthony towns"]
+
+
 def test_the_page_builds_without_price_files():
-    payload = D.build_payload(box_scores(), None, None)
-    assert payload["slate"] == {
+    payload = D.build_payload(box_scores(), None)
+    assert payload["model"] == {
         "snapshot_utc": None,
-        "columns": D.SLATE_COLUMNS,
+        "columns": D.EXPECTED_COLUMNS,
         "rows": [],
     }
-    assert payload["books"]["rows"] == []
     assert len(payload["players"]) == 12
 
 
@@ -243,7 +239,7 @@ def test_render_fills_the_template_and_cannot_close_the_script_early():
     assert template.count(D.PLACEHOLDER) == 1
     players = box_scores()
     players.loc[players.player_id == 1000, "player"] = "</script><b>x"
-    page = D.render(D.build_payload(players, projections(), books()), template)
+    page = D.render(D.build_payload(players, projections()), template)
     assert D.PLACEHOLDER not in page
     assert page.count("</script>") == template.count("</script>")
     assert "<\\/script><b>x" in page
@@ -261,7 +257,7 @@ def test_the_committed_page_is_the_template_plus_data():
     lines[at[0]] = f"const PAYLOAD = {D.PLACEHOLDER};"
     assert "\n".join(lines) == D.TEMPLATE.read_text("utf-8")
     assert len(payload["players"]) > 300
-    assert payload["slate"]["columns"] == D.SLATE_COLUMNS
+    assert payload["model"]["columns"] == D.EXPECTED_COLUMNS
     # No made-up market prices: the old page's simulated columns are gone.
     assert not re.search(r"mkt_|best_edge|placeholder market", page, re.IGNORECASE)
 
@@ -272,47 +268,42 @@ def test_the_pool_is_tonights_slate_and_earlier_nights_drop_off():
     # The Players tab can be limited to the teams with a game today.
     assert 'id="p-tonight"' in template
     assert "teams.has(r.team)" in template
-    # A night ends at 5am Eastern; rows from an earlier night are left out,
-    # and "PTS tonight" is filled from today's games only.
+    # A night ends at 5am Eastern; numbers from an earlier night are left
+    # out, and "PTS tonight" is filled from today's games only.
     assert "const DAY_STARTS_HOUR = 5;" in template
     assert 'timeZone: "America/New_York"' in template
-    assert "slateDay(r.tip) < today" in template
-    assert "slateDay(r.tip) === today) tonight.set(r.id, r.mean)" in template
+    assert "(tip && slateDay(tip) < today)" in template
+    assert "slateDay(m.tip) === today) tonight.set(m.id, m.mean)" in template
 
 
-def test_best_plays_take_their_numbers_from_the_nba_bot():
-    """The "Best plays" filter repeats the bot's entry tests. The numbers
-    travel with the data, so a rule change reaches the page without an edit."""
-    from kalshi.maker import maker_fee
-    from kalshi.paper_props import FEE_SHARE
-    from live import prod_nba_auto as bot
-
-    rules = D.best_play_rules()
-    band = (round(rules["no_min"] * 100), round(rules["no_max"] * 100))
-    assert band == tuple(bot.PRICE_BAND_CENTS)
-    assert rules["edge_min"] == bot.ENTRY_MIN_NET_EDGE
-    assert rules["edge_max"] == bot.MAX_ENTRY_NET_EDGE
-    assert rules["book_minutes"] == bot.BOOK_MAX_AGE_MINUTES
-    assert (rules["hours_min"], rules["hours_max"]) == tuple(bot.WINDOW)
-    assert rules["min_books"] == bot.MIN_BOOKS
-    assert rules["rules"] in bot.STRATEGY_VERSION
-    # fee_rate x price x (1 - price) is the bot's maker fee at any price.
-    for price in (0.65, 0.8, 0.95):
-        fee = float(maker_fee(price, FEE_SHARE))
-        assert rules["fee_rate"] * price * (1 - price) == pytest.approx(fee)
-
-    # They ride in the payload and in the data file an open page reloads.
-    payload = D.build_payload(box_scores(), projections(), books())
-    assert payload["meta"]["best_plays"] == rules
-    assert D.player_file(payload)["meta"]["best_plays"] == rules
-
-    # The page reads the same names and keeps its own copy only as a fallback.
+def test_kalshi_is_left_to_the_bot_and_is_not_on_the_page():
+    """The owner trades PrizePicks and Underdog by hand from this page and
+    leaves Kalshi to the bot."""
     template = D.TEMPLATE.read_text("utf-8")
-    fallback = re.search(r"const BEST_FALLBACK = \{([^}]*)\};", template).group(1)
-    names = {pair.split(":")[0].strip() for pair in fallback.split(",")}
-    assert names == set(rules)
-    assert "META.best_plays" in template
-    assert 'id="s-best"' in template
+    script = template[template.index("<script>") :]
+    # No Kalshi quote is fetched, read or shown, and nothing tells the
+    # reader what to buy or rest there.
+    for gone in (
+        "kalshi_quotes.json",
+        "yes_bid",
+        "yes_ask",
+        "p_model",
+        "Resting NO",
+        "Buy now",
+        "s-best",
+        "stamp-kalshi",
+        'id="panel-props"',
+    ):
+        assert gone not in template, gone
+    assert "kalshi" not in script.lower().replace(
+        "kalshi is not on this page", ""
+    ).replace("the project's bot trades kalshi automatically", "")
+    # Two tabs: the players, and tonight's props on the apps.
+    assert re.findall(r'role="tab" id="tab-(\w+)"', template) == ["players", "apps"]
+    assert "Kalshi is not on this page." in template
+    # Polymarket is checked, and the page says what the check found.
+    assert '"../outputs/cross_exchange/latest.json"' in template
+    assert "polymarket_us_strict_prop_markets" in template
 
 
 def test_the_page_sets_pickem_app_lines_beside_the_sportsbooks():
@@ -322,6 +313,9 @@ def test_the_page_sets_pickem_app_lines_beside_the_sportsbooks():
     # The tab reads the file the pick'em job writes, by the names it writes.
     assert f'const LIVE_PICKEM = "../{pickem_lines.LATEST.as_posix()}";' in template
     assert 'id="tab-apps"' in template and 'id="panel-apps"' in template
+    # The stat model's expected total sits beside each line, matched on the
+    # same player key, stat and game.
+    assert "expects.get(`${r.player_key}|${r.stat}|${r.away}${r.home}`)" in template
     used = ("app", "player", "player_key", "stat", "line", "sides", "home", "away")
     for column in (*used, "commence_utc", "updated_utc", "snapshot_utc"):
         assert column in pickem_lines.COLUMNS and f"r.{column}" in template
@@ -341,7 +335,7 @@ def test_the_data_file_holds_the_players_tab_and_is_rewritten_alone(
     box_scores().to_parquet(players)
     page, data = tmp_path / "page.html", tmp_path / "pool" / "latest.json"
     argv = ["build", "--players", str(players), "--projections", "none.csv"]
-    argv += ["--books", "none.csv", "--out", str(page), "--data", str(data)]
+    argv += ["--out", str(page), "--data", str(data)]
     monkeypatch.setattr("sys.argv", argv + ["--data-only"])
     D.main()
     assert data.exists() and not page.exists()

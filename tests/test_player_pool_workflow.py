@@ -81,8 +81,7 @@ def test_the_page_reads_the_files_this_workflow_writes():
         "utf-8"
     )
     assert '"../outputs/player_pool/latest.json"' in page
-    assert "/sports-market-maker/player-pool-live/kalshi_quotes.json" in page
-    # ... and uses every part of the quotes file the watcher publishes.
-    for part in ("data.quotes", "data.names", "data.tips"):
-        assert part in page, part
     assert "/sports-market-maker/player-pool-live/model.json" in page
+    # The watcher still publishes Kalshi's quotes beside the model file, but
+    # the page no longer reads them: Kalshi is left to the bot.
+    assert "kalshi_quotes.json" not in page

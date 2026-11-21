@@ -4922,3 +4922,63 @@ offered on both sides, in the shape the parser expected. PrizePicks posts
 some whole-number lines (4.0 assists, 3.0 threes); no sportsbook quotes
 those exactly, so the page shows them as floors from the neighbouring
 lines.
+
+## 2026-11-21: Player-pool page: Kalshi comes off it (owner decision)
+
+*Page, its generator and tests only. No workflow, live rule, limit or order
+path changes; the bot is untouched. Exploratory: no result is claimed.*
+
+**The decision.** Kalshi is to be traded by the bot alone. The page is for
+the venues the owner trades by hand: PrizePicks, Underdog and, if it ever
+lists NBA player props, Polymarket.
+
+**Old and new.**
+
+- *Tabs.* Old: Players, Tonight's props (Kalshi's lines with the stat
+  model, the sportsbooks and Kalshi's bid and ask, and a best-plays filter
+  that repeated the bot's resting-NO tests), Pick'em apps. New: Players,
+  and Tonight's props, which is now the app lines.
+- *Kalshi data on the page.* Old: its bid and ask, re-read every minute,
+  and a snapshot of them built into the page. New: none. The page no longer
+  requests the quotes file and nothing built into it carries a Kalshi
+  price.
+- *Stat model.* Old: its chance at each Kalshi line. New: what it expects
+  the player to total, shown beside each app line. Its pricing function
+  still works from Kalshi's list of markets, so it has a number only for
+  players in those markets (176 of 205 app lines on 21 November).
+- *Who plays tonight* (the Players tab's filter). Old: from Kalshi's market
+  list. New: from the sportsbook and app files, and the model's.
+- *Whole-number app lines* (37 of 205 that day, such as 4.0 assists). Old:
+  shown as floors. New: priced as what they are (over 4 is over 4.5, under
+  4 is under 3.5, landing on 4 ties), with the stronger side judged with
+  ties set aside.
+
+**Not built.** A version of best plays that bought Kalshi props at the ask
+was prepared the same day (pull request #130) and closed without merging
+once Kalshi was taken off the page. Its check is worth keeping: on the 150
+sampled 2025-26 games with saved sportsbook lines (4,608 markets about
+five hours before tip-off; simulated at the quoted ask; in-sample season;
+game-clustered t; 15 cuts), buying the better side of every market
+returned -2.9c a contract (t -4.1); buying only where the sportsbooks'
+price beat the ask and Kalshi's fee by 1c or more returned -2.1c on 215
+trades (t -0.8) and -13.7c on the 36 with 3c or more of stated edge
+(t -2.2); lines priced by two or more sportsbooks returned +6.0c on 50
+trades (t +1.0). Buying at the ask on that signal did not show a profit.
+
+**Polymarket.** Nothing to show. The project's own scan of Polymarket US
+(every four hours) found no NBA player-prop market in any scan from
+6 November to 12:50 UTC on 21 November. The page now reads that scan and
+says what it last found, so it will be visible if that changes; reading
+Polymarket's prices onto the page is not built.
+
+**Where the app lines stand.** With the real lines of 21 November (pulled
+19:10 UTC) against sportsbook lines of 18:46 UTC: of 205 lines, 181 had a
+sportsbook chance for at least one side, and none reached 55%. The
+strongest were 54.1%, 53.8% and 53.7%. The apps' standard lines sat on or
+half a point from the sportsbooks' main lines. That is one afternoon, not
+a finding; the forward check is the one already written down for pick'em
+lines.
+
+**Left as it is.** The price watcher still publishes Kalshi's quotes file
+beside the model file; the page ignores it. Its quote step also decides
+when the watcher stops for the night, so it is not removed here.

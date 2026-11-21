@@ -1,36 +1,35 @@
 """Build the NBA player-pool page: research/nba_player_pool_dashboard.html.
 
-A read-only research page. It places no orders and reads no account. Every
-number comes from public files:
+A read-only research page for trading PrizePicks and Underdog by hand. It
+places no orders and reads no account. Kalshi is not on it: the project's
+bot trades Kalshi automatically. Every number comes from public files:
 
 - box scores (data/player_games.parquet, written by live.fetch_nba_data);
-- the stat model's projections for today's games with Kalshi's quotes
-  (outputs/projections/latest.csv, rewritten by scheduled jobs; on game
-  days it has changed about five times, from early afternoon to late
-  evening US time);
-- the sportsbook consensus for the same players (outputs/books/nba_latest.csv,
-  which has changed three or four times a day).
+- what the stat model expects each player to total tonight
+  (outputs/projections/latest.csv; only the expected totals are taken from
+  it, never a market price);
+- live, read by the page itself: the sportsbook consensus
+  (outputs/books/nba_latest.csv) and the lines PrizePicks and Underdog post
+  (outputs/pickem/nba_latest.csv, research/pickem_lines.py).
 
 Players tab: season averages and a *baseline* for each player's next game.
 The baseline is half his recent form and half his per-minute rates times his
 expected minutes, all taken from the stat model's own features
 (markets/nba/features.py). It knows nothing about the opponent, the betting
-line or who is out; the stat model on the props tab does.
+line or who is out; the stat model's own number, beside it, does.
 
-Props tab: for each Kalshi prop on today's games, three probabilities side
-by side: the stat model, the sportsbooks and Kalshi's own bid and ask. A
-sportsbook price is shown only where the books quote Kalshi's exact line. No
-price on the page is simulated. A gap between two of them is a
-disagreement, not a profit.
+Props tab: each app line with the sportsbooks' chance of going over or
+under that same line, and what the stat model expects. The page loads all
+of it live, so that tab is empty when the page is opened as a file.
 
 The page keeps itself current when it is open on the project site. It
-re-reads three small public files and prefers them to the copy built in:
+re-reads small public files and prefers them to the copy built in:
 
 - outputs/player_pool/latest.json: the Players tab, rewritten by the
   player-pool workflow when new box scores arrive (``--data-only`` below);
-- the two price files above, for the props tab;
-- Kalshi's current bid and ask, published every few minutes on game days
-  by research/player_pool_quotes.py.
+- the stat model's numbers, recomputed every few minutes on game days by
+  research/player_pool_model.py;
+- the sportsbook and app lines above.
 
     python -m live.fetch_nba_data
     python -m research.nba_player_pool_dashboard              # page and data
@@ -39,13 +38,13 @@ re-reads three small public files and prefers them to the copy built in:
 
 import argparse
 import json
-import re
 from pathlib import Path
 
 import numpy as np
 import pandas as pd
 
 from markets.nba.dead_ticket import kalshi_team
+from markets.nba.kalshi import normalize_name
 from markets.nba.features import (
     SHRINK_MINUTES,
     STATS,
@@ -90,18 +89,16 @@ SLATE_COLUMNS = [
     "yes_ask_dollars",
     "injury_status",
 ]
-BOOK_COLUMNS = [
+# What the page itself keeps of the stat model: one expected total per player
+# and stat, and no market price.
+EXPECTED_COLUMNS = [
+    "tip_utc",
+    "event_ticker",
+    "player_id",
     "player_key",
     "stat",
-    "line",
-    "away",
-    "home",
-    "p_book",
-    "book_n",
-    "updated_utc",
-    "commence_utc",
+    "model_mean",
 ]
-LINE_KEY = ["player_key", "stat", "line"]
 
 
 def season_label(season):
@@ -294,7 +291,7 @@ def _table(frame, columns):
 
 
 def slate_snapshot(projections):
-    """The columns the props tab needs, as the page also reads them live."""
+    """The stat model's rows in the shape of its own file (model.json)."""
     if projections is None or projections.empty:
         return {"snapshot_utc": None, **_table(pd.DataFrame(), SLATE_COLUMNS)}
     snapshot = projections.snapshot_utc.dropna()
@@ -309,16 +306,23 @@ def slate_file(projections):
     return _clean(slate_snapshot(projections))
 
 
-def book_lines(books, projections):
-    """Sportsbook lines that sit exactly on one of today's Kalshi lines.
+def expected_snapshot(projections):
+    """What the stat model expects each player to total tonight: one row per
+    player and stat, without the market prices the projections file carries.
 
-    The page does the matching itself (it also re-reads both files live);
-    this only leaves out the lines it could never match.
+    Built into the page for when it is opened as a file; on the project site
+    the page re-reads the model's own files.
     """
-    if books is None or books.empty or projections is None or projections.empty:
-        return _table(pd.DataFrame(), BOOK_COLUMNS)
-    wanted = projections[LINE_KEY].drop_duplicates()
-    return _table(books.merge(wanted, on=LINE_KEY, how="inner"), BOOK_COLUMNS)
+    if projections is None or projections.empty:
+        return {"snapshot_utc": None, **_table(pd.DataFrame(), EXPECTED_COLUMNS)}
+    snapshot = projections.snapshot_utc.dropna()
+    rows = projections.drop_duplicates(["player_id", "stat"])
+    if "player_key" not in rows:
+        rows = rows.assign(player_key=rows.player.map(normalize_name))
+    return {
+        "snapshot_utc": None if snapshot.empty else str(snapshot.max()),
+        **_table(rows, EXPECTED_COLUMNS),
+    }
 
 
 def _clean(value):
@@ -336,36 +340,7 @@ def _clean(value):
     return value
 
 
-def best_play_rules():
-    """The NBA bot's entry tests, for the page's "Best plays" filter.
-
-    Read from the bot's own constants, so the page follows a rule change
-    without an edit. The page only marks rows with them; nothing here or on
-    the page places an order.
-    """
-    from kalshi.maker import TICK, maker_fee
-    from kalshi.paper_props import FEE_SHARE
-    from live import prod_nba_auto as bot
-
-    version = re.search(r"v\d+", bot.STRATEGY_VERSION)
-    low, high = bot.PRICE_BAND_CENTS
-    return {
-        "rules": version.group(0) if version else bot.STRATEGY_VERSION,
-        "no_min": low / 100,  # the NO price, in dollars
-        "no_max": high / 100,
-        "edge_min": bot.ENTRY_MIN_NET_EDGE,  # after the maker fee
-        "edge_max": bot.MAX_ENTRY_NET_EDGE,
-        "tick": TICK,
-        # The maker fee is fee_rate x price x (1 - price), per contract.
-        "fee_rate": round(float(maker_fee(0.5, FEE_SHARE)) / 0.25, 6),
-        "book_minutes": bot.BOOK_MAX_AGE_MINUTES,
-        "hours_min": bot.WINDOW[0],
-        "hours_max": bot.WINDOW[1],
-        "min_books": bot.MIN_BOOKS,
-    }
-
-
-def build_payload(players, projections, books=None):
+def build_payload(players, projections):
     """Everything the page shows. The same inputs give the same payload, so
     the data file changes only when the box scores do."""
     season = int(players.season.max())
@@ -382,11 +357,9 @@ def build_payload(players, projections, books=None):
             "value_minutes": VALUE_MINUTES,
             "replacement_rank": REPLACEMENT_RANK,
             "check": check,
-            "best_plays": best_play_rules(),
         },
         "players": table.to_dict("records"),
-        "slate": slate_snapshot(projections),
-        "books": book_lines(books, projections),
+        "model": expected_snapshot(projections),
     }
     return _clean(payload)
 
@@ -415,7 +388,6 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     parser.add_argument("--players", default="data/player_games.parquet")
     parser.add_argument("--projections", default="outputs/projections/latest.csv")
-    parser.add_argument("--books", default="outputs/books/nba_latest.csv")
     parser.add_argument("--out", default=str(PAGE))
     parser.add_argument("--data", default=str(DATA))
     parser.add_argument(
@@ -426,19 +398,18 @@ def main():
     args = parser.parse_args()
 
     players = pd.read_parquet(args.players)
-    projections, books = (
-        pd.read_csv(path) if Path(path).exists() else None
-        for path in (args.projections, args.books)
+    projections = (
+        pd.read_csv(args.projections) if Path(args.projections).exists() else None
     )
-    payload = build_payload(players, projections, books)
+    payload = build_payload(players, projections)
     write_json(args.data, player_file(payload))
     if not args.data_only:
         page = render(payload, TEMPLATE.read_text("utf-8"))
         Path(args.out).write_text(page, "utf-8")
     meta = payload["meta"]
     print(
-        f"{len(payload['players'])} players, {len(payload['slate']['rows'])} props, "
-        f"{len(payload['books']['rows'])} matching sportsbook lines, "
+        f"{len(payload['players'])} players, "
+        f"{len(payload['model']['rows'])} stat-model expected totals, "
         f"box scores through {meta['box_scores_through_utc']}"
     )
     print(f"baseline check: {json.dumps(meta['check'])}")
