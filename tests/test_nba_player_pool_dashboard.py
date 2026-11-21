@@ -315,6 +315,25 @@ def test_best_plays_take_their_numbers_from_the_nba_bot():
     assert 'id="s-best"' in template
 
 
+def test_the_page_sets_pickem_app_lines_beside_the_sportsbooks():
+    from research import pickem_lines
+
+    template = D.TEMPLATE.read_text("utf-8")
+    # The tab reads the file the pick'em job writes, by the names it writes.
+    assert f'const LIVE_PICKEM = "../{pickem_lines.LATEST.as_posix()}";' in template
+    assert 'id="tab-apps"' in template and 'id="panel-apps"' in template
+    used = ("app", "player", "player_key", "stat", "line", "sides", "home", "away")
+    for column in (*used, "commence_utc", "updated_utc", "snapshot_utc"):
+        assert column in pickem_lines.COLUMNS and f"r.{column}" in template
+    # The file is there before the first pull, with its header and no price.
+    header = pickem_lines.LATEST.read_text("utf-8").splitlines()[0].split(",")
+    assert header == pickem_lines.COLUMNS
+    assert not {"odds", "price"} & set(header)
+    # It says plainly that this is untested, and that a line may have moved.
+    assert "has not tested pick'em entries" in template
+    assert "check the line in the app" in template
+
+
 def test_the_data_file_holds_the_players_tab_and_is_rewritten_alone(
     tmp_path, monkeypatch
 ):

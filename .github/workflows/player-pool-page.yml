@@ -38,6 +38,9 @@ on:
       - "tests/test_player_pool_model.py"
       - "tests/test_player_pool_workflow.py"
       - ".github/workflows/player-pool-page.yml"
+      - "research/pickem_lines.py"
+      - "tests/test_pickem_lines.py"
+      - ".github/workflows/pickem-lines.yml"
 permissions:
   contents: read
 jobs:
@@ -54,7 +57,7 @@ jobs:
       - run: >-
           pytest -q tests/test_nba_player_pool_dashboard.py
           tests/test_player_pool_quotes.py tests/test_player_pool_model.py
-          tests/test_player_pool_workflow.py
+          tests/test_player_pool_workflow.py tests/test_pickem_lines.py
   stats:
     if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest

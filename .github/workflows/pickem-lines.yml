@@ -1,0 +1,84 @@
+name: pick'em app lines (page only)
+# Reads the lines PrizePicks and Underdog post on tonight's NBA props, for the
+# player-pool page's "Pick'em apps" tab (owner request, 2026-11-21).
+#
+# It writes outputs/pickem/ and nothing else. The sportsbook consensus in
+# outputs/books/, which the live NBA bot prices from, belongs to the "book
+# lines" workflow and is never touched here; this is a separate workflow so
+# that nothing in it can delay or break that one.
+#
+# Cost: up to 4 Odds API credits a game per pull. research/pickem_lines.py
+# skips a pull while the last one is under 5 hours old (about four a day) and
+# whenever fewer than 15,000 credits remain. A start that is not due ends in
+# seconds, installs nothing and spends nothing.
+on:
+  # After each sportsbook refresh, so both sides of the page's comparison are
+  # from about the same time. Most of these starts find that no pull is due.
+  workflow_run:
+    workflows: ["book lines"]
+    types: [completed]
+  # A fallback. GitHub starts this repository's schedules hours late, so
+  # these are set early.
+  schedule:
+    - cron: "40 10,15,20 * * *"
+    - cron: "40 1 * * *"
+  # The owner's "pull now" button. It ignores the 5-hour gap, not the credit
+  # floor.
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: pickem-lines
+  cancel-in-progress: false
+jobs:
+  pull:
+    # Spends Odds API credits: main only, and by hand the owner only.
+    if: >-
+      github.ref == 'refs/heads/main' &&
+      (github.event_name != 'workflow_dispatch' ||
+      (github.actor == 'akilatrades' && github.triggering_actor == 'akilatrades'))
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Is a pull due?
+        id: due
+        env:
+          EVENT: ${{ github.event_name }}
+        run: |
+          set -euo pipefail
+          flag=""
+          if [[ "$EVENT" == workflow_dispatch ]]; then flag="--force"; fi
+          echo "state=$(python -m research.pickem_lines --due $flag)" >> "$GITHUB_OUTPUT"
+      - name: Install
+        if: steps.due.outputs.state == 'due'
+        run: pip install -r requirements.txt
+      - name: Read the apps' lines
+        if: steps.due.outputs.state == 'due'
+        env:
+          ODDS_API_KEY: ${{ secrets.ODDS_API_KEY }}
+          EVENT: ${{ github.event_name }}
+        run: |
+          set -euo pipefail
+          flag=""
+          if [[ "$EVENT" == workflow_dispatch ]]; then flag="--force"; fi
+          python -m research.pickem_lines $flag
+      - name: Commit the lines
+        if: steps.due.outputs.state == 'due'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A outputs/pickem
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m "Pick'em app lines $(date -u +%Y-%m-%dT%H:%MZ)"
+          # Other jobs push to main too; retry instead of sharing their lock.
+          for attempt in 1 2 3 4 5; do
+            if git pull --rebase && git push; then exit 0; fi
+            sleep $((attempt * 5))
+          done
+          exit 1
