@@ -266,6 +266,20 @@ def test_the_committed_page_is_the_template_plus_data():
     assert not re.search(r"mkt_|best_edge|placeholder market", page, re.IGNORECASE)
 
 
+def test_the_pool_is_tonights_slate_and_earlier_nights_drop_off():
+    """Last night's games must not linger on the page as "tonight"."""
+    template = D.TEMPLATE.read_text("utf-8")
+    # The Players tab can be limited to the teams with a game today.
+    assert 'id="p-tonight"' in template
+    assert "teams.has(r.team)" in template
+    # A night ends at 5am Eastern; rows from an earlier night are left out,
+    # and "PTS tonight" is filled from today's games only.
+    assert "const DAY_STARTS_HOUR = 5;" in template
+    assert 'timeZone: "America/New_York"' in template
+    assert "slateDay(r.tip) < today" in template
+    assert "slateDay(r.tip) === today) tonight.set(r.id, r.mean)" in template
+
+
 def test_the_data_file_holds_the_players_tab_and_is_rewritten_alone(
     tmp_path, monkeypatch
 ):

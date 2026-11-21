@@ -4567,3 +4567,43 @@ GitHub is the real test.
 projections job, on its own schedule. The page's stat-model numbers can
 now differ from the projections file's by whatever changed in the
 injury report and betting lines between the two runs.
+
+## 2026-11-21: Player-pool page: the pool is tonight's slate (owner report)
+
+*Research page only: `research/nba_player_pool_dashboard.template.html` and
+the page built from it. No workflow, live rule, limit or order path changes.*
+
+**What the owner saw.** Around midday Eastern on 21 November the page still
+showed the previous night's players. Two causes:
+
+- The Players tab listed the whole league (345 regulars), so players whose
+  games were the night before sat at the top of a page called "player pool".
+- Until the day's first stat-model file arrived, the page fell back to the
+  projections file, whose newest copy (02:44 UTC) held only the previous
+  night's late game. Its 400 props were counted under "Tonight's props" and
+  its players filled the "PTS tonight" column.
+
+**What changed.**
+
+- A night's games now leave the page at 5am Eastern the next morning
+  (`DAY_STARTS_HOUR = 5`): rows from an earlier night are not read, whichever
+  file they come from. Before today's markets have been read, the props tab
+  says none are listed yet.
+- The Players tab has "Playing tonight only", ticked by default whenever
+  any game is listed for today: it keeps the teams with a game on today's
+  slate, started or not (140 regulars on 12 teams for the six games of
+  21 November). Unticking it brings the whole league back, and that choice
+  sticks while the page is open. Searching by name still finds anyone.
+- "PTS tonight" is filled from today's games only, so a team playing two
+  days running shows tonight's number, not tomorrow's.
+- The stat-model file prices only games still ahead, so since the previous
+  entry a game dropped off the props tab as soon as it tipped off. The page
+  now keeps the last pre-game rows it read for tonight's started games until
+  the 5am change-over.
+
+**Checked** in a browser with the clock set to five moments, against the
+files published at 17:05 UTC on 21 November (1,017 priced props, six
+games): midday with and without the price watcher, mid-evening with one
+game still ahead (907 started rows kept, no duplicate rows), 2am Eastern
+(same slate) and 5:30am Eastern (cleared). No simulated or live result is
+involved; this is a display rule, not a research finding.
