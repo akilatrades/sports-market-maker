@@ -4838,3 +4838,87 @@ of this change): from the league's archived reports and the box scores,
 how often players listed Probable played and players listed Out or Doubtful
 did not, with at least 200 listings; the rule stands if Probable played in
 at least 90% and Out or Doubtful in at most 10%.
+
+## 2026-11-21: NBA stat model: a returning regular and his stand-ins (result: not adopted)
+
+*The test written down in the entry above, run as written: three variants on
+the design seasons, the chosen one once on the confirmation seasons. It
+failed three of its four bars, so the candidate is not adopted. Nothing live
+changed. Code: `research/returning_regular.py`; numbers:
+`outputs/research/returning_regular/`. Simulated on box scores (the model's
+walk-forward predictions); no market prices or fills are involved.*
+
+**Design seasons (2022-23 to 2024-25; 1,292 stand-in rows per stat).**
+Stand-in `actual / model`, production first:
+
+| Variant | Points | Rebounds | Sum of the two gaps | Log loss, four stats |
+|---|---|---|---|---|
+| Production | 0.919 | 0.940 | 0.141 | 6.30880 |
+| 1: any returning regular | 0.938 | 0.963 | 0.100 | 6.30847 |
+| 2: only after 3+ games out | 0.952 | 0.980 | 0.068 | 6.30821 |
+| 3: split by position group | 0.942 | 0.966 | 0.092 | 6.30849 |
+
+Variant 2 had the smallest gap and a log loss no higher than production's,
+so by the rule it was chosen.
+
+**Confirmation seasons (2025-26 and 2026-27 to 20 November; 439 stand-in
+rows per stat in 174 games), variant 2, run once.**
+
+| Stat | Stand-in actual / model | Stand-in squared error | Log loss, all players |
+|---|---|---|---|
+| Points | 0.983 -> 1.012 | 31.22 -> 31.36 (worse; t +0.7) | +0.016% |
+| Rebounds | 0.930 -> 0.954 | 6.83 -> 6.76 (better; t -2.0) | -0.024% |
+| Assists | 1.016 -> 1.035 | 3.18 -> 3.19 | +0.004% |
+| Threes | 0.982 -> 0.993 | 1.46 -> 1.46 | +0.030% |
+
+**All five seasons (1,731 stand-in rows per stat):** points 0.935 -> 0.967
+(t -4.7 -> -2.3), rebounds 0.938 -> 0.973 (t -4.1 -> -1.7); stand-in
+squared error for points 33.36 -> 33.13 (t -2.1).
+
+**The bars.**
+
+1. *Bias smaller on the confirmation seasons, points and rebounds:* **pass**
+   (1.7% -> 1.2% and 7.0% -> 4.6%).
+2. *Stand-in squared error lower on the confirmation seasons, both:*
+   **fail.** Rebounds improved; points got slightly worse.
+3. *Five-season stand-in ratio within 0.97 to 1.03, both:* **fail**, just.
+   Rebounds 0.973 is inside; points 0.967 is not.
+4. *No harm on the confirmation seasons:* **fail.** Log loss over the four
+   stats rose from 6.37975 to 6.38021 (+0.007%). No single stat was worse
+   by more than 0.05%. `actual / model` for everyone else was outside
+   0.995 to 1.005 for rebounds (0.991) and threes (0.982), but the
+   production model is outside by the same amount there (0.992 and 0.982),
+   so that part of the bar was failed before the candidate was added.
+
+**Reading it.** The input does what it was built for over five seasons: it
+roughly halves the stand-in bias. But most of the points bias was in the
+design seasons (0.919) and little of it was left in the confirmation
+seasons (0.983, t -0.6), where the candidate did not make points
+predictions for stand-ins more accurate and made the model as a whole very
+slightly worse. Only the rebounds bias (about 7%) held up out of design.
+That is not enough to change the model, and no further variant will be
+tried on this data: three were allowed and three were used.
+
+**Two things worth keeping.** (1) In the confirmation seasons the
+production model runs about 0.8% high on rebounds and 1.8% high on threes
+for everyone, which is a separate question from stand-ins. (2) The
+instance that started this (Cam Spencer, 21 November) is mostly not this
+bias: the offline rerun put most of his 7.4 expected assists down to three
+other absences that night.
+
+**Question 2 (which injury status to believe)** is built as written, for
+the page's model step only (`research/player_pool_model.py`,
+`reconcile`): a player on the league's official injury report for a game
+being priced takes that report's status, and the page lists where that
+overrode the injury feed. The measurement of the official report's own
+accuracy is still to do.
+
+## 2026-11-21: Pick'em app lines: first live pull (follow-up)
+
+The entry "PrizePicks and Underdog lines" said the script had not yet run
+against the live feed. Its first run, at 19:10 UTC on 21 November: 205 lines
+(PrizePicks 147, Underdog 58) for 65 players in five games, every one
+offered on both sides, in the shape the parser expected. PrizePicks posts
+some whole-number lines (4.0 assists, 3.0 threes); no sportsbook quotes
+those exactly, so the page shows them as floors from the neighbouring
+lines.
