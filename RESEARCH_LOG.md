@@ -4607,3 +4607,61 @@ games): midday with and without the price watcher, mid-evening with one
 game still ahead (907 started rows kept, no duplicate rows), 2am Eastern
 (same slate) and 5:30am Eastern (cleared). No simulated or live result is
 involved; this is a display rule, not a research finding.
+
+## 2026-11-21: Player-pool page: a best-plays filter (owner request)
+
+*Research page only: the page template, its generator and their tests. No
+workflow, live rule, limit or order path changes. The page marks rows; it
+places no orders. Not a research finding: the filter repeats rules already
+in force.*
+
+**The request.** A "best plays" filter on the props tab, across Kalshi,
+Polymarket, PrizePicks and Underdog.
+
+**What was added (Kalshi).** "Best plays only" keeps the props that pass
+the NBA bot's entry tests (rules v9), worked out from the prices on the
+page with the bot's own arithmetic (`kalshi.maker.orders`,
+`live/prod_nba_auto.py`):
+
+- the order is a NO bid one cent inside Kalshi's spread (at the NO bid in
+  a 1¢ spread);
+- its edge is the sportsbooks' NO chance, minus that price, minus the
+  maker fee;
+- a best play is priced 65¢ to 95¢ with −3¢ to +8¢ of edge and at least
+  one sportsbook on Kalshi's exact line;
+- a row is "ready" when its sportsbook price is under 60 minutes old and
+  tip-off is 1 to 6 hours away; otherwise it says what it is waiting for.
+
+A new "Resting NO" column shows that price and edge on every row, and why
+a row fails. The numbers are read from the bot's constants when the data
+is built (`best_play_rules`, carried in `meta.best_plays`), so a rule
+change reaches the page without an edit.
+
+**Check.** At 17:28 UTC on 21 November, 320 of 1,035 listed props had a
+two-sided Kalshi quote and a sportsbook price on the exact line. The page
+marks 39 as best plays: the same 39 the bot's own functions pass, with the
+same prices and edges to the thousandth of a cent. Of the rest, 270 are
+not longshots and 11 fail on edge. All 39 rest on a single sportsbook's
+line. With a made-up rule set in the data file, the page's marks, note and
+method text followed it without a page edit.
+
+**What the filter is not.** It is not the bot's order list: the bot also
+prices lines no sportsbook quotes from nearby lines, checks the injury
+report and applies its limits. And the edge shown is before the order
+fills; in the live records filled orders earned less than the stated
+edge (exploratory, see the 20 November model review).
+
+**The other venues (not added).**
+
+- *Polymarket.* The project's own read-only watcher
+  (`live/compare_polymarket_us.py`, every four hours) found no NBA or NFL
+  player-prop market on Polymarket US in any of its 42 scans from 6 to
+  21 November, so there is nothing to show.
+- *PrizePicks and Underdog.* The odds feed lists both (its `us_dfs`
+  group), but the books job does not request them. Adding them is the
+  owner's decision on two counts: it spends more of the feed's monthly
+  credits (about 4 credits a game per refresh for the four main stats, on
+  top of about 8 now), and this page is public, while the project so far
+  publishes only the sportsbooks' de-vigged consensus, never one
+  bookmaker's own lines. Their lines must also never enter the consensus
+  file the live bot prices from.
