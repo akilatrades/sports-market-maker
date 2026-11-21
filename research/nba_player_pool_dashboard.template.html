@@ -157,6 +157,7 @@ td .sub{display:block;line-height:1.3}
       </div>
       <select id="s-game" aria-label="Game"><option value="">All games</option></select>
       <label class="best"><input type="checkbox" id="s-best"> Best plays only</label>
+      <select id="s-edge" aria-label="Smallest edge for a best play"><option value="0">Any edge above 0</option><option value="1" selected>Edge 1¢ or more</option><option value="2">Edge 2¢ or more</option></select>
       <label><input type="checkbox" id="s-play" checked> In play only (Kalshi 10¢ to 90¢, spread up to 10¢)</label>
       <select id="s-book" aria-label="Sportsbook price"><option value="2">Priced by 2+ sportsbooks</option><option value="1">Priced by any sportsbook</option><option value="0">Sportsbook price not needed</option></select>
       <label><input type="checkbox" id="s-upcoming" checked> Hide games that have started</label>
@@ -229,11 +230,12 @@ const KALSHI_STALE_MINUTES = 30;
 const BOOK_OLD_MINUTES = 120;       /* a sportsbook quote this much older than Kalshi's is marked */
 const TIP_MATCH_MINUTES = 90;       /* same teams, same night */
 const DAY_STARTS_HOUR = 5;          /* a night's games stay on the page until 5am Eastern */
-/* "Best plays" repeats the NBA bot's entry tests for a resting NO order. The numbers come with the data
-   (meta.best_plays, read from the bot's own constants in live/prod_nba_auto.py when the data is built), so
-   the page follows a rule change. These are the rules v9 values, used only when the data carries none.
-   The page only marks rows. It places no orders. */
-const BEST_FALLBACK = {rules: "v9", no_min: 0.65, no_max: 0.95, edge_min: -0.03, edge_max: 0.08, tick: 0.01, fee_rate: 0.0175, book_minutes: 60, hours_min: 1, hours_max: 6, min_books: 1};
+/* "Best plays" are props that can be bought outright on Kalshi for less than the sportsbooks' price after
+   Kalshi's fee. Nothing rests and nothing waits to be filled. The numbers come with the data
+   (meta.best_plays): Kalshi's fee rate from the project's fee code, and the bot's own limits for how old a
+   sportsbook price may be and how large an edge is believable. These values are used only when the data
+   carries none. The page only marks rows. It places no orders. */
+const BEST_FALLBACK = {taker_fee_rate: 0.07, edge_max: 0.08, book_minutes: 60};
 let BEST = BEST_FALLBACK;
 const STRIP_REACH = 0.20;
 const MAX_SPREAD = 0.10;            /* wider than this, the middle of bid and ask says little */
@@ -350,9 +352,9 @@ function showPlayers() {
   $("p-shown").textContent = `${rows.length} of ${players.length} players`;
 }
 pState.redraw = showPlayers;
-function readRules() {   /* the bot's entry numbers that came with the data; true when they changed */
+function readRules() {   /* the fee and limits that came with the data; true when they changed */
   const next = {...BEST_FALLBACK};
-  for (const [k, v] of Object.entries(META.best_plays || {})) if (k in next && (k === "rules" ? typeof v === "string" : Number.isFinite(v))) next[k] = v;
+  for (const [k, v] of Object.entries(META.best_plays || {})) if (k in next && Number.isFinite(v)) next[k] = v;
   const changed = JSON.stringify(next) !== JSON.stringify(BEST);
   BEST = next; return changed;
 }
@@ -408,38 +410,35 @@ function price(r) {   /* everything that follows from a row's bid and ask */
   r.bookAge = r.bookSeen && r.kalshiSeen ? (r.kalshiSeen - r.bookSeen) / 60000 : null;
   r.bookOld = r.bookAge !== null && r.bookAge > BOOK_OLD_MINUTES;
   r.gapBook = r.books !== null && r.tight ? 100 * (r.books - r.mid) : null;
-  /* The NO order the bot's rules would rest (one cent inside a 2¢+ spread, else at the NO bid) and its
-     edge in cents: the sportsbooks' NO chance, minus that price, minus Kalshi's maker fee. */
-  r.noPrice = r.noEdge = null; r.best = false;
-  if (r.bid !== null && r.ask !== null && r.ask > r.bid && r.books !== null && r.bookN >= BEST.min_books) {
-    const no = Math.round(100 * (1 - r.ask + (r.ask - r.bid >= 2 * BEST.tick - 1e-9 ? BEST.tick : 0))) / 100;
-    r.noPrice = no; r.noEdge = 100 * ((1 - r.books) - no - BEST.fee_rate * no * (1 - no));
-    r.best = no >= BEST.no_min - 1e-9 && no <= BEST.no_max + 1e-9 && r.noEdge >= 100 * BEST.edge_min - 1e-9 && r.noEdge <= 100 * BEST.edge_max + 1e-9;
+  /* Buying outright: YES at the ask, or NO at its ask (100¢ minus the YES bid), whichever leaves more
+     after Kalshi's fee. Edge in cents: the sportsbooks' chance for that side, minus the price, minus the fee. */
+  r.buySide = r.buyPrice = r.buyEdge = null;
+  if (r.bid !== null && r.ask !== null && r.ask > r.bid && r.books !== null) {
+    const edge = (chance, cost) => 100 * (chance - cost - BEST.taker_fee_rate * cost * (1 - cost));
+    const noAsk = Math.round(100 * (1 - r.bid)) / 100, yes = edge(r.books, r.ask), no = edge(1 - r.books, noAsk);
+    r.buySide = yes >= no ? "YES" : "NO"; r.buyPrice = yes >= no ? r.ask : noAsk; r.buyEdge = Math.max(yes, no);
   }
   return r;
 }
-function waiting(r) {   /* what a row that passes on price still waits for, by the bot's timing tests; "" when ready */
-  const now = Date.now(), hours = r.tip ? (r.tip - now) / 3600000 : null;
-  if (hours !== null && hours <= 0) return "game has started";
-  if (hours !== null && hours < BEST.hours_min) return `under ${BEST.hours_min} h to tip-off`;
-  if (hours !== null && hours > BEST.hours_max) return `opens ${clock(new Date(+r.tip - BEST.hours_max * 3600000))}`;
+const minEdge = () => +$("s-edge").value || 0;   /* the smallest edge, in cents, the reader counts as a play */
+const isPlay = r => r.buyEdge !== null && r.buyEdge > 0 && r.buyEdge >= minEdge() - 1e-9 && r.buyEdge <= 100 * BEST.edge_max + 1e-9;
+function waiting(r) {   /* why a play should not be acted on yet; "" when it is ready */
+  const now = Date.now();
+  if (r.tip && r.tip <= now) return "game has started";
   if (r.kalshiSeen && (now - r.kalshiSeen) / 60000 > KALSHI_STALE_MINUTES) return `Kalshi price ${span((now - r.kalshiSeen) / 60000)} old`;
   if (r.bookSeen && (now - r.bookSeen) / 60000 > BEST.book_minutes) return `books ${span((now - r.bookSeen) / 60000)} old`;
   return "";
 }
-const edgeCents = v => `${v > 0 ? "+" : v < 0 ? "−" : ""}${Math.abs(Math.round(100 * v))}¢`;
-const bestBand = () => `priced ${cents(BEST.no_min)} to ${cents(BEST.no_max)}, with ${edgeCents(BEST.edge_min)} to ${edgeCents(BEST.edge_max)} of edge against the sportsbooks after Kalshi's fee`;
-const bestNote = () => `Best plays repeat the NBA bot's entry tests on Kalshi: a NO order resting one cent inside the spread, ${bestBand()}. A row is ready when its sportsbook price is under ${BEST.book_minutes} minutes old and tip-off is ${BEST.hours_min} to ${BEST.hours_max} hours away; the others say what they are waiting for. This is a screen, not a forecast: live, filled orders have earned less than the edge shown. The page places no orders.`;
+const bestNote = () => `Best plays are props you can buy outright on Kalshi for less than the sportsbooks' price after Kalshi's fee: YES at the ask or NO at its ask, whichever is better. Nothing rests or waits to be filled. A row is ready when its sportsbook price is under ${BEST.book_minutes} minutes old. An edge above ${cents(BEST.edge_max)} is left out, because a gap that large more often means a stale line or news. Not a tested strategy: the project's results are for resting orders, and on last season's saved lines buying at the ask on this signal did not show a profit. The page places no orders.`;
 function playCell(r) {
-  if (r.noPrice === null) return dash;
-  const edge = `${r.noEdge > 0.05 ? "+" : r.noEdge < -0.05 ? "−" : ""}${Math.abs(r.noEdge).toFixed(1)}¢ edge`;
-  if (!r.best) {
-    const why = r.noPrice < BEST.no_min - 1e-9 ? "not a longshot" : r.noPrice > BEST.no_max + 1e-9 ? `past ${cents(BEST.no_max)}` : r.noEdge > 100 * BEST.edge_max ? `${edge}, past the cap` : `${edge}, too low`;
-    return `<span class="faint">${cents(r.noPrice)}</span><span class="sub">${why}</span>`;
-  }
+  if (r.buyEdge === null) return dash;
+  const what = `${r.buySide} ${cents(r.buyPrice)}`;
+  const edge = `${r.buyEdge > 0.05 ? "+" : r.buyEdge < -0.05 ? "−" : ""}${Math.abs(r.buyEdge).toFixed(1)}¢ edge`;
+  if (r.buyEdge > 100 * BEST.edge_max + 1e-9) return `<span class="faint">${what}</span><span class="sub">${edge}</span><span class="sub aged">over ${cents(BEST.edge_max)}: check the news</span>`;
+  if (!isPlay(r)) return `<span class="faint">${what}</span><span class="sub">${edge}</span>`;
   const wait = waiting(r);
-  return wait ? `${cents(r.noPrice)}<span class="sub">${edge}</span><span class="sub aged">${esc(wait)}</span>`
-    : `<span class="play">${cents(r.noPrice)}</span><span class="sub ready">${edge}, ready</span>`;
+  return wait ? `${what}<span class="sub">${edge}</span><span class="sub aged">${esc(wait)}</span>`
+    : `<span class="play">${what}</span><span class="sub ready">${edge}, ready</span>`;
 }
 function applyQuotes() {   /* newer Kalshi quotes, for games that have not started */
   if (!liveQuotes || (slateTime && liveQuotes.time <= slateTime)) return 0;
@@ -554,7 +553,7 @@ const propCols = [
   {key: "strip", label: "Around Kalshi's quote", sort: false, center: true, cell: strip},
   {key: "gapBook", label: "Books − Kalshi", bySize: true, cell: r => aged(r, r.gapBook), edge: true, title: "Sportsbook chance minus the middle of Kalshi's bid and ask, in points. Blank when the bid and ask are more than 10¢ apart. A disagreement, not a profit."},
   {key: "gapModel", label: "Model − books", bySize: true, cell: r => aged(r, r.gapModel), title: "Stat model chance minus sportsbook chance, in points."},
-  {key: "noEdge", label: "Resting NO", cell: playCell, edge: true, title: "The NO order the NBA bot's rules would rest: one cent inside Kalshi's spread. Edge is the sportsbooks' NO chance minus that price and Kalshi's maker fee, in cents. The tests a best play passes are listed under “How these numbers are made”."},
+  {key: "buyEdge", label: "Buy now", cell: playCell, edge: true, title: "The better of two purchases you could make right now: YES at the ask, or NO at its ask (100¢ minus the YES bid). Edge is the sportsbooks' chance for that side, minus the price, minus Kalshi's fee, in cents."},
 ];
 function aged(r, gap) {   /* a gap against an old sportsbook quote partly measures what changed since */
   return r.bookOld && has(gap) ? `<span class="faint" title="Against a sportsbook quote ${span(r.bookAge)} older than Kalshi's price.">${plain(gap)}</span>` : plain(gap);
@@ -565,12 +564,13 @@ const drawProps = makeTable($("t-props"), propCols, null, sState);
 function showProps() {
   const q = $("s-search").value.trim().toLowerCase(), stat = $("s-stat").querySelector('[aria-pressed="true"]').dataset.stat, game = $("s-game").value;
   const play = $("s-play").checked, book = +$("s-book").value, upcoming = $("s-upcoming").checked, now = Date.now();
-  /* Best plays carry their own price and sportsbook tests, so the two filters they replace are set aside. */
+  /* Best plays carry their own price test, so "In play only" is set aside. How many sportsbooks must price the
+     line still applies: last season, plays resting on one sportsbook's line did worse. */
   const best = $("s-best").checked;
-  $("s-play").disabled = $("s-book").disabled = best; $("s-best-note").hidden = !best; $("s-best-note").textContent = bestNote();
+  $("s-play").disabled = best; $("s-best-note").hidden = !best; $("s-best-note").textContent = bestNote();
   const started = slate.filter(r => r.tip && r.tip <= now).length;
   const pick = needBooks => slate.filter(r => (!q || r.player.toLowerCase().includes(q)) && (!stat || r.stat === stat) && (!game || r.game === game)
-    && (best ? r.best : (!play || (r.tight && r.mid >= 0.10 && r.mid <= 0.90)) && (!needBooks || (r.books !== null && r.bookN >= needBooks))) && (!upcoming || !r.tip || r.tip > now));
+    && (best ? isPlay(r) : (!play || (r.tight && r.mid >= 0.10 && r.mid <= 0.90))) && (!needBooks || (r.books !== null && r.bookN >= needBooks)) && (!upcoming || !r.tip || r.tip > now));
   let rows = pick(book);
   /* Early in the day no sportsbook line may sit on any of these Kalshi lines yet:
      show Kalshi's prices alone and say so, sooner than an empty table. */
@@ -578,15 +578,16 @@ function showProps() {
   if (noBooksYet) rows = pick(0);
   drawProps(rows);
   $("t-props").hidden = rows.length === 0; $("s-empty").hidden = rows.length > 0;
-  const anyBest = slate.some(r => r.best && (!upcoming || !r.tip || r.tip > now));
+  const anyBest = slate.some(r => isPlay(r) && (!upcoming || !r.tip || r.tip > now));
+  const thinner = best && book > 0 ? pick(0).length - rows.length : 0;   /* plays the sportsbook-count filter leaves out */
   if (!rows.length) $("s-empty").textContent = best && slate.length ? (!slate.some(r => r.books !== null) ? "No sportsbook line sits on any of these Kalshi lines yet, so no prop can be tested. Sportsbook lines arrive three or four times a day, then every 20 minutes from about six hours before tip-off."
-      : anyBest ? "No best play matches those filters. Try All stats or All games."
-      : `No prop passes the bot's price tests right now: a NO order ${bestBand()}.`)
+      : anyBest ? `No best play matches those filters. Try All stats, All games, a smaller edge${thinner > 0 ? ", or “Priced by any sportsbook”" : ""}.`
+      : `No prop can be bought below the sportsbooks' price ${minEdge() > 0 ? `by ${minEdge()}¢ or more ` : ""}after the fee right now. That is the usual state: Kalshi's prices mostly sit within a cent or two of the sportsbooks'.`)
     : !slate.length ? (slateLive ? "No props are listed for today yet. They appear on game days once the price watcher has read Kalshi's markets." : "The prices saved in this page are for games that have finished. Open the page on the project site for today's.")
     : upcoming && started === slate.length ? "Every game in the latest file has started, and prices here are pre-game only. Untick “Hide games that have started” to see the last pre-game snapshot."
     : book && !slate.some(r => r.books !== null) ? "No sportsbook line sits exactly on one of these Kalshi lines right now. Choose “Sportsbook price not needed” to see the stat model and Kalshi alone."
     : "No prop matches those filters. Try another stat, or untick a filter.";
-  $("s-shown").textContent = `${rows.length.toLocaleString()} of ${slate.length.toLocaleString()} props${best && rows.length ? `, ${rows.filter(r => !waiting(r)).length} ready now` : ""}`;
+  $("s-shown").textContent = `${rows.length.toLocaleString()} of ${slate.length.toLocaleString()} props${best && rows.length ? `, ${rows.filter(r => !waiting(r)).length} ready now` : ""}${thinner > 0 ? `. ${thinner} more on fewer sportsbooks` : ""}`;
   $("count-props").textContent = slate.length ? slate.length.toLocaleString() : "";
   paintTimes(rows);
 }
@@ -775,7 +776,7 @@ function method() {
     <p><strong>Value</strong> is a box-score index: z-scores of the baseline (points ${w.points}, rebounds ${w.rebounds}, assists ${w.assists}, threes ${w.threes}) and of true shooting (${w.ts}), among players projected for ${esc(m.value_minutes)}+ minutes, minus the score of the player ranked ${esc(m.replacement_rank)}th. It is not a plus-minus model and says nothing about defence.</p>
     <p><strong>Tonight's props</strong> are Kalshi's own lines (“25+ points” means 25 or more). Model is the project's stat model for tonight's game, which does use the opponent, the betting line and absences. Books is the sportsbook consensus with the bookmakers' margin removed, shown only where the books quote Kalshi's exact line; a quote more than two hours older than Kalshi's prices is marked with its age. Kalshi is its YES bid and ask when the file was written. No price on this page is simulated.</p>
     <p><strong>How fresh it is.</strong> The page keeps itself current while it is open, and the times at the top show how old each number is. Season numbers are rebuilt when new box scores are published, usually the day after the games. On game days, while the price watcher is running, Kalshi's bid and ask are republished about every three minutes and the stat model is recomputed about every six, with the projections job's own pricing function. The page looks for both every minute. When the watcher is not running they come from the projections file, which changes about five times on a game day. Sportsbook lines change three or four times a day. The stat model reads who is out from an injury feed and, where the league's official injury report lists a player for that game, takes the official status instead (the feed can keep an old “out” on a player who has since been cleared); the bots' own inputs do not use this yet. For a game that has started the page keeps the last pre-game numbers it read. A night's games drop off the page at 5am Eastern the next morning, and “Playing tonight only” on the Players tab then follows the new day's games.</p>
-    <p><strong>Best plays</strong> repeat the NBA bot's entry tests (rules ${esc(BEST.rules)}) with the prices on this page. Resting NO is the order those rules would rest: a NO bid one cent inside Kalshi's spread (at the NO bid when the spread is 1¢). Its edge is the sportsbooks' NO chance, minus that price, minus Kalshi's maker fee. A best play is ${bestBand()}, and has at least ${BEST.min_books === 1 ? "one sportsbook" : `${BEST.min_books} sportsbooks`} on Kalshi's exact line. That price range means a YES longshot. A larger edge is left out because it more often means a stale line or team news than a mispricing. A row is ready when its sportsbook price is under ${BEST.book_minutes} minutes old and tip-off is ${BEST.hours_min} to ${BEST.hours_max} hours away. The bot also prices lines no sportsbook quotes from nearby lines, checks the injury report and holds to its own limits; the page does none of that, so this is not a list of the bot's orders. The edge is before the order fills: in the bot's live records, filled orders earned less than the edge shown.</p>
+    <p><strong>Best plays</strong> are props you could buy outright on Kalshi, right now, for less than the sportsbooks' price. Nothing rests or waits to be filled. “Buy now” shows the better of two purchases: YES at the ask, or NO at its ask (100¢ minus the YES bid). Its edge is the sportsbooks' chance for that side, minus the price, minus Kalshi's fee of ${Math.round(100 * BEST.taker_fee_rate)}¢ × price × (1 − price) a contract; the fee is rounded up to a cent per order, which weighs on a single contract. A best play has at least the edge you pick and no more than ${cents(BEST.edge_max)}, because a larger gap more often means a stale line or team news than a mispricing. It is ready when its sportsbook price is under ${BEST.book_minutes} minutes old. This is not what the project's bot does and it has not been tested live. On last season's saved sportsbook lines (150 games; exploratory, simulated at the quoted ask), buying on this signal with 1¢ or more of stated edge returned about −2¢ a contract over 215 trades, and did worse the larger the stated edge. Lines priced by two or more sportsbooks did better, but on only 50 trades, which is too few to tell.</p>
     <p><strong>Pick'em apps</strong> lists the standard lines PrizePicks and Underdog post for tonight (their changed-payout lines are left out), read about four times a day. Beside each is the sportsbooks' chance of going over or staying under that same line, with the bookmakers' margin removed. Where no sportsbook quotes the app's exact line, the nearest quoted line beyond it gives a floor, shown as “at least”: going over 24.5 is at least as likely as going over 25.5. A best play is a side at or above the chance you pick. What you need depends on the entry: when every pick must win, the break-even chance per pick is (1 ÷ payout) to the power (1 ÷ picks), which is 57.7% for two picks paying 3× and 55.0% for three paying 6×. Payouts differ by app, state and entry, so check yours. The project has not tested pick'em entries, the app's line may have moved since it was read, and Polymarket lists no NBA player props for this page to compare.</p>
     <p><strong>A gap is a disagreement, not a profit.</strong> It ignores the bid-ask spread, fees and whether an order would ever fill. In this project's own records the sportsbooks have been a better guide than the stat model.</p>`;
 }
@@ -790,8 +791,9 @@ function start() {
   });
   $("s-best").addEventListener("input", () => {
     const on = $("s-best").checked;
-    sState.key = on ? "noEdge" : "gapBook"; sState.dir = on ? "desc" : "size"; showProps();
+    sState.key = on ? "buyEdge" : "gapBook"; sState.dir = on ? "desc" : "size"; showProps();
   });
+  $("s-edge").addEventListener("input", showProps);
   $("s-refresh").addEventListener("click", refreshPrices);
   for (const id of ["a-search", "a-app", "a-game", "a-best", "a-bar", "a-upcoming"]) $(id).addEventListener("input", showApps);
   $("a-stat").addEventListener("click", e => {

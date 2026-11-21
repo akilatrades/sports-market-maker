@@ -280,26 +280,22 @@ def test_the_pool_is_tonights_slate_and_earlier_nights_drop_off():
     assert "slateDay(r.tip) === today) tonight.set(r.id, r.mean)" in template
 
 
-def test_best_plays_take_their_numbers_from_the_nba_bot():
-    """The "Best plays" filter repeats the bot's entry tests. The numbers
-    travel with the data, so a rule change reaches the page without an edit."""
-    from kalshi.maker import maker_fee
-    from kalshi.paper_props import FEE_SHARE
+def test_best_plays_are_outright_purchases_with_the_projects_own_fee():
+    """The owner trades this page by hand: a best play is bought at the ask,
+    never rested. The fee and the two sanity limits travel with the data."""
+    from kalshi.api import FEE_RATE, fee_per_contract
     from live import prod_nba_auto as bot
 
     rules = D.best_play_rules()
-    band = (round(rules["no_min"] * 100), round(rules["no_max"] * 100))
-    assert band == tuple(bot.PRICE_BAND_CENTS)
-    assert rules["edge_min"] == bot.ENTRY_MIN_NET_EDGE
-    assert rules["edge_max"] == bot.MAX_ENTRY_NET_EDGE
-    assert rules["book_minutes"] == bot.BOOK_MAX_AGE_MINUTES
-    assert (rules["hours_min"], rules["hours_max"]) == tuple(bot.WINDOW)
-    assert rules["min_books"] == bot.MIN_BOOKS
-    assert rules["rules"] in bot.STRATEGY_VERSION
-    # fee_rate x price x (1 - price) is the bot's maker fee at any price.
-    for price in (0.65, 0.8, 0.95):
-        fee = float(maker_fee(price, FEE_SHARE))
-        assert rules["fee_rate"] * price * (1 - price) == pytest.approx(fee)
+    assert rules == {
+        "taker_fee_rate": FEE_RATE,
+        "edge_max": bot.MAX_ENTRY_NET_EDGE,
+        "book_minutes": bot.BOOK_MAX_AGE_MINUTES,
+    }
+    # taker_fee_rate x price x (1 - price) is Kalshi's fee at any price.
+    for price in (0.29, 0.5, 0.69):
+        fee = float(fee_per_contract(price))
+        assert rules["taker_fee_rate"] * price * (1 - price) == pytest.approx(fee)
 
     # They ride in the payload and in the data file an open page reloads.
     payload = D.build_payload(box_scores(), projections(), books())
@@ -312,7 +308,15 @@ def test_best_plays_take_their_numbers_from_the_nba_bot():
     names = {pair.split(":")[0].strip() for pair in fallback.split(",")}
     assert names == set(rules)
     assert "META.best_plays" in template
-    assert 'id="s-best"' in template
+    assert 'id="s-best"' in template and 'id="s-edge"' in template
+    # Both purchases are priced at what a buyer pays: the YES ask, and 100
+    # cents minus the YES bid for NO. Nothing about resting an order is left.
+    assert "edge(r.books, r.ask)" in template
+    assert "edge(1 - r.books, noAsk)" in template and "1 - r.bid" in template
+    for resting in ("Resting NO", "inside the spread", "maker fee", "noEdge"):
+        assert resting not in template, resting
+    # It says plainly that buying at the ask is untested here.
+    assert "has not been tested live" in template
 
 
 def test_the_page_sets_pickem_app_lines_beside_the_sportsbooks():

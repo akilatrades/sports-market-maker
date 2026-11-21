@@ -4922,3 +4922,67 @@ offered on both sides, in the shape the parser expected. PrizePicks posts
 some whole-number lines (4.0 assists, 3.0 threes); no sportsbook quotes
 those exactly, so the page shows them as floors from the neighbouring
 lines.
+
+## 2026-11-21: Player-pool page: best plays are bought, not rested (owner decision)
+
+*Page, its generator and tests only. No workflow, live rule, limit or order
+path changes. The bot still rests its own orders; this is about what the
+page marks for someone trading by hand. Exploratory: no result is claimed.*
+
+**The decision.** The owner trades this page by hand and does not want to
+rest orders. So the page's "Best plays" no longer repeat the bot's
+resting-NO tests.
+
+**Old and new.**
+
+- *Old:* a NO bid one cent inside Kalshi's spread, priced 65c to 95c, with
+  -3c to +8c of edge against the sportsbooks after the maker fee, 1 to 6
+  hours before tip-off ("Resting NO" column).
+- *New:* an outright purchase, YES at the ask or NO at its ask (100c minus
+  the YES bid), whichever leaves more: the sportsbooks' chance for that
+  side, minus the price, minus Kalshi's fee of 0.07 x price x (1 - price)
+  ("Buy now" column). A best play has at least the edge the reader picks
+  (any above 0, 1c or 2c; 1c by default) and no more than 8c, and is
+  "ready" when its sportsbook price is under 60 minutes old. The page's
+  filter for how many sportsbooks price the line still applies (two or
+  more by default). The fee rate is `kalshi.api.FEE_RATE`; the 8c and the
+  60 minutes are the bot's own limits, read from its constants.
+
+**What history says about buying on this signal (exploratory; simulated at
+the quoted ask; 2025-26, the in-sample season).** On the 150 sampled games
+with saved sportsbook lines (`outputs/bookline/book_lines.csv.gz` joined
+to every market in `outputs/decompose/orders_no.csv.gz`): 4,608 markets
+with a two-sided quote and a sportsbook price about five hours before
+tip-off. Game-clustered t. 15 cuts were looked at.
+
+| Rule | Trades | Stated edge | Realised, per contract |
+|---|---|---|---|
+| Buy the better side of every market | 4,608 | -2.3c | -2.9c (t -4.1) |
+| Edge above 0, any sportsbook | 512 | +1.1c | -0.6c (t -0.3) |
+| Edge 1c+, any sportsbook | 215 | +2.1c | -2.1c (t -0.8) |
+| Edge 2c+, any sportsbook | 89 | +3.1c | -6.7c (t -1.4) |
+| Edge 3c+, any sportsbook | 36 | +4.1c | -13.7c (t -2.2) |
+| Edge above 0, two or more sportsbooks | 157 | +0.9c | +0.7c (t +0.2) |
+| Edge 1c+, two or more sportsbooks | 50 | +1.9c | +6.0c (t +1.0) |
+
+At 1c+ the YES side returned -5.4c (132 trades, t -1.6) and the NO side
++3.1c (83, t +0.6). So: buying blindly loses the spread and the fee;
+buying where the sportsbooks' price beats the ask has not shown a profit;
+and on one sportsbook's line a larger stated edge did worse, which is what
+a stale or mistaken line looks like. Lines priced by two or more
+sportsbooks look better, on far too few trades to tell. Spreads then were
+wider (median 4c) than now (1c), so this is a guide, not a measurement of
+today's market. The page says all of this beside the filter.
+
+**Today, for scale.** At 19:37 UTC on 21 November, 252 props in games
+still ahead had a two-sided quote and a sportsbook price. The better side's
+edge after the fee averaged -1.1c. 42 were above 0, 15 at 1c or more, and
+5 of those were priced by two or more sportsbooks. The page's numbers match
+the project's fee function on all 252 (largest difference 0.000c).
+
+**Still to do, written down now.** A forward check of the default filter
+(edge 1c+, two or more sportsbooks, ready): record each such play the
+first time it appears on a day and settle it at the price shown. It passes
+if, on at least 300 plays, the mean result per contract after the fee is
+above 0 with a game-clustered t of at least 2. Until then the filter is a
+screen, not a strategy.

@@ -39,7 +39,6 @@ re-reads three small public files and prefers them to the copy built in:
 
 import argparse
 import json
-import re
 from pathlib import Path
 
 import numpy as np
@@ -337,31 +336,23 @@ def _clean(value):
 
 
 def best_play_rules():
-    """The NBA bot's entry tests, for the page's "Best plays" filter.
+    """The numbers behind the page's "Best plays" filter.
 
-    Read from the bot's own constants, so the page follows a rule change
-    without an edit. The page only marks rows with them; nothing here or on
-    the page places an order.
+    A best play is a prop that can be bought outright on Kalshi for less than
+    the sportsbooks' price after Kalshi's fee. The fee rate is the project's
+    own (kalshi.api.FEE_RATE). The two limits are the NBA bot's, read from
+    its constants so the page follows a change: how old a sportsbook price
+    may be, and the largest edge it believes. The page only marks rows with
+    them; nothing here or on the page places an order.
     """
-    from kalshi.maker import TICK, maker_fee
-    from kalshi.paper_props import FEE_SHARE
+    from kalshi.api import FEE_RATE
     from live import prod_nba_auto as bot
 
-    version = re.search(r"v\d+", bot.STRATEGY_VERSION)
-    low, high = bot.PRICE_BAND_CENTS
     return {
-        "rules": version.group(0) if version else bot.STRATEGY_VERSION,
-        "no_min": low / 100,  # the NO price, in dollars
-        "no_max": high / 100,
-        "edge_min": bot.ENTRY_MIN_NET_EDGE,  # after the maker fee
+        # The fee is taker_fee_rate x price x (1 - price), per contract.
+        "taker_fee_rate": FEE_RATE,
         "edge_max": bot.MAX_ENTRY_NET_EDGE,
-        "tick": TICK,
-        # The maker fee is fee_rate x price x (1 - price), per contract.
-        "fee_rate": round(float(maker_fee(0.5, FEE_SHARE)) / 0.25, 6),
         "book_minutes": bot.BOOK_MAX_AGE_MINUTES,
-        "hours_min": bot.WINDOW[0],
-        "hours_max": bot.WINDOW[1],
-        "min_books": bot.MIN_BOOKS,
     }
 
 
