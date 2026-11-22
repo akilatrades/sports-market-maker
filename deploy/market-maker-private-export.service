@@ -16,11 +16,16 @@ Environment=PYTHONDONTWRITEBYTECODE=1
 ExecStart=/home/trader/sports-market-maker-prod-auto/.venv/bin/python -m tools.export_private_fills --push
 # Never compete with the trading bots on the small server: capped memory,
 # first to be killed if memory runs out, lowest CPU and disk priority.
+# The export holds every order while it runs: about 35 MB plus 3.6 KB per
+# spread-maker order (338 MB at 85,138 orders, measured offline 2026-11-22).
+# It is slowed above MemoryHigh (about 170,000 orders) and killed at MemoryMax
+# (about 205,000). Until 2026-11-22 these were 160M and 192M, which the spread
+# maker's journal outgrew (deploy/PRIVATE_FILL_EXPORT.md, "Memory").
 Nice=15
 CPUWeight=10
 IOSchedulingClass=idle
-MemoryHigh=160M
-MemoryMax=192M
+MemoryHigh=640M
+MemoryMax=768M
 OOMScoreAdjust=1000
 TimeoutStartSec=180
 NoNewPrivileges=true

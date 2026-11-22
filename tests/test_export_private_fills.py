@@ -480,7 +480,8 @@ def test_service_is_isolated_from_trading_and_kalshi():
         "User=trader",
         "ProtectHome=read-only",
         "EnvironmentFile=/etc/market-maker-private-export.env",
-        "MemoryMax=192M",
+        "MemoryHigh=640M",
+        "MemoryMax=768M",
         "OOMScoreAdjust=1000",
         "IOSchedulingClass=idle",
     ):
@@ -495,6 +496,89 @@ def test_service_is_isolated_from_trading_and_kalshi():
         "prod-nba-auto.service",
     ):
         assert funded not in setup
+
+
+# Memory the export may hold for one more spread order, as traced by Python
+# in the test below (3.1 KB in November 2026). The service's limits rest on it.
+SPREAD_ORDER_KB_CEILING = 4.0
+
+
+def _limit_mb(unit, name):
+    return int(re.search(rf"^{name}=(\d+)M$", unit, re.M).group(1))
+
+
+def test_the_memory_limits_cover_the_spread_journal_and_match_the_guide():
+    """160 MB and 192 MB until 2026-11-22. The spread maker's journal outgrew
+    them (338 MB needed at 85,138 orders) and the hourly export stopped."""
+    unit = (ROOT / "deploy/market-maker-private-export.service").read_text()
+    high, cap = _limit_mb(unit, "MemoryHigh"), _limit_mb(unit, "MemoryMax")
+    assert (high, cap) == (640, 768)
+
+    def needed_mb(spread_orders, per_order_kb=3.6):  # measured: 35 MB + 3.6 KB
+        return 35 + per_order_kb * spread_orders / 1024
+
+    # Room for the journal as it stands. Up to the guide's warning point the
+    # export stays below the level where systemd starts to slow it down, even
+    # at the most memory per order the next test allows.
+    assert needed_mb(85_138) < high / 1.5
+    assert needed_mb(150_000, SPREAD_ORDER_KB_CEILING) < high < cap
+    guide = (ROOT / "deploy/PRIVATE_FILL_EXPORT.md").read_text()
+    for said in (
+        f"capped at {cap} MB",
+        f"MemoryHigh={high}M",
+        f"MemoryMax={cap}M",
+        "before it passes about 150,000",
+    ):
+        assert said in guide
+
+
+def test_memory_for_each_spread_order_stays_inside_the_guides_figure(tmp_path):
+    """The limits are sized from memory per order. A change that makes the
+    export hold much more for each order would make them wrong unnoticed."""
+    import tracemalloc
+
+    def peak_bytes(orders):
+        events = []
+        for i in range(orders):
+            key = f"{i:06d}"
+            utc = f"2026-11-{1 + i % 20:02d}T{i % 24:02d}:{i % 60:02d}:00+00:00"
+            events += _spread_order(key, "no" if i % 3 else "yes", 40 + i % 20, utc)
+            events += [
+                {
+                    "event": "cancel_intent",
+                    "utc": utc,
+                    "order_id": f"exchange-spread-{key}",
+                    "ticker": SPREAD_TICKER,
+                    "reason": "requote",
+                },
+                {
+                    "event": "cancel_accepted",
+                    "utc": utc,
+                    "order_id": f"exchange-spread-{key}",
+                    "reduced_by": "5.00",
+                    "expected": 5.0,
+                },
+            ]
+        journal = write(tmp_path / f"spread_{orders}.jsonl", events)
+        del events
+        missing = tmp_path / "missing.jsonl"
+        tracemalloc.start()
+        try:
+            files, summary, _ = export.build_files(
+                {"nba": missing, "nfl": missing, "spread": journal}, shadow=missing
+            )
+            peak = tracemalloc.get_traced_memory()[1]
+        finally:
+            tracemalloc.stop()
+        assert summary["markets"]["spread"]["orders"] == orders
+        return peak
+
+    peak_bytes(50)  # the first run also pays for imports
+    # Two sizes, so the fixed cost of a run cancels out.
+    per_order_kb = (peak_bytes(4_000) - peak_bytes(1_000)) / 3_000 / 1024
+    # 3.1 KB here. The guide's 3.6 KB is the whole process, measured on a
+    # journal shaped like the live one.
+    assert 1.0 < per_order_kb < SPREAD_ORDER_KB_CEILING
 
 
 def test_a_journal_that_went_backwards_pushes_nothing(tmp_path):
