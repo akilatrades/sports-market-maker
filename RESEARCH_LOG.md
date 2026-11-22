@@ -4982,3 +4982,62 @@ lines.
 **Left as it is.** The price watcher still publishes Kalshi's quotes file
 beside the model file; the page ignores it. Its quote step also decides
 when the watcher stops for the night, so it is not removed here.
+
+## 2026-11-22: Private export stopped; its memory limit raised (owner request)
+
+Operations, not research. No trading rule, order or risk limit changes.
+
+**What was seen (live order and export counts; no P&L).** The hourly export
+to the private repository thinned out and then stopped: 24 exports a day
+until 15 November, then 19, 10, 4, 1 and 1 on 16 to 20 November, and none
+since 06:54 UTC on 20 November. The last one held 85,138 spread-maker
+orders (NBA 2,025, NFL 15). The nightly report has read "no orders" since,
+which reflects the missing export, not the bots: they were trading after
+the last Go live / Stop run (20:07 UTC on 19 November), and that workflow
+has not run since.
+
+**Measured (offline, not on the server).** The export reads each journal
+from the start and holds every order while it builds the files. A spread
+journal of the same size and shape, rebuilt from the exported order rows
+with made-up ids, was run through `tools.export_private_fills --out`
+(Python 3.13, no push, no shadow or measurement files):
+
+| Spread orders | Peak memory | Build time |
+|---:|---:|---:|
+| 85,138 | 338 MB | 5 s |
+| 170,276 | 640 MB | 11 s |
+| 255,414 | 944 MB | 15 s |
+
+That is about 35 MB plus 3.6 KB an order. About two thirds is the journal
+events held for the ledger and a quarter the order rows. The guide's earlier
+estimate (5 KB an order, "raise the limit before 25,000 spread orders") was
+on the cautious side; the warning point was passed unnoticed.
+
+**Change** (`deploy/market-maker-private-export.service`):
+
+| Setting | Old | New |
+|---|---:|---:|
+| `MemoryHigh` (the export is slowed above this) | 160M | 640M |
+| `MemoryMax` (the export is killed at this) | 192M | 768M |
+
+Why these: 338 MB is needed now, so 640 MB leaves the export unthrottled up
+to about 170,000 spread orders and 768 MB stops it at about 205,000. The
+server already runs a job capped at 1.3 GB (the NBA model inputs). Nothing
+else in the unit changes: the export is still the first process killed if
+the server runs short, at the lowest CPU and disk priority, with read-only
+access to the journals and no Kalshi credentials. It takes effect when the
+owner runs `deploy/setup_private_export.sh` again on the server.
+
+**Not confirmed.** The server's own log line for the failed exports was not
+seen. A need of 338 MB against a 192 MB cap explains the pattern (slower and
+slower, then never finishing inside its 3 minutes); the first export after
+the change will show whether it was the only cause.
+
+**Not fixed.** Memory still grows with history: 3,400 to 4,800 spread orders
+a day (live, 3 to 20 November) is 12 to 17 MB a day, so from 20 November the
+export is slowed in about two and a half to three and a half weeks and
+stopped in three and a half to five. The lasting fix is an export
+that holds less for each order. Until then the guide says to act before the
+spread count passes about 150,000, and two tests keep the limits, the guide
+and the measured memory per order in step
+(`tests/test_export_private_fills.py`).
