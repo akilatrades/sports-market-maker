@@ -1,0 +1,1680 @@
+{
+ "note": "finished",
+ "credits_spent": 720,
+ "credits_remaining": 73467,
+ "first_month_priced": {
+  "nfl": {
+   "novig": "2024-12",
+   "prophetx": "2024-12",
+   "kalshi": "2025-12",
+   "polymarket_us": "2026-11"
+  },
+  "cfb": {
+   "novig": "2024-12",
+   "prophetx": "2024-12",
+   "kalshi": "2026-09",
+   "polymarket_us": null
+  },
+  "nba": {
+   "novig": "2024-12",
+   "prophetx": "2024-12",
+   "kalshi": "2025-12",
+   "polymarket_us": "2026-11"
+  },
+  "ncaamb": {
+   "novig": "2024-12",
+   "prophetx": "2025-11",
+   "kalshi": "2026-02",
+   "polymarket_us": null
+  },
+  "ncaawb": {
+   "novig": "2026-11",
+   "prophetx": null,
+   "kalshi": "2026-01",
+   "polymarket_us": null
+  },
+  "mlb": {
+   "novig": "2025-04",
+   "prophetx": "2025-04",
+   "kalshi": "2026-04",
+   "polymarket_us": null
+  }
+ },
+ "snapshots": [
+  {
+   "sport": "nfl",
+   "asked_utc": "2024-09-14T15:00+00:00",
+   "snapshot_utc": "2024-09-14T14:55+00:00",
+   "games_ahead": 16,
+   "bookmakers": {}
+  },
+  {
+   "sport": "nfl",
+   "asked_utc": "2024-10-12T15:00+00:00",
+   "snapshot_utc": "2024-10-12T14:55+00:00",
+   "games_ahead": 14,
+   "bookmakers": {}
+  },
+  {
+   "sport": "nfl",
+   "asked_utc": "2024-11-09T15:00+00:00",
+   "snapshot_utc": "2024-11-09T14:55+00:00",
+   "games_ahead": 14,
+   "bookmakers": {}
+  },
+  {
+   "sport": "nfl",
+   "asked_utc": "2024-12-14T15:00+00:00",
+   "snapshot_utc": "2024-12-14T14:55+00:00",
+   "games_ahead": 16,
+   "bookmakers": {
+    "novig": {
+     "games": 16,
+     "updated_in_last_hour": 16,
+     "median_width_pct": 2.4078,
+     "median_age_minutes": 0.9167
+    },
+    "prophetx": {
+     "games": 13,
+     "updated_in_last_hour": 13,
+     "median_width_pct": 0.8715,
+     "median_age_minutes": 0.9167
+    }
+   }
+  },
+  {
+   "sport": "nfl",
+   "asked_utc": "2025-01-11T15:00+00:00",
+   "snapshot_utc": "2025-01-11T14:55+00:00",
+   "games_ahead": 6,
+   "bookmakers": {
+    "novig": {
+     "games": 6,
+     "updated_in_last_hour": 6,
+     "median_width_pct": 1.6922,
+     "median_age_minutes": 0.5833
+    },
+    "prophetx": {
+     "games": 6,
+     "updated_in_last_hour": 6,
+     "median_width_pct": 0.6044,
+     "median_age_minutes": 0.5833
+    }
+   }
+  },
+  {
+   "sport": "nfl",
+   "asked_utc": "2025-09-13T15:00+00:00",
+   "snapshot_utc": "2025-09-13T14:55+00:00",
+   "games_ahead": 16,
+   "bookmakers": {
+    "novig": {
+     "games": 16,
+     "updated_in_last_hour": 16,
+     "median_width_pct": 0.9954,
+     "median_age_minutes": 0.2833
+    },
+    "prophetx": {
+     "games": 16,
+     "updated_in_last_hour": 16,
+     "median_width_pct": 1.2192,
+     "median_age_minutes": 0.2833
+    }
+   }
+  },
+  {
+   "sport": "nfl",
+   "asked_utc": "2025-10-11T15:00+00:00",
+   "snapshot_utc": "2025-10-11T14:55+00:00",
+   "games_ahead": 15,
+   "bookmakers": {
+    "novig": {
+     "games": 15,
+     "updated_in_last_hour": 15,
+     "median_width_pct": 0.9091,
+     "median_age_minutes": 0.1833
+    },
+    "prophetx": {
+     "games": 15,
+     "updated_in_last_hour": 15,
+     "median_width_pct": 0.8673,
+     "median_age_minutes": 0.4333
+    }
+   }
+  },
+  {
+   "sport": "nfl",
+   "asked_utc": "2025-11-08T15:00+00:00",
+   "snapshot_utc": "2025-11-08T14:55+00:00",
+   "games_ahead": 14,
+   "bookmakers": {
+    "novig": {
+     "games": 14,
+     "updated_in_last_hour": 14,
+     "median_width_pct": 0.5337,
+     "median_age_minutes": 0.2833
+    },
+    "prophetx": {
+     "games": 13,
+     "updated_in_last_hour": 13,
+     "median_width_pct": 0.6944,
+     "median_age_minutes": 0.5167
+    }
+   }
+  },
+  {
+   "sport": "nfl",
+   "asked_utc": "2025-12-13T15:00+00:00",
+   "snapshot_utc": "2025-12-13T14:55+00:00",
+   "games_ahead": 16,
+   "bookmakers": {
+    "kalshi": {
+     "games": 15,
+     "updated_in_last_hour": 15,
+     "median_width_pct": 1.3008,
+     "median_age_minutes": 0.0333
+    },
+    "novig": {
+     "games": 16,
+     "updated_in_last_hour": 16,
+     "median_width_pct": 0.6729,
+     "median_age_minutes": 0.2167
+    },
+    "prophetx": {
+     "games": 16,
+     "updated_in_last_hour": 16,
+     "median_width_pct": 0.4552,
+     "median_age_minutes": 0.4667
+    }
+   }
+  },
+  {
+   "sport": "nfl",
+   "asked_utc": "2026-01-10T15:00+00:00",
+   "snapshot_utc": "2026-01-10T14:55+00:00",
+   "games_ahead": 6,
+   "bookmakers": {
+    "betopenly": {
+     "games": 6,
+     "updated_in_last_hour": 6,
+     "median_width_pct": 1.2286,
+     "median_age_minutes": 1.0833
+    },
+    "kalshi": {
+     "games": 5,
+     "updated_in_last_hour": 5,
+     "median_width_pct": 1.1029,
+     "median_age_minutes": 0.65
+    },
+    "novig": {
+     "games": 6,
+     "updated_in_last_hour": 6,
+     "median_width_pct": 0.3622,
+     "median_age_minutes": 0.0667
+    },
+    "polymarket": {
+     "games": 6,
+     "updated_in_last_hour": 6,
+     "median_width_pct": 0.9671,
+     "median_age_minutes": 0.4667
+    },
+    "prophetx": {
+     "games": 6,
+     "updated_in_last_hour": 6,
+     "median_width_pct": 0.637,
+     "median_age_minutes": 0.4667
+    }
+   }
+  },
+  {
+   "sport": "nfl",
+   "asked_utc": "2026-09-12T15:00+00:00",
+   "snapshot_utc": "2026-09-12T14:55+00:00",
+   "games_ahead": 15,
+   "bookmakers": {
+    "betopenly": {
+     "games": 13,
+     "updated_in_last_hour": 13,
+     "median_width_pct": 0.0994,
+     "median_age_minutes": 0.4833
+    },
+    "kalshi": {
+     "games": 14,
+     "updated_in_last_hour": 14,
+     "median_width_pct": 0.9756,
+     "median_age_minutes": 0.0167
+    },
+    "novig": {
+     "games": 2,
+     "updated_in_last_hour": 2,
+     "median_width_pct": 2.0643,
+     "median_age_minutes": 4.4333
+    },
+    "polymarket": {
+     "games": 15,
+     "updated_in_last_hour": 15,
+     "median_width_pct": 0.987,
+     "median_age_minutes": 1.4
+    },
+    "prophetx": {
+     "games": 14,
+     "updated_in_last_hour": 14,
+     "median_width_pct": 0.8697,
+     "median_age_minutes": 0.0167
+    }
+   }
+  },
+  {
+   "sport": "nfl",
+   "asked_utc": "2026-10-10T15:00+00:00",
+   "snapshot_utc": "2026-10-10T14:55+00:00",
+   "games_ahead": 15,
+   "bookmakers": {
+    "betopenly": {
+     "games": 15,
+     "updated_in_last_hour": 15,
+     "median_width_pct": 0.0799,
+     "median_age_minutes": 0.05
+    },
+    "kalshi": {
+     "games": 14,
+     "updated_in_last_hour": 14,
+     "median_width_pct": 0.9159,
+     "median_age_minutes": 0.3667
+    },
+    "limitless": {
+     "games": 15,
+     "updated_in_last_hour": 15,
+     "median_width_pct": 4.0446,
+     "median_age_minutes": 0.0167
+    },
+    "novig": {
+     "games": 15,
+     "updated_in_last_hour": 15,
+     "median_width_pct": 0.4122,
+     "median_age_minutes": 0.7333
+    },
+    "polymarket": {
+     "games": 15,
+     "updated_in_last_hour": 15,
+     "median_width_pct": 1.1396,
+     "median_age_minutes": 0.6833
+    },
+    "prophetx": {
+     "games": 14,
+     "updated_in_last_hour": 14,
+     "median_width_pct": 0.7294,
+     "median_age_minutes": 0.35
+    }
+   }
+  },
+  {
+   "sport": "nfl",
+   "asked_utc": "2026-11-14T15:00+00:00",
+   "snapshot_utc": "2026-11-14T14:55+00:00",
+   "games_ahead": 14,
+   "bookmakers": {
+    "betopenly": {
+     "games": 13,
+     "updated_in_last_hour": 13,
+     "median_width_pct": 0.6046,
+     "median_age_minutes": 0.85
+    },
+    "kalshi": {
+     "games": 13,
+     "updated_in_last_hour": 13,
+     "median_width_pct": 1.0305,
+     "median_age_minutes": 0.4667
+    },
+    "limitless": {
+     "games": 12,
+     "updated_in_last_hour": 12,
+     "median_width_pct": 3.3667,
+     "median_age_minutes": 0.5
+    },
+    "novig": {
+     "games": 14,
+     "updated_in_last_hour": 14,
+     "median_width_pct": 0.529,
+     "median_age_minutes": 0.3667
+    },
+    "polymarket": {
+     "games": 14,
+     "updated_in_last_hour": 14,
+     "median_width_pct": 1.0126,
+     "median_age_minutes": 0.3833
+    },
+    "polymarket_us": {
+     "games": 13,
+     "updated_in_last_hour": 13,
+     "median_width_pct": 0.3463,
+     "median_age_minutes": 0.25
+    },
+    "prophetx": {
+     "games": 14,
+     "updated_in_last_hour": 14,
+     "median_width_pct": 1.1812,
+     "median_age_minutes": 0.3333
+    }
+   }
+  },
+  {
+   "sport": "cfb",
+   "asked_utc": "2024-09-14T15:00+00:00",
+   "snapshot_utc": "2024-09-14T14:55+00:00",
+   "games_ahead": 60,
+   "bookmakers": {}
+  },
+  {
+   "sport": "cfb",
+   "asked_utc": "2024-10-12T15:00+00:00",
+   "snapshot_utc": "2024-10-12T14:55+00:00",
+   "games_ahead": 51,
+   "bookmakers": {}
+  },
+  {
+   "sport": "cfb",
+   "asked_utc": "2024-11-09T15:00+00:00",
+   "snapshot_utc": "2024-11-09T14:55+00:00",
+   "games_ahead": 48,
+   "bookmakers": {}
+  },
+  {
+   "sport": "cfb",
+   "asked_utc": "2024-12-14T15:00+00:00",
+   "snapshot_utc": "2024-12-14T14:55+00:00",
+   "games_ahead": 9,
+   "bookmakers": {
+    "novig": {
+     "games": 6,
+     "updated_in_last_hour": 6,
+     "median_width_pct": 4.7886,
+     "median_age_minutes": 0.45
+    },
+    "prophetx": {
+     "games": 9,
+     "updated_in_last_hour": 9,
+     "median_width_pct": 3.3629,
+     "median_age_minutes": 0.4333
+    }
+   }
+  },
+  {
+   "sport": "cfb",
+   "asked_utc": "2025-09-13T15:00+00:00",
+   "snapshot_utc": "2025-09-13T14:55+00:00",
+   "games_ahead": 65,
+   "bookmakers": {
+    "novig": {
+     "games": 48,
+     "updated_in_last_hour": 48,
+     "median_width_pct": 2.0024,
+     "median_age_minutes": 1.3667
+    },
+    "prophetx": {
+     "games": 46,
+     "updated_in_last_hour": 46,
+     "median_width_pct": 1.6923,
+     "median_age_minutes": 0.25
+    }
+   }
+  },
+  {
+   "sport": "cfb",
+   "asked_utc": "2025-10-11T15:00+00:00",
+   "snapshot_utc": "2025-10-11T14:55+00:00",
+   "games_ahead": 55,
+   "bookmakers": {
+    "novig": {
+     "games": 47,
+     "updated_in_last_hour": 47,
+     "median_width_pct": 0.745,
+     "median_age_minutes": 0.65
+    },
+    "prophetx": {
+     "games": 47,
+     "updated_in_last_hour": 47,
+     "median_width_pct": 1.1801,
+     "median_age_minutes": 0.0833
+    }
+   }
+  },
+  {
+   "sport": "cfb",
+   "asked_utc": "2025-11-08T15:00+00:00",
+   "snapshot_utc": "2025-11-08T14:55+00:00",
+   "games_ahead": 49,
+   "bookmakers": {
+    "novig": {
+     "games": 42,
+     "updated_in_last_hour": 42,
+     "median_width_pct": 1.0899,
+     "median_age_minutes": 1.0833
+    },
+    "prophetx": {
+     "games": 41,
+     "updated_in_last_hour": 41,
+     "median_width_pct": 1.0024,
+     "median_age_minutes": 0.3333
+    }
+   }
+  },
+  {
+   "sport": "cfb",
+   "asked_utc": "2025-12-13T15:00+00:00",
+   "snapshot_utc": "2025-12-13T14:55+00:00",
+   "games_ahead": 9,
+   "bookmakers": {
+    "novig": {
+     "games": 9,
+     "updated_in_last_hour": 9,
+     "median_width_pct": 3.4341,
+     "median_age_minutes": 0.25
+    },
+    "prophetx": {
+     "games": 8,
+     "updated_in_last_hour": 8,
+     "median_width_pct": 1.6891,
+     "median_age_minutes": 0.05
+    }
+   }
+  },
+  {
+   "sport": "cfb",
+   "asked_utc": "2026-09-12T15:00+00:00",
+   "snapshot_utc": "2026-09-12T14:55+00:00",
+   "games_ahead": 83,
+   "bookmakers": {
+    "betopenly": {
+     "games": 17,
+     "updated_in_last_hour": 17,
+     "median_width_pct": 0.0,
+     "median_age_minutes": 0.95
+    },
+    "kalshi": {
+     "games": 40,
+     "updated_in_last_hour": 40,
+     "median_width_pct": 1.0395,
+     "median_age_minutes": 0.4667
+    },
+    "novig": {
+     "games": 3,
+     "updated_in_last_hour": 3,
+     "median_width_pct": 4.9522,
+     "median_age_minutes": 1.3667
+    },
+    "prophetx": {
+     "games": 61,
+     "updated_in_last_hour": 61,
+     "median_width_pct": 1.0148,
+     "median_age_minutes": 0.0333
+    }
+   }
+  },
+  {
+   "sport": "cfb",
+   "asked_utc": "2026-10-10T15:00+00:00",
+   "snapshot_utc": "2026-10-10T14:55+00:00",
+   "games_ahead": 49,
+   "bookmakers": {
+    "betopenly": {
+     "games": 29,
+     "updated_in_last_hour": 29,
+     "median_width_pct": 0.1462,
+     "median_age_minutes": 0.3833
+    },
+    "kalshi": {
+     "games": 46,
+     "updated_in_last_hour": 46,
+     "median_width_pct": 1.0152,
+     "median_age_minutes": 0.0167
+    },
+    "novig": {
+     "games": 48,
+     "updated_in_last_hour": 48,
+     "median_width_pct": 0.7089,
+     "median_age_minutes": 0.5833
+    },
+    "polymarket": {
+     "games": 48,
+     "updated_in_last_hour": 48,
+     "median_width_pct": 1.016,
+     "median_age_minutes": 0.4667
+    },
+    "prophetx": {
+     "games": 44,
+     "updated_in_last_hour": 44,
+     "median_width_pct": 1.0488,
+     "median_age_minutes": 0.1
+    }
+   }
+  },
+  {
+   "sport": "cfb",
+   "asked_utc": "2026-11-14T15:00+00:00",
+   "snapshot_utc": "2026-11-14T14:55+00:00",
+   "games_ahead": 61,
+   "bookmakers": {
+    "betopenly": {
+     "games": 31,
+     "updated_in_last_hour": 31,
+     "median_width_pct": 0.0817,
+     "median_age_minutes": 0.7167
+    },
+    "kalshi": {
+     "games": 60,
+     "updated_in_last_hour": 60,
+     "median_width_pct": 1.0305,
+     "median_age_minutes": 0.5333
+    },
+    "novig": {
+     "games": 61,
+     "updated_in_last_hour": 61,
+     "median_width_pct": 0.794,
+     "median_age_minutes": 4.5
+    },
+    "polymarket": {
+     "games": 59,
+     "updated_in_last_hour": 59,
+     "median_width_pct": 1.0404,
+     "median_age_minutes": 0.9
+    },
+    "prophetx": {
+     "games": 59,
+     "updated_in_last_hour": 59,
+     "median_width_pct": 0.6494,
+     "median_age_minutes": 0.0167
+    }
+   }
+  },
+  {
+   "sport": "nba",
+   "asked_utc": "2024-11-09T15:00+00:00",
+   "snapshot_utc": "2024-11-09T14:55+00:00",
+   "games_ahead": 7,
+   "bookmakers": {}
+  },
+  {
+   "sport": "nba",
+   "asked_utc": "2024-12-14T15:00+00:00",
+   "snapshot_utc": "2024-12-14T14:55+00:00",
+   "games_ahead": 9,
+   "bookmakers": {
+    "novig": {
+     "games": 2,
+     "updated_in_last_hour": 2,
+     "median_width_pct": 4.1921,
+     "median_age_minutes": 0.2167
+    },
+    "prophetx": {
+     "games": 2,
+     "updated_in_last_hour": 2,
+     "median_width_pct": 1.1852,
+     "median_age_minutes": 0.2167
+    }
+   }
+  },
+  {
+   "sport": "nba",
+   "asked_utc": "2025-01-11T15:00+00:00",
+   "snapshot_utc": "2025-01-11T14:55+00:00",
+   "games_ahead": 5,
+   "bookmakers": {
+    "novig": {
+     "games": 4,
+     "updated_in_last_hour": 4,
+     "median_width_pct": 4.9452,
+     "median_age_minutes": 0.3
+    },
+    "prophetx": {
+     "games": 5,
+     "updated_in_last_hour": 5,
+     "median_width_pct": 0.8715,
+     "median_age_minutes": 0.3
+    }
+   }
+  },
+  {
+   "sport": "nba",
+   "asked_utc": "2025-02-08T15:00+00:00",
+   "snapshot_utc": "2025-02-08T14:55+00:00",
+   "games_ahead": 11,
+   "bookmakers": {
+    "novig": {
+     "games": 11,
+     "updated_in_last_hour": 11,
+     "median_width_pct": 5.1968,
+     "median_age_minutes": 0.4
+    },
+    "prophetx": {
+     "games": 11,
+     "updated_in_last_hour": 11,
+     "median_width_pct": 1.1957,
+     "median_age_minutes": 0.3833
+    }
+   }
+  },
+  {
+   "sport": "nba",
+   "asked_utc": "2025-03-08T15:00+00:00",
+   "snapshot_utc": "2025-03-08T14:55+00:00",
+   "games_ahead": 8,
+   "bookmakers": {
+    "betopenly": {
+     "games": 3,
+     "updated_in_last_hour": 3,
+     "median_width_pct": -0.1536,
+     "median_age_minutes": 0.1
+    },
+    "novig": {
+     "games": 8,
+     "updated_in_last_hour": 8,
+     "median_width_pct": 5.0585,
+     "median_age_minutes": 0.1
+    },
+    "prophetx": {
+     "games": 8,
+     "updated_in_last_hour": 8,
+     "median_width_pct": 0.8055,
+     "median_age_minutes": 0.0667
+    }
+   }
+  },
+  {
+   "sport": "nba",
+   "asked_utc": "2025-04-12T15:00+00:00",
+   "snapshot_utc": "2025-04-12T14:55+00:00",
+   "games_ahead": 4,
+   "bookmakers": {}
+  },
+  {
+   "sport": "nba",
+   "asked_utc": "2025-11-08T15:00+00:00",
+   "snapshot_utc": "2025-11-08T14:55+00:00",
+   "games_ahead": 8,
+   "bookmakers": {
+    "betopenly": {
+     "games": 5,
+     "updated_in_last_hour": 5,
+     "median_width_pct": 0.1094,
+     "median_age_minutes": 0.75
+    },
+    "novig": {
+     "games": 8,
+     "updated_in_last_hour": 8,
+     "median_width_pct": 0.911,
+     "median_age_minutes": 0.3333
+    },
+    "prophetx": {
+     "games": 8,
+     "updated_in_last_hour": 8,
+     "median_width_pct": 0.4659,
+     "median_age_minutes": 0.3667
+    }
+   }
+  },
+  {
+   "sport": "nba",
+   "asked_utc": "2025-12-13T15:00+00:00",
+   "snapshot_utc": "2025-12-13T14:55+00:00",
+   "games_ahead": 10,
+   "bookmakers": {
+    "betopenly": {
+     "games": 1,
+     "updated_in_last_hour": 1,
+     "median_width_pct": 0.4213,
+     "median_age_minutes": 0.0667
+    },
+    "kalshi": {
+     "games": 10,
+     "updated_in_last_hour": 10,
+     "median_width_pct": 2.08,
+     "median_age_minutes": 0.5333
+    },
+    "novig": {
+     "games": 9,
+     "updated_in_last_hour": 9,
+     "median_width_pct": 8.0188,
+     "median_age_minutes": 0.3167
+    },
+    "prophetx": {
+     "games": 9,
+     "updated_in_last_hour": 9,
+     "median_width_pct": 6.015,
+     "median_age_minutes": 0.55
+    }
+   }
+  },
+  {
+   "sport": "nba",
+   "asked_utc": "2026-01-10T15:00+00:00",
+   "snapshot_utc": "2026-01-10T14:55+00:00",
+   "games_ahead": 6,
+   "bookmakers": {
+    "betopenly": {
+     "games": 6,
+     "updated_in_last_hour": 6,
+     "median_width_pct": 0.0099,
+     "median_age_minutes": 0.5
+    },
+    "kalshi": {
+     "games": 6,
+     "updated_in_last_hour": 6,
+     "median_width_pct": 2.0095,
+     "median_age_minutes": 0.5333
+    },
+    "novig": {
+     "games": 6,
+     "updated_in_last_hour": 6,
+     "median_width_pct": 1.0694,
+     "median_age_minutes": 0.1
+    },
+    "polymarket": {
+     "games": 6,
+     "updated_in_last_hour": 6,
+     "median_width_pct": 1.0741,
+     "median_age_minutes": 0.5333
+    },
+    "prophetx": {
+     "games": 6,
+     "updated_in_last_hour": 6,
+     "median_width_pct": 0.6412,
+     "median_age_minutes": 0.1333
+    }
+   }
+  },
+  {
+   "sport": "nba",
+   "asked_utc": "2026-02-14T15:00+00:00",
+   "snapshot_utc": "2026-02-13T05:40+00:00",
+   "games_ahead": 0,
+   "bookmakers": {}
+  },
+  {
+   "sport": "nba",
+   "asked_utc": "2026-03-14T15:00+00:00",
+   "snapshot_utc": "2026-03-14T14:55+00:00",
+   "games_ahead": 7,
+   "bookmakers": {
+    "betopenly": {
+     "games": 5,
+     "updated_in_last_hour": 5,
+     "median_width_pct": 0.1906,
+     "median_age_minutes": 0.1333
+    },
+    "kalshi": {
+     "games": 7,
+     "updated_in_last_hour": 7,
+     "median_width_pct": 1.2369,
+     "median_age_minutes": 0.2833
+    },
+    "novig": {
+     "games": 7,
+     "updated_in_last_hour": 7,
+     "median_width_pct": 0.5375,
+     "median_age_minutes": 0.2833
+    },
+    "polymarket": {
+     "games": 7,
+     "updated_in_last_hour": 7,
+     "median_width_pct": 0.9063,
+     "median_age_minutes": 0.7833
+    },
+    "prophetx": {
+     "games": 7,
+     "updated_in_last_hour": 7,
+     "median_width_pct": 0.6494,
+     "median_age_minutes": 0.1667
+    }
+   }
+  },
+  {
+   "sport": "nba",
+   "asked_utc": "2026-04-11T15:00+00:00",
+   "snapshot_utc": "2026-04-11T14:55+00:00",
+   "games_ahead": 7,
+   "bookmakers": {
+    "kalshi": {
+     "games": 7,
+     "updated_in_last_hour": 7,
+     "median_width_pct": 3.9253,
+     "median_age_minutes": 0.1333
+    },
+    "novig": {
+     "games": 6,
+     "updated_in_last_hour": 6,
+     "median_width_pct": 5.5833,
+     "median_age_minutes": 0.3167
+    },
+    "polymarket": {
+     "games": 7,
+     "updated_in_last_hour": 7,
+     "median_width_pct": 1.1011,
+     "median_age_minutes": 0.9
+    }
+   }
+  },
+  {
+   "sport": "nba",
+   "asked_utc": "2026-11-14T15:00+00:00",
+   "snapshot_utc": "2026-11-14T14:55+00:00",
+   "games_ahead": 5,
+   "bookmakers": {
+    "betopenly": {
+     "games": 2,
+     "updated_in_last_hour": 2,
+     "median_width_pct": 0.9906,
+     "median_age_minutes": 0.9167
+    },
+    "kalshi": {
+     "games": 5,
+     "updated_in_last_hour": 5,
+     "median_width_pct": 1.9297,
+     "median_age_minutes": 0.1167
+    },
+    "limitless": {
+     "games": 5,
+     "updated_in_last_hour": 5,
+     "median_width_pct": 3.4836,
+     "median_age_minutes": 0.0833
+    },
+    "novig": {
+     "games": 5,
+     "updated_in_last_hour": 5,
+     "median_width_pct": 0.6061,
+     "median_age_minutes": 0.05
+    },
+    "polymarket": {
+     "games": 5,
+     "updated_in_last_hour": 5,
+     "median_width_pct": 0.9756,
+     "median_age_minutes": 0.7
+    },
+    "polymarket_us": {
+     "games": 5,
+     "updated_in_last_hour": 5,
+     "median_width_pct": 0.987,
+     "median_age_minutes": 0.0333
+    },
+    "prophetx": {
+     "games": 5,
+     "updated_in_last_hour": 5,
+     "median_width_pct": 0.9408,
+     "median_age_minutes": 0.4
+    }
+   }
+  },
+  {
+   "sport": "ncaamb",
+   "asked_utc": "2024-11-09T15:00+00:00",
+   "snapshot_utc": "2024-11-09T14:55+00:00",
+   "games_ahead": 53,
+   "bookmakers": {}
+  },
+  {
+   "sport": "ncaamb",
+   "asked_utc": "2024-12-14T15:00+00:00",
+   "snapshot_utc": "2024-12-14T14:55+00:00",
+   "games_ahead": 84,
+   "bookmakers": {
+    "novig": {
+     "games": 37,
+     "updated_in_last_hour": 37,
+     "median_width_pct": 5.0208,
+     "median_age_minutes": 0.1833
+    }
+   }
+  },
+  {
+   "sport": "ncaamb",
+   "asked_utc": "2025-01-11T15:00+00:00",
+   "snapshot_utc": "2025-01-11T14:55+00:00",
+   "games_ahead": 148,
+   "bookmakers": {
+    "novig": {
+     "games": 100,
+     "updated_in_last_hour": 100,
+     "median_width_pct": 5.0297,
+     "median_age_minutes": 0.2333
+    }
+   }
+  },
+  {
+   "sport": "ncaamb",
+   "asked_utc": "2025-02-08T15:00+00:00",
+   "snapshot_utc": "2025-02-08T14:55+00:00",
+   "games_ahead": 154,
+   "bookmakers": {
+    "novig": {
+     "games": 106,
+     "updated_in_last_hour": 106,
+     "median_width_pct": 4.5683,
+     "median_age_minutes": 0.25
+    }
+   }
+  },
+  {
+   "sport": "ncaamb",
+   "asked_utc": "2025-03-08T15:00+00:00",
+   "snapshot_utc": "2025-03-08T14:55+00:00",
+   "games_ahead": 101,
+   "bookmakers": {
+    "betopenly": {
+     "games": 18,
+     "updated_in_last_hour": 18,
+     "median_width_pct": 0.0267,
+     "median_age_minutes": 1.7333
+    },
+    "novig": {
+     "games": 75,
+     "updated_in_last_hour": 75,
+     "median_width_pct": 4.5622,
+     "median_age_minutes": 1.75
+    }
+   }
+  },
+  {
+   "sport": "ncaamb",
+   "asked_utc": "2025-11-08T15:00+00:00",
+   "snapshot_utc": "2025-11-08T14:55+00:00",
+   "games_ahead": 59,
+   "bookmakers": {
+    "betopenly": {
+     "games": 18,
+     "updated_in_last_hour": 18,
+     "median_width_pct": 0.1339,
+     "median_age_minutes": 0.5833
+    },
+    "novig": {
+     "games": 34,
+     "updated_in_last_hour": 34,
+     "median_width_pct": 3.6548,
+     "median_age_minutes": 0.4667
+    },
+    "prophetx": {
+     "games": 42,
+     "updated_in_last_hour": 42,
+     "median_width_pct": 3.9248,
+     "median_age_minutes": 0.1833
+    }
+   }
+  },
+  {
+   "sport": "ncaamb",
+   "asked_utc": "2025-12-13T15:00+00:00",
+   "snapshot_utc": "2025-12-13T14:55+00:00",
+   "games_ahead": 93,
+   "bookmakers": {
+    "betopenly": {
+     "games": 42,
+     "updated_in_last_hour": 42,
+     "median_width_pct": -0.0229,
+     "median_age_minutes": 0.6667
+    },
+    "novig": {
+     "games": 61,
+     "updated_in_last_hour": 61,
+     "median_width_pct": 4.6463,
+     "median_age_minutes": 0.05
+    },
+    "prophetx": {
+     "games": 70,
+     "updated_in_last_hour": 70,
+     "median_width_pct": 3.0535,
+     "median_age_minutes": 0.0833
+    }
+   }
+  },
+  {
+   "sport": "ncaamb",
+   "asked_utc": "2026-01-10T15:00+00:00",
+   "snapshot_utc": "2026-01-10T14:55+00:00",
+   "games_ahead": 149,
+   "bookmakers": {
+    "betopenly": {
+     "games": 30,
+     "updated_in_last_hour": 30,
+     "median_width_pct": -0.0234,
+     "median_age_minutes": 0.4833
+    },
+    "novig": {
+     "games": 130,
+     "updated_in_last_hour": 130,
+     "median_width_pct": 2.6547,
+     "median_age_minutes": 0.6333
+    },
+    "prophetx": {
+     "games": 127,
+     "updated_in_last_hour": 127,
+     "median_width_pct": 2.1686,
+     "median_age_minutes": 0.5333
+    }
+   }
+  },
+  {
+   "sport": "ncaamb",
+   "asked_utc": "2026-02-14T15:00+00:00",
+   "snapshot_utc": "2026-02-14T14:55+00:00",
+   "games_ahead": 132,
+   "bookmakers": {
+    "betopenly": {
+     "games": 38,
+     "updated_in_last_hour": 38,
+     "median_width_pct": 0.0114,
+     "median_age_minutes": 0.75
+    },
+    "kalshi": {
+     "games": 130,
+     "updated_in_last_hour": 130,
+     "median_width_pct": 1.9101,
+     "median_age_minutes": 0.6167
+    },
+    "novig": {
+     "games": 102,
+     "updated_in_last_hour": 102,
+     "median_width_pct": 2.8284,
+     "median_age_minutes": 5.2
+    },
+    "polymarket": {
+     "games": 119,
+     "updated_in_last_hour": 119,
+     "median_width_pct": 1.2905,
+     "median_age_minutes": 0.3667
+    },
+    "prophetx": {
+     "games": 54,
+     "updated_in_last_hour": 54,
+     "median_width_pct": 1.8974,
+     "median_age_minutes": 1.0167
+    }
+   }
+  },
+  {
+   "sport": "ncaamb",
+   "asked_utc": "2026-03-14T15:00+00:00",
+   "snapshot_utc": "2026-03-14T14:55+00:00",
+   "games_ahead": 21,
+   "bookmakers": {
+    "betopenly": {
+     "games": 19,
+     "updated_in_last_hour": 19,
+     "median_width_pct": -0.0192,
+     "median_age_minutes": 0.4333
+    },
+    "kalshi": {
+     "games": 10,
+     "updated_in_last_hour": 10,
+     "median_width_pct": 1.2314,
+     "median_age_minutes": 0.2833
+    },
+    "novig": {
+     "games": 21,
+     "updated_in_last_hour": 21,
+     "median_width_pct": 2.2214,
+     "median_age_minutes": 0.3833
+    },
+    "polymarket": {
+     "games": 8,
+     "updated_in_last_hour": 8,
+     "median_width_pct": 0.9962,
+     "median_age_minutes": 0.2667
+    },
+    "prophetx": {
+     "games": 21,
+     "updated_in_last_hour": 21,
+     "median_width_pct": 1.5445,
+     "median_age_minutes": 0.4167
+    }
+   }
+  },
+  {
+   "sport": "ncaamb",
+   "asked_utc": "2026-11-14T15:00+00:00",
+   "snapshot_utc": "2026-11-14T14:55+00:00",
+   "games_ahead": 59,
+   "bookmakers": {
+    "betopenly": {
+     "games": 19,
+     "updated_in_last_hour": 19,
+     "median_width_pct": 0.0799,
+     "median_age_minutes": 0.3667
+    },
+    "kalshi": {
+     "games": 54,
+     "updated_in_last_hour": 54,
+     "median_width_pct": 1.0054,
+     "median_age_minutes": 0.1167
+    },
+    "novig": {
+     "games": 55,
+     "updated_in_last_hour": 55,
+     "median_width_pct": 0.7576,
+     "median_age_minutes": 0.35
+    },
+    "polymarket": {
+     "games": 54,
+     "updated_in_last_hour": 54,
+     "median_width_pct": 1.1752,
+     "median_age_minutes": 0.4333
+    },
+    "prophetx": {
+     "games": 54,
+     "updated_in_last_hour": 54,
+     "median_width_pct": 1.5038,
+     "median_age_minutes": 0.1167
+    }
+   }
+  },
+  {
+   "sport": "ncaawb",
+   "asked_utc": "2024-11-09T15:00+00:00",
+   "snapshot_utc": "2024-11-09T15:00+00:00",
+   "games_ahead": 0,
+   "bookmakers": {}
+  },
+  {
+   "sport": "ncaawb",
+   "asked_utc": "2024-12-14T15:00+00:00",
+   "snapshot_utc": "2024-12-14T14:55+00:00",
+   "games_ahead": 4,
+   "bookmakers": {}
+  },
+  {
+   "sport": "ncaawb",
+   "asked_utc": "2025-01-11T15:00+00:00",
+   "snapshot_utc": "2025-01-10T04:50+00:00",
+   "games_ahead": 0,
+   "bookmakers": {}
+  },
+  {
+   "sport": "ncaawb",
+   "asked_utc": "2025-02-08T15:00+00:00",
+   "snapshot_utc": "2025-02-08T14:55+00:00",
+   "games_ahead": 1,
+   "bookmakers": {}
+  },
+  {
+   "sport": "ncaawb",
+   "asked_utc": "2025-03-08T15:00+00:00",
+   "snapshot_utc": "2025-03-08T14:55+00:00",
+   "games_ahead": 6,
+   "bookmakers": {}
+  },
+  {
+   "sport": "ncaawb",
+   "asked_utc": "2025-11-08T15:00+00:00",
+   "snapshot_utc": "2025-11-08T03:05+00:00",
+   "games_ahead": 0,
+   "bookmakers": {}
+  },
+  {
+   "sport": "ncaawb",
+   "asked_utc": "2025-12-13T15:00+00:00",
+   "snapshot_utc": "2025-12-13T03:55+00:00",
+   "games_ahead": 0,
+   "bookmakers": {}
+  },
+  {
+   "sport": "ncaawb",
+   "asked_utc": "2026-01-10T15:00+00:00",
+   "snapshot_utc": "2026-01-10T14:55+00:00",
+   "games_ahead": 1,
+   "bookmakers": {
+    "kalshi": {
+     "games": 1,
+     "updated_in_last_hour": 1,
+     "median_width_pct": 3.3405,
+     "median_age_minutes": 0.1667
+    }
+   }
+  },
+  {
+   "sport": "ncaawb",
+   "asked_utc": "2026-02-14T15:00+00:00",
+   "snapshot_utc": "2026-02-14T14:55+00:00",
+   "games_ahead": 2,
+   "bookmakers": {
+    "kalshi": {
+     "games": 1,
+     "updated_in_last_hour": 1,
+     "median_width_pct": 1.9297,
+     "median_age_minutes": 0.4667
+    }
+   }
+  },
+  {
+   "sport": "ncaawb",
+   "asked_utc": "2026-03-14T15:00+00:00",
+   "snapshot_utc": "2026-03-14T14:55+00:00",
+   "games_ahead": 2,
+   "bookmakers": {
+    "kalshi": {
+     "games": 2,
+     "updated_in_last_hour": 2,
+     "median_width_pct": 2.5515,
+     "median_age_minutes": 0.3167
+    }
+   }
+  },
+  {
+   "sport": "ncaawb",
+   "asked_utc": "2026-11-14T15:00+00:00",
+   "snapshot_utc": "2026-11-14T14:55+00:00",
+   "games_ahead": 5,
+   "bookmakers": {
+    "kalshi": {
+     "games": 4,
+     "updated_in_last_hour": 4,
+     "median_width_pct": 1.6315,
+     "median_age_minutes": 0.1833
+    },
+    "novig": {
+     "games": 3,
+     "updated_in_last_hour": 3,
+     "median_width_pct": 3.2913,
+     "median_age_minutes": 0.1833
+    }
+   }
+  },
+  {
+   "sport": "mlb",
+   "asked_utc": "2024-09-14T15:00+00:00",
+   "snapshot_utc": "2024-09-14T14:55+00:00",
+   "games_ahead": 15,
+   "bookmakers": {}
+  },
+  {
+   "sport": "mlb",
+   "asked_utc": "2025-04-12T15:00+00:00",
+   "snapshot_utc": "2025-04-12T14:55+00:00",
+   "games_ahead": 15,
+   "bookmakers": {
+    "betopenly": {
+     "games": 10,
+     "updated_in_last_hour": 10,
+     "median_width_pct": 1.747,
+     "median_age_minutes": 1.4833
+    },
+    "novig": {
+     "games": 15,
+     "updated_in_last_hour": 15,
+     "median_width_pct": 2.051,
+     "median_age_minutes": 1.5
+    },
+    "prophetx": {
+     "games": 15,
+     "updated_in_last_hour": 15,
+     "median_width_pct": 0.8461,
+     "median_age_minutes": 1.5
+    }
+   }
+  },
+  {
+   "sport": "mlb",
+   "asked_utc": "2025-05-10T15:00+00:00",
+   "snapshot_utc": "2025-05-10T14:55+00:00",
+   "games_ahead": 15,
+   "bookmakers": {
+    "betopenly": {
+     "games": 15,
+     "updated_in_last_hour": 15,
+     "median_width_pct": 0.1603,
+     "median_age_minutes": 1.1667
+    },
+    "novig": {
+     "games": 15,
+     "updated_in_last_hour": 15,
+     "median_width_pct": 2.2639,
+     "median_age_minutes": 1.1833
+    },
+    "prophetx": {
+     "games": 15,
+     "updated_in_last_hour": 15,
+     "median_width_pct": 0.7115,
+     "median_age_minutes": 1.1833
+    }
+   }
+  },
+  {
+   "sport": "mlb",
+   "asked_utc": "2025-06-14T15:00+00:00",
+   "snapshot_utc": "2025-06-14T14:55+00:00",
+   "games_ahead": 15,
+   "bookmakers": {
+    "betopenly": {
+     "games": 13,
+     "updated_in_last_hour": 13,
+     "median_width_pct": 0.04,
+     "median_age_minutes": 0.7833
+    },
+    "novig": {
+     "games": 15,
+     "updated_in_last_hour": 15,
+     "median_width_pct": 1.2626,
+     "median_age_minutes": 0.2333
+    },
+    "prophetx": {
+     "games": 15,
+     "updated_in_last_hour": 15,
+     "median_width_pct": 0.7909,
+     "median_age_minutes": 0.4
+    }
+   }
+  },
+  {
+   "sport": "mlb",
+   "asked_utc": "2025-07-12T15:00+00:00",
+   "snapshot_utc": "2025-07-12T14:55+00:00",
+   "games_ahead": 15,
+   "bookmakers": {
+    "betopenly": {
+     "games": 15,
+     "updated_in_last_hour": 15,
+     "median_width_pct": 0.3568,
+     "median_age_minutes": 0.1833
+    },
+    "novig": {
+     "games": 15,
+     "updated_in_last_hour": 15,
+     "median_width_pct": 1.066,
+     "median_age_minutes": 0.2
+    },
+    "prophetx": {
+     "games": 15,
+     "updated_in_last_hour": 15,
+     "median_width_pct": 0.459,
+     "median_age_minutes": 0.2167
+    }
+   }
+  },
+  {
+   "sport": "mlb",
+   "asked_utc": "2025-08-09T15:00+00:00",
+   "snapshot_utc": "2025-08-09T14:55+00:00",
+   "games_ahead": 16,
+   "bookmakers": {
+    "betopenly": {
+     "games": 16,
+     "updated_in_last_hour": 16,
+     "median_width_pct": 0.0,
+     "median_age_minutes": 0.3667
+    },
+    "novig": {
+     "games": 16,
+     "updated_in_last_hour": 16,
+     "median_width_pct": 0.8387,
+     "median_age_minutes": 0.3833
+    },
+    "prophetx": {
+     "games": 16,
+     "updated_in_last_hour": 16,
+     "median_width_pct": 0.2613,
+     "median_age_minutes": 0.3833
+    }
+   }
+  },
+  {
+   "sport": "mlb",
+   "asked_utc": "2025-09-13T15:00+00:00",
+   "snapshot_utc": "2025-09-13T14:55+00:00",
+   "games_ahead": 15,
+   "bookmakers": {
+    "betopenly": {
+     "games": 13,
+     "updated_in_last_hour": 13,
+     "median_width_pct": -0.0246,
+     "median_age_minutes": 0.1333
+    },
+    "novig": {
+     "games": 15,
+     "updated_in_last_hour": 15,
+     "median_width_pct": 1.2962,
+     "median_age_minutes": 0.1667
+    },
+    "prophetx": {
+     "games": 15,
+     "updated_in_last_hour": 15,
+     "median_width_pct": 0.3457,
+     "median_age_minutes": 0.15
+    }
+   }
+  },
+  {
+   "sport": "mlb",
+   "asked_utc": "2026-04-11T15:00+00:00",
+   "snapshot_utc": "2026-04-11T14:55+00:00",
+   "games_ahead": 15,
+   "bookmakers": {
+    "betopenly": {
+     "games": 14,
+     "updated_in_last_hour": 14,
+     "median_width_pct": 0.6513,
+     "median_age_minutes": 0.25
+    },
+    "kalshi": {
+     "games": 14,
+     "updated_in_last_hour": 14,
+     "median_width_pct": 1.1213,
+     "median_age_minutes": 0.4333
+    },
+    "novig": {
+     "games": 15,
+     "updated_in_last_hour": 15,
+     "median_width_pct": 0.3986,
+     "median_age_minutes": 0.4167
+    },
+    "polymarket": {
+     "games": 15,
+     "updated_in_last_hour": 15,
+     "median_width_pct": 0.9756,
+     "median_age_minutes": 0.25
+    },
+    "prophetx": {
+     "games": 15,
+     "updated_in_last_hour": 15,
+     "median_width_pct": 0.7032,
+     "median_age_minutes": 0.0667
+    }
+   }
+  },
+  {
+   "sport": "mlb",
+   "asked_utc": "2026-05-09T15:00+00:00",
+   "snapshot_utc": "2026-05-09T14:55+00:00",
+   "games_ahead": 15,
+   "bookmakers": {
+    "betopenly": {
+     "games": 15,
+     "updated_in_last_hour": 15,
+     "median_width_pct": 0.04,
+     "median_age_minutes": 0.7333
+    },
+    "kalshi": {
+     "games": 14,
+     "updated_in_last_hour": 14,
+     "median_width_pct": 1.0655,
+     "median_age_minutes": 0.1833
+    },
+    "novig": {
+     "games": 15,
+     "updated_in_last_hour": 15,
+     "median_width_pct": 0.3069,
+     "median_age_minutes": 0.3333
+    },
+    "polymarket": {
+     "games": 15,
+     "updated_in_last_hour": 15,
+     "median_width_pct": 1.058,
+     "median_age_minutes": 0.4167
+    },
+    "prophetx": {
+     "games": 15,
+     "updated_in_last_hour": 15,
+     "median_width_pct": 0.5635,
+     "median_age_minutes": 0.4167
+    }
+   }
+  },
+  {
+   "sport": "mlb",
+   "asked_utc": "2026-06-13T15:00+00:00",
+   "snapshot_utc": "2026-06-13T14:55+00:00",
+   "games_ahead": 15,
+   "bookmakers": {
+    "betopenly": {
+     "games": 15,
+     "updated_in_last_hour": 15,
+     "median_width_pct": 0.5291,
+     "median_age_minutes": 0.6833
+    },
+    "kalshi": {
+     "games": 14,
+     "updated_in_last_hour": 14,
+     "median_width_pct": 1.5339,
+     "median_age_minutes": 0.0333
+    },
+    "novig": {
+     "games": 15,
+     "updated_in_last_hour": 15,
+     "median_width_pct": 0.5431,
+     "median_age_minutes": 1.7333
+    },
+    "polymarket": {
+     "games": 15,
+     "updated_in_last_hour": 15,
+     "median_width_pct": 1.0204,
+     "median_age_minutes": 0.45
+    },
+    "prophetx": {
+     "games": 15,
+     "updated_in_last_hour": 15,
+     "median_width_pct": 0.3572,
+     "median_age_minutes": 0.05
+    }
+   }
+  },
+  {
+   "sport": "mlb",
+   "asked_utc": "2026-07-11T15:00+00:00",
+   "snapshot_utc": "2026-07-11T14:55+00:00",
+   "games_ahead": 16,
+   "bookmakers": {
+    "betopenly": {
+     "games": 16,
+     "updated_in_last_hour": 16,
+     "median_width_pct": 0.0038,
+     "median_age_minutes": 0.8167
+    },
+    "kalshi": {
+     "games": 16,
+     "updated_in_last_hour": 16,
+     "median_width_pct": 1.1386,
+     "median_age_minutes": 0.25
+    },
+    "novig": {
+     "games": 16,
+     "updated_in_last_hour": 16,
+     "median_width_pct": 0.627,
+     "median_age_minutes": 0.4833
+    },
+    "polymarket": {
+     "games": 16,
+     "updated_in_last_hour": 16,
+     "median_width_pct": 1.0204,
+     "median_age_minutes": 0.1333
+    },
+    "prophetx": {
+     "games": 16,
+     "updated_in_last_hour": 16,
+     "median_width_pct": 0.8521,
+     "median_age_minutes": 0.25
+    }
+   }
+  },
+  {
+   "sport": "mlb",
+   "asked_utc": "2026-08-08T15:00+00:00",
+   "snapshot_utc": "2026-08-08T14:55+00:00",
+   "games_ahead": 15,
+   "bookmakers": {
+    "betopenly": {
+     "games": 12,
+     "updated_in_last_hour": 12,
+     "median_width_pct": -0.0158,
+     "median_age_minutes": 0.7833
+    },
+    "kalshi": {
+     "games": 15,
+     "updated_in_last_hour": 15,
+     "median_width_pct": 0.987,
+     "median_age_minutes": 0.2333
+    },
+    "novig": {
+     "games": 15,
+     "updated_in_last_hour": 15,
+     "median_width_pct": 0.6927,
+     "median_age_minutes": 0.4
+    },
+    "polymarket": {
+     "games": 15,
+     "updated_in_last_hour": 15,
+     "median_width_pct": 1.0024,
+     "median_age_minutes": 0.5167
+    },
+    "prophetx": {
+     "games": 15,
+     "updated_in_last_hour": 15,
+     "median_width_pct": 0.5747,
+     "median_age_minutes": 0.05
+    }
+   }
+  },
+  {
+   "sport": "mlb",
+   "asked_utc": "2026-09-12T15:00+00:00",
+   "snapshot_utc": "2026-09-12T14:55+00:00",
+   "games_ahead": 15,
+   "bookmakers": {
+    "betopenly": {
+     "games": 9,
+     "updated_in_last_hour": 9,
+     "median_width_pct": 0.04,
+     "median_age_minutes": 0.4833
+    },
+    "kalshi": {
+     "games": 15,
+     "updated_in_last_hour": 15,
+     "median_width_pct": 1.0204,
+     "median_age_minutes": 0.45
+    },
+    "novig": {
+     "games": 15,
+     "updated_in_last_hour": 15,
+     "median_width_pct": 0.6803,
+     "median_age_minutes": 0.3667
+    },
+    "polymarket": {
+     "games": 15,
+     "updated_in_last_hour": 15,
+     "median_width_pct": 1.0204,
+     "median_age_minutes": 0.3833
+    },
+    "prophetx": {
+     "games": 15,
+     "updated_in_last_hour": 15,
+     "median_width_pct": 0.783,
+     "median_age_minutes": 0.4833
+    }
+   }
+  }
+ ],
+ "updated_utc": "2026-11-22T17:13+00:00",
+ "sports_in_feed": {
+  "nfl": true,
+  "cfb": true,
+  "nba": true,
+  "ncaamb": true,
+  "ncaawb": true,
+  "mlb": true
+ }
+}
