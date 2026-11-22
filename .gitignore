@@ -49,3 +49,6 @@ journal.jsonl
 # the data-only branch player-pool-live; local copies never go to main.
 /outputs/player_pool/kalshi_quotes.json
 /outputs/player_pool/model.json
+
+# Research state kept in an Actions cache (licensed odds, per game): never committed
+/state/

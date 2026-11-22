@@ -5041,3 +5041,87 @@ that holds less for each order. Until then the guide says to act before the
 spread count passes about 150,000, and two tests keep the limits, the guide
 and the measured memory per order in step
 (`tests/test_export_private_fills.py`).
+
+## 2026-11-22: Game winners on Novig and ProphetX, a backtest (plan, written before any data)
+
+*Asked by the owner: backtest betting on game winners on Novig or ProphetX
+in college football, men's and women's college basketball, the NFL, MLB,
+golf and the NBA. Research only: nothing here places a bet or touches the
+live bots.*
+
+**What can and cannot be tested.** There is no model here that picks
+winners, so this tests rules that need none: what a bet costs on each
+exchange, and whether a price that beats the sportsbooks has paid. Golf is
+left out: the odds feed has no golf matches, only who wins each major.
+
+**Where the prices come from.** Neither exchange publishes its history.
+The Odds API (the project's key) keeps past snapshots of every bookmaker it
+covers, Novig and ProphetX among them (`us_ex`), from the day it added
+each one. How far back that goes for these two is not published, so the
+first step is a probe: one past snapshot a month for each sport, exchanges
+only, counting games priced and how wide the prices are. It reads no
+results. About 720 credits.
+
+**Question.** On Novig and on ProphetX, from 1 September 2025: (1) what
+does a game-winner bet cost, and (2) does taking a price that is better
+than the sportsbooks' fair price make money once the result is known?
+
+**Method** (`research/exchange_winners.py`, workflow "Exchange game
+winners (research)", started by the owner by hand).
+
+- **Days.** Every day from 1 September 2025 to the day before the run, in
+  each sport's season. One snapshot a day and sport: 15:30 UTC on Saturdays
+  and Sundays, 21:00 UTC on other days (20 credits: sportsbooks and
+  exchanges, moneylines). A day with no game in the window is found from
+  ESPN's free scoreboard first and costs nothing.
+- **Games.** Those starting more than 30 minutes and at most 12 hours
+  after the snapshot, regular season or postseason, with a final result on
+  ESPN's scoreboard. Ties and games ESPN does not list are dropped and
+  counted.
+- **An exchange's price.** Both teams priced, each between 2¢ and 98¢ for a
+  $1 payout, updated in the 60 minutes before the snapshot, and the two
+  prices adding up to between 98¢ and $1.25.
+- **The sportsbooks' fair price.** At the same snapshot: each US sportsbook
+  that prices both teams (updated in the last 2 hours), its margin removed
+  in proportion, averaged over three or more books.
+- **Rules.** Cost: buy every team (what a bet with no opinion loses).
+  Value 2: buy a team when the exchange's price is 2 points or more under
+  the fair price. Value 4: the same at 4 points or more.
+- **Fees.** Novig none before a game starts. ProphetX 2% of the net
+  winnings of a winning bet (the higher of the two figures published).
+  Kalshi and Polymarket US are shown beside them for cost only: Kalshi at
+  0.07 x price x (1 - price), Polymarket US before fees (its sports rate is
+  not confirmed).
+- **Score.** Profit for each contract that pays $1: result minus price
+  minus fee, and the same as a return on the money staked, with a t
+  clustered by game.
+- **If the credit cap is below the full cost** (about 19,000 credits for
+  every day): days are taken in a fixed shuffled order (seed 20261122),
+  one sport after another, so any cap gives an unbiased sample and a later
+  run carries on from where the last one stopped.
+
+**Bar** (read once, when the pull is finished or the owner stops it). A
+rule on an exchange passes if, over all sports together, profit after fees
+is above zero with a game-clustered t of 2 or more, on at least 300 bets,
+and it is positive in at least four sports that each have 30 bets or more.
+Variants: 2 exchanges x 2 value rules = 4, so one pass at t near 2 is weak
+evidence. Reported but not tested (exploratory): results by price range,
+by sport, and by half of the period.
+
+**What a result would mean.** A pass is a reason for a forward paper test
+at the passing exchange, nothing more: it is historical and simulated. The
+feed shows a price, not how much money sat behind it, so every bet is
+assumed to fill at the shown price (optimistic, and for one small bet
+only). Both exchanges ran as sweepstakes sites for part of the period and
+their prices then may not be like today's. A fail means the sportsbooks'
+price was not a reason to bet there. Neither says anything about a model
+that picks winners; none is tested here.
+
+**If the probe shows the plan cannot run as written** (for example the
+feed's update times put most exchange prices outside the 60-minute rule, or
+a sport is missing), the change is written here before the backtest is run.
+The probe reads prices only, so nothing it shows can be fitted to results.
+
+**Data kept.** Raw odds are licensed and are never committed. A row for each
+game and exchange stays in an Actions cache; only counts, averages and the
+tables above go to `outputs/exchange_winners/`.

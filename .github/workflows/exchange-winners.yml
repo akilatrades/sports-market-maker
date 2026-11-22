@@ -1,0 +1,91 @@
+name: Exchange game winners (research)
+# Backtest of game-winner bets on Novig and ProphetX (RESEARCH_LOG.md,
+# 2026-11-22). Research only: it places no bet and touches no live bot.
+#
+# It spends Odds API credits, so it never starts by itself: the owner starts
+# it by hand and sets the most it may spend. The script also stops before the
+# shared key would fall under 30,000 credits.
+#
+#   probe     one past snapshot a month and sport, exchanges only. About 720
+#             credits. Shows how far back Novig's and ProphetX's prices go.
+#   backtest  one snapshot a day and sport (20 credits each), in a fixed
+#             shuffled order, until max_credits; then scores what it has. A
+#             later run carries on where the last one stopped.
+#   score     no credits: scores again what has been pulled.
+#
+# Raw odds are licensed and are never committed. A row for each game stays in
+# an Actions cache (not an artifact: those are public here); only counts,
+# averages and tables go to outputs/exchange_winners/. GitHub drops a cache
+# that is not used for 7 days, so finish the backtest within a week of
+# starting it.
+on:
+  workflow_dispatch:
+    inputs:
+      stage:
+        description: "probe (about 720 credits), backtest, or score (no credits)"
+        type: choice
+        options:
+          - probe
+          - backtest
+          - score
+        default: probe
+      max_credits:
+        description: "Most Odds API credits this run may spend"
+        default: "800"
+permissions:
+  contents: read
+concurrency:
+  group: exchange-winners
+  cancel-in-progress: false
+jobs:
+  run:
+    # Spends Odds API credits: main only, the owner only.
+    if: >-
+      github.ref == 'refs/heads/main' &&
+      github.actor == 'akilatrades' && github.triggering_actor == 'akilatrades'
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install
+        run: pip install -r requirements.txt
+      - uses: actions/cache/restore@v4
+        with:
+          path: state/exchange_winners
+          key: exchange-winners-${{ github.run_id }}
+          restore-keys: exchange-winners-
+      - name: Run
+        env:
+          ODDS_API_KEY: ${{ secrets.ODDS_API_KEY }}
+          STAGE: ${{ inputs.stage }}
+          MAX_CREDITS: ${{ inputs.max_credits }}
+        run: |
+          set -euo pipefail
+          if ! [[ "$MAX_CREDITS" =~ ^[0-9]{1,6}$ ]]; then
+            echo "::error::max_credits must be a whole number"
+            exit 1
+          fi
+          python -m research.exchange_winners "$STAGE" --max-credits "$MAX_CREDITS"
+      - uses: actions/cache/save@v4
+        if: always()
+        with:
+          path: state/exchange_winners
+          key: exchange-winners-${{ github.run_id }}
+      - name: Commit the tables
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A outputs/exchange_winners
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m "Exchange game winners: tables $(date -u +%Y-%m-%dT%H:%MZ)"
+          # Other jobs push to main too; retry instead of sharing their lock.
+          for attempt in 1 2 3 4 5; do
+            if git pull --rebase && git push; then exit 0; fi
+            sleep $((attempt * 5))
+          done
+          exit 1
