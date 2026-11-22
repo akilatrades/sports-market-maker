@@ -1,0 +1,673 @@
+{
+ "updated_utc": "2026-11-22T17:30+00:00",
+ "kind": "historical, simulated; fills assumed at the shown price",
+ "pull": {
+  "credits_spent_in_all": 3000,
+  "days_in_plan": 1413,
+  "days_done": 238,
+  "by_sport": {
+   "nfl": {
+    "days_pulled": 20,
+    "games_in_window": 112,
+    "games_priced": 112
+   },
+   "cfb": {
+    "days_pulled": 20,
+    "games_in_window": 280,
+    "games_priced": 268
+   },
+   "nba": {
+    "days_pulled": 39,
+    "games_in_window": 244,
+    "games_priced": 244
+   },
+   "ncaamb": {
+    "days_pulled": 35,
+    "games_in_window": 1361,
+    "games_priced": 1226
+   },
+   "mlb": {
+    "days_pulled": 36,
+    "games_in_window": 352,
+    "games_priced": 352
+   }
+  },
+  "note": "stopped: this run's cap of 3000 credits",
+  "credits_spent_this_run": 3000,
+  "credits_remaining": 70451,
+  "results": {
+   "nfl": {
+    "games_priced": 112,
+    "with_a_result": 111,
+    "no_result_found": 0,
+    "ties": 1
+   },
+   "cfb": {
+    "games_priced": 268,
+    "with_a_result": 268,
+    "no_result_found": 0,
+    "ties": 0
+   },
+   "nba": {
+    "games_priced": 244,
+    "with_a_result": 243,
+    "no_result_found": 1,
+    "ties": 0
+   },
+   "ncaamb": {
+    "games_priced": 1226,
+    "with_a_result": 1202,
+    "no_result_found": 24,
+    "ties": 0
+   },
+   "mlb": {
+    "games_priced": 352,
+    "with_a_result": 350,
+    "no_result_found": 2,
+    "ties": 0
+   }
+  }
+ },
+ "result": {
+  "cost": {
+   "novig": {
+    "all": {
+     "bets": 4210,
+     "games": 2105,
+     "avg_price_cents": 50.8043,
+     "won_pct": 50.0,
+     "before_fees_cents": -0.8043,
+     "after_fees_cents": -0.8043,
+     "return_on_stake_pct": -1.5832,
+     "width_pct": 1.09,
+     "with_a_fair_price_pct": 100.0
+    },
+    "nfl": {
+     "bets": 220,
+     "games": 110,
+     "avg_price_cents": 50.2868,
+     "won_pct": 50.0,
+     "before_fees_cents": -0.2868,
+     "after_fees_cents": -0.2868,
+     "return_on_stake_pct": -0.5704,
+     "width_pct": 0.51,
+     "with_a_fair_price_pct": 100.0
+    },
+    "cfb": {
+     "bets": 534,
+     "games": 267,
+     "avg_price_cents": 50.4013,
+     "won_pct": 50.0,
+     "before_fees_cents": -0.4013,
+     "after_fees_cents": -0.4013,
+     "return_on_stake_pct": -0.7962,
+     "width_pct": 0.72,
+     "with_a_fair_price_pct": 100.0
+    },
+    "nba": {
+     "bets": 484,
+     "games": 242,
+     "avg_price_cents": 50.3254,
+     "won_pct": 50.0,
+     "before_fees_cents": -0.3254,
+     "after_fees_cents": -0.3254,
+     "return_on_stake_pct": -0.6465,
+     "width_pct": 0.62,
+     "with_a_fair_price_pct": 100.0
+    },
+    "ncaamb": {
+     "bets": 2272,
+     "games": 1136,
+     "avg_price_cents": 51.2055,
+     "won_pct": 50.0,
+     "before_fees_cents": -1.2055,
+     "after_fees_cents": -1.2055,
+     "return_on_stake_pct": -2.3543,
+     "width_pct": 2.25,
+     "with_a_fair_price_pct": 100.0
+    },
+    "mlb": {
+     "bets": 700,
+     "games": 350,
+     "avg_price_cents": 50.3034,
+     "won_pct": 50.0,
+     "before_fees_cents": -0.3034,
+     "after_fees_cents": -0.3034,
+     "return_on_stake_pct": -0.6031,
+     "width_pct": 0.57,
+     "with_a_fair_price_pct": 100.0
+    }
+   },
+   "prophetx": {
+    "all": {
+     "bets": 4160,
+     "games": 2080,
+     "avg_price_cents": 50.6945,
+     "won_pct": 50.0,
+     "before_fees_cents": -0.6945,
+     "after_fees_cents": -1.084,
+     "return_on_stake_pct": -2.1384,
+     "width_pct": 1.05,
+     "with_a_fair_price_pct": 100.0
+    },
+    "nfl": {
+     "bets": 222,
+     "games": 111,
+     "avg_price_cents": 50.2619,
+     "won_pct": 50.0,
+     "before_fees_cents": -0.2619,
+     "after_fees_cents": -0.6702,
+     "return_on_stake_pct": -1.3334,
+     "width_pct": 0.51,
+     "with_a_fair_price_pct": 100.0
+    },
+    "cfb": {
+     "bets": 532,
+     "games": 266,
+     "avg_price_cents": 50.4339,
+     "won_pct": 50.0,
+     "before_fees_cents": -0.4339,
+     "after_fees_cents": -0.7964,
+     "return_on_stake_pct": -1.5791,
+     "width_pct": 0.845,
+     "with_a_fair_price_pct": 100.0
+    },
+    "nba": {
+     "bets": 484,
+     "games": 242,
+     "avg_price_cents": 50.2964,
+     "won_pct": 50.0,
+     "before_fees_cents": -0.2964,
+     "after_fees_cents": -0.6873,
+     "return_on_stake_pct": -1.3665,
+     "width_pct": 0.52,
+     "with_a_fair_price_pct": 100.0
+    },
+    "ncaamb": {
+     "bets": 2222,
+     "games": 1111,
+     "avg_price_cents": 51.0015,
+     "won_pct": 50.0,
+     "before_fees_cents": -1.0015,
+     "after_fees_cents": -1.3647,
+     "return_on_stake_pct": -2.6757,
+     "width_pct": 1.79,
+     "with_a_fair_price_pct": 100.0
+    },
+    "mlb": {
+     "bets": 700,
+     "games": 350,
+     "avg_price_cents": 50.3304,
+     "won_pct": 50.0,
+     "before_fees_cents": -0.3304,
+     "after_fees_cents": -0.8174,
+     "return_on_stake_pct": -1.624,
+     "width_pct": 0.625,
+     "with_a_fair_price_pct": 100.0
+    }
+   },
+   "kalshi": {
+    "all": {
+     "bets": 2902,
+     "games": 1451,
+     "avg_price_cents": 50.6252,
+     "won_pct": 50.0,
+     "before_fees_cents": -0.6252,
+     "after_fees_cents": -2.0335,
+     "return_on_stake_pct": -4.0168,
+     "width_pct": 1.1,
+     "with_a_fair_price_pct": 99.7243
+    },
+    "nfl": {
+     "bets": 130,
+     "games": 65,
+     "avg_price_cents": 50.5448,
+     "won_pct": 50.0,
+     "before_fees_cents": -0.5448,
+     "after_fees_cents": -2.0051,
+     "return_on_stake_pct": -3.9669,
+     "width_pct": 1.09,
+     "with_a_fair_price_pct": 100.0
+    },
+    "cfb": {
+     "bets": 320,
+     "games": 160,
+     "avg_price_cents": 50.4712,
+     "won_pct": 50.0,
+     "before_fees_cents": -0.4712,
+     "after_fees_cents": -1.7539,
+     "return_on_stake_pct": -3.4751,
+     "width_pct": 1.0,
+     "with_a_fair_price_pct": 100.0
+    },
+    "nba": {
+     "bets": 366,
+     "games": 183,
+     "avg_price_cents": 50.6796,
+     "won_pct": 50.0,
+     "before_fees_cents": -0.6796,
+     "after_fees_cents": -2.0658,
+     "return_on_stake_pct": -4.0762,
+     "width_pct": 1.13,
+     "with_a_fair_price_pct": 100.0
+    },
+    "ncaamb": {
+     "bets": 1478,
+     "games": 739,
+     "avg_price_cents": 50.663,
+     "won_pct": 50.0,
+     "before_fees_cents": -0.663,
+     "after_fees_cents": -1.9775,
+     "return_on_stake_pct": -3.9032,
+     "width_pct": 1.14,
+     "with_a_fair_price_pct": 99.4587
+    },
+    "mlb": {
+     "bets": 608,
+     "games": 304,
+     "avg_price_cents": 50.5986,
+     "won_pct": 50.0,
+     "before_fees_cents": -0.5986,
+     "after_fees_cents": -2.3036,
+     "return_on_stake_pct": -4.5527,
+     "width_pct": 1.03,
+     "with_a_fair_price_pct": 100.0
+    }
+   },
+   "polymarket_us": {
+    "all": {
+     "bets": 42,
+     "games": 21,
+     "avg_price_cents": 50.424,
+     "won_pct": 50.0,
+     "before_fees_cents": -0.424,
+     "width_pct": 0.92,
+     "with_a_fair_price_pct": 100.0
+    },
+    "nfl": {
+     "bets": 2,
+     "games": 1,
+     "avg_price_cents": 50.095,
+     "won_pct": 50.0,
+     "before_fees_cents": -0.095,
+     "width_pct": 0.19,
+     "with_a_fair_price_pct": 100.0
+    },
+    "nba": {
+     "bets": 32,
+     "games": 16,
+     "avg_price_cents": 50.4938,
+     "won_pct": 50.0,
+     "before_fees_cents": -0.4938,
+     "width_pct": 0.995,
+     "with_a_fair_price_pct": 100.0
+    },
+    "mlb": {
+     "bets": 8,
+     "games": 4,
+     "avg_price_cents": 50.2275,
+     "won_pct": 50.0,
+     "before_fees_cents": -0.2275,
+     "width_pct": 0.45,
+     "with_a_fair_price_pct": 100.0
+    }
+   }
+  },
+  "value": {
+   "novig": {
+    "value 2": {
+     "all": {
+      "bets": 22,
+      "games": 22,
+      "avg_price_cents": 9.5736,
+      "won_pct": 18.1818,
+      "before_fees_cents": 8.6082,
+      "after_fees_cents": 8.6082,
+      "t": 1.1573,
+      "return_on_stake_pct": 89.9155
+     },
+     "nfl": {
+      "bets": 1,
+      "games": 1,
+      "avg_price_cents": 10.5,
+      "won_pct": 0.0,
+      "before_fees_cents": -10.5,
+      "after_fees_cents": null,
+      "t": null,
+      "return_on_stake_pct": -100.0
+     },
+     "cfb": {
+      "bets": 4,
+      "games": 4,
+      "avg_price_cents": 6.05,
+      "won_pct": 25.0,
+      "before_fees_cents": 18.95,
+      "after_fees_cents": 18.95,
+      "t": 0.7399,
+      "return_on_stake_pct": 313.2231
+     },
+     "nba": {
+      "bets": 3,
+      "games": 3,
+      "avg_price_cents": 7.67,
+      "won_pct": 0.0,
+      "before_fees_cents": -7.67,
+      "after_fees_cents": -7.67,
+      "t": -3.2055,
+      "return_on_stake_pct": -100.0
+     },
+     "ncaamb": {
+      "bets": 14,
+      "games": 14,
+      "avg_price_cents": 10.9221,
+      "won_pct": 21.4286,
+      "before_fees_cents": 10.5064,
+      "after_fees_cents": 10.5064,
+      "t": 1.12,
+      "return_on_stake_pct": 96.1938
+     },
+     "mlb": {
+      "bets": 0,
+      "games": 0
+     },
+     "first half": {
+      "bets": 10,
+      "games": 10,
+      "avg_price_cents": 9.61,
+      "won_pct": 10.0,
+      "before_fees_cents": 0.39,
+      "after_fees_cents": 0.39,
+      "t": 0.0406,
+      "return_on_stake_pct": 4.0583
+     },
+     "second half": {
+      "bets": 12,
+      "games": 12,
+      "avg_price_cents": 9.5433,
+      "won_pct": 25.0,
+      "before_fees_cents": 15.4567,
+      "after_fees_cents": 15.4567,
+      "t": 1.4025,
+      "return_on_stake_pct": 161.963
+     }
+    },
+    "value 4": {
+     "all": {
+      "bets": 0,
+      "games": 0
+     },
+     "nfl": {
+      "bets": 0,
+      "games": 0
+     },
+     "cfb": {
+      "bets": 0,
+      "games": 0
+     },
+     "nba": {
+      "bets": 0,
+      "games": 0
+     },
+     "ncaamb": {
+      "bets": 0,
+      "games": 0
+     },
+     "mlb": {
+      "bets": 0,
+      "games": 0
+     }
+    }
+   },
+   "prophetx": {
+    "value 2": {
+     "all": {
+      "bets": 20,
+      "games": 20,
+      "avg_price_cents": 12.751,
+      "won_pct": 10.0,
+      "before_fees_cents": -2.751,
+      "after_fees_cents": -2.9198,
+      "t": -0.4234,
+      "return_on_stake_pct": -22.8985
+     },
+     "nfl": {
+      "bets": 1,
+      "games": 1,
+      "avg_price_cents": 10.53,
+      "won_pct": 0.0,
+      "before_fees_cents": -10.53,
+      "after_fees_cents": null,
+      "t": null,
+      "return_on_stake_pct": -100.0
+     },
+     "cfb": {
+      "bets": 0,
+      "games": 0
+     },
+     "nba": {
+      "bets": 4,
+      "games": 4,
+      "avg_price_cents": 7.895,
+      "won_pct": 0.0,
+      "before_fees_cents": -7.895,
+      "after_fees_cents": -7.895,
+      "t": -3.0119,
+      "return_on_stake_pct": -100.0
+     },
+     "ncaamb": {
+      "bets": 15,
+      "games": 15,
+      "avg_price_cents": 14.194,
+      "won_pct": 13.3333,
+      "before_fees_cents": -0.8607,
+      "after_fees_cents": -1.0857,
+      "t": -0.118,
+      "return_on_stake_pct": -7.6491
+     },
+     "mlb": {
+      "bets": 0,
+      "games": 0
+     },
+     "first half": {
+      "bets": 9,
+      "games": 9,
+      "avg_price_cents": 11.7911,
+      "won_pct": 0.0,
+      "before_fees_cents": -11.7911,
+      "after_fees_cents": -11.7911,
+      "t": -4.7367,
+      "return_on_stake_pct": -100.0
+     },
+     "second half": {
+      "bets": 11,
+      "games": 11,
+      "avg_price_cents": 13.5364,
+      "won_pct": 18.1818,
+      "before_fees_cents": 4.6455,
+      "after_fees_cents": 4.3386,
+      "t": 0.356,
+      "return_on_stake_pct": 32.0512
+     }
+    },
+    "value 4": {
+     "all": {
+      "bets": 0,
+      "games": 0
+     },
+     "nfl": {
+      "bets": 0,
+      "games": 0
+     },
+     "cfb": {
+      "bets": 0,
+      "games": 0
+     },
+     "nba": {
+      "bets": 0,
+      "games": 0
+     },
+     "ncaamb": {
+      "bets": 0,
+      "games": 0
+     },
+     "mlb": {
+      "bets": 0,
+      "games": 0
+     }
+    }
+   }
+  },
+  "by_price": {
+   "novig": {
+    "0-30c": {
+     "bets": 819,
+     "games": 819,
+     "avg_price_cents": 18.0555,
+     "won_pct": 16.2393,
+     "before_fees_cents": -1.8162,
+     "after_fees_cents": -1.8162,
+     "t": -1.4374,
+     "return_on_stake_pct": -10.0587
+    },
+    "30-45c": {
+     "bets": 796,
+     "games": 796,
+     "avg_price_cents": 38.2992,
+     "won_pct": 37.4372,
+     "before_fees_cents": -0.862,
+     "after_fees_cents": -0.862,
+     "t": -0.5032,
+     "return_on_stake_pct": -2.2508
+    },
+    "45-55c": {
+     "bets": 866,
+     "games": 490,
+     "avg_price_cents": 50.0882,
+     "won_pct": 50.3464,
+     "before_fees_cents": 0.2582,
+     "after_fees_cents": 0.2582,
+     "t": 0.4144,
+     "return_on_stake_pct": 0.5156
+    },
+    "55-70c": {
+     "bets": 842,
+     "games": 842,
+     "avg_price_cents": 61.6125,
+     "won_pct": 59.62,
+     "before_fees_cents": -1.9926,
+     "after_fees_cents": -1.9926,
+     "t": -1.1837,
+     "return_on_stake_pct": -3.2341
+    },
+    "70-100c": {
+     "bets": 887,
+     "games": 887,
+     "avg_price_cents": 82.704,
+     "won_pct": 82.9763,
+     "before_fees_cents": 0.2723,
+     "after_fees_cents": 0.2723,
+     "t": 0.2205,
+     "return_on_stake_pct": 0.3292
+    }
+   },
+   "prophetx": {
+    "0-30c": {
+     "bets": 810,
+     "games": 810,
+     "avg_price_cents": 17.9311,
+     "won_pct": 16.4198,
+     "before_fees_cents": -1.5114,
+     "after_fees_cents": -1.769,
+     "t": -1.4134,
+     "return_on_stake_pct": -9.8655
+    },
+    "30-45c": {
+     "bets": 799,
+     "games": 799,
+     "avg_price_cents": 38.3988,
+     "won_pct": 37.7972,
+     "before_fees_cents": -0.6016,
+     "after_fees_cents": -1.0637,
+     "t": -0.6297,
+     "return_on_stake_pct": -2.7702
+    },
+    "45-55c": {
+     "bets": 842,
+     "games": 471,
+     "avg_price_cents": 50.0105,
+     "won_pct": 49.7625,
+     "before_fees_cents": -0.2481,
+     "after_fees_cents": -0.7458,
+     "t": -1.2668,
+     "return_on_stake_pct": -1.4913
+    },
+    "55-70c": {
+     "bets": 858,
+     "games": 858,
+     "avg_price_cents": 61.679,
+     "won_pct": 60.373,
+     "before_fees_cents": -1.3061,
+     "after_fees_cents": -1.7647,
+     "t": -1.0693,
+     "return_on_stake_pct": -2.861
+    },
+    "70-100c": {
+     "bets": 851,
+     "games": 851,
+     "avg_price_cents": 83.0256,
+     "won_pct": 83.1962,
+     "before_fees_cents": 0.1706,
+     "after_fees_cents": -0.0995,
+     "t": -0.0798,
+     "return_on_stake_pct": -0.1199
+    }
+   }
+  },
+  "verdict": {
+   "novig": {
+    "value 2": {
+     "bets": 22,
+     "enough_bets": false,
+     "profit_after_fees": true,
+     "t_at_least_2": false,
+     "sports_judged": 0,
+     "sports_positive": 0,
+     "enough_sports_positive": false,
+     "passes": false
+    },
+    "value 4": {
+     "bets": 0,
+     "enough_bets": false,
+     "profit_after_fees": false,
+     "t_at_least_2": false,
+     "sports_judged": 0,
+     "sports_positive": 0,
+     "enough_sports_positive": false,
+     "passes": false
+    }
+   },
+   "prophetx": {
+    "value 2": {
+     "bets": 20,
+     "enough_bets": false,
+     "profit_after_fees": false,
+     "t_at_least_2": false,
+     "sports_judged": 0,
+     "sports_positive": 0,
+     "enough_sports_positive": false,
+     "passes": false
+    },
+    "value 4": {
+     "bets": 0,
+     "enough_bets": false,
+     "profit_after_fees": false,
+     "t_at_least_2": false,
+     "sports_judged": 0,
+     "sports_positive": 0,
+     "enough_sports_positive": false,
+     "passes": false
+    }
+   }
+  }
+ }
+}
