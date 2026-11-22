@@ -1,5 +1,5 @@
 {
-  "run_utc": "2026-11-22T00:57+00:00",
+  "run_utc": "2026-11-22T05:01+00:00",
   "mode": "dry",
   "env": "prod",
   "rule": "no_seller_bookline",
@@ -9,12 +9,10 @@
   "pilot_day_cap": null,
   "pilot_total_cap": null,
   "bankroll": 250.0,
-  "injury_cancels": 10,
-  "candidates": 43,
-  "placed": 6,
-  "rejected": 37,
-  "rejections": {
-    "6 orders already in game 401910028": 37
-  },
-  "open_exposure": 14.23
+  "injury_cancels": 0,
+  "candidates": 0,
+  "placed": 0,
+  "rejected": 0,
+  "rejections": {},
+  "open_exposure": 0.0
 }
