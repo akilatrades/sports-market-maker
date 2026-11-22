@@ -12,6 +12,8 @@ name: Exchange game winners (research)
 #             shuffled order, until max_credits; then scores what it has. A
 #             later run carries on where the last one stopped.
 #   score     no credits: scores again what has been pulled.
+#   results   no credits: reads ESPN's results again for the days pulled,
+#             then scores.
 #
 # Raw odds are licensed and are never committed. A row for each game stays in
 # an Actions cache (not an artifact: those are public here); only counts,
@@ -22,12 +24,13 @@ on:
   workflow_dispatch:
     inputs:
       stage:
-        description: "probe (about 720 credits), backtest, or score (no credits)"
+        description: "probe (about 720 credits), backtest, or score / results (no credits)"
         type: choice
         options:
           - probe
           - backtest
           - score
+          - results
         default: probe
       max_credits:
         description: "Most Odds API credits this run may spend"

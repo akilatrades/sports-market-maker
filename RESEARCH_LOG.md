@@ -5125,3 +5125,57 @@ The probe reads prices only, so nothing it shows can be fitted to results.
 **Data kept.** Raw odds are licensed and are never committed. A row for each
 game and exchange stays in an Actions cache; only counts, averages and the
 tables above go to `outputs/exchange_winners/`.
+
+## 2026-11-22: Game winners on Novig and ProphetX: the probe, and one change to the plan (before any result)
+
+The probe ran at 17:13 UTC: 72 past snapshots, exchanges only, 720 credits,
+none refused, 73,467 credits left. It reads prices only, no results
+(`outputs/exchange_winners/probe.md`).
+
+**How far back the prices go** (first month with a game priced on both
+teams): Novig and ProphetX from December 2024 in the NFL, college football
+and the NBA, and from April 2025 in MLB. Men's college basketball: Novig
+from December 2024, ProphetX from November 2025. So the plan's start,
+1 September 2025, is covered in those five sports.
+
+**From September 2025** (41 snapshots, games starting in the next 7 days):
+
+| Sport | Games listed | Novig priced | ProphetX priced | Kalshi priced | Typical width: Novig / ProphetX / Kalshi |
+|---|---:|---:|---:|---:|---|
+| NFL | 111 | 98 | 108 | 61 | 0.6% / 0.8% / 1.0% |
+| College football | 371 | 258 | 306 | 146 | 1.1% / 1.0% / 1.0% |
+| NBA | 43 | 41 | 35 | 35 | 1.0% / 0.6% / 2.0% |
+| College basketball (men) | 513 | 403 | 368 | 194 | 2.7% / 2.0% / 1.2% |
+| College basketball (women) | 10 | 3 | 0 | 8 | 3.3% / none / 2.2% |
+| MLB | 106 | 106 | 106 | 88 | 0.6% / 0.6% / 1.1% |
+
+Width is both teams' prices together, less $1: what buying both would lose
+before fees. It is the median of each snapshot's median, one Saturday
+morning a month, and a shown price says nothing about how much money sat
+behind it. Exploratory: the backtest's cost table is the measurement, on
+every pulled day.
+
+- **Prices are fresh.** Every two-sided exchange price in those snapshots
+  had been updated in the hour before (median under a minute), so the plan's
+  60-minute rule stands.
+- **Some days are thin.** On 12 September 2026 Novig priced 2 of 15 NFL
+  games and 3 of 83 college football games, and in the 2024-25 season its
+  NBA and college basketball prices were about 5% wide. Such days simply
+  give fewer rows.
+
+**One change to the plan: women's college basketball is left out.** The
+feed lists at most 6 women's games a snapshot; ProphetX priced none and
+Novig 3, all this month. A snapshot there would cost 20 credits and buy
+nothing. It stays in the probe, so coverage would be seen if it arrives.
+No rule, fee, period or pass bar changes, and the "four sports positive"
+part of the bar now reads against five sports, not six.
+
+**Built before the pull, for safety, not for results.** The cache now keeps
+each priced game's team names and start, and results are matched when the
+tables are made, so a game whose result is not found can be matched again
+later without paying for its odds twice (stage `results` reads ESPN again).
+Before anything is spent, ESPN must show finished games on a known full day
+in every sport, or the run stops. Neither changes what is tested.
+
+**Cost of the pull.** About 900 game days since 1 September 2025 in five
+sports, at 20 credits: about 18,000.

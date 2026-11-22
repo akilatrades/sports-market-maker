@@ -11,6 +11,7 @@ Past prices come from The Odds API's historical snapshots (sportsbooks in
     python -m research.exchange_winners probe      # how far back do prices go?
     python -m research.exchange_winners backtest --max-credits 6000
     python -m research.exchange_winners score      # no credits: the cache again
+    python -m research.exchange_winners results    # no credits: ESPN again, then score
 
 - ``probe``: one past snapshot a month and sport, exchanges only (10 credits
   each, about 720 in all). Counts games priced and how wide the prices are.
@@ -21,8 +22,10 @@ Past prices come from The Odds API's historical snapshots (sportsbooks in
   nothing. A later run carries on where the last one stopped.
 
 Raw odds are licensed and never committed. A row for each game, exchange and
-team stays in ``state/exchange_winners/`` (an Actions cache, git-ignored);
-only counts, averages and tables go to ``outputs/exchange_winners/``.
+team stays in ``state/exchange_winners/`` (an Actions cache, git-ignored),
+with the team names, so results can be matched again without paying for the
+odds twice; only counts, averages and tables go to
+``outputs/exchange_winners/``.
 """
 
 import argparse
@@ -122,6 +125,10 @@ SPORTS = {
         "probe": (4, 5, 6, 7, 8, 9),
     },
 }
+# The probe (22 November 2026) found women's college basketball all but absent
+# from the feed: at most 6 games a snapshot, none priced by ProphetX and 3 by
+# Novig. It is probed but not pulled; a snapshot there would buy nothing.
+PULL_SPORTS = tuple(sport for sport in SPORTS if sport != "ncaawb")
 WEEKEND_TIME, WEEKDAY_TIME = (15, 30), (21, 0)  # the day's snapshot, UTC
 MIN_LEAD, MAX_LEAD = timedelta(minutes=30), timedelta(hours=12)
 PRICE_RANGE = (0.02, 0.98)  # an exchange's price for a $1 payout
@@ -139,23 +146,37 @@ ESPN_NOT_PLAYED_FOR_REAL = (1, 4)  # ESPN season types: preseason, off-season
 SNAPSHOT_CREDITS = 20  # 10 a region: sportsbooks and exchanges, one market
 PROBE_CREDITS = 10  # exchanges only
 MIN_REMAINING = 30_000  # of the plan's 100,000 a month; the NBA bot comes first
-TIME_BUDGET_SECONDS = 40 * 60
+TIME_BUDGET_SECONDS = 48 * 60  # the job's own limit is 60 minutes
 ESPN_PAUSE_SECONDS = 0.1  # ESPN is free; do not hammer it
 MAX_FAILURES_IN_A_ROW = 3
 PROBE_FROM = date(2024, 9, 1)
 PROBE_HOUR = 15  # UTC, on the second Saturday of the month
+# One row for each game, venue and team. Team names and the start are kept so
+# that results can be matched again later without paying for the odds twice.
 ROW_COLUMNS = [
     "sport",
     "day",
     "game",
+    "home",
+    "away",
+    "start",
     "venue",
     "side",
     "price",
     "fair",
     "books",
     "width",
-    "won",
 ]
+# A full slate in each sport: ESPN must show finished games on these days, or
+# the scoreboard reader is broken and nothing may be spent.
+CANARY_DAYS = {
+    "nfl": date(2025, 12, 14),
+    "cfb": date(2025, 10, 11),
+    "nba": date(2026, 1, 10),
+    "ncaamb": date(2026, 1, 10),
+    "mlb": date(2026, 6, 13),
+}
+CANARY_MIN_GAMES = 3
 
 
 # --- small helpers -------------------------------------------------------------
@@ -400,22 +421,16 @@ def venue_ok(home, away):
     )
 
 
-def day_rows(sport, day, games, snapshot, finals):
-    """(rows, counts) for one snapshot: a row for each game, venue and team."""
+def day_rows(sport, day, games, snapshot):
+    """(rows, counts) for one snapshot: a row for each game, venue and team,
+    for games in the window that a venue priced. No results here."""
     rows = []
-    seen = {"listed": 0, "unmatched": 0, "ties": 0, "priced": 0}
+    seen = {"listed": 0, "priced": 0}
     for game in games:
         start = _when(game.get("commence_time"))
         if start is None or not MIN_LEAD < start - snapshot <= MAX_LEAD:
             continue
         seen["listed"] += 1
-        result = find_result(game, finals)
-        if result is None:
-            seen["unmatched"] += 1
-            continue
-        if result == "tie":
-            seen["ties"] += 1
-            continue
         quoted = quotes(game, snapshot)
         fair, n_books = fair_home(quoted)
         before = len(rows)
@@ -432,17 +447,50 @@ def day_rows(sport, day, games, snapshot, finals):
                         "sport": sport,
                         "day": day.isoformat(),
                         "game": f"{sport}:{game.get('id')}",
+                        "home": game.get("home_team"),
+                        "away": game.get("away_team"),
+                        "start": start.isoformat(timespec="minutes"),
                         "venue": venue,
                         "side": side,
                         "price": round(price, 4),
                         "fair": None if chance is None else round(chance, 4),
                         "books": n_books,
                         "width": round(home + away - 1, 4),
-                        "won": int(result == side),
                     }
                 )
         seen["priced"] += len(rows) > before
     return rows, seen
+
+
+def with_results(rows, finals):
+    """(rows with ``won``, counts by sport). A game with no finished ESPN game
+    for both of its teams, or a tie, is dropped and counted."""
+    counts = {
+        sport: {"games_priced": 0, "with_a_result": 0, "no_result_found": 0, "ties": 0}
+        for sport in PULL_SPORTS
+    }
+    winners = {}
+    games = rows.drop_duplicates("game")
+    for g in games.itertuples(index=False):
+        tally = counts.setdefault(
+            g.sport,
+            {"games_priced": 0, "with_a_result": 0, "no_result_found": 0, "ties": 0},
+        )
+        tally["games_priced"] += 1
+        result = find_result(
+            {"home_team": g.home, "away_team": g.away, "commence_time": g.start},
+            finals.get(f"{g.sport}|{g.day}", []),
+        )
+        if result is None:
+            tally["no_result_found"] += 1
+        elif result == "tie":
+            tally["ties"] += 1
+        else:
+            tally["with_a_result"] += 1
+            winners[g.game] = result
+    out = rows[rows.game.isin(winners)].copy()
+    out["won"] = (out.side == out.game.map(winners)).astype(int)
+    return out, counts
 
 
 # --- the pull ------------------------------------------------------------------
@@ -457,11 +505,11 @@ def plan(start, end, seed=SEED):
     """Every (sport, day) to pull, in the fixed order: each sport's season
     days shuffled, then taken one sport after another."""
     per_sport = {}
-    for sport, spec in SPORTS.items():
+    for sport in PULL_SPORTS:
         days = [
             start + timedelta(days=i)
             for i in range((end - start).days + 1)
-            if (start + timedelta(days=i)).month in spec["months"]
+            if (start + timedelta(days=i)).month in SPORTS[sport]["months"]
         ]
         random.Random(f"{seed}:{sport}").shuffle(days)
         per_sport[sport] = days
@@ -475,24 +523,67 @@ def plan(start, end, seed=SEED):
 
 
 def load_state(state=None):
+    """(rows, the days done, ESPN's games for each pulled day) from the cache."""
     state = state or STATE
-    done, rows = {}, pd.DataFrame(columns=ROW_COLUMNS)
+    done, finals, rows = {}, {}, pd.DataFrame(columns=ROW_COLUMNS)
     try:
         done = json.loads((state / "done.json").read_text("utf-8"))
     except (OSError, ValueError):
         done = {}
     try:
+        stored = json.loads((state / "finals.json").read_text("utf-8"))
+        finals = {
+            tag: [{**g, "start": _when(g["start"])} for g in games]
+            for tag, games in stored.items()
+        }
+    except (OSError, ValueError, KeyError, TypeError):
+        finals = {}
+    try:
         rows = pd.read_csv(state / "rows.csv")
     except (OSError, ValueError):
         pass
-    return rows, done
+    return rows, done, finals
 
 
-def save_state(rows, done, state=None):
+def save_state(rows, done, finals, state=None):
     state = state or STATE
     state.mkdir(parents=True, exist_ok=True)
     rows.to_csv(state / "rows.csv", index=False)
     (state / "done.json").write_text(json.dumps(done, sort_keys=True), "utf-8")
+    stored = {
+        tag: [{**g, "start": g["start"].isoformat()} for g in games]
+        for tag, games in finals.items()
+    }
+    (state / "finals.json").write_text(json.dumps(stored, sort_keys=True), "utf-8")
+
+
+def pulled_days(done):
+    """The (sport, day) pairs a snapshot was paid for."""
+    out = []
+    for tag, entry in done.items():
+        if entry.get("credits"):
+            sport, day = tag.split("|")
+            out.append((sport, date.fromisoformat(day)))
+    return out
+
+
+def espn_canary(get_finals=espn_day):
+    """Raise unless ESPN shows finished games on a known full day in every
+    sport. Free; run before anything is spent."""
+    for sport in PULL_SPORTS:
+        day = CANARY_DAYS[sport]
+        try:
+            games = get_finals(sport, day)
+        except Exception as error:
+            raise books.BooksError(
+                f"ESPN's {sport} scoreboard could not be read ({type(error).__name__})"
+            ) from error
+        finished = sum(1 for g in games if g["final"] and g["winner"])
+        if finished < CANARY_MIN_GAMES:
+            raise books.BooksError(
+                f"ESPN's {sport} scoreboard shows {finished} finished games on "
+                f"{day.isoformat()}; expected a full day. Nothing was spent."
+            )
 
 
 def pull(
@@ -509,8 +600,8 @@ def pull(
     state=None,
 ):
     """Pull days in the plan's order until the cap, the floor or the time
-    budget. Returns (all rows so far, a summary of this run)."""
-    rows, done = load_state(state)
+    budget. Returns (all rows so far, ESPN's games by day, this run's summary)."""
+    rows, done, finals = load_state(state)
     fresh, spent, failures, unread = [], 0, 0, 0
     note = "finished: every day in the plan has been pulled"
     began = clock()
@@ -519,11 +610,11 @@ def pull(
         if tag in done:
             continue
         if clock() - began > TIME_BUDGET_SECONDS:
-            note = "stopped: out of time for one run"
+            note = "stopped: out of time for one run; run again to carry on"
             break
         when = snapshot_time(day)
         try:
-            finals = get_finals(sport, day)
+            games_that_day = get_finals(sport, day)
             sleep(ESPN_PAUSE_SECONDS)
         except Exception as error:  # ESPN is free; a bad day is left for later
             failures += 1
@@ -535,9 +626,10 @@ def pull(
             unread += 1
             continue
         if not any(
-            f["final"] and MIN_LEAD < f["start"] - when <= MAX_LEAD for f in finals
+            f["final"] and MIN_LEAD < f["start"] - when <= MAX_LEAD
+            for f in games_that_day
         ):
-            done[tag] = {"games": 0, "credits": 0}  # nothing to price: no spend
+            done[tag] = {"listed": 0, "credits": 0}  # nothing to price: no spend
             failures = 0
             continue
         if spent + SNAPSHOT_CREDITS > max_credits:
@@ -559,51 +651,56 @@ def pull(
         spent += SNAPSHOT_CREDITS
         left = credits(usage)
         remaining = left if left is not None else remaining
-        new, seen = day_rows(sport, day, games, _when(stamp) or when, finals)
+        new, seen = day_rows(sport, day, games, _when(stamp) or when)
         fresh += new
-        done[tag] = {"games": seen["listed"], "credits": SNAPSHOT_CREDITS, **seen}
+        finals[tag] = games_that_day
+        done[tag] = {"credits": SNAPSHOT_CREDITS, **seen}
     if unread and note.startswith("finished"):
         note = f"went through the plan: {unread} days could not be read; run again"
     if fresh:
         rows = pd.concat(
             [rows, pd.DataFrame(fresh, columns=ROW_COLUMNS)], ignore_index=True
         )
-    save_state(rows, done, state)
-    total = len(plan(start, end))
-    summary = {
-        "note": note,
-        "credits_spent_this_run": spent,
+    save_state(rows, done, finals, state)
+    summary = progress(done, start, end)
+    summary.update(
+        {"note": note, "credits_spent_this_run": spent, "credits_remaining": remaining}
+    )
+    return rows, finals, summary
+
+
+def progress(done, start, end):
+    """How far the pull has got, from the days done."""
+
+    def total(sport, field):
+        return sum(
+            entry.get(field, 0)
+            for tag, entry in done.items()
+            if tag.startswith(f"{sport}|")
+        )
+
+    return {
         "credits_spent_in_all": sum(d.get("credits", 0) for d in done.values()),
-        "credits_remaining": remaining,
-        "days_in_plan": total,
+        "days_in_plan": len(plan(start, end)),
         "days_done": len(done),
         "by_sport": {
             sport: {
-                "days_pulled": sum(
-                    1
-                    for tag, d in done.items()
-                    if tag.startswith(f"{sport}|") and d.get("credits")
-                ),
-                "games_in_window": sum(
-                    d.get("listed", 0)
-                    for tag, d in done.items()
-                    if tag.startswith(f"{sport}|")
-                ),
-                "no_result_found": sum(
-                    d.get("unmatched", 0)
-                    for tag, d in done.items()
-                    if tag.startswith(f"{sport}|")
-                ),
-                "ties": sum(
-                    d.get("ties", 0)
-                    for tag, d in done.items()
-                    if tag.startswith(f"{sport}|")
-                ),
+                "days_pulled": total(sport, "credits") // SNAPSHOT_CREDITS,
+                "games_in_window": total(sport, "listed"),
+                "games_priced": total(sport, "priced"),
             }
-            for sport in SPORTS
+            for sport in PULL_SPORTS
         },
     }
-    return rows, summary
+
+
+def refetch_results(done, get_finals=espn_day, sleep=time.sleep):
+    """ESPN's games again for every pulled day. Free."""
+    finals = {}
+    for sport, day in pulled_days(done):
+        finals[f"{sport}|{day.isoformat()}"] = get_finals(sport, day)
+        sleep(ESPN_PAUSE_SECONDS)
+    return finals
 
 
 # --- the score -----------------------------------------------------------------
@@ -889,6 +986,21 @@ def render_backtest(result, summary):
         f"{summary['days_in_plan']} days done, "
         f"{summary['credits_spent_in_all']} credits in all.",
         "",
+        "## Games behind the tables",
+        "",
+        "| Sport | Days pulled | Games priced | With a result | No result found | Ties |",
+        "|---|---:|---:|---:|---:|---:|",
+    ]
+    for sport in PULL_SPORTS:
+        days = summary.get("by_sport", {}).get(sport, {}).get("days_pulled", 0)
+        m = summary.get("results", {}).get(sport, {})
+        lines.append(
+            f"| {SPORTS[sport]['label']} | {days} | {m.get('games_priced', 0)} | "
+            f"{m.get('with_a_result', 0)} | {m.get('no_result_found', 0)} | "
+            f"{m.get('ties', 0)} |"
+        )
+    lines += [
+        "",
         "## What a bet with no opinion costs (every team, every game)",
         "",
         "| Venue | Sport | Games | Width | Before fees | After fees |",
@@ -956,46 +1068,52 @@ def render_backtest(result, summary):
 
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__.split("\n")[0])
-    parser.add_argument("stage", choices=("probe", "backtest", "score"))
+    parser.add_argument("stage", choices=("probe", "backtest", "score", "results"))
     parser.add_argument(
         "--max-credits", type=int, default=800, help="this run's spending cap"
     )
     args = parser.parse_args(argv)
     now = datetime.now(UTC)
     today = now.date()
+    end = today - timedelta(days=1)
 
-    if args.stage == "score":
-        rows, done = load_state()
-        summary = {
-            "note": "scored again from the cache; nothing pulled",
-            "days_done": len(done),
-            "days_in_plan": len(plan(START, today - timedelta(days=1))),
-            "credits_spent_in_all": sum(d.get("credits", 0) for d in done.values()),
-        }
-    else:
-        try:
+    try:
+        if args.stage == "probe":
             key = books.api_key()
             remaining, listed = feed_status(key)  # free
-            if args.stage == "probe":
-                report = probe(key, today, args.max_credits, remaining=remaining)
-                report["updated_utc"] = now.isoformat(timespec="minutes")
-                report["sports_in_feed"] = {
-                    sport: spec["feed"] in listed for sport, spec in SPORTS.items()
-                }
-                write_json(report, OUT / "probe.json")
-                (OUT / "probe.md").write_text(render_probe(report), "utf-8")
-                brief = {k: report[k] for k in ("note", "credits_spent")}
-                brief["first_month_priced"] = report["first_month_priced"]
-                print("::notice::" + json.dumps(clean(brief)))
-                return 0
-            rows, summary = pull(
-                key, today - timedelta(days=1), args.max_credits, remaining=remaining
+            report = probe(key, today, args.max_credits, remaining=remaining)
+            report["updated_utc"] = now.isoformat(timespec="minutes")
+            report["sports_in_feed"] = {
+                sport: spec["feed"] in listed for sport, spec in SPORTS.items()
+            }
+            write_json(report, OUT / "probe.json")
+            (OUT / "probe.md").write_text(render_probe(report), "utf-8")
+            brief = {k: report[k] for k in ("note", "credits_spent")}
+            brief["first_month_priced"] = report["first_month_priced"]
+            print("::notice::" + json.dumps(clean(brief)))
+            return 0
+        if args.stage == "backtest":
+            key = books.api_key()
+            espn_canary()  # free; stops here if the scoreboard reader is broken
+            remaining, _ = feed_status(key)  # free
+            rows, finals, summary = pull(
+                key, end, args.max_credits, remaining=remaining
             )
-        except books.BooksError as error:
-            print(f"::error::exchange winners: {error}")
-            return 1
+        else:
+            rows, done, finals = load_state()
+            summary = progress(done, START, end)
+            summary["note"] = "scored again from the cache; nothing pulled"
+            if args.stage == "results":
+                finals = refetch_results(done)  # free
+                save_state(rows, done, finals)
+                summary["note"] = "results read again from ESPN; nothing pulled"
+    except books.BooksError as error:
+        print(f"::error::exchange winners: {error}")
+        return 1
 
-    result = score(rows)
+    scored, matched = with_results(rows, finals)
+    summary["results"] = matched
+    result = score(scored)
     write_json(
         {
             "updated_utc": now.isoformat(timespec="minutes"),
@@ -1010,7 +1128,7 @@ def main(argv=None):
         "note": summary["note"],
         "days_done": summary["days_done"],
         "credits_spent_in_all": summary["credits_spent_in_all"],
-        "rows": len(rows),
+        "games_with_a_result": sum(m["with_a_result"] for m in matched.values()),
     }
     print("::notice::" + json.dumps(clean(brief)))
     return 0

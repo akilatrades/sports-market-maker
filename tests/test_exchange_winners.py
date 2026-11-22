@@ -195,7 +195,7 @@ def test_the_fair_price_needs_three_sportsbooks_and_no_exchange():
     assert n == 3 and fair == pytest.approx(0.6, abs=1e-9)
 
 
-def test_rows_follow_the_window_the_limits_and_the_result():
+def test_rows_follow_the_window_and_the_limits_then_results_are_matched():
     finals = W.parse_scoreboard(
         {
             "events": [
@@ -205,6 +205,7 @@ def test_rows_follow_the_window_the_limits_and_the_result():
             ]
         }
     )
+    kalshi_only = [book("kalshi", "No Such", "Team Here", 0.5, 0.51)]
     games = [
         feed_game(
             "a",
@@ -226,24 +227,43 @@ def test_rows_follow_the_window_the_limits_and_the_result():
                 book("kalshi", "Home B", "Away B", 0.31, 0.7),
             ],
         ),
-        feed_game("t", "Home T", "Away T", "2026-01-10T22:00:00Z", []),
-        feed_game("x", "No Such", "Team Here", "2026-01-10T22:00:00Z", []),
+        feed_game(
+            "t",
+            "Home T",
+            "Away T",
+            "2026-01-10T22:00:00Z",
+            [book("novig", "Home T", "Away T", 0.5, 0.52)],
+        ),
+        feed_game("x", "No Such", "Team Here", "2026-01-10T22:00:00Z", kalshi_only),
+        feed_game("none", "Home A", "Away A", "2026-01-10T23:00:00Z", []),
         # Too soon (20 minutes) and too far (13 hours): not this snapshot's games.
-        feed_game("soon", "Home A", "Away A", "2026-01-10T15:50:00Z", []),
-        feed_game("far", "Home A", "Away A", "2026-01-11T04:30:00Z", []),
+        feed_game("soon", "Home A", "Away A", "2026-01-10T15:50:00Z", kalshi_only),
+        feed_game("far", "Home A", "Away A", "2026-01-11T04:30:00Z", kalshi_only),
     ]
-    rows, seen = W.day_rows("nba", DAY, games, SNAP, finals)
-    assert seen == {"listed": 4, "unmatched": 1, "ties": 1, "priced": 2}
+    rows, seen = W.day_rows("nba", DAY, games, SNAP)
+    assert seen == {"listed": 5, "priced": 4}
     frame = pd.DataFrame(rows)
-    assert list(frame.columns) == W.ROW_COLUMNS
+    assert list(frame.columns) == W.ROW_COLUMNS and "won" not in frame
+    assert set(frame.game) == {"nba:a", "nba:b", "nba:t", "nba:x"}
     a = frame[frame.game == "nba:a"].set_index("side")
     assert list(a.venue) == ["novig", "novig"]
-    assert a.loc["home", "price"] == 0.58 and a.loc["home", "won"] == 1
-    assert a.loc["away", "won"] == 0 and a.loc["home", "width"] == pytest.approx(0.02)
+    assert a.loc["home", "price"] == 0.58 and a.loc["home", "width"] == pytest.approx(0.02)  # fmt: skip
     assert a.loc["home", "fair"] == pytest.approx(0.6) and a.loc["home", "books"] == 3
+    assert a.loc["home", "home"] == "Home A" and a.loc["home", "start"].startswith("2026-01-10T20:00")  # fmt: skip
     b = frame[frame.game == "nba:b"]
     assert set(b.venue) == {"kalshi"} and b.fair.isna().all()  # no sportsbooks there
-    assert b.set_index("side").loc["away", "won"] == 1
+
+    scored, counts = W.with_results(frame, {"nba|2026-01-10": finals})
+    assert counts["nba"] == {
+        "games_priced": 4, "with_a_result": 2, "no_result_found": 1, "ties": 1,
+    }  # fmt: skip
+    assert set(scored.game) == {"nba:a", "nba:b"}
+    won = scored.set_index(["game", "side"]).won
+    assert won["nba:a", "home"] == 1 and won["nba:a", "away"] == 0
+    assert won["nba:b", "away"] == 1
+    # Nothing is lost when a result is missing: matched again later, it counts.
+    nothing, counts = W.with_results(frame, {})
+    assert nothing.empty and counts["nba"]["no_result_found"] == 4
 
 
 # --- the score -----------------------------------------------------------------
@@ -341,14 +361,16 @@ def test_a_profit_in_too_few_sports_does_not_pass():
 
 
 def test_nothing_pulled_still_scores_and_writes_strict_json(tmp_path):
-    result = W.score(pd.DataFrame(columns=W.ROW_COLUMNS))
+    scored, counts = W.with_results(pd.DataFrame(columns=W.ROW_COLUMNS), {})
+    result = W.score(scored)
     assert result["verdict"]["novig"]["value 2"]["passes"] is False
     W.write_json({"a": float("nan"), "b": np.bool_(True), "c": np.int64(3)}, tmp_path / "x.json")  # fmt: skip
     assert json.loads((tmp_path / "x.json").read_text()) == {"a": None, "b": True, "c": 3}  # fmt: skip
-    text = W.render_backtest(
-        result, {"note": "n", "days_done": 0, "days_in_plan": 9, "credits_spent_in_all": 0}
-    )  # fmt: skip
+    summary = W.progress({}, date(2026, 1, 9), date(2026, 1, 13))
+    summary.update({"note": "n", "results": counts})
+    text = W.render_backtest(result, summary)
     assert "does not pass" in text and "simulated" in text
+    assert "| NBA | 0 | 0 | 0 | 0 | 0 |" in text
 
 
 # --- the plan and the pull -----------------------------------------------------
@@ -359,13 +381,15 @@ def test_snapshot_times_and_the_fixed_order():
     assert W.snapshot_time(date(2026, 1, 12)).hour == 21  # Monday
     order = W.plan(date(2025, 9, 1), date(2026, 11, 21))
     assert order == W.plan(date(2025, 9, 1), date(2026, 11, 21))  # the same every run
-    assert [sport for sport, _ in order[:6]] == list(
-        W.SPORTS
-    )  # one sport after another
+    assert [sport for sport, _ in order[:5]] == list(W.PULL_SPORTS)  # sport by sport
     assert len(set(order)) == len(order)
     for sport, day in order:
         assert day.month in W.SPORTS[sport]["months"]
     assert not any(sport == "nfl" and day.month == 6 for sport, day in order)
+    # The probe found no prices to buy there: probed, never pulled.
+    assert "ncaawb" in W.SPORTS and "ncaawb" not in W.PULL_SPORTS
+    assert not any(sport == "ncaawb" for sport, _ in order)
+    assert set(W.CANARY_DAYS) == set(W.PULL_SPORTS)
 
 
 class Feed:
@@ -415,32 +439,80 @@ def run_pull(feed, tmp_path, max_credits, **more):
 
 def test_a_pull_pays_only_for_game_days_and_carries_on_later(tmp_path):
     feed = Feed()
-    rows, summary = run_pull(feed, tmp_path, 20)
+    rows, finals, summary = run_pull(feed, tmp_path, 20)
     # One paid snapshot fits the cap; every empty day before it was free.
     assert summary["credits_spent_this_run"] == 20 and len(feed.calls) == 1
     assert summary["note"].startswith("stopped: this run's cap")
-    assert len(rows) == 2 and set(rows.venue) == {"novig"}
-    rows, summary = run_pull(feed, tmp_path, 1000)
+    assert len(rows) == 2 and set(rows.venue) == {"novig"} and len(finals) == 1
+    rows, finals, summary = run_pull(feed, tmp_path, 1000)
     assert len(feed.calls) == 2 and summary["credits_spent_this_run"] == 20
     assert summary["credits_spent_in_all"] == 40 and len(rows) == 4
     assert summary["note"].startswith("finished")
     assert summary["days_done"] == summary["days_in_plan"]
     assert summary["by_sport"]["nba"] == {
-        "days_pulled": 2, "games_in_window": 2, "no_result_found": 0, "ties": 0,
+        "days_pulled": 2, "games_in_window": 2, "games_priced": 2,
     }  # fmt: skip
+    assert summary["by_sport"]["mlb"]["days_pulled"] == 0
     # A third run finds nothing left and spends nothing.
-    rows, summary = run_pull(feed, tmp_path, 1000)
+    rows, finals, summary = run_pull(feed, tmp_path, 1000)
     assert len(feed.calls) == 2 and summary["credits_spent_this_run"] == 0
-    assert len(rows) == 4
+    assert len(rows) == 4 and set(finals) == {"nba|2026-01-10", "nba|2026-01-12"}
     # The rows live only in the cache folder, never under outputs/.
     assert (tmp_path / "state/rows.csv").exists()
-    result = W.score(rows)
+    scored, counts = W.with_results(rows, finals)
+    assert counts["nba"]["with_a_result"] == 2 and scored.won.sum() == 2
+    result = W.score(scored)
     assert result["value"]["novig"]["value 4"]["all"]["bets"] == 2  # fair 60, paid 55
+    assert result["value"]["novig"]["value 4"]["all"]["won_pct"] == 100.0
+
+
+def test_results_can_be_read_again_without_paying_for_odds(tmp_path):
+    feed = Feed()
+    rows, finals, _ = run_pull(feed, tmp_path, 1000)
+    paid = len(feed.calls)
+    done = json.loads((tmp_path / "state/done.json").read_text())
+    assert sorted(W.pulled_days(done)) == [("nba", date(2026, 1, 10)), ("nba", date(2026, 1, 12))]  # fmt: skip
+
+    def corrected(sport, day):  # ESPN now says the away team won
+        start = (W.snapshot_time(day) + timedelta(hours=3)).isoformat()
+        return W.parse_scoreboard({"events": [espn_event("Home A", "Away A", start, 1, 9)]})  # fmt: skip
+
+    again = W.refetch_results(done, get_finals=corrected, sleep=lambda s: None)
+    scored, counts = W.with_results(rows, again)
+    assert len(feed.calls) == paid and counts["nba"]["with_a_result"] == 2
+    assert scored[scored.side == "away"].won.tolist() == [1, 1]
+    # The cache keeps the scoreboards, with their times, across runs.
+    W.save_state(rows, done, again, tmp_path / "state")
+    _, _, loaded = W.load_state(tmp_path / "state")
+    assert loaded["nba|2026-01-10"][0]["start"] == again["nba|2026-01-10"][0]["start"]
+    assert loaded["nba|2026-01-10"][0]["winner"] == "away"
+
+
+def test_nothing_is_spent_if_the_scoreboard_reader_looks_broken():
+    def full(sport, day):
+        assert day == W.CANARY_DAYS[sport]
+        return W.parse_scoreboard(
+            {"events": [espn_event(f"H{i}", f"A{i}", "2026-01-10T20:00Z", 9, i) for i in range(4)]}
+        )  # fmt: skip
+
+    W.espn_canary(get_finals=full)  # four finished games in every sport: fine
+
+    def empty_for_mlb(sport, day):
+        return [] if sport == "mlb" else full(sport, day)
+
+    with pytest.raises(books.BooksError, match="mlb scoreboard shows 0 finished"):
+        W.espn_canary(get_finals=empty_for_mlb)
+
+    def down(sport, day):
+        raise OSError("no network")
+
+    with pytest.raises(books.BooksError, match="could not be read"):
+        W.espn_canary(get_finals=down)
 
 
 def test_a_pull_never_draws_the_shared_key_below_the_floor(tmp_path):
     feed = Feed(remaining=W.MIN_REMAINING + 25)
-    rows, summary = run_pull(feed, tmp_path, 1000)
+    rows, finals, summary = run_pull(feed, tmp_path, 1000)
     assert len(feed.calls) == 1  # the second would leave fewer than the floor
     assert "credits would be left" in summary["note"]
     assert summary["credits_remaining"] == W.MIN_REMAINING + 5
@@ -452,8 +524,8 @@ def test_a_pull_stops_when_a_source_keeps_failing(tmp_path):
     def refused(*args):
         raise books.BooksError("odds api: HTTP 422 out of range")
 
-    rows, summary = run_pull(feed, tmp_path, 1000, get_odds=refused)
-    assert rows.empty and summary["credits_spent_this_run"] == 0
+    rows, finals, summary = run_pull(feed, tmp_path, 1000, get_odds=refused)
+    assert rows.empty and summary["credits_spent_this_run"] == 0 and not finals
     # Two refused days: not enough to stop, and not marked done, so a later
     # run tries them again.
     assert summary["note"] == (
@@ -467,18 +539,18 @@ def test_a_pull_stops_when_a_source_keeps_failing(tmp_path):
     def broken(sport, day):
         raise OSError("down")
 
-    rows, summary = W.pull(
-        "k", date(2026, 1, 13), 1000, start=date(2026, 1, 9), get_odds=feed.odds,
-        get_finals=broken, sleep=lambda s: None, state=tmp_path / "other",
-    )  # fmt: skip
+    rows, finals, summary = run_pull(
+        feed, tmp_path, 1000, get_finals=broken, state=tmp_path / "other"
+    )
     assert "ESPN's scoreboard kept failing" in summary["note"] and not feed.calls
 
 
 def test_a_pull_stops_at_its_time_budget(tmp_path):
     feed = Feed()
     ticks = iter([0, 0, W.TIME_BUDGET_SECONDS + 1, W.TIME_BUDGET_SECONDS + 2])
-    rows, summary = run_pull(feed, tmp_path, 1000, clock=lambda: next(ticks))
-    assert summary["note"] == "stopped: out of time for one run"
+    rows, finals, summary = run_pull(feed, tmp_path, 1000, clock=lambda: next(ticks))
+    assert summary["note"].startswith("stopped: out of time for one run")
+    assert W.TIME_BUDGET_SECONDS < 60 * 60  # inside the job's own limit
 
 
 # --- the probe -----------------------------------------------------------------
@@ -575,6 +647,9 @@ def test_only_the_owner_can_start_it_and_it_never_runs_by_itself():
     assert WORKFLOW.count("secrets.ODDS_API_KEY") == 1
     assert "secrets.ODDS_API_KEY" in run_step
     assert 'default: "800"' in WORKFLOW and "default: probe" in WORKFLOW
+    for stage in ("probe", "backtest", "score", "results"):
+        assert f"          - {stage}\n" in WORKFLOW
+    assert "timeout-minutes: 60" in WORKFLOW
 
 
 def test_no_order_or_account_code_is_touched():
