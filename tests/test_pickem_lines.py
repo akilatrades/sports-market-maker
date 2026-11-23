@@ -121,8 +121,9 @@ def test_a_pull_is_due_only_after_the_gap(tmp_path):
     assert P.due(NOW + gap, path)
     path.write_text("snapshot_utc\nnot a time\n", "utf-8")
     assert P.due(NOW, path)
-    # About four pulls a day, and the bot's credits come first.
-    assert P.MIN_HOURS_BETWEEN >= 5
+    # At most one pull an hour (owner's choice, 2026-11-23), and the bot's
+    # credits come first.
+    assert P.MIN_HOURS_BETWEEN >= 1
     assert P.MIN_CREDITS_LEFT >= 10_000
 
 

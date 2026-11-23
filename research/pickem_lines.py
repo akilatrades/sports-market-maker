@@ -20,7 +20,7 @@ What is kept and what is not (owner's decision, 2026-11-21, RESEARCH_LOG.md):
 
 Cost: up to 4 Odds API credits a game per pull (one per market). Whatever
 starts this job, a pull is skipped while the last one is under
-MIN_HOURS_BETWEEN old (about four pulls a day) and whenever fewer than
+MIN_HOURS_BETWEEN old (about one pull an hour on game nights) and whenever fewer than
 MIN_CREDITS_LEFT credits remain, so the page can never use up the credits
 the bot's odds depend on.
 
@@ -69,7 +69,7 @@ COLUMNS = [
     "snapshot_utc",
 ]
 HOURS_AHEAD = 18  # tonight's games, not tomorrow's
-MIN_HOURS_BETWEEN = 5  # about four pulls a day
+MIN_HOURS_BETWEEN = 1  # about hourly on game nights (owner, 2026-11-23; was 5)
 MIN_CREDITS_LEFT = 15_000  # of the plan's 100,000 a month; the bot comes first
 TIME_BUDGET_SECONDS = 90
 
