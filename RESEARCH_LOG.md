@@ -5405,3 +5405,44 @@ it.
 **Run:** `python -m research.pickem_forward` (after
 `python -m live.fetch_nba_data`), each day from the player-pool workflow's
 stats job; tables in `outputs/pickem_forward/`. Aggregates only.
+
+## 2026-11-23: Pick'em lines in other sports: a probe (plan; counts only, no result)
+
+**Owner request.** Add other sports to the pick'em comparison: college
+basketball and football, the NHL, the EPL, La Liga, MLS, the Champions
+League and tennis. Before any of that is built or paid for, one cheap look
+at what the odds feed actually carries.
+
+**What the feed's own pages say** (read 23 November): player props are
+listed for the NBA, college basketball, the NFL, college football, the NHL,
+and for six soccer leagues (EPL, Ligue 1, Bundesliga, Serie A, La Liga,
+MLS; US sportsbooks only). The Champions League is not in that list, and
+there are no tennis player props at all. The pages do not say which sports
+PrizePicks and Underdog are carried for.
+
+**The probe** (`python -m research.pickem_probe`, workflow "pick'em probe
+(other sports)", started by hand by the owner). For each sport, the next
+one or two games within 72 hours; the main prop markets from the US
+sportsbooks and the pick'em apps in one request. It keeps counts only:
+sportsbooks quoting each market, lines each app posts, and how many of
+those sit on a line a sportsbook also quotes. No odds or lines are stored.
+The NBA's combined stats (points + rebounds + assists and the pairs) are
+in it too, since the page does not read them yet. Tennis is left out:
+there is nothing to ask for.
+
+**Cost.** At most 128 credits (a market nobody quotes is free), nothing
+when fewer than 15,000 remain.
+
+**What it decides.** Only where it is worth pulling lines at all: a sport
+goes forward if an app posts lines there and a sportsbook quotes the same
+lines. It prices nothing and reads no results, so it cannot say whether
+any pick is good; that would be the forward check, extended under its own
+entry.
+
+**Credits at full speed, estimated** (a pull every 10 minutes in the 6.5
+hours before each game, four stats a sport, sportsbooks and apps): the NBA
+about 120,000 a month, the NHL about 69,000, the EPL and La Liga about
+12,000 each, college football up to 75,000, college basketball about
+187,000 if held to 20 games a day. All of it: about 475,000 a month
+against the present plan's 100,000. The owner intends to move to a larger
+plan; nothing here depends on it, and no cadence changes in this entry.

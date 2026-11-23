@@ -1,0 +1,48 @@
+name: pick'em probe (other sports)
+# A one-off look at which other sports have PrizePicks and Underdog lines
+# beside sportsbook prices in the odds feed (RESEARCH_LOG.md, 2026-11-23):
+# NBA combined stats, college basketball and football, the NHL, the EPL, La
+# Liga, MLS and the Champions League. Counts only; no odds or lines are kept.
+#
+# Cost: at most 128 Odds API credits (usually fewer: a market nobody quotes
+# is free), and nothing when fewer than 15,000 remain. Started by hand by
+# the owner only; it has no schedule.
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: pickem-probe
+  cancel-in-progress: false
+jobs:
+  probe:
+    # Spends Odds API credits: main only, the owner only.
+    if: >-
+      github.ref == 'refs/heads/main' &&
+      github.actor == 'akilatrades' && github.triggering_actor == 'akilatrades'
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r requirements.txt
+      - name: Count the lines
+        env:
+          ODDS_API_KEY: ${{ secrets.ODDS_API_KEY }}
+        run: python -m research.pickem_probe
+      - name: Commit the counts
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add outputs/pickem/probe.json
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m "Pick'em probe $(date -u +%Y-%m-%dT%H:%MZ)"
+          for attempt in 1 2 3 4 5; do
+            if git pull --rebase && git push; then exit 0; fi
+            sleep $((attempt * 5))
+          done
+          exit 1
