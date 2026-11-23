@@ -20,7 +20,8 @@ What is kept and what is not (owner's decision, 2026-11-21, RESEARCH_LOG.md):
 
 Cost: up to 4 Odds API credits a game per pull (one per market). Whatever
 starts this job, a pull is skipped while the last one is under
-MIN_HOURS_BETWEEN old (about one pull an hour on game nights) and whenever fewer than
+MIN_HOURS_BETWEEN old (NEAR_MINUTES_BETWEEN once a game tips off within
+NEAR_HOURS) and whenever fewer than
 MIN_CREDITS_LEFT credits remain, so the page can never use up the credits
 the bot's odds depend on.
 
@@ -70,6 +71,12 @@ COLUMNS = [
 ]
 HOURS_AHEAD = 18  # tonight's games, not tomorrow's
 MIN_HOURS_BETWEEN = 1  # about hourly on game nights (owner, 2026-11-23; was 5)
+# ... and every 10 minutes once a game tips off within NEAR_HOURS, when lines
+# move on lineup news (owner, 2026-11-23). The same window as the sportsbook
+# refreshes (live.log_books.NEAR_HOURS), so both sides of the page's
+# comparison are about equally fresh.
+NEAR_MINUTES_BETWEEN = 10
+NEAR_HOURS = 6.5
 MIN_CREDITS_LEFT = 15_000  # of the plan's 100,000 a month; the bot comes first
 TIME_BUDGET_SECONDS = 90
 
@@ -92,10 +99,33 @@ def last_pull(path=None):
     return max(times) if times else None
 
 
-def due(now, path=None, min_hours=MIN_HOURS_BETWEEN):
-    """True when there is no earlier pull, or it is at least ``min_hours`` old."""
+def tips_soon(now, path=None, hours=NEAR_HOURS):
+    """True when a game in the latest file tips off within ``hours`` from now."""
+    try:
+        with open(path or LATEST, newline="", encoding="utf-8") as handle:
+            stamps = {row.get("commence_utc") for row in csv.DictReader(handle)}
+    except OSError:
+        return False
+    for stamp in stamps:
+        try:
+            tip = datetime.fromisoformat((stamp or "").replace("Z", "+00:00"))
+        except ValueError:
+            continue
+        if tip.tzinfo is not None and now < tip <= now + timedelta(hours=hours):
+            return True
+    return False
+
+
+def due(now, path=None, min_hours=MIN_HOURS_BETWEEN, near_minutes=NEAR_MINUTES_BETWEEN):
+    """True when there is no earlier pull, or it is at least ``min_hours`` old
+    (``near_minutes`` while a game in the last pull tips off within NEAR_HOURS)."""
     last = last_pull(path)
-    return last is None or now - last >= timedelta(hours=min_hours)
+    if last is None:
+        return True
+    gap = timedelta(hours=min_hours)
+    if tips_soon(now, path):
+        gap = min(gap, timedelta(minutes=near_minutes))
+    return now - last >= gap
 
 
 def credits(usage):

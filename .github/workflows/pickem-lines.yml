@@ -8,8 +8,8 @@ name: pick'em app lines (page only)
 # that nothing in it can delay or break that one.
 #
 # Cost: up to 4 Odds API credits a game per pull. research/pickem_lines.py
-# skips a pull while the last one is under 1 hour old (about hourly on game
-# nights; it was 5 hours until 2026-11-23) and
+# skips a pull while the last one is under 1 hour old, or under 10 minutes
+# once a game tips off within 6.5 hours (it was 5 hours until 2026-11-23), and
 # whenever fewer than 15,000 credits remain. A start that is not due ends in
 # seconds, installs nothing and spends nothing.
 on:
@@ -24,7 +24,7 @@ on:
     - cron: "40 10,15,20 * * *"
     - cron: "40 1 * * *"
   # The owner's "pull now" button, which ignores the gap (not the credit
-  # floor). The player-pool watcher also starts this about every 20 minutes
+  # floor). The player-pool watcher also starts this about every 10 minutes
   # on game days, because GitHub runs the schedules above only a few times a
   # day; those starts keep the gap, so most of them end in seconds.
   workflow_dispatch:
