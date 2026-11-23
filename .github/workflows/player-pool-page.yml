@@ -49,6 +49,8 @@ on:
       - ".github/workflows/pickem-lines.yml"
       - "research/returning_regular.py"
       - "tests/test_returning_regular.py"
+      - "research/pickem_forward.py"
+      - "tests/test_pickem_forward.py"
 permissions:
   contents: read
 jobs:
@@ -66,7 +68,7 @@ jobs:
           pytest -q tests/test_nba_player_pool_dashboard.py
           tests/test_player_pool_quotes.py tests/test_player_pool_model.py
           tests/test_player_pool_workflow.py tests/test_pickem_lines.py
-          tests/test_returning_regular.py
+          tests/test_returning_regular.py tests/test_pickem_forward.py
   stats:
     if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
