@@ -5179,3 +5179,64 @@ in every sport, or the run stops. Neither changes what is tested.
 
 **Cost of the pull.** About 900 game days since 1 September 2025 in five
 sports, at 20 credits: about 18,000.
+
+## 2026-11-23: Do YES buyers overpay more for some types of player? (plan, written before any result; exploratory)
+
+**Owner request.** Group NBA players into types and see whether the
+overpayment by Kalshi's YES buyers differs by type. The strategy rests on
+fans backing players, so the gap could be larger for, say, high-scoring
+stars than for role players.
+
+**Status: exploratory.** The 2025-26 season is in-sample (the rules were
+chosen on it). Whatever this finds is a lead to check on 2026-27 fills, not
+a result, and it changes no rule and no live setting.
+
+**Player types (fixed before looking at any outcome).**
+
+- Each player's box scores from the 2024-25 season and from 2025-26 games
+  that tipped off before 18 November 2025 (the first day in the replay
+  file), games with minutes played only. Nothing after that date is used, so
+  a player's type cannot depend on the results being tested.
+- Seven numbers per player: minutes per game; points, rebounds, assists,
+  three-point attempts and shot attempts per 36 minutes; and the share of
+  his shots that are threes.
+- Players with fewer than 20 such games form their own group ("little
+  history") and are left out of the grouping.
+- The rest are standardised (mean 0, standard deviation 1 across the
+  replay file's players) and split by k-means into **5 types**
+  (`random_state=0`, `n_init=20`). Types are named afterwards from their
+  averages; the names are labels, not findings.
+
+**What is measured**, on `outputs/decompose/orders_no.csv.gz` (one row per
+2025-26 NBA prop market, with the hypothetical resting NO order):
+
+1. *All fills*: profit per filled contract after fees (`pnl_if_filled`,
+   filled rows). Fills are the optimistic kind: public trade prints with
+   the order assumed first in line (`flow_share` 1).
+2. *Current price range*: the same, only where the NO price is 65 cents or
+   more (rules v9).
+3. *Every market, no fill needed*: the YES ask 5 hours before tip-off minus
+   whether the YES won, i.e. what a YES buyer at the ask overpaid, before
+   fees.
+
+For each type and each measure: the type's average, and its difference from
+all other players with a game-clustered t (`kalshi.stats.clustered_mean_t`
+on the linearised difference).
+
+**Variants: 15 comparisons** (5 types x 3 measures), plus the "little
+history" group shown for completeness. Two sensitivity runs, 4 and 6 types,
+are reported only as "does the picture hold", so 3 groupings are tried in
+all. No other grouping, feature set or filter will be tried on this data
+without a new entry.
+
+**Bar for calling something a lead.** A type differs from the rest with
+|t| of 3.0 or more on measure 1 (15 comparisons make 2.0 too easy), the
+difference has the same sign on measure 3, and the same sign in both halves
+of the season (games before and from 1 February 2026). Anything less is
+written up as "no lead". A lead would be checked on 2026-27 live fills
+under its own entry before any rule changed.
+
+**Run:** `python -m research.player_types` (reads
+`data/player_games.parquet` from `python -m live.fetch_nba_data`; writes
+`outputs/player_types/`). Nothing is simulated forward and no live data is
+used.
