@@ -1,0 +1,271 @@
+{
+ "probed_utc": "2026-11-23T20:23+00:00",
+ "sports": {
+  "basketball_nba": {
+   "asked": [
+    "player_points_rebounds_assists",
+    "player_points_rebounds",
+    "player_points_assists",
+    "player_rebounds_assists"
+   ],
+   "games_listed": 10,
+   "games_asked": 2,
+   "markets": {
+    "player_points_assists": {
+     "sportsbooks": 8,
+     "sportsbook_lines": 68,
+     "PrizePicks_lines": 19,
+     "PrizePicks_lines_a_sportsbook_also_quotes": 18,
+     "Underdog_lines": 6,
+     "Underdog_lines_a_sportsbook_also_quotes": 6
+    },
+    "player_points_rebounds": {
+     "sportsbooks": 8,
+     "sportsbook_lines": 81,
+     "PrizePicks_lines": 25,
+     "PrizePicks_lines_a_sportsbook_also_quotes": 21,
+     "Underdog_lines": 12,
+     "Underdog_lines_a_sportsbook_also_quotes": 12
+    },
+    "player_points_rebounds_assists": {
+     "sportsbooks": 10,
+     "sportsbook_lines": 111,
+     "PrizePicks_lines": 26,
+     "PrizePicks_lines_a_sportsbook_also_quotes": 22,
+     "Underdog_lines": 20,
+     "Underdog_lines_a_sportsbook_also_quotes": 19
+    },
+    "player_rebounds_assists": {
+     "sportsbooks": 8,
+     "sportsbook_lines": 67,
+     "PrizePicks_lines": 22,
+     "PrizePicks_lines_a_sportsbook_also_quotes": 10,
+     "Underdog_lines": 4,
+     "Underdog_lines_a_sportsbook_also_quotes": 4
+    }
+   }
+  },
+  "basketball_ncaab": {
+   "asked": [
+    "player_points",
+    "player_rebounds",
+    "player_assists",
+    "player_threes",
+    "player_points_rebounds_assists"
+   ],
+   "games_listed": 46,
+   "games_asked": 2,
+   "markets": {}
+  },
+  "americanfootball_ncaaf": {
+   "asked": [
+    "player_pass_yds",
+    "player_rush_yds",
+    "player_reception_yds",
+    "player_receptions",
+    "player_pass_tds"
+   ],
+   "games_listed": 71,
+   "games_asked": 2,
+   "markets": {
+    "player_reception_yds": {
+     "sportsbooks": 5,
+     "sportsbook_lines": 9,
+     "PrizePicks_lines": 6,
+     "PrizePicks_lines_a_sportsbook_also_quotes": 6,
+     "Underdog_lines": 0,
+     "Underdog_lines_a_sportsbook_also_quotes": 0
+    },
+    "player_rush_yds": {
+     "sportsbooks": 5,
+     "sportsbook_lines": 10,
+     "PrizePicks_lines": 5,
+     "PrizePicks_lines_a_sportsbook_also_quotes": 5,
+     "Underdog_lines": 0,
+     "Underdog_lines_a_sportsbook_also_quotes": 0
+    },
+    "player_pass_tds": {
+     "sportsbooks": 3,
+     "sportsbook_lines": 1,
+     "PrizePicks_lines": 0,
+     "PrizePicks_lines_a_sportsbook_also_quotes": 0,
+     "Underdog_lines": 0,
+     "Underdog_lines_a_sportsbook_also_quotes": 0
+    },
+    "player_pass_yds": {
+     "sportsbooks": 5,
+     "sportsbook_lines": 3,
+     "PrizePicks_lines": 1,
+     "PrizePicks_lines_a_sportsbook_also_quotes": 1,
+     "Underdog_lines": 0,
+     "Underdog_lines_a_sportsbook_also_quotes": 0
+    },
+    "player_receptions": {
+     "sportsbooks": 1,
+     "sportsbook_lines": 3,
+     "PrizePicks_lines": 0,
+     "PrizePicks_lines_a_sportsbook_also_quotes": 0,
+     "Underdog_lines": 0,
+     "Underdog_lines_a_sportsbook_also_quotes": 0
+    }
+   }
+  },
+  "icehockey_nhl": {
+   "asked": [
+    "player_points",
+    "player_assists",
+    "player_goals",
+    "player_shots_on_goal",
+    "player_total_saves",
+    "player_blocked_shots"
+   ],
+   "games_listed": 8,
+   "games_asked": 2,
+   "markets": {
+    "player_assists": {
+     "sportsbooks": 5,
+     "sportsbook_lines": 36,
+     "PrizePicks_lines": 4,
+     "PrizePicks_lines_a_sportsbook_also_quotes": 4,
+     "Underdog_lines": 2,
+     "Underdog_lines_a_sportsbook_also_quotes": 2
+    },
+    "player_blocked_shots": {
+     "sportsbooks": 1,
+     "sportsbook_lines": 5,
+     "PrizePicks_lines": 13,
+     "PrizePicks_lines_a_sportsbook_also_quotes": 4,
+     "Underdog_lines": 2,
+     "Underdog_lines_a_sportsbook_also_quotes": 2
+    },
+    "player_goals": {
+     "sportsbooks": 4,
+     "sportsbook_lines": 151,
+     "PrizePicks_lines": 0,
+     "PrizePicks_lines_a_sportsbook_also_quotes": 0,
+     "Underdog_lines": 0,
+     "Underdog_lines_a_sportsbook_also_quotes": 0
+    },
+    "player_points": {
+     "sportsbooks": 6,
+     "sportsbook_lines": 38,
+     "PrizePicks_lines": 9,
+     "PrizePicks_lines_a_sportsbook_also_quotes": 9,
+     "Underdog_lines": 6,
+     "Underdog_lines_a_sportsbook_also_quotes": 6
+    },
+    "player_shots_on_goal": {
+     "sportsbooks": 8,
+     "sportsbook_lines": 41,
+     "PrizePicks_lines": 23,
+     "PrizePicks_lines_a_sportsbook_also_quotes": 9,
+     "Underdog_lines": 7,
+     "Underdog_lines_a_sportsbook_also_quotes": 7
+    },
+    "player_total_saves": {
+     "sportsbooks": 5,
+     "sportsbook_lines": 5,
+     "PrizePicks_lines": 4,
+     "PrizePicks_lines_a_sportsbook_also_quotes": 4,
+     "Underdog_lines": 0,
+     "Underdog_lines_a_sportsbook_also_quotes": 0
+    }
+   }
+  },
+  "soccer_epl": {
+   "asked": [
+    "player_shots",
+    "player_shots_on_target",
+    "player_assists"
+   ],
+   "games_listed": 21,
+   "games_asked": 0,
+   "markets": {},
+   "note": "no game in the next 72 hours"
+  },
+  "soccer_spain_la_liga": {
+   "asked": [
+    "player_shots",
+    "player_shots_on_target",
+    "player_assists"
+   ],
+   "games_listed": 23,
+   "games_asked": 0,
+   "markets": {},
+   "note": "no game in the next 72 hours"
+  },
+  "soccer_usa_mls": {
+   "asked": [
+    "player_shots",
+    "player_shots_on_target",
+    "player_assists"
+   ],
+   "games_listed": 10,
+   "games_asked": 2,
+   "markets": {
+    "player_assists": {
+     "sportsbooks": 1,
+     "sportsbook_lines": 69,
+     "PrizePicks_lines": 0,
+     "PrizePicks_lines_a_sportsbook_also_quotes": 0,
+     "Underdog_lines": 0,
+     "Underdog_lines_a_sportsbook_also_quotes": 0
+    },
+    "player_shots": {
+     "sportsbooks": 1,
+     "sportsbook_lines": 302,
+     "PrizePicks_lines": 0,
+     "PrizePicks_lines_a_sportsbook_also_quotes": 0,
+     "Underdog_lines": 0,
+     "Underdog_lines_a_sportsbook_also_quotes": 0
+    },
+    "player_shots_on_target": {
+     "sportsbooks": 2,
+     "sportsbook_lines": 153,
+     "PrizePicks_lines": 0,
+     "PrizePicks_lines_a_sportsbook_also_quotes": 0,
+     "Underdog_lines": 0,
+     "Underdog_lines_a_sportsbook_also_quotes": 0
+    }
+   }
+  },
+  "soccer_uefa_champs_league": {
+   "asked": [
+    "player_shots",
+    "player_shots_on_target",
+    "player_assists"
+   ],
+   "games_listed": 18,
+   "games_asked": 2,
+   "markets": {
+    "player_assists": {
+     "sportsbooks": 1,
+     "sportsbook_lines": 58,
+     "PrizePicks_lines": 0,
+     "PrizePicks_lines_a_sportsbook_also_quotes": 0,
+     "Underdog_lines": 0,
+     "Underdog_lines_a_sportsbook_also_quotes": 0
+    },
+    "player_shots": {
+     "sportsbooks": 2,
+     "sportsbook_lines": 265,
+     "PrizePicks_lines": 0,
+     "PrizePicks_lines_a_sportsbook_also_quotes": 0,
+     "Underdog_lines": 0,
+     "Underdog_lines_a_sportsbook_also_quotes": 0
+    },
+    "player_shots_on_target": {
+     "sportsbooks": 2,
+     "sportsbook_lines": 146,
+     "PrizePicks_lines": 0,
+     "PrizePicks_lines_a_sportsbook_also_quotes": 0,
+     "Underdog_lines": 0,
+     "Underdog_lines_a_sportsbook_also_quotes": 0
+    }
+   }
+  }
+ },
+ "credits_before": 68233,
+ "credits_after": 68147,
+ "credits_spent": 86
+}
