@@ -1,0 +1,57 @@
+{
+ "status": "forward check; live lines, public results; not a forecast",
+ "counted_from": "2026-11-24",
+ "picks_made": 323,
+ "picks_made_at_the_bar": 10,
+ "results": {
+  "pending": 323
+ },
+ "primary": {
+  "picks": 0,
+  "bar": 0.54,
+  "break_even": 0.5421,
+  "status": "waiting for the first look (0 of 200)"
+ },
+ "primary_3_or_more_books": {
+  "picks": 0,
+  "bar": 0.54,
+  "break_even": 0.5421,
+  "status": "waiting for the first look (0 of 200)"
+ },
+ "calibration_all_picks": {
+  "picks": 0
+ },
+ "by_stated_chance": {
+  "under 52%": {
+   "picks": 0
+  },
+  "52 to 53%": {
+   "picks": 0
+  },
+  "53 to 54%": {
+   "picks": 0
+  },
+  "54 to 55%": {
+   "picks": 0
+  },
+  "55% or more": {
+   "picks": 0
+  }
+ },
+ "by_app": {
+  "PrizePicks": {
+   "picks": 0
+  },
+  "Underdog": {
+   "picks": 0
+  }
+ },
+ "before_the_plan_not_tested": {
+  "picks": 468,
+  "games": 12,
+  "win_rate": 0.5107,
+  "stated_chance": 0.5141,
+  "won_less_stated": -0.0034,
+  "t": -0.18
+ }
+}
