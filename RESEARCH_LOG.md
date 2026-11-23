@@ -5296,3 +5296,43 @@ fills once the current rules reach their 1,500-fill checkpoint, under an
 entry of its own. A difference of about 1 cent between groups could not
 be told from zero on that many fills (about 1,900 are needed to see a
 3-cent edge at all), so it would be read as a check on direction only.
+
+## 2026-11-23: Player-pool page: lines every 10 minutes before tip-off (owner request)
+
+*Workflow timing, the pick'em script's gap, the page's wording and tests.
+No live rule, limit or order path changes; `live/`, `kalshi/` and `deploy/`
+are untouched. Exploratory: no result is claimed.*
+
+**Why.** In the pulls saved from 21 to 23 November, 958 app lines had a
+sportsbook price on the exact line within 45 minutes; the better side
+reached 55% on 2 of them and 56% on 1 (exploratory, three days). The apps'
+standard lines sit on the sportsbooks'. Where a gap opens it is after
+lineup news, and it lasts minutes; an hourly read of the apps cannot see
+it. The owner asked for faster reads with the credits left (68,673 of
+100,000 on 23 November).
+
+**Old and new.**
+
+- *Watcher starts of "book lines" (near scope) and "pick'em app lines".*
+  Old: about every 20 minutes. New: about every 10
+  (`player-pool-page.yml`, 1200 to 600 seconds).
+- *Gap between pick'em pulls* (`research/pickem_lines.py`). Old: 1 hour.
+  New: 1 hour, or 10 minutes (`NEAR_MINUTES_BETWEEN`) once a game in the
+  last pull tips off within 6.5 hours (`NEAR_HOURS`, the sportsbook
+  refresh's own window). The 15,000-credit floor is unchanged.
+- *Page.* An open page looks for newer files every 5 minutes (was 10) and
+  calls app lines old after 1 hour (was 2).
+
+**Cost, estimated.** In the 6.5 hours before a tip-off, about 39 reads a
+game instead of 20 for the sportsbooks (8 credits each) and 7 for the apps
+(4 each): about 470 credits a game against about 185. An 8-game night goes
+from about 1,700 credits to about 4,000 with the day's full snapshots.
+Seven nights to 30 November: about 28,000 of the 68,673 left. A full month
+at this rate would be about 120,000, more than the plan's 100,000, so this
+cadence fits December only on lighter slates or a larger plan; the
+"book lines" job has no credit floor of its own. The 18,000-credit
+game-winners pull (22 November entry) also comes out of the same credits.
+
+**Still untested.** Faster reads make the comparison fresher; they do not
+show that any pick wins more often than its break-even. That is the forward
+check already written down for pick'em lines.

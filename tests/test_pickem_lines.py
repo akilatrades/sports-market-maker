@@ -114,7 +114,9 @@ def test_a_pull_is_due_only_after_the_gap(tmp_path):
     assert P.due(NOW, path)  # no file yet
     path.write_text(",".join(P.COLUMNS) + "\n", "utf-8")
     assert P.due(NOW, path)  # a file with no rows
-    P.app_lines(reply(), NOW).to_csv(path, index=False)
+    # A game far from tip-off: the hourly gap (the near one is tested below).
+    far = (NOW + timedelta(hours=17)).strftime("%Y-%m-%dT%H:%M:%SZ")
+    P.app_lines(reply(), NOW).assign(commence_utc=far).to_csv(path, index=False)
     assert P.last_pull(path) == NOW
     gap = timedelta(hours=P.MIN_HOURS_BETWEEN)
     assert not P.due(NOW + gap - timedelta(minutes=1), path)
@@ -124,7 +126,29 @@ def test_a_pull_is_due_only_after_the_gap(tmp_path):
     # At most one pull an hour (owner's choice, 2026-11-23), and the bot's
     # credits come first.
     assert P.MIN_HOURS_BETWEEN >= 1
+    assert P.NEAR_MINUTES_BETWEEN >= 10
     assert P.MIN_CREDITS_LEFT >= 10_000
+
+
+def test_pulls_come_every_10_minutes_once_a_game_is_close(tmp_path):
+    """Hourly while tip-off is far away; every 10 minutes within 6.5 hours of
+    it (owner, 2026-11-23). Games that have started do not count."""
+    path = tmp_path / "nba_latest.csv"
+    frame = P.app_lines(reply(), NOW)
+    ten, hour = timedelta(minutes=P.NEAR_MINUTES_BETWEEN), timedelta(hours=1)
+    for hours_to_tip, near in ((12, False), (6.5, True), (0.5, True), (-1, False)):
+        tip = NOW + ten + timedelta(hours=hours_to_tip)
+        frame.assign(commence_utc=tip.strftime("%Y-%m-%dT%H:%M:%SZ")).to_csv(
+            path, index=False
+        )
+        assert P.tips_soon(NOW + ten, path) is near, hours_to_tip
+        assert P.due(NOW + ten, path) is near, hours_to_tip
+        assert not P.due(NOW + ten - timedelta(minutes=1), path)
+        assert P.due(NOW + hour, path)
+    frame.assign(commence_utc="not a time").to_csv(path, index=False)
+    assert not P.tips_soon(NOW, path)
+    assert not P.tips_soon(NOW, tmp_path / "missing.csv")
+    assert P.NEAR_HOURS == 6.5
 
 
 def listed_events():
