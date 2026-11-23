@@ -5240,3 +5240,59 @@ under its own entry before any rule changed.
 `data/player_games.parquet` from `python -m live.fetch_nba_data`; writes
 `outputs/player_types/`). Nothing is simulated forward and no live data is
 used.
+
+## 2026-11-23: Do YES buyers overpay more for some types of player? (result: no lead; exploratory)
+
+Run as written in the plan above, once (`python -m research.player_types`,
+tables in `outputs/player_types/`). In-sample 2025-26 replay; fills assume
+the order was first in line (`flow_share` 1). Nothing here is live and
+nothing is a forecast.
+
+**The types.** 165 of the replay file's 175 players had 20 or more games
+before 18 November 2025; the other 10 are "little history". Names are
+labels given after the grouping:
+
+| Type | Players | Minutes | Points / 36 | Rebounds / 36 | Assists / 36 | Share of shots that are threes |
+|---|---:|---:|---:|---:|---:|---:|
+| 1 High scorers, inside | 35 | 32.5 | 24.0 | 8.4 | 5.2 | 27% |
+| 2 High scorers, perimeter | 36 | 32.8 | 23.6 | 4.9 | 5.8 | 47% |
+| 3 Starters in a supporting role | 46 | 30.0 | 15.7 | 6.0 | 3.5 | 42% |
+| 4 Rebounding big men | 21 | 25.8 | 15.5 | 11.7 | 2.8 | 8% |
+| 5 Three-point specialists | 27 | 22.7 | 14.9 | 5.3 | 3.1 | 63% |
+
+**Each type against all other players** (cents; game-clustered t):
+
+| Type | Filled contracts | Profit per fill | Difference | t | NO 65¢+: difference | t | YES overpay, all markets: difference | t |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|
+| 1 High scorers, inside | 11,031 | +1.9 | +0.4 | 0.5 | +1.3 | 1.4 | +0.3 | 0.4 |
+| 2 High scorers, perimeter | 9,806 | +2.4 | +1.0 | 1.2 | +1.2 | 1.2 | +0.7 | 1.0 |
+| 3 Supporting starters | 5,719 | +1.0 | −0.8 | −0.8 | −1.9 | −1.8 | −0.8 | −1.0 |
+| 4 Rebounding big men | 2,899 | +1.1 | −0.6 | −0.5 | −0.2 | −0.1 | −0.2 | −0.2 |
+| 5 Three-point specialists | 2,107 | +0.7 | −1.1 | −0.6 | −1.5 | −0.9 | −0.5 | −0.4 |
+| Little history | 1,913 | +0.4 | −1.4 | −0.8 | −1.8 | −1.0 | −1.0 | −0.6 |
+
+**Verdict: no lead.** The bar was |t| of 3.0 or more on profit per fill;
+the largest of the 15 comparisons is 1.8 (supporting starters, NO at 65¢ or
+more) and the largest on the primary measure is 1.2. No type clears it.
+
+**What the direction looks like, and why it is not a finding.** The two
+high-scorer types sit about 0.3 to 1.3 cents above the rest on all three
+measures and every other group sits below, which is the direction the
+"fans back stars" idea predicts. But a difference of about 1 cent has a
+standard error of about 0.8 cents here, and the halves disagree: for the
+inside scorers the difference is −0.8 cents before 1 February and +0.7
+after. With 4 types instead of 5 the perimeter scorers reach t 2.0 (+1.6
+cents), and with 6 types the top group reaches 1.4; that is 1 nominal
+"2.0" among 3 groupings and stays under the bar.
+
+**Counts.** 15 comparisons on the pre-registered grouping; 3 groupings
+tried (5, 4 and 6 types); 1 feature set; no other filter. Nothing was
+re-run with different choices.
+
+**What follows.** No rule changes and nothing is added to the bots. If the
+question is worth more, the clean test is this season: the same five types,
+recomputed from games before 20 October 2026, compared on 2026-27 live
+fills once the current rules reach their 1,500-fill checkpoint, under an
+entry of its own. A difference of about 1 cent between groups could not
+be told from zero on that many fills (about 1,900 are needed to see a
+3-cent edge at all), so it would be read as a check on direction only.
