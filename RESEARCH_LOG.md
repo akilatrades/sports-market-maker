@@ -5336,3 +5336,72 @@ game-winners pull (22 November entry) also comes out of the same credits.
 **Still untested.** Faster reads make the comparison fresher; they do not
 show that any pick wins more often than its break-even. That is the forward
 check already written down for pick'em lines.
+
+## 2026-11-23: Pick'em picks against the sportsbooks: the forward check (plan, written before any result)
+
+**Owner request.** Get a PrizePicks model running. The model is the one the
+page already shows: each app line priced by the sportsbooks' de-vigged
+chance for the same line. This entry is the check, promised on 21 November,
+of whether that chance can be trusted at the apps' lines, written before
+any outcome has been looked at. What has been looked at is the spread of
+the chances alone (previous entry: 958 exact-line matches from 21 to 23
+November, 5 at 54% or more).
+
+**What a pick is.** One per app, player, stat and game: the stronger side
+at the last pull before tip-off for which the sportsbooks priced the line,
+from a sportsbook snapshot taken in the 30 minutes before that pull
+(`outputs/pickem/nba_<day>.csv.gz` against `outputs/books/nba_<day>.csv.gz`).
+A half-point line needs the sportsbooks' price on that exact line. A
+whole-number line is priced as the page prices it (over 4 is over 4.5,
+under 4 is under 3.5), the stronger side judged with ties set aside. No
+"at least" floors: a pick needs an exact price.
+
+**Grading.** From public box scores (`data/player_games.parquet`). Win or
+loss; a whole-number line landed on exactly is a tie and is set aside; a
+player with no minutes is void. The apps' own settlement is not read.
+
+**Counted from** games tipping off on or after 24 November 2026 (the first
+day with pulls every 10 minutes before tip-off). The pulls of 21 to 23
+November are shown in a separate line and are not part of any test.
+
+**Primary question.** Do picks the sportsbooks put at **54% or more** win
+more often than 54.2%, the lowest break-even of any standard PrizePicks
+entry (5- and 6-pick Flex, payouts as published 19 October 2026)?
+Measure: win rate of those picks less 54.2%, with a game-clustered t
+(`kalshi.stats.clustered_mean_t`).
+
+- *First look* at 200 graded picks at 54% or more; *verdict* at 600.
+- *Pass at the verdict:* the win rate beats 54.2% with t of 2.0 or more.
+  At 600 picks that needs about 58% or better.
+- *Stop early at the first look* if the win rate is under 52%.
+- Anything else: "not shown".
+
+**Secondary, reported each time, no pass bar.** (1) Calibration on every
+graded pick: the average of (won less stated chance), with its clustered
+t; near zero means the sportsbooks' chance is a fair guide at the apps'
+lines. (2) Win rate by stated chance: under 52%, 52 to 53%, 53 to 54%, 54
+to 55%, 55% or more. (3) The primary measure again on picks priced by 3 or
+more sportsbooks. **Variants: 1 primary, 1 extra cut (3 or more books).**
+No other threshold, window or filter is read as a test without a new
+entry.
+
+**How long this will take.** At the rate seen so far (about 1 line in 200
+at 54% or more, a few hundred lines a night), the first look is months
+away. If picks at 54% or more stay that rare, that is itself the answer
+for the four main stats: there is too little to play, whatever the win
+rate. Widening the pull to other stats or to the apps' changed-payout
+lines would be a new entry.
+
+**Also added, no result claimed.** The page's Tonight's props tab gains an
+entry builder for PrizePicks: from the lines on the page it takes the
+strongest exact-priced side per player, at most one per game, and shows
+the expected return of each standard entry (2 to 6 picks, Power and Flex)
+from the stated chances, treated as independent. It says so when no entry
+has a positive expected return, which on the lines seen so far is the
+usual case. It places nothing, and the expected return is arithmetic on
+the sportsbooks' chances, not a forecast. Underdog's payouts are not in
+it.
+
+**Run:** `python -m research.pickem_forward` (after
+`python -m live.fetch_nba_data`), each day from the player-pool workflow's
+stats job; tables in `outputs/pickem_forward/`. Aggregates only.
