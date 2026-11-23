@@ -3,6 +3,8 @@ name: player-pool page (read-only)
 # (research/nba_player_pool_dashboard.html).
 #
 #   stats   rewrites outputs/player_pool/latest.json from public box scores.
+#           It also grades the pick'em forward check
+#           (outputs/pickem_forward/summary.json).
 #   prices  until the night's last game tips off: reads Kalshi's public bid
 #           and ask about every three minutes, and every second pass reprices
 #           the props with the stat model (the projections job's own pricing
@@ -47,6 +49,8 @@ on:
       - ".github/workflows/pickem-lines.yml"
       - "research/returning_regular.py"
       - "tests/test_returning_regular.py"
+      - "research/pickem_forward.py"
+      - "tests/test_pickem_forward.py"
 permissions:
   contents: read
 jobs:
@@ -64,7 +68,7 @@ jobs:
           pytest -q tests/test_nba_player_pool_dashboard.py
           tests/test_player_pool_quotes.py tests/test_player_pool_model.py
           tests/test_player_pool_workflow.py tests/test_pickem_lines.py
-          tests/test_returning_regular.py
+          tests/test_returning_regular.py tests/test_pickem_forward.py
   stats:
     if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
@@ -82,11 +86,16 @@ jobs:
       - run: pip install -r requirements.txt
       - run: python -m live.fetch_nba_data
       - run: python -m research.nba_player_pool_dashboard --data-only
+      # Grades yesterday's pick'em picks against the new box scores
+      # (RESEARCH_LOG.md, 2026-11-23). Reads committed files only; a failure
+      # here must not hold back the Players-tab data.
+      - name: Pick'em forward check
+        run: python -m research.pickem_forward || echo "::warning::the pick'em forward check failed"
       - name: Commit the Players-tab data when the box scores have changed
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add outputs/player_pool/latest.json
+          git add outputs/player_pool/latest.json outputs/pickem_forward/summary.json
           if git diff --cached --quiet; then exit 0; fi
           git commit -m "Player-pool page data"
           for attempt in 1 2 3 4 5; do

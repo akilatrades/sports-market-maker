@@ -35,9 +35,14 @@ def test_only_the_two_publishing_jobs_can_write():
         assert "cancel-in-progress: false" in JOBS[name]
 
 
-def test_stats_adds_one_file_to_main():
+def test_stats_adds_two_files_to_main():
     job = JOBS["stats"]
-    assert re.findall(r"git add (.+)", job) == ["outputs/player_pool/latest.json"]
+    assert re.findall(r"git add (.+)", job) == [
+        "outputs/player_pool/latest.json outputs/pickem_forward/summary.json"
+    ]
+    # The pick'em forward check reads committed files and cannot stop the job.
+    assert 'python -m research.pickem_forward || echo "::warning::' in job
+    assert (ROOT / "outputs/pickem_forward/summary.json").exists()
     assert "--data-only" in job
     assert "--force" not in job
 
