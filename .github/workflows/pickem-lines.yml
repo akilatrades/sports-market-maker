@@ -8,7 +8,8 @@ name: pick'em app lines (page only)
 # that nothing in it can delay or break that one.
 #
 # Cost: up to 4 Odds API credits a game per pull. research/pickem_lines.py
-# skips a pull while the last one is under 5 hours old (about four a day) and
+# skips a pull while the last one is under 1 hour old (about hourly on game
+# nights; it was 5 hours until 2026-11-23) and
 # whenever fewer than 15,000 credits remain. A start that is not due ends in
 # seconds, installs nothing and spends nothing.
 on:
@@ -22,8 +23,10 @@ on:
   schedule:
     - cron: "40 10,15,20 * * *"
     - cron: "40 1 * * *"
-  # The owner's "pull now" button. It ignores the 5-hour gap, not the credit
-  # floor.
+  # The owner's "pull now" button, which ignores the gap (not the credit
+  # floor). The player-pool watcher also starts this about every 20 minutes
+  # on game days, because GitHub runs the schedules above only a few times a
+  # day; those starts keep the gap, so most of them end in seconds.
   workflow_dispatch:
 permissions:
   contents: read
@@ -32,11 +35,13 @@ concurrency:
   cancel-in-progress: false
 jobs:
   pull:
-    # Spends Odds API credits: main only, and by hand the owner only.
+    # Spends Odds API credits: main only; by hand the owner only, or the
+    # player-pool watcher (github-actions[bot]), which never skips the gap.
     if: >-
       github.ref == 'refs/heads/main' &&
       (github.event_name != 'workflow_dispatch' ||
-      (github.actor == 'akilatrades' && github.triggering_actor == 'akilatrades'))
+      (github.actor == 'akilatrades' && github.triggering_actor == 'akilatrades') ||
+      github.triggering_actor == 'github-actions[bot]')
     runs-on: ubuntu-latest
     timeout-minutes: 8
     permissions:
@@ -50,10 +55,11 @@ jobs:
         id: due
         env:
           EVENT: ${{ github.event_name }}
+          BY: ${{ github.triggering_actor }}
         run: |
           set -euo pipefail
           flag=""
-          if [[ "$EVENT" == workflow_dispatch ]]; then flag="--force"; fi
+          if [[ "$EVENT" == workflow_dispatch && "$BY" == akilatrades ]]; then flag="--force"; fi
           echo "state=$(python -m research.pickem_lines --due $flag)" >> "$GITHUB_OUTPUT"
       - name: Install
         if: steps.due.outputs.state == 'due'
@@ -63,10 +69,11 @@ jobs:
         env:
           ODDS_API_KEY: ${{ secrets.ODDS_API_KEY }}
           EVENT: ${{ github.event_name }}
+          BY: ${{ github.triggering_actor }}
         run: |
           set -euo pipefail
           flag=""
-          if [[ "$EVENT" == workflow_dispatch ]]; then flag="--force"; fi
+          if [[ "$EVENT" == workflow_dispatch && "$BY" == akilatrades ]]; then flag="--force"; fi
           python -m research.pickem_lines $flag
       - name: Commit the lines
         if: steps.due.outputs.state == 'due'

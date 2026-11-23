@@ -8,7 +8,11 @@ name: player-pool page (read-only)
 #           the props with the stat model (the projections job's own pricing
 #           function). Both go out as small files on the data-only branch
 #           player-pool-live. Nothing is added to main, and nothing the
-#           projections job writes is touched.
+#           projections job writes is touched. About every 20 minutes it
+#           also starts the "book lines" and "pick'em app lines" workflows
+#           (each keeps its own rules, scope and credit floor), because
+#           GitHub runs their own schedules only a few times a day and the
+#           page's sportsbook and app times went many hours stale.
 #
 # PUBLIC data only. No keys, no account, no orders.
 #
@@ -97,6 +101,8 @@ jobs:
     timeout-minutes: 345
     permissions:
       contents: write
+      # Only to start the two line workflows (see the loop below).
+      actions: write
     concurrency:
       # One watcher at a time. A start that arrives while one is running
       # waits and takes over when it ends.
@@ -113,6 +119,10 @@ jobs:
       - name: Box scores for the stat model
         run: python -m live.fetch_nba_data
       - name: Publish Kalshi's quotes and the stat model until the last game tips off
+        env:
+          # This run's own short-lived token, to start the line workflows only.
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
         run: |
           set -uo pipefail
           export GIT_AUTHOR_NAME="github-actions[bot]"
@@ -122,9 +132,20 @@ jobs:
           dir=outputs/player_pool
           stop=$((SECONDS + 330 * 60))
           fetched=$SECONDS
+          lines=-99999
           failures=0
           pass=0
           while [ "$SECONDS" -lt "$stop" ]; do
+            # Sportsbook lines (near scope: games within 6.5 hours) and the
+            # pick'em apps, about every 20 minutes. A failed start is only a
+            # warning; the quotes still go out.
+            if [ $((SECONDS - lines)) -ge 1200 ]; then
+              gh workflow run books.yml -f scope=near \
+                || echo "::warning::could not start book lines"
+              gh workflow run pickem-lines.yml \
+                || echo "::warning::could not start pick'em app lines"
+              lines=$SECONDS
+            fi
             status=0
             python -m research.player_pool_quotes --out "$dir/kalshi_quotes.json" || status=$?
             # 0: quotes written, games still ahead. 3: written, none ahead.
