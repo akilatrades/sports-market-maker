@@ -1,0 +1,58 @@
+name: Injury-report lag study (research)
+# Does Kalshi lag the official NBA injury report? (RESEARCH_LOG.md,
+# 2026-11-24). Research only: it places no order, reads no account and spends
+# no Odds API credits. It reads the league's public injury reports and
+# Kalshi's public market results, then scores the plan written before any
+# data. Parsed reports stay in an Actions cache; only events and aggregates
+# are committed to outputs/injury_lag/.
+on:
+  push:
+    branches: [main]
+    paths: ["research/injury_lag.py", ".github/workflows/injury-lag.yml"]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: injury-lag
+  cancel-in-progress: false
+jobs:
+  study:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 75
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r requirements.txt
+      - uses: actions/cache/restore@v4
+        with:
+          path: state/injury_lag
+          key: injury-lag-${{ github.run_id }}
+          restore-keys: injury-lag-
+      - name: Official injury reports (resumes where the last run stopped)
+        run: python -m research.injury_lag reports
+      - name: Kalshi's public results for the matched markets
+        run: python -m research.injury_lag results
+      - uses: actions/cache/save@v4
+        if: always()
+        with:
+          path: state/injury_lag
+          key: injury-lag-${{ github.run_id }}
+      - name: Score
+        run: python -m research.injury_lag score
+      - name: Commit the result
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A outputs/injury_lag
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m "Injury-report lag study $(date -u +%Y-%m-%dT%H:%MZ)"
+          for attempt in 1 2 3 4 5; do
+            if git pull --rebase && git push; then exit 0; fi
+            sleep $((attempt * 5))
+          done
+          exit 1
