@@ -5593,3 +5593,43 @@ the median first stale trade comes at least 2 minutes after slot s. A pass
 is in-sample (2025-26) and only justifies building a live paper watcher on
 2026-27 before any order. Variants: the window end (15, 30, 60 minutes)
 is reported, the 30-minute one decides: 1 decisive variant.
+
+## 2026-11-24: An esports rating model against Kalshi's price (plan, written before any data)
+
+*Owner request: find an edge from information the market does not already
+have. Esports is where the spread maker has done best and where sportsbooks
+are weakest. Research only: nothing here places an order.*
+
+**Question.** Do team ratings built only from past match results predict
+esports match winners better than Kalshi's price just before the match, and
+would betting the gap have paid?
+
+**Data.** Every settled market in Kalshi's esports match series (Counter-
+Strike 2, Dota 2, League of Legends, Overwatch, Rainbow Six, Call of Duty,
+Valorant: `KX...GAME`), from Kalshi's public market data on GitHub's
+runners: team (the market's subtitle), event, start, result, and the last
+hourly candle (bid, ask, last price) at least 30 minutes before the start.
+One market per match (the first team listed). Committed to
+`data/esports/` (Kalshi public data, as `data/kalshi_history/`).
+
+**Ratings (fixed now, not tuned).** Elo per game title: every team starts at
+1500; after each match the winner gains K x (1 - expected) with K = 32;
+expected = 1 / (1 + 10^((other - own) / 400)). Matches in start-time order,
+each priced only from matches that finished before it started. A team's
+first 5 matches are rated but not scored.
+
+**Measures.** On matches with a two-sided Kalshi quote (bid and ask both
+between 2c and 98c): (a) log loss of Elo, of Kalshi's midpoint, and of a
+blend fitted on the first half (by date) and scored on the second; (b) a
+logistic regression of the result on logit(mid) and logit(Elo), clustered by
+event; (c) the rule "buy the side Elo rates at least 5 points more likely
+than Kalshi's ask, at the ask, paying the taker fee", profit per contract
+after fees, second half only.
+
+**Bar.** Passes if, on the second half: the blend's log loss is lower than
+the midpoint's, Elo's logistic coefficient has t >= 2, and the rule makes
+more than zero after fees with t >= 2 on at least 200 bets. A pass is
+in-sample for the rule's 5-point threshold only in name (it is fixed here)
+and leads to a paper watcher on live esports matches before any order.
+Variants: one (K = 32, 5 points); K = 16 and 48 and thresholds of 3 and 8
+points are reported as exploratory.
