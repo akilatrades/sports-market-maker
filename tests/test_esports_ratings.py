@@ -2,6 +2,7 @@
 
 import numpy as np
 import pandas as pd
+import pytest
 
 from research import esports_ratings as E
 
@@ -91,6 +92,8 @@ def test_the_rule_buys_the_cheap_side_and_pays_the_fee():
 
 
 def test_a_strong_team_is_found_and_scored_end_to_end():
+    # statsmodels is installed by the study's own workflow, not requirements.txt.
+    pytest.importorskip("statsmodels")
     rng = np.random.default_rng(0)
     teams = [f"t{i}" for i in range(8)]
     strength = {t: i for i, t in enumerate(teams)}
