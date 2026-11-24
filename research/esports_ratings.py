@@ -67,24 +67,53 @@ def norm(name):
     return " ".join(text.split())
 
 
+# Kalshi words each esports market "<Team> wins"; both teams appear only in
+# the rules: "If X wins the <event>: A vs. B <game> match originally ...".
+RULES_TEAMS = re.compile(r":\s*(.+?)\s+vs\.?\s+(.+?)\s+match\b", re.I)
+
+
 def teams_of(market):
-    """(team this market pays on, opponent), from the subtitle and the title
-    ('Team A vs Team B'). None when either cannot be read."""
-    team = norm(market.get("yes_sub_title") or "")
-    title = str(market.get("title") or "")
-    title = re.sub(r"(?i)^will\s+|\s+win.*$|\?$", "", title)
-    parts = re.split(r"(?i)\s+(?:vs\.?|v\.?|versus|-)\s+", title)
-    names = [norm(p) for p in parts if norm(p)]
-    if not team or len(names) != 2:
+    """(team this market pays on, opponent), or None when they cannot be read."""
+    team_raw = str(market.get("yes_sub_title") or "").strip()
+    team = norm(team_raw)
+    if not team:
         return None
-    if team == names[0]:
-        return team, names[1]
-    if team == names[1]:
-        return team, names[0]
-    for i, name in enumerate(names):  # subtitle shorter or longer than the title
-        if team in name or name in team:
-            return team, names[1 - i]
-    return None
+    found = RULES_TEAMS.search(str(market.get("rules_primary") or ""))
+    if found:
+        first, second = found.group(1).strip(), found.group(2).strip()
+    else:  # older wording: "A vs B" in the title
+        title = re.sub(
+            r"(?i)^will\s+|\s+win.*$|\?$", "", str(market.get("title") or "")
+        )
+        parts = re.split(r"(?i)\s+(?:vs\.?|v\.?|versus)\s+", title)
+        if len(parts) != 2:
+            return None
+        first, second = parts
+    a, b = norm(first), norm(second)
+    # The second name runs into the game's name ("PRIVATE CS2"), so match the
+    # team by the start of each side.
+    if a == team or (a.startswith(team) and not b.startswith(team)):
+        opponent = _without_game(second)  # "PRIVATE CS2" -> "private"
+    elif b == team or b.startswith(team):
+        opponent = a
+    else:
+        return None
+    return (team, opponent) if opponent and opponent != team else None
+
+
+GAME_NAMES = (
+    "counter strike 2", "counter strike", "cs2", "cs go", "csgo", "dota 2", "dota",
+    "league of legends", "lol", "overwatch 2", "overwatch", "rainbow six siege",
+    "rainbow six", "r6 siege", "r6", "call of duty", "cod", "valorant",
+)  # fmt: skip
+
+
+def _without_game(name):
+    text = norm(name)
+    for game in sorted(GAME_NAMES, key=len, reverse=True):
+        if text.endswith(" " + game):
+            return text[: -len(game) - 1].strip()
+    return text
 
 
 def start_of(market):

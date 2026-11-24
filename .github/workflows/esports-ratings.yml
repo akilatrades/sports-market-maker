@@ -27,7 +27,7 @@ jobs:
           python-version: "3.12"
       - run: pip install -r requirements.txt
       # Research only; kept out of requirements.txt (the server's packages).
-      - run: pip install statsmodels==0.14.4
+      - run: pip install statsmodels==0.15.0
       - name: Kalshi's public esports markets (resumes)
         run: python -m research.esports_ratings fetch
       - name: Score
