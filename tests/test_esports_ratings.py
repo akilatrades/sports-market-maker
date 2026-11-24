@@ -108,3 +108,10 @@ def test_a_strong_team_is_found_and_scored_end_to_end():
     assert s["matches_scored"] > 400
     assert s["second_half"]["logloss_elo"] < s["second_half"]["logloss_mid"]
     assert s["rule"]["bets"] > 0 and s["rule"]["cents_per_contract"] > 0
+
+
+def test_start_times_with_and_without_fractions_both_parse():
+    # Kalshi mixes "...:44+00:00" and "...:44.951000+00:00" (run failed 24 Nov).
+    times = pd.Series(["2026-06-13T22:28:44.951000+00:00", "2026-06-13T22:28:44+00:00"])
+    parsed = pd.to_datetime(times, utc=True, format="ISO8601")
+    assert parsed.notna().all()
