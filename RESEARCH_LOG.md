@@ -5633,3 +5633,52 @@ in-sample for the rule's 5-point threshold only in name (it is fixed here)
 and leads to a paper watcher on live esports matches before any order.
 Variants: one (K = 32, 5 points); K = 16 and 48 and thresholds of 3 and 8
 points are reported as exploratory.
+
+## 2026-11-24: A robustness search across Kalshi (plan, written before any results)
+
+*Owner request: use parameter sensitivity, walk-forward optimisation, stress
+tests and Monte Carlo simulation to find an edge. Research only.*
+
+**Data.** `outputs/scan/orders_*.csv.gz` (the October 2025 cross-market scan,
+extended to August 2026): for up to 1,200 markets in each of 1,763 Kalshi
+series, an order resting one cent inside the spread on each side every hour
+in the scan's window, whether trades went through it in the next hour
+(first in line: optimistic), and its profit at settlement after the maker
+fee. 1.31 million orders, 394,000 filled, 99,555 events, 11 September 2025
+to 17 August 2026. Historical and simulated throughout.
+
+**Strategy family (480 variants).** Rest one contract on a side when:
+market type (from the series name: game winner, spread, total, part-game
+or other in-game market, season or futures market, or all) x side (YES,
+NO) x price of the side bought (ten bands: 2-10c, 10-20c, ... 90-98c) x
+minimum spread (1, 2, 4 or 8c). A fill is a filled scan order; profit is
+the scan's, after the maker fee.
+
+**1. Parameter sensitivity.** Every variant on the whole period, shown as a
+grid. A result is read as robust only if it sits on a plateau: both
+neighbouring price bands (same type, side and spread) also above zero.
+
+**2. Walk-forward (the decisive test).** Test months January to August 2026.
+For each, variants are chosen on all earlier months only: at least 300
+fills, mean above zero, event-clustered t of 2 or more, and on a plateau.
+The union of the chosen variants' fills in the test month is traded (a fill
+counts once). The joined test months are the out-of-sample result; the
+choosing is part of the strategy, so all 480 variants are accounted for.
+
+**3. Stress tests on the out-of-sample result.** Subtract 2c and 4c a fill
+(the live NBA fills did 2-4c worse than the replay, RESEARCH_LOG.md
+2026-11-24); double the maker fee; leave out the best month; leave out the
+best series.
+
+**4. Monte Carlo.** (a) Resampling whole events of the out-of-sample fills:
+the spread of total profit and the chance of a loss. (b) A null: the whole
+walk-forward rerun 200 times on data where each order's outcome is redrawn
+as a coin with the order's own price (a fair market). The share of null runs
+whose out-of-sample t is at least the real one is the chance that the
+procedure finds this much by luck.
+
+**Bar.** An edge is found if the walk-forward result after the 2c haircut
+is above zero with event-clustered t >= 2 on at least 1,000 fills, at least
+5 of the 8 test months are above zero, and fewer than 5% of null runs do as
+well. Anything less is reported as not found. A pass leads to a live paper
+test of the chosen variants before any order.
