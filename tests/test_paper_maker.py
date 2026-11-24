@@ -152,6 +152,7 @@ def test_v2_rules_differ_from_v1():
         "no_seller_veto2",
         "no_seller_stat_veto",
         "no_seller_bookline",
+        "no_seller_book_primary",  # added 2026-11-20 (paper only)
     }
 
 
