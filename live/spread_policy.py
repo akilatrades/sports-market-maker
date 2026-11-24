@@ -37,7 +37,9 @@ from pathlib import Path
 # at 10c or more made 2.1c over 593; under v7 about 85% of contracts filled
 # at spreads under 10c and lost $10.66 in three days. Every other limit,
 # esports only included, is v7's.
-STRATEGY_VERSION = "spread-maker-v8-wide-spreads"
+# v9 (2026-11-24): MIN_LEAD_MINUTES 85 -> 180 (see there). Every other limit,
+# esports only and the v8 spread rules included, is v8's.
+STRATEGY_VERSION = "spread-maker-v9-early-quotes"
 # The shared-risk cohort journal lives in STATE; the owner creates ARM_MARKER
 # to allow live orders.
 STATE = Path("/home/trader/prod-spread-auto")
@@ -111,7 +113,15 @@ SHADOW_REPOST_MINUTES = 60  # shadow: one quote per market and side per hour
 # New York time, or from Kalshi's milestones) and at least MIN_LEAD_MINUTES
 # away, so a 65-minute order expires at least CANCEL_LEAD_MINUTES before the
 # start; any resting quote that close to the start is cancelled.
-MIN_LEAD_MINUTES = 85  # ORDER_LIFETIME_MINUTES + CANCEL_LEAD_MINUTES
+# v9 (2026-11-24, owner: "lets do all these changes"; RESEARCH_LOG.md "Spread
+# maker v9: no new quotes in the last 3 hours"): 85 -> 180 minutes. Live
+# v6-v8 fills (exploratory, about 22 cuts, split after looking) filled 30-120
+# minutes before the start lost 13.9c a contract (36 fills, event t -2.5);
+# 2-10 hours out -1.2c (196); more than 10 hours out +6.7c (174). A
+# 65-minute order placed at 180 minutes expires 115 minutes before the start,
+# so no quote rests in the last ~2 hours. Must stay at least
+# ORDER_LIFETIME_MINUTES + CANCEL_LEAD_MINUTES (85).
+MIN_LEAD_MINUTES = 180
 # v5 (2026-10-30), new rule: a new quote also needs the start no more than
 # this far away (before: up to 24 hours before expiry, WINDOW_HOURS). In the
 # 24-to-4-hour replay's later half, quotes 12-24 hours before the start made

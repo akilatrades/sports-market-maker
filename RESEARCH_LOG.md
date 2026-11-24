@@ -5446,3 +5446,40 @@ about 120,000 a month, the NHL about 69,000, the EPL and La Liga about
 187,000 if held to 20 games a day. All of it: about 475,000 a month
 against the present plan's 100,000. The owner intends to move to a larger
 plan; nothing here depends on it, and no cadence changes in this entry.
+
+## 2026-11-24: Spread maker v9: no new quotes in the last 3 hours (owner; pre-registered)
+
+*Written before any v9 order. The owner asked on 24 November to "do all these
+changes" after a review of live fills.*
+
+**What led here (live, exploratory: split after looking; about 22 cuts of the
+spread maker's fills and about 43 of the NBA bot's, on the same data).**
+Spread maker v6-v8 resting fills, 3-24 November, held to settlement (yes/no
+results only), by how long before the event's start they filled:
+
+| Filled | Fills | Events | Per contract | Event t |
+|---|---:|---:|---:|---:|
+| 30-120 minutes before | 36 | 29 | -13.9c | -2.5 |
+| 2-10 hours before | 196 | 127 | -1.2c | -0.4 |
+| More than 10 hours before | 174 | 121 | +6.7c | +1.9 |
+
+A likely reason: near the start, the people trading know line-ups and late
+news. With 22 cuts, one t of -2.5 could be chance (roughly one time in four).
+
+**Change.** `live/spread_policy.py`: `MIN_LEAD_MINUTES` 85 -> 180. A new
+quote needs the start at least 3 hours away; a 65-minute order placed then
+expires about 115 minutes before the start. Version
+`spread-maker-v9-early-quotes`. Every other limit is v8's (esports only,
+10c spreads, YES at 20c+, 2 contracts, $100 open, -$15 a day, -$40 total).
+About a tenth of v6-v8's fills (36 of 407) came in the window this removes.
+
+**Question.** Does v9 earn more than zero per contract after fees?
+
+**Method.** Live v9 fills only (`research/live_checkpoint.py`,
+`SPREAD_VERSION`), profit per contract after fees at settlement, t clustered
+by event. No simulated fills are mixed in.
+
+**Pass/fail bar.** At 300 settled v9 contracts: continue if profit per
+contract is above zero; otherwise stop and review. More size only after 600
+or more settled contracts with event-clustered t >= 2. The -$15 daily and
+-$40 total spread stops and the account stops apply throughout.
