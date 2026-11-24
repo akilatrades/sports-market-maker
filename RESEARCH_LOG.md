@@ -5666,3 +5666,61 @@ zero with event-clustered t >= 2; stop if it is at or below zero. Earlier,
 stop if profit is below -5c a contract after 200 settled contracts. The
 capacity question (how many contracts trade through an order an hour) is
 reported, not judged.
+
+## 2026-11-24: Which Kalshi edges survive a queue? (exploratory, plan written before results)
+
+Question. The cross-market scan (`outputs/scan/`, 2025-26, SIMULATED) counts
+a resting order as filled when one contract trades through its price in the
+next hour, as if we were first in line. Live, others rest ahead of us, and
+the trades big enough to reach us may be the informed ones (the NBA bot's
+live fills trail the replay by 2-4 points). Which market families keep their
+edge when fills require bigger trades?
+
+Method. Filled scan orders, grouped into 10 families by series name
+(mention, player prop, combat, racing, finance/commodities, game, spread,
+total, part of game, other), 2 sides (YES, NO) and 4 queue levels: a fill
+needs at least Q = 1, 5, 10 or 25 contracts traded through our price in the
+hour (Q = 1 is the scan as it stands; Q = 5 is "four contracts ahead of us").
+80 variants. Per variant: profit per contract after the maker fee,
+event-clustered t (`kalshi.stats` method), fills, events, and the mean in
+each half (September-February, March-August).
+
+Bar for a CANDIDATE (sent to a forward paper test, never straight to money):
+at Q = 5, mean at least 2 cents (the live haircut) with clustered t at least
+3 (raised from 2 because 80 variants are tried), 500+ fills, 50+ events, and
+positive in both halves. Everything here is exploratory and in-sample; the
+mention-market paper test (above) is unchanged by it.
+
+### Result (exploratory, in-sample, SIMULATED; 80 variants)
+
+`python -m research.queue_stress` -> `outputs/queue_stress/`. Cents per
+contract after the maker fee, with event-clustered t.
+
+- Two variants meet the candidate bar at Q = 5. **Mention NO**: +4.6c, t 3.4,
+  3,249 fills, 378 events. **Racing NO**: +2.2c, t 4.0, 4,268 fills, 335
+  events.
+- Both are weaker than they first looked:
+  - Mention NO falls with the queue (+5.1c at Q = 1, +3.4c at Q = 25) and by
+    calendar half (Sep-Feb +5.6c, Mar-Aug +2.2c at Q = 5). The earlier
+    "+4.8c / +5.4c by half" (robustness search) split by order count, not
+    date; this calendar split is less kind. Without its best series
+    (KXNCAABMENTION) it is +3.7c, t 2.4.
+  - Racing NO rests on NASCAR: without KXNASCARRACE it is +1.7c, t 2.7. Its
+    first half is only +0.9c.
+- Near misses, but the most queue-proof: **player-prop NO** holds +1.9c to
+  +2.0c at every queue level (t 3.8-4.0, 56 series, 4,400+ events), and
+  **"other" NO** is +2.0c at Q = 5 (t 4.0). The prop result is the project's
+  original idea (fans overpay for YES) seen across every sport, and the queue
+  does not shrink it. After the 2c live haircut, though, it is about zero.
+- **YES resting loses in every family** at every queue level (all families
+  -1.7c to -2.5c). Bigger queues make every YES result worse: the large
+  trades that reach a queued order are worse for us.
+- **Game, spread, total and combat markets**: NO is about zero, and goes
+  negative as the queue grows.
+
+Reading. The edge on Kalshi is NO against YES buyers on "fun" questions
+(will they say it, will he score, will he win the race), not in efficient
+two-sided markets. Mentions are the only family large enough to survive the
+2c live haircut on paper, and its spring weakness is a reason for the paper
+test, not against it. Racing NO is a candidate for a second paper test. No
+change to any live bot.
