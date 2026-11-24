@@ -1,5 +1,5 @@
 {
- "updated_utc": "2026-11-24T23:46+00:00",
+ "updated_utc": "2026-11-24T23:50+00:00",
  "paper": {
   "ledgers": [
    {
@@ -94,8 +94,8 @@
    },
    {
     "ledger": "KXITFMATCH",
-    "orders": 2967,
-    "open": 4,
+    "orders": 2969,
+    "open": 6,
     "fill_rate": 0.7431657104286197,
     "fills": 2202,
     "contracts": 20997,
@@ -113,8 +113,8 @@
    },
    {
     "ledger": "KXITFMATCH+no30",
-    "orders": 2456,
-    "open": 8,
+    "orders": 2457,
+    "open": 9,
     "fill_rate": 0.7565359477124183,
     "fills": 1852,
     "contracts": 11649,
@@ -208,8 +208,8 @@
    },
    {
     "ledger": "KXNBA3D",
-    "orders": 511,
-    "open": 4,
+    "orders": 517,
+    "open": 10,
     "fill_rate": 0.4970414201183432,
     "fills": 252,
     "contracts": 1311,
@@ -227,20 +227,20 @@
    },
    {
     "ledger": "KXNCAAMB1HSPREAD",
-    "orders": 660,
-    "open": 33,
-    "fill_rate": 0.18341307814992025,
-    "fills": 115,
-    "contracts": 923,
-    "profit": -84.45,
-    "cents_per_contract": -6.12,
-    "cents_weighted": -9.15,
-    "se_cents": 5.07,
-    "t": -1.21,
-    "hit_rate": 0.504,
+    "orders": 709,
+    "open": 49,
+    "fill_rate": 0.17575757575757575,
+    "fills": 116,
+    "contracts": 929,
+    "profit": -82.5,
+    "cents_per_contract": -5.79,
+    "cents_weighted": -8.88,
+    "se_cents": 5.05,
+    "t": -1.15,
+    "hit_rate": 0.509,
     "max_drawdown": 91.76,
     "days": 20,
-    "bankroll": 415.55,
+    "bankroll": 417.5,
     "group": "other markets (model-free unless +model)",
     "backtest_cents": 16.35
    },
@@ -285,19 +285,19 @@
    {
     "ledger": "KXUCLCORNERS",
     "orders": 159,
-    "open": 31,
-    "fill_rate": 0.5,
-    "fills": 64,
-    "contracts": 836,
-    "profit": 106.9,
-    "cents_per_contract": 11.42,
-    "cents_weighted": 12.79,
-    "se_cents": 8.74,
-    "t": 1.31,
-    "hit_rate": 0.516,
+    "open": 0,
+    "fill_rate": 0.44025157232704404,
+    "fills": 70,
+    "contracts": 894,
+    "profit": 120.16,
+    "cents_per_contract": 12.37,
+    "cents_weighted": 13.44,
+    "se_cents": 8.44,
+    "t": 1.46,
+    "hit_rate": 0.529,
     "max_drawdown": 0.0,
-    "days": 4,
-    "bankroll": 606.9,
+    "days": 5,
+    "bankroll": 620.16,
     "group": "other markets (model-free unless +model)",
     "backtest_cents": 29.41
    },
@@ -1821,10 +1821,10 @@
    {
     "ledger": "KXNCAAMB1HSPREAD",
     "day": "2026-11-24",
-    "profit": -12.42,
-    "fills": 11,
-    "contracts": 93,
-    "expected": 15.21
+    "profit": -10.47,
+    "fills": 12,
+    "contracts": 99,
+    "expected": 16.19
    },
    {
     "ledger": "KXNFLRECYDS",
@@ -2299,6 +2299,14 @@
     "expected": 35.29
    },
    {
+    "ledger": "KXUCLCORNERS",
+    "day": "2026-11-24",
+    "profit": 13.26,
+    "fills": 6,
+    "contracts": 58,
+    "expected": 17.06
+   },
+   {
     "ledger": "KXUFCMOF",
     "day": "2026-10-17",
     "profit": -27.33,
@@ -2379,10 +2387,10 @@
     "expected": 5.18
    }
   ],
-  "total_profit": -1199.49,
-  "total_fills": 6849,
+  "total_profit": -1184.28,
+  "total_fills": 6856,
   "best": "KXUCLCORNERS",
-  "worst": "KXNCAAMB1HSPREAD"
+  "worst": "KXNFLRECYDS"
  },
  "per_fill_histogram": {
   "-100": 85,
@@ -2390,7 +2398,7 @@
   "-80": 293,
   "-70": 424,
   "-60": 546,
-  "-50": 754,
+  "-50": 756,
   "-40": 910,
   "-30": 696,
   "-20": 551,
@@ -2398,12 +2406,12 @@
   "0": 1175,
   "10": 920,
   "20": 779,
-  "30": 736,
-  "40": 594,
-  "50": 510,
+  "30": 738,
+  "40": 595,
+  "50": 511,
   "60": 419,
   "70": 198,
-  "80": 85,
+  "80": 86,
   "90": 18
  },
  "live": {
