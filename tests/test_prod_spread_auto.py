@@ -368,7 +368,10 @@ def test_unchanged_book_keeps_quotes_and_moved_book_requotes(world):
     assert {(o.side, o.price_cents) for o in ex.placed[-1:]} == {("yes", 43)}
 
 
-def test_old_quotes_are_replaced_before_they_expire(world):
+def test_old_quotes_are_replaced_before_they_expire(world, monkeypatch):
+    # Checks the mechanism on v2-v8's 85-minute lead; v9's 180 is checked in
+    # test_no_new_quote_in_the_last_three_hours.
+    monkeypatch.setattr(P, "MIN_LEAD_MINUTES", 85)
     world["quotes"][TICKER] = market(hours=6.5)
     run(world)
     report, _ = run(world, NOW + timedelta(minutes=P.ORDER_LIFETIME_MINUTES - 4))
@@ -1146,9 +1149,11 @@ def test_pilot_limits_are_the_owner_approved_ones():
     # esports off, $50 open, 20 a pass, 1,500 a day), then "Spread maker v7:
     # esports only" (2026-11-16; v6: every series, no maintenance pause),
     # then "Spread maker v8: wide spreads only" (2026-11-19; v7: 4c spreads,
-    # YES bids at any quoted spread).
+    # YES bids at any quoted spread), then "Spread maker v9: no new quotes in
+    # the last 3 hours" (2026-11-24; v8: new quotes up to 85 minutes before).
     # Change these only through a new, recorded amendment.
-    assert P.STRATEGY_VERSION == "spread-maker-v8-wide-spreads"
+    assert P.STRATEGY_VERSION == "spread-maker-v9-early-quotes"
+    assert P.MIN_LEAD_MINUTES == 180
     assert (P.MIN_SPREAD_CENTS, P.MIN_YES_SPREAD_CENTS) == (10, 20)
     assert P.ESPORTS_ONLY is True
     assert P.KALSHI_MAINTENANCE == (3, (2, 55), (5, 5))
@@ -1528,7 +1533,11 @@ def test_milestone_start_takes_the_game_not_the_tournament():
 
 
 def test_markets_are_quoted_only_well_before_the_start():
-    assert P.MIN_LEAD_MINUTES == P.ORDER_LIFETIME_MINUTES + P.CANCEL_LEAD_MINUTES
+    # v9: 180 (v2-v8: 85, the least that lets a 65-minute order expire 20
+    # minutes before the start).
+    assert P.MIN_LEAD_MINUTES == 180
+    assert P.MIN_LEAD_MINUTES >= P.ORDER_LIFETIME_MINUTES + P.CANCEL_LEAD_MINUTES
+    assert P.STRATEGY_VERSION == "spread-maker-v9-early-quotes"
     reasons = bot.Counter()
     untimed = market("KXCS2GAME-26OCT22ABCD-A")
     rows = bot.eligible_markets(
@@ -1551,6 +1560,21 @@ def test_markets_are_quoted_only_well_before_the_start():
     assert reasons["event_starting"] == 1
 
 
+def test_no_new_quote_in_the_last_three_hours():
+    """v9: quotes rest only from 24 hours to 3 hours before the start; a
+    quote already resting is kept (it expires within 65 minutes)."""
+    late = market(hours=9.0)
+    for minutes, postable in ((181, True), (179, False), (90, False), (25, False)):
+        rows = bot.eligible_markets(
+            [late], "KXDOTA2GAME", START - timedelta(minutes=minutes)
+        )
+        assert len(rows) == 1 and rows[0]["postable"] is postable, minutes
+    # A quote placed at the earliest moment expires well before the start.
+    placed = START - timedelta(minutes=P.MIN_LEAD_MINUTES)
+    expires = bot.quote_expiry(placed, {"event_start_utc": START.isoformat()})
+    assert START - expires >= timedelta(minutes=115)
+
+
 def test_orders_expire_before_the_start_and_record_it(world):
     run(world)
     intents = [e for e in journal(world) if e["event"] == "intent"]
@@ -1565,7 +1589,10 @@ def test_orders_expire_before_the_start_and_record_it(world):
     assert bot.quote_expiry(NOW, {}) == NOW + timedelta(minutes=65)
 
 
-def test_resting_quotes_are_cancelled_before_the_start(world):
+def test_resting_quotes_are_cancelled_before_the_start(world, monkeypatch):
+    # Checks the mechanism on v2-v8's 85-minute lead; v9's 180 is checked in
+    # test_no_new_quote_in_the_last_three_hours.
+    monkeypatch.setattr(P, "MIN_LEAD_MINUTES", 85)
     world["quotes"][TICKER]["expected_expiration_time"] = (
         START + timedelta(hours=5)
     ).isoformat()
@@ -1609,7 +1636,10 @@ def test_v1_orders_without_a_recorded_start_are_cancelled(world):
     assert report["canceled_event_start"] == 2
 
 
-def test_shadow_quotes_only_markets_open_for_new_orders(world):
+def test_shadow_quotes_only_markets_open_for_new_orders(world, monkeypatch):
+    # Checks the mechanism on v2-v8's 85-minute lead; v9's 180 is checked in
+    # test_no_new_quote_in_the_last_three_hours.
+    monkeypatch.setattr(P, "MIN_LEAD_MINUTES", 85)
     world["quotes"][TICKER]["expected_expiration_time"] = (
         START + timedelta(hours=5)
     ).isoformat()
@@ -1689,7 +1719,10 @@ def test_preflight_compares_milestones_with_ticker_times(world):
     assert check["matched"] == 1 and check["milestone_types"] == {"basketball_game": 1}
 
 
-def test_no_new_quote_within_85_minutes_of_the_start(world):
+def test_no_new_quote_within_85_minutes_of_the_start(world, monkeypatch):
+    # Checks the mechanism on v2-v8's 85-minute lead; v9's 180 is checked in
+    # test_no_new_quote_in_the_last_three_hours.
+    monkeypatch.setattr(P, "MIN_LEAD_MINUTES", 85)
     world["quotes"][TICKER]["expected_expiration_time"] = (
         START + timedelta(hours=5)
     ).isoformat()
@@ -2426,7 +2459,12 @@ def test_financial_daily_series_are_never_quoted(world, tmp_path):
     assert seen == ["KXDOTA2GAME"]
 
 
-def test_an_offset_dated_quote_is_cancelled_20_minutes_before_the_start(world):
+def test_an_offset_dated_quote_is_cancelled_20_minutes_before_the_start(
+    world, monkeypatch
+):
+    # Checks the mechanism on v2-v8's 85-minute lead; v9's 180 is checked in
+    # test_no_new_quote_in_the_last_three_hours.
+    monkeypatch.setattr(P, "MIN_LEAD_MINUTES", 85)
     untimed = "KXCS2GAME-26OCT22ABCD-A"
     world["quotes"].clear()
     world["quotes"][untimed] = market(untimed, hours=8.0)
@@ -2452,6 +2490,9 @@ def test_an_offset_dated_quote_is_cancelled_20_minutes_before_the_start(world):
 
 
 def test_resting_v2_orders_are_kept_then_refreshed_as_v3(world, monkeypatch):
+    # Checks the mechanism on v2-v8's 85-minute lead; v9's 180 is checked in
+    # test_no_new_quote_in_the_last_three_hours.
+    monkeypatch.setattr(P, "MIN_LEAD_MINUTES", 85)
     world["quotes"][TICKER]["expected_expiration_time"] = (
         NOW + timedelta(hours=8)
     ).isoformat()  # still in the window an hour later
@@ -2594,7 +2635,12 @@ def test_a_v2_quote_in_an_excluded_series_is_cancelled_on_the_first_v3_pass(
     assert report["markets_no_start_series"] == 1 and len(world["exchange"].placed) == 2
 
 
-def test_an_unwritable_cache_is_reported_and_the_journal_keeps_starts(world, tmp_path):
+def test_an_unwritable_cache_is_reported_and_the_journal_keeps_starts(
+    world, tmp_path, monkeypatch
+):
+    # Checks the mechanism on v2-v8's 85-minute lead; v9's 180 is checked in
+    # test_no_new_quote_in_the_last_three_hours.
+    monkeypatch.setattr(P, "MIN_LEAD_MINUTES", 85)
     folder = tmp_path / "starts"
     folder.mkdir()
     (folder / "event_starts.json.tmp").mkdir()  # writing the cache fails
