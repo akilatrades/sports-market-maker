@@ -1,4 +1,213 @@
 {
+ "diagnostics": {
+  "events_by_previous_status": {
+   "not listed": 2576,
+   "Questionable": 425,
+   "Doubtful": 227,
+   "Probable": 4,
+   "Available": 3
+  },
+  "status_changes": 659,
+  "status_changes_matched": 0,
+  "unmatched_samples": [
+   {
+    "player": "Markkanen, Lauri",
+    "team": "Utah Jazz",
+    "code": "UTALMARKKANEN",
+    "slot": "2026-02-26 17:15:00+00:00",
+    "game_date": "02/26/2026",
+    "codes_that_day": [
+     "UTAABAILEY"
+    ],
+    "codes_next_day": []
+   },
+   {
+    "player": "George, Kyshawn",
+    "team": "Washington Wizards",
+    "code": "WASKGEORGE",
+    "slot": "2026-02-26 17:30:00+00:00",
+    "game_date": "02/26/2026",
+    "codes_that_day": [
+     "WASBCARRINGTON",
+     "WASBCOULIBALY",
+     "WASTJOHNSON"
+    ],
+    "codes_next_day": []
+   },
+   {
+    "player": "Beauchamp, MarJon",
+    "team": "Philadelphia 76ers",
+    "code": "PHIMBEAUCHAMP",
+    "slot": "2026-02-26 17:45:00+00:00",
+    "game_date": "02/26/2026",
+    "codes_that_day": [
+     "PHIJEMBIID",
+     "PHIKOUBRE",
+     "PHITMAXEY",
+     "PHIVEDGECOMBE"
+    ],
+    "codes_next_day": []
+   },
+   {
+    "player": "Johnson, Jalen",
+    "team": "Atlanta Hawks",
+    "code": "ATLJJOHNSON",
+    "slot": "2026-02-26 18:00:00+00:00",
+    "game_date": "02/26/2026",
+    "codes_that_day": [
+     "ATLCMCCOLLUM",
+     "ATLDDANIELS",
+     "ATLJKUMINGA",
+     "ATLOOKONGWU"
+    ],
+    "codes_next_day": []
+   },
+   {
+    "player": "George, Keyonte",
+    "team": "Utah Jazz",
+    "code": "UTAKGEORGE",
+    "slot": "2026-02-26 18:15:00+00:00",
+    "game_date": "02/26/2026",
+    "codes_that_day": [
+     "UTAABAILEY"
+    ],
+    "codes_next_day": []
+   },
+   {
+    "player": "Smith, Jalen",
+    "team": "Chicago Bulls",
+    "code": "CHIJSMITH",
+    "slot": "2026-02-26 18:30:00+00:00",
+    "game_date": "02/26/2026",
+    "codes_that_day": [
+     "CHIIOKORO",
+     "CHIJGIDDEY",
+     "CHIMBUZELIS"
+    ],
+    "codes_next_day": []
+   },
+   {
+    "player": "Williams, Patrick",
+    "team": "Chicago Bulls",
+    "code": "CHIPWILLIAMS",
+    "slot": "2026-02-26 18:30:00+00:00",
+    "game_date": "02/26/2026",
+    "codes_that_day": [
+     "CHIIOKORO",
+     "CHIJGIDDEY",
+     "CHIMBUZELIS"
+    ],
+    "codes_next_day": []
+   },
+   {
+    "player": "Collins, John",
+    "team": "LA Clippers",
+    "code": "LACJCOLLINS",
+    "slot": "2026-02-26 21:00:00+00:00",
+    "game_date": "02/26/2026",
+    "codes_that_day": [
+     "LACBLOPEZ",
+     "LACBMATHURIN",
+     "LACDJONES"
+    ],
+    "codes_next_day": []
+   },
+   {
+    "player": "Leonard, Kawhi",
+    "team": "LA Clippers",
+    "code": "LACKLEONARD",
+    "slot": "2026-02-26 21:00:00+00:00",
+    "game_date": "02/26/2026",
+    "codes_that_day": [
+     "LACBLOPEZ",
+     "LACBMATHURIN",
+     "LACDJONES"
+    ],
+    "codes_next_day": []
+   },
+   {
+    "player": "Dennis, RayJ",
+    "team": "Atlanta Hawks",
+    "code": "ATLRDENNIS",
+    "slot": "2026-02-26 21:45:00+00:00",
+    "game_date": "02/26/2026",
+    "codes_that_day": [
+     "ATLCMCCOLLUM",
+     "ATLDDANIELS",
+     "ATLJKUMINGA",
+     "ATLOOKONGWU"
+    ],
+    "codes_next_day": []
+   },
+   {
+    "player": "Houstan, Caleb",
+    "team": "Atlanta Hawks",
+    "code": "ATLCHOUSTAN",
+    "slot": "2026-02-26 21:45:00+00:00",
+    "game_date": "02/26/2026",
+    "codes_that_day": [
+     "ATLCMCCOLLUM",
+     "ATLDDANIELS",
+     "ATLJKUMINGA",
+     "ATLOOKONGWU"
+    ],
+    "codes_next_day": []
+   },
+   {
+    "player": "Hachimura, Rui",
+    "team": "Los Angeles Lakers",
+    "code": "LALRHACHIMURA",
+    "slot": "2026-02-26 21:45:00+00:00",
+    "game_date": "02/26/2026",
+    "codes_that_day": [
+     "LALAREAVES",
+     "LALDAYTON",
+     "LALLDONCIC",
+     "LALLJAMES",
+     "LALMSMART"
+    ],
+    "codes_next_day": []
+   },
+   {
+    "player": "Siakam, Pascal",
+    "team": "Indiana Pacers",
+    "code": "INDPSIAKAM",
+    "slot": "2026-02-26 22:30:00+00:00",
+    "game_date": "02/26/2026",
+    "codes_that_day": [
+     "INDANEMBHARD",
+     "INDJWALKER"
+    ],
+    "codes_next_day": []
+   },
+   {
+    "player": "Alexander-Walker, Nickeil",
+    "team": "Atlanta Hawks",
+    "code": "ATLNALEXANDERWALKER",
+    "slot": "2026-02-26 22:45:00+00:00",
+    "game_date": "02/26/2026",
+    "codes_that_day": [
+     "ATLCMCCOLLUM",
+     "ATLDDANIELS",
+     "ATLJKUMINGA",
+     "ATLOOKONGWU"
+    ],
+    "codes_next_day": []
+   },
+   {
+    "player": "Peter, Taelon",
+    "team": "Indiana Pacers",
+    "code": "INDTPETER",
+    "slot": "2026-02-26 23:00:00+00:00",
+    "game_date": "02/26/2026",
+    "codes_that_day": [
+     "INDANEMBHARD",
+     "INDJWALKER"
+    ],
+    "codes_next_day": []
+   }
+  ]
+ },
  "note": "2025-26, historical; trade prints are public; in-sample",
  "events_found": 3235,
  "events_matched": 1,
