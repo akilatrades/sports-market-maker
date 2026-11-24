@@ -89,3 +89,46 @@ def test_workflow_marks_the_same_slots_full_that_it_schedules():
     assert f'"$SCHEDULE" == "{full}"' in text
     assert '"5,25,45 10-23 * * *"' in text and '"5,25,45 0-3 * * *"' in text
     assert "python -m live.log_books nba --near" in text
+
+
+def test_per_book_prices_are_saved_only_when_asked(out_dir, monkeypatch, tmp_path):
+    lines = parse_event(EVENT, snapshot_utc="2026-01-09T19:00:00Z")
+    monkeypatch.setattr(log_books, "props", lambda *a, **k: (lines, {"remaining": "5"}))
+    monkeypatch.delenv(log_books.PER_BOOK_ENV, raising=False)
+    log_books.main("nba", "full")
+    assert not list(tmp_path.glob("per_book/*"))  # off by default
+    monkeypatch.setenv(log_books.PER_BOOK_ENV, str(tmp_path / "per_book"))
+    log_books.main("nba", "full")
+    files = list((tmp_path / "per_book").glob("nba_*.csv.gz"))
+    assert len(files) == 1
+    rows = pd.read_csv(files[0])
+    assert list(rows.columns) == log_books.PER_BOOK_COLUMNS
+    assert rows.p_over.between(0, 1).all() and rows.book.nunique() >= 1
+    # The averaged file is the same either way.
+    averaged = pd.read_csv(out_dir / "nba_latest.csv")
+    one_book = rows.groupby(["player_key", "stat", "line"]).p_over.mean()
+    joined = averaged.set_index(["player_key", "stat", "line"]).p_book
+    common = one_book.index.intersection(joined.index)
+    assert len(common) and (abs(one_book[common] - joined[common]) < 1e-3).all()
+    # The committed files carry no per-book column (licensed raw odds).
+    for committed in out_dir.glob("nba_*.csv*"):
+        assert "book" not in pd.read_csv(committed).columns
+
+
+def test_a_per_book_failure_never_stops_the_feed(out_dir, monkeypatch, tmp_path):
+    lines = parse_event(EVENT, snapshot_utc="2026-01-09T19:00:00Z")
+    monkeypatch.setattr(log_books, "props", lambda *a, **k: (lines, {"remaining": "5"}))
+    blocked = tmp_path / "file"
+    blocked.write_text("not a folder")
+    monkeypatch.setenv(log_books.PER_BOOK_ENV, str(blocked))
+    log_books.main("nba", "full")  # does not raise
+    assert (out_dir / "nba_latest.csv").exists()
+
+
+def test_the_workflow_caches_per_book_prices_and_never_commits_them():
+    flow = (ROOT / ".github/workflows/books.yml").read_text()
+    assert "BOOKS_PER_BOOK_DIR: state/books_per_book" in flow
+    assert "path: state/books_per_book" in flow
+    assert "git add -A outputs/books" in flow and "git add -A state" not in flow
+    assert "upload-artifact" not in flow  # artifacts are public on this repository
+    assert "/state/" in (ROOT / ".gitignore").read_text().splitlines()

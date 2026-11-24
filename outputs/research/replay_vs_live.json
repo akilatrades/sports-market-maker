@@ -1,0 +1,80 @@
+{
+ "note": "Fill outcome vs the sportsbooks' fair chance of NO, in points. Replay: 2025-26, SIMULATED (first in line). Live: 2026-27 NBA v7-v9 fills. Reported side by side, never combined.",
+ "bands": {
+  "all": {
+   "replay_simulated": {
+    "gap_points": 2.01,
+    "range_90_points": [
+     -0.33,
+     4.2
+    ],
+    "fills": 3197,
+    "games": 150
+   },
+   "live": {
+    "gap_points": -2.3,
+    "range_90_points": [
+     -4.39,
+     -0.28
+    ],
+    "fills": 796,
+    "games": 141
+   },
+   "live_minus_replay_points": -4.31,
+   "range_90_points": [
+    -7.44,
+    -1.29
+   ]
+  },
+  "NO under 65c": {
+   "replay_simulated": {
+    "gap_points": 2.14,
+    "range_90_points": [
+     -0.06,
+     4.38
+    ],
+    "fills": 2425,
+    "games": 150
+   },
+   "live": {
+    "gap_points": -3.55,
+    "range_90_points": [
+     -6.69,
+     -0.48
+    ],
+    "fills": 443,
+    "games": 94
+   },
+   "live_minus_replay_points": -5.69,
+   "range_90_points": [
+    -9.55,
+    -1.88
+   ]
+  },
+  "NO 65-95c": {
+   "replay_simulated": {
+    "gap_points": 1.57,
+    "range_90_points": [
+     -2.05,
+     4.89
+    ],
+    "fills": 772,
+    "games": 117
+   },
+   "live": {
+    "gap_points": -0.73,
+    "range_90_points": [
+     -4.02,
+     2.26
+    ],
+    "fills": 353,
+    "games": 87
+   },
+   "live_minus_replay_points": -2.3,
+   "range_90_points": [
+    -6.94,
+    2.28
+   ]
+  }
+ }
+}

@@ -54,6 +54,14 @@ jobs:
         with:
           python-version: "3.12"
       - run: pip install -r requirements.txt
+      # Research only: each book's own price, kept in an Actions cache (never
+      # committed; raw odds are licensed). See RESEARCH_LOG.md, 2026-11-24,
+      # "Which sportsbooks to trust". The trading server never sets this.
+      - uses: actions/cache/restore@v4
+        with:
+          path: state/books_per_book
+          key: books-per-book-${{ github.run_id }}
+          restore-keys: books-per-book-
       - name: Choose scope
         env:
           EVENT: ${{ github.event_name }}
@@ -67,11 +75,18 @@ jobs:
           [[ "$scope" == near || "$scope" == full ]]
           echo "SCOPE=$scope" >> "$GITHUB_ENV"
       - name: NBA lines
+        env:
+          BOOKS_PER_BOOK_DIR: state/books_per_book
         run: |
           if [[ "$SCOPE" == near ]]; then python -m live.log_books nba --near; else python -m live.log_books nba; fi
       - name: NFL lines
         run: |
           if [[ "$SCOPE" == near ]]; then python -m live.log_books nfl --near; else python -m live.log_books nfl; fi
+      - uses: actions/cache/save@v4
+        if: always()
+        with:
+          path: state/books_per_book
+          key: books-per-book-${{ github.run_id }}
       - name: Commit
         run: |
           git config user.name "github-actions[bot]"
