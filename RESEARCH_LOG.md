@@ -5483,3 +5483,65 @@ by event. No simulated fills are mixed in.
 contract is above zero; otherwise stop and review. More size only after 600
 or more settled contracts with event-clustered t >= 2. The -$15 daily and
 -$40 total spread stops and the account stops apply throughout.
+
+## 2026-11-24: Does the replay match live fills? (open question 1, measured)
+
+*Owner request ("lets do all these changes"). Research only.
+`research/replay_vs_live.py`; output `outputs/research/replay_vs_live.json`.*
+
+On the orders that FILLED, how often NO won compared with the sportsbooks'
+fair chance of NO, in percentage points. Replay: 2025-26, SIMULATED, first
+in line (`outputs/bookline/fills_with_book.csv.gz`, in-sample). Live: NBA
+v7-v9 fills, 30 October to 24 November 2026. Ranges are 90%, resampling whole
+games. Side by side, never combined.
+
+| NO price | Replay (simulated) | Live | Live minus replay |
+|---|---:|---:|---:|
+| All | +2.0 (3,197 fills) | -2.3 (796 fills; -4.4 to -0.3) | **-4.3** (-7.4 to -1.3) |
+| Under 65c | +2.1 (2,425) | -3.6 (443; -6.7 to -0.5) | -5.7 (-9.6 to -1.9) |
+| 65-95c (v9's band) | +1.6 (772) | -0.7 (353; -4.0 to +2.3) | -2.3 (-6.9 to +2.3) |
+
+**Reading.** The replay's fills did better than the books said; live fills do
+worse. The difference is the cost of being filled when someone else knows
+more (the replay assumes we fill whenever anyone trades at our price). For
+replay results to be read as a guide to live trading, subtract about 4
+points of NO win rate (4 cents a contract at these prices) overall; in v9's
+65-95c band the measured gap is smaller (about 2 points) and not yet
+distinguishable from zero. Every replay-based rule in this log, including
+the v8 and v9 NBA rules, was chosen without this adjustment.
+
+**Also checked (exploratory, not adopted): a 4c cap on the NBA bot's stated
+edge.** Live, filled orders the books priced at 4-9c of edge made +1.8c a
+contract (250 fills; t 0.7) against +0.8c for the rest; under v9 alone, the
+12 such fills made +12.8c; in the replay, +2.9c (99 fills). The books
+overstate large edges (NO won about 3.6 points less often than they said,
+live and in the replay), but those orders still made money, so a cap would
+have cost money. `MAX_ENTRY_NET_EDGE` stays at 8c. Variants tried: one
+(a 4c cap), on three data cuts.
+
+## 2026-11-24: Which sportsbooks to trust (plan, written before any data)
+
+*Owner request. Research only; nothing changes in how the bot prices.*
+
+**Question.** Is a weighted average of sportsbooks, with more weight on the
+books whose prices are closer to the outcome, a better fair price for NBA
+player props than today's equal-weight average?
+
+**Data.** None exists yet: the feed keeps only the average. From this change,
+`live/log_books.py` also saves each book's de-vigged price when
+`BOOKS_PER_BOOK_DIR` is set. The GitHub "book lines" job sets it and keeps
+the rows in an Actions cache (licensed raw odds are never committed); the
+trading server does not set it and is unchanged. No extra Odds API credits:
+the same replies are kept, book by book. The feed's US region has no
+Pinnacle or Circa; adding them (the "eu" region) would double the credits
+of every pull and is not part of this plan.
+
+**Method (after at least 3 weeks of data).** Outcomes from the box scores.
+For each book: log loss and Brier score of its own price, on lines quoted
+by at least 3 books, t clustered by game. Weights fitted on the first half of
+the period (by date), scored on the second half against equal weights.
+
+**Bar.** Adopt weighting only if, on the second half, the weighted price
+lowers log loss with a game-clustered t of 2 or more, on at least 2,000
+lines. Variants: equal, inverse-error weights, and "drop the worst two
+books": 3.
