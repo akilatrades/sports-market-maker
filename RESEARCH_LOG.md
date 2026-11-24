@@ -5545,3 +5545,51 @@ the period (by date), scored on the second half against equal weights.
 lowers log loss with a game-clustered t of 2 or more, on at least 2,000
 lines. Variants: equal, inverse-error weights, and "drop the worst two
 books": 3.
+
+## 2026-11-24: Does Kalshi lag the official NBA injury report? (plan, written before any data)
+
+*Owner request: find an edge from information the sportsbooks do not already
+give the bot. Research only: nothing here places an order.*
+
+**Question.** When the league's official injury report newly lists a player
+as Out for a game that has not started, do Kalshi's prop markets on that
+player keep trading at the old price for long enough that a bot could sell
+YES (buy NO) at the stale price and profit?
+
+**Data.** 2025-26 regular season and playoffs (18 November to 13 June):
+Kalshi's public trade prints for points, rebounds, assists and threes
+(`data/kalshi_history/trades_*.parquet`, already in the repository), and the
+official injury report every 15 minutes from 11:00 ET to 23:45 ET on each
+day with trades (`markets/nba/official_injuries.py`, fetched on GitHub's
+runners). The parsed reports stay in an Actions cache; only status-change
+events and aggregates are committed. How Kalshi settles a prop when the
+player does not play is read from Kalshi's public market data for the
+matched tickers, not assumed.
+
+**Events.** A player whose status becomes Out in report slot s, having been
+listed with any other status (or not listed) in the same day's previous
+report, at most 60 minutes before s, for a game that tips more than 15
+minutes after s. Matched to his Kalshi tickers by team code, first initial
+and last name; events with no unique match are dropped and counted.
+
+**Measures, per event and market.** The last trade price in the 60 minutes
+before slot s (p0, must exist and be 10c or more); every trade from s to
+tip-off. A "stale" trade is one at a YES price of at least half of p0 and at
+least 10c. The opportunity is a stale trade a bot could have taken by
+selling YES: taker side "yes" (a buyer paying the stale price, so a resting
+seller would have been filled) or "no" (someone already selling into a stale
+bid). Reported: minutes from s to the first and last stale trade, stale
+contracts by taker side, and the share of the move from p0 that happened in
+the hour before s (news reaching Kalshi before the report).
+
+**The rule tested.** Sell YES at every stale trade price from slot s + 2
+minutes (a bot reading the report every minute or two) to s + 30 minutes,
+one contract per trade print, paying the taker fee; settle at Kalshi's
+result. Profit per contract after fees, t clustered by game.
+
+**Bar.** Passes if, on at least 50 events in at least 30 games, profit per
+contract after fees is above zero with a game-clustered t of 2 or more, and
+the median first stale trade comes at least 2 minutes after slot s. A pass
+is in-sample (2025-26) and only justifies building a live paper watcher on
+2026-27 before any order. Variants: the window end (15, 30, 60 minutes)
+is reported, the 30-minute one decides: 1 decisive variant.
