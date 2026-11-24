@@ -1,24 +1,24 @@
 {
   "calibration": {
     "all_resolved_opportunities": {
-      "actual_win_rate": 0.49923664122137407,
+      "actual_win_rate": 0.49924585218702866,
       "fresh_book_brier": 0.257030355334875,
       "fresh_book_observations": 8,
       "independent_games": 74,
-      "market_midpoint_brier": 0.2408356106870229,
-      "mean_predicted_win_probability": 0.5113547480916031,
-      "model_brier": 0.24443524358261376,
+      "market_midpoint_brier": 0.24107375565610858,
+      "mean_predicted_win_probability": 0.5118818883861237,
+      "model_brier": 0.24447764084108595,
       "model_brier_on_fresh_book_coverage": 0.217607891594125,
       "model_minus_book_brier_game_95_interval": [
         -0.040256,
         -0.03359
       ],
       "model_minus_market_brier_game_95_interval": [
-        -0.001036,
-        0.013627
+        -0.00126,
+        0.013278
       ],
       "note": "Lower Brier score is better. Market midpoint is a forecast benchmark, not an executable price. Book and model scores must use matched coverage for a causal comparison.",
-      "opportunities": 655,
+      "opportunities": 663,
       "probability_buckets": [
         {
           "actual": 0.0,
@@ -39,49 +39,49 @@
           "predicted": 0.2642547
         },
         {
-          "actual": 0.36363636363636365,
+          "actual": 0.3582089552238806,
           "forecast_range": [
             0.3,
             0.4
           ],
-          "n": 66,
-          "predicted": 0.33962610606060606
+          "n": 67,
+          "predicted": 0.3397545373134328
         },
         {
-          "actual": 0.4200913242009132,
+          "actual": 0.42081447963800905,
           "forecast_range": [
             0.4,
             0.5
           ],
-          "n": 219,
-          "predicted": 0.4406017397260274
+          "n": 221,
+          "predicted": 0.44047656108597283
         },
         {
-          "actual": 0.5615763546798029,
+          "actual": 0.5637254901960784,
           "forecast_range": [
             0.5,
             0.6
           ],
-          "n": 203,
-          "predicted": 0.5463016403940887
+          "n": 204,
+          "predicted": 0.546489068627451
         },
         {
-          "actual": 0.6194029850746269,
+          "actual": 0.6204379562043796,
           "forecast_range": [
             0.6,
             0.7
           ],
-          "n": 134,
-          "predicted": 0.6424539552238806
+          "n": 137,
+          "predicted": 0.6426018613138686
         },
         {
-          "actual": 0.5,
+          "actual": 0.47368421052631576,
           "forecast_range": [
             0.7,
             0.8
           ],
-          "n": 18,
-          "predicted": 0.7460396111111112
+          "n": 19,
+          "predicted": 0.7439533157894737
         },
         {
           "actual": 0.0,
@@ -104,21 +104,21 @@
       ]
     },
     "through_filled": {
-      "actual_win_rate": 0.4908424908424908,
+      "actual_win_rate": 0.4909090909090909,
       "fresh_book_brier": 0.22085958184899995,
       "fresh_book_observations": 1,
-      "independent_games": 70,
-      "market_midpoint_brier": 0.23712225274725274,
-      "mean_predicted_win_probability": 0.523011304029304,
-      "model_brier": 0.24592725441490845,
+      "independent_games": 71,
+      "market_midpoint_brier": 0.23668518181818182,
+      "mean_predicted_win_probability": 0.5225994690909092,
+      "model_brier": 0.24520732650545451,
       "model_brier_on_fresh_book_coverage": 0.15292870572099998,
       "model_minus_book_brier_game_95_interval": null,
       "model_minus_market_brier_game_95_interval": [
-        -0.002947,
-        0.016342
+        -0.00341,
+        0.015354
       ],
       "note": "Lower Brier score is better. Market midpoint is a forecast benchmark, not an executable price. Book and model scores must use matched coverage for a causal comparison.",
-      "opportunities": 273,
+      "opportunities": 275,
       "probability_buckets": [
         {
           "actual": 0.3333333333333333,
@@ -130,13 +130,13 @@
           "predicted": 0.27332233333333333
         },
         {
-          "actual": 0.37037037037037035,
+          "actual": 0.35714285714285715,
           "forecast_range": [
             0.3,
             0.4
           ],
-          "n": 27,
-          "predicted": 0.34108914814814817
+          "n": 28,
+          "predicted": 0.3413442142857143
         },
         {
           "actual": 0.3614457831325301,
@@ -148,13 +148,13 @@
           "predicted": 0.44457459036144575
         },
         {
-          "actual": 0.5609756097560976,
+          "actual": 0.5662650602409639,
           "forecast_range": [
             0.5,
             0.6
           ],
-          "n": 82,
-          "predicted": 0.5467217317073171
+          "n": 83,
+          "predicted": 0.5471773373493977
         },
         {
           "actual": 0.6571428571428571,
@@ -177,24 +177,24 @@
       ]
     },
     "through_unfilled": {
-      "actual_win_rate": 0.5052356020942408,
+      "actual_win_rate": 0.5051546391752577,
       "fresh_book_brier": 0.26219760869000003,
       "fresh_book_observations": 7,
       "independent_games": 74,
-      "market_midpoint_brier": 0.24348939790575916,
-      "mean_predicted_win_probability": 0.5030242774869109,
-      "model_brier": 0.2433689635899005,
+      "market_midpoint_brier": 0.2441842139175258,
+      "mean_predicted_win_probability": 0.5042856649484536,
+      "model_brier": 0.24396046672329896,
       "model_brier_on_fresh_book_coverage": 0.22684777529028574,
       "model_minus_book_brier_game_95_interval": [
         -0.035643,
         -0.03359
       ],
       "model_minus_market_brier_game_95_interval": [
-        -0.002609,
-        0.016868
+        -0.002847,
+        0.016586
       ],
       "note": "Lower Brier score is better. Market midpoint is a forecast benchmark, not an executable price. Book and model scores must use matched coverage for a causal comparison.",
-      "opportunities": 382,
+      "opportunities": 388,
       "probability_buckets": [
         {
           "actual": 0.0,
@@ -224,13 +224,13 @@
           "predicted": 0.3386132307692308
         },
         {
-          "actual": 0.45588235294117646,
+          "actual": 0.45652173913043476,
           "forecast_range": [
             0.4,
             0.5
           ],
-          "n": 136,
-          "predicted": 0.43817713235294115
+          "n": 138,
+          "predicted": 0.43801180434782605
         },
         {
           "actual": 0.5619834710743802,
@@ -242,22 +242,22 @@
           "predicted": 0.5460169504132231
         },
         {
-          "actual": 0.578125,
+          "actual": 0.582089552238806,
           "forecast_range": [
             0.6,
             0.7
           ],
-          "n": 64,
-          "predicted": 0.640727703125
+          "n": 67,
+          "predicted": 0.6411074328358208
         },
         {
-          "actual": 0.8,
+          "actual": 0.7272727272727273,
           "forecast_range": [
             0.7,
             0.8
           ],
-          "n": 10,
-          "predicted": 0.7489131
+          "n": 11,
+          "predicted": 0.7450482727272728
         },
         {
           "actual": 0.0,
@@ -280,21 +280,21 @@
       ]
     },
     "touch_filled": {
-      "actual_win_rate": 0.47039473684210525,
+      "actual_win_rate": 0.46905537459283386,
       "fresh_book_brier": 0.21982996748499997,
       "fresh_book_observations": 2,
-      "independent_games": 71,
-      "market_midpoint_brier": 0.2335331414473684,
-      "mean_predicted_win_probability": 0.5205616118421053,
-      "model_brier": 0.24350992400563817,
+      "independent_games": 72,
+      "market_midpoint_brier": 0.23321864820846905,
+      "mean_predicted_win_probability": 0.5199824592833876,
+      "model_brier": 0.24275048136525407,
       "model_brier_on_fresh_book_coverage": 0.162962819381,
       "model_minus_book_brier_game_95_interval": null,
       "model_minus_market_brier_game_95_interval": [
-        -0.000965,
-        0.018746
+        -0.001193,
+        0.017589
       ],
       "note": "Lower Brier score is better. Market midpoint is a forecast benchmark, not an executable price. Book and model scores must use matched coverage for a causal comparison.",
-      "opportunities": 304,
+      "opportunities": 307,
       "probability_buckets": [
         {
           "actual": 0.3333333333333333,
@@ -306,31 +306,31 @@
           "predicted": 0.27332233333333333
         },
         {
-          "actual": 0.3225806451612903,
+          "actual": 0.3125,
           "forecast_range": [
             0.3,
             0.4
           ],
-          "n": 31,
-          "predicted": 0.3391416774193548
+          "n": 32,
+          "predicted": 0.33942571875
         },
         {
-          "actual": 0.34375,
+          "actual": 0.3402061855670103,
           "forecast_range": [
             0.4,
             0.5
           ],
-          "n": 96,
-          "predicted": 0.44388925
+          "n": 97,
+          "predicted": 0.4439637628865979
         },
         {
-          "actual": 0.532608695652174,
+          "actual": 0.5376344086021505,
           "forecast_range": [
             0.5,
             0.6
           ],
-          "n": 92,
-          "predicted": 0.5483016413043478
+          "n": 93,
+          "predicted": 0.5486912688172043
         },
         {
           "actual": 0.6712328767123288,
@@ -362,24 +362,24 @@
       ]
     },
     "touch_unfilled": {
-      "actual_win_rate": 0.5242165242165242,
+      "actual_win_rate": 0.5252808988764045,
       "fresh_book_brier": 0.2694304846181667,
       "fresh_book_observations": 6,
       "independent_games": 73,
-      "market_midpoint_brier": 0.2471602564102564,
-      "mean_predicted_win_probability": 0.5033807122507122,
-      "model_brier": 0.24523665996837038,
+      "market_midpoint_brier": 0.24784768258426965,
+      "mean_predicted_win_probability": 0.5048962837078652,
+      "model_brier": 0.24596707331041293,
       "model_brier_on_fresh_book_coverage": 0.23582291566516667,
       "model_minus_book_brier_game_95_interval": [
         -0.033611,
         -0.03359
       ],
       "model_minus_market_brier_game_95_interval": [
-        -0.006093,
-        0.012973
+        -0.006288,
+        0.012929
       ],
       "note": "Lower Brier score is better. Market midpoint is a forecast benchmark, not an executable price. Book and model scores must use matched coverage for a causal comparison.",
-      "opportunities": 351,
+      "opportunities": 356,
       "probability_buckets": [
         {
           "actual": 0.0,
@@ -409,13 +409,13 @@
           "predicted": 0.3400551714285714
         },
         {
-          "actual": 0.4796747967479675,
+          "actual": 0.4838709677419355,
           "forecast_range": [
             0.4,
             0.5
           ],
-          "n": 123,
-          "predicted": 0.4380358780487805
+          "n": 124,
+          "predicted": 0.43774866935483875
         },
         {
           "actual": 0.5855855855855856,
@@ -427,22 +427,22 @@
           "predicted": 0.5446439819819819
         },
         {
-          "actual": 0.5573770491803278,
+          "actual": 0.5625,
           "forecast_range": [
             0.6,
             0.7
           ],
-          "n": 61,
-          "predicted": 0.638898606557377
+          "n": 64,
+          "predicted": 0.639381875
         },
         {
-          "actual": 0.8,
+          "actual": 0.7272727272727273,
           "forecast_range": [
             0.7,
             0.8
           ],
-          "n": 10,
-          "predicted": 0.7489131
+          "n": 11,
+          "predicted": 0.7450482727272728
         },
         {
           "actual": 0.0,
@@ -465,11 +465,18 @@
       ]
     }
   },
-  "generated_at": "2026-11-23T01:56:18.435548+00:00",
+  "generated_at": "2026-11-24T00:12:20.742098+00:00",
   "input_quality": {
-    "issues": {},
+    "issues": {
+      "fresh_two_book_consensus_missing": 1639,
+      "fully_verified_rows": 0,
+      "history_or_team_change_requires_books": 14,
+      "lineup_unverified": 1639,
+      "reported_injury_status": 47,
+      "tonight_minutes_unverified": 1639
+    },
     "meaning": "Freshly generated predictions do not establish confirmed lineups or tonight-specific minutes. Missing inputs remain unverified.",
-    "rows": 0
+    "rows": 1639
   },
   "next_requirements": [
     "Fresh prospective games under the fixed equal-size protocol.",
@@ -478,8 +485,8 @@
     "Compare filled and unfilled forecast errors by game; do not fit corrections to the evaluation games."
   ],
   "paper_comparison": {
-    "all_opportunities_resolved": 655,
-    "brier_all_resolved": 0.24443524358261376,
+    "all_opportunities_resolved": 663,
+    "brier_all_resolved": 0.24447764084108595,
     "comparisons": {
       "through/fresh_books_veto": {
         "actual_win_rate": null,
@@ -507,21 +514,21 @@
         }
       },
       "through/model_veto": {
-        "actual_win_rate": 0.5107913669064749,
-        "brier_filled": 0.25241965744043166,
+        "actual_win_rate": 0.5142857142857142,
+        "brier_filled": 0.25184958491849285,
         "execution_known": 337,
         "exposure_by_game": {
-          "401910031": 0.5700000000000001
+          "401910044": 2.27
         },
         "filled": 140,
-        "forecast_win_probability": 0.5728376258992806,
-        "net_pnl_fee_upper_estimate": -1.09,
-        "orders": 337,
-        "pending_or_unknown_execution": 0,
-        "pnl_without_best_game": -2.7,
-        "pnl_without_best_three_games": -5.57,
-        "settled": 139,
-        "settled_games": 56,
+        "forecast_win_probability": 0.5729211928571428,
+        "net_pnl_fee_upper_estimate": -0.66,
+        "orders": 341,
+        "pending_or_unknown_execution": 4,
+        "pnl_without_best_game": -2.27,
+        "pnl_without_best_three_games": -5.14,
+        "settled": 140,
+        "settled_games": 57,
         "trade_print_markouts_not_executable_quotes": {
           "300": {
             "mean": -0.007777777777777778,
@@ -534,21 +541,21 @@
         }
       },
       "through/no_baseline": {
-        "actual_win_rate": 0.4908424908424908,
-        "brier_filled": 0.24592725441490845,
+        "actual_win_rate": 0.4909090909090909,
+        "brier_filled": 0.24520732650545451,
         "execution_known": 666,
         "exposure_by_game": {
-          "401910031": 0.9800000000000001
+          "401910044": 4.92
         },
         "filled": 275,
-        "forecast_win_probability": 0.523011304029304,
-        "net_pnl_fee_upper_estimate": -8.01,
-        "orders": 666,
-        "pending_or_unknown_execution": 0,
-        "pnl_without_best_game": -9.81,
-        "pnl_without_best_three_games": -13.14,
-        "settled": 273,
-        "settled_games": 70,
+        "forecast_win_probability": 0.5225994690909092,
+        "net_pnl_fee_upper_estimate": -7.99,
+        "orders": 675,
+        "pending_or_unknown_execution": 9,
+        "pnl_without_best_game": -9.79,
+        "pnl_without_best_three_games": -13.12,
+        "settled": 275,
+        "settled_games": 71,
         "trade_print_markouts_not_executable_quotes": {
           "300": {
             "mean": -0.00875,
@@ -586,21 +593,21 @@
         }
       },
       "touch/model_veto": {
-        "actual_win_rate": 0.4936708860759494,
-        "brier_filled": 0.24927008585890503,
+        "actual_win_rate": 0.4968553459119497,
+        "brier_filled": 0.24878794383695596,
         "execution_known": 337,
         "exposure_by_game": {
-          "401910031": 0.5700000000000001
+          "401910044": 2.27
         },
         "filled": 159,
-        "forecast_win_probability": 0.5665919936708861,
-        "net_pnl_fee_upper_estimate": -2.84,
-        "orders": 337,
-        "pending_or_unknown_execution": 0,
-        "pnl_without_best_game": -4.45,
-        "pnl_without_best_three_games": -7.32,
-        "settled": 158,
-        "settled_games": 59,
+        "forecast_win_probability": 0.566704855345912,
+        "net_pnl_fee_upper_estimate": -2.41,
+        "orders": 341,
+        "pending_or_unknown_execution": 4,
+        "pnl_without_best_game": -4.02,
+        "pnl_without_best_three_games": -6.89,
+        "settled": 159,
+        "settled_games": 60,
         "trade_print_markouts_not_executable_quotes": {
           "300": {
             "mean": -0.00875,
@@ -613,21 +620,21 @@
         }
       },
       "touch/no_baseline": {
-        "actual_win_rate": 0.47039473684210525,
-        "brier_filled": 0.24350992400563817,
+        "actual_win_rate": 0.46905537459283386,
+        "brier_filled": 0.24275048136525407,
         "execution_known": 666,
         "exposure_by_game": {
-          "401910031": 1.5
+          "401910044": 4.92
         },
         "filled": 307,
-        "forecast_win_probability": 0.5205616118421053,
-        "net_pnl_fee_upper_estimate": -13.85,
-        "orders": 666,
-        "pending_or_unknown_execution": 0,
-        "pnl_without_best_game": -15.94,
-        "pnl_without_best_three_games": -19.31,
-        "settled": 304,
-        "settled_games": 71,
+        "forecast_win_probability": 0.5199824592833876,
+        "net_pnl_fee_upper_estimate": -14.35,
+        "orders": 675,
+        "pending_or_unknown_execution": 9,
+        "pnl_without_best_game": -16.44,
+        "pnl_without_best_three_games": -19.81,
+        "settled": 307,
+        "settled_games": 72,
         "trade_print_markouts_not_executable_quotes": {
           "300": {
             "mean": -0.006111111111111111,
