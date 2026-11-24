@@ -203,7 +203,7 @@ def elo(matches, k=K):
     A result changes the ratings only RESULT_DELAY_HOURS after its start, so a
     match is never rated from one that had not finished when it began."""
     m = matches.sort_values("start_utc").reset_index(drop=True)
-    starts = pd.to_datetime(m.start_utc, utc=True)
+    starts = pd.to_datetime(m.start_utc, utc=True, format="ISO8601")
     ratings, played, pending = {}, {}, []
     p, n_team, n_opp = [], [], []
     for start, row in zip(starts, m.itertuples(index=False)):
