@@ -9,7 +9,6 @@ Intended for paper evaluation. Does not alter live hard-skip behavior.
 
 from __future__ import annotations
 
-import numpy as np
 import pandas as pd
 
 STATUS_MINUTES_MULT = {

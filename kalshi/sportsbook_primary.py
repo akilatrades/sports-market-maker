@@ -11,7 +11,6 @@ mode or as a new forward-validation cohort before any live change.
 
 from __future__ import annotations
 
-import numpy as np
 import pandas as pd
 
 
@@ -69,7 +68,9 @@ def should_quote_no(
     ``fee_fn`` should accept a price and return the maker fee per contract.
     """
     if fee_fn is None:
-        fee_fn = lambda p: 0.25 * 0.07 * p * (1 - p)  # default maker share
+
+        def fee_fn(p):
+            return 0.25 * 0.07 * p * (1 - p)  # default maker share
 
     fee = fee_fn(no_price)
     edge = (1 - fair) - no_price - fee
