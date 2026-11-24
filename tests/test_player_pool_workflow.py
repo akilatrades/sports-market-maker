@@ -97,13 +97,13 @@ def test_the_watcher_starts_the_line_workflows_about_every_10_minutes():
     so the page's sportsbook and app times went stale (owner, 2026-11-23)."""
     job = JOBS["prices"]
     starts = re.findall(r"gh workflow run (\S+)", job)
-    assert starts == ["books.yml", "pickem-lines.yml"]
+    assert starts == ["books.yml", "pickem-lines.yml", "paper-mentions.yml"]
     # Only the cheap scope: games within 6.5 hours of tip-off.
     assert "gh workflow run books.yml -f scope=near" in job
     gap = int(re.search(r"\$\(\(SECONDS - lines\)\) -ge (\d+)", job).group(1))
     assert 10 * 60 <= gap <= 30 * 60  # 10 minutes since 2026-11-23, was 20
     # A failed start never stops the watcher.
-    assert job.count('|| echo "::warning::could not start') == 2
+    assert job.count('|| echo "::warning::could not start') == 3
     # The token is this run's own, given to that step only, and may start
     # workflows but nothing more.
     assert job.count("GH_TOKEN: ${{ github.token }}") == 1
