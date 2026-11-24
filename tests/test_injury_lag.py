@@ -133,3 +133,17 @@ def test_reports_are_resumable_and_missing_slots_are_skipped(tmp_path):
     assert len(saved) == 39  # 52 slots less the 13 at :15
     again = L.collect_reports([date(2026, 1, 10)], state=tmp_path, read=read)
     assert again["days_already"] == 1 and len(calls) == 52
+
+
+def test_read_slot_unpacks_the_parser_reply(monkeypatch):
+    from markets.nba import official_injuries as O
+
+    table = pd.DataFrame([report("x", "Out")])
+    monkeypatch.setattr(O, "download", lambda url, timeout: b"%PDF-1.7 fake")
+    monkeypatch.setattr(O, "parse", lambda data: ("issued", table))
+    got = L.read_slot(pd.Timestamp("2026-01-10T17:00:00-05:00").to_pydatetime())
+    assert got is table
+    monkeypatch.setattr(O, "download", lambda url, timeout: None)
+    assert (
+        L.read_slot(pd.Timestamp("2026-01-10T17:00:00-05:00").to_pydatetime()) is None
+    )

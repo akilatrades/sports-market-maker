@@ -146,7 +146,7 @@ def read_slot(slot):
     if not data or not data.startswith(b"%PDF-"):
         return None
     try:
-        rows = O.parse(data)
+        _, rows = O.parse(data)  # (report time, table rows)
     except O.ReportError:
         return pd.DataFrame({"error": ["unreadable"]})
     return rows

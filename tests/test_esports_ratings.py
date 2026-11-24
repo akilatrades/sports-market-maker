@@ -6,6 +6,26 @@ import pandas as pd
 from research import esports_ratings as E
 
 
+def test_team_names_come_from_kalshis_rules_text():
+    rules = (
+        "If PRIVATE wins the CyberClash Closed Qualifier 2026: UPGRADE vs. PRIVATE "
+        "CS2 match originally scheduled for Oct 16, 2026 at 12:00 PM EDT"
+    )
+    m = {"yes_sub_title": "PRIVATE", "title": "PRIVATE wins", "rules_primary": rules}
+    assert E.teams_of(m) == ("private", "upgrade")
+    m = {**m, "yes_sub_title": "UPGRADE", "title": "UPGRADE wins"}
+    assert E.teams_of(m) == ("upgrade", "private")
+    dota = (
+        "If Team Liquid wins the TI 2026: Team Liquid vs. Tundra Esports Dota 2 "
+        "match originally scheduled"
+    )
+    assert E.teams_of({"yes_sub_title": "Team Liquid", "rules_primary": dota}) == (
+        "team liquid",
+        "tundra esports",
+    )
+    assert E.teams_of({"yes_sub_title": "Nobody", "rules_primary": dota}) is None
+
+
 def test_team_names_come_from_the_subtitle_and_title():
     m = {
         "yes_sub_title": "Team Vitality",
