@@ -125,3 +125,11 @@ def test_series_are_the_105_mention_series_and_nothing_trades():
     assert not any(
         "client" in n or "order" in n.lower() and "paper" not in n for n in names
     )
+
+
+def test_the_game_day_watcher_starts_the_paper_test():
+    root = Path(__file__).resolve().parents[1]
+    watcher = (root / ".github/workflows/player-pool-page.yml").read_text()
+    assert "gh workflow run paper-mentions.yml" in watcher
+    flow = (root / ".github/workflows/paper-mentions.yml").read_text()
+    assert "workflow_dispatch:" in flow and "--due" in flow

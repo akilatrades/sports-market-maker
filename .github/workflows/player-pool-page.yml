@@ -155,6 +155,11 @@ jobs:
                 || echo "::warning::could not start book lines"
               gh workflow run pickem-lines.yml \
                 || echo "::warning::could not start pick'em app lines"
+              # The mention-market paper test (no orders; it skips unless an
+              # hour has passed). GitHub runs its own schedule only a few
+              # times a day, and "after book lines" never fires here.
+              gh workflow run paper-mentions.yml \
+                || echo "::warning::could not start the mention paper test"
               lines=$SECONDS
             fi
             status=0
