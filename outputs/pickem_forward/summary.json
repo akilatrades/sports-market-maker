@@ -4,46 +4,95 @@
  "picks_made": 551,
  "picks_made_at_the_bar": 24,
  "results": {
-  "pending": 551
+  "loss": 267,
+  "win": 256,
+  "pending": 15,
+  "tie": 13
  },
  "primary": {
-  "picks": 0,
+  "picks": 20,
   "bar": 0.54,
   "break_even": 0.5421,
-  "status": "waiting for the first look (0 of 200)"
+  "win_rate": 0.4,
+  "over_break_even": -0.1421,
+  "t": -0.77,
+  "status": "waiting for the first look (20 of 200)"
  },
  "primary_3_or_more_books": {
-  "picks": 0,
+  "picks": 16,
   "bar": 0.54,
   "break_even": 0.5421,
-  "status": "waiting for the first look (0 of 200)"
+  "win_rate": 0.375,
+  "over_break_even": -0.1671,
+  "t": -0.87,
+  "status": "waiting for the first look (16 of 200)"
  },
  "calibration_all_picks": {
-  "picks": 0
+  "picks": 523,
+  "games": 10,
+  "win_rate": 0.4895,
+  "stated_chance": 0.5165,
+  "won_less_stated": -0.027,
+  "t": -0.85
  },
  "by_stated_chance": {
   "under 52%": {
-   "picks": 0
+   "picks": 340,
+   "games": 10,
+   "win_rate": 0.4765,
+   "stated_chance": 0.5091,
+   "won_less_stated": -0.0326,
+   "t": -0.82
   },
   "52 to 53%": {
-   "picks": 0
+   "picks": 115,
+   "games": 10,
+   "win_rate": 0.513,
+   "stated_chance": 0.5246,
+   "won_less_stated": -0.0116,
+   "t": -0.19
   },
   "53 to 54%": {
-   "picks": 0
+   "picks": 48,
+   "games": 10,
+   "win_rate": 0.5625,
+   "stated_chance": 0.5337,
+   "won_less_stated": 0.0288,
+   "t": 0.35
   },
   "54 to 55%": {
-   "picks": 0
+   "picks": 11,
+   "games": 7,
+   "win_rate": 0.2727,
+   "stated_chance": 0.5438,
+   "won_less_stated": -0.271,
+   "t": -2.03
   },
   "55% or more": {
-   "picks": 0
+   "picks": 9,
+   "games": 5,
+   "win_rate": 0.5556,
+   "stated_chance": 0.5671,
+   "won_less_stated": -0.0115,
+   "t": -0.04
   }
  },
  "by_app": {
   "PrizePicks": {
-   "picks": 0
+   "picks": 338,
+   "games": 10,
+   "win_rate": 0.4882,
+   "stated_chance": 0.5174,
+   "won_less_stated": -0.0292,
+   "t": -1.08
   },
   "Underdog": {
-   "picks": 0
+   "picks": 185,
+   "games": 9,
+   "win_rate": 0.4919,
+   "stated_chance": 0.5149,
+   "won_less_stated": -0.023,
+   "t": -0.5
   }
  },
  "before_the_plan_not_tested": {
