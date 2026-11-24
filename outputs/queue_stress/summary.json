@@ -1,0 +1,35 @@
+{
+ "note": "EXPLORATORY, in-sample 2025-26, SIMULATED fills from public trades. A fill needs >= queue contracts traded through the price in the hour. Profit per contract after the maker fee, cents.",
+ "variants": 80,
+ "bar": {
+  "queue": 5,
+  "mean": 0.02,
+  "t": 3.0,
+  "fills": 500,
+  "events": 50
+ },
+ "candidates": [
+  {
+   "family": "mention",
+   "side": "no",
+   "queue": 5,
+   "fills": 3249,
+   "events": 378,
+   "mean_cents": 4.55,
+   "t": 3.43,
+   "first_half_cents": 5.61,
+   "second_half_cents": 2.2
+  },
+  {
+   "family": "racing",
+   "side": "no",
+   "queue": 5,
+   "fills": 4268,
+   "events": 335,
+   "mean_cents": 2.22,
+   "t": 3.95,
+   "first_half_cents": 0.91,
+   "second_half_cents": 2.4
+  }
+ ]
+}
