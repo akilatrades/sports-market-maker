@@ -1,14 +1,14 @@
 {
   "KXITFMATCH": {
-    "orders": 2955,
+    "orders": 2967,
     "vetoed": 0,
     "open": 16,
-    "fill_rate": 0.7420891459680163,
-    "fills_settled": 2181,
-    "bankroll": 193.2,
-    "cents_per_contract": -1.18,
+    "fill_rate": 0.7431379193493731,
+    "fills_settled": 2193,
+    "bankroll": 189.66,
+    "cents_per_contract": -1.17,
     "t": -3.0,
-    "profit_dollars": -306.8
+    "profit_dollars": -310.34
   },
   "KXNASCARRACE": {
     "orders": 295,
@@ -52,9 +52,9 @@
     "bankroll": 500.0
   },
   "KXNFLRECYDS": {
-    "orders": 1435,
+    "orders": 1480,
     "vetoed": 0,
-    "open": 0,
+    "open": 45,
     "fill_rate": 0.5749128919860628,
     "fills_settled": 825,
     "bankroll": 137.63,
@@ -109,9 +109,9 @@
     "bankroll": 500.0
   },
   "KXNCAAMB1HSPREAD": {
-    "orders": 607,
+    "orders": 627,
     "vetoed": 0,
-    "open": 0,
+    "open": 20,
     "fill_rate": 0.171334431630972,
     "fills_settled": 104,
     "bankroll": 427.97,
@@ -120,9 +120,9 @@
     "profit_dollars": -72.03
   },
   "KXNBA3D": {
-    "orders": 510,
+    "orders": 511,
     "vetoed": 0,
-    "open": 4,
+    "open": 5,
     "fill_rate": 0.49604743083003955,
     "fills_settled": 251,
     "bankroll": 550.0,
@@ -150,9 +150,9 @@
     "bankroll": 500.0
   },
   "KXNFLRECYDS+model": {
-    "orders": 1198,
-    "vetoed": 4001,
-    "open": 0,
+    "orders": 1210,
+    "vetoed": 4055,
+    "open": 12,
     "fill_rate": 0.501669449081803,
     "fills_settled": 601,
     "bankroll": 280.02,
@@ -163,15 +163,15 @@
     "vetoed_settled": 1949
   },
   "KXITFMATCH+no30": {
-    "orders": 2450,
+    "orders": 2456,
     "vetoed": 0,
-    "open": 16,
-    "fill_rate": 0.7559572719802794,
-    "fills_settled": 1840,
-    "bankroll": 249.03,
-    "cents_per_contract": -1.44,
-    "t": -2.15,
-    "profit_dollars": -250.97
+    "open": 14,
+    "fill_rate": 0.7567567567567568,
+    "fills_settled": 1848,
+    "bankroll": 245.06,
+    "cents_per_contract": -1.45,
+    "t": -2.16,
+    "profit_dollars": -254.94
   },
-  "updated_utc": "2026-11-23T12:07+00:00"
+  "updated_utc": "2026-11-24T02:06+00:00"
 }
