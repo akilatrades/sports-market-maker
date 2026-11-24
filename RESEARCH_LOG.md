@@ -5682,3 +5682,36 @@ is above zero with event-clustered t >= 2 on at least 1,000 fills, at least
 5 of the 8 test months are above zero, and fewer than 5% of null runs do as
 well. Anything less is reported as not found. A pass leads to a live paper
 test of the chosen variants before any order.
+
+### Result (2026-11-24): edge not found under the bar
+
+Historical and simulated (first-in-line fills, maker fee). 391,221 filled
+orders, 78,171 events, 1,582 series, 11 September 2025 to 17 August 2026.
+
+- **Sensitivity.** 88 of 479 variants sat on a robust plateau. The pattern
+  is one-sided: resting NO orders are above zero in almost every market type
+  and price band, resting YES orders below zero in almost all; both grow
+  with wider spreads.
+- **Walk-forward (decisive).** Chosen on earlier months only, January to
+  August 2026: **+1.18c a fill before any haircut** (99,700 fills, 37,893
+  events, event t +6.3, 7 of 8 months above zero). **After the 2c haircut:
+  -0.82c** (t -4.3, 2 of 8 months above zero); after 4c: -2.82c.
+- **Stress.** Double fees +0.91c; without the best month (March) +0.96c;
+  without the best series +1.13c: robust to everything except the haircut.
+  By type (no haircut): season and futures NO +2.3c (27,107 fills), game NO
+  +1.5c (27,633), part-game NO +1.3c (21,677), totals NO -0.2c, spreads NO
+  -1.0c.
+- **Monte Carlo.** Resampling events with the 2c haircut: a loss in every
+  draw (5-95%: -$1,118 to -$505 a contract). Fair-market null: 93.5% of the
+  200 runs had a higher haircut t than the real one, because under fair
+  outcomes the procedure chooses few variants and trades few fills.
+
+**Verdict.** No edge by the bar fixed beforehand. The replay's one-sided
+NO advantage is real in the replay (it survives walk-forward selection,
+fees and leaving out the best month or series), but it is about 1.2c a
+fill, smaller than the 2-4c by which live NBA fills trailed the replay. The
+size of that gap in other market types is unknown; it was measured on NBA
+props, which trade on fast news close to the start. Season and futures
+markets, where the replay's advantage is largest (+2.3c) and news is slower,
+are where a live measurement of the gap would decide it. Variants: 479,
+all inside the walk-forward.
