@@ -1,6 +1,6 @@
 # Live trader
 
-Updated 2026-11-23 06:29 UTC. Risk limits: kalshi/risk.py. Rule: no_seller_bookline.
+Updated 2026-11-24 00:33 UTC. Risk limits: kalshi/risk.py. Rule: no_seller_bookline.
 
 | Status | Orders | Dollars |
 |---|---:|---:|
