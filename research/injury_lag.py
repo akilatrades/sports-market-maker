@@ -430,6 +430,32 @@ def load_reports(state=STATE):
     return pd.concat(frames, ignore_index=True) if frames else pd.DataFrame()
 
 
+def diagnose(events, matched, trades):
+    """Why events do or do not match a ticker (names are public)."""
+    if events.empty:
+        return {}
+    out = {"events_by_previous_status": events.was.value_counts().to_dict()}
+    real = matched[
+        matched.was.isin(["Questionable", "Doubtful", "Probable", "Available"])
+    ]
+    out["status_changes"] = int(len(real))
+    out["status_changes_matched"] = int(real.tickers.notna().sum())
+    by_day_team = {}
+    for day, code in trades.groupby(["game_day", "code"]).size().index:
+        by_day_team.setdefault((day, code[:3]), set()).add(code)
+    samples = []
+    for e in real[real.tickers.isna()].head(15).itertuples(index=False):
+        day = pd.Timestamp(e.slot_utc).tz_convert("America/New_York").date()
+        team = (e.code or "")[:3]
+        nearby = sorted(by_day_team.get((day, team), set()))
+        nextday = sorted(by_day_team.get((day + pd.Timedelta(days=1), team), set()))
+        samples.append({"player": e.player, "team": e.team, "code": e.code,
+                        "slot": str(e.slot_utc), "game_date": e.game_date,
+                        "codes_that_day": nearby[:12], "codes_next_day": nextday[:6]})  # fmt: skip
+    out["unmatched_samples"] = samples
+    return out
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     parser.add_argument("stage", choices=("reports", "results", "score"))
@@ -452,6 +478,7 @@ def main(argv=None):
         results = {}
     measured = measure(matched, trades, results)
     summary = {
+        "diagnostics": diagnose(events, matched, trades),
         "note": "2025-26, historical; trade prints are public; in-sample",
         "events_found": int(len(events)),
         "events_matched": int(matched.tickers.notna().sum()) if len(matched) else 0,
