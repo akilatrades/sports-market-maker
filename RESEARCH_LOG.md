@@ -5633,3 +5633,36 @@ in-sample for the rule's 5-point threshold only in name (it is fixed here)
 and leads to a paper watcher on live esports matches before any order.
 Variants: one (K = 32, 5 points); K = 16 and 48 and thresholds of 3 and 8
 points are reported as exploratory.
+
+## 2026-11-24: Mention markets, a forward paper test (plan, written before any order)
+
+*Owner request. Paper only: no order reaches Kalshi.*
+
+**Where it came from (exploratory).** In the robustness search's data
+(historical, simulated, first in line, maker fee), after looking across many
+market types, resting NO orders in Kalshi's "mention" markets ("will X be
+said during Y?") made +5.1c a fill (3,485 fills, 379 events, event t +3.9):
++4.8c in the first half of the period and +5.4c in the second, +3.8c to
++5.9c in every price range; resting YES lost 4.7c. It was found after
+looking at many market types, so part of it may be luck. The live NBA bot's
+fills trailed the replay by 2-4c, which this would survive if it holds.
+
+**Question.** Do resting NO orders in mention markets make money after fees
+on live markets, with fills judged from Kalshi's public trades?
+
+**Rule (the scan's, unchanged).** Every hour, in each of the 105 mention
+series the scan covered (`live/paper_mentions.py`, `SERIES`), for every open
+market whose expected expiration is 4 to 7 hours away with a two-sided quote,
+a NO order rests one cent inside the spread (at the bid when the spread is
+1c) for one hour. Fills from public trade prints with the price-priority
+rules of `kalshi.maker` (first in line: optimistic); settled at Kalshi's
+result; maker fee 25% of the taker fee. Sizing as the other paper tests:
+$500 paper bankroll, 1% an order, 30% a day, at most $25 and 100 contracts
+an order. Ledger `outputs/paper_mentions/orders.csv`.
+
+**Bar.** Judged once 400 settled contracts in at least 40 events exist:
+continue to a small live test if profit per contract after fees is above
+zero with event-clustered t >= 2; stop if it is at or below zero. Earlier,
+stop if profit is below -5c a contract after 200 settled contracts. The
+capacity question (how many contracts trade through an order an hour) is
+reported, not judged.

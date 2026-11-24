@@ -92,7 +92,7 @@ def bankroll(ledger, series, start=START_BANKROLL):
     return start + float(pd.to_numeric(done.profit).fillna(0).sum())
 
 
-def quotes(markets, now):
+def quotes(markets, now, window=WINDOW_HOURS):
     """Open markets in the window with a two-sided quote; prices as floats."""
     m = pd.DataFrame(markets)
     if m.empty:
@@ -105,7 +105,7 @@ def quotes(markets, now):
     m["yes_bid"] = pd.to_numeric(m.yes_bid_dollars, errors="coerce")
     m["yes_ask"] = pd.to_numeric(m.yes_ask_dollars, errors="coerce")
     ok = (
-        hours.between(*WINDOW_HOURS)
+        hours.between(*window)
         & (m.yes_bid > 0)
         & (m.yes_ask < 1)
         & (m.yes_ask > m.yes_bid)
@@ -135,6 +135,7 @@ def post_orders(
     start=START_BANKROLL,
     p_model=None,
     min_price=None,
+    window=WINDOW_HOURS,
 ):
     """New orders for one series.
 
@@ -144,7 +145,7 @@ def post_orders(
     order price and the maker fee is below zero. ``min_price`` drops orders
     whose "no" price is below it (the price-floor variants).
     """
-    q = quotes(markets, now)
+    q = quotes(markets, now, window)
     if q.empty:
         return empty_ledger()
     o = no_orders(q)
