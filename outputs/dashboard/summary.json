@@ -1,5 +1,5 @@
 {
- "updated_utc": "2026-11-24T13:30+00:00",
+ "updated_utc": "2026-11-24T22:40+00:00",
  "paper": {
   "ledgers": [
    {
@@ -2387,21 +2387,21 @@
  "per_fill_histogram": {
   "-100": 85,
   "-90": 171,
-  "-80": 288,
+  "-80": 293,
   "-70": 424,
-  "-60": 541,
-  "-50": 737,
-  "-40": 909,
+  "-60": 546,
+  "-50": 754,
+  "-40": 910,
   "-30": 696,
-  "-20": 539,
+  "-20": 551,
   "-10": 365,
   "0": 1175,
-  "10": 918,
-  "20": 767,
-  "30": 723,
-  "40": 593,
+  "10": 920,
+  "20": 779,
+  "30": 736,
+  "40": 594,
   "50": 510,
-  "60": 413,
+  "60": 419,
   "70": 198,
   "80": 85,
   "90": 18
@@ -2486,10 +2486,10 @@
   "account_total_loss_stop": 100.0,
   "daily_loss_stop": 20.0,
   "total_loss_stop": 100.0,
-  "odds_snapshot_utc": "2026-11-24T03:04+00:00",
-  "trade_prints_through": "2026-11-22",
+  "odds_snapshot_utc": "2026-11-24T22:34+00:00",
+  "trade_prints_through": "2026-11-23",
   "spread": {
-   "rules": "spread-maker-v8-wide-spreads",
+   "rules": "spread-maker-v9-early-quotes",
    "contracts_per_order": 2,
    "max_net_per_market_side": 2,
    "min_spread_cents": 10,
@@ -2498,7 +2498,7 @@
     4.0,
     24.0
    ],
-   "min_lead_minutes": 85,
+   "min_lead_minutes": 180,
    "cancel_lead_minutes": 20,
    "series": 61,
    "max_open": 100.0,
