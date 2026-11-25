@@ -22,7 +22,9 @@
 | Tue 8:00 PM | Sam Hauser | YES 4+ rebounds | 39¢ | 47% | 6¢ | 5 | $2.04 | paper |
 | Tue 8:00 PM | Trae Young | YES 2+ rebounds | 67¢ | 78% | 9¢ | 2 | $1.38 | paper |
 | Tue 10:00 PM | Caleb Martin | YES 10+ points | 20¢ | 28% | 7¢ | 9 | $1.91 | paper |
+| Tue 10:00 PM | Caleb Martin | NO 2+ assists | 31¢ | 39% | 6¢ | 6 | $1.95 | paper |
 | Tue 10:00 PM | Cameron Johnson | YES 15+ points | 39¢ | 46% | 5¢ | 5 | $2.04 | paper |
+| Tue 10:00 PM | Cameron Johnson | YES 4+ assists | 23¢ | 32% | 8¢ | 8 | $1.94 | paper |
 | Tue 10:00 PM | Cooper Flagg | NO 6+ rebounds | 40¢ | 54% | 13¢ | 4 | $1.67 | paper |
 | Tue 10:00 PM | Cooper Flagg | NO 2+ threes | 47¢ | 58% | 10¢ | 4 | $1.95 | paper |
 | Tue 10:00 PM | Cooper Flagg | NO 25+ points | 51¢ | 61% | 8¢ | 3 | $1.59 | paper |

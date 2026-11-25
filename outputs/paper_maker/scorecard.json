@@ -1,7 +1,7 @@
 {
   "model_side": {
-    "orders": 1135,
-    "resting_or_awaiting_result": 0,
+    "orders": 1168,
+    "resting_or_awaiting_result": 33,
     "fill_rate": 0.3022026431718062,
     "fills_settled": 343,
     "bankroll": 443.39,
@@ -10,8 +10,8 @@
     "profit_dollars": -56.61
   },
   "no_seller": {
-    "orders": 1155,
-    "resting_or_awaiting_result": 0,
+    "orders": 1187,
+    "resting_or_awaiting_result": 32,
     "fill_rate": 0.48484848484848486,
     "fills_settled": 560,
     "bankroll": 376.24,
@@ -20,9 +20,9 @@
     "profit_dollars": -123.76
   },
   "no_seller_late": {
-    "orders": 1113,
-    "resting_or_awaiting_result": 0,
-    "fill_rate": 0.35938903863432164,
+    "orders": 1147,
+    "resting_or_awaiting_result": 17,
+    "fill_rate": 0.35398230088495575,
     "fills_settled": 400,
     "bankroll": 258.61,
     "cents_per_contract": -7.93,
@@ -30,8 +30,8 @@
     "profit_dollars": -241.39
   },
   "no_seller_edge_sized": {
-    "orders": 778,
-    "resting_or_awaiting_result": 0,
+    "orders": 801,
+    "resting_or_awaiting_result": 23,
     "fill_rate": 0.4820051413881748,
     "fills_settled": 375,
     "bankroll": 457.52,
@@ -40,8 +40,8 @@
     "profit_dollars": -42.48
   },
   "no_seller_veto2": {
-    "orders": 1150,
-    "resting_or_awaiting_result": 0,
+    "orders": 1182,
+    "resting_or_awaiting_result": 32,
     "fill_rate": 0.4826086956521739,
     "fills_settled": 555,
     "bankroll": 376.26,
@@ -50,8 +50,8 @@
     "profit_dollars": -123.74
   },
   "no_seller_stat_veto": {
-    "orders": 1150,
-    "resting_or_awaiting_result": 0,
+    "orders": 1183,
+    "resting_or_awaiting_result": 33,
     "fill_rate": 0.4852173913043478,
     "fills_settled": 558,
     "bankroll": 378.88,
@@ -60,8 +60,8 @@
     "profit_dollars": -121.12
   },
   "no_seller_bookline": {
-    "orders": 1148,
-    "resting_or_awaiting_result": 0,
+    "orders": 1183,
+    "resting_or_awaiting_result": 35,
     "fill_rate": 0.4686411149825784,
     "fills_settled": 538,
     "bankroll": 289.7,
@@ -70,8 +70,8 @@
     "profit_dollars": -210.3
   },
   "no_seller_book_primary": {
-    "orders": 134,
-    "resting_or_awaiting_result": 0,
+    "orders": 168,
+    "resting_or_awaiting_result": 34,
     "fill_rate": 0.3805970149253731,
     "fills_settled": 51,
     "bankroll": 502.2,
@@ -79,5 +79,5 @@
     "t": 0.33,
     "profit_dollars": 2.2
   },
-  "updated_utc": "2026-11-24T22:40+00:00"
+  "updated_utc": "2026-11-25T00:00+00:00"
 }
