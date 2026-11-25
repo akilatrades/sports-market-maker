@@ -1,18 +1,18 @@
 {
   "model_side": {
     "orders": 1168,
-    "resting_or_awaiting_result": 22,
-    "fill_rate": 0.29930191972076786,
-    "fills_settled": 343,
-    "bankroll": 443.39,
-    "cents_per_contract": -1.7,
+    "resting_or_awaiting_result": 9,
+    "fill_rate": 0.3002588438308887,
+    "fills_settled": 348,
+    "bankroll": 449.94,
+    "cents_per_contract": -1.67,
     "t": -0.57,
-    "profit_dollars": -56.61
+    "profit_dollars": -50.06
   },
   "no_seller": {
     "orders": 1187,
-    "resting_or_awaiting_result": 19,
-    "fill_rate": 0.4794520547945205,
+    "resting_or_awaiting_result": 12,
+    "fill_rate": 0.4765957446808511,
     "fills_settled": 560,
     "bankroll": 376.24,
     "cents_per_contract": -2.9,
@@ -31,8 +31,8 @@
   },
   "no_seller_edge_sized": {
     "orders": 801,
-    "resting_or_awaiting_result": 13,
-    "fill_rate": 0.47588832487309646,
+    "resting_or_awaiting_result": 8,
+    "fill_rate": 0.4728877679697352,
     "fills_settled": 375,
     "bankroll": 457.52,
     "cents_per_contract": -2.19,
@@ -41,8 +41,8 @@
   },
   "no_seller_veto2": {
     "orders": 1182,
-    "resting_or_awaiting_result": 19,
-    "fill_rate": 0.4772141014617369,
+    "resting_or_awaiting_result": 12,
+    "fill_rate": 0.47435897435897434,
     "fills_settled": 555,
     "bankroll": 376.26,
     "cents_per_contract": -2.92,
@@ -51,8 +51,8 @@
   },
   "no_seller_stat_veto": {
     "orders": 1183,
-    "resting_or_awaiting_result": 19,
-    "fill_rate": 0.4793814432989691,
+    "resting_or_awaiting_result": 12,
+    "fill_rate": 0.47651579846285225,
     "fills_settled": 558,
     "bankroll": 378.88,
     "cents_per_contract": -2.77,
@@ -61,23 +61,23 @@
   },
   "no_seller_bookline": {
     "orders": 1183,
-    "resting_or_awaiting_result": 22,
-    "fill_rate": 0.46339362618432384,
-    "fills_settled": 538,
-    "bankroll": 289.7,
-    "cents_per_contract": -5.08,
-    "t": -2.3,
-    "profit_dollars": -210.3
+    "resting_or_awaiting_result": 12,
+    "fill_rate": 0.46199829205807,
+    "fills_settled": 541,
+    "bankroll": 282.46,
+    "cents_per_contract": -5.38,
+    "t": -2.42,
+    "profit_dollars": -217.54
   },
   "no_seller_book_primary": {
     "orders": 168,
-    "resting_or_awaiting_result": 19,
-    "fill_rate": 0.3422818791946309,
+    "resting_or_awaiting_result": 12,
+    "fill_rate": 0.3269230769230769,
     "fills_settled": 51,
     "bankroll": 502.2,
     "cents_per_contract": 2.99,
     "t": 0.33,
     "profit_dollars": 2.2
   },
-  "updated_utc": "2026-11-25T02:43+00:00"
+  "updated_utc": "2026-11-25T04:28+00:00"
 }
