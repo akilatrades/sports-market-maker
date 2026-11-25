@@ -1,35 +1,35 @@
 stat,feature,coefficient
-receiving_yards,log expected targets,0.696
-receiving_yards,log yards per target,0.4456
+receiving_yards,log expected targets,0.6966
+receiving_yards,log yards per target,0.4462
 receiving_yards,log implied team points,0.3746
-receiving_yards,win probability,-0.1145
-receiving_yards,is TE,-0.0381
-receiving_yards,is RB,-0.1065
-receiving_yards,is RB x win probability,-0.0659
+receiving_yards,win probability,-0.1148
+receiving_yards,is TE,-0.0384
+receiving_yards,is RB,-0.108
+receiving_yards,is RB x win probability,-0.0649
 receiving_yards,log games played,-0.0397
-receiving_yards,log recent receiving yards,0.2565
-receiving_yards,log opponent pass yards allowed,0.2034
-receiving_yards,"teammates out, same position: targets to redistribute",1.046
-receiving_yards,"teammates out, other positions: targets to redistribute",0.327
-receptions,log expected targets,0.5235
-receptions,log catch rate,0.3477
-receptions,log implied team points,0.1812
-receptions,win probability,-0.1029
-receptions,is TE,0.0264
-receptions,is RB,0.0509
-receptions,is RB x win probability,-0.085
-receptions,log recent receptions,0.501
+receiving_yards,log recent receiving yards,0.2558
+receiving_yards,log opponent pass yards allowed,0.2036
+receiving_yards,"teammates out, same position: targets to redistribute",1.0451
+receiving_yards,"teammates out, other positions: targets to redistribute",0.3272
+receptions,log expected targets,0.5232
+receptions,log catch rate,0.348
+receptions,log implied team points,0.1814
+receptions,win probability,-0.1037
+receptions,is TE,0.0262
+receptions,is RB,0.0488
+receptions,is RB x win probability,-0.0825
+receptions,log recent receptions,0.5012
 receptions,log opponent pass yards allowed,0.2285
-receptions,"teammates out, same position: targets to redistribute",1.0046
-receptions,"teammates out, other positions: targets to redistribute",0.2779
-rushing_yards,log expected carries,0.3648
-rushing_yards,log yards per carry,0.1329
-rushing_yards,log implied team points,-0.0997
-rushing_yards,win probability,0.2456
-rushing_yards,log recent rushing yards,0.5783
-rushing_yards,log opponent rush yards allowed,0.3884
-rushing_yards,"teammates out, same position: carries to redistribute",0.5965
-rushing_yards,"teammates out, other positions: carries to redistribute",0.0917
+receptions,"teammates out, same position: targets to redistribute",1.0049
+receptions,"teammates out, other positions: targets to redistribute",0.2776
+rushing_yards,log expected carries,0.3689
+rushing_yards,log yards per carry,0.1358
+rushing_yards,log implied team points,-0.0991
+rushing_yards,win probability,0.2469
+rushing_yards,log recent rushing yards,0.5743
+rushing_yards,log opponent rush yards allowed,0.3882
+rushing_yards,"teammates out, same position: carries to redistribute",0.5968
+rushing_yards,"teammates out, other positions: carries to redistribute",0.1246
 passing_yards,log team pass attempts,0.3048
 passing_yards,log yards per attempt,0.1435
 passing_yards,log implied team points,0.6448
@@ -41,10 +41,10 @@ passing_tds,log TD rate per attempt,0.2125
 passing_tds,log implied team points,1.4593
 passing_tds,win probability,-0.1849
 passing_tds,log opponent pass yards allowed,0.0042
-skill_tds,log expected targets,0.4738
-skill_tds,log expected carries,0.1554
-skill_tds,log TDs per touch,-0.1514
-skill_tds,log implied team points,1.0397
-skill_tds,is TE,0.1275
-skill_tds,is RB,-0.0419
+skill_tds,log expected targets,0.4732
+skill_tds,log expected carries,0.1562
+skill_tds,log TDs per touch,-0.1522
+skill_tds,log implied team points,1.0414
+skill_tds,is TE,0.1274
+skill_tds,is RB,-0.0465
 skill_tds,log recent TDs,0.3856
