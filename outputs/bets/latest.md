@@ -30,11 +30,24 @@
 | Wed 10:00 PM | Brandin Podziemski | NO 4+ assists | 43¢ | 57% | 13¢ | 4 | $1.79 | paper |
 | Wed 10:00 PM | Charles Bassey | NO 8+ rebounds | 46¢ | 59% | 11¢ | 4 | $1.91 | paper |
 | Wed 10:00 PM | Charles Bassey | NO 2+ assists | 59¢ | 71% | 11¢ | 3 | $1.83 | paper |
+| Wed 10:00 PM | Damian Lillard | NO 20+ points | 47¢ | 56% | 7¢ | 4 | $1.95 | paper |
 | Wed 10:00 PM | Darius Acuff Jr. | NO 25+ points | 52¢ | 68% | 14¢ | 3 | $1.62 | paper |
+| Wed 10:00 PM | Darius Acuff Jr. | YES 4+ rebounds | 41¢ | 49% | 6¢ | 4 | $1.71 | paper |
 | Wed 10:00 PM | De'Andre Hunter | YES 4+ assists | 18¢ | 31% | 12¢ | 11 | $2.10 | paper |
+| Wed 10:00 PM | De'Andre Hunter | YES 20+ points | 29¢ | 37% | 7¢ | 6 | $1.83 | paper |
 | Wed 10:00 PM | De'Anthony Melton | NO 15+ points | 68¢ | 83% | 14¢ | 2 | $1.40 | paper |
+| Wed 10:00 PM | De'Anthony Melton | NO 2+ threes | 39¢ | 47% | 6¢ | 5 | $2.04 | paper |
+| Wed 10:00 PM | Deni Avdija | NO 6+ rebounds | 43¢ | 55% | 10¢ | 4 | $1.79 | paper |
+| Wed 10:00 PM | Devin Vassell | NO 4+ assists | 68¢ | 79% | 10¢ | 2 | $1.40 | paper |
 | Wed 10:00 PM | Domantas Sabonis | NO 12+ rebounds | 34¢ | 53% | 17¢ | 5 | $1.78 | paper |
+| Wed 10:00 PM | Domantas Sabonis | YES 15+ points | 50¢ | 57% | 6¢ | 4 | $2.07 | paper |
+| Wed 10:00 PM | Draymond Green | YES 8+ assists | 18¢ | 27% | 8¢ | 11 | $2.10 | paper |
+| Wed 10:00 PM | Draymond Green | NO 5+ points | 39¢ | 46% | 6¢ | 5 | $2.04 | paper |
 | Wed 10:00 PM | Julian Champagnie | NO 10+ points | 36¢ | 53% | 15¢ | 5 | $1.89 | paper |
+| Wed 10:00 PM | Julian Champagnie | NO 6+ rebounds | 58¢ | 75% | 16¢ | 3 | $1.80 | paper |
+| Wed 10:00 PM | Julian Champagnie | NO 4+ threes | 70¢ | 78% | 7¢ | 2 | $1.43 | paper |
+| Wed 10:00 PM | Keegan Murray | YES 2+ assists | 52¢ | 62% | 8¢ | 3 | $1.62 | paper |
+| Wed 10:00 PM | Keldon Johnson | NO 6+ rebounds | 56¢ | 75% | 18¢ | 3 | $1.74 | paper |
 | Wed 10:00 PM | Stephon Castle | NO 8+ assists | 55¢ | 78% | 21¢ | 3 | $1.71 | paper |
 | Wed 10:00 PM | Stephon Castle | NO 15+ points | 26¢ | 47% | 20¢ | 7 | $1.92 | paper |
 | Wed 10:00 PM | Stephon Castle | NO 6+ rebounds | 55¢ | 68% | 12¢ | 3 | $1.71 | paper |
