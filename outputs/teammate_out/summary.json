@@ -1,0 +1,102 @@
+{
+ "note": "This season, sportsbook consensus at the close (last snapshot within 2 hours of tip-off) vs box scores. miss_points = over won minus closing over chance, game-clustered. Not a forecast.",
+ "box_scores_through": "2026-11-21",
+ "out_regulars": {
+  "unknown": 66,
+  "same_day": 42,
+  "before_day": 37,
+  "late_unpriced": 11
+ },
+ "team_games": {
+  "control": 223,
+  "same_day": 38,
+  "before_day": 25,
+  "other": 12
+ },
+ "groups": {
+  "same_day": {
+   "lines": 869,
+   "games": 33,
+   "over_won": 0.4948,
+   "closing_chance": 0.4926,
+   "miss_points": 0.22,
+   "t": 0.1
+  },
+  "control": {
+   "lines": 5438,
+   "games": 133,
+   "over_won": 0.4744,
+   "closing_chance": 0.4921,
+   "miss_points": -1.77,
+   "t": -2.41
+  },
+  "before_day": {
+   "lines": 598,
+   "games": 24,
+   "over_won": 0.5234,
+   "closing_chance": 0.4938,
+   "miss_points": 2.96,
+   "t": 1.04
+  }
+ },
+ "same_day_by_stat": {
+  "points": {
+   "lines": 253,
+   "games": 33,
+   "over_won": 0.5178,
+   "closing_chance": 0.4987,
+   "miss_points": 1.9,
+   "t": 0.62
+  },
+  "rebounds": {
+   "lines": 237,
+   "games": 33,
+   "over_won": 0.4557,
+   "closing_chance": 0.4925,
+   "miss_points": -3.68,
+   "t": -1.09
+  },
+  "assists": {
+   "lines": 182,
+   "games": 33,
+   "over_won": 0.5,
+   "closing_chance": 0.495,
+   "miss_points": 0.5,
+   "t": 0.15
+  },
+  "threes": {
+   "lines": 197,
+   "games": 33,
+   "over_won": 0.5076,
+   "closing_chance": 0.4826,
+   "miss_points": 2.5,
+   "t": 0.78
+  }
+ },
+ "points_line_move_open_to_close": {
+  "before_day": {
+   "size": 92,
+   "mean": -0.2391304347826087
+  },
+  "control": {
+   "size": 1137,
+   "mean": -0.06860158311345646
+  },
+  "other": {
+   "size": 42,
+   "mean": 1.0238095238095237
+  },
+  "same_day": {
+   "size": 161,
+   "mean": 0.7577639751552795
+  }
+ },
+ "bar": {
+  "points": 0.04,
+  "t": 2.5,
+  "team_games": 30,
+  "control": 0.02
+ },
+ "variants": 5,
+ "pass": false
+}
