@@ -1,0 +1,69 @@
+{
+ "note": "SIMULATED (cross-market scan 2025-26), resting NO, walk-forward by month; fills need `queue` contracts traded through. Cents per contract after the fee.",
+ "persistence": {
+  "series_in_both_halves": 152,
+  "correlation_first_vs_second_half": 0.143,
+  "rank_correlation": 0.114,
+  "median_gap_cents": -3.13,
+  "fill_weighted_gap_cents": -3.33,
+  "share_of_series_with_negative_gap": 0.751
+ },
+ "primary": {
+  "before_haircut": {
+   "fills": 30515,
+   "events": 8747,
+   "series": 169,
+   "cents": 0.2,
+   "t": 0.55,
+   "months_positive": 7,
+   "months": 10
+  },
+  "after_2c_haircut": {
+   "fills": 30515,
+   "events": 8747,
+   "series": 169,
+   "cents": -1.8,
+   "t": -4.96,
+   "months_positive": 7,
+   "months": 10
+  },
+  "range_90_cents_before_haircut": [
+   -0.4,
+   0.79
+  ],
+  "beats_random_share": 0.383,
+  "random_median_cents": 0.31,
+  "series_chosen_per_month": {
+   "2025-11": 7,
+   "2025-12": 14,
+   "2026-01": 19,
+   "2026-02": 27,
+   "2026-03": 39,
+   "2026-04": 53,
+   "2026-05": 63,
+   "2026-06": 73,
+   "2026-07": 86,
+   "2026-08": 110
+  },
+  "fills_by_family": {
+   "game": 13304,
+   "total": 4327,
+   "part of game": 4281,
+   "player prop": 3647,
+   "combat": 2068,
+   "other": 1213,
+   "spread": 966,
+   "finance": 565,
+   "racing": 144
+  }
+ },
+ "variants": 9,
+ "bar": {
+  "t": 2.5,
+  "fills": 1000,
+  "events": 100,
+  "months_positive": 7,
+  "random_share": 0.95
+ },
+ "pass": false
+}
