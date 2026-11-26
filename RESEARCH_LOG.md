@@ -6090,3 +6090,88 @@ journal so it can be measured apart.
 **What it is not.** Not a claim of edge: the NBA bot's live result is about
 zero so far (+0.8c per contract, t 0.4). It only stops a safety pause from
 costing the rest of the day's orders in those markets.
+## 2026-11-26: Quant playbook tests: favorite-longshot bias and cross-contract consistency (plans, written before any result)
+
+**Owner request.** Test a list of standard prediction-market quant ideas.
+Not testable with data the project has (stated, not tested): SPX call-spread
+replication of S&P binaries (needs SPX option quotes), Fed markets against
+CME FedWatch (needs fed funds futures history), and latency/Bayesian
+repricing (needs low-latency feeds; the crypto Up/Down test of 8 December is
+the nearest). Already tested: strike-ladder arbitrage (none, 2026-11-26).
+
+### Test 1: favorite-longshot bias across Kalshi (backtest, SIMULATED, in-sample 2025-26)
+
+**Data.** The cross-market scan (`outputs/scan/`): bid and ask each hour from
+7 to 4 hours before expected expiration, and the result, for about 2,500
+series. These markets settle within hours, so only short-horizon "theta"
+is covered; months-long catalyst markets are not in the data.
+
+**Calibration (descriptive).** One quote per market (its first hour in the
+window): realized share of YES against the mid, by price bucket (1-2, 2-5,
+5-10, 10-20, ..., 80-90, 90-95, 95-98, 98-99 cents).
+
+**Strategies (4 variants).**
+- **T-NO (primary 1):** take NO at the ask (1 - YES bid) when the YES bid is
+  10 cents or less, one contract per market at its first hour; taker fee
+  0.07 x P x (1 - P) per contract (large-order rate; the rounding to whole
+  cents on 1-contract orders reported too).
+- **M-NO (primary 2):** the scan's resting NO at 90-98 cents, filled when 5+
+  contracts trade through; maker fee as the scan; then the 2-cent live
+  haircut.
+- T-YES and M-YES (favourites underpriced?): the same with YES at 90-98
+  cents. Reported, no bar.
+
+**Bar, each primary.** Mean profit per contract above 0 (T-NO after fees;
+M-NO after fees and the haircut), event-clustered t at least 2.5, at least
+1,000 markets in 300+ events, positive in both halves of the season
+(September-February, March-August). Also reported: by family; return on
+cash per day against a 4% Treasury yield.
+
+### Test 2: cross-contract consistency, live (read-only scanner, forward)
+
+**Method.** `research/consistency_scan.py`, hourly on GitHub for 7 days from
+the first run, public Kalshi data only (events with their markets):
+- **Sum of bids above $1:** in an event Kalshi marks mutually exclusive,
+  buying NO on every outcome at (1 - YES bid) pays at least (n - 1) dollars
+  whatever happens, so it is riskless when the YES bids sum to more than 1
+  plus the taker fees. Buying every YES when the asks sum to less than 1 is
+  reported separately, because it is riskless only if the outcomes are
+  exhaustive.
+- **Calendar:** markets in one event whose titles differ only by a deadline
+  ("before June 30" / "before December 31"): riskless when the earlier
+  deadline's YES bid exceeds the later one's YES ask plus fees.
+- **Thresholds:** markets in one event on one number ("above 4%", "above
+  5%"): riskless when a higher threshold's YES bid exceeds a lower one's
+  YES ask plus fees.
+
+Counts, sizes and examples (public tickers) per run; prices are top of book
+with no size, so a count is an upper bound on what could be traded. **Bar
+for "worth building an executor":** after 7 days, at least 20 distinct
+events with an after-fee riskless edge of 2+ cents seen in two consecutive
+runs (an hour apart, so it lasts long enough to act on).
+
+### Test 1 result (SIMULATED, in-sample 2025-26; 4 variants): fails
+
+`python -m research.longshot` -> `outputs/longshot/summary.json`.
+- **Calibration (202,805 markets, first quote 7 hours out):** the
+  favourite-longshot bias exists but is small. YES priced 1-10 cents
+  happened 0.3 to 0.5 points less often than priced; 90-99 cents, 0.6 to 1.1
+  points more often; 10-90 cents within 1.4 points.
+- **T-NO, take NO when the YES bid is 10c or less: -9.1c per contract**
+  (t -48.6; 43,826 markets; both halves -9.1c). Wide spreads are the cause:
+  the YES bid is often far below the real chance, so 1 minus the bid
+  overpays for NO. Exploratory, markets with a 1-2 cent spread only:
+  -0.5c (t -3.2; 19,476 markets), and -1.2c with fees rounded per contract.
+- **M-NO, rest NO at 90-98c (5-contract queue): +0.48c before the haircut**
+  (t 2.3; 25,375 markets), **-1.5c after it**. By family before the haircut:
+  combat +2.5c (t 3.1), game +1.9c (t 3.9), player prop +1.8c (t 4.1),
+  racing +1.6c; totals -2.6c, spreads -1.0c.
+- T-YES (take favourites at the ask): -20.3c (t -37); M-YES: +0.2c before
+  the haircut.
+- Capital lockup does not matter at these horizons: a 4% Treasury earns
+  0.003 cents per dollar over the 5.5 hours these orders are open.
+
+Reading. The bias is real and in the textbook direction, but at 0.3 to 1
+point it is smaller than Kalshi's taker fee (about 0.3 to 1.7 cents at these
+prices) and than the 2-cent live haircut on resting orders. Taking at the
+ask in wide markets is the most expensive mistake in the table.
