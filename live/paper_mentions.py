@@ -178,15 +178,39 @@ def discover(get_json, match=None, max_pages=60, events=None):
     return {ticker for ticker, _ in events if keep(ticker)}
 
 
-SPORT_WORDS = ("NFL", "NBA", "NCAA", "CFB", "CBB", "NHL", "MLB", "SNF", "TNF", "MNF")
-TALK = re.compile(r"\b(say|said|mention|announcer|broadcast|word)", re.IGNORECASE)
+SPORT_PREFIXES = tuple(
+    "KX" + w
+    for w in (
+        "NFL",
+        "NBA",
+        "NCAA",
+        "CFB",
+        "CBB",
+        "NHL",
+        "MLB",
+        "SNF",
+        "TNF",
+        "MNF",
+        "WNBA",
+    )
+)
+TALK = re.compile(
+    r"\b(say|said|mention|mentioned|announcers?|broadcasters?)\b", re.IGNORECASE
+)
 
 
 def sports_talk(events):
-    """Open sports series whose event titles are about what gets said: the
-    markets last season's mention edge came from, under any name."""
+    """Open sports series (ticker starts KXNFL, KXNBA, ...) whose event titles
+    are about what gets said: last season's mention edge, under any name."""
     return sorted({t for t, title in events
-                   if any(w in t for w in SPORT_WORDS) and TALK.search(title)})  # fmt: skip
+                   if t.startswith(SPORT_PREFIXES) and TALK.search(title)})  # fmt: skip
+
+
+def category_series(get_json, category="Mentions"):
+    """Every series Kalshi files under ``category`` (public /series), or an
+    empty set when the reply has none."""
+    reply = get_json("/series", {"category": category}) or {}
+    return {str(x.get("ticker")) for x in reply.get("series") or [] if x.get("ticker")}
 
 
 def why_not(markets, now, window=WINDOW_HOURS):
@@ -307,6 +331,11 @@ def main(argv=None, out=None, fixed=None, match=None, pass_events=PASS_EVENTS):
     except OSError:
         events, complete = [], False
     found = discover(get_json, match, events=events)
+    try:
+        filed = category_series(get_json) if match is None else set()
+    except OSError:
+        filed = set()
+    found |= filed
     series = sorted(set(fixed) | found)
     ledger, seen = run(now, fetch_markets, fetch_trades, fetch_market,
                        series=series, ledger_path=out / "orders.csv")  # fmt: skip
@@ -315,6 +344,7 @@ def main(argv=None, out=None, fixed=None, match=None, pass_events=PASS_EVENTS):
     summary = {"updated_utc": now.isoformat(timespec="minutes"),
                "series_checked": len(series), "series_found_open": len(found),
                "open_events_listed": len(events), "open_events_complete": complete,
+               "mentions_category_series": len(filed),
                "sports_talk_series_open": sports_talk(events),
                "series_added_since_plan": sorted(found - set(fixed)),
                "series_with_markets": seen,
