@@ -5916,3 +5916,121 @@ the haircut itself: it was measured on NBA props, where informed traders
 are active, and may be smaller in thin markets. Only live fills can say;
 the spread bot's esports fills (69 since 19 November, +1.6c, t 0.3) are far
 too few yet.
+
+## 2026-11-26: Two finance theories, two walk-forward backtests (plans, written before any result)
+
+**Owner request.** Apply derivatives and market-making theory to these
+markets, then backtest. Two studies; everything SIMULATED and in-sample
+2025-26 unless stated.
+
+### Study A: adverse selection by market (Glosten-Milgrom)
+
+**Theory.** A market maker loses to informed traders and wins from the
+rest; the spread must cover the informed share. In the scan, an order
+filled by a big trade-through that then loses, while the same market's
+unfilled orders would have won, is the footprint of informed flow.
+
+**Measure.** Per series and month, *toxicity gap* = mean profit of NO orders
+that filled (5+ contracts traded through) minus mean profit of NO orders
+that did not fill (nothing traded through), both "if filled" at the order's
+own price after the fee (`outputs/scan/`). Negative = fills are worse than
+non-fills (adverse selection).
+
+**Persistence check (no bar).** Correlation across series of the gap in
+September-February against March-August (series with 30+ fills and 30+
+non-fills in each half), and the gap's overall size.
+
+**Rule.** Each month M from November 2025, using only earlier orders: series
+with 30+ fills and 30+ non-fills; rank by the gap; trade every NO order of
+month M in the 20% with the highest (least toxic) gap, fills needing 5
+contracts traded through. Compared with every series and with 2,000 random
+same-size picks, as in the tourist map.
+
+**Bar.** Mean after the 2c haircut above 0 with event-clustered t at least
+2.5; 1,000+ fills in 100+ events; at least 7 of 10 months positive before
+the haircut; better than 95% of random picks. Sensitivity reported (top
+10/20/33% x queue 1/5/10): **9 variants**.
+
+### Study B: the strike ladder as an option chain (NBA props)
+
+**Theory.** Kalshi's 15+/20+/25+/30+ markets for one player and stat are
+digital options on one number. Their prices must fall as the strike rises
+(no arbitrage), and should lie on a smooth curve; a strike priced above
+its neighbours' curve is overpriced relative to them.
+
+**Data.** `data/kalshi_history/`: hourly candles (bid, ask) and every public
+trade for NBA points, rebounds, assists and threes, November 2025 to June
+2026; results from the market files. Pre-game only: candles ending at
+least 3 hours before the market's occurrence time (about tip-off).
+
+**B1, arbitrage (count, no bar).** A ladder-hour has an arbitrage when a
+higher strike's YES bid exceeds a lower strike's YES ask by more than two
+taker fees (0.07 x P x (1 - P) each, rounded up to the cent): buy the lower
+YES and the higher NO, and every outcome pays at least $1. Reported: how
+often, by how much, and the candle volume beside it. Candle prices are
+hourly snapshots, so this is an upper bound, not tradable size.
+
+**B2, smooth-curve outliers (backtest, bar).** For each ladder-hour with 4+
+strikes quoted two-sided, fit logit(mid) = a - b x strike by least squares;
+residual = mid minus fitted price. On each strike with residual at least
+**+3 cents** (overpriced against the curve), rest NO one cent inside the
+spread for one hour (the scan's rule, `research/scan_markets.py`), filled
+when 5+ contracts trade through; held to settlement; maker fee at the scan's
+share. One order per market (its first qualifying hour). Comparisons:
+residual at most -3 cents (underpriced) and between -1 and +1.
+
+**Bar.** The +3-cent group: mean after the 2c haircut above 0 with
+game-clustered t at least 2.5; 500+ fills in 100+ games; positive before the
+haircut in at least 5 of the 8 months; and at least 1 cent above the -1 to
++1 group. Sensitivity reported: thresholds 2/3/5 cents x queue 1/5: **6
+variants** (plus the two comparison groups).
+
+**Total variants across both studies: 15.** A pass earns a forward paper
+test, never money directly.
+
+### Results (SIMULATED, in-sample 2025-26; 15 variants across both studies)
+
+**Study A, adverse selection** (`python -m research.toxicity` ->
+`outputs/toxicity/`). **Fails.**
+- Adverse selection is real and visible in public data: across series, NO
+  orders that filled earned **3.3 cents less** than the same series' orders
+  that did not fill (fill-weighted; median -3.1c; 75% of series negative).
+  That is the size of the live haircut measured on NBA props (2-4 points).
+- It does not persist: a series' gap from September-February barely
+  predicts its gap from March-August (correlation 0.14, rank 0.11; 152
+  series). So it cannot be used to choose markets.
+- Walk-forward, the least toxic 20%: +0.20c before the haircut (t 0.6;
+  30,515 fills), -1.8c after; beat only 38% of random picks. All 9 cells
+  between -0.7c and +0.2c.
+
+**Study B, the strike ladder** (`python -m research.ladder` ->
+`outputs/ladder/`). Plumbing fixes before any result was read: Kalshi's
+occurrence time is missing before April 2026, so tip-off comes from the
+box scores (1,082 games, November-June); trade times were in
+microseconds, which first made every fill count zero.
+- **B1, arbitrage: none.** In 114,999 pre-game ladder-hours, a higher
+  strike's bid crossed a lower strike's ask once before fees, and never
+  after taker fees. Kalshi's ladders are consistent.
+- **B2, curve outliers: near miss, fails on t.** Strikes priced 3+ cents
+  above the fitted curve, resting NO, 5-contract queue: **+4.92 cents** per
+  contract before the haircut (t 3.25; 1,174 fills, 490 games; 6 of 8
+  months positive; checked by recomputing from the order rows),
+  **+2.92 cents after the 2c haircut, t 1.93** (bar 2.5). The -1 to +1 cent
+  group: +0.68c, so the outliers beat it by 4.2c (bar 1c). Every other
+  condition passes.
+- Sensitivity: +2c threshold +3.6c (t 2.9, 1,775 fills); +5c +2.7c (t 1.4,
+  699 fills); underpriced strikes (-3c) +0.3c to +0.8c. First line in the
+  queue gives the same picture.
+- Exploratory breakdowns (no bar): middle strikes of a ladder carry it
+  (+5.3c, t 3.3, 1,049 fills; lowest +0.9c, highest +6.1c on 24 fills); by
+  stat, rebounds +7.8c and threes +7.4c, points +4.4c, assists -2.2c; first
+  half of the season +6.9c (t 3.2), second half +3.0c (t 1.4); NO prices
+  30-50c +7.1c, under 30c +0.3c.
+
+Reading. Of everything tested since October, the ladder outliers are the
+closest to a real edge: an independent rule (the shape of the ladder, not
+the sportsbooks, not the model) that is positive after the haircut and
+beats its own control by 4 cents. It is not proven: t 1.9 after the
+haircut, a weaker second half, and assists going the other way. The plan
+sends a pass to a forward paper test; a near miss earns the same cheap
+test only by a new entry written before it starts.

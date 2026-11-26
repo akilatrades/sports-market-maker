@@ -1,0 +1,61 @@
+{
+ "note": "SIMULATED, NBA props 2025-26, pre-game hourly candles; resting NO one cent inside, filled when `queue` contracts trade through in the next hour. Cents per contract after the maker fee. Not a forecast.",
+ "ladder_hours_fitted": 59989,
+ "residual_spread_cents": {
+  "0.05": -3.92,
+  "0.25": -1.11,
+  "0.5": -0.02,
+  "0.75": 0.79,
+  "0.95": 2.83
+ },
+ "B1_arbitrage": {
+  "ladder_hours": 114999,
+  "crossed_before_fees": 1,
+  "with_arbitrage": 0,
+  "share": 0.0,
+  "median_profit_cents": null,
+  "max_profit_cents": null,
+  "ladders": 0,
+  "with_volume_in_both": 0,
+  "by_month": {}
+ },
+ "B2_primary": {
+  "before_haircut": {
+   "fills": 1174,
+   "games": 490,
+   "cents": 4.92,
+   "t": 3.25,
+   "months_positive": 6,
+   "months": 8,
+   "avg_no_price": 0.48
+  },
+  "after_2c_haircut": {
+   "fills": 1174,
+   "games": 490,
+   "cents": 2.92,
+   "t": 1.93,
+   "months_positive": 6,
+   "months": 8,
+   "avg_no_price": 0.48
+  },
+  "middle_group": {
+   "fills": 5623,
+   "games": 848,
+   "cents": 0.68,
+   "t": 0.89,
+   "months_positive": 4,
+   "months": 8,
+   "avg_no_price": 0.544
+  },
+  "over_minus_middle_cents": 4.24
+ },
+ "variants": 6,
+ "bar": {
+  "t": 2.5,
+  "fills": 500,
+  "games": 100,
+  "months_positive": 5,
+  "over_middle": 0.01
+ },
+ "pass": false
+}
