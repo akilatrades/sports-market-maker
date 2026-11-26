@@ -1,6 +1,7 @@
 """live/paper_mentions.py with a fake Kalshi (no network, no orders)."""
 
 import ast
+import json
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
@@ -133,3 +134,81 @@ def test_the_game_day_watcher_starts_the_paper_test():
     assert "gh workflow run paper-mentions.yml" in watcher
     flow = (root / ".github/workflows/paper-mentions.yml").read_text()
     assert "workflow_dispatch:" in flow and "--due" in flow
+
+
+def test_discover_pages_through_open_events_and_keeps_matches():
+    pages = {
+        "": {"events": [{"series_ticker": "KXNFLMENTION"}, {"series_ticker": "KXNBAGAME"}],
+             "cursor": "p2"},
+        "p2": {"events": [{"series_ticker": "KXNFLGAMEMENTION"}, {"series_ticker": None}],
+               "cursor": ""},
+    }  # fmt: skip
+    asked = []
+
+    def get_json(path, params):
+        assert path == "/events" and params["status"] == "open"
+        asked.append(params.get("cursor", ""))
+        return pages[params.get("cursor", "")]
+
+    assert P.discover(get_json) == {"KXNFLMENTION", "KXNFLGAMEMENTION"}
+    assert asked == ["", "p2"]
+
+
+def test_main_adds_found_series_and_reports_them(tmp_path, monkeypatch):
+    import kalshi.api as api
+
+    k = Kalshi()
+    k.listed = {"KXNEWMENTION": [market("KXNEWMENTION-26NOV24-A", 5)]}
+    monkeypatch.setattr(api, "fetch_markets", k.fetch_markets)
+    monkeypatch.setattr(api, "fetch_trades", k.fetch_trades)
+    monkeypatch.setattr(api, "fetch_market", k.fetch_market)
+    monkeypatch.setattr(
+        api,
+        "get_json",
+        lambda path, params: {"events": [{"series_ticker": "KXNEWMENTION"}]},
+    )
+    monkeypatch.setattr(
+        P, "datetime", type("D", (), {"now": staticmethod(lambda tz: NOW)})
+    )
+    P.main([], out=tmp_path)
+    card = json.loads((tmp_path / "scorecard.json").read_text())
+    assert card["series_added_since_plan"] == ["KXNEWMENTION"]
+    assert card["series_checked"] == len(P.SERIES) + 1
+    assert pd.read_csv(tmp_path / "orders.csv").ticker.tolist() == [
+        "KXNEWMENTION-26NOV24-A"
+    ]
+    assert (tmp_path / "last_run.txt").exists()
+
+
+def test_racing_uses_its_own_folder_series_and_filter():
+    from live import paper_racing as R
+
+    assert R.OUT != P.OUT and len(R.SERIES) == 31
+    assert R.is_racing("KXNASCARRACE") and R.is_racing("KXF1POLE")
+    assert not R.is_racing("KXNCAAF1HWINNER") and not R.is_racing("KXTFF1LIGGAME")
+    text = (Path(__file__).resolve().parents[1] / "live/paper_racing.py").read_text()
+    imported = {
+        n.module for n in ast.walk(ast.parse(text)) if isinstance(n, ast.ImportFrom)
+    }
+    assert imported == {"pathlib", "live"}  # no order code, no client
+
+
+def test_the_job_runs_both_paper_tests_and_commits_both_folders():
+    flow = (
+        Path(__file__).resolve().parents[1] / ".github/workflows/paper-mentions.yml"
+    ).read_text()
+    assert (
+        "python -m live.paper_racing --due" in flow
+        and "python -m live.paper_racing\n" in flow
+    )
+    assert "git add -A outputs/paper_mentions outputs/paper_racing" in flow
+
+
+def test_racing_judges_at_20_events_mentions_at_40():
+    from live import paper_racing as R
+
+    rows = [{"ticker": f"T{i}", "event_ticker": f"E{i % 25}", "status": "settled",
+             "filled_contracts": 1, "profit": 0.05 if i % 3 else -0.02} for i in range(420)]  # fmt: skip
+    ledger = pd.DataFrame(rows)
+    assert P.verdict(ledger)["state"] == "collecting"  # 25 events < 40
+    assert P.verdict(ledger, R.PASS_EVENTS)["state"] == "pass"

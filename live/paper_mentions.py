@@ -129,6 +129,9 @@ SERIES = [
     "KXZIWEMENTION",
     "KXZUCKMENTION",
 ]
+# Kalshi adds and renames series, so every run also lists the series of all
+# open events and adds any whose name contains MENTION (2026-11-26 addendum).
+MATCH = "MENTION"
 WINDOW_HOURS = (4, 7)  # the scan's window: 7 to 4 hours before expiration
 NEXT_RUN_HOURS = 1  # each order rests one hour, as in the scan
 MIN_MINUTES_BETWEEN = 50
@@ -144,7 +147,31 @@ def due(now, path=LAST_RUN, minutes=MIN_MINUTES_BETWEEN):
     return (now - last).total_seconds() >= minutes * 60
 
 
-def run(now, fetch_markets, fetch_trades, fetch_market, sleep=time.sleep):
+def discover(get_json, match=None, max_pages=60):
+    """Series tickers of all open Kalshi events that ``match`` accepts (a
+    substring, or a function of the ticker). Public market data only."""
+    match = MATCH if match is None else match
+    keep = match if callable(match) else (lambda ticker: match in ticker)
+    found, cursor = set(), ""
+    for _ in range(max_pages):
+        params = {"status": "open", "limit": 200}
+        if cursor:
+            params["cursor"] = cursor
+        page = get_json("/events", params) or {}
+        for event in page.get("events") or []:
+            ticker = str(event.get("series_ticker") or "")
+            if ticker and keep(ticker):
+                found.add(ticker)
+        cursor = page.get("cursor") or ""
+        if not cursor:
+            break
+    return found
+
+
+def run(
+    now, fetch_markets, fetch_trades, fetch_market, sleep=time.sleep,
+    series=None, ledger_path=None,
+):  # fmt: skip
     import pandas as pd
 
     from kalshi.paper_markets import (
@@ -155,29 +182,30 @@ def run(now, fetch_markets, fetch_trades, fetch_market, sleep=time.sleep):
         settle,
     )
 
-    ledger = pd.read_csv(LEDGER) if LEDGER.exists() else empty_ledger()
+    path = LEDGER if ledger_path is None else ledger_path
+    ledger = pd.read_csv(path) if path.exists() else empty_ledger()
     ledger = check_fills(ledger, fetch_trades, int(now.timestamp()))
     ledger = settle(ledger, fetch_market)
     seen = {}
-    for series in SERIES:
+    for name in SERIES if series is None else series:
         try:
-            markets = fetch_markets(series, status="open", historical=False)
+            markets = fetch_markets(name, status="open", historical=False)
         except OSError as error:
-            seen[series] = {"error": str(error)[:80]}
+            seen[name] = {"error": str(error)[:80]}
             continue
         posted = post_orders(
-            series, markets, ledger, now,
+            name, markets, ledger, now,
             next_run_hours=NEXT_RUN_HOURS, window=WINDOW_HOURS,
         )  # fmt: skip
         if len(posted):
             ledger = pd.concat([ledger, posted], ignore_index=True)[COLUMNS]
         if markets or len(posted):
-            seen[series] = {"open": len(markets), "posted": int(len(posted))}
+            seen[name] = {"open": len(markets), "posted": int(len(posted))}
         sleep(0.05)
     return ledger, seen
 
 
-def verdict(ledger):
+def verdict(ledger, pass_events=PASS_EVENTS):
     """The plan's bar on settled paper orders, pooled across series."""
     import numpy as np
     import pandas as pd
@@ -206,7 +234,7 @@ def verdict(ledger):
         and out["cents_per_contract"] < EARLY_STOP_CENTS
     ):
         out["state"] = "stop (early)"
-    elif out["contracts"] >= PASS_CONTRACTS and out["events"] >= PASS_EVENTS:
+    elif out["contracts"] >= PASS_CONTRACTS and out["events"] >= pass_events:
         out["state"] = (
             "pass"
             if (mean > 0 and (out["t"] or 0) >= PASS_T)
@@ -217,21 +245,33 @@ def verdict(ledger):
     return out
 
 
-def main(argv=None):
+def main(argv=None, out=None, fixed=None, match=None, pass_events=PASS_EVENTS):
     argv = sys.argv[1:] if argv is None else argv
+    out = OUT if out is None else Path(out)
+    last_run = out / "last_run.txt"
     now = datetime.now(UTC)
     if "--due" in argv:
-        print("due" if due(now) else "not due")
+        print("due" if due(now, last_run) else "not due")
         return 0
-    from kalshi.api import fetch_market, fetch_markets, fetch_trades
+    from kalshi.api import fetch_market, fetch_markets, fetch_trades, get_json
 
-    ledger, seen = run(now, fetch_markets, fetch_trades, fetch_market)
-    OUT.mkdir(parents=True, exist_ok=True)
-    ledger.to_csv(LEDGER, index=False)
-    summary = {"updated_utc": now.isoformat(timespec="minutes"), "series_with_markets": seen,
-               "kind": "PAPER (no orders sent); fills from public trades, first in line", **verdict(ledger)}  # fmt: skip
-    (OUT / "scorecard.json").write_text(json.dumps(summary, indent=1) + "\n", "utf-8")
-    LAST_RUN.write_text(now.isoformat(timespec="seconds"), "utf-8")
+    fixed = SERIES if fixed is None else fixed
+    try:
+        found = discover(get_json, match)
+    except OSError:
+        found = set()
+    series = sorted(set(fixed) | found)
+    ledger, seen = run(now, fetch_markets, fetch_trades, fetch_market,
+                       series=series, ledger_path=out / "orders.csv")  # fmt: skip
+    out.mkdir(parents=True, exist_ok=True)
+    ledger.to_csv(out / "orders.csv", index=False)
+    summary = {"updated_utc": now.isoformat(timespec="minutes"),
+               "series_checked": len(series), "series_found_open": len(found),
+               "series_added_since_plan": sorted(found - set(fixed)),
+               "series_with_markets": seen,
+               "kind": "PAPER (no orders sent); fills from public trades, first in line", **verdict(ledger, pass_events)}  # fmt: skip
+    (out / "scorecard.json").write_text(json.dumps(summary, indent=1) + "\n", "utf-8")
+    last_run.write_text(now.isoformat(timespec="seconds"), "utf-8")
     print(json.dumps({k: v for k, v in summary.items() if k != "series_with_markets"}))
     return 0
 
