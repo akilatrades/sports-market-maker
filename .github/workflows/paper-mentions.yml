@@ -6,7 +6,8 @@ name: Mention markets paper test
 # The racing paper test (2026-11-26) runs in the same job, same rule, and
 # writes outputs/paper_racing/. The ladder-outlier paper test (2026-11-26,
 # NBA props) runs here too and writes outputs/paper_ladder/. The read-only
-# consistency scan (2026-11-26, 7 days) writes outputs/consistency/.
+# consistency scan (2026-11-26, 7 days) writes outputs/consistency/. The
+# weather recorder (NWS forecasts vs Kalshi brackets) writes outputs/weather/.
 on:
   # GitHub starts this repository's schedules late; the sportsbook job runs
   # every ~12 minutes, so this follows it and skips unless 50 minutes passed.
@@ -42,8 +43,9 @@ jobs:
           echo "racing=$(python -m live.paper_racing --due)" >> "$GITHUB_OUTPUT"
           echo "ladder=$(python -m live.paper_ladder --due)" >> "$GITHUB_OUTPUT"
           echo "scan=$(python -m research.consistency_scan --due)" >> "$GITHUB_OUTPUT"
+          echo "weather=$(python -m research.weather_record --due)" >> "$GITHUB_OUTPUT"
       - name: Install
-        if: steps.due.outputs.state == 'due' || steps.due.outputs.racing == 'due' || steps.due.outputs.ladder == 'due' || steps.due.outputs.scan == 'due'
+        if: steps.due.outputs.state == 'due' || steps.due.outputs.racing == 'due' || steps.due.outputs.ladder == 'due' || steps.due.outputs.scan == 'due' || steps.due.outputs.weather == 'due'
         run: pip install -r requirements.txt
       - name: Paper run (mentions)
         if: steps.due.outputs.state == 'due'
@@ -61,12 +63,17 @@ jobs:
         continue-on-error: true
         timeout-minutes: 12
         run: python -m research.consistency_scan
+      - name: Weather recorder (read-only)
+        if: steps.due.outputs.weather == 'due'
+        continue-on-error: true
+        timeout-minutes: 5
+        run: python -m research.weather_record
       - name: Commit the ledgers
-        if: steps.due.outputs.state == 'due' || steps.due.outputs.racing == 'due' || steps.due.outputs.ladder == 'due' || steps.due.outputs.scan == 'due'
+        if: steps.due.outputs.state == 'due' || steps.due.outputs.racing == 'due' || steps.due.outputs.ladder == 'due' || steps.due.outputs.scan == 'due' || steps.due.outputs.weather == 'due'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -A outputs/paper_mentions outputs/paper_racing outputs/paper_ladder outputs/consistency
+          git add -A outputs/paper_mentions outputs/paper_racing outputs/paper_ladder outputs/consistency outputs/weather
           if git diff --cached --quiet; then exit 0; fi
           git commit -m "Paper tests $(date -u +%Y-%m-%dT%H:%MZ)"
           for attempt in 1 2 3 4 5; do

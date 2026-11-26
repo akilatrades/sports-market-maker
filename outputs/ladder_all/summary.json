@@ -1,0 +1,142 @@
+{
+ "note": "SIMULATED (cross-market scan 2025-26, 7-4 hours before expiration), NBA points/rebounds/assists/threes excluded. Resting NO one cent inside on strikes above the ladder's fitted curve; 5+ contracts traded through. Not a forecast.",
+ "series_with_numbered_ladders": 242,
+ "series_passing_shape_check": 124,
+ "ladder_hours_fitted": 10111,
+ "primary": {
+  "before_haircut": {
+   "fills": 133,
+   "events": 120,
+   "series": 39,
+   "cents": 3.53,
+   "t": 0.84,
+   "months_positive": 4,
+   "months": 9,
+   "avg_no_price": 0.353
+  },
+  "after_2c_haircut": {
+   "fills": 133,
+   "events": 120,
+   "series": 39,
+   "cents": 1.53,
+   "t": 0.36,
+   "months_positive": 4,
+   "months": 9,
+   "avg_no_price": 0.353
+  },
+  "control": {
+   "fills": 2506,
+   "events": 1487,
+   "series": 81,
+   "cents": 0.01,
+   "t": 0.01,
+   "months_positive": 6,
+   "months": 12,
+   "avg_no_price": 0.545
+  },
+  "over_control_cents": 3.52
+ },
+ "thresholds": {
+  "+2c": {
+   "fills": 293,
+   "events": 262,
+   "series": 57,
+   "cents": 3.56,
+   "t": 1.36,
+   "months_positive": 7,
+   "months": 10,
+   "avg_no_price": 0.361
+  },
+  "+3c": {
+   "fills": 133,
+   "events": 120,
+   "series": 39,
+   "cents": 3.53,
+   "t": 0.84,
+   "months_positive": 4,
+   "months": 9,
+   "avg_no_price": 0.353
+  },
+  "+5c": {
+   "fills": 64,
+   "events": 59,
+   "series": 29,
+   "cents": 7.11,
+   "t": 1.17,
+   "months_positive": 7,
+   "months": 10,
+   "avg_no_price": 0.348
+  }
+ },
+ "by_family_before_haircut": {
+  "total": {
+   "fills": 87,
+   "events": 80,
+   "series": 29,
+   "cents": 5.36,
+   "t": 0.98,
+   "months_positive": 4,
+   "months": 7,
+   "avg_no_price": 0.334
+  }
+ },
+ "top_series": {
+  "KXWOMHOCKEYTOTAL": {
+   "size": 12,
+   "mean": 20.15
+  },
+  "KXWC2HTOTAL": {
+   "size": 11,
+   "mean": -5.67
+  },
+  "KXNCAAMB1HTOTAL": {
+   "size": 9,
+   "mean": -7.61
+  },
+  "KXWCCORNERS": {
+   "size": 7,
+   "mean": 5.89
+  },
+  "KXUELTOTAL": {
+   "size": 6,
+   "mean": 9.18
+  },
+  "KXCANPLTOTAL": {
+   "size": 5,
+   "mean": -17.74
+  },
+  "KXB200WS": {
+   "size": 5,
+   "mean": 26.51
+  },
+  "KXUECLTOTAL": {
+   "size": 5,
+   "mean": 1.69
+  },
+  "KXINTLFRIENDLYTOTAL": {
+   "size": 5,
+   "mean": 9.45
+  },
+  "KXSCOCUPTOTAL": {
+   "size": 5,
+   "mean": 1.18
+  },
+  "KXUCLTOTAL": {
+   "size": 5,
+   "mean": -8.46
+  },
+  "KXAPFDDHTOTAL": {
+   "size": 4,
+   "mean": 24.72
+  }
+ },
+ "variants": 3,
+ "bar": {
+  "t": 2.5,
+  "fills": 500,
+  "events": 100,
+  "over_control": 0.01,
+  "months_share": 0.6
+ },
+ "pass": false
+}

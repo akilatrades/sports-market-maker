@@ -1,0 +1,51 @@
+{
+ "note": "SIMULATED, NBA props 2025-26, in-game hourly candles (tip-off to +3h). Resting one cent inside for an hour; 5+ contracts traded through. Not a forecast.",
+ "ingame_candles": 49272,
+ "jumps_up": 11372,
+ "falls": 9488,
+ "fade_up_no": {
+  "orders": 10801,
+  "before_haircut": {
+   "fills": 0
+  },
+  "after_2c_haircut": {
+   "fills": 0
+  },
+  "first_in_line": {
+   "fills": 0
+  }
+ },
+ "fade_down_yes": {
+  "orders": 8960,
+  "before_haircut": {
+   "fills": 0
+  },
+  "after_2c_haircut": {
+   "fills": 0
+  },
+  "first_in_line": {
+   "fills": 0
+  }
+ },
+ "control_quiet_no": {
+  "orders": 11142,
+  "before_haircut": {
+   "fills": 0
+  },
+  "after_2c_haircut": {
+   "fills": 0
+  },
+  "first_in_line": {
+   "fills": 0
+  }
+ },
+ "fade_up_over_control_cents": null,
+ "variants": 3,
+ "bar": {
+  "t": 2.5,
+  "fills": 300,
+  "games": 100,
+  "over_control": 0.01
+ },
+ "pass": false
+}

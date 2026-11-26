@@ -520,7 +520,7 @@ that updates on the live game state price them better than the market?
 
 ### In-game: passed, but the edge is speed
 
-Run once as written above (`research/ingame.py`,
+Run once as written above (`research/ingame_fade.py`,
 [results](outputs/ingame/results.json)). The state rebuilt from play-by-play
 matches the box scores (stats exactly; minutes within about 0.8), and the
 in-game model fitted on 2023-24 alone was calibrated on 2024-25 within half
@@ -6187,3 +6187,96 @@ subtitle with its number removed). The first run's record is deleted and
 the 7 days restart; the rule and bar are unchanged. The same run found 1
 calendar finding and 138 "asks below $1" events (riskless only if
 exhaustive), not yet checked.
+
+## 2026-11-26: Four more tracks (plans, written before any result)
+
+**Owner request:** do all four. Each plan below is fixed before its data is
+looked at for results.
+
+### Track 1: ladder outliers on every other Kalshi ladder (backtest, SIMULATED, 2025-26)
+
+The NBA ladder study (Study B) was chosen and tested on NBA points,
+rebounds, assists and threes. Here the same rule meets markets it never saw.
+**Data:** the cross-market scan's hourly quotes (7 to 4 hours before
+expected expiration) and its resting-order fills. **Ladder:** markets whose
+ticker ends in a plain number, grouped by the rest of the ticker; a series
+counts as a "number-or-more" ladder only if, in at least 90% of its
+ladder-hours with 3+ strikes, mids do not rise with the strike (1 cent
+tolerance) and it has 20+ such hours (a price-shape check, no results
+read). All `KXNBAPTS/REB/AST/3PT` excluded. **Rule (Study B unchanged):**
+4+ two-sided strikes, fit logit(mid) = a - b x strike, resting NO on
+strikes 3+ cents above the curve, first qualifying hour per market, 5+
+contracts traded through, scan's fee. Control: -1 to +1 cents.
+**Bar:** after the 2c haircut above 0 with event-clustered t at least 2.5;
+500+ fills in 100+ events; 4.2 cents is not required, but at least 1 cent
+above the control; positive in at least 60% of months with fills.
+**Variants: 3** (the rule; +2c and +5c thresholds reported).
+
+### Track 2: in-game overreaction on NBA props (backtest, SIMULATED, 2025-26)
+
+**Data:** NBA points/rebounds/assists/threes hourly candles and trades
+(`data/kalshi_history/`), candles ending between tip-off and tip-off + 3
+hours (in-game). **Event:** the mid rose 15+ cents since the previous
+candle (a player "heating up"). **Rule:** rest NO one cent inside for the
+next hour, filled when 5+ contracts trade through, held to settlement.
+Mirror (reported, no bar): after a 15+ cent fall, rest YES. Control: in-game
+candles that moved under 5 cents, resting NO. One order per market.
+**Bar (fade-up NO):** after the 2c haircut above 0, game-clustered t at
+least 2.5, 300+ fills in 100+ games, at least 1 cent above the control.
+**Variants: 3** (fade up, fade down, control).
+
+### Track 3: weather markets against National Weather Service forecasts (forward, recorder)
+
+**Recorder** (`research/weather_record.py`, hourly on GitHub, public data
+only): for each Kalshi daily high-temperature series found open (tickers
+starting `KXHIGH`), every bracket's bid and ask; for the cities whose
+settlement station is mapped, the NWS hourly forecast's maximum for that
+local day. No orders. **Analysis (after 4 weeks, written now):** fair chance
+of each bracket from a normal distribution centred on the NWS maximum, with
+spread equal to the forecast's own error measured in weeks 1-2; graded on
+weeks 3-4: taking the side the forecast favours when the gap to the market
+is 5+ cents after the taker fee. **Bar:** mean above 0 after fees with
+day-clustered t at least 2.5 on 200+ trades.
+
+### Track 4: the live haircut in thin markets (private repo, LIVE)
+
+Every resting-order idea dies to the 2-cent haircut measured on NBA props
+(live fills 2-4 points worse than the replay). **Method** (private repo,
+aggregates only, never copied here): for each accepted live spread-bot order,
+fetch Kalshi's public trades for its resting interval and replay it with
+the scan's first-in-line rule. Report the live and replayed fill rates, and
+the profit per contract of live-filled against replay-filled orders on the
+same markets, game-clustered. **No bar:** this measures, it does not test a
+rule. It is LIVE data and is never combined with simulated results.
+
+### Track 1 result (SIMULATED, 2025-26; 3 variants): fails on size, same direction
+
+`python -m research.ladder_all` -> `outputs/ladder_all/`. 242 non-NBA series
+have numbered ladders; 124 pass the price-shape check (mostly game totals in
+soccer, NFL, WNBA, college sports). 10,111 ladder-hours could be fitted.
+- Strikes 3+ cents above the curve: **+3.5 cents** per contract before the
+  haircut (t 0.8; **133 fills**, 120 events, 39 series), +1.5c after it.
+  Control (on the curve): **0.0c** (2,506 fills). So outliers beat the
+  control by 3.5 cents, the same direction and size as in the NBA (4.2c),
+  but far short of the 500-fill bar. +2c threshold: +3.6c on 293 fills
+  (t 1.4); +5c: +7.1c on 64 fills.
+- Why so few: most non-NBA ladders have 3-4 strikes and outliers of 3+
+  cents are rare. The NBA paper test stays the deciding test.
+
+### Track 2 result: the planned test cannot be scored; exploratory reading
+
+`python -m research.ingame_fade` -> `outputs/ingame_fade/` (not the
+2026-10-15 game-state study in `research/ingame.py`, which is unchanged).
+The NBA trade prints in `data/kalshi_history/` stop at tip-off (downloaded
+for the 6 hours before each game), so no in-game resting order can be
+filled: 0 fills in every group. Not a result. Exploratory, from candles and
+results only (989 games):
+- After an in-game jump of 15+ cents, YES happened 48.8% against a mid of
+  60.1% (gap -11.4 points, t -18.7); after a 15+ cent fall, +2.2 points;
+  quiet hours, -5.4 points. But the in-game spread averages 34-40 cents, so
+  the mid says little, as the quiet control's own -5.4 shows.
+- Taking the fade at the ask after the taker fee: -10.0c (jumps), -16.1c
+  (falls); with spreads of 3 cents or less, +1.2c on 630 trades (t 0.6).
+- Whether patient resting orders inside those wide in-game spreads would
+  fill profitably needs in-game trade prints (`research/backfill_trades.py`
+  with the window extended past tip-off). A new entry would come first.
