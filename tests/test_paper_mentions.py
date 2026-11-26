@@ -221,11 +221,24 @@ def test_sports_talk_finds_renamed_mention_series():
     events = [
         ("KXNFLANNOUNCERS", "What will the announcers say during DAL vs KC?"),
         ("KXNFLGAME", "Dallas at Kansas City"),
-        ("KXEARNINGSMENTIONNVDA", "What will NVIDIA say on its earnings call?"),
+        ("KXEARNINGSMENTIONNFLX", "What will Netflix say on its earnings call?"),
+        ("KXEARNINGSMENTIONBA", "What will Boeing say on its earnings call?"),
         ("KXNCAAFWORDS", "Which word will be said on the broadcast?"),
     ]
     assert P.sports_talk(events) == ["KXNCAAFWORDS", "KXNFLANNOUNCERS"]
-    assert P.discover(None, events=events) == {"KXEARNINGSMENTIONNVDA"}
+    assert P.discover(None, events=events) == {
+        "KXEARNINGSMENTIONNFLX",
+        "KXEARNINGSMENTIONBA",
+    }
+
+
+def test_the_mentions_category_adds_series_with_any_name():
+    def get_json(path, params):
+        assert path == "/series" and params == {"category": "Mentions"}
+        return {"series": [{"ticker": "KXNFLBOOTH"}, {"ticker": "KXFEDMENTION"}, {}]}
+
+    assert P.category_series(get_json) == {"KXNFLBOOTH", "KXFEDMENTION"}
+    assert P.category_series(lambda path, params: None) == set()
 
 
 def test_why_not_explains_markets_outside_the_window():
