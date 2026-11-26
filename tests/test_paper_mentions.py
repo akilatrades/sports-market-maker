@@ -49,7 +49,10 @@ def test_a_full_cycle_rests_fills_and_settles(tmp_path, monkeypatch):
     row = ledger.iloc[0]
     assert row.side == "no" and row.price == 0.65  # NO bid 64c + 1c
     assert row.cancel_ts - row.placed_ts == 3600  # rests one hour
-    assert seen["KXNFLMENTION"] == {"open": 3, "posted": 1}
+    assert seen["KXNFLMENTION"] == {
+        "open": 3, "posted": 1, "two_sided": 3, "in_window": 1,
+        "hours_to_expiry_min": 2.0, "hours_to_expiry_median": 5.0,
+    }  # fmt: skip
     ledger.to_csv(P.LEDGER, index=False)
     # An hour later: a YES buyer traded through at 35c (NO 65c), then it settles NO.
     later = NOW + timedelta(hours=1, minutes=5)
@@ -212,3 +215,24 @@ def test_racing_judges_at_20_events_mentions_at_40():
     ledger = pd.DataFrame(rows)
     assert P.verdict(ledger)["state"] == "collecting"  # 25 events < 40
     assert P.verdict(ledger, R.PASS_EVENTS)["state"] == "pass"
+
+
+def test_sports_talk_finds_renamed_mention_series():
+    events = [
+        ("KXNFLANNOUNCERS", "What will the announcers say during DAL vs KC?"),
+        ("KXNFLGAME", "Dallas at Kansas City"),
+        ("KXEARNINGSMENTIONNVDA", "What will NVIDIA say on its earnings call?"),
+        ("KXNCAAFWORDS", "Which word will be said on the broadcast?"),
+    ]
+    assert P.sports_talk(events) == ["KXNCAAFWORDS", "KXNFLANNOUNCERS"]
+    assert P.discover(None, events=events) == {"KXEARNINGSMENTIONNVDA"}
+
+
+def test_why_not_explains_markets_outside_the_window():
+    far = [
+        market("KXEARNINGSMENTIONNVDA-26DEC01-A", 70),
+        market("X-B", 30, bid="0", ask="0.1"),
+    ]
+    why = P.why_not(far, NOW)
+    assert why == {"two_sided": 1, "in_window": 0, "hours_to_expiry_min": 30.0,
+                   "hours_to_expiry_median": 70.0}  # fmt: skip
