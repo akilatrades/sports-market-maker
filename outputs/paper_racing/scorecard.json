@@ -1,55 +1,210 @@
 {
- "updated_utc": "2026-11-26T16:08+00:00",
- "series_checked": 33,
- "series_found_open": 2,
+ "updated_utc": "2026-11-26T17:26+00:00",
+ "series_checked": 44,
+ "series_found_open": 22,
+ "open_events_listed": 20000,
+ "open_events_complete": false,
+ "sports_talk_series_open": [
+  "KXEARNINGSMENTIONBA",
+  "KXEARNINGSMENTIONBAC",
+  "KXEARNINGSMENTIONHLT",
+  "KXEARNINGSMENTIONNFLX",
+  "KXNCAAFGAME",
+  "KXNCAAFSPREAD",
+  "KXNCAAFTOTAL",
+  "KXNCAAMBGAME"
+ ],
  "series_added_since_plan": [
+  "KXF1ACTION",
+  "KXF1BIGGESTMOVER",
+  "KXF1CHINA",
+  "KXF1EXACTFINISH",
+  "KXF1FASTPIT",
+  "KXF1FP1FASTLAP",
+  "KXF1FP2FASTLAP",
+  "KXF1FP3FASTLAP",
+  "KXF1H2HLOTP",
   "KXF1NEXTTEAM",
-  "KXF1RETIRE"
+  "KXF1OCCUR",
+  "KXF1RETIRE",
+  "KXF1WINMARGIN"
  ],
  "series_with_markets": {
+  "KXF1ACTION": {
+   "open": 23,
+   "posted": 0,
+   "two_sided": 5,
+   "in_window": 0,
+   "hours_to_expiry_min": 837.6,
+   "hours_to_expiry_median": 837.6
+  },
+  "KXF1BIGGESTMOVER": {
+   "open": 22,
+   "posted": 0,
+   "two_sided": 7,
+   "in_window": 0,
+   "hours_to_expiry_min": 76.6,
+   "hours_to_expiry_median": 76.6
+  },
+  "KXF1CHINA": {
+   "open": 1,
+   "posted": 0,
+   "two_sided": 0,
+   "in_window": 0,
+   "hours_to_expiry_min": 861.6,
+   "hours_to_expiry_median": 861.6
+  },
+  "KXF1EXACTFINISH": {
+   "open": 20,
+   "posted": 0,
+   "two_sided": 15,
+   "in_window": 0,
+   "hours_to_expiry_min": 237.6,
+   "hours_to_expiry_median": 261.6
+  },
   "KXF1FASTLAP": {
    "open": 22,
-   "posted": 0
+   "posted": 0,
+   "two_sided": 8,
+   "in_window": 0,
+   "hours_to_expiry_min": 76.6,
+   "hours_to_expiry_median": 76.6
+  },
+  "KXF1FASTPIT": {
+   "open": 11,
+   "posted": 0,
+   "two_sided": 7,
+   "in_window": 0,
+   "hours_to_expiry_min": 76.6,
+   "hours_to_expiry_median": 76.6
+  },
+  "KXF1FP1FASTLAP": {
+   "open": 22,
+   "posted": 0,
+   "two_sided": 7,
+   "in_window": 0,
+   "hours_to_expiry_min": 26.1,
+   "hours_to_expiry_median": 26.1
+  },
+  "KXF1FP2FASTLAP": {
+   "open": 22,
+   "posted": 0,
+   "two_sided": 7,
+   "in_window": 0,
+   "hours_to_expiry_min": 29.6,
+   "hours_to_expiry_median": 29.6
+  },
+  "KXF1FP3FASTLAP": {
+   "open": 22,
+   "posted": 0,
+   "two_sided": 7,
+   "in_window": 0,
+   "hours_to_expiry_min": 51.1,
+   "hours_to_expiry_median": 51.1
   },
   "KXF1H2H": {
    "open": 2,
-   "posted": 0
+   "posted": 0,
+   "two_sided": 2,
+   "in_window": 0,
+   "hours_to_expiry_min": 75.6,
+   "hours_to_expiry_median": 75.6
+  },
+  "KXF1H2HLOTP": {
+   "open": 8,
+   "posted": 0,
+   "two_sided": 8,
+   "in_window": 0,
+   "hours_to_expiry_min": 75.6,
+   "hours_to_expiry_median": 75.6
   },
   "KXF1NEXTTEAM": {
    "open": 12,
-   "posted": 0
+   "posted": 0,
+   "two_sided": 1,
+   "in_window": 0,
+   "hours_to_expiry_min": 2541.6,
+   "hours_to_expiry_median": 2541.6
+  },
+  "KXF1OCCUR": {
+   "open": 2,
+   "posted": 0,
+   "two_sided": 2,
+   "in_window": 0,
+   "hours_to_expiry_min": 93.6,
+   "hours_to_expiry_median": 261.6
   },
   "KXF1POLE": {
    "open": 22,
-   "posted": 0
+   "posted": 0,
+   "two_sided": 8,
+   "in_window": 0,
+   "hours_to_expiry_min": 27.6,
+   "hours_to_expiry_median": 27.6
   },
   "KXF1RACE": {
    "open": 22,
-   "posted": 0
+   "posted": 0,
+   "two_sided": 8,
+   "in_window": 0,
+   "hours_to_expiry_min": 76.6,
+   "hours_to_expiry_median": 76.6
   },
   "KXF1RACEPODIUM": {
    "open": 22,
-   "posted": 0
+   "posted": 0,
+   "two_sided": 8,
+   "in_window": 0,
+   "hours_to_expiry_min": 76.6,
+   "hours_to_expiry_median": 76.6
   },
   "KXF1RETIRE": {
    "open": 4,
-   "posted": 0
+   "posted": 0,
+   "two_sided": 3,
+   "in_window": 0,
+   "hours_to_expiry_min": 29324.6,
+   "hours_to_expiry_median": 29324.6
   },
   "KXF1TOP10": {
    "open": 22,
-   "posted": 0
+   "posted": 0,
+   "two_sided": 20,
+   "in_window": 0,
+   "hours_to_expiry_min": 76.6,
+   "hours_to_expiry_median": 76.6
   },
   "KXF1TOP5": {
    "open": 22,
-   "posted": 0
+   "posted": 0,
+   "two_sided": 9,
+   "in_window": 0,
+   "hours_to_expiry_min": 76.6,
+   "hours_to_expiry_median": 76.6
   },
   "KXF1TOPCONSTRUCTOR": {
    "open": 11,
-   "posted": 0
+   "posted": 0,
+   "two_sided": 4,
+   "in_window": 0,
+   "hours_to_expiry_min": 76.6,
+   "hours_to_expiry_median": 76.6
+  },
+  "KXF1WINMARGIN": {
+   "open": 4,
+   "posted": 0,
+   "two_sided": 4,
+   "in_window": 0,
+   "hours_to_expiry_min": 75.6,
+   "hours_to_expiry_median": 75.6
   },
   "KXMOTOGPRACE": {
    "open": 22,
-   "posted": 0
+   "posted": 0,
+   "two_sided": 9,
+   "in_window": 0,
+   "hours_to_expiry_min": 73.6,
+   "hours_to_expiry_median": 73.6
   }
  },
  "kind": "PAPER (no orders sent); fills from public trades, first in line",

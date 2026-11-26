@@ -1,12 +1,26 @@
 {
- "updated_utc": "2026-11-26T16:07+00:00",
- "series_checked": 206,
- "series_found_open": 106,
+ "updated_utc": "2026-11-26T17:24+00:00",
+ "series_checked": 233,
+ "series_found_open": 137,
+ "open_events_listed": 20000,
+ "open_events_complete": false,
+ "sports_talk_series_open": [
+  "KXEARNINGSMENTIONBA",
+  "KXEARNINGSMENTIONBAC",
+  "KXEARNINGSMENTIONHLT",
+  "KXEARNINGSMENTIONNFLX",
+  "KXNCAAFGAME",
+  "KXNCAAFSPREAD",
+  "KXNCAAFTOTAL",
+  "KXNCAAMBGAME"
+ ],
  "series_added_since_plan": [
   "KXEARNINGSMENTIONAAL",
   "KXEARNINGSMENTIONABBV",
   "KXEARNINGSMENTIONABT",
   "KXEARNINGSMENTIONACI",
+  "KXEARNINGSMENTIONACN",
+  "KXEARNINGSMENTIONADBE",
   "KXEARNINGSMENTIONALK",
   "KXEARNINGSMENTIONAMAT",
   "KXEARNINGSMENTIONAMD",
@@ -17,10 +31,13 @@
   "KXEARNINGSMENTIONAS",
   "KXEARNINGSMENTIONASML",
   "KXEARNINGSMENTIONASTS",
+  "KXEARNINGSMENTIONAVAV",
+  "KXEARNINGSMENTIONAVGO",
   "KXEARNINGSMENTIONAXP",
   "KXEARNINGSMENTIONAZO",
   "KXEARNINGSMENTIONBA",
   "KXEARNINGSMENTIONBAC",
+  "KXEARNINGSMENTIONBB",
   "KXEARNINGSMENTIONBKNG",
   "KXEARNINGSMENTIONBLK",
   "KXEARNINGSMENTIONC",
@@ -29,12 +46,19 @@
   "KXEARNINGSMENTIONCAT",
   "KXEARNINGSMENTIONCBRL",
   "KXEARNINGSMENTIONCBRS",
+  "KXEARNINGSMENTIONCCL",
+  "KXEARNINGSMENTIONCHWY",
+  "KXEARNINGSMENTIONCIEN",
   "KXEARNINGSMENTIONCOP",
   "KXEARNINGSMENTIONCRCL",
+  "KXEARNINGSMENTIONCRM",
+  "KXEARNINGSMENTIONCRWD",
   "KXEARNINGSMENTIONCSCO",
   "KXEARNINGSMENTIONCVX",
   "KXEARNINGSMENTIONDHR",
   "KXEARNINGSMENTIONDIS",
+  "KXEARNINGSMENTIONDOCUSIGN",
+  "KXEARNINGSMENTIONDOLLARGENERAL",
   "KXEARNINGSMENTIONDPZ",
   "KXEARNINGSMENTIONDUOL",
   "KXEARNINGSMENTIONETOR",
@@ -52,6 +76,7 @@
   "KXEARNINGSMENTIONKKR",
   "KXEARNINGSMENTIONKLAC",
   "KXEARNINGSMENTIONKLAR",
+  "KXEARNINGSMENTIONKMX",
   "KXEARNINGSMENTIONKO",
   "KXEARNINGSMENTIONKR",
   "KXEARNINGSMENTIONLIN",
@@ -59,17 +84,24 @@
   "KXEARNINGSMENTIONLOW",
   "KXEARNINGSMENTIONLRCX",
   "KXEARNINGSMENTIONLUCID",
+  "KXEARNINGSMENTIONLULU",
+  "KXEARNINGSMENTIONM",
   "KXEARNINGSMENTIONMCD",
   "KXEARNINGSMENTIONMCO",
   "KXEARNINGSMENTIONMETA",
   "KXEARNINGSMENTIONMKC",
   "KXEARNINGSMENTIONMRK",
+  "KXEARNINGSMENTIONMRVL",
   "KXEARNINGSMENTIONMS",
+  "KXEARNINGSMENTIONMTN",
   "KXEARNINGSMENTIONNEE",
   "KXEARNINGSMENTIONNEM",
   "KXEARNINGSMENTIONNFLX",
+  "KXEARNINGSMENTIONNKE",
   "KXEARNINGSMENTIONNVDA",
   "KXEARNINGSMENTIONNYT",
+  "KXEARNINGSMENTIONORCL",
+  "KXEARNINGSMENTIONPATH",
   "KXEARNINGSMENTIONPFE",
   "KXEARNINGSMENTIONPG",
   "KXEARNINGSMENTIONPGR",
@@ -79,6 +111,7 @@
   "KXEARNINGSMENTIONPYPL",
   "KXEARNINGSMENTIONRKLB",
   "KXEARNINGSMENTIONRTX",
+  "KXEARNINGSMENTIONRY",
   "KXEARNINGSMENTIONSCHW",
   "KXEARNINGSMENTIONSNDK",
   "KXEARNINGSMENTIONSPCX",
@@ -87,464 +120,1126 @@
   "KXEARNINGSMENTIONTJX",
   "KXEARNINGSMENTIONTMO",
   "KXEARNINGSMENTIONTMUS",
+  "KXEARNINGSMENTIONTOL",
   "KXEARNINGSMENTIONTOST",
   "KXEARNINGSMENTIONTSLA",
   "KXEARNINGSMENTIONTTWO",
   "KXEARNINGSMENTIONTXN",
   "KXEARNINGSMENTIONUAL",
+  "KXEARNINGSMENTIONULTA",
   "KXEARNINGSMENTIONUNH",
   "KXEARNINGSMENTIONUNP",
   "KXEARNINGSMENTIONV",
+  "KXEARNINGSMENTIONVSCO",
   "KXEARNINGSMENTIONVZ",
   "KXEARNINGSMENTIONWELL",
   "KXEARNINGSMENTIONWFC",
+  "KXEARNINGSMENTIONWGO",
   "KXEARNINGSMENTIONWING",
   "KXEARNINGSMENTIONXOM",
   "KXEARNINGSMENTIONYOU",
   "KXEARNINGSMENTIONZETA",
+  "KXEARNINGSMENTIONZS",
   "KXMENTIONEARNAIR",
-  "KXMENTIONEARNSFD"
+  "KXMENTIONEARNSFD",
+  "KXNVDAMENTION"
  ],
  "series_with_markets": {
   "KXEARNINGSMENTIONAAL": {
    "open": 14,
-   "posted": 0
+   "posted": 0,
+   "two_sided": 14,
+   "in_window": 0,
+   "hours_to_expiry_min": 1845.6,
+   "hours_to_expiry_median": 1845.6
   },
   "KXEARNINGSMENTIONABBV": {
    "open": 14,
-   "posted": 0
+   "posted": 0,
+   "two_sided": 14,
+   "in_window": 0,
+   "hours_to_expiry_min": 1989.6,
+   "hours_to_expiry_median": 1989.6
   },
   "KXEARNINGSMENTIONABT": {
    "open": 14,
-   "posted": 0
+   "posted": 0,
+   "two_sided": 14,
+   "in_window": 0,
+   "hours_to_expiry_min": 1677.6,
+   "hours_to_expiry_median": 1677.6
   },
   "KXEARNINGSMENTIONACI": {
    "open": 14,
-   "posted": 0
+   "posted": 0,
+   "two_sided": 14,
+   "in_window": 0,
+   "hours_to_expiry_min": 1155.6,
+   "hours_to_expiry_median": 1155.6
+  },
+  "KXEARNINGSMENTIONACN": {
+   "open": 14,
+   "posted": 0,
+   "two_sided": 14,
+   "in_window": 0,
+   "hours_to_expiry_min": 837.6,
+   "hours_to_expiry_median": 837.6
+  },
+  "KXEARNINGSMENTIONADBE": {
+   "open": 12,
+   "posted": 0,
+   "two_sided": 12,
+   "in_window": 0,
+   "hours_to_expiry_min": 322.6,
+   "hours_to_expiry_median": 322.6
   },
   "KXEARNINGSMENTIONALK": {
    "open": 12,
-   "posted": 0
+   "posted": 0,
+   "two_sided": 12,
+   "in_window": 0,
+   "hours_to_expiry_min": 1701.6,
+   "hours_to_expiry_median": 1701.6
   },
   "KXEARNINGSMENTIONAMAT": {
    "open": 13,
-   "posted": 0
+   "posted": 0,
+   "two_sided": 13,
+   "in_window": 0,
+   "hours_to_expiry_min": 2349.6,
+   "hours_to_expiry_median": 2349.6
   },
   "KXEARNINGSMENTIONAMD": {
    "open": 17,
-   "posted": 0
+   "posted": 0,
+   "two_sided": 17,
+   "in_window": 0,
+   "hours_to_expiry_min": 1965.6,
+   "hours_to_expiry_median": 1965.6
   },
   "KXEARNINGSMENTIONAMGN": {
    "open": 15,
-   "posted": 0
+   "posted": 0,
+   "two_sided": 15,
+   "in_window": 0,
+   "hours_to_expiry_min": 1965.6,
+   "hours_to_expiry_median": 1965.6
   },
   "KXEARNINGSMENTIONANET": {
    "open": 15,
-   "posted": 0
+   "posted": 0,
+   "two_sided": 15,
+   "in_window": 0,
+   "hours_to_expiry_min": 2181.6,
+   "hours_to_expiry_median": 2181.6
   },
   "KXEARNINGSMENTIONAPH": {
    "open": 14,
-   "posted": 0
+   "posted": 0,
+   "two_sided": 14,
+   "in_window": 0,
+   "hours_to_expiry_min": 1821.6,
+   "hours_to_expiry_median": 1821.6
   },
   "KXEARNINGSMENTIONARM": {
    "open": 12,
-   "posted": 0
+   "posted": 0,
+   "two_sided": 12,
+   "in_window": 0,
+   "hours_to_expiry_min": 1989.6,
+   "hours_to_expiry_median": 1989.6
   },
   "KXEARNINGSMENTIONAS": {
    "open": 13,
-   "posted": 0
+   "posted": 0,
+   "two_sided": 13,
+   "in_window": 0,
+   "hours_to_expiry_min": 2469.6,
+   "hours_to_expiry_median": 2469.6
   },
   "KXEARNINGSMENTIONASML": {
    "open": 15,
-   "posted": 0
+   "posted": 0,
+   "two_sided": 15,
+   "in_window": 0,
+   "hours_to_expiry_min": 1821.6,
+   "hours_to_expiry_median": 1821.6
   },
   "KXEARNINGSMENTIONASTS": {
    "open": 13,
-   "posted": 0
+   "posted": 0,
+   "two_sided": 13,
+   "in_window": 0,
+   "hours_to_expiry_min": 2612.6,
+   "hours_to_expiry_median": 2612.6
+  },
+  "KXEARNINGSMENTIONAVAV": {
+   "open": 14,
+   "posted": 0,
+   "two_sided": 14,
+   "in_window": 0,
+   "hours_to_expiry_min": 621.6,
+   "hours_to_expiry_median": 621.6
+  },
+  "KXEARNINGSMENTIONAVGO": {
+   "open": 14,
+   "posted": 0,
+   "two_sided": 14,
+   "in_window": 0,
+   "hours_to_expiry_min": 645.6,
+   "hours_to_expiry_median": 645.6
   },
   "KXEARNINGSMENTIONAXP": {
    "open": 14,
-   "posted": 0
+   "posted": 0,
+   "two_sided": 14,
+   "in_window": 0,
+   "hours_to_expiry_min": 1869.6,
+   "hours_to_expiry_median": 1869.6
   },
   "KXEARNINGSMENTIONAZO": {
    "open": 15,
-   "posted": 0
+   "posted": 0,
+   "two_sided": 15,
+   "in_window": 0,
+   "hours_to_expiry_min": 2996.6,
+   "hours_to_expiry_median": 2996.6
   },
   "KXEARNINGSMENTIONBA": {
    "open": 13,
-   "posted": 0
+   "posted": 0,
+   "two_sided": 13,
+   "in_window": 0,
+   "hours_to_expiry_min": 1821.6,
+   "hours_to_expiry_median": 1821.6
   },
   "KXEARNINGSMENTIONBAC": {
    "open": 14,
-   "posted": 0
+   "posted": 0,
+   "two_sided": 14,
+   "in_window": 0,
+   "hours_to_expiry_min": 1533.6,
+   "hours_to_expiry_median": 1533.6
+  },
+  "KXEARNINGSMENTIONBB": {
+   "open": 14,
+   "posted": 0,
+   "two_sided": 14,
+   "in_window": 0,
+   "hours_to_expiry_min": 837.6,
+   "hours_to_expiry_median": 837.6
   },
   "KXEARNINGSMENTIONBKNG": {
    "open": 11,
-   "posted": 0
+   "posted": 0,
+   "two_sided": 11,
+   "in_window": 0,
+   "hours_to_expiry_min": 2325.6,
+   "hours_to_expiry_median": 2325.6
   },
   "KXEARNINGSMENTIONBLK": {
    "open": 18,
-   "posted": 0
+   "posted": 0,
+   "two_sided": 18,
+   "in_window": 0,
+   "hours_to_expiry_min": 1509.6,
+   "hours_to_expiry_median": 1509.6
   },
   "KXEARNINGSMENTIONC": {
    "open": 14,
-   "posted": 0
+   "posted": 0,
+   "two_sided": 14,
+   "in_window": 0,
+   "hours_to_expiry_min": 1180.6,
+   "hours_to_expiry_median": 1180.6
   },
   "KXEARNINGSMENTIONCALM": {
    "open": 12,
-   "posted": 0
+   "posted": 0,
+   "two_sided": 12,
+   "in_window": 0,
+   "hours_to_expiry_min": 1317.6,
+   "hours_to_expiry_median": 1317.6
   },
   "KXEARNINGSMENTIONCAR": {
    "open": 12,
-   "posted": 0
+   "posted": 0,
+   "two_sided": 12,
+   "in_window": 0,
+   "hours_to_expiry_min": 2349.6,
+   "hours_to_expiry_median": 2349.6
   },
   "KXEARNINGSMENTIONCAT": {
    "open": 11,
-   "posted": 0
+   "posted": 0,
+   "two_sided": 11,
+   "in_window": 0,
+   "hours_to_expiry_min": 1845.6,
+   "hours_to_expiry_median": 1845.6
   },
   "KXEARNINGSMENTIONCBRL": {
    "open": 10,
-   "posted": 0
+   "posted": 0,
+   "two_sided": 10,
+   "in_window": 0,
+   "hours_to_expiry_min": 2996.6,
+   "hours_to_expiry_median": 2996.6
   },
   "KXEARNINGSMENTIONCBRS": {
    "open": 16,
-   "posted": 0
+   "posted": 0,
+   "two_sided": 16,
+   "in_window": 0,
+   "hours_to_expiry_min": 2205.6,
+   "hours_to_expiry_median": 2205.6
+  },
+  "KXEARNINGSMENTIONCCL": {
+   "open": 14,
+   "posted": 0,
+   "two_sided": 14,
+   "in_window": 0,
+   "hours_to_expiry_min": 861.6,
+   "hours_to_expiry_median": 861.6
+  },
+  "KXEARNINGSMENTIONCHWY": {
+   "open": 11,
+   "posted": 0,
+   "two_sided": 11,
+   "in_window": 0,
+   "hours_to_expiry_min": 645.6,
+   "hours_to_expiry_median": 645.6
+  },
+  "KXEARNINGSMENTIONCIEN": {
+   "open": 13,
+   "posted": 0,
+   "two_sided": 13,
+   "in_window": 0,
+   "hours_to_expiry_min": 669.6,
+   "hours_to_expiry_median": 669.6
   },
   "KXEARNINGSMENTIONCOP": {
    "open": 14,
-   "posted": 0
+   "posted": 0,
+   "two_sided": 14,
+   "in_window": 0,
+   "hours_to_expiry_min": 2013.6,
+   "hours_to_expiry_median": 2013.6
   },
   "KXEARNINGSMENTIONCOST": {
    "open": 21,
-   "posted": 0
+   "posted": 0,
+   "two_sided": 21,
+   "in_window": 0,
+   "hours_to_expiry_min": 669.6,
+   "hours_to_expiry_median": 669.6
   },
   "KXEARNINGSMENTIONCRCL": {
    "open": 12,
-   "posted": 0
+   "posted": 0,
+   "two_sided": 12,
+   "in_window": 0,
+   "hours_to_expiry_min": 2493.6,
+   "hours_to_expiry_median": 2493.6
+  },
+  "KXEARNINGSMENTIONCRM": {
+   "open": 18,
+   "posted": 0,
+   "two_sided": 18,
+   "in_window": 0,
+   "hours_to_expiry_min": 477.6,
+   "hours_to_expiry_median": 477.6
+  },
+  "KXEARNINGSMENTIONCRWD": {
+   "open": 17,
+   "posted": 0,
+   "two_sided": 0,
+   "in_window": 0,
+   "hours_to_expiry_min": 453.6,
+   "hours_to_expiry_median": 453.6
   },
   "KXEARNINGSMENTIONCSCO": {
    "open": 12,
-   "posted": 0
+   "posted": 0,
+   "two_sided": 12,
+   "in_window": 0,
+   "hours_to_expiry_min": 2157.6,
+   "hours_to_expiry_median": 2157.6
   },
   "KXEARNINGSMENTIONCVX": {
    "open": 14,
-   "posted": 0
+   "posted": 0,
+   "two_sided": 14,
+   "in_window": 0,
+   "hours_to_expiry_min": 1869.6,
+   "hours_to_expiry_median": 1869.6
   },
   "KXEARNINGSMENTIONDHR": {
    "open": 16,
-   "posted": 0
+   "posted": 0,
+   "two_sided": 16,
+   "in_window": 0,
+   "hours_to_expiry_min": 1821.6,
+   "hours_to_expiry_median": 1821.6
   },
   "KXEARNINGSMENTIONDIS": {
    "open": 16,
-   "posted": 0
+   "posted": 0,
+   "two_sided": 16,
+   "in_window": 0,
+   "hours_to_expiry_min": 2157.6,
+   "hours_to_expiry_median": 2157.6
+  },
+  "KXEARNINGSMENTIONDOCUSIGN": {
+   "open": 10,
+   "posted": 0,
+   "two_sided": 10,
+   "in_window": 0,
+   "hours_to_expiry_min": 501.6,
+   "hours_to_expiry_median": 501.6
+  },
+  "KXEARNINGSMENTIONDOLLARGENERAL": {
+   "open": 12,
+   "posted": 0,
+   "two_sided": 12,
+   "in_window": 0,
+   "hours_to_expiry_min": 501.6,
+   "hours_to_expiry_median": 501.6
   },
   "KXEARNINGSMENTIONDPZ": {
    "open": 13,
-   "posted": 0
+   "posted": 0,
+   "two_sided": 13,
+   "in_window": 0,
+   "hours_to_expiry_min": 2283.6,
+   "hours_to_expiry_median": 2283.6
   },
   "KXEARNINGSMENTIONDUOL": {
    "open": 13,
-   "posted": 0
+   "posted": 0,
+   "two_sided": 13,
+   "in_window": 0,
+   "hours_to_expiry_min": 2517.6,
+   "hours_to_expiry_median": 2517.6
   },
   "KXEARNINGSMENTIONETOR": {
    "open": 14,
-   "posted": 0
+   "posted": 0,
+   "two_sided": 14,
+   "in_window": 0,
+   "hours_to_expiry_min": 2301.6,
+   "hours_to_expiry_median": 2301.6
   },
   "KXEARNINGSMENTIONGE": {
    "open": 14,
-   "posted": 0
+   "posted": 0,
+   "two_sided": 14,
+   "in_window": 0,
+   "hours_to_expiry_min": 1677.6,
+   "hours_to_expiry_median": 1677.6
   },
   "KXEARNINGSMENTIONGEV": {
    "open": 14,
-   "posted": 0
+   "posted": 0,
+   "two_sided": 14,
+   "in_window": 0,
+   "hours_to_expiry_min": 1821.6,
+   "hours_to_expiry_median": 1821.6
   },
   "KXEARNINGSMENTIONGILD": {
    "open": 13,
-   "posted": 0
+   "posted": 0,
+   "two_sided": 13,
+   "in_window": 0,
+   "hours_to_expiry_min": 2133.6,
+   "hours_to_expiry_median": 2133.6
   },
   "KXEARNINGSMENTIONGIS": {
    "open": 16,
-   "posted": 0
+   "posted": 0,
+   "two_sided": 16,
+   "in_window": 0,
+   "hours_to_expiry_min": 2996.6,
+   "hours_to_expiry_median": 2996.6
   },
   "KXEARNINGSMENTIONGM": {
    "open": 13,
-   "posted": 0
+   "posted": 0,
+   "two_sided": 13,
+   "in_window": 0,
+   "hours_to_expiry_min": 1821.6,
+   "hours_to_expiry_median": 1821.6
   },
   "KXEARNINGSMENTIONGS": {
    "open": 14,
-   "posted": 0
+   "posted": 0,
+   "two_sided": 14,
+   "in_window": 0,
+   "hours_to_expiry_min": 1299.1,
+   "hours_to_expiry_median": 1299.1
   },
   "KXEARNINGSMENTIONHD": {
    "open": 14,
-   "posted": 0
+   "posted": 0,
+   "two_sided": 14,
+   "in_window": 0,
+   "hours_to_expiry_min": 2469.6,
+   "hours_to_expiry_median": 2469.6
   },
   "KXEARNINGSMENTIONHIMS": {
    "open": 19,
-   "posted": 0
+   "posted": 0,
+   "two_sided": 19,
+   "in_window": 0,
+   "hours_to_expiry_min": 2445.6,
+   "hours_to_expiry_median": 2445.6
   },
   "KXEARNINGSMENTIONHLT": {
    "open": 11,
-   "posted": 0
+   "posted": 0,
+   "two_sided": 11,
+   "in_window": 0,
+   "hours_to_expiry_min": 2157.6,
+   "hours_to_expiry_median": 2157.6
   },
   "KXEARNINGSMENTIONHOOD": {
    "open": 16,
-   "posted": 0
+   "posted": 0,
+   "two_sided": 16,
+   "in_window": 0,
+   "hours_to_expiry_min": 2133.6,
+   "hours_to_expiry_median": 2133.6
   },
   "KXEARNINGSMENTIONIBM": {
    "open": 14,
-   "posted": 0
+   "posted": 0,
+   "two_sided": 14,
+   "in_window": 0,
+   "hours_to_expiry_min": 1821.6,
+   "hours_to_expiry_median": 1821.6
   },
   "KXEARNINGSMENTIONISRG": {
    "open": 13,
-   "posted": 0
+   "posted": 0,
+   "two_sided": 13,
+   "in_window": 0,
+   "hours_to_expiry_min": 1677.6,
+   "hours_to_expiry_median": 1677.6
   },
   "KXEARNINGSMENTIONJNJ": {
    "open": 16,
-   "posted": 0
+   "posted": 0,
+   "two_sided": 16,
+   "in_window": 0,
+   "hours_to_expiry_min": 1467.6,
+   "hours_to_expiry_median": 1467.6
   },
   "KXEARNINGSMENTIONJPM": {
    "open": 18,
-   "posted": 0
+   "posted": 0,
+   "two_sided": 18,
+   "in_window": 0,
+   "hours_to_expiry_min": 1178.1,
+   "hours_to_expiry_median": 1178.1
   },
   "KXEARNINGSMENTIONKKR": {
    "open": 14,
-   "posted": 0
+   "posted": 0,
+   "two_sided": 14,
+   "in_window": 0,
+   "hours_to_expiry_min": 2013.6,
+   "hours_to_expiry_median": 2013.6
   },
   "KXEARNINGSMENTIONKLAC": {
    "open": 14,
-   "posted": 0
+   "posted": 0,
+   "two_sided": 14,
+   "in_window": 0,
+   "hours_to_expiry_min": 1845.6,
+   "hours_to_expiry_median": 1845.6
   },
   "KXEARNINGSMENTIONKLAR": {
    "open": 17,
-   "posted": 0
+   "posted": 0,
+   "two_sided": 17,
+   "in_window": 0,
+   "hours_to_expiry_min": 2373.6,
+   "hours_to_expiry_median": 2373.6
+  },
+  "KXEARNINGSMENTIONKMX": {
+   "open": 15,
+   "posted": 0,
+   "two_sided": 15,
+   "in_window": 0,
+   "hours_to_expiry_min": 837.6,
+   "hours_to_expiry_median": 837.6
   },
   "KXEARNINGSMENTIONKO": {
    "open": 12,
-   "posted": 0
+   "posted": 0,
+   "two_sided": 12,
+   "in_window": 0,
+   "hours_to_expiry_min": 2133.6,
+   "hours_to_expiry_median": 2133.6
   },
   "KXEARNINGSMENTIONKR": {
    "open": 11,
-   "posted": 0
+   "posted": 0,
+   "two_sided": 11,
+   "in_window": 0,
+   "hours_to_expiry_min": 2996.6,
+   "hours_to_expiry_median": 2996.6
   },
   "KXEARNINGSMENTIONLIN": {
    "open": 14,
-   "posted": 0
+   "posted": 0,
+   "two_sided": 14,
+   "in_window": 0,
+   "hours_to_expiry_min": 2013.6,
+   "hours_to_expiry_median": 2013.6
   },
   "KXEARNINGSMENTIONLMT": {
    "open": 13,
-   "posted": 0
+   "posted": 0,
+   "two_sided": 13,
+   "in_window": 0,
+   "hours_to_expiry_min": 1845.6,
+   "hours_to_expiry_median": 1845.6
   },
   "KXEARNINGSMENTIONLOW": {
    "open": 13,
-   "posted": 0
+   "posted": 0,
+   "two_sided": 13,
+   "in_window": 0,
+   "hours_to_expiry_min": 2493.6,
+   "hours_to_expiry_median": 2493.6
   },
   "KXEARNINGSMENTIONLRCX": {
    "open": 13,
-   "posted": 0
+   "posted": 0,
+   "two_sided": 13,
+   "in_window": 0,
+   "hours_to_expiry_min": 1821.6,
+   "hours_to_expiry_median": 1821.6
   },
   "KXEARNINGSMENTIONLUCID": {
    "open": 13,
-   "posted": 0
+   "posted": 0,
+   "two_sided": 13,
+   "in_window": 0,
+   "hours_to_expiry_min": 2469.6,
+   "hours_to_expiry_median": 2469.6
+  },
+  "KXEARNINGSMENTIONLULU": {
+   "open": 13,
+   "posted": 0,
+   "two_sided": 13,
+   "in_window": 0,
+   "hours_to_expiry_min": 669.6,
+   "hours_to_expiry_median": 669.6
+  },
+  "KXEARNINGSMENTIONM": {
+   "open": 13,
+   "posted": 0,
+   "two_sided": 13,
+   "in_window": 0,
+   "hours_to_expiry_min": 477.6,
+   "hours_to_expiry_median": 477.6
   },
   "KXEARNINGSMENTIONMCD": {
    "open": 20,
-   "posted": 0
+   "posted": 0,
+   "two_sided": 20,
+   "in_window": 0,
+   "hours_to_expiry_min": 2157.6,
+   "hours_to_expiry_median": 2157.6
   },
   "KXEARNINGSMENTIONMCO": {
    "open": 13,
-   "posted": 0
+   "posted": 0,
+   "two_sided": 13,
+   "in_window": 0,
+   "hours_to_expiry_min": 2325.6,
+   "hours_to_expiry_median": 2325.6
   },
   "KXEARNINGSMENTIONMETA": {
    "open": 15,
-   "posted": 0
+   "posted": 0,
+   "two_sided": 15,
+   "in_window": 0,
+   "hours_to_expiry_min": 1821.6,
+   "hours_to_expiry_median": 1821.6
   },
   "KXEARNINGSMENTIONMKC": {
    "open": 14,
-   "posted": 0
+   "posted": 0,
+   "two_sided": 14,
+   "in_window": 0,
+   "hours_to_expiry_min": 1845.6,
+   "hours_to_expiry_median": 1845.6
   },
   "KXEARNINGSMENTIONMRK": {
    "open": 14,
-   "posted": 0
+   "posted": 0,
+   "two_sided": 14,
+   "in_window": 0,
+   "hours_to_expiry_min": 1965.6,
+   "hours_to_expiry_median": 1965.6
+  },
+  "KXEARNINGSMENTIONMRVL": {
+   "open": 17,
+   "posted": 0,
+   "two_sided": 17,
+   "in_window": 0,
+   "hours_to_expiry_min": 453.6,
+   "hours_to_expiry_median": 453.6
   },
   "KXEARNINGSMENTIONMS": {
    "open": 15,
-   "posted": 0
+   "posted": 0,
+   "two_sided": 15,
+   "in_window": 0,
+   "hours_to_expiry_min": 1509.6,
+   "hours_to_expiry_median": 1509.6
+  },
+  "KXEARNINGSMENTIONMTN": {
+   "open": 14,
+   "posted": 0,
+   "two_sided": 14,
+   "in_window": 0,
+   "hours_to_expiry_min": 645.6,
+   "hours_to_expiry_median": 645.6
   },
   "KXEARNINGSMENTIONNEE": {
    "open": 12,
-   "posted": 0
+   "posted": 0,
+   "two_sided": 12,
+   "in_window": 0,
+   "hours_to_expiry_min": 1797.6,
+   "hours_to_expiry_median": 1797.6
   },
   "KXEARNINGSMENTIONNEM": {
    "open": 13,
-   "posted": 0
+   "posted": 0,
+   "two_sided": 13,
+   "in_window": 0,
+   "hours_to_expiry_min": 2349.6,
+   "hours_to_expiry_median": 2349.6
   },
   "KXEARNINGSMENTIONNFLX": {
    "open": 16,
-   "posted": 0
+   "posted": 0,
+   "two_sided": 16,
+   "in_window": 0,
+   "hours_to_expiry_min": 1629.6,
+   "hours_to_expiry_median": 1629.6
+  },
+  "KXEARNINGSMENTIONNKE": {
+   "open": 14,
+   "posted": 0,
+   "two_sided": 14,
+   "in_window": 0,
+   "hours_to_expiry_min": 837.6,
+   "hours_to_expiry_median": 837.6
   },
   "KXEARNINGSMENTIONNVDA": {
    "open": 27,
-   "posted": 0
+   "posted": 0,
+   "two_sided": 27,
+   "in_window": 0,
+   "hours_to_expiry_min": 2493.6,
+   "hours_to_expiry_median": 2493.6
   },
   "KXEARNINGSMENTIONNYT": {
    "open": 12,
-   "posted": 0
+   "posted": 0,
+   "two_sided": 12,
+   "in_window": 0,
+   "hours_to_expiry_min": 1989.6,
+   "hours_to_expiry_median": 1989.6
+  },
+  "KXEARNINGSMENTIONORCL": {
+   "open": 14,
+   "posted": 0,
+   "two_sided": 14,
+   "in_window": 0,
+   "hours_to_expiry_min": 669.6,
+   "hours_to_expiry_median": 669.6
+  },
+  "KXEARNINGSMENTIONPATH": {
+   "open": 12,
+   "posted": 0,
+   "two_sided": 12,
+   "in_window": 0,
+   "hours_to_expiry_min": 501.6,
+   "hours_to_expiry_median": 501.6
   },
   "KXEARNINGSMENTIONPFE": {
    "open": 16,
-   "posted": 0
+   "posted": 0,
+   "two_sided": 16,
+   "in_window": 0,
+   "hours_to_expiry_min": 1965.6,
+   "hours_to_expiry_median": 1965.6
   },
   "KXEARNINGSMENTIONPG": {
    "open": 16,
-   "posted": 0
+   "posted": 0,
+   "two_sided": 16,
+   "in_window": 0,
+   "hours_to_expiry_min": 1701.6,
+   "hours_to_expiry_median": 1701.6
   },
   "KXEARNINGSMENTIONPGR": {
    "open": 12,
-   "posted": 0
+   "posted": 0,
+   "two_sided": 12,
+   "in_window": 0,
+   "hours_to_expiry_min": 2636.6,
+   "hours_to_expiry_median": 2636.6
   },
   "KXEARNINGSMENTIONPLD": {
    "open": 11,
-   "posted": 0
+   "posted": 0,
+   "two_sided": 11,
+   "in_window": 0,
+   "hours_to_expiry_min": 1653.6,
+   "hours_to_expiry_median": 1653.6
   },
   "KXEARNINGSMENTIONPM": {
    "open": 15,
-   "posted": 0
+   "posted": 0,
+   "two_sided": 15,
+   "in_window": 0,
+   "hours_to_expiry_min": 2037.6,
+   "hours_to_expiry_median": 2037.6
   },
   "KXEARNINGSMENTIONPSKY": {
    "open": 13,
-   "posted": 0
+   "posted": 0,
+   "two_sided": 13,
+   "in_window": 0,
+   "hours_to_expiry_min": 2493.6,
+   "hours_to_expiry_median": 2493.6
   },
   "KXEARNINGSMENTIONPYPL": {
    "open": 14,
-   "posted": 0
+   "posted": 0,
+   "two_sided": 14,
+   "in_window": 0,
+   "hours_to_expiry_min": 1965.6,
+   "hours_to_expiry_median": 1965.6
   },
   "KXEARNINGSMENTIONRKLB": {
    "open": 14,
-   "posted": 0
+   "posted": 0,
+   "two_sided": 14,
+   "in_window": 0,
+   "hours_to_expiry_min": 2517.6,
+   "hours_to_expiry_median": 2517.6
   },
   "KXEARNINGSMENTIONRTX": {
    "open": 12,
-   "posted": 0
+   "posted": 0,
+   "two_sided": 12,
+   "in_window": 0,
+   "hours_to_expiry_min": 1797.6,
+   "hours_to_expiry_median": 1797.6
+  },
+  "KXEARNINGSMENTIONRY": {
+   "open": 14,
+   "posted": 0,
+   "two_sided": 14,
+   "in_window": 0,
+   "hours_to_expiry_min": 501.6,
+   "hours_to_expiry_median": 501.6
   },
   "KXEARNINGSMENTIONSCHW": {
    "open": 16,
-   "posted": 0
+   "posted": 0,
+   "two_sided": 16,
+   "in_window": 0,
+   "hours_to_expiry_min": 1653.6,
+   "hours_to_expiry_median": 1653.6
   },
   "KXEARNINGSMENTIONSNDK": {
    "open": 13,
-   "posted": 0
+   "posted": 0,
+   "two_sided": 13,
+   "in_window": 0,
+   "hours_to_expiry_min": 1845.6,
+   "hours_to_expiry_median": 1845.6
   },
   "KXEARNINGSMENTIONSNOW": {
    "open": 13,
-   "posted": 0
+   "posted": 0,
+   "two_sided": 13,
+   "in_window": 0,
+   "hours_to_expiry_min": 477.6,
+   "hours_to_expiry_median": 477.6
   },
   "KXEARNINGSMENTIONSPCX": {
    "open": 22,
-   "posted": 0
+   "posted": 0,
+   "two_sided": 22,
+   "in_window": 0,
+   "hours_to_expiry_min": 1797.6,
+   "hours_to_expiry_median": 1797.6
   },
   "KXEARNINGSMENTIONSPOT": {
    "open": 14,
-   "posted": 0
+   "posted": 0,
+   "two_sided": 14,
+   "in_window": 0,
+   "hours_to_expiry_min": 1965.6,
+   "hours_to_expiry_median": 1965.6
   },
   "KXEARNINGSMENTIONTGT": {
    "open": 16,
-   "posted": 0
+   "posted": 0,
+   "two_sided": 16,
+   "in_window": 0,
+   "hours_to_expiry_min": 2636.6,
+   "hours_to_expiry_median": 2636.6
   },
   "KXEARNINGSMENTIONTJX": {
    "open": 13,
-   "posted": 0
+   "posted": 0,
+   "two_sided": 13,
+   "in_window": 0,
+   "hours_to_expiry_min": 2493.6,
+   "hours_to_expiry_median": 2493.6
   },
   "KXEARNINGSMENTIONTMO": {
    "open": 15,
-   "posted": 0
+   "posted": 0,
+   "two_sided": 15,
+   "in_window": 0,
+   "hours_to_expiry_min": 1845.6,
+   "hours_to_expiry_median": 1845.6
   },
   "KXEARNINGSMENTIONTMUS": {
    "open": 12,
-   "posted": 0
+   "posted": 0,
+   "two_sided": 12,
+   "in_window": 0,
+   "hours_to_expiry_min": 2157.6,
+   "hours_to_expiry_median": 2157.6
+  },
+  "KXEARNINGSMENTIONTOL": {
+   "open": 16,
+   "posted": 0,
+   "two_sided": 16,
+   "in_window": 0,
+   "hours_to_expiry_min": 621.6,
+   "hours_to_expiry_median": 621.6
   },
   "KXEARNINGSMENTIONTOST": {
    "open": 9,
-   "posted": 0
+   "posted": 0,
+   "two_sided": 9,
+   "in_window": 0,
+   "hours_to_expiry_min": 2181.6,
+   "hours_to_expiry_median": 2181.6
   },
   "KXEARNINGSMENTIONTSLA": {
    "open": 20,
-   "posted": 0
+   "posted": 0,
+   "two_sided": 20,
+   "in_window": 0,
+   "hours_to_expiry_min": 1821.6,
+   "hours_to_expiry_median": 1821.6
   },
   "KXEARNINGSMENTIONTTWO": {
    "open": 12,
-   "posted": 0
+   "posted": 0,
+   "two_sided": 12,
+   "in_window": 0,
+   "hours_to_expiry_min": 2013.6,
+   "hours_to_expiry_median": 2013.6
   },
   "KXEARNINGSMENTIONTXN": {
    "open": 12,
-   "posted": 0
+   "posted": 0,
+   "two_sided": 12,
+   "in_window": 0,
+   "hours_to_expiry_min": 1797.6,
+   "hours_to_expiry_median": 1797.6
   },
   "KXEARNINGSMENTIONUAL": {
    "open": 14,
-   "posted": 0
+   "posted": 0,
+   "two_sided": 14,
+   "in_window": 0,
+   "hours_to_expiry_min": 1653.6,
+   "hours_to_expiry_median": 1653.6
   },
   "KXEARNINGSMENTIONUBER": {
    "open": 19,
-   "posted": 0
+   "posted": 0,
+   "two_sided": 19,
+   "in_window": 0,
+   "hours_to_expiry_min": 1989.6,
+   "hours_to_expiry_median": 1989.6
+  },
+  "KXEARNINGSMENTIONULTA": {
+   "open": 18,
+   "posted": 0,
+   "two_sided": 18,
+   "in_window": 0,
+   "hours_to_expiry_min": 501.6,
+   "hours_to_expiry_median": 501.6
   },
   "KXEARNINGSMENTIONUNH": {
    "open": 17,
-   "posted": 0
+   "posted": 0,
+   "two_sided": 17,
+   "in_window": 0,
+   "hours_to_expiry_min": 1797.6,
+   "hours_to_expiry_median": 1797.6
   },
   "KXEARNINGSMENTIONUNP": {
    "open": 15,
-   "posted": 0
+   "posted": 0,
+   "two_sided": 15,
+   "in_window": 0,
+   "hours_to_expiry_min": 1797.6,
+   "hours_to_expiry_median": 1797.6
   },
   "KXEARNINGSMENTIONV": {
    "open": 15,
-   "posted": 0
+   "posted": 0,
+   "two_sided": 15,
+   "in_window": 0,
+   "hours_to_expiry_min": 1845.6,
+   "hours_to_expiry_median": 1845.6
+  },
+  "KXEARNINGSMENTIONVSCO": {
+   "open": 15,
+   "posted": 0,
+   "two_sided": 15,
+   "in_window": 0,
+   "hours_to_expiry_min": 501.6,
+   "hours_to_expiry_median": 501.6
   },
   "KXEARNINGSMENTIONVZ": {
    "open": 16,
-   "posted": 0
+   "posted": 0,
+   "two_sided": 16,
+   "in_window": 0,
+   "hours_to_expiry_min": 1869.6,
+   "hours_to_expiry_median": 1869.6
   },
   "KXEARNINGSMENTIONWELL": {
    "open": 16,
-   "posted": 0
+   "posted": 0,
+   "two_sided": 16,
+   "in_window": 0,
+   "hours_to_expiry_min": 2157.6,
+   "hours_to_expiry_median": 2157.6
   },
   "KXEARNINGSMENTIONWFC": {
    "open": 16,
-   "posted": 0
+   "posted": 0,
+   "two_sided": 16,
+   "in_window": 0,
+   "hours_to_expiry_min": 1179.6,
+   "hours_to_expiry_median": 1179.6
+  },
+  "KXEARNINGSMENTIONWGO": {
+   "open": 11,
+   "posted": 0,
+   "two_sided": 11,
+   "in_window": 0,
+   "hours_to_expiry_min": 861.6,
+   "hours_to_expiry_median": 861.6
   },
   "KXEARNINGSMENTIONWING": {
    "open": 15,
-   "posted": 0
+   "posted": 0,
+   "two_sided": 15,
+   "in_window": 0,
+   "hours_to_expiry_min": 2325.6,
+   "hours_to_expiry_median": 2325.6
   },
   "KXEARNINGSMENTIONXOM": {
    "open": 17,
-   "posted": 0
+   "posted": 0,
+   "two_sided": 17,
+   "in_window": 0,
+   "hours_to_expiry_min": 1869.6,
+   "hours_to_expiry_median": 1869.6
   },
   "KXEARNINGSMENTIONYOU": {
    "open": 12,
-   "posted": 0
+   "posted": 0,
+   "two_sided": 12,
+   "in_window": 0,
+   "hours_to_expiry_min": 2493.6,
+   "hours_to_expiry_median": 2493.6
   },
   "KXEARNINGSMENTIONZETA": {
    "open": 13,
-   "posted": 0
+   "posted": 0,
+   "two_sided": 13,
+   "in_window": 0,
+   "hours_to_expiry_min": 2469.6,
+   "hours_to_expiry_median": 2469.6
+  },
+  "KXEARNINGSMENTIONZS": {
+   "open": 12,
+   "posted": 0,
+   "two_sided": 12,
+   "in_window": 0,
+   "hours_to_expiry_min": 285.6,
+   "hours_to_expiry_median": 285.6
   },
   "KXFEDMENTION": {
    "open": 27,
-   "posted": 0
+   "posted": 0,
+   "two_sided": 26,
+   "in_window": 0,
+   "hours_to_expiry_min": 333.6,
+   "hours_to_expiry_median": 333.6
   },
   "KXJENSENMENTION": {
    "open": 18,
-   "posted": 0
+   "posted": 0,
+   "two_sided": 18,
+   "in_window": 0,
+   "hours_to_expiry_min": 501.6,
+   "hours_to_expiry_median": 501.6
   },
   "KXMENTIONEARNAIR": {
    "open": 10,
-   "posted": 0
+   "posted": 0,
+   "two_sided": 10,
+   "in_window": 0,
+   "hours_to_expiry_min": 1293.6,
+   "hours_to_expiry_median": 1293.6
   },
   "KXMENTIONEARNSFD": {
    "open": 13,
-   "posted": 0
+   "posted": 0,
+   "two_sided": 13,
+   "in_window": 0,
+   "hours_to_expiry_min": 3140.6,
+   "hours_to_expiry_median": 3140.6
+  },
+  "KXNVDAMENTION": {
+   "open": 18,
+   "posted": 0,
+   "two_sided": 18,
+   "in_window": 0,
+   "hours_to_expiry_min": 453.6,
+   "hours_to_expiry_median": 453.6
   },
   "KXSECPRESSMENTION": {
    "open": 26,
-   "posted": 0
+   "posted": 0,
+   "two_sided": 26,
+   "in_window": 0,
+   "hours_to_expiry_min": 1605.6,
+   "hours_to_expiry_median": 1605.6
   }
  },
  "kind": "PAPER (no orders sent); fills from public trades, first in line",
