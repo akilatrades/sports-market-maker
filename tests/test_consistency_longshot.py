@@ -35,8 +35,8 @@ def test_bids_summing_above_one_are_riskless_only_after_fees():
 
 
 def test_threshold_and_calendar_need_the_harder_yes_bid_above_the_easier_ask():
-    ladder = {"markets": [m("X4", 0.50, 0.52, floor_strike=4, strike_type="greater"),
-                          m("X5", 0.58, 0.60, floor_strike=5, strike_type="greater")]}  # fmt: skip
+    ladder = {"markets": [m("X4", 0.50, 0.52, floor_strike=4, strike_type="greater", yes_sub_title="Rate above 4%"),
+                          m("X5", 0.58, 0.60, floor_strike=5, strike_type="greater", yes_sub_title="Rate above 5%")]}  # fmt: skip
     ((kind, tickers, edge, _, _),) = C.threshold_findings(ladder)
     assert kind == "threshold" and tickers == ["X4", "X5"] and round(edge, 3) == 0.025
     close = lambda d: (NOW + timedelta(days=d)).isoformat()  # noqa: E731
@@ -85,3 +85,15 @@ def test_the_scan_runs_in_the_hourly_job_and_needs_no_install_to_check_due():
         Path(__file__).resolve().parents[1] / "research/consistency_scan.py"
     ).read_text()
     assert "import pandas" not in head and "import numpy" not in head  # stdlib only
+
+
+def test_thresholds_on_different_players_or_teams_are_never_paired():
+    """26 Nov: one event holds many players' yards and both teams' spreads."""
+    event = {"markets": [
+        m("WR1-50", 0.01, 0.02, floor_strike=49.5, strike_type="greater", yes_sub_title="Amon-Ra St. Brown: 50+"),
+        m("WR2-40", 0.99, 1.00, floor_strike=39.5, strike_type="greater", yes_sub_title="Jameson Williams: 40+"),
+        m("DUKE3", 0.01, 0.02, floor_strike=3.5, strike_type="greater", yes_sub_title="Duke wins by over 3.5"),
+        m("WAKE4", 0.99, 1.00, floor_strike=4.5, strike_type="greater", yes_sub_title="Wake Forest wins by over 4.5"),
+    ]}  # fmt: skip
+    assert C.threshold_findings(event) == []
+    assert C.subject(event["markets"][0]) == "amon-ra st. brown: #"

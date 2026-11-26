@@ -108,19 +108,33 @@ def pair_findings(pairs, kind):
     return [best] if best else []
 
 
+NUMBER = re.compile(r"[-+]?\$?\d[\d,.]*%?\+?")
+
+
+def subject(market):
+    """What a threshold is about, without its number: "Amon-Ra St. Brown:
+    50+" and "...: 70+" share one; two players, or two teams' spreads, do
+    not. Kalshi often puts many subjects in one event."""
+    text = market.get("yes_sub_title") or market.get("title") or ""
+    return re.sub(r"\s+", " ", NUMBER.sub("#", str(text))).strip().lower()
+
+
 def threshold_findings(event):
-    ms = []
+    ladders = {}
     for m in live(event.get("markets") or []):
         try:
             strike = float(m.get("floor_strike"))
         except (TypeError, ValueError):
             continue
         if str(m.get("strike_type", "")).lower() in GREATER:
-            ms.append((strike, m))
-    ms.sort(key=lambda x: x[0])
-    pairs = [(ms[i][1], ms[j][1]) for i in range(len(ms)) for j in range(i + 1, len(ms))
-             if ms[j][0] > ms[i][0]]  # fmt: skip
-    return pair_findings(pairs, "threshold")
+            ladders.setdefault(subject(m), []).append((strike, m))
+    out = []
+    for ms in ladders.values():
+        ms.sort(key=lambda x: x[0])
+        pairs = [(ms[i][1], ms[j][1]) for i in range(len(ms)) for j in range(i + 1, len(ms))
+                 if ms[j][0] > ms[i][0]]  # fmt: skip
+        out += pair_findings(pairs, "threshold")
+    return out
 
 
 def calendar_findings(event):
