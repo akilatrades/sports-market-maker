@@ -1,0 +1,346 @@
+{
+ "note": "SIMULATED (cross-market scan 2025-26, quotes 7-4 hours before expected expiration). Cents per contract. Not a forecast.",
+ "markets_quoted": 202805,
+ "calibration_yes": {
+  "(0.01, 0.02]": {
+   "markets": 3419,
+   "priced": 0.0164,
+   "happened": 0.0111,
+   "gap_points": -0.53
+  },
+  "(0.02, 0.05]": {
+   "markets": 9381,
+   "priced": 0.0368,
+   "happened": 0.0324,
+   "gap_points": -0.44
+  },
+  "(0.05, 0.1]": {
+   "markets": 13808,
+   "priced": 0.0761,
+   "happened": 0.0729,
+   "gap_points": -0.32
+  },
+  "(0.1, 0.2]": {
+   "markets": 24996,
+   "priced": 0.1527,
+   "happened": 0.152,
+   "gap_points": -0.07
+  },
+  "(0.2, 0.3]": {
+   "markets": 31702,
+   "priced": 0.2529,
+   "happened": 0.2531,
+   "gap_points": 0.02
+  },
+  "(0.3, 0.4]": {
+   "markets": 26963,
+   "priced": 0.3511,
+   "happened": 0.3491,
+   "gap_points": -0.19
+  },
+  "(0.4, 0.5]": {
+   "markets": 31274,
+   "priced": 0.4559,
+   "happened": 0.4419,
+   "gap_points": -1.4
+  },
+  "(0.5, 0.6]": {
+   "markets": 22274,
+   "priced": 0.5485,
+   "happened": 0.544,
+   "gap_points": -0.46
+  },
+  "(0.6, 0.7]": {
+   "markets": 15060,
+   "priced": 0.6487,
+   "happened": 0.6449,
+   "gap_points": -0.38
+  },
+  "(0.7, 0.8]": {
+   "markets": 11512,
+   "priced": 0.749,
+   "happened": 0.7552,
+   "gap_points": 0.62
+  },
+  "(0.8, 0.9]": {
+   "markets": 7376,
+   "priced": 0.8474,
+   "happened": 0.8529,
+   "gap_points": 0.55
+  },
+  "(0.9, 0.95]": {
+   "markets": 2829,
+   "priced": 0.927,
+   "happened": 0.9381,
+   "gap_points": 1.12
+  },
+  "(0.95, 0.98]": {
+   "markets": 1685,
+   "priced": 0.9657,
+   "happened": 0.9727,
+   "gap_points": 0.7
+  },
+  "(0.98, 0.99]": {
+   "markets": 333,
+   "priced": 0.985,
+   "happened": 0.991,
+   "gap_points": 0.6
+  }
+ },
+ "T_NO_take_no_when_yes_bid_le_10c": {
+  "after_fee": {
+   "markets": 43826,
+   "events": 26615,
+   "cents": -9.12,
+   "t": -48.61,
+   "first_half_cents": -9.154,
+   "second_half_cents": -9.112,
+   "avg_price": 0.957,
+   "profit_per_dollar": -0.0953
+  },
+  "after_fee_rounded_1_contract": {
+   "markets": 43826,
+   "events": 26615,
+   "cents": -9.838,
+   "t": -52.42,
+   "first_half_cents": -9.877,
+   "second_half_cents": -9.828,
+   "avg_price": 0.957
+  },
+  "by_family": {
+   "combat": {
+    "markets": 1196,
+    "events": 700,
+    "cents": -4.626,
+    "t": -5.89,
+    "first_half_cents": 0.0,
+    "second_half_cents": -5.035,
+    "avg_price": 0.9565
+   },
+   "finance": {
+    "markets": 1522,
+    "events": 934,
+    "cents": -2.237,
+    "t": -2.49,
+    "first_half_cents": -8.879,
+    "second_half_cents": -1.156,
+    "avg_price": 0.9641
+   },
+   "game": {
+    "markets": 5853,
+    "events": 5062,
+    "cents": -16.806,
+    "t": -32.73,
+    "first_half_cents": -14.837,
+    "second_half_cents": -17.756,
+    "avg_price": 0.9471
+   },
+   "mention": {
+    "markets": 351,
+    "events": 129,
+    "cents": -4.049,
+    "t": -1.25,
+    "first_half_cents": -1.109,
+    "second_half_cents": -11.859,
+    "avg_price": 0.9671
+   },
+   "other": {
+    "markets": 6120,
+    "events": 3149,
+    "cents": -8.256,
+    "t": -17.95,
+    "first_half_cents": -6.089,
+    "second_half_cents": -8.825,
+    "avg_price": 0.9623
+   },
+   "part of game": {
+    "markets": 9597,
+    "events": 5949,
+    "cents": -12.687,
+    "t": -27.41,
+    "first_half_cents": -29.437,
+    "second_half_cents": -12.083,
+    "avg_price": 0.9579
+   },
+   "player prop": {
+    "markets": 5091,
+    "events": 2784,
+    "cents": -7.992,
+    "t": -15.07,
+    "first_half_cents": -9.07,
+    "second_half_cents": -6.772,
+    "avg_price": 0.9598
+   },
+   "racing": {
+    "markets": 1451,
+    "events": 290,
+    "cents": -2.945,
+    "t": -3.78,
+    "first_half_cents": 0.182,
+    "second_half_cents": -3.422,
+    "avg_price": 0.9666
+   },
+   "spread": {
+    "markets": 8338,
+    "events": 4648,
+    "cents": -3.27,
+    "t": -10.36,
+    "first_half_cents": -2.293,
+    "second_half_cents": -3.504,
+    "avg_price": 0.9571
+   },
+   "total": {
+    "markets": 4307,
+    "events": 2970,
+    "cents": -10.792,
+    "t": -15.25,
+    "first_half_cents": -20.246,
+    "second_half_cents": -10.292,
+    "avg_price": 0.9508
+   }
+  }
+ },
+ "T_YES_take_yes_at_90_98c": {
+  "markets": 10540,
+  "events": 8538,
+  "cents": -20.349,
+  "t": -37.25,
+  "first_half_cents": -18.873,
+  "second_half_cents": -20.687,
+  "avg_price": 0.9457,
+  "profit_per_dollar": -0.21518
+ },
+ "M_NO_rest_no_at_90_98c": {
+  "before_haircut": {
+   "markets": 25375,
+   "events": 10372,
+   "cents": 0.483,
+   "t": 2.33,
+   "first_half_cents": 1.406,
+   "second_half_cents": 0.209,
+   "avg_price": 0.9393,
+   "profit_per_dollar": 0.00514
+  },
+  "after_2c_haircut": {
+   "markets": 25375,
+   "events": 10372,
+   "cents": -1.517,
+   "t": -7.32,
+   "first_half_cents": -0.594,
+   "second_half_cents": -1.791,
+   "avg_price": 0.9393
+  },
+  "by_family_before_haircut": {
+   "combat": {
+    "markets": 965,
+    "events": 376,
+    "cents": 2.507,
+    "t": 3.09,
+    "first_half_cents": 3.076,
+    "second_half_cents": 2.413,
+    "avg_price": 0.9355
+   },
+   "finance": {
+    "markets": 611,
+    "events": 347,
+    "cents": 0.951,
+    "t": 0.91,
+    "first_half_cents": -1.592,
+    "second_half_cents": 1.28,
+    "avg_price": 0.9471
+   },
+   "game": {
+    "markets": 3827,
+    "events": 1963,
+    "cents": 1.925,
+    "t": 3.92,
+    "first_half_cents": 1.83,
+    "second_half_cents": 1.985,
+    "avg_price": 0.9318
+   },
+   "other": {
+    "markets": 2479,
+    "events": 997,
+    "cents": 1.091,
+    "t": 1.85,
+    "first_half_cents": 1.145,
+    "second_half_cents": 1.07,
+    "avg_price": 0.9418
+   },
+   "part of game": {
+    "markets": 5697,
+    "events": 2003,
+    "cents": -0.783,
+    "t": -1.58,
+    "first_half_cents": -5.993,
+    "second_half_cents": -0.726,
+    "avg_price": 0.9425
+   },
+   "player prop": {
+    "markets": 4630,
+    "events": 1367,
+    "cents": 1.849,
+    "t": 4.09,
+    "first_half_cents": 0.967,
+    "second_half_cents": 2.92,
+    "avg_price": 0.9384
+   },
+   "racing": {
+    "markets": 1562,
+    "events": 226,
+    "cents": 1.602,
+    "t": 2.23,
+    "first_half_cents": 1.806,
+    "second_half_cents": 1.566,
+    "avg_price": 0.9479
+   },
+   "spread": {
+    "markets": 3594,
+    "events": 1932,
+    "cents": -0.992,
+    "t": -1.8,
+    "first_half_cents": 2.592,
+    "second_half_cents": -1.479,
+    "avg_price": 0.9399
+   },
+   "total": {
+    "markets": 1816,
+    "events": 1102,
+    "cents": -2.567,
+    "t": -2.61,
+    "first_half_cents": 4.937,
+    "second_half_cents": -2.667,
+    "avg_price": 0.9343
+   }
+  }
+ },
+ "M_YES_rest_yes_at_90_98c": {
+  "before_haircut": {
+   "markets": 3221,
+   "events": 2206,
+   "cents": 0.185,
+   "t": 0.35,
+   "first_half_cents": 0.354,
+   "second_half_cents": 0.132,
+   "avg_price": 0.9363
+  },
+  "after_2c_haircut": {
+   "markets": 3221,
+   "events": 2206,
+   "cents": -1.815,
+   "t": -3.43,
+   "first_half_cents": -1.646,
+   "second_half_cents": -1.868,
+   "avg_price": 0.9363
+  }
+ },
+ "treasury_per_dollar_over_5_5_hours": 2.51e-05,
+ "pass_T_NO": false,
+ "pass_M_NO": false,
+ "variants": 4,
+ "bar": {
+  "t": 2.5,
+  "markets": 1000,
+  "events": 300
+ }
+}

@@ -5,7 +5,8 @@ name: Mention markets paper test
 # outputs/paper_mentions/. No account, no keys, no Odds API credits.
 # The racing paper test (2026-11-26) runs in the same job, same rule, and
 # writes outputs/paper_racing/. The ladder-outlier paper test (2026-11-26,
-# NBA props) runs here too and writes outputs/paper_ladder/.
+# NBA props) runs here too and writes outputs/paper_ladder/. The read-only
+# consistency scan (2026-11-26, 7 days) writes outputs/consistency/.
 on:
   # GitHub starts this repository's schedules late; the sportsbook job runs
   # every ~12 minutes, so this follows it and skips unless 50 minutes passed.
@@ -24,7 +25,7 @@ jobs:
   paper:
     if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_run'
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 35
     permissions:
       contents: write
     steps:
@@ -40,8 +41,9 @@ jobs:
           echo "state=$(python -m live.paper_mentions --due)" >> "$GITHUB_OUTPUT"
           echo "racing=$(python -m live.paper_racing --due)" >> "$GITHUB_OUTPUT"
           echo "ladder=$(python -m live.paper_ladder --due)" >> "$GITHUB_OUTPUT"
+          echo "scan=$(python -m research.consistency_scan --due)" >> "$GITHUB_OUTPUT"
       - name: Install
-        if: steps.due.outputs.state == 'due' || steps.due.outputs.racing == 'due' || steps.due.outputs.ladder == 'due'
+        if: steps.due.outputs.state == 'due' || steps.due.outputs.racing == 'due' || steps.due.outputs.ladder == 'due' || steps.due.outputs.scan == 'due'
         run: pip install -r requirements.txt
       - name: Paper run (mentions)
         if: steps.due.outputs.state == 'due'
@@ -54,12 +56,17 @@ jobs:
         if: steps.due.outputs.ladder == 'due'
         continue-on-error: true
         run: python -m live.paper_ladder
+      - name: Consistency scan (read-only)
+        if: steps.due.outputs.scan == 'due'
+        continue-on-error: true
+        timeout-minutes: 12
+        run: python -m research.consistency_scan
       - name: Commit the ledgers
-        if: steps.due.outputs.state == 'due' || steps.due.outputs.racing == 'due' || steps.due.outputs.ladder == 'due'
+        if: steps.due.outputs.state == 'due' || steps.due.outputs.racing == 'due' || steps.due.outputs.ladder == 'due' || steps.due.outputs.scan == 'due'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -A outputs/paper_mentions outputs/paper_racing outputs/paper_ladder
+          git add -A outputs/paper_mentions outputs/paper_racing outputs/paper_ladder outputs/consistency
           if git diff --cached --quiet; then exit 0; fi
           git commit -m "Paper tests $(date -u +%Y-%m-%dT%H:%MZ)"
           for attempt in 1 2 3 4 5; do
