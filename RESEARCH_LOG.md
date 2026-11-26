@@ -5758,3 +5758,83 @@ are fewer than in mentions (one race has several markets that move
 together), so 20 events is the floor. NASCAR's season ended in November and
 F1's ends in early December, so this test will mostly wait until February
 2027.
+
+## 2026-11-26: Do sportsbooks under-react when a regular is ruled out on game day? (plan, written before any result)
+
+**Owner request.** First step toward a better prop model: find where the
+sportsbook price is predictably wrong. The candidate: when a regular is
+ruled out during the day, his teammates gain minutes and shots. Do the
+books move the teammates' lines far enough?
+
+**Data.** This season only (2026-27, never used to choose a rule): sportsbook
+snapshots (`outputs/books/nba_<day>.csv.gz` and every committed version of
+`nba_latest.csv`; de-vigged consensus, no per-book prices) and box scores
+(`data/player_games.parquet`, games 21 October to 20 November). Snapshots
+are irregular before 23 November, so news is timed only as "between the
+game's first and last snapshot of the day".
+
+**Definitions.**
+- *Regular:* played at least 5 of his team's previous 10 games, averaging
+  24+ minutes in them.
+- *Out:* a regular with no minutes in the game.
+- *Ruled out on game day:* his own props are in the game's first snapshot
+  taken 3 to 30 hours before tip-off and in none of the snapshots in the
+  last 2 hours before tip-off (the books pulled them during the day).
+- *Close:* the last snapshot before tip-off. *Open:* the first snapshot
+  3 to 30 hours before tip-off.
+- *Main line:* per player, stat and game, the line whose over price is
+  closest to 50%, priced by 2+ books. Stats: points, rebounds, assists,
+  threes. Whole-number lines landing exactly are ties and dropped; a
+  teammate who did not play is dropped.
+
+**Primary measure.** For teammates (same team, same game) of a player ruled
+out on game day: mean of (over won - closing over chance), in points of
+probability, game-clustered (`kalshi.stats.clustered_mean_t`). Positive
+means overs won more than the books said, i.e. the books under-reacted.
+**Control:** the same measure on all main lines of teams with no regular
+out in that game.
+
+**Bar for "worth building a model on".** Primary at least +4 points with
+clustered t at least 2.5, from at least 30 such team-games, while the
+control is within 2 points of zero. Variants: the primary on all four stats
+pooled, plus each stat alone (reported, no bar): 5. Also reported: how far
+teammates' lines moved from open to close (points lines), and the same
+measure for players ruled out before the day began (props never posted),
+where the books had all day to adjust.
+
+**What a pass would mean.** Only that this situation is worth modelling;
+the next step would be a forward test on new games. A fail means the books
+handle same-day absences well enough at the close, and the edge, if any,
+is in being faster than the close, which needs the dense snapshots from 23
+November onward.
+
+### Result (this season, games 21 October to 20 November; 5 variants)
+
+`python -m research.teammate_out` -> `outputs/teammate_out/summary.json`.
+Sportsbook consensus at the close vs box scores; "miss" = over won minus the
+closing over chance, game-clustered.
+
+- **Fails the bar.** Teammates of a regular ruled out on game day: miss
+  **+0.2 points** (t 0.1; 869 lines, 33 team-games). By stat: points +1.9,
+  rebounds -3.7, assists +0.5, threes +2.5, all t under 1.1.
+- **The books do react.** Those teammates' points lines rose 0.76 points on
+  average between the first snapshot of the day and the close (161 lines),
+  against -0.07 for teams with nobody out (1,137 lines). By tip-off the move
+  was about right.
+- Ruled out before the day began (props never posted): miss +3.0 points,
+  t 1.0, 598 lines, 24 team-games. Not tested; too small to read.
+- Control (teams with no regular out): miss **-1.8 points** (t -2.4; 5,438
+  lines, 133 games). Overs won 47.4% against 49.2% priced. Within the
+  plan's 2-point allowance, so the test stands, but it is a hint
+  (exploratory, one month) that the de-vigged consensus leans slightly
+  toward overs, which fits books shading the side fans like. 1.8 points is
+  well under what a sportsbook's margin or a pick'em break-even needs.
+- Limits: only 148 of 235 games had a snapshot in the last 2 hours, and the
+  first snapshot is often many hours before tip-off, so "same day" mixes
+  morning news with evening news.
+
+Reading. At the close the books price same-day absences well; there is no
+under-reaction to model from closing prices. Any edge from this news is in
+being faster than the close, which only the dense snapshots (every ~20
+minutes since 23 November) can measure. That is the next test, written
+down separately before it is run.
