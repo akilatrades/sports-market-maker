@@ -5838,3 +5838,81 @@ under-reaction to model from closing prices. Any edge from this news is in
 being faster than the close, which only the dense snapshots (every ~20
 minutes since 23 November) can measure. That is the next test, written
 down separately before it is run.
+
+## 2026-11-26: Tourist map, a walk-forward backtest across Kalshi (plan, written before any result)
+
+**Owner request.** Stop guessing market groups. The one finding that has held
+up is that casual buyers overpay; look for where they trade and
+professionals do not, across every series, and backtest it.
+
+**Data.** The cross-market scan (`outputs/scan/`, 2025-26, SIMULATED,
+in-sample for the families but not for this selection rule): hourly resting
+orders 4-7 hours before expected expiration, one cent inside, filled when
+contracts trade through in the next hour; profit after the maker fee. NO
+side only (YES resting lost in every family, 2026-11-24). Individual trade
+sizes were not saved, so "who is trading" uses three proxies, each with its
+direction fixed now:
+
+- *Spread:* median YES ask minus bid (wider = no professional maker).
+- *Volume:* median contracts traded in the hour (lower = fewer big players).
+- *Age:* days since the series' first order in the scan (younger = newer).
+  Series already in the scan's first two weeks count as old.
+
+**Rule (strategy A, primary).** Each month M from November 2025, using only
+orders before M: series with at least 30 orders get a score = mean of their
+three percentile ranks (wide, quiet, young = high). Trade every NO order in
+month M in the top 20% of series by score, with a fill needing **5
+contracts** traded through (queue; 2026-11-24 study).
+
+**Comparisons, same months, same fill rule.** (B) top 20% by past profit per
+fill (momentum on results, for contrast); (C) every series (baseline);
+(R) 2,000 random picks of the same number of series each month.
+
+**Measures.** Profit per contract after the fee, then after the 2-cent
+live haircut; event-clustered t; months positive; a resampling of whole
+events for a 90% range; share of R that A beats. Reported also: A without
+mention series (already under their own paper test), and the age effect
+alone (profit per fill by series age: under 30 days, 30-90, over 90, old).
+
+**Sensitivity (reported, not the bar).** Top 10% / 20% / 33% x queue 1 / 5 /
+10 for A and B: 18 cells, plus C at 3 queues and the age table. **Variants
+counted: 25.**
+
+**Bar for a CANDIDATE (then a forward paper test, never straight to
+money).** Strategy A at (20%, queue 5), November 2025 to August 2026: mean
+after the 2-cent haircut above 0 with clustered t at least 2.5; 1,000+
+fills in 100+ events; positive (before haircut) in at least 7 of 10 months;
+better than 95% of random picks; and A without mentions still above 0
+after the haircut. Anything else is a fail, reported as such.
+
+### Result (SIMULATED, walk-forward November 2025 to August 2026; 25 variants)
+
+`python -m research.tourist_map` -> `outputs/tourist_map/`. Cents per
+contract after the maker fee; fills need 5 contracts traded through.
+
+- **Fails the bar.** Strategy A (top 20% by the tourist score, chosen each
+  month from earlier months only): **+0.65c** before the haircut (t 1.8;
+  29,877 fills, 11,396 events, 278 series; 7 of 10 months positive; 90%
+  range +0.08c to +1.24c), **-1.35c after the 2c haircut** (t -3.7). It
+  beat 88% of random same-size picks (bar 95%); random picks' median was
+  +0.31c. Without mentions: -1.44c after the haircut.
+- **Every series (C):** +0.43c at a 5-contract queue (237,322 fills, t 3.2),
+  +0.56c first in line, +0.30c at 10. Checked by recomputing directly from
+  the scan rows.
+- **Past-profit picks (B):** +0.5c to +2.2c across the 9 cells, best at the
+  top 10% first in line (+2.2c, t 3.2) and falling with the queue. None
+  clears 2c at queue 5 or more.
+- **Series age:** under 30 days in the scan +0.68c (t 3.0, 90,491 fills);
+  30-90 days +0.24c; over 90 days +0.19c; old series +0.66c. A small "new
+  series" effect, well under the haircut. "Age" is first appearance in the
+  scan, so a sport's new season also looks young.
+- The score's picks were mostly first-half, game, total and prop markets
+  (part of game 11,372 fills, game 8,460), not the "fun question" families.
+
+Reading. Across Kalshi, a resting NO one cent inside earns about 0.3 to 1
+cent per contract on paper, and none of 25 ways of choosing series lifts
+that to the 2 cents that live fills lost on NBA props. The open question is
+the haircut itself: it was measured on NBA props, where informed traders
+are active, and may be smaller in thin markets. Only live fills can say;
+the spread bot's esports fills (69 since 19 November, +1.6c, t 0.3) are far
+too few yet.

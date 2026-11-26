@@ -1,0 +1,171 @@
+{
+ "note": "SIMULATED (cross-market scan, 2025-26), resting NO, walk-forward by month (Nov 2025-Aug 2026); fills need `queue` contracts traded through. Cents per contract after the maker fee. Not a forecast.",
+ "variants": 25,
+ "bar": {
+  "t": 2.5,
+  "fills": 1000,
+  "events": 100,
+  "months_positive": 7,
+  "random_share": 0.95
+ },
+ "primary": {
+  "before_haircut": {
+   "fills": 29877,
+   "events": 11396,
+   "series": 278,
+   "cents": 0.65,
+   "t": 1.79,
+   "months_positive": 7,
+   "months": 10
+  },
+  "after_2c_haircut": {
+   "fills": 29877,
+   "events": 11396,
+   "series": 278,
+   "cents": -1.35,
+   "t": -3.69,
+   "months_positive": 7,
+   "months": 10
+  },
+  "range_90_cents_before_haircut": [
+   0.08,
+   1.24
+  ],
+  "beats_random_share": 0.881,
+  "random_median_cents": 0.31,
+  "without_mentions_after_haircut": {
+   "fills": 29322,
+   "events": 11337,
+   "series": 276,
+   "cents": -1.44,
+   "t": -3.94,
+   "months_positive": 7,
+   "months": 10
+  },
+  "series_chosen_per_month": {
+   "2025-11": 12,
+   "2025-12": 23,
+   "2026-01": 31,
+   "2026-02": 44,
+   "2026-03": 62,
+   "2026-04": 77,
+   "2026-05": 96,
+   "2026-06": 111,
+   "2026-07": 127,
+   "2026-08": 169
+  },
+  "fills_by_family": {
+   "part of game": 11372,
+   "game": 8460,
+   "total": 2933,
+   "player prop": 2718,
+   "other": 1609,
+   "spread": 1454,
+   "mention": 555,
+   "finance": 536,
+   "racing": 205,
+   "combat": 35
+  },
+  "top_series": {
+   "KXNBA1HWINNER": {
+    "size": 1530,
+    "mean": -0.95
+   },
+   "KXITFWMATCH": {
+    "size": 1056,
+    "mean": -3.1
+   },
+   "KXITFMATCH": {
+    "size": 910,
+    "mean": 3.68
+   },
+   "KXWNBA1HWINNER": {
+    "size": 809,
+    "mean": -0.29
+   },
+   "KXNBA1HSPREAD": {
+    "size": 807,
+    "mean": -0.9
+   },
+   "KXNCAAMB1HWINNER": {
+    "size": 797,
+    "mean": 2.03
+   },
+   "KXNBA1HTOTAL": {
+    "size": 710,
+    "mean": -0.98
+   },
+   "KXNBAPTS": {
+    "size": 607,
+    "mean": 6.16
+   },
+   "KXWNBA1HSPREAD": {
+    "size": 587,
+    "mean": -1.12
+   },
+   "KXNCAABBGAME": {
+    "size": 576,
+    "mean": 0.2
+   },
+   "KXNBATEAMTOTAL": {
+    "size": 573,
+    "mean": -6.55
+   },
+   "KXWT20MATCH": {
+    "size": 547,
+    "mean": -0.55
+   },
+   "KXVALORANTMAP": {
+    "size": 523,
+    "mean": -3.55
+   },
+   "KXCLUBFTOTAL": {
+    "size": 519,
+    "mean": 2.02
+   },
+   "KXNCAAMB1HTOTAL": {
+    "size": 430,
+    "mean": 0.75
+   }
+  }
+ },
+ "age_effect_queue_5": {
+  "30-90 days": {
+   "fills": 59718,
+   "events": 18934,
+   "series": 521,
+   "cents": 0.24,
+   "t": 0.93,
+   "months_positive": 5,
+   "months": 10
+  },
+  "old": {
+   "fills": 19275,
+   "events": 5379,
+   "series": 39,
+   "cents": 0.66,
+   "t": 1.75,
+   "months_positive": 7,
+   "months": 10
+  },
+  "over 90 days": {
+   "fills": 67838,
+   "events": 22106,
+   "series": 388,
+   "cents": 0.19,
+   "t": 0.78,
+   "months_positive": 7,
+   "months": 9
+  },
+  "under 30 days": {
+   "fills": 90491,
+   "events": 23054,
+   "series": 1383,
+   "cents": 0.68,
+   "t": 2.96,
+   "months_positive": 8,
+   "months": 10
+  }
+ },
+ "pass": false
+}
