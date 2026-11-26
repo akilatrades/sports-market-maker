@@ -4,104 +4,104 @@
  "picks_made": 1439,
  "picks_made_at_the_bar": 69,
  "results": {
-  "pending": 741,
-  "loss": 351,
-  "win": 328,
-  "tie": 15,
+  "loss": 693,
+  "win": 685,
+  "tie": 29,
+  "pending": 28,
   "void": 4
  },
  "primary": {
-  "picks": 29,
+  "picks": 61,
   "bar": 0.54,
   "break_even": 0.5421,
-  "win_rate": 0.4138,
-  "over_break_even": -0.1283,
-  "t": -1.0,
-  "status": "waiting for the first look (29 of 200)"
+  "win_rate": 0.4426,
+  "over_break_even": -0.0995,
+  "t": -1.14,
+  "status": "waiting for the first look (61 of 200)"
  },
  "primary_3_or_more_books": {
-  "picks": 24,
+  "picks": 47,
   "bar": 0.54,
   "break_even": 0.5421,
-  "win_rate": 0.4167,
-  "over_break_even": -0.1254,
-  "t": -0.92,
-  "status": "waiting for the first look (24 of 200)"
+  "win_rate": 0.4468,
+  "over_break_even": -0.0953,
+  "t": -1.01,
+  "status": "waiting for the first look (47 of 200)"
  },
  "calibration_all_picks": {
-  "picks": 679,
-  "games": 13,
-  "win_rate": 0.4831,
-  "stated_chance": 0.5166,
-  "won_less_stated": -0.0336,
-  "t": -1.35
+  "picks": 1378,
+  "games": 27,
+  "win_rate": 0.4971,
+  "stated_chance": 0.5159,
+  "won_less_stated": -0.0188,
+  "t": -1.33
  },
  "by_stated_chance": {
   "under 52%": {
-   "picks": 441,
-   "games": 13,
-   "win_rate": 0.4649,
+   "picks": 948,
+   "games": 27,
+   "win_rate": 0.4842,
    "stated_chance": 0.5091,
-   "won_less_stated": -0.0442,
-   "t": -1.37
+   "won_less_stated": -0.0249,
+   "t": -1.4
   },
   "52 to 53%": {
-   "picks": 144,
-   "games": 13,
-   "win_rate": 0.5069,
-   "stated_chance": 0.5247,
-   "won_less_stated": -0.0177,
-   "t": -0.33
+   "picks": 268,
+   "games": 26,
+   "win_rate": 0.5112,
+   "stated_chance": 0.5244,
+   "won_less_stated": -0.0132,
+   "t": -0.4
   },
   "53 to 54%": {
-   "picks": 65,
-   "games": 13,
-   "win_rate": 0.5846,
-   "stated_chance": 0.5338,
-   "won_less_stated": 0.0508,
-   "t": 0.71
+   "picks": 101,
+   "games": 24,
+   "win_rate": 0.6139,
+   "stated_chance": 0.5334,
+   "won_less_stated": 0.0804,
+   "t": 1.43
   },
   "54 to 55%": {
-   "picks": 16,
-   "games": 10,
-   "win_rate": 0.3125,
-   "stated_chance": 0.5433,
-   "won_less_stated": -0.2308,
-   "t": -2.04
+   "picks": 29,
+   "games": 17,
+   "win_rate": 0.2759,
+   "stated_chance": 0.544,
+   "won_less_stated": -0.2682,
+   "t": -3.15
   },
   "55% or more": {
-   "picks": 13,
-   "games": 8,
-   "win_rate": 0.5385,
-   "stated_chance": 0.5638,
-   "won_less_stated": -0.0253,
-   "t": -0.12
+   "picks": 32,
+   "games": 18,
+   "win_rate": 0.5938,
+   "stated_chance": 0.5641,
+   "won_less_stated": 0.0297,
+   "t": 0.24
   }
  },
  "by_app": {
   "PrizePicks": {
-   "picks": 431,
-   "games": 13,
-   "win_rate": 0.4896,
-   "stated_chance": 0.5176,
-   "won_less_stated": -0.028,
-   "t": -1.32
+   "picks": 887,
+   "games": 27,
+   "win_rate": 0.5073,
+   "stated_chance": 0.5167,
+   "won_less_stated": -0.0093,
+   "t": -0.73
   },
   "Underdog": {
-   "picks": 248,
-   "games": 12,
-   "win_rate": 0.4718,
-   "stated_chance": 0.515,
-   "won_less_stated": -0.0432,
-   "t": -1.13
+   "picks": 491,
+   "games": 25,
+   "win_rate": 0.4786,
+   "stated_chance": 0.5144,
+   "won_less_stated": -0.0358,
+   "t": -1.62
   }
  },
  "before_the_plan_not_tested": {
-  "picks": 467,
+  "picks": 466,
   "games": 12,
-  "win_rate": 0.5118,
+  "win_rate": 0.5129,
   "stated_chance": 0.5141,
-  "won_less_stated": -0.0023,
-  "t": -0.12
+  "won_less_stated": -0.0012,
+  "t": -0.06
  }
 }
