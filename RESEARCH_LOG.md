@@ -6034,3 +6034,35 @@ beats its own control by 4 cents. It is not proven: t 1.9 after the
 haircut, a weaker second half, and assists going the other way. The plan
 sends a pass to a forward paper test; a near miss earns the same cheap
 test only by a new entry written before it starts.
+## 2026-11-26: Ladder outliers, a forward paper test (plan, written before any order)
+
+**Why.** Study B (above) was a near miss: strikes priced 3+ cents above the
+curve through their ladder earned +4.9c per contract as resting NO, +2.9c
+after the 2c haircut, t 1.9 against a bar of 2.5. The only fair next step is
+new data with the rule frozen. PAPER only: nothing reaches Kalshi.
+
+**Rule, unchanged from the backtest.** `live/paper_ladder.py`, run hourly
+beside the mention test. For every open NBA points, rebounds, assists and
+threes market: a ladder is one player, stat and game; it needs 4+ strikes
+with a two-sided quote. Fit logit(mid) = a - b x strike by least squares. A
+strike with residual at least +3 cents gets one paper NO bid of 1 contract,
+one cent inside the spread (at the bid when the spread is 1 cent), resting
+one hour, only while the order would rest wholly before tip-off (tip-off =
+the market's occurrence time minus 3 hours, as in the backtest's fallback).
+One order per market, ever. All four stats stay in, including assists.
+**Control:** strikes with residual between -1 and +1 cents get the same
+paper order (reported beside, not part of the bar).
+
+**Fills and settlement.** Contracts YES buyers traded through the bid in the
+hour, from Kalshi's public trades (`kalshi.maker.fills`). Primary fill = 5+
+contracts (the queue used in the backtest); first-in-line (1+) reported too.
+Settled at Kalshi's result; profit = won - price - maker fee (25% of the
+taker fee), per contract.
+
+**Bar.** At 300 settled primary fills in at least 60 games: continue (to a
+small live test, only if the owner chooses) if the mean after the 2c
+haircut is above 0 with game-clustered t at least 2; stop if the mean
+before the haircut is 0 or below; otherwise inconclusive, and collect to
+600. Early stop: below -5 cents before the haircut after 150 fills. The
+backtest made about 150 primary fills a month, so the first verdict is
+roughly two months away (late January 2027).

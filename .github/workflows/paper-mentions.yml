@@ -4,7 +4,8 @@ name: Mention markets paper test
 # trades, records hypothetical resting NO orders and their results in
 # outputs/paper_mentions/. No account, no keys, no Odds API credits.
 # The racing paper test (2026-11-26) runs in the same job, same rule, and
-# writes outputs/paper_racing/.
+# writes outputs/paper_racing/. The ladder-outlier paper test (2026-11-26,
+# NBA props) runs here too and writes outputs/paper_ladder/.
 on:
   # GitHub starts this repository's schedules late; the sportsbook job runs
   # every ~12 minutes, so this follows it and skips unless 50 minutes passed.
@@ -38,8 +39,9 @@ jobs:
         run: |
           echo "state=$(python -m live.paper_mentions --due)" >> "$GITHUB_OUTPUT"
           echo "racing=$(python -m live.paper_racing --due)" >> "$GITHUB_OUTPUT"
+          echo "ladder=$(python -m live.paper_ladder --due)" >> "$GITHUB_OUTPUT"
       - name: Install
-        if: steps.due.outputs.state == 'due' || steps.due.outputs.racing == 'due'
+        if: steps.due.outputs.state == 'due' || steps.due.outputs.racing == 'due' || steps.due.outputs.ladder == 'due'
         run: pip install -r requirements.txt
       - name: Paper run (mentions)
         if: steps.due.outputs.state == 'due'
@@ -48,12 +50,16 @@ jobs:
         if: steps.due.outputs.racing == 'due'
         continue-on-error: true
         run: python -m live.paper_racing
+      - name: Paper run (ladder outliers)
+        if: steps.due.outputs.ladder == 'due'
+        continue-on-error: true
+        run: python -m live.paper_ladder
       - name: Commit the ledgers
-        if: steps.due.outputs.state == 'due' || steps.due.outputs.racing == 'due'
+        if: steps.due.outputs.state == 'due' || steps.due.outputs.racing == 'due' || steps.due.outputs.ladder == 'due'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -A outputs/paper_mentions outputs/paper_racing
+          git add -A outputs/paper_mentions outputs/paper_racing outputs/paper_ladder
           if git diff --cached --quiet; then exit 0; fi
           git commit -m "Paper tests $(date -u +%Y-%m-%dT%H:%MZ)"
           for attempt in 1 2 3 4 5; do
