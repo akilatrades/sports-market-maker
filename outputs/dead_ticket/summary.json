@@ -1,41 +1,41 @@
 {
   "what": "watch-only sightings, public quotes; not fills, not live P&L",
-  "observation_files": 40,
-  "sightings": 3011,
-  "unsettled_markets": 5,
+  "observation_files": 56,
+  "sightings": 3775,
+  "unsettled_markets": 13,
   "rules": {
     "dead_strict": {
-      "markets": 2,
-      "games": 2,
-      "nights": 2,
+      "markets": 4,
+      "games": 3,
+      "nights": 3,
       "lost": 0,
       "cents_per_contract_after_fee": 1.8,
       "game_clustered_t": null,
-      "share_still_there_next_poll": 0.0,
-      "median_seconds_quote_stayed": 0.0,
+      "share_still_there_next_poll": 0.5,
+      "median_seconds_quote_stayed": 269.0,
       "median_contracts_at_price": 95.5
     },
     "dead_loose_only": {
-      "markets": 403,
-      "games": 24,
-      "nights": 5,
-      "lost": 8,
-      "cents_per_contract_after_fee": 0.727,
-      "game_clustered_t": 0.56,
+      "markets": 497,
+      "games": 32,
+      "nights": 6,
+      "lost": 9,
+      "cents_per_contract_after_fee": 0.847,
+      "game_clustered_t": 0.8,
       "share_still_there_next_poll": 0.73,
-      "median_seconds_quote_stayed": 127.0,
-      "median_contracts_at_price": 52.0
+      "median_seconds_quote_stayed": 129.0,
+      "median_contracts_at_price": 60.0
     },
     "reached": {
-      "markets": 7,
-      "games": 7,
-      "nights": 3,
+      "markets": 10,
+      "games": 9,
+      "nights": 4,
       "lost": 1,
-      "cents_per_contract_after_fee": -12.871,
-      "game_clustered_t": -0.91,
-      "share_still_there_next_poll": 0.286,
+      "cents_per_contract_after_fee": -8.47,
+      "game_clustered_t": -0.83,
+      "share_still_there_next_poll": 0.3,
       "median_seconds_quote_stayed": 0.0,
-      "median_contracts_at_price": 98.0
+      "median_contracts_at_price": 118.0
     }
   }
 }
