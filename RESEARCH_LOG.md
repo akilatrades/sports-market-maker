@@ -5724,3 +5724,37 @@ two-sided markets. Mentions are the only family large enough to survive the
 2c live haircut on paper, and its spring weakness is a reason for the paper
 test, not against it. Racing NO is a candidate for a second paper test. No
 change to any live bot.
+
+## 2026-11-26: Mention paper test, series lookup (addendum, before any paper order)
+
+After two days and 40 runs the mention paper test had posted no order: only
+9 of the 105 series from last season had open markets, none of them sports,
+during a week with NBA and NFL games. Kalshi seems to name some series
+differently this season. Change, made while the ledger is still empty: every
+run also lists the series of all open Kalshi events (public data) and adds
+any whose name contains MENTION. The rule, window, fills and bar are
+unchanged. The scorecard lists every added series, so the result can still
+be split into "series in the plan" and "series added".
+
+## 2026-11-26: Racing markets, a forward paper test (plan, written before any order)
+
+Question. Does resting NO on racing markets keep its edge on new data? The
+queue study (2026-11-24, exploratory, SIMULATED) found +2.2c per contract at
+a 5-contract queue, mostly from NASCAR, and only +0.9c in the first half of
+last season. That study's "racing" group also held 94 fills from three
+football series with "F1" in their names; this test uses only series that
+start with F1, INDYCAR, MOTOGP or NASCAR.
+
+Method. `live/paper_racing.py`: the mention test's engine and rule unchanged
+(NO one cent inside the spread, 4-7 hours before expected expiration, resting
+one hour, first-in-line fills from public trades, settled at Kalshi's
+result), on the 31 racing series in the scan plus any new open series with
+those prefixes. PAPER only. Ledger in `outputs/paper_racing/`.
+
+Bar. At 400 settled contracts in at least 20 events: continue if the
+event-clustered mean is above 0 with t at least 2; stop if it is 0 or below;
+otherwise inconclusive. Early stop if below -5c after 200 contracts. Events
+are fewer than in mentions (one race has several markets that move
+together), so 20 events is the floor. NASCAR's season ended in November and
+F1's ends in early December, so this test will mostly wait until February
+2027.
