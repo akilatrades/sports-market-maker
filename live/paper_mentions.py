@@ -12,11 +12,13 @@ result. Ledger: outputs/paper_mentions/orders.csv; scorecard beside it.
 """
 
 import json
+import re
 import sys
 import time
 from datetime import UTC, datetime
 from pathlib import Path
 
+PARSE_TIME = datetime.fromisoformat  # kept apart from the clock (tests replace it)
 OUT = Path("outputs/paper_mentions")
 LEDGER = OUT / "orders.csv"
 LAST_RUN = OUT / "last_run.txt"
@@ -147,12 +149,10 @@ def due(now, path=LAST_RUN, minutes=MIN_MINUTES_BETWEEN):
     return (now - last).total_seconds() >= minutes * 60
 
 
-def discover(get_json, match=None, max_pages=60):
-    """Series tickers of all open Kalshi events that ``match`` accepts (a
-    substring, or a function of the ticker). Public market data only."""
-    match = MATCH if match is None else match
-    keep = match if callable(match) else (lambda ticker: match in ticker)
-    found, cursor = set(), ""
+def open_events(get_json, max_pages=100):
+    """(series ticker, event title) of every open Kalshi event, and whether
+    the listing reached its end. Public market data only."""
+    rows, cursor = [], ""
     for _ in range(max_pages):
         params = {"status": "open", "limit": 200}
         if cursor:
@@ -160,12 +160,57 @@ def discover(get_json, match=None, max_pages=60):
         page = get_json("/events", params) or {}
         for event in page.get("events") or []:
             ticker = str(event.get("series_ticker") or "")
-            if ticker and keep(ticker):
-                found.add(ticker)
+            if ticker:
+                rows.append((ticker, str(event.get("title") or "")))
         cursor = page.get("cursor") or ""
         if not cursor:
-            break
-    return found
+            return rows, True
+    return rows, False
+
+
+def discover(get_json, match=None, max_pages=60, events=None):
+    """Series tickers of all open Kalshi events that ``match`` accepts (a
+    substring, or a function of the ticker)."""
+    match = MATCH if match is None else match
+    keep = match if callable(match) else (lambda ticker: match in ticker)
+    if events is None:
+        events, _ = open_events(get_json, max_pages)
+    return {ticker for ticker, _ in events if keep(ticker)}
+
+
+SPORT_WORDS = ("NFL", "NBA", "NCAA", "CFB", "CBB", "NHL", "MLB", "SNF", "TNF", "MNF")
+TALK = re.compile(r"\b(say|said|mention|announcer|broadcast|word)", re.IGNORECASE)
+
+
+def sports_talk(events):
+    """Open sports series whose event titles are about what gets said: the
+    markets last season's mention edge came from, under any name."""
+    return sorted({t for t, title in events
+                   if any(w in t for w in SPORT_WORDS) and TALK.search(title)})  # fmt: skip
+
+
+def why_not(markets, now, window=WINDOW_HOURS):
+    """Why open markets were or were not quoted: hours to expected
+    expiration and two-sided quotes."""
+    hours, two_sided = [], 0
+    for m in markets:
+        try:
+            exp = PARSE_TIME(
+                str(m.get("expected_expiration_time")).replace("Z", "+00:00")
+            )
+            hours.append((exp - now).total_seconds() / 3600)
+        except ValueError:
+            pass
+        try:
+            bid, ask = float(m.get("yes_bid_dollars")), float(m.get("yes_ask_dollars"))
+            two_sided += int(0 < bid < ask < 1)
+        except (TypeError, ValueError):
+            pass
+    hours.sort()
+    return {"two_sided": two_sided,
+            "in_window": sum(window[0] <= h <= window[1] for h in hours),
+            "hours_to_expiry_min": round(hours[0], 1) if hours else None,
+            "hours_to_expiry_median": round(hours[len(hours) // 2], 1) if hours else None}  # fmt: skip
 
 
 def run(
@@ -200,7 +245,8 @@ def run(
         if len(posted):
             ledger = pd.concat([ledger, posted], ignore_index=True)[COLUMNS]
         if markets or len(posted):
-            seen[name] = {"open": len(markets), "posted": int(len(posted))}
+            seen[name] = {"open": len(markets), "posted": int(len(posted)),
+                          **why_not(markets, now)}  # fmt: skip
         sleep(0.05)
     return ledger, seen
 
@@ -257,9 +303,10 @@ def main(argv=None, out=None, fixed=None, match=None, pass_events=PASS_EVENTS):
 
     fixed = SERIES if fixed is None else fixed
     try:
-        found = discover(get_json, match)
+        events, complete = open_events(get_json)
     except OSError:
-        found = set()
+        events, complete = [], False
+    found = discover(get_json, match, events=events)
     series = sorted(set(fixed) | found)
     ledger, seen = run(now, fetch_markets, fetch_trades, fetch_market,
                        series=series, ledger_path=out / "orders.csv")  # fmt: skip
@@ -267,6 +314,8 @@ def main(argv=None, out=None, fixed=None, match=None, pass_events=PASS_EVENTS):
     ledger.to_csv(out / "orders.csv", index=False)
     summary = {"updated_utc": now.isoformat(timespec="minutes"),
                "series_checked": len(series), "series_found_open": len(found),
+               "open_events_listed": len(events), "open_events_complete": complete,
+               "sports_talk_series_open": sports_talk(events),
                "series_added_since_plan": sorted(found - set(fixed)),
                "series_with_markets": seen,
                "kind": "PAPER (no orders sent); fills from public trades, first in line", **verdict(ledger, pass_events)}  # fmt: skip
