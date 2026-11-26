@@ -2,7 +2,7 @@
   "what": "watch-only sightings, public quotes; not fills, not live P&L",
   "observation_files": 56,
   "sightings": 3775,
-  "unsettled_markets": 13,
+  "unsettled_markets": 5,
   "rules": {
     "dead_strict": {
       "markets": 4,
@@ -16,15 +16,15 @@
       "median_contracts_at_price": 95.5
     },
     "dead_loose_only": {
-      "markets": 497,
+      "markets": 505,
       "games": 32,
       "nights": 6,
       "lost": 9,
-      "cents_per_contract_after_fee": 0.847,
-      "game_clustered_t": 0.8,
-      "share_still_there_next_poll": 0.73,
-      "median_seconds_quote_stayed": 129.0,
-      "median_contracts_at_price": 60.0
+      "cents_per_contract_after_fee": 0.892,
+      "game_clustered_t": 0.86,
+      "share_still_there_next_poll": 0.727,
+      "median_seconds_quote_stayed": 128.0,
+      "median_contracts_at_price": 64.07
     },
     "reached": {
       "markets": 10,
