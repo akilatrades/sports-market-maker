@@ -1,0 +1,81 @@
+name: backfill other sports' prop ladders
+# Public Kalshi market data for other sports' player-prop ladders
+# (research/backfill_ladders.py; RESEARCH_LOG.md, 2026-11-26, "Ladders,
+# deeper", part B). Resumable: run it again until every series reports
+# remaining 0. Read-only: no account, no keys, no order endpoint.
+on:
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: backfill-ladders
+  cancel-in-progress: false
+jobs:
+  discover:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    outputs:
+      series: ${{ steps.find.outputs.series }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install pandas numpy pyarrow
+      - id: find
+        run: |
+          s=$(python -m research.backfill_ladders --discover)
+          echo "found: $s"
+          echo "series=$s" >> "$GITHUB_OUTPUT"
+  fetch:
+    needs: discover
+    if: needs.discover.outputs.series != '[]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 330
+    strategy:
+      fail-fast: false
+      max-parallel: 6
+      matrix:
+        series: ${{ fromJSON(needs.discover.outputs.series) }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install pandas numpy pyarrow
+      - run: python -m research.backfill_ladders --series ${{ matrix.series }} --minutes 300 --workers 12
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ladders-${{ matrix.series }}
+          path: data/kalshi_history_ladders/*_${{ matrix.series }}.*
+          if-no-files-found: ignore
+          retention-days: 7
+  commit:
+    needs: fetch
+    if: always()
+    runs-on: ubuntu-latest
+    concurrency:
+      group: repo-writes
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: ladders-*
+          path: data/kalshi_history_ladders
+          merge-multiple: true
+      - name: Commit
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          mkdir -p data/kalshi_history_ladders
+          git add -A data/kalshi_history_ladders
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m "Other sports' prop ladders $(date -u +%Y-%m-%dT%H:%MZ)"
+          for attempt in 1 2 3 4 5; do
+            if git pull --rebase && git push; then exit 0; fi
+            sleep $((attempt * 5))
+          done
+          exit 1

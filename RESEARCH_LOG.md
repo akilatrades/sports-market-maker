@@ -6280,3 +6280,73 @@ results only (989 games):
 - Whether patient resting orders inside those wide in-game spreads would
   fill profitably needs in-game trade prints (`research/backfill_trades.py`
   with the window extended past tip-off). A new entry would come first.
+
+## 2026-11-26: Ladders, deeper (plans, written before any result)
+
+**Owner request:** more exploratory research and backtesting on ladders,
+the project's best lead. Two separate kinds of work.
+
+### Part A: why NBA ladders kink (EXPLORATORY, in-sample 2025-26)
+
+On the Study B data (`data/kalshi_history/`, NBA points/rebounds/assists/
+threes, pre-game candles and trades), with Study B's outlier group (+3c,
+5-contract queue) and control (-1c to +1c). Questions, each reported with
+fills, game-clustered t and the control beside it; **none has a bar**, none
+changes the frozen paper rule, and every cut is counted:
+- E1 round strikes: is the outlier strike a multiple of 5 (and of 10) more
+  often than chance, and is it more profitable there?
+- E2 timing: outlier profit by hours before tip-off (under 3, 3-6, 6+).
+- E3 persistence: does an outlier's residual shrink over the next 1-3
+  hourly candles, and does the bid fall or the ask fall?
+- E4 which side: is the outlier strike's bid or ask the part above the curve?
+- E5 spread: outlier profit by the strike's spread (1-2c, 3-5c, 6c+).
+**Variants: 14 cuts** (E1 2, E2 3, E3 3, E4 2, E5 3, plus the overall
+check). Anything found here is a hypothesis for a new plan, not a result.
+
+### Part B: other sports' prop ladders (out-of-sample, frozen rule)
+
+**Data, new download** (`research/backfill_ladders.py`, GitHub job): every
+Kalshi series filed under Sports whose ticker names a player stat (points,
+rebounds, assists, threes, yards, receptions, touchdowns, hits, strikeouts,
+total bases, home runs, shots, goals, saves), except the four NBA series;
+settled markets from 1 September 2025 whose ticker ends in a plain number;
+hourly candles from 14 hours before to 1 hour after the market's occurrence
+time, and trades from 14 to 3 hours before it. **Pre-game:** candles ending
+4+ hours before the occurrence time (Kalshi sets it near the end of the
+game; no sport here lasts 4 hours).
+
+**Rule, frozen from Study B:** price-shape check per series as in Track 1;
+4+ two-sided strikes; logit fit; resting NO one cent inside on strikes 3+
+cents above the curve, first qualifying hour per market, filled when 5+
+contracts trade through in the next hour; maker fee. Control -1 to +1.
+
+**Bar:** after the 2c haircut above 0 with event-clustered t at least 2.5;
+500+ fills in 100+ games; at least 1 cent above the control. Reported
+beside it, not the bar: the same after a 0.5c haircut (the first live
+reading in thin markets, 26 November). **Variants: 1** (plus the control).
+
+### Part A result (EXPLORATORY, in-sample, SIMULATED; 14 cuts)
+
+`python -m research.ladder_why` -> `outputs/ladder_why/`. Overall: outliers
++4.92c (t 3.25, 1,174 fills), control +0.68c, as in Study B.
+- **E1 round strikes: not the cause.** Outliers sit on multiples of 5 less
+  often than strikes in general (34% against 40%; multiples of 10: 17%
+  against 21%) and earn the same there (+4.8c) as elsewhere (+5.0c).
+- **E2 timing:** under 3 hours to tip-off +5.5c (t 2.5, control +0.1c); 3-6
+  hours +5.6c (t 2.3); 6+ hours +2.3c (t 0.7), where the control is +2.7c.
+  The gap over the control is there only in the last 6 hours.
+- **E3 persistence: kinks fade slowly.** The median residual of an outlier
+  falls from 4.9c to 3.1c after 1 hour, 2.5c after 2 and 1.8c after 3; the
+  strike's own median bid and ask do not move, so the neighbours catch up.
+- **E4 side:** in 81% of outliers the bid itself is above the curve (buyers
+  bidding the strike up, not only a thin offer); both kinds earn about the
+  same (+4.9c, +4.8c).
+- **E5 spread:** 1-2 cent spreads +0.6c (t 0.2, control +2.1c); 3-5 cents
+  **+7.7c (t 3.3, control -0.4c)**; 6+ cents +4.4c (t 1.9).
+
+Reading (hypotheses only). Kinks look like buyers bidding one strike above
+its neighbours in moderately thin books in the last hours before tip-off,
+then the neighbours drifting up to meet it. Tight books show no kink edge.
+Candidate refinements for a future plan, not for the running paper test:
+spread of 3+ cents, and within 6 hours of tip-off. They need fresh data
+(part B, or the paper test's own ledger) before they count.
