@@ -6066,3 +6066,27 @@ before the haircut is 0 or below; otherwise inconclusive, and collect to
 600. Early stop: below -5 cents before the haircut after 150 fills. The
 backtest made about 150 primary fills a month, so the first verdict is
 roughly two months away (late January 2027).
+
+## 2026-11-26: NBA bot, one re-entry after a missing-price cancel (owner decision)
+
+**Why.** On 23 November injury news for every team on the early slate
+arrived at about 21:25 UTC, after the 21:05 sportsbook prices, so the bot's
+safety rule blanked those prices and cancelled 22 resting orders for
+`fresh_two_book_consensus_missing`. Fresh prices came at 21:26, but the bot
+never orders a market twice, so six games 2.5 to 3.5 hours from tip-off got
+no further orders. On a normal day about 3 orders end this way.
+
+**Change** (`live/prod_nba_auto.py`). Old: a market attempted once is never
+attempted again. New: a market whose only order was accepted, cancelled for
+`fresh_two_book_consensus_missing`, and never filled may get **one** more
+order, only when the sportsbook price used is newer than that cancel. Every
+other check (window, price band, edge, caps, injury vetoes) applies as
+before; both orders count toward the daily, game and team caps. Cancels for
+injury or roster vetoes, stale exchange books, low edge and every other
+reason stay final. No limit changes; the rules version stays
+`nba-no-v9-longshots`, and each re-entry is marked `"reentry": true` in the
+journal so it can be measured apart.
+
+**What it is not.** Not a claim of edge: the NBA bot's live result is about
+zero so far (+0.8c per contract, t 0.4). It only stops a safety pause from
+costing the rest of the day's orders in those markets.

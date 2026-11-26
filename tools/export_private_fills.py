@@ -1125,8 +1125,9 @@ These are LIVE results; never mix them with replays or simulations.
   what happened: accepted, queue position, cancel request/confirmation,
   reason and veto, filled contracts and price, fees.
   `market_settlement_net_profit_dollars` is the settled profit of the whole
-  MARKET (ticker), repeated on each order for that market; the bots post at
-  most one order per market, but never sum it across orders without checking.
+  MARKET (ticker), repeated on each order for that market. A market has at
+  most one order with fills (an NBA market may get a second order only after
+  its first was cancelled unfilled), so never sum it across orders.
 - `data/<nba|nfl>/fills/<day>.csv`: one row per fill, with the entry evidence
   of its order and the NO-price moves 5, 15 and 60 minutes after the fill
   (positive = the market moved our way; fees not included).

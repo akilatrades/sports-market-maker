@@ -279,6 +279,7 @@ def test_selection_funnel_counts_each_gate_without_loosening_it():
         "passed_edge_sanity": 1,
         "in_price_band": 1,  # v9's gate (this test keeps the 5c-95c band)
         "not_previously_attempted": 1,
+        "reentry_after_missing_book": 0,
     }
     f.loc[0, "hours_to_tip"] = 0.5  # outside v8's 1-6 hour entry window
     stats = {}
@@ -1432,3 +1433,84 @@ def test_v9_favourites_are_dropped_before_any_quote_is_read(monkeypatch):
     picked = nba.select_candidates(found, [], {}, now, counts)
     assert [c.ticker for c in picked] == ["KXNBAPTS-A-30"]
     assert counts["passed_edge_sanity"] == 3 and counts["in_price_band"] == 1
+
+
+def _cancelled(
+    reason, cancel_at, fills=False, ticker="KXNBAPTS-26OCT20LALGSW-LALSPLAYER-30"
+):
+    """Journal of one accepted order on ``ticker``, cancelled for ``reason``."""
+    events = [
+        {"event": "intent", "client_order_id": "c1", "ticker": ticker, "cost": 0.6,
+         "game_id": "20261020", "team": "LAL", "utc": (cancel_at - timedelta(hours=1)).isoformat()},
+        {"event": "accepted", "client_order_id": "c1", "order_id": "o1"},
+        {"event": "cancel_accepted", "order_id": "o1", "reason": reason, "utc": cancel_at.isoformat()},
+    ]  # fmt: skip
+    if fills:
+        events.append(
+            {"event": "fill", "order_id": "o1", "ticker": ticker, "fill_id": "f1"}
+        )
+    return events
+
+
+def test_one_reentry_after_a_missing_book_cancel_once_prices_are_fresher():
+    """Old: a market attempted once was never attempted again. New: one more
+    order after a 'fresh_two_book_consensus_missing' cancel with no fill, once a
+    sportsbook price newer than the cancel exists."""
+    f = priced()  # book updated NOW
+    earlier = NOW - timedelta(minutes=30)
+    stats = {}
+    rows = nba.select_candidates(
+        f, _cancelled("fresh_two_book_consensus_missing", earlier), {"active": []}, NOW,
+        diagnostics=stats,
+    )  # fmt: skip
+    assert len(rows) == 1 and rows[0].reentry is True
+    assert stats["reentry_after_missing_book"] == 1
+    # The price is not newer than the cancel: no re-entry.
+    later = NOW + timedelta(minutes=1)
+    assert (
+        nba.select_candidates(
+            f,
+            _cancelled("fresh_two_book_consensus_missing", later),
+            {"active": []},
+            NOW,
+        )
+        == []
+    )
+
+
+@pytest.mark.parametrize(
+    "reason, fills",
+    [
+        (
+            "unverified_roster_injury_or_model",
+            False,
+        ),  # injury and roster vetoes stay final
+        ("invalid_fresh_exchange_book", False),
+        ("current_net_edge_below_minimum", False),
+        ("fresh_two_book_consensus_missing", True),  # something filled: final
+    ],
+)
+def test_every_other_cancel_stays_final(reason, fills):
+    events = _cancelled(reason, NOW - timedelta(minutes=30), fills=fills)
+    assert nba.select_candidates(priced(), events, {"active": []}, NOW) == []
+    assert nba.reentry_after(events) == {}
+
+
+def test_only_one_reentry_per_market():
+    first = _cancelled("fresh_two_book_consensus_missing", NOW - timedelta(hours=2))
+    second = [
+        {**e, "client_order_id": "c2"} if e.get("client_order_id") else e
+        for e in _cancelled(
+            "fresh_two_book_consensus_missing", NOW - timedelta(minutes=30)
+        )
+    ]
+    second = [{**e, "order_id": "o2"} if e.get("order_id") else e for e in second]
+    events = first + second
+    assert nba.reentry_after(events) == {}
+    assert nba.select_candidates(priced(), events, {"active": []}, NOW) == []
+
+
+def test_a_reentry_is_marked_in_the_journal_intent():
+    text = open(nba.__file__, encoding="utf-8").read()
+    assert '"reentry": bool(getattr(row, "reentry", False))' in text
+    assert nba.REENTRY_CANCEL_REASONS == frozenset({"fresh_two_book_consensus_missing"})

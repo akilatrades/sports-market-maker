@@ -199,6 +199,47 @@ def queue_observation_due(last_times, order_id, now):
     return not 0 <= age < QUEUE_OBSERVATION_MINUTES
 
 
+# One re-entry (owner request, 2026-11-26). Old: a market attempted once was
+# never attempted again. New: a market whose only order was cancelled for one
+# of these reasons, with nothing filled, may be ordered once more when a
+# sportsbook price newer than that cancel exists; every other check still
+# applies. Injury, roster and every other cancel stay final.
+REENTRY_CANCEL_REASONS = frozenset({"fresh_two_book_consensus_missing"})
+
+
+def reentry_after(events):
+    """Ticker -> confirmed cancel time, for markets allowed one re-entry: one
+    order, accepted, cancelled for a reason in REENTRY_CANCEL_REASONS, no fill."""
+    intents, accepted, cancels = {}, {}, {}
+    filled_orders, filled_tickers = set(), set()
+    for e in events:
+        kind = e.get("event")
+        if kind == "intent":
+            intents.setdefault(str(e.get("ticker")), []).append(e)
+        elif kind == "accepted":
+            accepted[e.get("client_order_id")] = e.get("order_id")
+        elif kind == "cancel_accepted":
+            cancels[e.get("order_id")] = e
+        elif kind == "fill":
+            filled_orders.add(e.get("order_id"))
+            filled_tickers.add(str(e.get("ticker")))
+    out = {}
+    for ticker, its in intents.items():
+        if len(its) != 1 or ticker in filled_tickers:
+            continue
+        order_id = accepted.get(its[0].get("client_order_id"))
+        cancel = cancels.get(order_id) if order_id else None
+        if not cancel or order_id in filled_orders:
+            continue
+        if cancel.get("reason") not in REENTRY_CANCEL_REASONS:
+            continue
+        try:
+            out[ticker] = pd.Timestamp(cancel["utc"])
+        except (KeyError, TypeError, ValueError):
+            continue
+    return out
+
+
 def records(events):
     attempts = [e for e in events if e.get("event") == "intent"]
     accepted = {}
@@ -933,8 +974,16 @@ def select_candidates(frame, events, state, now, diagnostics=None, window=WINDOW
     found = found[cents.between(*PRICE_BAND_CENTS)]
     counts["in_price_band"] = len(found)
     already = {a["ticker"] for a in attempts}
-    found = found[~found.ticker.isin(already)]
+    retry = reentry_after(events)
+    if retry and "book_updated_utc" in found:
+        cancelled = pd.to_datetime(found.ticker.map(retry), utc=True, errors="coerce")
+        priced = pd.to_datetime(found.book_updated_utc, utc=True, errors="coerce")
+        found["reentry"] = (cancelled.notna() & (priced > cancelled)).to_numpy()
+    else:
+        found["reentry"] = False
+    found = found[~found.ticker.isin(already) | found.reentry]
     counts["not_previously_attempted"] = len(found)
+    counts["reentry_after_missing_book"] = int(found.reentry.sum())
     if found.empty:
         return []
     return list(found.sort_values("edge", ascending=False).itertuples())
@@ -1503,6 +1552,7 @@ def pass_once(client, env, frame, now, journal, *, dry=False):
             "extra_maker_ticks": extra_ticks,
             "strategy_version": STRATEGY_VERSION,
             "model_version": MODEL_VERSION,
+            "reentry": bool(getattr(row, "reentry", False)),
             "probability_source": (
                 "sportsbook_translated"
                 if str(getattr(row, "book_source", "")) == "translated"
