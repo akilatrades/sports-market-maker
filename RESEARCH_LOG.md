@@ -6175,3 +6175,15 @@ Reading. The bias is real and in the textbook direction, but at 0.3 to 1
 point it is smaller than Kalshi's taker fee (about 0.3 to 1.7 cents at these
 prices) and than the 2-cent live haircut on resting orders. Taking at the
 ask in wide markets is the most expensive mistake in the table.
+
+### Test 2: first run discarded (fix, 26 November)
+
+The first scan (19:37 UTC, 21,081 events, listing complete) reported 723
+"threshold" findings, mostly a 99-cent bid above a 1-cent ask. They were a
+bug: Kalshi puts many subjects in one event (every receiver's yards in a
+game, both teams' spreads), and the scanner compared thresholds across
+them. Thresholds are now compared only within one subject (the market's
+subtitle with its number removed). The first run's record is deleted and
+the 7 days restart; the rule and bar are unchanged. The same run found 1
+calendar finding and 138 "asks below $1" events (riskless only if
+exhaustive), not yet checked.
