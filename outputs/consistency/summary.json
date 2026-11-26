@@ -1,0 +1,114 @@
+{
+ "kind": "READ-ONLY scan of public Kalshi prices; top of book, no size; not a trade",
+ "started_utc": "2026-11-26T19:37:55+00:00",
+ "updated_utc": "2026-11-26T19:37:55+00:00",
+ "runs": 1,
+ "events_scanned_this_run": 21081,
+ "listing_complete": true,
+ "mutually_exclusive_events": 11654,
+ "findings_this_run": {
+  "calendar": 1,
+  "sum_asks_below_1_if_exhaustive": 138,
+  "threshold": 723
+ },
+ "best_this_run": [
+  {
+   "utc": "2026-11-26T19:37+00:00",
+   "kind": "threshold",
+   "event_ticker": "KXUECLSPREAD-26NOV26BRICSU",
+   "tickers": "KXUECLSPREAD-26NOV26BRICSU-CSU2 KXUECLSPREAD-26NOV26BRICSU-BRI3",
+   "edge": 0.9786,
+   "n": 2,
+   "detail": "bid 0.99 > ask 0.01"
+  },
+  {
+   "utc": "2026-11-26T19:37+00:00",
+   "kind": "threshold",
+   "event_ticker": "KXUECLSPREAD-26NOV26AJATHU",
+   "tickers": "KXUECLSPREAD-26NOV26AJATHU-THU2 KXUECLSPREAD-26NOV26AJATHU-AJA3",
+   "edge": 0.9786,
+   "n": 2,
+   "detail": "bid 0.99 > ask 0.01"
+  },
+  {
+   "utc": "2026-11-26T19:37+00:00",
+   "kind": "threshold",
+   "event_ticker": "KXNFLRECYDS-26NOV26CHIDET",
+   "tickers": "KXNFLRECYDS-26NOV26CHIDET-CHICLOVELAND84-15 KXNFLRECYDS-26NOV26CHIDET-DETJGIBBS0-20",
+   "edge": 0.9786,
+   "n": 2,
+   "detail": "bid 0.99 > ask 0.01"
+  },
+  {
+   "utc": "2026-11-26T19:37+00:00",
+   "kind": "threshold",
+   "event_ticker": "KXNFLREC-26NOV26CHIDET",
+   "tickers": "KXNFLREC-26NOV26CHIDET-CHICLOVELAND84-2 KXNFLREC-26NOV26CHIDET-CHIDSWIFT4-3",
+   "edge": 0.9786,
+   "n": 2,
+   "detail": "bid 0.99 > ask 0.01"
+  },
+  {
+   "utc": "2026-11-26T19:37+00:00",
+   "kind": "threshold",
+   "event_ticker": "KXNFLLONGREC-26NOV26CHIDET",
+   "tickers": "KXNFLLONGREC-26NOV26CHIDET-CHICLOVELAND84-20 KXNFLLONGREC-26NOV26CHIDET-DETASTBROWN14-24",
+   "edge": 0.9786,
+   "n": 2,
+   "detail": "bid 0.99 > ask 0.01"
+  },
+  {
+   "utc": "2026-11-26T19:37+00:00",
+   "kind": "threshold",
+   "event_ticker": "KXNFL2QSPREAD-26NOV26CHIDET",
+   "tickers": "KXNFL2QSPREAD-26NOV26CHIDET-CHI3 KXNFL2QSPREAD-26NOV26CHIDET-DET4",
+   "edge": 0.9786,
+   "n": 2,
+   "detail": "bid 0.99 > ask 0.01"
+  },
+  {
+   "utc": "2026-11-26T19:37+00:00",
+   "kind": "threshold",
+   "event_ticker": "KXNFL1HTEAMTOTAL-26NOV26CHIDET",
+   "tickers": "KXNFL1HTEAMTOTAL-26NOV26CHIDET-CHI14 KXNFL1HTEAMTOTAL-26NOV26CHIDET-DET17",
+   "edge": 0.9786,
+   "n": 2,
+   "detail": "bid 0.99 > ask 0.01"
+  },
+  {
+   "utc": "2026-11-26T19:37+00:00",
+   "kind": "threshold",
+   "event_ticker": "KXNFL1HSPREAD-26NOV26CHIDET",
+   "tickers": "KXNFL1HSPREAD-26NOV26CHIDET-CHI3 KXNFL1HSPREAD-26NOV26CHIDET-DET4",
+   "edge": 0.9786,
+   "n": 2,
+   "detail": "bid 0.99 > ask 0.01"
+  },
+  {
+   "utc": "2026-11-26T19:37+00:00",
+   "kind": "threshold",
+   "event_ticker": "KXUELTEAMTOTAL-26NOV26RBSARA",
+   "tickers": "KXUELTEAMTOTAL-26NOV26RBSARA-ARA1 KXUELTEAMTOTAL-26NOV26RBSARA-RBS2",
+   "edge": 0.9786,
+   "n": 2,
+   "detail": "bid 0.99 > ask 0.01"
+  },
+  {
+   "utc": "2026-11-26T19:37+00:00",
+   "kind": "threshold",
+   "event_ticker": "KXUELTEAMTOTAL-26NOV26DINLEV",
+   "tickers": "KXUELTEAMTOTAL-26NOV26DINLEV-DIN1 KXUELTEAMTOTAL-26NOV26DINLEV-LEV2",
+   "edge": 0.9786,
+   "n": 2,
+   "detail": "bid 0.99 > ask 0.01"
+  }
+ ],
+ "events_2c_in_consecutive_runs": {},
+ "examples_2c_in_consecutive_runs": {},
+ "bar": {
+  "edge": 0.02,
+  "events": 20
+ },
+ "riskless_events_meeting_bar": 0,
+ "verdict": "not yet"
+}
