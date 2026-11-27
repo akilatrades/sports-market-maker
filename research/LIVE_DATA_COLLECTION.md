@@ -30,3 +30,9 @@ Open `outputs/research_monitor/index.html` locally. Counts are coverage diagnost
 
 ## Next integration
 Add a read-only account adapter (separate credential/permission review) to emit order attempts, acknowledgements, cancellations, and personal fills. Do not wire the data collector into execution logic.
+
+## Scheduled collection (GitHub Actions)
+
+A workflow is included to collect four documented NBA prop series every 15 minutes. Each run records for up to 12 minutes, caps at 5 markets per series, polls every 60 seconds, builds the monitor, and uploads a 14-day artifact. It is read-only. The schedule becomes active only after this PR is merged; use Actions > Collect sports market research data > Run workflow for a manual run.
+
+Series scope: `KXNBAPTS`, `KXNBAREB`, `KXNBAAST`, `KXNBA3PT`. This is a starting cohort, not all sports markets.
