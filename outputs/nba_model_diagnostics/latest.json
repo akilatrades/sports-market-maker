@@ -465,17 +465,17 @@
       ]
     }
   },
-  "generated_at": "2026-11-27T21:32:15.896893+00:00",
+  "generated_at": "2026-11-27T23:38:36.265999+00:00",
   "input_quality": {
     "issues": {
-      "fresh_two_book_consensus_missing": 2284,
+      "fresh_two_book_consensus_missing": 2332,
       "fully_verified_rows": 0,
-      "lineup_unverified": 2284,
-      "reported_injury_status": 125,
-      "tonight_minutes_unverified": 2284
+      "lineup_unverified": 2332,
+      "reported_injury_status": 74,
+      "tonight_minutes_unverified": 2332
     },
     "meaning": "Freshly generated predictions do not establish confirmed lineups or tonight-specific minutes. Missing inputs remain unverified.",
-    "rows": 2284
+    "rows": 2332
   },
   "next_requirements": [
     "Fresh prospective games under the fixed equal-size protocol.",
