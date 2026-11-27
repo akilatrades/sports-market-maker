@@ -6412,3 +6412,45 @@ after 0.5c). Small at any size.
 C1 (this season's NBA ladders) and part B (other sports) keep their plans:
 they test the frozen rule's filled-order profit on fresh data, which is now
 the only open question about it.
+
+## 2026-11-27: Collector on the research server; the queue-model study (plans, written before any data)
+
+**Collector.** `research/live_kalshi_collector.py` gains a tip-off window
+(`--within-hours`, `--in-game-hours`), paging, parallel requests under a
+shared 10-a-second limit, and one file per UTC day. It runs continuously on
+the `pm-recorder` research server (see the crypto repository's deploy
+files) for the NBA points/rebounds/assists/threes series, 7 hours before to
+3 hours after tip-off; finished days go to that repository's `recordings`
+branch under `nba/`. The microstructure protocol's amendment v1.1
+(`research/NBA_MICROSTRUCTURE_PROTOCOL_AMENDMENT_v1.1_2026-11-27.md`)
+records the change before its cohort starts.
+
+**Why it matters.** The independent audit (26 November) found that the
+2-cent "live haircut" is the number deciding most ideas, and that it rests
+on a confounded comparison. Minute-level books and trades let us measure
+fills directly instead.
+
+### The queue-model study (plan; runs after 3 weeks of collection, about 19 December)
+
+**Question.** For a 1-contract resting NO bid placed one cent inside the
+spread (or joining the best bid when the spread is 1 cent), what are the
+chance of a fill within one hour and the profit per contract once filled,
+with queue position modelled from the book instead of assumed?
+
+**Method.** Each pre-game book snapshot (7 to 0 hours before tip-off),
+one per market per 5-minute bin, is a hypothetical order. Queue ahead =
+displayed size at our price at placement when joining, 0 when improving.
+The order fills when public trades through or at our price exceed the queue
+ahead (trades at our price count only after the queue is used up; a later
+cancel by others ahead is ignored, which errs against us). Settled at
+Kalshi's result; maker fee. Compared with the same orders under the
+backtests' first-in-line rule: **"modelled haircut" = first-in-line profit
+minus queue-model profit per contract**, by price band (NO under 50, 50-80,
+80-95 cents) and spread (1-2, 3-5, 6+ cents). Event-clustered bootstrap.
+
+**What it will be used for (decided now).** If the modelled haircut in a
+band is reliably (90% range) below 1 cent, the backtests' resting-NO results
+in that band are re-read with the modelled haircut in place of 2 cents, as
+a new entry; if above 2 cents, the 2-cent rule stays. No live change
+follows from this study alone. Live fills (private repository) are compared
+with the model there, never copied here.
