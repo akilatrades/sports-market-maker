@@ -1,19 +1,19 @@
 {
  "kind": "READ-ONLY scan of public Kalshi prices; top of book, no size; not a trade",
  "started_utc": "2026-11-26T20:39:41+00:00",
- "updated_utc": "2026-11-27T08:14:20+00:00",
- "runs": 6,
- "events_scanned_this_run": 21471,
+ "updated_utc": "2026-11-27T12:11:54+00:00",
+ "runs": 7,
+ "events_scanned_this_run": 21487,
  "listing_complete": true,
- "mutually_exclusive_events": 11768,
+ "mutually_exclusive_events": 11652,
  "findings_this_run": {
   "calendar": 1,
-  "sum_asks_below_1_if_exhaustive": 121,
-  "threshold": 2
+  "sum_asks_below_1_if_exhaustive": 127,
+  "threshold": 3
  },
  "best_this_run": [
   {
-   "utc": "2026-11-27T08:14+00:00",
+   "utc": "2026-11-27T12:11+00:00",
    "kind": "sum_asks_below_1_if_exhaustive",
    "event_ticker": "KXSTATE51-29",
    "tickers": "KXSTATE51-29-DC KXSTATE51-29-PR KXSTATE51-29-CA KXSTATE51-29-GL KXSTATE51-29-VE KXSTATE51-29-GU KXSTATE51-29-CO KXSTATE51-29-CU",
@@ -22,7 +22,7 @@
    "detail": ""
   },
   {
-   "utc": "2026-11-27T08:14+00:00",
+   "utc": "2026-11-27T12:11+00:00",
    "kind": "sum_asks_below_1_if_exhaustive",
    "event_ticker": "KXNBERRECESSQ",
    "tickers": "KXNBERRECESSQ-Q4-2024 KXNBERRECESSQ-Q1-2025 KXNBERRECESSQ-Q2-2025 KXNBERRECESSQ-Q3-2025 KXNBERRECESSQ-Q4-2025 KXNBERRECESSQ-Q1-2026",
@@ -31,7 +31,7 @@
    "detail": ""
   },
   {
-   "utc": "2026-11-27T08:14+00:00",
+   "utc": "2026-11-27T12:11+00:00",
    "kind": "sum_asks_below_1_if_exhaustive",
    "event_ticker": "KXOSCARS-SONG27",
    "tickers": "KXOSCARS-SONG27-OHER KXOSCARS-SONG27-TBRA KXOSCARS-SONG27-TSON KXOSCARS-SONG27-TIE",
@@ -40,7 +40,7 @@
    "detail": ""
   },
   {
-   "utc": "2026-11-27T08:14+00:00",
+   "utc": "2026-11-27T12:11+00:00",
    "kind": "sum_asks_below_1_if_exhaustive",
    "event_ticker": "KXNEWPOPE-70",
    "tickers": "KXNEWPOPE-70-PPIZ KXNEWPOPE-70-PPAR KXNEWPOPE-70-FAMB KXNEWPOPE-70-LANT KXNEWPOPE-70-MZUP KXNEWPOPE-70-PERD KXNEWPOPE-70-AARB",
@@ -49,7 +49,7 @@
    "detail": ""
   },
   {
-   "utc": "2026-11-27T08:14+00:00",
+   "utc": "2026-11-27T12:11+00:00",
    "kind": "sum_asks_below_1_if_exhaustive",
    "event_ticker": "KXACQUANNOUNCEPINS-27JAN01",
    "tickers": "KXACQUANNOUNCEPINS-27JAN01-OPENPINT KXACQUANNOUNCEPINS-27JAN01-PAYPPINT KXACQUANNOUNCEPINS-27JAN01-METAPINT KXACQUANNOUNCEPINS-27JAN01-GOOGPINT KXACQUANNOUNCEPINS-27JAN01-MICRPINT KXACQUANNOUNCEPINS-27JAN01-AMAZPINT",
@@ -58,7 +58,7 @@
    "detail": ""
   },
   {
-   "utc": "2026-11-27T08:14+00:00",
+   "utc": "2026-11-27T12:11+00:00",
    "kind": "sum_asks_below_1_if_exhaustive",
    "event_ticker": "KXFDANOM-27",
    "tickers": "KXFDANOM-27-RMAR KXFDANOM-27-KDIA KXFDANOM-27-SBRE KXFDANOM-27-BGIR KXFDANOM-27-NSAP",
@@ -67,7 +67,7 @@
    "detail": ""
   },
   {
-   "utc": "2026-11-27T08:14+00:00",
+   "utc": "2026-11-27T12:11+00:00",
    "kind": "sum_asks_below_1_if_exhaustive",
    "event_ticker": "KXMBPCLEAD-27SEP30",
    "tickers": "KXMBPCLEAD-27SEP30-JLUK KXMBPCLEAD-27SEP30-JBEZ KXMBPCLEAD-27SEP30-RSQU KXMBPCLEAD-27SEP30-KCOO KXMBPCLEAD-27SEP30-LSTO KXMBPCLEAD-27SEP30-JBYR KXMBPCLEAD-27SEP30-CHIE",
@@ -76,30 +76,30 @@
    "detail": ""
   },
   {
-   "utc": "2026-11-27T08:14+00:00",
+   "utc": "2026-11-27T12:11+00:00",
    "kind": "sum_asks_below_1_if_exhaustive",
    "event_ticker": "KXSCOURT-29",
    "tickers": "KXSCOURT-29-AT KXSCOURT-29-NR KXSCOURT-29-JH KXSCOURT-29-AO KXSCOURT-29-SKD KXSCOURT-29-LVD KXSCOURT-29-MK KXSCOURT-29-AC KXSCOURT-29-KM KXSCOURT-29-TMC KXSCOURT-29-EY KXSCOURT-29-CB KXSCOURT-29-KB KXSCOURT-29-JL KXSCOURT-29-GGK KXSCOURT-29-PB KXSCOURT-29-KL KXSCOURT-29-BL KXSCOURT-29-BG KXSCOURT-29-KN KXSCOURT-29-MP KXSCOURT-29-DS KXSCOURT-29-AJR KXSCOURT-29-KCT KXSCOURT-29-PW KXSCOURT-29-KW KXSCOURT-29-TC KXSCOURT-29-ML KXSCOURT-29-MT KXSCOURT-29-MM KXSCOURT-29-AEID KXSCOURT-29-TED KXSCOURT-29-SBIB KXSCOURT-29-EBOV KXSCOURT-29-JSAU KXSCOURT-29-RDES KXSCOURT-29-YROT KXSCOURT-29-AJOH KXSCOURT-29-SMEN KXSCOURT-29-MSCH KXSCOURT-29-ETUN",
-   "edge": 0.5269,
+   "edge": 0.5248,
    "n": 41,
    "detail": ""
   },
   {
-   "utc": "2026-11-27T08:14+00:00",
+   "utc": "2026-11-27T12:11+00:00",
+   "kind": "sum_asks_below_1_if_exhaustive",
+   "event_ticker": "KXNFLMOSTRSHYDS-26NOV29BALHOU",
+   "tickers": "KXNFLMOSTRSHYDS-26NOV29BALHOU-HOUDMONTGOMERY32 KXNFLMOSTRSHYDS-26NOV29BALHOU-HOUCSTROUD7",
+   "edge": 0.4663,
+   "n": 2,
+   "detail": ""
+  },
+  {
+   "utc": "2026-11-27T12:11+00:00",
    "kind": "sum_asks_below_1_if_exhaustive",
    "event_ticker": "KXGOOGLESEARCH-TVS27",
    "tickers": "KXGOOGLESEARCH-TVS27-HIS KXGOOGLESEARCH-TVS27-BRID KXGOOGLESEARCH-TVS27-LAN KXGOOGLESEARCH-TVS27-STR KXGOOGLESEARCH-TVS27-PIT KXGOOGLESEARCH-TVS27-SUR",
    "edge": 0.4287,
    "n": 6,
-   "detail": ""
-  },
-  {
-   "utc": "2026-11-27T08:14+00:00",
-   "kind": "sum_asks_below_1_if_exhaustive",
-   "event_ticker": "KXMODELHIGH-27-1550",
-   "tickers": "KXMODELHIGH-27-1550-QWEN KXMODELHIGH-27-1550-GEMI KXMODELHIGH-27-1550-CHAT KXMODELHIGH-27-1550-CLAU KXMODELHIGH-27-1550-GROK KXMODELHIGH-27-1550-KIMI KXMODELHIGH-27-1550-ERNI KXMODELHIGH-27-1550-OTHE",
-   "edge": 0.3985,
-   "n": 8,
    "detail": ""
   }
  ],
