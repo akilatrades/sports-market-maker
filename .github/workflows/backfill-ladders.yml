@@ -5,6 +5,15 @@ name: backfill other sports' prop ladders
 # remaining 0. Read-only: no account, no keys, no order endpoint.
 on:
   workflow_dispatch:
+    inputs:
+      series:
+        description: 'Series as a JSON list, e.g. ["KXNBAPTS","KXNBAREB"] (empty = discover)'
+        required: false
+        default: ""
+      start:
+        description: "First market date (YYYY-MM-DD)"
+        required: false
+        default: "2025-09-01"
 permissions:
   contents: write
 concurrency:
@@ -24,7 +33,7 @@ jobs:
       - run: pip install pandas numpy pyarrow
       - id: find
         run: |
-          s=$(python -m research.backfill_ladders --discover)
+          if [ -n "${{ inputs.series }}" ]; then s='${{ inputs.series }}'; else s=$(python -m research.backfill_ladders --discover); fi
           echo "found: $s"
           echo "series=$s" >> "$GITHUB_OUTPUT"
   fetch:
@@ -45,7 +54,7 @@ jobs:
         with:
           python-version: "3.12"
       - run: pip install pandas numpy pyarrow
-      - run: python -m research.backfill_ladders --series ${{ matrix.series }} --minutes 300 --workers 12
+      - run: python -m research.backfill_ladders --series ${{ matrix.series }} --start ${{ inputs.start || '2025-09-01' }} --minutes 300 --workers 12
       - uses: actions/upload-artifact@v4
         with:
           name: ladders-${{ matrix.series }}
