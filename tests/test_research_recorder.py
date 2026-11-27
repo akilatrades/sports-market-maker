@@ -30,6 +30,14 @@ class RecorderTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             validate_record(dict(VALID, source_timestamp="not-a-date"))
 
+    def test_invalid_timestamp_rejected(self):
+        with self.assertRaises(ValueError):
+            validate_record(dict(VALID, source_timestamp="not-iso"))
+
+    def test_naive_timestamp_rejected(self):
+        with self.assertRaises(ValueError):
+            validate_record(dict(VALID, source_timestamp="2026-11-26T18:00:00"))
+
     def test_append_jsonl(self):
         with tempfile.TemporaryDirectory() as tmp:
             path = Path(tmp) / "subdir" / "events.jsonl"
