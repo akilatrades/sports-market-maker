@@ -147,10 +147,13 @@ def build_features(events: list[dict], horizons: tuple[int, ...] = HORIZONS_MIN)
                                               if yes_vol+no_vol > 0 else None)
             for h in horizons:
                 future = next((f for f in snapshots[i+1:]
-                              if (parse_ts(f["timestamp"])-t).total_seconds() >= h*60), None)
+                              if f["mid"] is not None
+                              and (parse_ts(f["timestamp"])-t).total_seconds() >= h*60
+                              and (parse_ts(f["timestamp"])-t).total_seconds() <= h*2*60), None)
+                actual_gap = ((parse_ts(future["timestamp"])-t).total_seconds()/60) if future else None
                 out[f"mid_return_{h}m"] = (future["mid"]-s["mid"]
-                                             if future and future["mid"] is not None and s["mid"] is not None
-                                             else None)
+                                             if future and s["mid"] is not None else None)
+                out[f"mid_return_{h}m_observed_gap"] = actual_gap
             result.append(out)
     return result
 
