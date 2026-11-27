@@ -6454,3 +6454,86 @@ in that band are re-read with the modelled haircut in place of 2 cents, as
 a new entry; if above 2 cents, the 2-cent rule stays. No live change
 follows from this study alone. Live fills (private repository) are compared
 with the model there, never copied here.
+
+## 2026-11-27: Week 1 of the measurement plan (plans, written before any result)
+
+**W1. Live haircut, method v2 (private repo, LIVE, aggregates only).** The
+independent review (2026-11-26) found the v1 replay counted our own fills as
+replay fills; v1 reported NBA live fills *better* than the replay (-0.66
+points), against the 2-4 points measured by `research/replay_vs_live.py`,
+which confirms the flaw. v2: our own filled contracts are removed from the
+prints at our price; an order that joined the best price (NBA orders record
+the book at entry) counts only trades strictly through it; both trade
+endpoints are read and de-duplicated. Paired on the same orders; haircut =
+profit per replay-filled order minus per live-filled order; game-clustered
+90% range; by family (NBA by NO price band, spread bot by side). **Use:**
+a family's haircut is "measured" when its 90% range is narrower than 3
+points with 300+ live fills; until then the flat 2c stays the working
+assumption. **Validity check:** NBA 65-95c should land in or near 2-4 points;
+if it lands below 0 again, v2 is wrong too.
+
+**W2. Fills just before the bot's own news cancels (private repo, LIVE).**
+The NBA official injury report is published every 15 minutes, so "cancel
+before the report" is not a usable rule. Instead: the bot cancels a game's
+orders when news makes its sportsbook price stale or vetoes a player
+(cancel reasons `fresh_two_book_consensus_missing`,
+`unverified_roster_injury_or_model`). Fills on that game in the 30 minutes
+before such a cancel are "pre-news fills". **Measure:** profit per contract
+of pre-news fills against all other fills (v7-v9), game-clustered.
+**Bar for a faster-news-cancel change:** pre-news fills at least 5 cents
+worse with t at least 2, and at least 8% of fills. Otherwise faster news
+detection is not worth building.
+
+**W3. Execution tests on last season's NBA trades (SIMULATED, in-sample
+2025-26; `research/execution_tests.py`).** Universe: every NBA
+points/rebounds/assists/threes market with a pre-game candle whose resting
+NO price, one cent inside the spread, falls in the v9 band (65-95 cents);
+one order per market per test; fill if YES buyers trade through the price
+while it rests (first in line; prints exist only for the 6 hours before
+tip-off); held to settlement; maker fee; game-clustered; halves by date.
+- **E-window:** place at the first candle in each start window - 6-4, 4-2,
+  2-1 hours before tip-off - and rest until tip-off. Measure profit per
+  order placed and per fill. **Bar to change the bot's 1-6 hour window:** a
+  window beating the others by 1+ cent per fill, t at least 2 on the
+  paired difference, both halves.
+- **E-improve:** markets with a spread of 6+ cents: rest at 1 cent inside
+  vs 2 cents inside, same start (4 hours before tip-off), until tip-off.
+  Paired by market. **Bar:** 2 cents inside earns 0.3+ cents more per order
+  placed, t at least 2, both halves, 1,500+ orders.
+- **E-inventory:** the E-window fills at 4 hours, capped at 2 or 3 fills per
+  game (earliest first). **Bar:** game-level P&L standard deviation down
+  20%+ with the mean per contract no more than 0.2 cents lower.
+**Variants: 7** (3 windows, 2 prices, 2 caps). All in-sample; a pass is a
+candidate for the bot, decided by the owner, then measured live.
+
+**W3 addendum (written before the live check is run).** Exploratory, in
+the W3 inventory data: the first two fills in a game earned +3.5c (t 3.8),
+fills 3-5 +1.6c, 6-10 +0.6c, 11+ +0.5c; with fill timing, waiting time and
+price controlled, "first two in the game" is worth +2.6c (t 2.4). Not
+planned, found after the planned test. **Out-of-sample check, fixed now:**
+on LIVE NBA fills (v7-v9, private repo, aggregate only), profit per
+contract of each game's first two fills (by first-fill time) against its
+later fills, game-clustered difference. It supports the finding if the
+first two are at least 2 cents better with t at least 1.5 (live samples are
+small); anything else and the finding is not used.
+
+### Week 1 results
+
+**W2 (LIVE, private repo): fails.** Fills in the 30 minutes before the bot's
+own news cancels did not do worse than other fills; they did better
+(difference +4.4 cents, t 1.05; 10% of fills). No faster news cancel.
+
+**W3 (SIMULATED, in-sample; 7 variants)** `python -m research.execution_tests`
+-> `outputs/execution_tests/`:
+- **E-window: fails; keep the 1-6 hour window.** Starting 6-4, 4-2 or 2-1
+  hours before tip-off changes profit per order by at most 0.17 cents
+  (paired, t at most 1.5); per fill all three earn +0.9 to +1.2 cents.
+- **E-improve: fails; keep 1 cent inside.** In 6+ cent spreads, 2 cents
+  inside fills more (57% against 52%) but earns 0.10 cents less per order
+  (t -1.0; 6,337 orders).
+- **E-inventory: the planned bar passed, but the bar was badly designed.**
+  A cap of 2 or 3 fills per game cuts the game-level spread of P&L by 68% /
+  60%, mostly because fewer contracts are held. The exploratory finding
+  under it (first two fills in a game +2.6c with controls, t 2.4) **failed
+  its live out-of-sample check**: on live fills the first two per game did
+  worse, not better (-2.5 cents, t -1.0, 149 games). Not used.

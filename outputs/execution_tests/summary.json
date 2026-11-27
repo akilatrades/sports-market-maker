@@ -1,0 +1,143 @@
+{
+ "note": "SIMULATED, NBA props 2025-26, first in line, prints only 6h before tip-off; NO 65-95c; rest from the candle to tip-off. Cents per contract after the maker fee.",
+ "E_window": {
+  "6-4h": {
+   "orders": 18630,
+   "fill_rate": 0.604,
+   "per_fill": {
+    "n": 11249,
+    "cents": 0.929,
+    "t": 2.03
+   },
+   "per_order": {
+    "n": 18630,
+    "cents": 0.561,
+    "t": 2.03
+   },
+   "per_fill_halves_cents": [
+    1.128,
+    0.793
+   ]
+  },
+  "4-2h": {
+   "orders": 19560,
+   "fill_rate": 0.578,
+   "per_fill": {
+    "n": 11296,
+    "cents": 1.211,
+    "t": 2.66
+   },
+   "per_order": {
+    "n": 19560,
+    "cents": 0.699,
+    "t": 2.66
+   },
+   "per_fill_halves_cents": [
+    1.903,
+    0.675
+   ]
+  },
+  "2-1h": {
+   "orders": 19377,
+   "fill_rate": 0.527,
+   "per_fill": {
+    "n": 10214,
+    "cents": 0.93,
+    "t": 1.95
+   },
+   "per_order": {
+    "n": 19377,
+    "cents": 0.49,
+    "t": 1.95
+   },
+   "per_fill_halves_cents": [
+    1.027,
+    0.853
+   ]
+  },
+  "6-4h minus 4-2h per order (paired)": {
+   "n": 17435,
+   "cents": -0.07,
+   "t": -0.67,
+   "halves_cents": [
+    -0.287,
+    0.098
+   ]
+  },
+  "6-4h minus 2-1h per order (paired)": {
+   "n": 16674,
+   "cents": 0.156,
+   "t": 1.11,
+   "halves_cents": [
+    0.071,
+    0.219
+   ]
+  },
+  "4-2h minus 2-1h per order (paired)": {
+   "n": 17889,
+   "cents": 0.17,
+   "t": 1.51,
+   "halves_cents": [
+    0.382,
+    -0.004
+   ]
+  }
+ },
+ "E_improve_2c_vs_1c_spread_6c_plus": {
+  "n": 6337,
+  "cents": -0.096,
+  "t": -1.0,
+  "halves_cents": [
+   -0.14,
+   -0.012
+  ],
+  "fill_rate_1c": 0.517,
+  "fill_rate_2c": 0.57,
+  "per_order_1c": {
+   "n": 6337,
+   "cents": 0.767,
+   "t": 1.9
+  },
+  "per_order_2c": {
+   "n": 6337,
+   "cents": 0.671,
+   "t": 1.59
+  },
+  "pass": false
+ },
+ "E_inventory_4_2h_fills": {
+  "no cap": {
+   "fills": 11296,
+   "games": 919,
+   "cents_per_contract": 1.211,
+   "game_pnl_sd_dollars": 1.6964
+  },
+  "cap 2": {
+   "fills": 1778,
+   "games": 919,
+   "cents_per_contract": 3.538,
+   "game_pnl_sd_dollars": 0.543,
+   "sd_cut": 0.68,
+   "mean_drop_cents": -2.327,
+   "pass": true
+  },
+  "cap 3": {
+   "fills": 2564,
+   "games": 919,
+   "cents_per_contract": 2.862,
+   "game_pnl_sd_dollars": 0.6817,
+   "sd_cut": 0.598,
+   "mean_drop_cents": -1.651,
+   "pass": true
+  }
+ },
+ "variants": 7,
+ "bar": {
+  "window_cents_per_fill": 1.0,
+  "t": 2.0,
+  "improve_cents_per_order": 0.3,
+  "improve_orders": 1500,
+  "inventory_sd_cut": 0.2,
+  "inventory_mean_drop_cents": 0.2
+ }
+}
