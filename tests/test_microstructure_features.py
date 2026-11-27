@@ -27,7 +27,7 @@ class MicrostructureFeatureTests(unittest.TestCase):
         self.assertAlmostEqual(rows[0]["mid"], 0.45)
         self.assertAlmostEqual(rows[0]["imbalance_1"], (10-5)/(10+5))
         self.assertEqual(rows[0]["mid_return_5m"], 0.01)
-        self.assertEqual(rows[0]["mid_return_15m"], 0.02)
+        self.assertEqual(rows[0]["mid_return_15m"], 0.02)\n        self.assertEqual(rows[0]["mid_return_5m_observed_gap"], 5)\n        self.assertEqual(rows[0]["mid_return_15m_observed_gap"], 15)
 
     def test_trade_flow_features(self):
         events = [
