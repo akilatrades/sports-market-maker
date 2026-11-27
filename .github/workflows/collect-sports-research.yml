@@ -1,0 +1,43 @@
+name: Collect sports market research data
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "7,22,37,52 * * * *"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: sports-market-research-collection
+  cancel-in-progress: true
+
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Collect public sports market data (read-only)
+        run: |
+          timeout 12m python -m research.live_kalshi_collector \
+            --series KXNBAPTS,KXNBAREB,KXNBAAST,KXNBA3PT \
+            --max-markets 5 --interval 60 \
+            --output data/research/live_events.jsonl || code=$?
+          if [ "${code:-0}" -ne 0 ] && [ "${code}" -ne 124 ]; then
+            exit "${code}"
+          fi
+      - name: Build coverage monitor
+        run: python -m research.research_monitor
+      - name: Upload research data and monitor
+        uses: actions/upload-artifact@v4
+        with:
+          name: sports-market-research-${{ github.run_id }}
+          path: |
+            data/research/live_events.jsonl
+            outputs/research_monitor/index.html
+          retention-days: 14
+          if-no-files-found: error
