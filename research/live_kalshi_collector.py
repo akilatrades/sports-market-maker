@@ -131,7 +131,7 @@ def collect_once(series_tickers: list[str], output: str, market_cap: int,
                     rec = {
                         "event_id": market.get("event_ticker", ticker),
                         "market_id": ticker,
-                        "event_type": "fill",  # public trade print, NOT user's own fill
+                        "event_type": "public_trade",  # public tape, not personal fill
                         "source_timestamp": trade_time,
                         "observed_at": observed,
                         "source": "kalshi_public_trade_tape",
