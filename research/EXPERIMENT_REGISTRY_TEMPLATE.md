@@ -1,0 +1,29 @@
+# Experiment Registry Entry (Copy for Every Experiment)
+
+- **ID / version:**
+- **Owner:**
+- **Created / preregistered UTC:**
+- **Status:** exploratory / validation / paper / live (approved)
+- **Market family / sport / side:**
+- **Hypothesis:**
+- **Decision timestamp and available features:**
+- **Baseline:**
+- **Variants / parameter grid (limited and justified):**
+- **Dataset and source IDs:**
+- **Train/exploration window:**
+- **Untouched validation window:**
+- **Holdout end date:**
+- **Exclusion criteria (predefined):**
+- **Sample size target (games, attempts, fills):**
+- **Primary metric (choose one):**
+- **Secondary diagnostics:**
+- **Fee/slippage/queue assumptions:**
+- **Risk limits:**
+- **Multiple-testing accounting:**
+- **Results:**
+- **Event-clustered CI:**
+- **Chronological split results:**
+- **Concentration and adverse scenarios:**
+- **Decision:** reject / exploratory / inconclusive / paper / live pilot approved
+- **Decision rationale:**
+- **Next experiment (if any):**
