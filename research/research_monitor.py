@@ -34,14 +34,14 @@ def html_report(rows, output):
     total = len(rows)
     rows_html = "".join(
         f"<tr><td>{market}</td><td>{c.get('market_snapshot',0)}</td><td>{c.get('book_snapshot',0)}</td>"
-        f"<td>{c.get('fill',0)}</td><td>{c.get('private_fill_count',0)}</td></tr>"
+        f"<td>{c.get('public_trade',0)}</td><td>{c.get('private_fill_count',0)}</td></tr>"
         for market, c in sorted(markets.items())
     )
     cards = "".join(f"<div class='card'><b>{typ}</b><div>{num}</div></div>" for typ, num in sorted(counts.items()))
     html = f"""<!doctype html><html><head><meta charset='utf-8'><title>Sports Market Research Monitor</title>
 <style>body{{font:15px system-ui;margin:24px;background:#10131a;color:#e8edf4}}h1{{font-size:24px}}.cards{{display:flex;flex-wrap:wrap;gap:10px}}.card{{background:#202735;border-radius:8px;padding:14px;min-width:110px}}.card div{{font-size:22px;margin-top:6px}}table{{border-collapse:collapse;width:100%;margin-top:22px}}td,th{{border-bottom:1px solid #394150;padding:9px;text-align:left}}small{{color:#aab4c2}}</style></head>
 <body><h1>Sports Market Research Monitor</h1><small>Local file report from JSONL recorder. Public trade prints are not your own fills; this dashboard does not estimate strategy profitability.</small>
-<p>Records loaded: {total}</p><div class='cards'>{cards}</div><table><thead><tr><th>Market ticker</th><th>Market snapshots</th><th>Book snapshots</th><th>Public trades</th><th>Private fills</th></tr></thead><tbody>{rows_html}</tbody></table>
+<p>Records loaded: {total}</p><div class='cards'>{cards}</div><table><thead><tr><th>Market ticker</th><th>Market snapshots</th><th>Book snapshots</th><th>Public tape prints</th><th>Private fills</th></tr></thead><tbody>{rows_html}</tbody></table>
 </body></html>"""
     Path(output).parent.mkdir(parents=True, exist_ok=True)
     Path(output).write_text(html, encoding="utf-8")
