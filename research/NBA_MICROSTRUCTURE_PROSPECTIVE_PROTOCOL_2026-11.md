@@ -1,8 +1,8 @@
 # NBA Microstructure Prospective Validation Protocol (v1)
 
-**Protocol frozen:** 2026-11-26 UTC  
-**Cohort start:** 2026-11-27 00:00 UTC (no pre-start data admitted)  
-**Planned cohort end:** 2026-12-27 00:00 UTC  
+**Protocol frozen:** 2026-11-27 UTC  
+**Cohort start:** 2026-11-28 00:00 UTC (no pre-start data admitted)  
+**Planned cohort end:** 2026-12-28 00:00 UTC  
 **Status:** prospective validation / read-only research  
 **Protocol ID:** `nba-microstructure-prospective-v1`
 
