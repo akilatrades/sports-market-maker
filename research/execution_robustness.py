@@ -152,7 +152,7 @@ def main():
         "fill_rule": "For q estimated contracts ahead, require traded >= q+1. A print count is not proof of fill.",
         "output": "sensitivity.csv",
     }
-    (OUT / "summary.json").write_text(json.dumps(meta, indent=2) + "\\n")
+    (OUT / "summary.json").write_text(json.dumps(meta, indent=2) + "\n")
     print(json.dumps(meta, indent=2))
     print(sensitivity.to_string(index=False))
 
