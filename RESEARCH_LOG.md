@@ -6350,3 +6350,43 @@ then the neighbours drifting up to meet it. Tight books show no kink edge.
 Candidate refinements for a future plan, not for the running paper test:
 spread of 3+ cents, and within 6 hours of tip-off. They need fresh data
 (part B, or the paper test's own ledger) before they count.
+
+## 2026-11-27: Ladders, three more checks (plans, written before any result)
+
+### Check 1: the frozen NBA rule on this season's games (OUT-OF-SAMPLE)
+
+**Data, new download:** NBA points, rebounds, assists and threes ladders
+settled from 21 October 2026 (`research/backfill_ladders.py --series ...
+--start 2026-10-20` into `data/kalshi_history_ladders/`): hourly candles and
+pre-game trades. Never used to choose anything. It ends before the paper
+test's first order (27 November), so the two never overlap.
+**Rule:** Study B exactly (`research/ladder.py`): pre-game candles (tip-off
+from the box scores, else occurrence time minus 3 hours), 4+ two-sided
+strikes, logit fit, resting NO on +3c outliers, 5+ traded through, maker
+fee. Control -1 to +1.
+**Bar** (the paper test's, scaled to a smaller sample): mean after the 2c
+haircut above 0 with game-clustered t at least 2, 150+ fills in 40+ games.
+**Part A hypotheses, directional check (no bar of their own):** outliers
+with a spread of 3+ cents, and outliers within 6 hours of tip-off, each
+reported against the control in the same cut; "holds" if the outlier beats
+its control by 1+ cent. **Variants: 3.**
+
+### Check 2: do the sportsbooks agree the kinked strike is overpriced? (in-sample, independent source)
+
+On last season's Study B outlier orders (all of them, filled or not) whose
+market has a de-vigged sportsbook chance (`outputs/bookline/
+fills_with_book.csv.gz`, one snapshot per market about an hour before
+tip-off): compare Kalshi's mid at the kink, and the fitted curve, with the
+books' chance of YES. Same for the control. **Confirms** if, for outliers,
+Kalshi's mid exceeds the books by 2+ points with game-clustered t at least
+2.5, the fitted curve is within 1 point of the books, and the control's
+mid-minus-books gap is at least 2 points smaller. **Variants: 1.**
+
+### Check 3: capacity, in dollars (in-sample, SIMULATED)
+
+From last season's outlier orders and the contracts traded through each
+one, with 4 contracts assumed ahead of ours: contracts filled at an order
+size of k = the traded-through count minus 4, capped at k (k = 1, 3, 5,
+10). Profit per month at each size with the 2c and the 0.5c haircut, and a
+90% range from resampling whole games. No bar: it sizes the prize. It is a
+replay, never a forecast.

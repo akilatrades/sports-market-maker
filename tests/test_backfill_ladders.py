@@ -73,3 +73,15 @@ def test_ladder_why_marks_round_strikes_and_hours_to_tip(monkeypatch):
     ]
     assert got.hours_to_tip.round(1).tolist() == [2.0, 2.0]
     assert got.bid_above_curve.tolist() == [True, False]
+
+
+def test_this_seasons_nba_download_is_its_own_job():
+    flow = (
+        Path(__file__).resolve().parents[1]
+        / ".github/workflows/backfill-nba-current.yml"
+    ).read_text()
+    assert (
+        "--start 2026-10-20" in flow
+        and "KXNBAPTS" in flow
+        and "group: backfill-nba-current" in flow
+    )

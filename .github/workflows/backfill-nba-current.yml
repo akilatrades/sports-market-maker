@@ -1,0 +1,62 @@
+name: backfill this season's NBA ladders
+# This season's NBA points/rebounds/assists/threes ladders from 20 October
+# 2026, for the out-of-sample ladder check (RESEARCH_LOG.md, 2026-11-27,
+# "Ladders, three more checks", check 1). Public data only; resumable.
+on:
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: backfill-nba-current
+  cancel-in-progress: false
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 330
+    strategy:
+      fail-fast: false
+      matrix:
+        series: [KXNBAPTS, KXNBAREB, KXNBAAST, KXNBA3PT]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install pandas numpy pyarrow
+      - run: >-
+          python -m research.backfill_ladders --series ${{ matrix.series }}
+          --start 2026-10-20 --minutes 300 --workers 12
+      - uses: actions/upload-artifact@v4
+        with:
+          name: nba-current-${{ matrix.series }}
+          path: data/kalshi_history_ladders/*_${{ matrix.series }}.*
+          if-no-files-found: ignore
+          retention-days: 7
+  commit:
+    needs: fetch
+    if: always()
+    runs-on: ubuntu-latest
+    concurrency:
+      group: repo-writes
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: nba-current-*
+          path: data/kalshi_history_ladders
+          merge-multiple: true
+      - name: Commit
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A data/kalshi_history_ladders
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m "This season's NBA ladders $(date -u +%Y-%m-%dT%H:%MZ)"
+          for attempt in 1 2 3 4 5; do
+            if git pull --rebase && git push; then exit 0; fi
+            sleep $((attempt * 5))
+          done
+          exit 1
