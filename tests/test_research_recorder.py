@@ -12,6 +12,7 @@ VALID = {
     "price_yes": 0.52,
 }
 
+
 class RecorderTests(unittest.TestCase):
     def test_validation_adds_schema_and_ingest_time(self):
         result = validate_record(VALID)
@@ -39,6 +40,7 @@ class RecorderTests(unittest.TestCase):
             path = Path(tmp) / "subdir" / "events.jsonl"
             self.assertEqual(append_records(path, [VALID, VALID]), 2)
             self.assertEqual(len(path.read_text(encoding="utf-8").splitlines()), 2)
+
 
 if __name__ == "__main__":
     unittest.main()

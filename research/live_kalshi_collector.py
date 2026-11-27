@@ -5,6 +5,7 @@ No API keys, order endpoints, or trading logic are used. Requires explicit serie
 so the user controls scope. Current books are observations, not exchange-timestamped
 historical books; source_timestamp is collection time for snapshots.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -25,7 +26,9 @@ def now_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
 
 
-def get_json(path: str, params: dict[str, Any] | None = None, timeout: int = 12) -> dict:
+def get_json(
+    path: str, params: dict[str, Any] | None = None, timeout: int = 12
+) -> dict:
     query = urlencode(params or {}, doseq=True)
     url = f"{BASE}{path}" + (f"?{query}" if query else "")
     req = Request(url, headers={"User-Agent": USER_AGENT, "Accept": "application/json"})
@@ -34,7 +37,9 @@ def get_json(path: str, params: dict[str, Any] | None = None, timeout: int = 12)
 
 
 def market_list(series: str, limit: int = 100) -> list[dict]:
-    payload = get_json("/markets", {"series_ticker": series, "status": "open", "limit": limit})
+    payload = get_json(
+        "/markets", {"series_ticker": series, "status": "open", "limit": limit}
+    )
     return payload.get("markets", [])
 
 
@@ -61,26 +66,35 @@ def normalize_market(market: dict, observed_at: str) -> dict:
         "title": market.get("title"),
         "yes_bid_dollars": market.get("yes_bid_dollars", market.get("yes_bid")),
         "yes_ask_dollars": market.get("yes_ask_dollars", market.get("yes_ask")),
-        "last_price_dollars": market.get("last_price_dollars", market.get("last_price")),
+        "last_price_dollars": market.get(
+            "last_price_dollars", market.get("last_price")
+        ),
         "volume_fp": market.get("volume_fp", market.get("volume")),
         "open_interest_fp": market.get("open_interest_fp", market.get("open_interest")),
         "raw_ticker": ticker,
     }
 
 
-def collect_once(series_tickers: list[str], output: str, market_cap: int,
-                 trade_limit: int, seen_trade_ids: set[str]) -> dict[str, int]:
+def collect_once(
+    series_tickers: list[str],
+    output: str,
+    market_cap: int,
+    trade_limit: int,
+    seen_trade_ids: set[str],
+) -> dict[str, int]:
     collected = 0
     markets_count = books_count = trades_count = errors = 0
     for series in series_tickers:
         try:
             markets = market_list(series, limit=min(max(market_cap * 3, 100), 1000))
+
             # Prioritize highest-volume contracts where numeric volume is parseable.
             def vol(m):
                 try:
                     return float(m.get("volume_fp", m.get("volume", 0)) or 0)
                 except (ValueError, TypeError):
                     return 0
+
             markets = sorted(markets, key=vol, reverse=True)[:market_cap]
         except Exception as exc:
             print(f"[warn] series {series} markets fetch failed: {exc}")
@@ -100,7 +114,9 @@ def collect_once(series_tickers: list[str], output: str, market_cap: int,
                 errors += 1
             try:
                 book_payload = get_json(f"/markets/{ticker}/orderbook", {"depth": 10})
-                book = book_payload.get("orderbook", book_payload.get("orderbook_fp", {}))
+                book = book_payload.get(
+                    "orderbook", book_payload.get("orderbook_fp", {})
+                )
                 levels = best_bid_levels(book)
                 book_record = {
                     "event_id": market.get("event_ticker", ticker),
@@ -118,7 +134,9 @@ def collect_once(series_tickers: list[str], output: str, market_cap: int,
                 print(f"[warn] orderbook {ticker}: {exc}")
                 errors += 1
             try:
-                trades_payload = get_json("/markets/trades", {"ticker": ticker, "limit": trade_limit})
+                trades_payload = get_json(
+                    "/markets/trades", {"ticker": ticker, "limit": trade_limit}
+                )
                 trades = trades_payload.get("trades", [])
                 for trade in trades:
                     tid = str(trade.get("trade_id", trade.get("id", "")))
@@ -136,7 +154,9 @@ def collect_once(series_tickers: list[str], output: str, market_cap: int,
                         "source": "kalshi_public_trade_tape",
                         "trade_id": tid or None,
                         "public_trade": True,
-                        "yes_price_dollars": trade.get("yes_price_dollars", trade.get("yes_price")),
+                        "yes_price_dollars": trade.get(
+                            "yes_price_dollars", trade.get("yes_price")
+                        ),
                         "count_fp": trade.get("count_fp", trade.get("count")),
                         "taker_outcome_side": trade.get("taker_outcome_side"),
                     }
@@ -145,16 +165,34 @@ def collect_once(series_tickers: list[str], output: str, market_cap: int,
             except Exception as exc:
                 print(f"[warn] trades {ticker}: {exc}")
                 errors += 1
-    return {"records": collected, "markets": markets_count, "books": books_count,
-            "public_trades": trades_count, "errors": errors}
+    return {
+        "records": collected,
+        "markets": markets_count,
+        "books": books_count,
+        "public_trades": trades_count,
+        "errors": errors,
+    }
 
 
 def main() -> None:
-    p = argparse.ArgumentParser(description="Read-only Kalshi sports market recorder; no orders.")
-    p.add_argument("--series", required=True, help="Comma-separated Kalshi series tickers to record")
+    p = argparse.ArgumentParser(
+        description="Read-only Kalshi sports market recorder; no orders."
+    )
+    p.add_argument(
+        "--series",
+        required=True,
+        help="Comma-separated Kalshi series tickers to record",
+    )
     p.add_argument("--output", default="data/research/live_events.jsonl")
-    p.add_argument("--interval", type=float, default=60, help="seconds between cycles (minimum 15)")
-    p.add_argument("--max-markets", type=int, default=10, help="per-series cap; highest-volume open markets")
+    p.add_argument(
+        "--interval", type=float, default=60, help="seconds between cycles (minimum 15)"
+    )
+    p.add_argument(
+        "--max-markets",
+        type=int,
+        default=10,
+        help="per-series cap; highest-volume open markets",
+    )
     p.add_argument("--trade-limit", type=int, default=100)
     p.add_argument("--once", action="store_true", help="run one cycle then exit")
     args = p.parse_args()
@@ -170,7 +208,9 @@ def main() -> None:
     seen: set[str] = set()
     while True:
         started = time.monotonic()
-        stats = collect_once(series, args.output, args.max_markets, args.trade_limit, seen)
+        stats = collect_once(
+            series, args.output, args.max_markets, args.trade_limit, seen
+        )
         print(f"{now_iso()} cycle stats: {stats}")
         if args.once:
             break
