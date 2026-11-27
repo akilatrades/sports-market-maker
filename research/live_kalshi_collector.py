@@ -337,7 +337,7 @@ def main() -> None:
             want_trades=cycle % max(1, args.trades_every) == 0,
         )
         cycle += 1
-        if len(seen) > 2_000_000:  # bounded memory on a small server
+        if len(seen) > 300_000:  # bounded memory on a small server
             seen.clear()
         print(f"{now_iso()} cycle stats: {stats}")
         if args.once:
