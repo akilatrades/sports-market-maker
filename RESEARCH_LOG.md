@@ -6537,3 +6537,33 @@ own news cancels did not do worse than other fills; they did better
   under it (first two fills in a game +2.6c with controls, t 2.4) **failed
   its live out-of-sample check**: on live fills the first two per game did
   worse, not better (-2.5 cents, t -1.0, 149 games). Not used.
+
+## 2026-11-27: Ladders, deeper, part B result: other sports (pre-registered, SIMULATED)
+
+`python -m research.ladder_fresh other` → `outputs/ladder_fresh/other.json`,
+run once on the download committed in ab9323d (212 series, all marked done;
+43 had candles). Frozen Study B rule, out of sample: none of these series
+chose it. Public data, first in line. **Variants: 1** (plus the control).
+
+- 17 series passed the price-shape check (MLB home runs, strikeouts, RBIs
+  and total bases; NBA blocks and steals; NFL passing, receiving and rushing;
+  NHL goals, assists and points; World Cup goals; WNBA points and rebounds).
+  114,427 ladder-hours were fitted.
+- **Outliers (3+ cents above the curve): +0.90¢ per contract before the
+  haircut (t 0.65), −1.10¢ after the 2¢ haircut (t −0.79)**, on 1,649 fills
+  in 792 games. Positive in 6 of 12 months.
+- Control (on the curve): −0.59¢ on 9,458 fills. Outliers beat it by 1.49¢.
+- After a 0.5¢ haircut, reported beside the bar: +0.40¢ (t 0.29). That
+  haircut came from the live replay later found to count our own fills
+  (2026-11-27 audit), so it is not a measured cost.
+- With spreads of 3¢ or more: +1.11¢ (t 0.66), 1,117 fills.
+- On every outlier order, YES happened 45.4% of the time against a mid of
+  44.1%, so the strikes above the curve were, if anything, priced too low,
+  not too high.
+
+**Verdict: fails.** It has enough fills and games, and beats the control by
+more than 1¢, but the mean after the haircut is below zero and t is far from
+2.5. The NBA ladder reading (+4.9¢) does not carry over to other sports.
+Combined with the audit's finding that the NBA reading was a timing effect,
+the ladder-outlier idea is closed in this project. The NBA ladder paper test
+keeps running only as already planned.
