@@ -29,7 +29,7 @@ def price_to_dollars(price):
     except (ValueError, TypeError):
         return None
     # Legacy API prices are integer cents; fixed-point dollar prices are < 1.
-    return value / 100 if value > 1 else value
+    return value / 100 if value >= 1 else value
 
 
 def top_price(levels):
