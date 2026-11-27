@@ -173,3 +173,27 @@ def test_trading_refuses_mismatched_market_and_execution_venues(monkeypatch):
     monkeypatch.setattr(nba_trade, "TradingClient", lambda dry_run: FakeClient())
     with pytest.raises(TradingError, match="different venues"):
         nba_trade.main()
+
+
+def test_candles_read_the_live_endpoint_dollar_fields(monkeypatch):
+    """27 November 2026: live-endpoint candles came back all NaN because they
+    carry close_dollars, volume_fp and open_interest_fp, not close/volume."""
+    payload = {
+        "candlesticks": [
+            {
+                "end_period_ts": 1795651200,
+                "open_interest_fp": "120.00",
+                "price": {"close_dollars": "0.4500"},
+                "volume_fp": "35.00",
+                "yes_ask": {"close_dollars": "0.4600", "open_dollars": "0.5000"},
+                "yes_bid": {"close_dollars": "0.4400"},
+            }
+        ]
+    }
+    monkeypatch.setattr(api, "get_json", lambda path, params: payload)
+    rows = api.candles("KXNBAPTS-26NOV25AB-X-20", 1, 2, historical=False)
+    assert rows[0]["yes_bid"] == pytest.approx(0.44)
+    assert rows[0]["yes_ask"] == pytest.approx(0.46)
+    assert rows[0]["price"] == pytest.approx(0.45)
+    assert rows[0]["volume"] == pytest.approx(35.0)
+    assert rows[0]["open_interest"] == pytest.approx(120.0)

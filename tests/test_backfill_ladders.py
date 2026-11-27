@@ -110,3 +110,10 @@ def test_old_markets_use_historical_only():
 
     B.fetch_one("KXNFLREC-25NOV02X-P-5", pd.Timestamp("2025-11-02T21:00:00Z"), get, get)
     assert calls == [True, True]
+
+
+def test_a_batch_of_empty_quotes_is_refused():
+    empty = [{"yes_bid": float("nan"), "yes_ask": float("nan")}] * 300
+    assert not B.quotes_present(empty)
+    assert B.quotes_present(empty[:50])  # too few to judge
+    assert B.quotes_present(empty + [{"yes_bid": 0.4, "yes_ask": float("nan")}])

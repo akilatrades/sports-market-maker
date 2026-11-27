@@ -104,6 +104,17 @@ def fetch_one(ticker, anchor, get_candles=candles, get_trades=trades):
     return got_c or [], got_t or []
 
 
+def quotes_present(candle_rows, at_least=200):
+    """False when a large batch of candles has no bid or ask at all: the
+    parser is reading the wrong fields (27 November 2026), so nothing may be
+    marked done."""
+    if len(candle_rows) < at_least:
+        return True
+    return any(
+        pd.notna(r.get("yes_bid")) or pd.notna(r.get("yes_ask")) for r in candle_rows
+    )
+
+
 def run(series, start, minutes, workers):
     OUT.mkdir(parents=True, exist_ok=True)
     paths = {k: OUT / f"{k}_{series}.parquet" for k in ("markets", "candles", "trades")}
@@ -142,6 +153,11 @@ def run(series, start, minutes, workers):
                     if job:
                         pending[pool.submit(fetch_one, *job)] = job[0]
                 break
+    if not quotes_present(got_c):
+        print(
+            f"::error::{series}: {len(got_c)} candles but no bid or ask in any; not saved"
+        )
+        raise SystemExit(1)
     for key, rows in (("candles", got_c), ("trades", got_t)):
         new = pd.DataFrame(rows)
         if paths[key].exists():

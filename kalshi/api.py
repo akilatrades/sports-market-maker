@@ -162,8 +162,8 @@ def candles(ticker, start_ts, end_ts, period=60, historical=True):
                 "yes_bid": _close(c.get("yes_bid")),
                 "yes_ask": _close(c.get("yes_ask")),
                 "price": _close(c.get("price")),
-                "volume": _number(c.get("volume")),
-                "open_interest": _number(c.get("open_interest")),
+                "volume": _first_number(c, "volume_fp", "volume"),
+                "open_interest": _first_number(c, "open_interest_fp", "open_interest"),
             }
         )
     return rows
@@ -204,7 +204,22 @@ def _number(value):
 
 
 def _close(block):
-    return _number((block or {}).get("close"))
+    """Closing value of a candle block. The historical endpoint sends "close"
+    (dollars); the live endpoint sends "close_dollars"."""
+    block = block or {}
+    for key in ("close_dollars", "close"):
+        value = _number(block.get(key))
+        if np.isfinite(value):
+            return value
+    return np.nan
+
+
+def _first_number(record, *keys):
+    for key in keys:
+        value = _number(record.get(key))
+        if np.isfinite(value):
+            return value
+    return np.nan
 
 
 def fee_per_contract(price):
