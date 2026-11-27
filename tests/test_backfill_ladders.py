@@ -73,3 +73,40 @@ def test_ladder_why_marks_round_strikes_and_hours_to_tip(monkeypatch):
     ]
     assert got.hours_to_tip.round(1).tolist() == [2.0, 2.0]
     assert got.bid_above_curve.tolist() == [True, False]
+
+
+def test_recent_markets_fall_back_to_the_live_endpoints():
+    """26 November 2026: every NBA market since 20 October came back empty,
+    because only /historical was asked."""
+    import pandas as pd
+
+    calls = []
+
+    def fake(kind):
+        def get(ticker, lo, hi, historical=True):
+            calls.append((kind, historical))
+            return [] if historical else [{"ticker": ticker, "kind": kind}]
+
+        return get
+
+    c, t = B.fetch_one(
+        "KXNBAPTS-26NOV25AB-X-20",
+        pd.Timestamp("2026-11-26T06:00:00Z"),
+        get_candles=fake("c"),
+        get_trades=fake("t"),
+    )
+    assert c == [{"ticker": "KXNBAPTS-26NOV25AB-X-20", "kind": "c"}] and len(t) == 1
+    assert calls == [("c", True), ("c", False), ("t", True), ("t", False)]
+
+
+def test_old_markets_use_historical_only():
+    import pandas as pd
+
+    calls = []
+
+    def get(ticker, lo, hi, historical=True):
+        calls.append(historical)
+        return [{"x": 1}]
+
+    B.fetch_one("KXNFLREC-25NOV02X-P-5", pd.Timestamp("2025-11-02T21:00:00Z"), get, get)
+    assert calls == [True, True]

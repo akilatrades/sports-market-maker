@@ -87,10 +87,20 @@ def save(frame, path):
     tmp.replace(path)
 
 
-def fetch_one(ticker, anchor):
+def fetch_one(ticker, anchor, get_candles=candles, get_trades=trades):
+    """Candles and trades for one market. Markets settled before Kalshi's
+    historical cutoff are under /historical; newer ones are only on the live
+    endpoints, so an empty historical answer falls back to the live one."""
     a = int(anchor.timestamp())
-    got_c = candles(ticker, a - BEFORE_HOURS * 3600, a + AFTER_HOURS * 3600)
-    got_t = trades(ticker, a - BEFORE_HOURS * 3600, a - TRADES_UNTIL_HOURS * 3600)
+    lo, hi, t_hi = (
+        a - BEFORE_HOURS * 3600,
+        a + AFTER_HOURS * 3600,
+        a - TRADES_UNTIL_HOURS * 3600,
+    )
+    got_c = get_candles(ticker, lo, hi) or get_candles(ticker, lo, hi, historical=False)
+    got_t = get_trades(ticker, lo, t_hi) or get_trades(
+        ticker, lo, t_hi, historical=False
+    )
     return got_c or [], got_t or []
 
 
