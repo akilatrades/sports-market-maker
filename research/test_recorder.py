@@ -2,7 +2,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from recorder import append_records, validate_record
+from research.recorder import append_records, validate_record
 
 
 VALID = {
