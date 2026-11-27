@@ -21,6 +21,7 @@ EVENT_TYPES = {
     "order_cancel_request",
     "order_cancel_ack",
     "fill",
+    "public_trade",
     "partial_fill",
     "settlement",
     "heartbeat",
@@ -42,6 +43,12 @@ def validate_record(record: dict[str, Any]) -> dict[str, Any]:
     # require an ISO-like string so records can be audited and sorted.
     if not isinstance(record["source_timestamp"], str):
         raise ValueError("source_timestamp must be an ISO timestamp string")
+    try:
+        parsed = datetime.fromisoformat(record["source_timestamp"].replace("Z", "+00:00"))
+    except ValueError as exc:
+        raise ValueError("source_timestamp must be valid ISO-8601") from exc
+    if parsed.tzinfo is None:
+        raise ValueError("source_timestamp must include a timezone")
     result = dict(record)
     result.setdefault("schema_version", 1)
     result.setdefault("ingested_at", utc_now())
