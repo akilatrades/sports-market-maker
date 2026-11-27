@@ -131,3 +131,124 @@ def test_a_cycle_pages_selects_and_writes(tmp_path, monkeypatch):
         "order" not in json.loads(line).get("event_type", "")
         for line in files[0].read_text().splitlines()
     )
+
+
+def test_event_time_rules():
+    from datetime import datetime, timezone
+
+    from research.live_kalshi_collector import event_time
+
+    m = {
+        "occurrence_datetime": "2026-11-28T20:00:00Z",
+        "close_time": "2026-11-28T18:00:00Z",
+    }
+    assert event_time(m) == datetime(2026, 11, 28, 17, tzinfo=timezone.utc)  # NBA rule
+    assert event_time(m, "earliest", 0) == datetime(
+        2026, 11, 28, 18, tzinfo=timezone.utc
+    )
+    assert event_time(
+        {"close_time": "2026-11-28T18:00:00Z"}, "earliest", 0
+    ) == datetime(2026, 11, 28, 18, tzinfo=timezone.utc)
+    assert event_time({}, "earliest", 0) is None
+
+
+def test_category_markets_page_and_keep_only_the_category(monkeypatch):
+    from datetime import datetime, timezone
+
+    import research.live_kalshi_collector as C
+
+    calls = []
+    pages = {
+        "": {
+            "markets": [
+                {"ticker": "A", "event_ticker": "KXTRUMPMENTION-26NOV28"},
+                {"ticker": "X", "event_ticker": "KXNBAPTS-26NOV28LALBOS"},
+            ],
+            "cursor": "p2",
+        },
+        "p2": {
+            "markets": [{"ticker": "B", "event_ticker": "KXEARNINGSMENTIONTSLA-26"}]
+        },
+    }
+
+    def fake(path, params=None, timeout=12):
+        calls.append((path, dict(params)))
+        return pages[params.get("cursor", "")]
+
+    monkeypatch.setattr(C, "get_json", fake)
+    now = datetime(2026, 11, 28, 12, tzinfo=timezone.utc)
+    got = C.category_markets({"KXTRUMPMENTION", "KXEARNINGSMENTIONTSLA"}, now, 48)
+    assert [m["ticker"] for m in got] == ["A", "B"]
+    first = calls[0][1]
+    assert (
+        first["status"] == "open"
+        and first["max_close_ts"] - first["min_close_ts"] == 48 * 3600
+    )
+
+
+def test_category_source_refreshes_on_schedule(monkeypatch):
+    from datetime import datetime, timedelta, timezone
+
+    import research.live_kalshi_collector as C
+
+    now = datetime(2026, 11, 28, 12, tzinfo=timezone.utc)
+    soon = (now + timedelta(hours=3)).isoformat()
+    later = (now + timedelta(hours=30)).isoformat()
+    counts = {"series": 0, "markets": 0}
+
+    def series(category):
+        counts["series"] += 1
+        return {"KXTRUMPMENTION"}
+
+    def markets(s, n, h):
+        counts["markets"] += 1
+        return [
+            {"ticker": "SOON", "event_ticker": "KXTRUMPMENTION-1", "close_time": soon},
+            {
+                "ticker": "LATER",
+                "event_ticker": "KXTRUMPMENTION-2",
+                "close_time": later,
+            },
+        ]
+
+    monkeypatch.setattr(C, "category_series", series)
+    monkeypatch.setattr(C, "category_markets", markets)
+    src = C.CategorySource("Mentions", 7, 0, 200, "earliest", 0, refresh_minutes=30)
+    got, fresh = src.markets(now)
+    assert [m["ticker"] for m in got] == ["SOON"] and fresh
+    got, fresh = src.markets(now + timedelta(minutes=10))
+    assert not fresh and counts == {"series": 1, "markets": 1}
+    got, fresh = src.markets(now + timedelta(hours=4))  # past the event, rediscovered
+    assert fresh and got == [] and counts == {"series": 2, "markets": 2}
+
+
+def test_a_category_cycle_reads_only_books_and_trades(tmp_path, monkeypatch):
+    import json
+
+    import research.live_kalshi_collector as C
+
+    seen_paths = []
+
+    def fake(path, params=None, timeout=12):
+        seen_paths.append(path)
+        if path.endswith("/orderbook"):
+            return {
+                "orderbook": {
+                    "yes_dollars": [["0.40", "5"]],
+                    "no_dollars": [["0.55", "3"]],
+                }
+            }
+        return {"trades": []}
+
+    monkeypatch.setattr(C, "get_json", fake)
+    out = str(tmp_path / "m_{date}.jsonl")
+    stats = C.collect_once(
+        [], out, 200, 100, set(), within_hours=7,
+        chosen_markets=[{"ticker": "A", "event_ticker": "E"}], write_market_snapshots=False,
+    )  # fmt: skip
+    assert stats["markets"] == 0 and stats["books"] == 1
+    assert "/markets" not in seen_paths  # no listing on a non-refresh cycle
+    lines = [
+        json.loads(x) for x in next(tmp_path.glob("m_*.jsonl")).read_text().splitlines()
+    ]
+    assert [x["event_type"] for x in lines] == ["book_snapshot"]
