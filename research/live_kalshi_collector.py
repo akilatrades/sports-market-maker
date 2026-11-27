@@ -166,29 +166,25 @@ def category_series(category: str, max_pages: int = 20) -> set[str]:
 
 
 def category_markets(
-    series: set[str], now: datetime, horizon_hours: float, max_pages: int = 50
+    series: set[str], now: datetime, horizon_hours: float, max_pages: int = 5
 ) -> list[dict]:
-    """Open markets closing within horizon_hours whose series is in `series`.
-    The series is the event ticker's first dash-separated part (an explicit
-    key, never a substring search)."""
-    markets, cursor = [], ""
-    params: dict[str, Any] = {
-        "status": "open",
-        "min_close_ts": int(now.timestamp()),
-        "max_close_ts": int((now + timedelta(hours=horizon_hours)).timestamp()),
-        "limit": 1000,
-    }
-    for _ in range(max_pages):
-        if cursor:
-            params["cursor"] = cursor
-        payload = get_json("/markets", params)
-        for m in payload.get("markets", []):
-            if str(m.get("event_ticker", "")).split("-")[0] in series:
-                markets.append(m)
-        cursor = payload.get("cursor") or ""
-        if not cursor:
-            break
-    return markets
+    """Open markets of every series in `series` that close within
+    horizon_hours, listed series by series. (One unfiltered /markets listing
+    does not work: tens of thousands of combo markets crowd out the rest.)
+    A series that fails to list is skipped and retried at the next refresh."""
+    until = now + timedelta(hours=horizon_hours)
+    out = []
+    for s in sorted(series):
+        try:
+            markets = market_list(s, limit=1000, max_pages=max_pages)
+        except Exception as exc:  # noqa: BLE001
+            print(f"[warn] series {s} markets fetch failed: {exc}")
+            continue
+        for m in markets:
+            close = _parse(m.get("close_time"))
+            if close is not None and now <= close <= until:
+                out.append(m)
+    return out
 
 
 class CategorySource:

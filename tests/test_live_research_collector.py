@@ -152,38 +152,32 @@ def test_event_time_rules():
     assert event_time({}, "earliest", 0) is None
 
 
-def test_category_markets_page_and_keep_only_the_category(monkeypatch):
-    from datetime import datetime, timezone
+def test_category_markets_list_each_series_and_keep_closes_in_the_horizon(monkeypatch):
+    from datetime import datetime, timedelta, timezone
 
     import research.live_kalshi_collector as C
 
-    calls = []
-    pages = {
-        "": {
-            "markets": [
-                {"ticker": "A", "event_ticker": "KXTRUMPMENTION-26NOV28"},
-                {"ticker": "X", "event_ticker": "KXNBAPTS-26NOV28LALBOS"},
-            ],
-            "cursor": "p2",
-        },
-        "p2": {
-            "markets": [{"ticker": "B", "event_ticker": "KXEARNINGSMENTIONTSLA-26"}]
-        },
-    }
-
-    def fake(path, params=None, timeout=12):
-        calls.append((path, dict(params)))
-        return pages[params.get("cursor", "")]
-
-    monkeypatch.setattr(C, "get_json", fake)
     now = datetime(2026, 11, 28, 12, tzinfo=timezone.utc)
-    got = C.category_markets({"KXTRUMPMENTION", "KXEARNINGSMENTIONTSLA"}, now, 48)
-    assert [m["ticker"] for m in got] == ["A", "B"]
-    first = calls[0][1]
-    assert (
-        first["status"] == "open"
-        and first["max_close_ts"] - first["min_close_ts"] == 48 * 3600
-    )
+    iso = lambda h: (now + timedelta(hours=h)).isoformat()  # noqa: E731
+    listed = {
+        "KXTRUMPMENTION": [
+            {"ticker": "A", "close_time": iso(5)},
+            {"ticker": "FAR", "close_time": iso(80)},
+        ],
+        "KXEARNINGSMENTIONTSLA": [{"ticker": "B", "close_time": iso(30)}],
+    }
+    calls = []
+
+    def fake_list(series, limit=100, max_pages=20):
+        calls.append(series)
+        if series == "KXBROKEN":
+            raise OSError("timeout")
+        return listed.get(series, [])
+
+    monkeypatch.setattr(C, "market_list", fake_list)
+    got = C.category_markets(set(listed) | {"KXBROKEN"}, now, 48)
+    assert sorted(m["ticker"] for m in got) == ["A", "B"]
+    assert sorted(calls) == sorted(set(listed) | {"KXBROKEN"})
 
 
 def test_category_source_refreshes_on_schedule(monkeypatch):
