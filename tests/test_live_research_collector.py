@@ -246,3 +246,37 @@ def test_a_category_cycle_reads_only_books_and_trades(tmp_path, monkeypatch):
         json.loads(x) for x in next(tmp_path.glob("m_*.jsonl")).read_text().splitlines()
     ]
     assert [x["event_type"] for x in lines] == ["book_snapshot"]
+
+
+def test_get_json_backs_off_on_429_then_gives_up(monkeypatch):
+    import io
+    from urllib.error import HTTPError
+
+    import pytest
+
+    import research.live_kalshi_collector as C
+
+    answers = [429, 429, 200]
+    sleeps = []
+
+    def fake_open(req, timeout=12):
+        code = answers.pop(0)
+        if code == 429:
+            raise HTTPError(req.full_url, 429, "Too Many Requests", {}, None)
+        return io.BytesIO(b'{"ok": 1}')
+
+    monkeypatch.setattr(C, "urlopen", fake_open)
+    monkeypatch.setattr(C.time, "sleep", sleeps.append)
+    monkeypatch.setattr(C, "_wait_turn", lambda: None)
+    assert C.get_json("/x") == {"ok": 1} and sleeps == [2.0, 4.0]
+    answers[:] = [429] * 4
+    with pytest.raises(HTTPError):
+        C.get_json("/x")
+    answers[:] = [500]
+
+    def fail_500(req, timeout=12):
+        raise HTTPError(req.full_url, 500, "boom", {}, None)
+
+    monkeypatch.setattr(C, "urlopen", fail_500)
+    with pytest.raises(HTTPError):  # other errors are not retried
+        C.get_json("/x")

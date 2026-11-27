@@ -16,6 +16,7 @@ from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timedelta, timezone
 from typing import Any
 from urllib.parse import urlencode
+from urllib.error import HTTPError
 from urllib.request import Request, urlopen
 
 from research.recorder import append_records
@@ -41,15 +42,27 @@ def now_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
 
 
+RETRIES_429 = 3  # Kalshi answers 429 (too many requests) under load: back off
+
+
 def get_json(
     path: str, params: dict[str, Any] | None = None, timeout: int = 12
 ) -> dict:
     query = urlencode(params or {}, doseq=True)
     url = f"{BASE}{path}" + (f"?{query}" if query else "")
-    _wait_turn()
-    req = Request(url, headers={"User-Agent": USER_AGENT, "Accept": "application/json"})
-    with urlopen(req, timeout=timeout) as response:
-        return json.loads(response.read().decode("utf-8"))
+    for attempt in range(RETRIES_429 + 1):
+        _wait_turn()
+        req = Request(
+            url, headers={"User-Agent": USER_AGENT, "Accept": "application/json"}
+        )
+        try:
+            with urlopen(req, timeout=timeout) as response:
+                return json.loads(response.read().decode("utf-8"))
+        except HTTPError as exc:
+            if exc.code != 429 or attempt == RETRIES_429:
+                raise
+            time.sleep(2.0 * (attempt + 1))
+    raise RuntimeError("unreachable")
 
 
 def market_list(series: str, limit: int = 100, max_pages: int = 20) -> list[dict]:
