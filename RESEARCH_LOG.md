@@ -6350,3 +6350,65 @@ then the neighbours drifting up to meet it. Tight books show no kink edge.
 Candidate refinements for a future plan, not for the running paper test:
 spread of 3+ cents, and within 6 hours of tip-off. They need fresh data
 (part B, or the paper test's own ledger) before they count.
+
+## 2026-11-27: Ladder checks: this season, the sportsbooks, and size (plans, written before any result)
+
+**C1. This season's NBA ladders (out-of-sample, frozen rule).** Download
+2026-27 NBA points/rebounds/assists/threes ladders from 20 October
+(`backfill-ladders` workflow with a series list and start date), then run
+Study B's rule unchanged: pre-game candles (tip-off = occurrence time minus
+3 hours, Study B's fallback), 4+ strikes, logit fit, resting NO on strikes
+3+ cents above the curve, first qualifying hour, 5+ contracts traded
+through, maker fee. **Bar:** after the 2c haircut above 0 with game-clustered
+t at least 2.0 (lower than 2.5 because this is one rule, one fresh sample,
+not a search), 100+ fills in 40+ games, and at least 1 cent above the
+control. Reported beside it, no bar: Part A's refinements (spread 3+ cents;
+within 6 hours of tip-off), the 0.5c haircut. This is a first look, not the
+paper test's verdict.
+
+**C2. Do the sportsbooks agree the kinked strike is overpriced?** In-sample
+2025-26, but an independent source: for Study B's outlier and control
+orders whose exact line has a de-vigged sportsbook price
+(`outputs/bookline/fills_with_book.csv.gz`, the books' earliest posting for
+the game), compare Kalshi's mid, the fitted curve and the books' fair
+chance. **Reading fixed now:** if kinks are mispricings, the outliers' mid
+minus the book is clearly positive (about the residual) while the curve
+minus the book is near 0, and the control shows neither. If the books
+agree with Kalshi's kinked price, the kink is information, not an error.
+Reported with game-clustered t; no pass bar. 2 measures x 2 groups.
+
+**C3. How much money (capacity).** In-sample, SIMULATED. For Study B's
+outlier orders, contracts filled at sizes 1, 3, 5, 10 and 25 with 4
+contracts resting ahead (fill = min(size, traded - 4)); profit per month in
+dollars after the maker fee, at 2-cent and 0.5-cent haircuts. Descriptive.
+
+### C2 and C3 results (in-sample, SIMULATED)
+
+`python -m research.ladder_checks` -> `outputs/ladder_checks/`.
+
+**C2: the sportsbooks side with Kalshi, not with the curve.** For the 402
+outlier orders whose exact line has a sportsbook price (111 games): Kalshi's
+mid minus the books' fair chance **-1.0 points** (t -4.5); the fitted curve
+minus the books **-8.0 points** (t -17.8); the residual +7.0. Control (1,965
+orders): -0.9, -0.8 and -0.1. By the reading fixed in the plan, **the kink is
+not a mispricing**: the logit curve fits real ladders badly at those
+strikes. Outcomes agree: over all 5,408 outlier orders YES happened 54.8%,
+the mid said 53.1% and the curve 46.0%.
+
+So Study B's +4.9c on filled orders is not "the market overprices the
+kinked strike". What is left is which orders fill: on filled outliers YES
+happened less often than the mid said. Spread capture explains about 1
+cent of it (the books' expectation on the 135 filled orders with a book
+price was +0.9c; realized +5.8c, t 1.1). The remaining 3-4 cents (about t 2)
+is favourable fills or chance; this data cannot tell which. Part A's
+mechanism reading ("buyers bid one strike above fair") is withdrawn.
+
+**C3: capacity, if Study B's edge were real.** 8 months, 1,174 fills at 1
+contract. With 4 contracts ahead: per month 147 / 433 / 709 / 1,350 / 3,019
+contracts at sizes 1 / 3 / 5 / 10 / 25, worth **$4.3 / $12.8 / $20.2 / $33.0
+/ $53.2 a month after the 2c haircut** ($6.5 / $19.3 / $30.8 / $53.3 / $98.5
+after 0.5c). Small at any size.
+
+C1 (this season's NBA ladders) and part B (other sports) keep their plans:
+they test the frozen rule's filled-order profit on fresh data, which is now
+the only open question about it.

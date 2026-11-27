@@ -1,0 +1,83 @@
+{
+ "note": "In-sample NBA 2025-26, SIMULATED. C2: de-vigged sportsbook YES chance at the books' earliest posting for the game, exact line only. C3: 4 contracts ahead of us.",
+ "C2_sportsbooks": {
+  "outlier": {
+   "orders_with_book": 402,
+   "mid_minus_book": {
+    "n": 402,
+    "games": 111,
+    "cents": -0.98,
+    "t": -4.51
+   },
+   "curve_minus_book": {
+    "n": 402,
+    "games": 111,
+    "cents": -7.96,
+    "t": -17.79
+   },
+   "residual": {
+    "n": 402,
+    "games": 111,
+    "cents": 6.97,
+    "t": 21.6
+   }
+  },
+  "control": {
+   "orders_with_book": 1965,
+   "mid_minus_book": {
+    "n": 1965,
+    "games": 136,
+    "cents": -0.88,
+    "t": -8.16
+   },
+   "curve_minus_book": {
+    "n": 1965,
+    "games": 136,
+    "cents": -0.82,
+    "t": -7.62
+   },
+   "residual": {
+    "n": 1965,
+    "games": 136,
+    "cents": -0.06,
+    "t": -5.13
+   }
+  }
+ },
+ "C3_capacity": {
+  "months": 8,
+  "fills_at_size_1": 1174,
+  "by_size": {
+   "1": {
+    "contracts_filled": 1174,
+    "contracts_per_month": 146.8,
+    "dollars_per_month_after_2.0c": 4.28,
+    "dollars_per_month_after_0.5c": 6.48
+   },
+   "3": {
+    "contracts_filled": 3459,
+    "contracts_per_month": 432.5,
+    "dollars_per_month_after_2.0c": 12.82,
+    "dollars_per_month_after_0.5c": 19.31
+   },
+   "5": {
+    "contracts_filled": 5673,
+    "contracts_per_month": 709.2,
+    "dollars_per_month_after_2.0c": 20.15,
+    "dollars_per_month_after_0.5c": 30.79
+   },
+   "10": {
+    "contracts_filled": 10799,
+    "contracts_per_month": 1349.9,
+    "dollars_per_month_after_2.0c": 33.03,
+    "dollars_per_month_after_0.5c": 53.28
+   },
+   "25": {
+    "contracts_filled": 24151,
+    "contracts_per_month": 3018.9,
+    "dollars_per_month_after_2.0c": 53.17,
+    "dollars_per_month_after_0.5c": 98.46
+   }
+  }
+ }
+}
