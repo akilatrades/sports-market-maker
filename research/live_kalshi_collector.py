@@ -10,8 +10,10 @@ from __future__ import annotations
 
 import argparse
 import json
+import threading
 import time
-from datetime import datetime, timezone
+from concurrent.futures import ThreadPoolExecutor
+from datetime import datetime, timedelta, timezone
 from typing import Any
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
@@ -20,6 +22,18 @@ from research.recorder import append_records
 
 BASE = "https://external-api.kalshi.com/trade-api/v2"
 USER_AGENT = "sports-market-maker-research-collector/1.0"
+MAX_PER_SECOND = 10.0  # shared across worker threads; well under public limits
+_LOCK = threading.Lock()
+_NEXT = [0.0]
+
+
+def _wait_turn() -> None:
+    with _LOCK:
+        now = time.monotonic()
+        wait = _NEXT[0] - now
+        _NEXT[0] = max(now, _NEXT[0]) + 1.0 / MAX_PER_SECOND
+    if wait > 0:
+        time.sleep(wait)
 
 
 def now_iso() -> str:
@@ -31,16 +45,71 @@ def get_json(
 ) -> dict:
     query = urlencode(params or {}, doseq=True)
     url = f"{BASE}{path}" + (f"?{query}" if query else "")
+    _wait_turn()
     req = Request(url, headers={"User-Agent": USER_AGENT, "Accept": "application/json"})
     with urlopen(req, timeout=timeout) as response:
         return json.loads(response.read().decode("utf-8"))
 
 
-def market_list(series: str, limit: int = 100) -> list[dict]:
-    payload = get_json(
-        "/markets", {"series_ticker": series, "status": "open", "limit": limit}
-    )
-    return payload.get("markets", [])
+def market_list(series: str, limit: int = 100, max_pages: int = 20) -> list[dict]:
+    """Open markets in a series, following Kalshi's cursor (up to max_pages)."""
+    markets, cursor = [], ""
+    for _ in range(max_pages):
+        params = {"series_ticker": series, "status": "open", "limit": limit}
+        if cursor:
+            params["cursor"] = cursor
+        payload = get_json("/markets", params)
+        markets += payload.get("markets", [])
+        cursor = payload.get("cursor") or ""
+        if not cursor:
+            break
+    return markets
+
+
+def tip_estimate(market: dict, offset_hours: float = 3.0) -> datetime | None:
+    """Kalshi sets the occurrence time near the END of an NBA game; tip-off is
+    about three hours earlier (the backtests' rule)."""
+    for field in ("occurrence_datetime", "expected_expiration_time"):
+        text = market.get(field)
+        if text:
+            try:
+                return datetime.fromisoformat(
+                    str(text).replace("Z", "+00:00")
+                ) - timedelta(hours=offset_hours)
+            except ValueError:
+                continue
+    return None
+
+
+def select_markets(
+    markets: list[dict],
+    now: datetime,
+    cap: int,
+    within_hours: float | None = None,
+    in_game_hours: float = 0.0,
+) -> list[dict]:
+    """Without within_hours: the cap highest-volume markets (the original rule).
+    With it: every market from within_hours before tip-off to in_game_hours
+    after, nearest tip-off first, up to cap."""
+    if within_hours is None:
+
+        def vol(m):
+            try:
+                return float(m.get("volume_fp", m.get("volume", 0)) or 0)
+            except (ValueError, TypeError):
+                return 0
+
+        return sorted(markets, key=vol, reverse=True)[:cap]
+    keep = []
+    for m in markets:
+        tip = tip_estimate(m)
+        if tip is None:
+            continue
+        hours = (tip - now).total_seconds() / 3600
+        if -in_game_hours <= hours <= within_hours:
+            keep.append((abs(hours), m))
+    keep.sort(key=lambda x: x[0])
+    return [m for _, m in keep[:cap]]
 
 
 def best_bid_levels(orderbook: dict) -> dict:
@@ -71,8 +140,31 @@ def normalize_market(market: dict, observed_at: str) -> dict:
         ),
         "volume_fp": market.get("volume_fp", market.get("volume")),
         "open_interest_fp": market.get("open_interest_fp", market.get("open_interest")),
+        "occurrence_datetime": market.get("occurrence_datetime"),
         "raw_ticker": ticker,
     }
+
+
+def fetch_market_data(ticker: str, trade_limit: int, want_trades: bool) -> tuple:
+    """(orderbook payload or exception, trades payload or exception)."""
+    try:
+        book = get_json(f"/markets/{ticker}/orderbook", {"depth": 10})
+    except Exception as exc:  # noqa: BLE001 - reported by the caller
+        book = exc
+    trades: Any = {"trades": []}
+    if want_trades:
+        try:
+            trades = get_json(
+                "/markets/trades", {"ticker": ticker, "limit": trade_limit}
+            )
+        except Exception as exc:  # noqa: BLE001
+            trades = exc
+    return book, trades
+
+
+def dated(output: str, when: datetime) -> str:
+    """'data/nba/live_events_{date}.jsonl' -> one file per UTC day."""
+    return output.replace("{date}", when.strftime("%Y-%m-%d"))
 
 
 def collect_once(
@@ -81,89 +173,94 @@ def collect_once(
     market_cap: int,
     trade_limit: int,
     seen_trade_ids: set[str],
+    within_hours: float | None = None,
+    in_game_hours: float = 0.0,
+    workers: int = 1,
+    want_trades: bool = True,
 ) -> dict[str, int]:
     collected = 0
     markets_count = books_count = trades_count = errors = 0
+    now = datetime.now(timezone.utc)
+    path = dated(output, now)
+    chosen = []
     for series in series_tickers:
         try:
             markets = market_list(series, limit=min(max(market_cap * 3, 100), 1000))
-
-            # Prioritize highest-volume contracts where numeric volume is parseable.
-            def vol(m):
-                try:
-                    return float(m.get("volume_fp", m.get("volume", 0)) or 0)
-                except (ValueError, TypeError):
-                    return 0
-
-            markets = sorted(markets, key=vol, reverse=True)[:market_cap]
+            chosen += select_markets(
+                markets, now, market_cap, within_hours, in_game_hours
+            )
         except Exception as exc:
             print(f"[warn] series {series} markets fetch failed: {exc}")
             errors += 1
-            continue
-        for market in markets:
-            ticker = market.get("ticker")
-            if not ticker:
-                continue
-            observed = now_iso()
+    chosen = [m for m in chosen if m.get("ticker")]
+    with ThreadPoolExecutor(max(1, workers)) as pool:
+        fetched = list(
+            pool.map(
+                lambda m: fetch_market_data(m["ticker"], trade_limit, want_trades),
+                chosen,
+            )
+        )
+    for market, (book_payload, trades_payload) in zip(chosen, fetched):
+        ticker = market["ticker"]
+        observed = now_iso()
+        try:
+            collected += append_records(path, [normalize_market(market, observed)])
+            markets_count += 1
+        except Exception as exc:
+            print(f"[warn] market record {ticker}: {exc}")
+            errors += 1
+        if isinstance(book_payload, Exception):
+            print(f"[warn] orderbook {ticker}: {book_payload}")
+            errors += 1
+        else:
+            book = book_payload.get("orderbook", book_payload.get("orderbook_fp", {}))
+            levels = best_bid_levels(book)
+            book_record = {
+                "event_id": market.get("event_ticker", ticker),
+                "market_id": ticker,
+                "event_type": "book_snapshot",
+                "source_timestamp": observed,
+                "source": "kalshi_public_rest",
+                "snapshot_time_semantics": "collector_observation_time; exchange snapshot timestamp not provided",
+                "yes_bid_levels": levels["yes"],
+                "no_bid_levels": levels["no"],
+            }
             try:
-                rec = normalize_market(market, observed)
-                collected += append_records(output, [rec])
-                markets_count += 1
-            except Exception as exc:
-                print(f"[warn] market record {ticker}: {exc}")
-                errors += 1
-            try:
-                book_payload = get_json(f"/markets/{ticker}/orderbook", {"depth": 10})
-                book = book_payload.get(
-                    "orderbook", book_payload.get("orderbook_fp", {})
-                )
-                levels = best_bid_levels(book)
-                book_record = {
-                    "event_id": market.get("event_ticker", ticker),
-                    "market_id": ticker,
-                    "event_type": "book_snapshot",
-                    "source_timestamp": observed,
-                    "source": "kalshi_public_rest",
-                    "snapshot_time_semantics": "collector_observation_time; exchange snapshot timestamp not provided",
-                    "yes_bid_levels": levels["yes"],
-                    "no_bid_levels": levels["no"],
-                }
-                collected += append_records(output, [book_record])
+                collected += append_records(path, [book_record])
                 books_count += 1
             except Exception as exc:
-                print(f"[warn] orderbook {ticker}: {exc}")
+                print(f"[warn] book record {ticker}: {exc}")
                 errors += 1
+        if isinstance(trades_payload, Exception):
+            print(f"[warn] trades {ticker}: {trades_payload}")
+            errors += 1
+            continue
+        for trade in trades_payload.get("trades", []):
+            tid = str(trade.get("trade_id", trade.get("id", "")))
+            if tid and tid in seen_trade_ids:
+                continue
+            if tid:
+                seen_trade_ids.add(tid)
+            rec = {
+                "event_id": market.get("event_ticker", ticker),
+                "market_id": ticker,
+                "event_type": "public_trade",  # public tape, not personal fill
+                "source_timestamp": trade.get("created_time") or observed,
+                "observed_at": observed,
+                "source": "kalshi_public_trade_tape",
+                "trade_id": tid or None,
+                "public_trade": True,
+                "yes_price_dollars": trade.get(
+                    "yes_price_dollars", trade.get("yes_price")
+                ),
+                "count_fp": trade.get("count_fp", trade.get("count")),
+                "taker_outcome_side": trade.get("taker_outcome_side"),
+            }
             try:
-                trades_payload = get_json(
-                    "/markets/trades", {"ticker": ticker, "limit": trade_limit}
-                )
-                trades = trades_payload.get("trades", [])
-                for trade in trades:
-                    tid = str(trade.get("trade_id", trade.get("id", "")))
-                    if tid and tid in seen_trade_ids:
-                        continue
-                    if tid:
-                        seen_trade_ids.add(tid)
-                    trade_time = trade.get("created_time") or observed
-                    rec = {
-                        "event_id": market.get("event_ticker", ticker),
-                        "market_id": ticker,
-                        "event_type": "public_trade",  # public tape, not personal fill
-                        "source_timestamp": trade_time,
-                        "observed_at": observed,
-                        "source": "kalshi_public_trade_tape",
-                        "trade_id": tid or None,
-                        "public_trade": True,
-                        "yes_price_dollars": trade.get(
-                            "yes_price_dollars", trade.get("yes_price")
-                        ),
-                        "count_fp": trade.get("count_fp", trade.get("count")),
-                        "taker_outcome_side": trade.get("taker_outcome_side"),
-                    }
-                    collected += append_records(output, [rec])
-                    trades_count += 1
+                collected += append_records(path, [rec])
+                trades_count += 1
             except Exception as exc:
-                print(f"[warn] trades {ticker}: {exc}")
+                print(f"[warn] trade record {ticker}: {exc}")
                 errors += 1
     return {
         "records": collected,
@@ -194,6 +291,22 @@ def main() -> None:
         help="per-series cap; highest-volume open markets",
     )
     p.add_argument("--trade-limit", type=int, default=100)
+    p.add_argument(
+        "--within-hours",
+        type=float,
+        default=None,
+        help="every market from this many hours before tip-off (instead of top volume)",
+    )
+    p.add_argument(
+        "--in-game-hours",
+        type=float,
+        default=0.0,
+        help="keep markets this long after tip-off",
+    )
+    p.add_argument("--workers", type=int, default=1, help="parallel requests (1-8)")
+    p.add_argument(
+        "--trades-every", type=int, default=1, help="fetch trades every Nth cycle"
+    )
     p.add_argument("--once", action="store_true", help="run one cycle then exit")
     args = p.parse_args()
     series = [s.strip() for s in args.series.split(",") if s.strip()]
@@ -201,16 +314,31 @@ def main() -> None:
         p.error("at least one series ticker required")
     if args.interval < 15:
         p.error("interval minimum is 15 seconds to reduce API load")
-    if args.max_markets < 1 or args.max_markets > 50:
-        p.error("--max-markets must be 1..50")
+    top = 50 if args.within_hours is None else 400
+    if args.max_markets < 1 or args.max_markets > top:
+        p.error(f"--max-markets must be 1..{top}")
+    if not 1 <= args.workers <= 8:
+        p.error("--workers must be 1..8")
     if args.trade_limit < 1 or args.trade_limit > 1000:
         p.error("--trade-limit must be 1..1000")
     seen: set[str] = set()
+    cycle = 0
     while True:
         started = time.monotonic()
         stats = collect_once(
-            series, args.output, args.max_markets, args.trade_limit, seen
+            series,
+            args.output,
+            args.max_markets,
+            args.trade_limit,
+            seen,
+            within_hours=args.within_hours,
+            in_game_hours=args.in_game_hours,
+            workers=args.workers,
+            want_trades=cycle % max(1, args.trades_every) == 0,
         )
+        cycle += 1
+        if len(seen) > 2_000_000:  # bounded memory on a small server
+            seen.clear()
         print(f"{now_iso()} cycle stats: {stats}")
         if args.once:
             break
