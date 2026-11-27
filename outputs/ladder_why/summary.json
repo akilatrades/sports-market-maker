@@ -1,0 +1,162 @@
+{
+ "note": "EXPLORATORY, in-sample NBA 2025-26, SIMULATED. Outlier = 3+ cents above the ladder's curve; control = within 1 cent; resting NO, 5+ contracts traded through.",
+ "overall": {
+  "outlier": {
+   "fills": 1174,
+   "games": 490,
+   "cents": 4.92,
+   "t": 3.25
+  },
+  "control": {
+   "fills": 5623,
+   "games": 848,
+   "cents": 0.68,
+   "t": 0.89
+  }
+ },
+ "E1_round_strikes": {
+  "share_round5_all_strikes": 0.402,
+  "share_round5_outlier_orders": 0.343,
+  "share_round10_all_strikes": 0.209,
+  "share_round10_outlier_orders": 0.171,
+  "outlier_round5": {
+   "fills": 531,
+   "games": 330,
+   "cents": 4.78,
+   "t": 2.2
+  },
+  "outlier_not_round5": {
+   "fills": 643,
+   "games": 357,
+   "cents": 5.03,
+   "t": 2.53
+  }
+ },
+ "E2_hours_before_tip": {
+  "0-3h": {
+   "outlier": {
+    "fills": 582,
+    "games": 316,
+    "cents": 5.54,
+    "t": 2.5
+   },
+   "control": {
+    "fills": 2122,
+    "games": 617,
+    "cents": 0.06,
+    "t": 0.05
+   }
+  },
+  "3-6h": {
+   "outlier": {
+    "fills": 362,
+    "games": 245,
+    "cents": 5.6,
+    "t": 2.28
+   },
+   "control": {
+    "fills": 2183,
+    "games": 623,
+    "cents": 0.04,
+    "t": 0.04
+   }
+  },
+  "6-99h": {
+   "outlier": {
+    "fills": 230,
+    "games": 165,
+    "cents": 2.28,
+    "t": 0.69
+   },
+   "control": {
+    "fills": 1318,
+    "games": 424,
+    "cents": 2.72,
+    "t": 1.87
+   }
+  }
+ },
+ "E3_persistence": {
+  "+1h": {
+   "still_fitted": 3960,
+   "median_resid_then_cents": 3.14,
+   "median_resid_at_order_cents": 4.92,
+   "median_bid_change_cents": 0.0,
+   "median_ask_change_cents": 0.0
+  },
+  "+2h": {
+   "still_fitted": 3272,
+   "median_resid_then_cents": 2.48,
+   "median_resid_at_order_cents": 4.88,
+   "median_bid_change_cents": 0.0,
+   "median_ask_change_cents": 0.0
+  },
+  "+3h": {
+   "still_fitted": 2885,
+   "median_resid_then_cents": 1.81,
+   "median_resid_at_order_cents": 4.94,
+   "median_bid_change_cents": 0.0,
+   "median_ask_change_cents": 0.0
+  }
+ },
+ "E4_side": {
+  "share_with_bid_above_curve": 0.812,
+  "bid_above_curve": {
+   "fills": 1031,
+   "games": 466,
+   "cents": 4.94,
+   "t": 3.09
+  },
+  "only_ask_above_curve": {
+   "fills": 143,
+   "games": 126,
+   "cents": 4.76,
+   "t": 1.19
+  }
+ },
+ "E5_spread": {
+  "1-2c": {
+   "outlier": {
+    "fills": 248,
+    "games": 187,
+    "cents": 0.62,
+    "t": 0.2
+   },
+   "control": {
+    "fills": 1706,
+    "games": 513,
+    "cents": 2.12,
+    "t": 1.65
+   }
+  },
+  "3-5c": {
+   "outlier": {
+    "fills": 462,
+    "games": 290,
+    "cents": 7.71,
+    "t": 3.29
+   },
+   "control": {
+    "fills": 2490,
+    "games": 659,
+    "cents": -0.43,
+    "t": -0.4
+   }
+  },
+  "6c+": {
+   "outlier": {
+    "fills": 464,
+    "games": 296,
+    "cents": 4.44,
+    "t": 1.9
+   },
+   "control": {
+    "fills": 1427,
+    "games": 593,
+    "cents": 0.88,
+    "t": 0.71
+   }
+  }
+ },
+ "variants": 14
+}
