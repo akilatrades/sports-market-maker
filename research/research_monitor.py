@@ -1,4 +1,5 @@
 """Generate local research coverage, market snapshots and CSV summaries from JSONL."""
+
 from __future__ import annotations
 
 import argparse
@@ -70,24 +71,28 @@ def summarize(rows):
         yes_bid = top_price(b.get("yes_bid_levels", []))
         no_bid = top_price(b.get("no_bid_levels", []))
         yes_ask = 1 - no_bid if no_bid is not None else None
-        spread = (yes_ask - yes_bid) if yes_bid is not None and yes_ask is not None else None
-        snapshot_rows.append({
-            "ticker": market,
-            "event_ticker": m.get("event_id"),
-            "title": m.get("title"),
-            "status": m.get("status"),
-            "close_time": m.get("close_time"),
-            "last_price": m.get("last_price_dollars"),
-            "market_yes_bid": m.get("yes_bid_dollars"),
-            "book_yes_bid": yes_bid,
-            "implied_yes_ask": yes_ask,
-            "spread_dollars": spread,
-            "market_snapshots": by_market[market]["market_snapshot"],
-            "book_snapshots": by_market[market]["book_snapshot"],
-            "public_trades": by_market[market]["public_trade"],
-            "public_trade_volume": trade_volume[market],
-            "private_fills": by_market[market]["private_fill_count"],
-        })
+        spread = (
+            (yes_ask - yes_bid) if yes_bid is not None and yes_ask is not None else None
+        )
+        snapshot_rows.append(
+            {
+                "ticker": market,
+                "event_ticker": m.get("event_id"),
+                "title": m.get("title"),
+                "status": m.get("status"),
+                "close_time": m.get("close_time"),
+                "last_price": m.get("last_price_dollars"),
+                "market_yes_bid": m.get("yes_bid_dollars"),
+                "book_yes_bid": yes_bid,
+                "implied_yes_ask": yes_ask,
+                "spread_dollars": spread,
+                "market_snapshots": by_market[market]["market_snapshot"],
+                "book_snapshots": by_market[market]["book_snapshot"],
+                "public_trades": by_market[market]["public_trade"],
+                "public_trade_volume": trade_volume[market],
+                "private_fills": by_market[market]["private_fill_count"],
+            }
+        )
     return counts, by_market, snapshot_rows
 
 
@@ -99,11 +104,23 @@ def html_report(rows, output):
         for kind, num in sorted(counts.items())
     )
     table_rows = "".join(
-        "<tr>" + "".join(f"<td>{row.get(key, '')}</td>" for key in (
-            "ticker", "status", "last_price", "book_yes_bid", "implied_yes_ask",
-            "spread_dollars", "public_trades", "public_trade_volume",
-            "market_snapshots", "book_snapshots"
-        )) + "</tr>"
+        "<tr>"
+        + "".join(
+            f"<td>{row.get(key, '')}</td>"
+            for key in (
+                "ticker",
+                "status",
+                "last_price",
+                "book_yes_bid",
+                "implied_yes_ask",
+                "spread_dollars",
+                "public_trades",
+                "public_trade_volume",
+                "market_snapshots",
+                "book_snapshots",
+            )
+        )
+        + "</tr>"
         for row in market_rows
     )
     html = f"""<!doctype html><html><head><meta charset='utf-8'><title>Sports Market Research Monitor</title>
@@ -130,7 +147,9 @@ def main():
     args = parser.parse_args()
     events = load_events(args.input)
     counts, csv_path = html_report(events, args.output)
-    print(f"wrote {args.output} and {csv_path}; records={len(events)}; types={dict(counts)}")
+    print(
+        f"wrote {args.output} and {csv_path}; records={len(events)}; types={dict(counts)}"
+    )
 
 
 if __name__ == "__main__":

@@ -3,6 +3,7 @@
 Use to persist normalized, timestamped market snapshots and order lifecycle observations.
 The caller is responsible for collecting data and passing already-normalized records.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -44,7 +45,9 @@ def validate_record(record: dict[str, Any]) -> dict[str, Any]:
     if not isinstance(record["source_timestamp"], str):
         raise ValueError("source_timestamp must be an ISO timestamp string")
     try:
-        parsed = datetime.fromisoformat(record["source_timestamp"].replace("Z", "+00:00"))
+        parsed = datetime.fromisoformat(
+            record["source_timestamp"].replace("Z", "+00:00")
+        )
     except ValueError as exc:
         raise ValueError("source_timestamp must be valid ISO-8601") from exc
     if parsed.tzinfo is None:
@@ -62,13 +65,17 @@ def append_records(path: str | Path, records: Iterable[dict[str, Any]]) -> int:
     with destination.open("a", encoding="utf-8") as handle:
         for record in records:
             normalized = validate_record(record)
-            handle.write(json.dumps(normalized, sort_keys=True, separators=(",", ":")) + "\n")
+            handle.write(
+                json.dumps(normalized, sort_keys=True, separators=(",", ":")) + "\n"
+            )
             count += 1
     return count
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Validate and append normalized research events from stdin JSON.")
+    parser = argparse.ArgumentParser(
+        description="Validate and append normalized research events from stdin JSON."
+    )
     parser.add_argument("--output", default="data/research/events.jsonl")
     args = parser.parse_args()
     records = []

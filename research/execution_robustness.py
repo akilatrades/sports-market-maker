@@ -62,11 +62,41 @@ def family(series):
         return "combat"
     if any(x in s for x in ("NASCAR", "F1", "INDYCAR", "MOTOGP")):
         return "racing"
-    if any(x in s for x in ("PTS", "REB", "AST", "HR", "HITS", "3PT", "GOAL",
-                              "SHOTS", "PASSYDS", "RSHYDS", "RECYDS", "OUTS")):
+    if any(
+        x in s
+        for x in (
+            "PTS",
+            "REB",
+            "AST",
+            "HR",
+            "HITS",
+            "3PT",
+            "GOAL",
+            "SHOTS",
+            "PASSYDS",
+            "RSHYDS",
+            "RECYDS",
+            "OUTS",
+        )
+    ):
         return "player prop"
-    if any(x in s for x in ("1H", "2H", "1Q", "2Q", "3Q", "4Q", "BTTS",
-                              "INNING", "MAP", "SET", "HALF", "F5")):
+    if any(
+        x in s
+        for x in (
+            "1H",
+            "2H",
+            "1Q",
+            "2Q",
+            "3Q",
+            "4Q",
+            "BTTS",
+            "INNING",
+            "MAP",
+            "SET",
+            "HALF",
+            "F5",
+        )
+    ):
         return "part of game"
     if s.endswith(("GAME", "MATCH")):
         return "game"
@@ -74,8 +104,22 @@ def family(series):
         return "spread"
     if s.endswith("TOTAL"):
         return "total"
-    if any(x in s for x in ("WTI", "BRENT", "GOLD", "SILVER", "NATGAS", "NASDAQ",
-                              "BTC", "ETH", "FED", "CPI", "COPPER")):
+    if any(
+        x in s
+        for x in (
+            "WTI",
+            "BRENT",
+            "GOLD",
+            "SILVER",
+            "NATGAS",
+            "NASDAQ",
+            "BTC",
+            "ETH",
+            "FED",
+            "CPI",
+            "COPPER",
+        )
+    ):
         return "finance"
     return "other"
 
@@ -105,36 +149,66 @@ def run(d, queues, haircuts):
                 fills = base[base.traded >= q_ahead + 1].copy()
                 if fills.empty:
                     for haircut in haircuts:
-                        rows.append({"family": family_name, "side": side,
-                                    "queue_ahead": q_ahead, "haircut_cents": haircut,
-                                    "fills": 0, "events": 0, "net_cents": None,
-                                    "cluster_t": None, "first_half_cents": None,
-                                    "second_half_cents": None})
+                        rows.append(
+                            {
+                                "family": family_name,
+                                "side": side,
+                                "queue_ahead": q_ahead,
+                                "haircut_cents": haircut,
+                                "fills": 0,
+                                "events": 0,
+                                "net_cents": None,
+                                "cluster_t": None,
+                                "first_half_cents": None,
+                                "second_half_cents": None,
+                            }
+                        )
                     continue
                 for haircut in haircuts:
                     net = fills.pnl - haircut / 100
                     mean, t = clustered_mean_t(net, fills.event_ticker)
-                    h1 = net[fills.first_half].mean() if fills.first_half.any() else None
-                    h2 = net[~fills.first_half].mean() if (~fills.first_half).any() else None
-                    rows.append({
-                        "family": family_name, "side": side,
-                        "queue_ahead": q_ahead, "haircut_cents": haircut,
-                        "fills": len(fills), "events": fills.event_ticker.nunique(),
-                        "net_cents": round(mean * 100, 3),
-                        "cluster_t": round(t, 3) if not math.isnan(t) else None,
-                        "first_half_cents": round(h1 * 100, 3) if h1 is not None else None,
-                        "second_half_cents": round(h2 * 100, 3) if h2 is not None else None,
-                    })
+                    h1 = (
+                        net[fills.first_half].mean() if fills.first_half.any() else None
+                    )
+                    h2 = (
+                        net[~fills.first_half].mean()
+                        if (~fills.first_half).any()
+                        else None
+                    )
+                    rows.append(
+                        {
+                            "family": family_name,
+                            "side": side,
+                            "queue_ahead": q_ahead,
+                            "haircut_cents": haircut,
+                            "fills": len(fills),
+                            "events": fills.event_ticker.nunique(),
+                            "net_cents": round(mean * 100, 3),
+                            "cluster_t": round(t, 3) if not math.isnan(t) else None,
+                            "first_half_cents": round(h1 * 100, 3)
+                            if h1 is not None
+                            else None,
+                            "second_half_cents": round(h2 * 100, 3)
+                            if h2 is not None
+                            else None,
+                        }
+                    )
     return pd.DataFrame(rows)
 
 
 def main():
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("--input", default=DEFAULT_INPUT)
-    p.add_argument("--queues", default="0,1,5,10,25,50",
-                   help="estimated contracts ahead; 0 means first-in-line proxy")
-    p.add_argument("--haircuts", default="0,0.5,1,2,3,4",
-                   help="replay haircut in cents per filled contract")
+    p.add_argument(
+        "--queues",
+        default="0,1,5,10,25,50",
+        help="estimated contracts ahead; 0 means first-in-line proxy",
+    )
+    p.add_argument(
+        "--haircuts",
+        default="0,0.5,1,2,3,4",
+        help="replay haircut in cents per filled contract",
+    )
     args = p.parse_args()
     queues = sorted({int(v) for v in args.queues.split(",")})
     haircuts = sorted({float(v) for v in args.haircuts.split(",")})
@@ -145,9 +219,12 @@ def main():
     OUT.mkdir(parents=True, exist_ok=True)
     sensitivity.to_csv(OUT / "sensitivity.csv", index=False)
     meta = {
-        "input_pattern": args.input, "orders_loaded": int(len(d)),
-        "events": int(d.event_ticker.nunique()), "families": int(d.family.nunique()),
-        "queue_ahead_scenarios": queues, "haircut_cents": haircuts,
+        "input_pattern": args.input,
+        "orders_loaded": int(len(d)),
+        "events": int(d.event_ticker.nunique()),
+        "families": int(d.family.nunique()),
+        "queue_ahead_scenarios": queues,
+        "haircut_cents": haircuts,
         "warning": "Queue-ahead scenarios are sensitivity bounds, not actual queue reconstruction. Public trade prints do not reveal queue position, order cancellations, or partial-fill priority.",
         "fill_rule": "For q estimated contracts ahead, require traded >= q+1. A print count is not proof of fill.",
         "output": "sensitivity.csv",
