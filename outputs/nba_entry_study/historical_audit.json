@@ -3,7 +3,7 @@
     "invalid_settlement",
     "invalid_settlement"
   ],
-  "generated_at": "2026-11-27T23:38:35.051849+00:00",
+  "generated_at": "2026-11-28T01:36:28.736504+00:00",
   "limitations": [
     "Existing no_seller uses a model veto; it is not a model-free control.",
     "Different sizing and candidate baskets confound existing variant comparisons.",
@@ -42,14 +42,14 @@
       "without_best_three_games": -86.75
     },
     "no_seller_bookline": {
-      "actual_win_rate": 0.26208749040675366,
-      "contracts": 5212.0,
-      "forecast_win_probability": 0.4563121642363776,
-      "games": 119,
-      "net_pnl": -239.14,
-      "settled_orders": 564,
-      "without_best_game": -271.56,
-      "without_best_three_games": -319.26
+      "actual_win_rate": 0.2618363043894959,
+      "contracts": 5217.0,
+      "forecast_win_probability": 0.456181426106958,
+      "games": 120,
+      "net_pnl": -239.96,
+      "settled_orders": 565,
+      "without_best_game": -272.38,
+      "without_best_three_games": -320.08
     },
     "no_seller_edge_sized": {
       "actual_win_rate": 0.3772943575798776,
