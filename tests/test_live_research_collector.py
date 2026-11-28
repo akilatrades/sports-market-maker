@@ -195,7 +195,9 @@ def test_category_source_refreshes_on_schedule(monkeypatch):
             {
                 "ticker": "LATER",
                 "close_time": (now + timedelta(hours=80)).isoformat(),
-                "occurrence_datetime": (now + timedelta(hours=7, minutes=5)).isoformat(),
+                "occurrence_datetime": (
+                    now + timedelta(hours=7, minutes=5)
+                ).isoformat(),
             },
         ]
 
@@ -235,7 +237,11 @@ def test_discover_category_uses_events_and_preserves_distant_closes(monkeypatch)
         assert params == {"event_ticker": "E"}
         return {
             "markets": [
-                {"ticker": "A", "status": "active", "close_time": "2027-01-01T00:00:00Z"},
+                {
+                    "ticker": "A",
+                    "status": "active",
+                    "close_time": "2027-01-01T00:00:00Z",
+                },
                 {"ticker": "B", "status": "closed"},
             ]
         }
