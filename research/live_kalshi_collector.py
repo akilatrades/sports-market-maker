@@ -212,6 +212,8 @@ def category_series(category: str, max_pages: int = 20) -> set[str]:
         cursor = payload.get("cursor") or ""
         if not cursor:
             break
+    else:
+        raise RuntimeError("category series pagination incomplete")
     return out
 
 
@@ -281,7 +283,9 @@ def discover_category(category: str, max_pages: int = 200) -> list[dict]:
         for market in payload["markets"]:
             if market.get("status") in ("active", "open") and market.get("ticker"):
                 found[market["ticker"]] = market
-    print(f"event discovery complete: {len(events)} events, {len(found)} open markets")
+    print(
+        f"event discovery complete: {len(events)} events, {len(found)} open markets"
+    )
     return list(found.values())
 
 
@@ -315,8 +319,13 @@ class CategorySource:
             self.candidates = discover_category(self.category)
             now += timedelta(seconds=time.monotonic() - started)
             self.last = now
+        available = [
+            m
+            for m in self.candidates
+            if (close := _parse(m.get("close_time"))) is not None and close > now
+        ]
         keep = select_markets(
-            self.candidates,
+            available,
             now,
             self.cap,
             self.within,
@@ -324,10 +333,6 @@ class CategorySource:
             self.rule,
             self.offset,
         )
-        keep = [
-            m for m in keep
-            if (close := _parse(m.get("close_time"))) is not None and close > now
-        ]
         old = {m["ticker"] for m in self.chosen}
         new = {m["ticker"] for m in keep}
         fresh = fresh or bool(new - old) or self.day != now.date()
@@ -611,9 +616,10 @@ def main() -> None:
                 chosen, fresh = source.markets(datetime.now(timezone.utc))
             except Exception as exc:  # keep the last list; try again next cycle
                 print(f"[warn] {args.category} discovery failed: {exc}")
-                chosen, fresh = source.chosen, False
                 discovery_errors = 1
-                source.last = datetime.now(timezone.utc) - source.refresh + timedelta(minutes=5)
+                now = datetime.now(timezone.utc)
+                source.last = now - source.refresh + timedelta(minutes=5)
+                chosen, fresh = source.markets(now)
         stats = collect_once(
             series,
             args.output,
