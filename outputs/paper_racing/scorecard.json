@@ -1,7 +1,7 @@
 {
- "updated_utc": "2026-11-28T13:43+00:00",
- "series_checked": 42,
- "series_found_open": 19,
+ "updated_utc": "2026-11-28T14:43+00:00",
+ "series_checked": 41,
+ "series_found_open": 18,
  "open_events_listed": 20000,
  "open_events_complete": false,
  "mentions_category_series": 0,
@@ -12,7 +12,6 @@
   "KXF1CHINA",
   "KXF1EXACTFINISH",
   "KXF1FASTPIT",
-  "KXF1FP3FASTLAP",
   "KXF1H2HLOTP",
   "KXF1NEXTTEAM",
   "KXF1OCCUR",
@@ -25,160 +24,152 @@
    "posted": 0,
    "two_sided": 5,
    "in_window": 0,
-   "hours_to_expiry_min": 793.3,
-   "hours_to_expiry_median": 793.3
+   "hours_to_expiry_min": 792.3,
+   "hours_to_expiry_median": 792.3
   },
   "KXF1BIGGESTMOVER": {
    "open": 22,
    "posted": 0,
-   "two_sided": 8,
+   "two_sided": 5,
    "in_window": 0,
-   "hours_to_expiry_min": 32.3,
-   "hours_to_expiry_median": 32.3
+   "hours_to_expiry_min": 31.3,
+   "hours_to_expiry_median": 31.3
   },
   "KXF1CHINA": {
    "open": 1,
    "posted": 0,
    "two_sided": 1,
    "in_window": 0,
-   "hours_to_expiry_min": 817.3,
-   "hours_to_expiry_median": 817.3
+   "hours_to_expiry_min": 816.3,
+   "hours_to_expiry_median": 816.3
   },
   "KXF1EXACTFINISH": {
    "open": 20,
    "posted": 0,
    "two_sided": 15,
    "in_window": 0,
-   "hours_to_expiry_min": 193.3,
-   "hours_to_expiry_median": 217.3
+   "hours_to_expiry_min": 192.3,
+   "hours_to_expiry_median": 216.3
   },
   "KXF1FASTLAP": {
    "open": 22,
    "posted": 0,
-   "two_sided": 8,
+   "two_sided": 7,
    "in_window": 0,
-   "hours_to_expiry_min": 32.3,
-   "hours_to_expiry_median": 32.3
+   "hours_to_expiry_min": 31.3,
+   "hours_to_expiry_median": 31.3
   },
   "KXF1FASTPIT": {
    "open": 11,
    "posted": 0,
    "two_sided": 7,
    "in_window": 0,
-   "hours_to_expiry_min": 32.3,
-   "hours_to_expiry_median": 32.3
-  },
-  "KXF1FP3FASTLAP": {
-   "open": 22,
-   "posted": 7,
-   "two_sided": 7,
-   "in_window": 22,
-   "hours_to_expiry_min": 6.8,
-   "hours_to_expiry_median": 6.8
+   "hours_to_expiry_min": 31.3,
+   "hours_to_expiry_median": 31.3
   },
   "KXF1H2H": {
    "open": 2,
    "posted": 0,
    "two_sided": 2,
    "in_window": 0,
-   "hours_to_expiry_min": 31.3,
-   "hours_to_expiry_median": 31.3
+   "hours_to_expiry_min": 30.3,
+   "hours_to_expiry_median": 30.3
   },
   "KXF1H2HLOTP": {
    "open": 8,
    "posted": 0,
    "two_sided": 8,
    "in_window": 0,
-   "hours_to_expiry_min": 31.3,
-   "hours_to_expiry_median": 31.3
+   "hours_to_expiry_min": 30.3,
+   "hours_to_expiry_median": 30.3
   },
   "KXF1NEXTTEAM": {
    "open": 12,
    "posted": 0,
    "two_sided": 1,
    "in_window": 0,
-   "hours_to_expiry_min": 2497.3,
-   "hours_to_expiry_median": 2497.3
+   "hours_to_expiry_min": 2496.3,
+   "hours_to_expiry_median": 2496.3
   },
   "KXF1OCCUR": {
    "open": 2,
    "posted": 0,
    "two_sided": 2,
    "in_window": 0,
-   "hours_to_expiry_min": 49.3,
-   "hours_to_expiry_median": 217.3
+   "hours_to_expiry_min": 48.3,
+   "hours_to_expiry_median": 216.3
   },
   "KXF1POLE": {
    "open": 22,
    "posted": 0,
    "two_sided": 8,
    "in_window": 0,
-   "hours_to_expiry_min": -16.7,
-   "hours_to_expiry_median": -16.7
+   "hours_to_expiry_min": -17.7,
+   "hours_to_expiry_median": -17.7
   },
   "KXF1RACE": {
    "open": 22,
    "posted": 0,
    "two_sided": 8,
    "in_window": 0,
-   "hours_to_expiry_min": 32.3,
-   "hours_to_expiry_median": 32.3
+   "hours_to_expiry_min": 31.3,
+   "hours_to_expiry_median": 31.3
   },
   "KXF1RACEPODIUM": {
    "open": 22,
    "posted": 0,
    "two_sided": 8,
    "in_window": 0,
-   "hours_to_expiry_min": 32.3,
-   "hours_to_expiry_median": 32.3
+   "hours_to_expiry_min": 31.3,
+   "hours_to_expiry_median": 31.3
   },
   "KXF1RETIRE": {
    "open": 4,
    "posted": 0,
    "two_sided": 3,
    "in_window": 0,
-   "hours_to_expiry_min": 29280.3,
-   "hours_to_expiry_median": 29280.3
+   "hours_to_expiry_min": 29279.3,
+   "hours_to_expiry_median": 29279.3
   },
   "KXF1TOP10": {
    "open": 22,
    "posted": 0,
-   "two_sided": 18,
+   "two_sided": 15,
    "in_window": 0,
-   "hours_to_expiry_min": 32.3,
-   "hours_to_expiry_median": 32.3
+   "hours_to_expiry_min": 31.3,
+   "hours_to_expiry_median": 31.3
   },
   "KXF1TOP5": {
    "open": 22,
    "posted": 0,
-   "two_sided": 9,
+   "two_sided": 8,
    "in_window": 0,
-   "hours_to_expiry_min": 32.3,
-   "hours_to_expiry_median": 32.3
+   "hours_to_expiry_min": 31.3,
+   "hours_to_expiry_median": 31.3
   },
   "KXF1TOPCONSTRUCTOR": {
    "open": 11,
    "posted": 0,
    "two_sided": 4,
    "in_window": 0,
-   "hours_to_expiry_min": 32.3,
-   "hours_to_expiry_median": 32.3
+   "hours_to_expiry_min": 31.3,
+   "hours_to_expiry_median": 31.3
   },
   "KXF1WINMARGIN": {
    "open": 4,
    "posted": 0,
    "two_sided": 4,
    "in_window": 0,
-   "hours_to_expiry_min": 31.3,
-   "hours_to_expiry_median": 31.3
+   "hours_to_expiry_min": 30.3,
+   "hours_to_expiry_median": 30.3
   },
   "KXMOTOGPRACE": {
    "open": 22,
    "posted": 0,
    "two_sided": 8,
    "in_window": 0,
-   "hours_to_expiry_min": 29.3,
-   "hours_to_expiry_median": 29.3
+   "hours_to_expiry_min": 28.3,
+   "hours_to_expiry_median": 28.3
   }
  },
  "kind": "PAPER (no orders sent); fills from public trades, first in line",
