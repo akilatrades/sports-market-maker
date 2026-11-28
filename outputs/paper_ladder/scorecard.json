@@ -1,9 +1,9 @@
 {
- "updated_utc": "2026-11-28T16:44+00:00",
+ "updated_utc": "2026-11-28T17:46+00:00",
  "kind": "PAPER (no orders sent); 1 contract per order; fills from public trades",
  "series": {
   "KXNBAPTS": {
-   "open": 217,
+   "open": 226,
    "fitted_strikes": 142,
    "ladders": 34,
    "posted_outlier": 0,
@@ -11,24 +11,24 @@
   },
   "KXNBAREB": {
    "open": 232,
-   "fitted_strikes": 201,
-   "ladders": 47,
+   "fitted_strikes": 205,
+   "ladders": 48,
    "posted_outlier": 0,
    "posted_control": 3
   },
   "KXNBAAST": {
-   "open": 186,
-   "fitted_strikes": 117,
-   "ladders": 28,
-   "posted_outlier": 0,
-   "posted_control": 5
-  },
-  "KXNBA3PT": {
-   "open": 243,
-   "fitted_strikes": 229,
-   "ladders": 47,
+   "open": 194,
+   "fitted_strikes": 122,
+   "ladders": 29,
    "posted_outlier": 2,
    "posted_control": 3
+  },
+  "KXNBA3PT": {
+   "open": 271,
+   "fitted_strikes": 242,
+   "ladders": 51,
+   "posted_outlier": 6,
+   "posted_control": 1
   }
  },
  "state": "collecting",
@@ -57,7 +57,7 @@
   "t_after_haircut": -0.0
  },
  "orders": {
-  "control": 1532,
-  "outlier": 153
+  "control": 1540,
+  "outlier": 161
  }
 }
