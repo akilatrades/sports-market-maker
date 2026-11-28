@@ -1,30 +1,30 @@
 {
- "updated_utc": "2026-11-28T02:33+00:00",
+ "updated_utc": "2026-11-28T03:33+00:00",
  "kind": "PAPER (no orders sent); 1 contract per order; fills from public trades",
  "series": {
   "KXNBAPTS": {
-   "open": 563,
+   "open": 340,
    "fitted_strikes": 0,
    "ladders": 0,
    "posted_outlier": 0,
    "posted_control": 0
   },
   "KXNBAREB": {
-   "open": 607,
+   "open": 483,
    "fitted_strikes": 0,
    "ladders": 0,
    "posted_outlier": 0,
    "posted_control": 0
   },
   "KXNBAAST": {
-   "open": 505,
+   "open": 359,
    "fitted_strikes": 0,
    "ladders": 0,
    "posted_outlier": 0,
    "posted_control": 0
   },
   "KXNBA3PT": {
-   "open": 673,
+   "open": 399,
    "fitted_strikes": 0,
    "ladders": 0,
    "posted_outlier": 0,
@@ -33,20 +33,28 @@
  },
  "state": "collecting",
  "primary_queue_5": {
-  "fills": 1,
-  "games": 1
+  "fills": 7,
+  "games": 2,
+  "cents": -18.69,
+  "t": -6.13,
+  "cents_after_haircut": -20.69,
+  "t_after_haircut": -6.78
  },
  "outlier_first_in_line": {
-  "fills": 1,
-  "games": 1
+  "fills": 7,
+  "games": 2,
+  "cents": -18.69,
+  "t": -6.13,
+  "cents_after_haircut": -20.69,
+  "t_after_haircut": -6.78
  },
  "control_queue_5": {
-  "fills": 4,
-  "games": 4,
-  "cents": -42.11,
-  "t": -3.86,
-  "cents_after_haircut": -44.11,
-  "t_after_haircut": -4.04
+  "fills": 40,
+  "games": 6,
+  "cents": 15.06,
+  "t": 4.05,
+  "cents_after_haircut": 13.06,
+  "t_after_haircut": 3.51
  },
  "orders": {
   "control": 1072,
