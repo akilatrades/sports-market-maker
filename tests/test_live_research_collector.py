@@ -268,10 +268,13 @@ def test_get_json_backs_off_on_429_then_gives_up(monkeypatch):
     monkeypatch.setattr(C, "urlopen", fake_open)
     monkeypatch.setattr(C.time, "sleep", sleeps.append)
     monkeypatch.setattr(C, "_wait_turn", lambda: None)
-    assert C.get_json("/x") == {"ok": 1} and sleeps == [2.0, 4.0]
+    monkeypatch.delenv("KALSHI_SHARED_LIMIT_FILE", raising=False)
+    assert C.get_json("/x") == {"ok": 1} and sleeps == [5.0, 10.0]
+    sleeps.clear()
     answers[:] = [429] * 4
     with pytest.raises(HTTPError):
         C.get_json("/x")
+    assert sleeps == [5.0, 10.0, 20.0]
     answers[:] = [500]
 
     def fail_500(req, timeout=12):
@@ -320,3 +323,27 @@ def test_series_mode_uses_the_event_time_rule(tmp_path, monkeypatch):
         event_rule="earliest", event_offset_hours=0,
     )  # fmt: skip
     assert earliest["books"] == 1
+
+
+def test_shared_slots_and_cooldown(tmp_path, monkeypatch):
+    import research.live_kalshi_collector as C
+
+    state = tmp_path / "rate-limit"
+    clock = [100.0]
+    monkeypatch.setenv("KALSHI_SHARED_LIMIT_FILE", str(state))
+    monkeypatch.setenv("KALSHI_SHARED_RATE", "2")
+    monkeypatch.setattr(C.time, "monotonic", lambda: clock[0])
+
+    def sleep(seconds):
+        clock[0] += seconds
+
+    monkeypatch.setattr(C.time, "sleep", sleep)
+    C._shared_slot()
+    assert float(state.read_text()) == 100.5
+    C._shared_slot()
+    assert clock[0] == 100.5
+    C._shared_slot(5.0)
+    assert float(state.read_text()) == 105.5
+    C._shared_slot()
+    assert clock[0] == 105.5
+    assert float(state.read_text()) == 106.0
