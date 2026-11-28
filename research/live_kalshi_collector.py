@@ -9,9 +9,10 @@ historical books; source_timestamp is collection time for snapshots.
 from __future__ import annotations
 
 import argparse
+import fcntl
 import json
 import os
-import fcntl
+import sys
 import threading
 import time
 from concurrent.futures import ThreadPoolExecutor
@@ -223,6 +224,7 @@ def category_markets(
     A series that fails to list is skipped and retried at the next refresh."""
     until = now + timedelta(hours=horizon_hours)
     out = []
+    failures = 0
     print(f"discovering {len(series)} category series", flush=True)
     for index, s in enumerate(sorted(series)):
         if index % 20 == 0:
@@ -231,11 +233,13 @@ def category_markets(
             markets = market_list(s, limit=1000, max_pages=max_pages)
         except Exception as exc:  # noqa: BLE001
             print(f"[warn] series {s} markets fetch failed: {exc}")
+            failures += 1
             continue
         for m in markets:
             close = _parse(m.get("close_time"))
             if close is not None and now <= close <= until:
                 out.append(m)
+    print(f"discovery complete: {len(out)} markets, {failures} failed series", flush=True)
     return out
 
 
@@ -510,8 +514,6 @@ def main() -> None:
     )
     p.add_argument("--once", action="store_true", help="run one cycle then exit")
     args = p.parse_args()
-    import sys
-
     sys.stdout.reconfigure(line_buffering=True)
     series = [s.strip() for s in (args.series or "").split(",") if s.strip()]
     if args.series is not None and not series:
