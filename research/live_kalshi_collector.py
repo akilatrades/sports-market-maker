@@ -9,11 +9,15 @@ historical books; source_timestamp is collection time for snapshots.
 from __future__ import annotations
 
 import argparse
+import fcntl
 import json
+import os
+import sys
 import threading
 import time
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timedelta, timezone
+from pathlib import Path
 from typing import Any
 from urllib.parse import urlencode
 from urllib.error import HTTPError
@@ -27,6 +31,33 @@ MAX_PER_SECOND = 10.0  # shared across worker threads; well under public limits
 _LOCK = threading.Lock()
 _NEXT = [0.0]
 _RATE = [MAX_PER_SECOND]  # --max-per-second may lower it
+
+
+def _shared_slot(delay: float = 0.0) -> None:
+    """Coordinate read-only collectors on the same Linux host."""
+    location = os.environ.get("KALSHI_SHARED_LIMIT_FILE")
+    if not location:
+        return
+    rate = float(os.environ.get("KALSHI_SHARED_RATE", "3"))
+    if not 0.5 <= rate <= MAX_PER_SECOND:
+        raise ValueError("invalid shared rate")
+    while True:
+        with Path(location).open("a+") as state:
+            fcntl.flock(state, fcntl.LOCK_EX)
+            state.seek(0)
+            now = time.monotonic()
+            previous = float(state.read() or "0")
+            if previous > now + 600:
+                previous = 0.0
+            if delay or previous <= now:
+                next_slot = max(previous, now + delay) if delay else now + 1 / rate
+                state.seek(0)
+                state.truncate()
+                state.write(str(next_slot))
+                state.flush()
+                return
+            wait = previous - now
+        time.sleep(min(wait, 1.0))
 
 
 def _wait_turn() -> None:
@@ -52,6 +83,7 @@ def get_json(
     url = f"{BASE}{path}" + (f"?{query}" if query else "")
     for attempt in range(RETRIES_429 + 1):
         _wait_turn()
+        _shared_slot()
         req = Request(
             url, headers={"User-Agent": USER_AGENT, "Accept": "application/json"}
         )
@@ -59,9 +91,14 @@ def get_json(
             with urlopen(req, timeout=timeout) as response:
                 return json.loads(response.read().decode("utf-8"))
         except HTTPError as exc:
-            if exc.code != 429 or attempt == RETRIES_429:
+            if exc.code != 429:
                 raise
-            time.sleep(2.0 * (attempt + 1))
+            delay = min(60.0, 5.0 * 2**attempt)
+            _shared_slot(delay)
+            print(f"[warn] HTTP 429 {path}; backoff {delay}s", flush=True)
+            if attempt == RETRIES_429:
+                raise
+            time.sleep(delay)
     raise RuntimeError("unreachable")
 
 
@@ -187,16 +224,24 @@ def category_markets(
     A series that fails to list is skipped and retried at the next refresh."""
     until = now + timedelta(hours=horizon_hours)
     out = []
-    for s in sorted(series):
+    failures = 0
+    print(f"discovering {len(series)} category series", flush=True)
+    for index, s in enumerate(sorted(series)):
+        if index % 20 == 0:
+            print(f"discovery progress {index}/{len(series)}", flush=True)
         try:
             markets = market_list(s, limit=1000, max_pages=max_pages)
         except Exception as exc:  # noqa: BLE001
             print(f"[warn] series {s} markets fetch failed: {exc}")
+            failures += 1
             continue
         for m in markets:
             close = _parse(m.get("close_time"))
             if close is not None and now <= close <= until:
                 out.append(m)
+    print(
+        f"discovery complete: {len(out)} markets, {failures} failed series", flush=True
+    )
     return out
 
 
@@ -471,6 +516,7 @@ def main() -> None:
     )
     p.add_argument("--once", action="store_true", help="run one cycle then exit")
     args = p.parse_args()
+    sys.stdout.reconfigure(line_buffering=True)
     series = [s.strip() for s in (args.series or "").split(",") if s.strip()]
     if args.series is not None and not series:
         p.error("at least one series ticker required")
