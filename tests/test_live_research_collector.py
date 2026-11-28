@@ -280,3 +280,43 @@ def test_get_json_backs_off_on_429_then_gives_up(monkeypatch):
     monkeypatch.setattr(C, "urlopen", fail_500)
     with pytest.raises(HTTPError):  # other errors are not retried
         C.get_json("/x")
+
+
+def test_series_mode_uses_the_event_time_rule(tmp_path, monkeypatch):
+    """28 November 2026: --event-time was ignored in series mode, so Kalshi's
+    15-minute crypto markets (occurrence = close + 5 min) were never chosen."""
+    from datetime import datetime, timedelta, timezone
+
+    import research.live_kalshi_collector as C
+
+    now = datetime.now(timezone.utc)
+    m = {
+        "ticker": "KXBTC15M-X",
+        "event_ticker": "KXBTC15M-X",
+        "close_time": (now + timedelta(minutes=8)).isoformat(),
+        "occurrence_datetime": (now + timedelta(minutes=13)).isoformat(),
+    }
+
+    def fake(path, params=None, timeout=12):
+        if path == "/markets":
+            return {"markets": [m]}
+        if path.endswith("/orderbook"):
+            return {
+                "orderbook": {
+                    "yes_dollars": [["0.86", "5"]],
+                    "no_dollars": [["0.13", "5"]],
+                }
+            }
+        return {"trades": []}
+
+    monkeypatch.setattr(C, "get_json", fake)
+    out = str(tmp_path / "c_{date}.jsonl")
+    nba_rule = C.collect_once(
+        ["KXBTC15M"], out, 8, 100, set(), within_hours=1, in_game_hours=0.5
+    )
+    assert nba_rule["books"] == 0  # occurrence - 3 h is long past
+    earliest = C.collect_once(
+        ["KXBTC15M"], out, 8, 100, set(), within_hours=1, in_game_hours=0.5,
+        event_rule="earliest", event_offset_hours=0,
+    )  # fmt: skip
+    assert earliest["books"] == 1

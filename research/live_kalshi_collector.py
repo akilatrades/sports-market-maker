@@ -310,6 +310,8 @@ def collect_once(
     want_trades: bool = True,
     chosen_markets: list[dict] | None = None,
     write_market_snapshots: bool = True,
+    event_rule: str = "occurrence",
+    event_offset_hours: float = 3.0,
 ) -> dict[str, int]:
     collected = 0
     markets_count = books_count = trades_count = errors = 0
@@ -320,7 +322,13 @@ def collect_once(
         try:
             markets = market_list(series, limit=min(max(market_cap * 3, 100), 1000))
             chosen += select_markets(
-                markets, now, market_cap, within_hours, in_game_hours
+                markets,
+                now,
+                market_cap,
+                within_hours,
+                in_game_hours,
+                event_rule,
+                event_offset_hours,
             )
         except Exception as exc:
             print(f"[warn] series {series} markets fetch failed: {exc}")
@@ -520,6 +528,8 @@ def main() -> None:
             want_trades=cycle % max(1, args.trades_every) == 0,
             chosen_markets=chosen,
             write_market_snapshots=fresh,
+            event_rule=args.event_time,
+            event_offset_hours=args.event_offset_hours,
         )
         cycle += 1
         if len(seen) > 300_000:  # bounded memory on a small server
