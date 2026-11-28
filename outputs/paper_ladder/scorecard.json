@@ -1,63 +1,63 @@
 {
- "updated_utc": "2026-11-28T03:33+00:00",
+ "updated_utc": "2026-11-28T07:39+00:00",
  "kind": "PAPER (no orders sent); 1 contract per order; fills from public trades",
  "series": {
   "KXNBAPTS": {
-   "open": 340,
-   "fitted_strikes": 0,
-   "ladders": 0,
-   "posted_outlier": 0,
-   "posted_control": 0
+   "open": 172,
+   "fitted_strikes": 112,
+   "ladders": 27,
+   "posted_outlier": 3,
+   "posted_control": 59
   },
   "KXNBAREB": {
-   "open": 483,
-   "fitted_strikes": 0,
-   "ladders": 0,
-   "posted_outlier": 0,
-   "posted_control": 0
+   "open": 150,
+   "fitted_strikes": 138,
+   "ladders": 32,
+   "posted_outlier": 2,
+   "posted_control": 38
   },
   "KXNBAAST": {
-   "open": 359,
-   "fitted_strikes": 0,
-   "ladders": 0,
-   "posted_outlier": 0,
-   "posted_control": 0
+   "open": 119,
+   "fitted_strikes": 83,
+   "ladders": 20,
+   "posted_outlier": 1,
+   "posted_control": 23
   },
   "KXNBA3PT": {
-   "open": 399,
-   "fitted_strikes": 0,
-   "ladders": 0,
-   "posted_outlier": 0,
-   "posted_control": 0
+   "open": 191,
+   "fitted_strikes": 187,
+   "ladders": 38,
+   "posted_outlier": 6,
+   "posted_control": 65
   }
  },
  "state": "collecting",
  "primary_queue_5": {
-  "fills": 7,
-  "games": 2,
-  "cents": -18.69,
-  "t": -6.13,
-  "cents_after_haircut": -20.69,
-  "t_after_haircut": -6.78
+  "fills": 9,
+  "games": 4,
+  "cents": -22.84,
+  "t": -3.91,
+  "cents_after_haircut": -24.84,
+  "t_after_haircut": -4.25
  },
  "outlier_first_in_line": {
-  "fills": 7,
-  "games": 2,
-  "cents": -18.69,
-  "t": -6.13,
-  "cents_after_haircut": -20.69,
-  "t_after_haircut": -6.78
+  "fills": 10,
+  "games": 5,
+  "cents": -22.48,
+  "t": -4.54,
+  "cents_after_haircut": -24.48,
+  "t_after_haircut": -4.94
  },
  "control_queue_5": {
-  "fills": 40,
-  "games": 6,
-  "cents": 15.06,
-  "t": 4.05,
-  "cents_after_haircut": 13.06,
-  "t_after_haircut": 3.51
+  "fills": 112,
+  "games": 11,
+  "cents": 1.99,
+  "t": 0.43,
+  "cents_after_haircut": -0.01,
+  "t_after_haircut": -0.0
  },
  "orders": {
-  "control": 1072,
-  "outlier": 110
+  "control": 1257,
+  "outlier": 122
  }
 }
