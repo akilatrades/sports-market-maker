@@ -283,9 +283,7 @@ def discover_category(category: str, max_pages: int = 200) -> list[dict]:
         for market in payload["markets"]:
             if market.get("status") in ("active", "open") and market.get("ticker"):
                 found[market["ticker"]] = market
-    print(
-        f"event discovery complete: {len(events)} events, {len(found)} open markets"
-    )
+    print(f"event discovery complete: {len(events)} events, {len(found)} open markets")
     return list(found.values())
 
 
