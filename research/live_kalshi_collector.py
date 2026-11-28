@@ -239,7 +239,9 @@ def category_markets(
             close = _parse(m.get("close_time"))
             if close is not None and now <= close <= until:
                 out.append(m)
-    print(f"discovery complete: {len(out)} markets, {failures} failed series", flush=True)
+    print(
+        f"discovery complete: {len(out)} markets, {failures} failed series", flush=True
+    )
     return out
 
 
