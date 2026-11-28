@@ -245,9 +245,48 @@ def category_markets(
     return out
 
 
+def discover_category(category: str, max_pages: int = 200) -> list[dict]:
+    """List open non-combo events first, then markets only for matching events.
+
+    Do not prefilter on close horizon: occurrence may precede a distant close.
+    Fail explicitly on incomplete pagination rather than reporting zero markets.
+    """
+    series = category_series(category)
+    events = set()
+    cursor = ""
+    for page in range(max_pages):
+        params: dict[str, Any] = {"status": "open", "limit": 200}
+        if cursor:
+            params["cursor"] = cursor
+        payload = get_json("/events", params)
+        for event in payload["events"]:
+            if (
+                str(event.get("category", "")).casefold() == category.casefold()
+                or event.get("series_ticker") in series
+            ) and event.get("event_ticker"):
+                events.add(event["event_ticker"])
+        cursor = payload.get("cursor") or ""
+        if not cursor:
+            break
+        if (page + 1) % 20 == 0:
+            print(f"event discovery pages={page + 1}, matches={len(events)}")
+    else:
+        raise RuntimeError("event discovery pagination incomplete")
+    found = {}
+    for event in sorted(events):
+        # Event ticker alone returns all its markets without pagination.
+        payload = get_json("/markets", {"event_ticker": event})
+        if payload.get("cursor"):
+            raise RuntimeError(f"unexpected market cursor for {event}")
+        for market in payload["markets"]:
+            if market.get("status") in ("active", "open") and market.get("ticker"):
+                found[market["ticker"]] = market
+    print(f"event discovery complete: {len(events)} events, {len(found)} open markets")
+    return list(found.values())
+
+
 class CategorySource:
-    """The markets to record for a category, rediscovered every refresh_minutes
-    (series and markets) so each cycle only reads order books and trades."""
+    """Cache open candidates, select by the existing event clock each cycle."""
 
     def __init__(self, category, within_hours, in_game_hours, cap, rule, offset_hours,
                  refresh_minutes=30, horizon_hours=48):  # fmt: skip
@@ -261,31 +300,42 @@ class CategorySource:
         self.refresh = timedelta(minutes=refresh_minutes)
         self.horizon = horizon_hours
         self.chosen: list[dict] = []
+        self.candidates: list[dict] = []
         self.last: datetime | None = None
+        self.day = None
 
     def due(self, now: datetime) -> bool:
         return self.last is None or now - self.last >= self.refresh
 
     def markets(self, now: datetime) -> tuple[list[dict], bool]:
-        """(markets to record, whether they were just rediscovered)."""
-        if not self.due(now):
-            keep = select_markets(
-                self.chosen,
-                now,
-                self.cap,
-                self.within,
-                self.in_game,
-                self.rule,
-                self.offset,
-            )
-            return keep, False
-        series = category_series(self.category)
-        found = category_markets(series, now, self.horizon)
-        self.chosen = select_markets(
-            found, now, self.cap, self.within, self.in_game, self.rule, self.offset
+        """(markets to record, whether fresh metadata must be written)."""
+        fresh = self.due(now)
+        if fresh:
+            started = time.monotonic()
+            self.candidates = discover_category(self.category)
+            now += timedelta(seconds=time.monotonic() - started)
+            self.last = now
+        keep = select_markets(
+            self.candidates,
+            now,
+            self.cap,
+            self.within,
+            self.in_game,
+            self.rule,
+            self.offset,
         )
-        self.last = now
-        return self.chosen, True
+        keep = [
+            m for m in keep
+            if (close := _parse(m.get("close_time"))) is not None and close > now
+        ]
+        old = {m["ticker"] for m in self.chosen}
+        new = {m["ticker"] for m in keep}
+        fresh = fresh or bool(new - old) or self.day != now.date()
+        self.chosen = keep
+        self.day = now.date()
+        if fresh:
+            print(f"category selection: {len(keep)} eligible of {len(self.candidates)}")
+        return keep, fresh
 
 
 def best_bid_levels(orderbook: dict) -> dict:
@@ -555,13 +605,15 @@ def main() -> None:
     while True:
         started = time.monotonic()
         chosen, fresh = None, True
+        discovery_errors = 0
         if source is not None:
             try:
                 chosen, fresh = source.markets(datetime.now(timezone.utc))
             except Exception as exc:  # keep the last list; try again next cycle
                 print(f"[warn] {args.category} discovery failed: {exc}")
                 chosen, fresh = source.chosen, False
-                source.last = None
+                discovery_errors = 1
+                source.last = datetime.now(timezone.utc) - source.refresh + timedelta(minutes=5)
         stats = collect_once(
             series,
             args.output,
@@ -577,6 +629,8 @@ def main() -> None:
             event_rule=args.event_time,
             event_offset_hours=args.event_offset_hours,
         )
+        stats["errors"] += discovery_errors
+        stats["discovery_errors"] = discovery_errors
         cycle += 1
         if len(seen) > 300_000:  # bounded memory on a small server
             seen.clear()
