@@ -186,34 +186,76 @@ def test_category_source_refreshes_on_schedule(monkeypatch):
     import research.live_kalshi_collector as C
 
     now = datetime(2026, 11, 28, 12, tzinfo=timezone.utc)
-    soon = (now + timedelta(hours=3)).isoformat()
-    later = (now + timedelta(hours=30)).isoformat()
-    counts = {"series": 0, "markets": 0}
+    calls = []
 
-    def series(category):
-        counts["series"] += 1
-        return {"KXTRUMPMENTION"}
-
-    def markets(s, n, h):
-        counts["markets"] += 1
+    def discover(category):
+        calls.append(category)
         return [
-            {"ticker": "SOON", "event_ticker": "KXTRUMPMENTION-1", "close_time": soon},
+            {"ticker": "SOON", "close_time": (now + timedelta(hours=3)).isoformat()},
             {
                 "ticker": "LATER",
-                "event_ticker": "KXTRUMPMENTION-2",
-                "close_time": later,
+                "close_time": (now + timedelta(hours=80)).isoformat(),
+                "occurrence_datetime": (now + timedelta(hours=7, minutes=5)).isoformat(),
             },
         ]
 
-    monkeypatch.setattr(C, "category_series", series)
-    monkeypatch.setattr(C, "category_markets", markets)
+    monkeypatch.setattr(C, "discover_category", discover)
     src = C.CategorySource("Mentions", 7, 0, 200, "earliest", 0, refresh_minutes=30)
     got, fresh = src.markets(now)
     assert [m["ticker"] for m in got] == ["SOON"] and fresh
     got, fresh = src.markets(now + timedelta(minutes=10))
-    assert not fresh and counts == {"series": 1, "markets": 1}
-    got, fresh = src.markets(now + timedelta(hours=4))  # past the event, rediscovered
-    assert fresh and got == [] and counts == {"series": 2, "markets": 2}
+    assert [m["ticker"] for m in got] == ["SOON", "LATER"] and fresh
+    assert calls == ["Mentions"]
+    got, fresh = src.markets(now + timedelta(minutes=20))
+    assert not fresh
+    got, fresh = src.markets(now + timedelta(hours=4))
+    assert fresh and [m["ticker"] for m in got] == ["LATER"]
+    assert calls == ["Mentions", "Mentions"]
+
+
+def test_discover_category_uses_events_and_preserves_distant_closes(monkeypatch):
+    import research.live_kalshi_collector as C
+
+    calls = []
+
+    def fake(path, params=None):
+        calls.append((path, params))
+        if path == "/series":
+            return {"series": [{"ticker": "S"}]}
+        if path == "/events" and not params.get("cursor"):
+            return {
+                "events": [
+                    {"event_ticker": "E", "series_ticker": "S"},
+                    {"event_ticker": "OTHER", "category": "Sports"},
+                ],
+                "cursor": "next",
+            }
+        if path == "/events":
+            return {"events": [{"event_ticker": "E", "category": "Mentions"}]}
+        assert params == {"event_ticker": "E"}
+        return {
+            "markets": [
+                {"ticker": "A", "status": "active", "close_time": "2027-01-01T00:00:00Z"},
+                {"ticker": "B", "status": "closed"},
+            ]
+        }
+
+    monkeypatch.setattr(C, "get_json", fake)
+    assert [m["ticker"] for m in C.discover_category("Mentions")] == ["A"]
+    assert [path for path, _ in calls] == ["/series", "/events", "/events", "/markets"]
+
+
+def test_discover_category_rejects_incomplete_pagination(monkeypatch):
+    import pytest
+
+    import research.live_kalshi_collector as C
+
+    monkeypatch.setattr(C, "category_series", lambda category: {"S"})
+    monkeypatch.setattr(
+        C, "get_json", lambda path, params: {"events": [], "cursor": "next"}
+    )
+    with pytest.raises(RuntimeError, match="pagination incomplete"):
+        C.discover_category("Mentions", max_pages=1)
 
 
 def test_a_category_cycle_reads_only_books_and_trades(tmp_path, monkeypatch):
