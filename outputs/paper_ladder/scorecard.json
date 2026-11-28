@@ -1,34 +1,34 @@
 {
- "updated_utc": "2026-11-28T00:31+00:00",
+ "updated_utc": "2026-11-28T01:32+00:00",
  "kind": "PAPER (no orders sent); 1 contract per order; fills from public trades",
  "series": {
   "KXNBAPTS": {
-   "open": 562,
-   "fitted_strikes": 158,
-   "ladders": 38,
+   "open": 572,
+   "fitted_strikes": 0,
+   "ladders": 0,
    "posted_outlier": 0,
-   "posted_control": 7
+   "posted_control": 0
   },
   "KXNBAREB": {
-   "open": 614,
-   "fitted_strikes": 234,
-   "ladders": 56,
+   "open": 623,
+   "fitted_strikes": 0,
+   "ladders": 0,
    "posted_outlier": 0,
-   "posted_control": 7
+   "posted_control": 0
   },
   "KXNBAAST": {
-   "open": 523,
-   "fitted_strikes": 111,
-   "ladders": 26,
+   "open": 521,
+   "fitted_strikes": 0,
+   "ladders": 0,
    "posted_outlier": 0,
-   "posted_control": 3
+   "posted_control": 0
   },
   "KXNBA3PT": {
-   "open": 665,
-   "fitted_strikes": 257,
-   "ladders": 54,
-   "posted_outlier": 1,
-   "posted_control": 5
+   "open": 668,
+   "fitted_strikes": 0,
+   "ladders": 0,
+   "posted_outlier": 0,
+   "posted_control": 0
   }
  },
  "state": "waiting",
@@ -41,8 +41,8 @@
   "games": 0
  },
  "control_queue_5": {
-  "fills": 0,
-  "games": 0
+  "fills": 1,
+  "games": 1
  },
  "orders": {
   "control": 1072,
