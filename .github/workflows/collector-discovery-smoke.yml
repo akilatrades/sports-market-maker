@@ -1,0 +1,45 @@
+name: collector-discovery-smoke
+on:
+  pull_request:
+    paths:
+      - 'research/live_kalshi_collector.py'
+      - 'tests/test_live_research_collector.py'
+      - '.github/workflows/collector-discovery-smoke.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  public-catalog:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Inspect open public markets without trading
+        run: |
+          python -u - <<'PY'
+          from collections import Counter
+          from datetime import datetime, timezone
+          from research import live_kalshi_collector as c
+          c._RATE[0] = 2
+          candidates = c.discover_category("Mentions")
+          now = datetime.now(timezone.utc)
+          counts = Counter()
+          for market in candidates:
+              event = c.event_time(market, "earliest", 0)
+              close = c._parse(market.get("close_time"))
+              if event is None or close is None:
+                  counts["missing_time"] += 1
+              elif event < now or close <= now:
+                  counts["past"] += 1
+              elif (event - now).total_seconds() > 7 * 3600:
+                  counts["later"] += 1
+              else:
+                  counts["eligible"] += 1
+                  if (close - now).total_seconds() > 48 * 3600:
+                      counts["eligible_with_distant_close"] += 1
+          print("Open candidates:", len(candidates), "Time buckets:", dict(counts))
+          print("Zero eligible is a valid market state, not a successful recording.")
+          PY
